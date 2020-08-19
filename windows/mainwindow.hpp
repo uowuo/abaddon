@@ -7,6 +7,7 @@ class MainWindow : public Gtk::Window {
 public:
     MainWindow();
     void SetAbaddon(Abaddon *ptr);
+    void UpdateMenuStatus();
 
 protected:
     Gtk::Box m_main_box;
@@ -17,6 +18,8 @@ protected:
     Gtk::MenuItem m_menu_discord;
     Gtk::Menu m_menu_discord_sub;
     Gtk::MenuItem m_menu_discord_connect;
+    Gtk::MenuItem m_menu_discord_disconnect;
+    Gtk::MenuItem m_menu_discord_set_token;
 
     Abaddon *m_abaddon = nullptr;
 };

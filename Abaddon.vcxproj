@@ -143,15 +143,19 @@
   <ItemGroup>
     <ClCompile Include="abaddon.cpp" />
     <ClCompile Include="components\channels.cpp" />
+    <ClCompile Include="dialogs\token.cpp" />
     <ClCompile Include="discord\discord.cpp" />
     <ClCompile Include="discord\websocket.cpp" />
+    <ClCompile Include="settings.cpp" />
     <ClCompile Include="windows\mainwindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="components\channels.hpp" />
     <ClInclude Include="abaddon.hpp" />
+    <ClInclude Include="dialogs\token.hpp" />
     <ClInclude Include="discord\discord.hpp" />
     <ClInclude Include="discord\websocket.hpp" />
+    <ClInclude Include="settings.hpp" />
     <ClInclude Include="windows\mainwindow.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

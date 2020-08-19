@@ -13,6 +13,9 @@ public:
     using JSONCallback_t = std::function<void(nlohmann::json)>;
     void SetJSONCallback(JSONCallback_t func);
     void Send(const std::string &str);
+    void Send(const nlohmann::json &j);
+    void Stop();
+    bool IsOpen() const;
 
 private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);
