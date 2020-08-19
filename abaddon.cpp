@@ -27,7 +27,7 @@ int Abaddon::StartGTK() {
     m_main_window->SetAbaddon(this);
     m_main_window->set_title("Abaddon");
     m_main_window->show();
-    m_main_window->UpdateMenuStatus();
+    m_main_window->UpdateComponents();
 
     m_gtk_app->signal_shutdown().connect([&]() {
         StopDiscord();
@@ -70,19 +70,19 @@ const DiscordClient &Abaddon::GetDiscordClient() const {
 }
 
 void Abaddon::DiscordNotifyReady() {
-    m_main_window->UpdateChannelListing();
+    m_main_window->UpdateComponents();
 }
 
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
-    m_main_window->UpdateMenuStatus();
+    m_main_window->UpdateComponents();
 }
 
 void Abaddon::ActionDisconnect() {
     if (m_discord.IsStarted())
         StopDiscord();
-    m_main_window->UpdateMenuStatus();
+    m_main_window->UpdateComponents();
 }
 
 void Abaddon::ActionSetToken() {
@@ -90,7 +90,7 @@ void Abaddon::ActionSetToken() {
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK) {
         m_discord_token = dlg.GetToken();
-        m_main_window->UpdateMenuStatus();
+        m_main_window->UpdateComponents();
         m_settings.SetSetting("discord", "token", m_discord_token);
     }
 }
