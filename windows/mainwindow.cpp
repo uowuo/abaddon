@@ -47,14 +47,22 @@ MainWindow::MainWindow()
     show_all_children();
 }
 
-void MainWindow::UpdateMenuStatus() {
+void MainWindow::UpdateComponents() {
+    bool discord_active = m_abaddon->IsDiscordActive();
+
+    // menu
     // Connect
     std::string token = m_abaddon->GetDiscordToken();
-    bool discord_active = m_abaddon->IsDiscordActive();
     m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
 
     // Disconnect
     m_menu_discord_disconnect.set_sensitive(discord_active);
+
+    // channel listing
+    if (!discord_active)
+        m_channel_list.ClearListing();
+    else
+        UpdateChannelListing();
 }
 
 void MainWindow::UpdateChannelListing() {

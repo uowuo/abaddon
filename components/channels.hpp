@@ -12,6 +12,7 @@ public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
     void SetListingFromGuilds(const DiscordClient::Guilds_t &guilds);
+    void ClearListing();
 
     void SetAbaddon(Abaddon *ptr);
 

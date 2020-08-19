@@ -31,6 +31,12 @@ void ChannelList::SetListingFromGuilds(const DiscordClient::Guilds_t &guilds) {
     m_update_dispatcher.emit();
 }
 
+void ChannelList::ClearListing() {
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_update_queue.push(DiscordClient::Guilds_t());
+    m_update_dispatcher.emit();
+}
+
 void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
     auto &info = m_infos[row];
     bool new_collapsed = !info.IsUserCollapsed;
@@ -75,6 +81,12 @@ void ChannelList::SetListingFromGuildsInternal() {
     while (it != children.end()) {
         delete *it;
         it++;
+    }
+
+    if (guilds->empty()) {
+        std::scoped_lock<std::mutex> guard(m_update_mutex);
+        m_update_queue.pop();
+        return;
     }
 
     auto &settings = m_abaddon->GetDiscordClient().GetUserSettings();

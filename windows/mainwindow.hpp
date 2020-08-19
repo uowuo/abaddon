@@ -8,7 +8,7 @@ public:
     MainWindow();
     void SetAbaddon(Abaddon *ptr);
 
-    void UpdateMenuStatus();
+    void UpdateComponents();
     void UpdateChannelListing();
 
 protected:
