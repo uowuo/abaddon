@@ -7,10 +7,13 @@ class MainWindow : public Gtk::Window {
 public:
     MainWindow();
     void SetAbaddon(Abaddon *ptr);
+
     void UpdateMenuStatus();
+    void UpdateChannelListing();
 
 protected:
     Gtk::Box m_main_box;
+    Gtk::Box m_content_box;
 
     ChannelList m_channel_list;
 
