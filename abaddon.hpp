@@ -1,5 +1,6 @@
 #include <gtkmm.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include "discord/discord.hpp"
 #include "windows/mainwindow.hpp"
@@ -23,9 +24,12 @@ public:
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
 
+    const DiscordClient &GetDiscordClient() const;
+    void DiscordNotifyReady();
+
 private:
     std::string m_discord_token;
-
+    mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     DiscordClient m_discord;
     SettingsManager m_settings;

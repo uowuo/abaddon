@@ -1,10 +1,10 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
 
-MainWindow::MainWindow() {
+MainWindow::MainWindow()
+    : m_main_box(Gtk::ORIENTATION_VERTICAL)
+    , m_content_box(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(800, 600);
-
-    m_main_box.set_orientation(Gtk::ORIENTATION_VERTICAL);
 
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);
@@ -31,10 +31,16 @@ MainWindow::MainWindow() {
         m_abaddon->ActionSetToken();
     });
 
+    m_content_box.set_hexpand(true);
+    m_content_box.set_vexpand(true);
+
     m_main_box.add(m_menu_bar);
+    m_main_box.add(m_content_box);
 
     auto *channel_list = m_channel_list.GetRoot();
-    m_main_box.add(*channel_list);
+    channel_list->set_hexpand(true);
+    channel_list->set_vexpand(true);
+    m_content_box.add(*channel_list);
 
     add(m_main_box);
 
@@ -51,6 +57,12 @@ void MainWindow::UpdateMenuStatus() {
     m_menu_discord_disconnect.set_sensitive(discord_active);
 }
 
+void MainWindow::UpdateChannelListing() {
+    auto &discord = m_abaddon->GetDiscordClient();
+    m_channel_list.SetListingFromGuilds(discord.GetGuilds());
+}
+
 void MainWindow::SetAbaddon(Abaddon *ptr) {
     m_abaddon = ptr;
+    m_channel_list.SetAbaddon(ptr);
 }

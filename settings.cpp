@@ -1,7 +1,15 @@
 #include "settings.hpp"
+#include <filesystem>
+#include <fstream>
 
 SettingsManager::SettingsManager(std::string filename)
     : m_filename(filename) {
+    if (!std::filesystem::exists(filename)) {
+        std::fstream fs;
+        fs.open(filename, std::ios::out);
+        fs.close();
+    }
+
     auto rc = m_ini.LoadFile(filename.c_str());
     m_ok = rc == SI_OK;
 }

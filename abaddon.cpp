@@ -64,6 +64,15 @@ std::string Abaddon::GetDiscordToken() const {
     return m_discord_token;
 }
 
+const DiscordClient &Abaddon::GetDiscordClient() const {
+    std::scoped_lock<std::mutex> guard(m_mutex);
+    return m_discord;
+}
+
+void Abaddon::DiscordNotifyReady() {
+    m_main_window->UpdateChannelListing();
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
