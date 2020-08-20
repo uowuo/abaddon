@@ -3,7 +3,8 @@
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
-    , m_content_box(Gtk::ORIENTATION_HORIZONTAL) {
+    , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
+    , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(800, 600);
 
     m_menu_discord.set_label("Discord");
@@ -20,7 +21,7 @@ MainWindow::MainWindow()
     m_menu_bar.append(m_menu_discord);
 
     m_menu_discord_connect.signal_activate().connect([&] {
-        m_abaddon->ActionConnect(); // this feels maybe not too smart
+        m_abaddon->ActionConnect();
     });
 
     m_menu_discord_disconnect.signal_activate().connect([&] {
@@ -38,9 +39,17 @@ MainWindow::MainWindow()
     m_main_box.add(m_content_box);
 
     auto *channel_list = m_channel_list.GetRoot();
-    channel_list->set_hexpand(true);
     channel_list->set_vexpand(true);
-    m_content_box.add(*channel_list);
+    channel_list->set_size_request(-1, -1);
+    m_chan_chat_paned.pack1(*channel_list);
+    auto *chat = m_chat.GetRoot();
+    chat->set_vexpand(true);
+    chat->set_hexpand(true);
+    m_chan_chat_paned.pack2(*chat);
+    m_chan_chat_paned.set_position(200);
+    m_chan_chat_paned.child_property_shrink(*channel_list) = true;
+    m_chan_chat_paned.child_property_resize(*channel_list) = true;
+    m_content_box.add(m_chan_chat_paned);
 
     add(m_main_box);
 
@@ -68,6 +77,15 @@ void MainWindow::UpdateComponents() {
 void MainWindow::UpdateChannelListing() {
     auto &discord = m_abaddon->GetDiscordClient();
     m_channel_list.SetListingFromGuilds(discord.GetGuilds());
+}
+
+void MainWindow::UpdateChatWindowContents() {
+    auto &discord = m_abaddon->GetDiscordClient();
+    m_chat.SetMessages(discord.GetMessagesForChannel(m_chat.GetActiveChannel()));
+}
+
+void MainWindow::UpdateChatActiveChannel(Snowflake id) {
+    m_chat.SetActiveChannel(id);
 }
 
 void MainWindow::SetAbaddon(Abaddon *ptr) {

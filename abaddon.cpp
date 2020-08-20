@@ -107,7 +107,7 @@ void Abaddon::ActionMoveGuildUp(Snowflake id) {
     std::vector<Snowflake> &pos = d.GuildPositions;
     if (pos.size() == 0) {
         auto x = m_discord.GetUserSortedGuilds();
-        for (const auto& pair : x)
+        for (const auto &pair : x)
             pos.push_back(pair.first);
     }
 
@@ -136,7 +136,20 @@ void Abaddon::ActionMoveGuildDown(Snowflake id) {
     m_discord.UpdateSettingsGuildPositions(pos);
 }
 
+void Abaddon::ActionListChannelItemClick(Snowflake id) {
+    m_main_window->UpdateChatActiveChannel(id);
+    if (m_channels_requested.find(id) == m_channels_requested.end()) {
+        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<MessageData> &msgs) {
+            m_channels_requested.insert(id);
+            m_main_window->UpdateChatWindowContents();
+        });
+    } else {
+        m_main_window->UpdateChatWindowContents();
+    }
+}
+
 int main(int argc, char **argv) {
+    Gtk::Main::init_gtkmm_internals(); // why???
     Abaddon abaddon;
     return abaddon.StartGTK();
 }

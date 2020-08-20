@@ -52,6 +52,10 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
     bool new_collapsed = !info.IsUserCollapsed;
     info.IsUserCollapsed = new_collapsed;
 
+    if (info.Type == ListItemInfo::ListItemType::Channel) {
+        m_abaddon->ActionListChannelItemClick(info.ID);
+    }
+
     if (info.CatArrow != nullptr)
         info.CatArrow->set(new_collapsed ? Gtk::ARROW_RIGHT : Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
 
@@ -143,6 +147,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         info.ID = id;
         info.IsUserCollapsed = false;
         info.IsHidden = false;
+        info.Type = ListItemInfo::ListItemType::Channel;
 
         m_infos[channel_row] = std::move(info);
         return channel_row;
@@ -168,6 +173,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         info.IsUserCollapsed = false;
         info.IsHidden = true;
         info.CatArrow = category_arrow;
+        info.Type = ListItemInfo::ListItemType::Category;
 
         if (cat_to_channels.find(id) != cat_to_channels.end()) {
             std::map<int, const ChannelData *> sorted_channels;
@@ -206,6 +212,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         info.IsUserCollapsed = true;
         info.IsHidden = false;
         info.GuildIndex = m_guild_count++;
+        info.Type = ListItemInfo::ListItemType::Guild;
 
         if (orphan_channels.find(id) != orphan_channels.end()) {
             std::map<int, const ChannelData *> sorted_orphans;

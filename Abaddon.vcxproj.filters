@@ -39,6 +39,9 @@
     <ClCompile Include="discord\http.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="components\chatwindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="windows\mainwindow.hpp">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="discord\http.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\chatwindow.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
