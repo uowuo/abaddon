@@ -1,5 +1,6 @@
 #pragma once
 #include "websocket.hpp"
+#include "http.hpp"
 #include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
@@ -21,9 +22,14 @@ struct Snowflake {
         return m_num < s.m_num;
     }
 
+    operator uint64_t() const noexcept {
+        return m_num;
+    }
+
     const static int Invalid = -1;
 
     friend void from_json(const nlohmann::json &j, Snowflake &s);
+    friend void to_json(nlohmann::json &j, const Snowflake &s);
 
 private:
     friend struct std::hash<Snowflake>;
@@ -286,6 +292,8 @@ private:
 
 class Abaddon;
 class DiscordClient {
+    friend class Abaddon;
+
 public:
     static const constexpr char *DiscordGateway = "wss://gateway.discord.gg/?v=6&encoding=json";
     static const constexpr char *DiscordAPI = "https://discord.com/api";
@@ -301,6 +309,10 @@ public:
     using Guilds_t = std::unordered_map<Snowflake, GuildData>;
     const Guilds_t &GetGuilds() const;
     const UserSettingsData &GetUserSettings() const;
+    std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
+    void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
+
+    void UpdateToken(std::string token);
 
 private:
     void HandleGatewayMessage(nlohmann::json msg);
@@ -309,6 +321,10 @@ private:
     void SendIdentify();
 
     Abaddon *m_abaddon = nullptr;
+    HTTPClient m_http;
+
+    std::string m_token;
+
     mutable std::mutex m_mutex;
 
     void StoreGuild(Snowflake id, const GuildData &g);

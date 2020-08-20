@@ -20,12 +20,15 @@ public:
     void ActionConnect();
     void ActionDisconnect();
     void ActionSetToken();
+    void ActionMoveGuildUp(Snowflake id);
+    void ActionMoveGuildDown(Snowflake id);
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
 
     const DiscordClient &GetDiscordClient() const;
     void DiscordNotifyReady();
+    void DiscordNotifyChannelListFullRefresh();
 
 private:
     std::string m_discord_token;
