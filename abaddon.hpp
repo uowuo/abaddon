@@ -2,6 +2,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_set>
 #include "discord/discord.hpp"
 #include "windows/mainwindow.hpp"
 #include "settings.hpp"
@@ -22,6 +23,7 @@ public:
     void ActionSetToken();
     void ActionMoveGuildUp(Snowflake id);
     void ActionMoveGuildDown(Snowflake id);
+    void ActionListChannelItemClick(Snowflake id);
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -31,10 +33,12 @@ public:
     void DiscordNotifyChannelListFullRefresh();
 
 private:
+    DiscordClient m_discord;
     std::string m_discord_token;
+    std::unordered_set<Snowflake> m_channels_requested;
+
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
-    DiscordClient m_discord;
     SettingsManager m_settings;
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
 };

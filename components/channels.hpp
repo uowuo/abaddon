@@ -21,11 +21,17 @@ protected:
     Gtk::ScrolledWindow *m_main;
 
     struct ListItemInfo {
+        enum ListItemType {
+            Guild,
+            Category,
+            Channel,
+        };
         int GuildIndex;
         Snowflake ID;
         std::unordered_set<Gtk::ListBoxRow *> Children;
         bool IsUserCollapsed;
         bool IsHidden;
+        ListItemType Type;
         // for categories
         Gtk::Arrow *CatArrow = nullptr;
     };

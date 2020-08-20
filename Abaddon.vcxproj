@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="abaddon.cpp" />
     <ClCompile Include="components\channels.cpp" />
+    <ClCompile Include="components\chatwindow.cpp" />
     <ClCompile Include="dialogs\token.cpp" />
     <ClCompile Include="discord\discord.cpp" />
     <ClCompile Include="discord\http.cpp" />
@@ -153,6 +154,7 @@
   <ItemGroup>
     <ClInclude Include="components\channels.hpp" />
     <ClInclude Include="abaddon.hpp" />
+    <ClInclude Include="components\chatwindow.hpp" />
     <ClInclude Include="dialogs\token.hpp" />
     <ClInclude Include="discord\discord.hpp" />
     <ClInclude Include="discord\http.hpp" />

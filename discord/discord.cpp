@@ -84,6 +84,13 @@ std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds(
     return sorted_guilds;
 }
 
+std::unordered_set<const MessageData *> DiscordClient::GetMessagesForChannel(Snowflake id) const {
+    auto it = m_chan_to_message_map.find(id);
+    if (it == m_chan_to_message_map.end())
+        return std::unordered_set<const MessageData *>();
+    return it->second;
+}
+
 void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos) {
     assert(pos.size() == m_guilds.size());
     nlohmann::json body;
@@ -91,6 +98,18 @@ void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &p
     m_http.MakePATCH("/users/@me/settings", body.dump(), [this, pos](const cpr::Response &r) {
         m_user_settings.GuildPositions = pos;
         m_abaddon->DiscordNotifyChannelListFullRefresh();
+    });
+}
+
+void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb) {
+    std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
+    m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
+        std::vector<MessageData> msgs;
+        nlohmann::json::parse(r.text).get_to(msgs);
+        for (const auto &msg : msgs)
+            StoreMessage(msg.ID, msg);
+
+        cb(msgs);
     });
 }
 
@@ -151,6 +170,15 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 void DiscordClient::StoreGuild(Snowflake id, const GuildData &g) {
     assert(id.IsValid() && id == g.ID);
     m_guilds[id] = g;
+}
+
+void DiscordClient::StoreMessage(Snowflake id, const MessageData &m) {
+    assert(id.IsValid());
+    m_messages[id] = m;
+    auto it = m_chan_to_message_map.find(m.ChannelID);
+    if (it == m_chan_to_message_map.end())
+        m_chan_to_message_map[m.ChannelID] = decltype(m_chan_to_message_map)::mapped_type();
+    m_chan_to_message_map[m.ChannelID].insert(&m_messages[id]);
 }
 
 void DiscordClient::HeartbeatThread() {
@@ -308,6 +336,33 @@ void from_json(const nlohmann::json &j, ChannelData &m) {
     JS_ON("last_pin_timestamp", m.LastPinTimestamp);
 }
 
+void from_json(const nlohmann::json &j, MessageData &m) {
+    JS_D("id", m.ID);
+    JS_D("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+    JS_D("author", m.Author);
+    // JS_O("member", m.Member);
+    JS_D("content", m.Content);
+    JS_D("timestamp", m.Timestamp);
+    JS_N("edited_timestamp", m.EditedTimestamp);
+    JS_D("tts", m.IsTTS);
+    JS_D("mention_everyone", m.DoesMentionEveryone);
+    JS_D("mentions", m.Mentions);
+    // JS_D("mention_roles", m.MentionRoles);
+    // JS_O("mention_channels", m.MentionChannels);
+    // JS_D("attachments", m.Attachments);
+    // JS_D("embeds", m.Embeds);
+    // JS_O("reactions", m.Reactions);
+    JS_O("nonce", m.Nonce);
+    JS_D("pinned", m.IsPinned);
+    JS_O("webhook_id", m.WebhookID);
+    JS_D("type", m.Type);
+    // JS_O("activity", m.Activity);
+    // JS_O("application", m.Application);
+    // JS_O("message_reference", m.MessageReference);
+    JS_O("flags", m.Flags);
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.User);
@@ -400,7 +455,7 @@ void from_json(const nlohmann::json &j, Snowflake &s) {
     s.m_num = std::stoull(tmp);
 }
 
-void to_json(nlohmann::json& j, const Snowflake& s) {
+void to_json(nlohmann::json &j, const Snowflake &s) {
     j = std::to_string(s);
 }
 

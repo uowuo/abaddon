@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 
 struct Snowflake {
@@ -33,6 +34,7 @@ struct Snowflake {
 
 private:
     friend struct std::hash<Snowflake>;
+    friend struct std::less<Snowflake>;
     unsigned long long m_num;
 };
 
@@ -41,6 +43,13 @@ template<>
 struct hash<Snowflake> {
     std::size_t operator()(const Snowflake &k) const {
         return k.m_num;
+    }
+};
+
+template<>
+struct less<Snowflake> {
+    bool operator()(const Snowflake &l, const Snowflake &r) const {
+        return l.m_num < r.m_num;
     }
 };
 } // namespace std
@@ -222,6 +231,62 @@ struct UserSettingsData {
     friend void from_json(const nlohmann::json &j, UserSettingsData &m);
 };
 
+enum class MessageType {
+    DEFAULT = 0,
+    RECIPIENT_ADD = 1,
+    RECIPIENT_REMOVE = 2,
+    CALL = 3,
+    CHANNEL_NaME_CHANGE = 4,
+    CHANNEL_ICON_CHANGE = 5,
+    CHANNEL_PINNED_MESSAGE = 6,
+    GUILD_MEMBER_JOIN = 6,
+    USER_PREMIUM_GUILD_SUBSCRIPTION = 7,
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 8,
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 9,
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 10,
+    CHANNEL_FOLLOW_ADD = 12,
+    GUILD_DISCOVERY_DISQUALIFIED = 13,
+    GUILD_DISCOVERY_REQUALIFIED = 14,
+};
+
+enum class MessageFlags {
+    NONE = 0,
+    CROSSPOSTED = 1 << 0,
+    IS_CROSSPOST = 1 << 1,
+    SUPPRESS_EMBEDS = 1 << 2,
+    SOURCE_MESSAGE_DELETE = 1 << 3,
+    URGENT = 1 << 4,
+};
+
+struct MessageData {
+    Snowflake ID;        //
+    Snowflake ChannelID; //
+    Snowflake GuildID;   // opt
+    UserData Author;     //
+    // GuildMemberData Member; // opt
+    std::string Content;            //
+    std::string Timestamp;          //
+    std::string EditedTimestamp;    // null
+    bool IsTTS;                     //
+    bool DoesMentionEveryone;       //
+    std::vector<UserData> Mentions; //
+    // std::vector<RoleData> MentionRoles; //
+    // std::vector<ChannelMentionData> MentionChannels; // opt
+    // std::vector<AttachmentData> Attachments; //
+    // std::vector<EmbedData> Embeds; //
+    // std::vector<ReactionData> Reactions; // opt
+    std::string Nonce;   // opt
+    bool IsPinned;       //
+    Snowflake WebhookID; // opt
+    MessageType Type;    //
+    // MessageActivityData Activity; // opt
+    // MessageApplicationData Application; // opt
+    // MessageReferenceData MessageReference; // opt
+    MessageFlags Flags = MessageFlags::NONE; // opt
+
+    friend void from_json(const nlohmann::json &j, MessageData &m);
+};
+
 struct ReadyEventData {
     int GatewayVersion;            //
     UserData User;                 //
@@ -307,10 +372,15 @@ public:
     bool IsStarted() const;
 
     using Guilds_t = std::unordered_map<Snowflake, GuildData>;
+    using Messages_t = std::unordered_map<Snowflake, MessageData>;
+
     const Guilds_t &GetGuilds() const;
     const UserSettingsData &GetUserSettings() const;
     std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
+    std::unordered_set<const MessageData *> GetMessagesForChannel(Snowflake id) const;
+
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
+    void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
 
     void UpdateToken(std::string token);
 
@@ -329,6 +399,10 @@ private:
 
     void StoreGuild(Snowflake id, const GuildData &g);
     Guilds_t m_guilds;
+
+    void StoreMessage(Snowflake id, const MessageData &m);
+    Messages_t m_messages;
+    std::unordered_map<Snowflake, std::unordered_set<const MessageData *>> m_chan_to_message_map;
 
     UserSettingsData m_user_settings;
 
