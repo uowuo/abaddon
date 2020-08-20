@@ -2,7 +2,8 @@
 #include "discord.hpp"
 #include <cassert>
 
-DiscordClient::DiscordClient() {
+DiscordClient::DiscordClient()
+    : m_http(DiscordAPI) {
     LoadEventMap();
 }
 
@@ -27,6 +28,8 @@ void DiscordClient::Stop() {
     m_heartbeat_thread.join();
     m_client_connected = false;
     m_websocket.Stop();
+
+    m_guilds.clear();
 }
 
 bool DiscordClient::IsStarted() const {
@@ -44,6 +47,58 @@ const UserSettingsData &DiscordClient::GetUserSettings() const {
     return m_user_settings;
 }
 
+std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds() const {
+    std::vector<std::pair<Snowflake, GuildData>> sorted_guilds;
+
+    if (m_user_settings.GuildPositions.size()) {
+        for (const auto &id : m_user_settings.GuildPositions) {
+            auto &guild = m_guilds.at(id);
+            sorted_guilds.push_back(std::make_pair(id, guild));
+        }
+    } else { // default sort is alphabetic
+        for (auto &it : m_guilds)
+            sorted_guilds.push_back(it);
+        std::sort(sorted_guilds.begin(), sorted_guilds.end(), [&](auto &a, auto &b) -> bool {
+            std::string &s1 = a.second.Name;
+            std::string &s2 = b.second.Name;
+
+            if (s1.empty() || s2.empty())
+                return s1 < s2;
+
+            bool ac[] = {
+                !isalnum(s1[0]),
+                !isalnum(s2[0]),
+                isdigit(s1[0]),
+                isdigit(s2[0]),
+                isalpha(s1[0]),
+                isalpha(s2[0]),
+            };
+
+            if ((ac[0] && ac[1]) || (ac[2] && ac[3]) || (ac[4] && ac[5]))
+                return s1 < s2;
+
+            return ac[0] || ac[5];
+        });
+    }
+
+    return sorted_guilds;
+}
+
+void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos) {
+    assert(pos.size() == m_guilds.size());
+    nlohmann::json body;
+    body["guild_positions"] = pos;
+    m_http.MakePATCH("/users/@me/settings", body.dump(), [this, pos](const cpr::Response &r) {
+        m_user_settings.GuildPositions = pos;
+        m_abaddon->DiscordNotifyChannelListFullRefresh();
+    });
+}
+
+void DiscordClient::UpdateToken(std::string token) {
+    m_token = token;
+    m_http.SetAuth(token);
+}
+
 void DiscordClient::HandleGatewayMessage(nlohmann::json j) {
     GatewayMessage m;
     try {
@@ -57,6 +112,7 @@ void DiscordClient::HandleGatewayMessage(nlohmann::json j) {
         case GatewayOp::Hello: {
             HelloMessageData d = m.Data;
             m_heartbeat_msec = d.HeartbeatInterval;
+            assert(!m_heartbeat_thread.joinable()); // handle reconnects later
             m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
             SendIdentify();
         } break;
@@ -116,13 +172,12 @@ void DiscordClient::HeartbeatThread() {
 }
 
 void DiscordClient::SendIdentify() {
-    auto token = m_abaddon->GetDiscordToken();
-    assert(token.size());
+    assert(m_token.size());
     IdentifyMessage msg;
     msg.Properties.OS = "OpenBSD";
     msg.Properties.Device = GatewayIdentity;
     msg.Properties.Browser = GatewayIdentity;
-    msg.Token = token;
+    msg.Token = m_token;
     m_websocket.Send(msg);
 }
 
@@ -343,6 +398,10 @@ void from_json(const nlohmann::json &j, Snowflake &s) {
     std::string tmp;
     j.get_to(tmp);
     s.m_num = std::stoull(tmp);
+}
+
+void to_json(nlohmann::json& j, const Snowflake& s) {
+    j = std::to_string(s);
 }
 
 #undef JS_O

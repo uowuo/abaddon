@@ -35,10 +35,10 @@ void Websocket::Send(const nlohmann::json &j) {
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
         case ix::WebSocketMessageType::Message: {
-            if (msg->str.size() > 1000)
-                printf("%s\n", msg->str.substr(0, 1000).c_str());
-            else
-                printf("%s\n", msg->str.c_str());
+            //if (msg->str.size() > 1000)
+            //    printf("%s\n", msg->str.substr(0, 1000).c_str());
+            //else
+            //    printf("%s\n", msg->str.c_str());
             auto obj = nlohmann::json::parse(msg->str);
             if (m_json_callback)
                 m_json_callback(obj);

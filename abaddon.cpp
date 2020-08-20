@@ -1,6 +1,7 @@
 #include <gtkmm.h>
 #include <memory>
 #include <string>
+#include <algorithm>
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "abaddon.hpp"
@@ -45,6 +46,7 @@ void Abaddon::LoadFromSettings() {
     std::string token = m_settings.GetSetting("discord", "token");
     if (token.size()) {
         m_discord_token = token;
+        m_discord.UpdateToken(m_discord_token);
     }
 }
 
@@ -73,6 +75,10 @@ void Abaddon::DiscordNotifyReady() {
     m_main_window->UpdateComponents();
 }
 
+void Abaddon::DiscordNotifyChannelListFullRefresh() {
+    m_main_window->UpdateChannelListing();
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
@@ -90,9 +96,44 @@ void Abaddon::ActionSetToken() {
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK) {
         m_discord_token = dlg.GetToken();
+        m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
         m_settings.SetSetting("discord", "token", m_discord_token);
     }
+}
+
+void Abaddon::ActionMoveGuildUp(Snowflake id) {
+    UserSettingsData d = m_discord.GetUserSettings();
+    std::vector<Snowflake> &pos = d.GuildPositions;
+    if (pos.size() == 0) {
+        auto x = m_discord.GetUserSortedGuilds();
+        for (const auto& pair : x)
+            pos.push_back(pair.first);
+    }
+
+    auto it = std::find(pos.begin(), pos.end(), id);
+    assert(it != pos.end());
+    std::vector<Snowflake>::iterator left = it - 1;
+    std::swap(*left, *it);
+
+    m_discord.UpdateSettingsGuildPositions(pos);
+}
+
+void Abaddon::ActionMoveGuildDown(Snowflake id) {
+    UserSettingsData d = m_discord.GetUserSettings();
+    std::vector<Snowflake> &pos = d.GuildPositions;
+    if (pos.size() == 0) {
+        auto x = m_discord.GetUserSortedGuilds();
+        for (const auto &pair : x)
+            pos.push_back(pair.first);
+    }
+
+    auto it = std::find(pos.begin(), pos.end(), id);
+    assert(it != pos.end());
+    std::vector<Snowflake>::iterator right = it + 1;
+    std::swap(*right, *it);
+
+    m_discord.UpdateSettingsGuildPositions(pos);
 }
 
 int main(int argc, char **argv) {

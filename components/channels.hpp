@@ -21,6 +21,7 @@ protected:
     Gtk::ScrolledWindow *m_main;
 
     struct ListItemInfo {
+        int GuildIndex;
         Snowflake ID;
         std::unordered_set<Gtk::ListBoxRow *> Children;
         bool IsUserCollapsed;
@@ -32,10 +33,18 @@ protected:
 
     void on_row_activated(Gtk::ListBoxRow *row);
 
+    int m_guild_count;
+    Gtk::Menu m_guild_menu;
+    Gtk::MenuItem *m_guild_menu_up;
+    Gtk::MenuItem *m_guild_menu_down;
+    void on_menu_move_up();
+    void on_menu_move_down();
+
     Glib::Dispatcher m_update_dispatcher;
     mutable std::mutex m_update_mutex;
     std::queue<DiscordClient::Guilds_t> m_update_queue;
     void SetListingFromGuildsInternal();
+    void AttachMenuHandler(Gtk::ListBoxRow* row);
 
     Abaddon *m_abaddon = nullptr;
 };
