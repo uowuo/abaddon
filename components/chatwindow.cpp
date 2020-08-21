@@ -1,8 +1,10 @@
 #include "chatwindow.hpp"
+#include "../abaddon.hpp"
 #include <map>
 
 ChatWindow::ChatWindow() {
-    m_update_dispatcher.connect(sigc::mem_fun(*this, &ChatWindow::SetMessagesInternal));
+    m_message_set_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::SetMessagesInternal));
+    m_new_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewMessageInternal));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_listbox = Gtk::manage(new Gtk::ListBox);
@@ -10,6 +12,8 @@ ChatWindow::ChatWindow() {
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
     m_input = Gtk::manage(new Gtk::TextView);
     m_entry_scroll = Gtk::manage(new Gtk::ScrolledWindow);
+
+    m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
 
     m_main->set_hexpand(true);
     m_main->set_vexpand(true);
@@ -49,6 +53,10 @@ ChatWindow::ChatWindow() {
     m_scroll->add(*m_viewport);
     m_main->add(*m_scroll);
     m_main->add(*m_entry_scroll);
+}
+
+void ChatWindow::SetAbaddon(Abaddon* ptr) {
+    m_abaddon = ptr;
 }
 
 Gtk::Widget *ChatWindow::GetRoot() const {
@@ -120,15 +128,52 @@ Gtk::ListBoxRow *ChatWindow::CreateChatEntryComponent(const MessageData *data) {
     return nullptr;
 }
 
+bool ChatWindow::on_key_press_event(GdkEventKey *e) {
+    if (e->keyval == GDK_KEY_Return) {
+        auto buffer = m_input->get_buffer();
+
+        if (e->state & GDK_SHIFT_MASK)
+            return false;
+
+        auto text = buffer->get_text();
+
+        buffer->set_text("");
+
+        return true;
+    }
+
+    return false;
+}
+
 void ChatWindow::SetMessages(std::unordered_set<const MessageData *> msgs) {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_queue.push(msgs);
-    m_update_dispatcher.emit();
+    m_message_set_queue.push(msgs);
+    m_message_set_dispatch.emit();
+}
+
+void ChatWindow::AddNewMessage(Snowflake id) {
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_new_message_queue.push(id);
+    m_new_message_dispatch.emit();
 }
 
 void ChatWindow::ScrollToBottom() {
     auto x = m_scroll->get_vadjustment();
     x->set_value(x->get_upper());
+}
+
+void ChatWindow::AddNewMessageInternal() {
+    Snowflake id;
+    {
+        std::scoped_lock<std::mutex> guard(m_update_mutex);
+        id = m_new_message_queue.front();
+        m_new_message_queue.pop();
+    }
+
+    auto data = m_abaddon->GetDiscordClient().GetMessage(id);
+    auto *row = CreateChatEntryComponent(data);
+    if (row != nullptr)
+        m_listbox->add(*row);
 }
 
 void ChatWindow::SetMessagesInternal() {
@@ -143,7 +188,7 @@ void ChatWindow::SetMessagesInternal() {
     std::unordered_set<const MessageData *> *msgs;
     {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
-        msgs = &m_update_queue.front();
+        msgs = &m_message_set_queue.front();
     }
 
     // sort
@@ -159,6 +204,6 @@ void ChatWindow::SetMessagesInternal() {
 
     {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
-        m_update_queue.pop();
+        m_message_set_queue.pop();
     }
 }

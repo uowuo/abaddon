@@ -7,6 +7,11 @@
 #include <unordered_set>
 #include <mutex>
 
+// bruh
+#ifdef GetMessage
+#undef GetMessage
+#endif
+
 struct Snowflake {
     Snowflake();
     Snowflake(const Snowflake &s);
@@ -64,6 +69,7 @@ enum class GatewayOp : int {
 
 enum class GatewayEvent : int {
     READY,
+    MESSAGE_CREATE,
 };
 
 struct GatewayMessage {
@@ -381,12 +387,14 @@ public:
 
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
+    const MessageData *GetMessage(Snowflake id) const;
 
     void UpdateToken(std::string token);
 
 private:
     void HandleGatewayMessage(nlohmann::json msg);
     void HandleGatewayReady(const GatewayMessage &msg);
+    void HandleGatewayMessageCreate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 

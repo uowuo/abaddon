@@ -31,6 +31,7 @@ public:
     const DiscordClient &GetDiscordClient() const;
     void DiscordNotifyReady();
     void DiscordNotifyChannelListFullRefresh();
+    void DiscordNotifyMessageCreate(Snowflake id);
 
 private:
     DiscordClient m_discord;

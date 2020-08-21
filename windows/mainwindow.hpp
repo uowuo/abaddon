@@ -13,6 +13,8 @@ public:
     void UpdateChannelListing();
     void UpdateChatWindowContents();
     void UpdateChatActiveChannel(Snowflake id);
+    Snowflake GetChatActiveChannel() const;
+    void UpdateChatNewMessage(Snowflake id);
 
 protected:
     Gtk::Box m_main_box;
