@@ -39,7 +39,13 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
             //    printf("%s\n", msg->str.substr(0, 1000).c_str());
             //else
             //    printf("%s\n", msg->str.c_str());
-            auto obj = nlohmann::json::parse(msg->str);
+            nlohmann::json obj;
+            try {
+                obj = nlohmann::json::parse(msg->str);
+            } catch (std::exception &e) {
+                printf("Error decoding JSON. Discarding message: %s\n", e.what());
+                return;
+            }
             if (m_json_callback)
                 m_json_callback(obj);
         } break;

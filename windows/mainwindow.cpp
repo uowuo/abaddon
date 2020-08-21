@@ -88,7 +88,17 @@ void MainWindow::UpdateChatActiveChannel(Snowflake id) {
     m_chat.SetActiveChannel(id);
 }
 
+Snowflake MainWindow::GetChatActiveChannel() const {
+    return m_chat.GetActiveChannel();
+}
+
+void MainWindow::UpdateChatNewMessage(Snowflake id) {
+    if (m_abaddon->GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel())
+        m_chat.AddNewMessage(id);
+}
+
 void MainWindow::SetAbaddon(Abaddon *ptr) {
     m_abaddon = ptr;
     m_channel_list.SetAbaddon(ptr);
+    m_chat.SetAbaddon(ptr);
 }

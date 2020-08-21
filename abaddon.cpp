@@ -79,6 +79,10 @@ void Abaddon::DiscordNotifyChannelListFullRefresh() {
     m_main_window->UpdateChannelListing();
 }
 
+void Abaddon::DiscordNotifyMessageCreate(Snowflake id) {
+    m_main_window->UpdateChatNewMessage(id);
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();

@@ -113,6 +113,10 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
     });
 }
 
+const MessageData *DiscordClient::GetMessage(Snowflake id) const {
+    return &m_messages.at(id);
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     m_token = token;
     m_http.SetAuth(token);
@@ -147,7 +151,10 @@ void DiscordClient::HandleGatewayMessage(nlohmann::json j) {
             switch (iter->second) {
                 case GatewayEvent::READY: {
                     HandleGatewayReady(m);
-                }
+                } break;
+                case GatewayEvent::MESSAGE_CREATE: {
+                    HandleGatewayMessageCreate(m);
+                } break;
             }
         } break;
         default:
@@ -164,7 +171,12 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     }
     m_abaddon->DiscordNotifyReady();
     m_user_settings = data.UserSettings;
-    return;
+}
+
+void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage& msg) {
+    MessageData data = msg.Data;
+    StoreMessage(data.ID, data);
+    m_abaddon->DiscordNotifyMessageCreate(data.ID);
 }
 
 void DiscordClient::StoreGuild(Snowflake id, const GuildData &g) {
@@ -211,6 +223,7 @@ void DiscordClient::SendIdentify() {
 
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
+    m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
 }
 
 #define JS_D(k, t)         \
