@@ -9,7 +9,7 @@
 
 // bruh
 #ifdef GetMessage
-#undef GetMessage
+    #undef GetMessage
 #endif
 
 struct Snowflake {
@@ -341,6 +341,12 @@ struct HeartbeatMessage : GatewayMessage {
     friend void to_json(nlohmann::json &j, const HeartbeatMessage &m);
 };
 
+struct CreateMessageObject {
+    std::string Content;
+
+    friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
+};
+
 // https://stackoverflow.com/questions/29775153/stopping-long-sleep-threads/29775639#29775639
 class HeartbeatWaiter {
 public:
@@ -388,6 +394,8 @@ public:
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
+
+    void SendChatMessage(std::string content, Snowflake channel);
 
     void UpdateToken(std::string token);
 

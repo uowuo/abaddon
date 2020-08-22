@@ -24,6 +24,7 @@ public:
     void ActionMoveGuildUp(Snowflake id);
     void ActionMoveGuildDown(Snowflake id);
     void ActionListChannelItemClick(Snowflake id);
+    void ActionChatInputSubmit(std::string msg, Snowflake channel);
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;

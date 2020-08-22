@@ -37,20 +37,20 @@ void HTTPClient::MakePOST(std::string path, std::string payload, std::function<v
     };
     auto body = cpr::Body { payload };
 #ifdef USE_LOCAL_PROXY
-    m_futures.push_back(cpr::GetCallback(
+    m_futures.push_back(cpr::PostCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
         url, headers, body,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
-    m_futures.push_back(cpr::PatchCallback(
+    m_futures.push_back(cpr::PostCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
         url, headers, body));
 #endif
 }
 
 void HTTPClient::MakeGET(std::string path, std::function<void(cpr::Response r)> cb) {
-    printf("POST %s\n", path.c_str());
+    printf("GET %s\n", path.c_str());
     auto url = cpr::Url { m_api_base + path };
     auto headers = cpr::Header {
         { "Authorization", m_authorization },
