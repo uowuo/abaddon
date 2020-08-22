@@ -5,8 +5,8 @@ MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
     , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL) {
-    set_default_size(800, 600);
-
+    set_default_size(1200, 800);
+    
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);
     m_menu_discord_connect.set_label("Connect");

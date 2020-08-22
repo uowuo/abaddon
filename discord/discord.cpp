@@ -117,6 +117,14 @@ const MessageData *DiscordClient::GetMessage(Snowflake id) const {
     return &m_messages.at(id);
 }
 
+void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
+    // @([^@#]{1,32})#(\\d{4})
+    CreateMessageObject obj;
+    obj.Content = content;
+    nlohmann::json j = obj;
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", j.dump(), [](auto) {});
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     m_token = token;
     m_http.SetAuth(token);
@@ -173,7 +181,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_user_settings = data.UserSettings;
 }
 
-void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage& msg) {
+void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     MessageData data = msg.Data;
     StoreMessage(data.ID, data);
     m_abaddon->DiscordNotifyMessageCreate(data.ID);
@@ -440,6 +448,10 @@ void to_json(nlohmann::json &j, const HeartbeatMessage &m) {
         j["d"] = nullptr;
     else
         j["d"] = m.Sequence;
+}
+
+void to_json(nlohmann::json &j, const CreateMessageObject &m) {
+    j["content"] = m.Content;
 }
 
 Snowflake::Snowflake()

@@ -136,8 +136,9 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
             return false;
 
         auto text = buffer->get_text();
-
         buffer->set_text("");
+
+        m_abaddon->ActionChatInputSubmit(text, m_active_channel);
 
         return true;
     }
