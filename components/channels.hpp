@@ -43,8 +43,10 @@ protected:
     Gtk::Menu m_guild_menu;
     Gtk::MenuItem *m_guild_menu_up;
     Gtk::MenuItem *m_guild_menu_down;
+    Gtk::MenuItem *m_guild_menu_copyid;
     void on_menu_move_up();
     void on_menu_move_down();
+    void on_menu_copyid();
 
     Glib::Dispatcher m_update_dispatcher;
     mutable std::mutex m_update_mutex;

@@ -114,7 +114,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;USE_LOCAL_PROXY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;USE_LOCAL_PROXY;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -130,7 +130,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -146,6 +146,7 @@
     <ClCompile Include="abaddon.cpp" />
     <ClCompile Include="components\channels.cpp" />
     <ClCompile Include="components\chatwindow.cpp" />
+    <ClCompile Include="components\memberlist.cpp" />
     <ClCompile Include="dialogs\token.cpp" />
     <ClCompile Include="discord\discord.cpp" />
     <ClCompile Include="discord\http.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="components\channels.hpp" />
     <ClInclude Include="abaddon.hpp" />
     <ClInclude Include="components\chatwindow.hpp" />
+    <ClInclude Include="components\memberlist.hpp" />
     <ClInclude Include="dialogs\token.hpp" />
     <ClInclude Include="discord\discord.hpp" />
     <ClInclude Include="discord\http.hpp" />

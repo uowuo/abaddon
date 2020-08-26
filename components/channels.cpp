@@ -16,6 +16,10 @@ ChannelList::ChannelList() {
     m_guild_menu_down->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_move_down));
     m_guild_menu.append(*m_guild_menu_down);
 
+    m_guild_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_copyid));
+    m_guild_menu.append(*m_guild_menu_copyid);
+
     m_guild_menu.show_all();
 
     m_list->set_activate_on_single_click(true);
@@ -267,6 +271,11 @@ void ChannelList::on_menu_move_up() {
 void ChannelList::on_menu_move_down() {
     auto row = m_list->get_selected_row();
     m_abaddon->ActionMoveGuildDown(m_infos[row].ID);
+}
+
+void ChannelList::on_menu_copyid() {
+    auto row = m_list->get_selected_row();
+    m_abaddon->ActionCopyGuildID(m_infos[row].ID);
 }
 
 void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {

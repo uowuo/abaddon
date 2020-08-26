@@ -4,9 +4,10 @@
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
-    , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL) {
+    , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL)
+    , m_chat_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(1200, 800);
-    
+
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);
     m_menu_discord_connect.set_label("Connect");
@@ -39,17 +40,31 @@ MainWindow::MainWindow()
     m_main_box.add(m_content_box);
 
     auto *channel_list = m_channel_list.GetRoot();
-    channel_list->set_vexpand(true);
-    channel_list->set_size_request(-1, -1);
-    m_chan_chat_paned.pack1(*channel_list);
+    auto *member_list = m_members.GetRoot();
     auto *chat = m_chat.GetRoot();
+
     chat->set_vexpand(true);
     chat->set_hexpand(true);
-    m_chan_chat_paned.pack2(*chat);
-    m_chan_chat_paned.set_position(200);
+
+    channel_list->set_vexpand(true);
+    channel_list->set_size_request(-1, -1);
+
+    member_list->set_vexpand(true);
+
+    m_chan_chat_paned.pack1(*channel_list);
+    m_chan_chat_paned.pack2(m_chat_members_paned);
     m_chan_chat_paned.child_property_shrink(*channel_list) = true;
     m_chan_chat_paned.child_property_resize(*channel_list) = true;
+    m_chan_chat_paned.set_position(200);
     m_content_box.add(m_chan_chat_paned);
+
+    m_chat_members_paned.pack1(*chat);
+    m_chat_members_paned.pack2(*member_list);
+    m_chat_members_paned.child_property_shrink(*member_list) = true;
+    m_chat_members_paned.child_property_resize(*member_list) = true;
+    int w, h;
+    get_default_size(w, h); // :s
+    m_chat_members_paned.set_position(w - m_chan_chat_paned.get_position() - 150);
 
     add(m_main_box);
 

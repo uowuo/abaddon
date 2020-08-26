@@ -1,10 +1,10 @@
 #include "websocket.hpp"
 #include <functional>
-#include <nlohmann/json.hpp>
 
 Websocket::Websocket() {}
 
 void Websocket::StartConnection(std::string url) {
+    m_websocket.disableAutomaticReconnection();
     m_websocket.setUrl(url);
     m_websocket.setOnMessageCallback(std::bind(&Websocket::OnMessage, this, std::placeholders::_1));
     m_websocket.start();
@@ -19,8 +19,8 @@ bool Websocket::IsOpen() const {
     return state == ix::ReadyState::Open;
 }
 
-void Websocket::SetJSONCallback(JSONCallback_t func) {
-    m_json_callback = func;
+void Websocket::SetMessageCallback(MessageCallback_t func) {
+    m_callback = func;
 }
 
 void Websocket::Send(const std::string &str) {
@@ -39,15 +39,8 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
             //    printf("%s\n", msg->str.substr(0, 1000).c_str());
             //else
             //    printf("%s\n", msg->str.c_str());
-            nlohmann::json obj;
-            try {
-                obj = nlohmann::json::parse(msg->str);
-            } catch (std::exception &e) {
-                printf("Error decoding JSON. Discarding message: %s\n", e.what());
-                return;
-            }
-            if (m_json_callback)
-                m_json_callback(obj);
+            if (m_callback)
+                m_callback(msg->str);
         } break;
     }
 }

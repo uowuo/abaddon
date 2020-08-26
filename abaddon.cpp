@@ -107,37 +107,49 @@ void Abaddon::ActionSetToken() {
 }
 
 void Abaddon::ActionMoveGuildUp(Snowflake id) {
-    UserSettingsData d = m_discord.GetUserSettings();
-    std::vector<Snowflake> &pos = d.GuildPositions;
-    if (pos.size() == 0) {
-        auto x = m_discord.GetUserSortedGuilds();
-        for (const auto &pair : x)
-            pos.push_back(pair.first);
+    auto order = m_discord.GetUserSortedGuilds();
+    // get iter to target
+    decltype(order)::iterator target_iter;
+    for (auto it = order.begin(); it != order.end(); it++) {
+        if (it->first == id) {
+            target_iter = it;
+            break;
+        }
     }
 
-    auto it = std::find(pos.begin(), pos.end(), id);
-    assert(it != pos.end());
-    std::vector<Snowflake>::iterator left = it - 1;
-    std::swap(*left, *it);
+    decltype(order)::iterator left = target_iter - 1;
+    std::swap(*left, *target_iter);
 
-    m_discord.UpdateSettingsGuildPositions(pos);
+    std::vector<Snowflake> new_sort;
+    for (const auto& x : order)
+        new_sort.push_back(x.first);
+
+    m_discord.UpdateSettingsGuildPositions(new_sort);
 }
 
 void Abaddon::ActionMoveGuildDown(Snowflake id) {
-    UserSettingsData d = m_discord.GetUserSettings();
-    std::vector<Snowflake> &pos = d.GuildPositions;
-    if (pos.size() == 0) {
-        auto x = m_discord.GetUserSortedGuilds();
-        for (const auto &pair : x)
-            pos.push_back(pair.first);
+    auto order = m_discord.GetUserSortedGuilds();
+    // get iter to target
+    decltype(order)::iterator target_iter;
+    for (auto it = order.begin(); it != order.end(); it++) {
+        if (it->first == id) {
+            target_iter = it;
+            break;
+        }
     }
 
-    auto it = std::find(pos.begin(), pos.end(), id);
-    assert(it != pos.end());
-    std::vector<Snowflake>::iterator right = it + 1;
-    std::swap(*right, *it);
+    decltype(order)::iterator right = target_iter + 1;
+    std::swap(*right, *target_iter);
 
-    m_discord.UpdateSettingsGuildPositions(pos);
+    std::vector<Snowflake> new_sort;
+    for (const auto &x : order)
+        new_sort.push_back(x.first);
+
+    m_discord.UpdateSettingsGuildPositions(new_sort);
+}
+
+void Abaddon::ActionCopyGuildID(Snowflake id) {
+    Gtk::Clipboard::get()->set_text(std::to_string(id));
 }
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {
