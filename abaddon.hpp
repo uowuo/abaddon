@@ -23,6 +23,7 @@ public:
     void ActionSetToken();
     void ActionMoveGuildUp(Snowflake id);
     void ActionMoveGuildDown(Snowflake id);
+    void ActionCopyGuildID(Snowflake id);
     void ActionListChannelItemClick(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel);
 

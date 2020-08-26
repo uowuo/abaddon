@@ -1,6 +1,7 @@
 #pragma once
 #include "../components/channels.hpp"
 #include "../components/chatwindow.hpp"
+#include "../components/memberlist.hpp"
 #include <gtkmm.h>
 
 class Abaddon;
@@ -20,9 +21,11 @@ protected:
     Gtk::Box m_main_box;
     Gtk::Box m_content_box;
     Gtk::Paned m_chan_chat_paned;
+    Gtk::Paned m_chat_members_paned;
 
     ChannelList m_channel_list;
     ChatWindow m_chat;
+    MemberList m_members;
 
     Gtk::MenuBar m_menu_bar;
     Gtk::MenuItem m_menu_discord;

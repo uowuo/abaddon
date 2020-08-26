@@ -10,8 +10,8 @@ public:
     Websocket();
     void StartConnection(std::string url);
 
-    using JSONCallback_t = std::function<void(nlohmann::json)>;
-    void SetJSONCallback(JSONCallback_t func);
+    using MessageCallback_t = std::function<void(std::string data)>;
+    void SetMessageCallback(MessageCallback_t func);
     void Send(const std::string &str);
     void Send(const nlohmann::json &j);
     void Stop();
@@ -20,6 +20,6 @@ public:
 private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);
 
-    JSONCallback_t m_json_callback;
+    MessageCallback_t m_callback;
     ix::WebSocket m_websocket;
 };
