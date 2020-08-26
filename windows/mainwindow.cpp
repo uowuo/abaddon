@@ -74,19 +74,17 @@ MainWindow::MainWindow()
 void MainWindow::UpdateComponents() {
     bool discord_active = m_abaddon->IsDiscordActive();
 
-    // menu
-    // Connect
     std::string token = m_abaddon->GetDiscordToken();
     m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
 
-    // Disconnect
     m_menu_discord_disconnect.set_sensitive(discord_active);
 
-    // channel listing
-    if (!discord_active)
+    if (!discord_active) {
         m_channel_list.ClearListing();
-    else
+        m_chat.ClearMessages();
+    } else {
         UpdateChannelListing();
+    }
 }
 
 void MainWindow::UpdateChannelListing() {

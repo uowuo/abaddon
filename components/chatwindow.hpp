@@ -16,6 +16,7 @@ public:
     Snowflake GetActiveChannel() const;
     void SetMessages(std::unordered_set<const MessageData *> msgs);
     void AddNewMessage(Snowflake id);
+    void ClearMessages();
 
 protected:
     void ScrollToBottom();
