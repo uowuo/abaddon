@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include <queue>
 #include <mutex>
+#include "chatmessage.hpp"
 #include "../discord/discord.hpp"
 
 class Abaddon;
@@ -20,8 +21,8 @@ protected:
     void ScrollToBottom();
     void SetMessagesInternal();
     void AddNewMessageInternal();
-    Gtk::ListBoxRow *CreateChatEntryComponentText(const MessageData *data);
-    Gtk::ListBoxRow *CreateChatEntryComponent(const MessageData *data);
+    ChatMessageItem *CreateChatEntryComponentText(const MessageData *data);
+    ChatMessageItem *CreateChatEntryComponent(const MessageData *data);
 
     bool on_key_press_event(GdkEventKey *e);
 
