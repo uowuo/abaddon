@@ -116,6 +116,12 @@ void ChatWindow::AddNewMessage(Snowflake id) {
     m_new_message_dispatch.emit();
 }
 
+void ChatWindow::ClearMessages() {
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_message_set_queue.push(std::unordered_set<const MessageData *>());
+    m_message_set_dispatch.emit();
+}
+
 void ChatWindow::ScrollToBottom() {
     auto x = m_scroll->get_vadjustment();
     x->set_value(x->get_upper());
