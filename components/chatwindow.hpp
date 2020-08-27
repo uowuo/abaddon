@@ -22,8 +22,11 @@ protected:
     void ScrollToBottom();
     void SetMessagesInternal();
     void AddNewMessageInternal();
+    ChatDisplayType GetMessageDisplayType(const MessageData *data);
     ChatMessageItem *CreateChatEntryComponentText(const MessageData *data);
     ChatMessageItem *CreateChatEntryComponent(const MessageData *data);
+    void ProcessMessage(const MessageData *data);
+    int m_num_rows = 0; // youd think thered be a Gtk::ListBox::get_row_count or something but nope
 
     bool on_key_press_event(GdkEventKey *e);
 

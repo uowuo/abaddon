@@ -1,48 +1,59 @@
 #include "chatmessage.hpp"
 
 ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
-    auto *main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    auto *sub_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
-    auto *meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    auto *author = Gtk::manage(new Gtk::Label);
-    auto *timestamp = Gtk::manage(new Gtk::Label);
-    auto *text = Gtk::manage(new Gtk::TextView);
+    m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_sub_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_author = Gtk::manage(new Gtk::Label);
+    m_timestamp = Gtk::manage(new Gtk::Label);
+    m_text = Gtk::manage(new Gtk::TextView);
 
-    text->set_can_focus(false);
-    text->set_editable(false);
-    text->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
-    text->set_halign(Gtk::ALIGN_FILL);
-    text->set_hexpand(true);
-    text->get_buffer()->set_text(data->Content);
-    text->show();
+    m_text->set_can_focus(false);
+    m_text->set_editable(false);
+    m_text->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
+    m_text->set_halign(Gtk::ALIGN_FILL);
+    m_text->set_hexpand(true);
+    m_text->get_buffer()->set_text(data->Content);
+    m_text->show();
 
-    author->set_markup("<span weight=\"bold\">" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
-    author->set_single_line_mode(true);
-    author->set_line_wrap(false);
-    author->set_ellipsize(Pango::ELLIPSIZE_END);
-    author->set_xalign(0.f);
-    author->show();
+    m_author->set_markup("<span weight=\"bold\">" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
+    m_author->set_single_line_mode(true);
+    m_author->set_line_wrap(false);
+    m_author->set_ellipsize(Pango::ELLIPSIZE_END);
+    m_author->set_xalign(0.f);
+    m_author->set_can_focus(false);
+    m_author->show();
 
-    timestamp->set_text(data->Timestamp);
-    timestamp->set_opacity(0.5);
-    timestamp->set_single_line_mode(true);
-    timestamp->set_margin_start(12);
-    timestamp->show();
+    m_timestamp->set_text(data->Timestamp);
+    m_timestamp->set_opacity(0.5);
+    m_timestamp->set_single_line_mode(true);
+    m_timestamp->set_margin_start(12);
+    m_timestamp->set_can_focus(false);
+    m_timestamp->show();
 
-    main_box->set_hexpand(true);
-    main_box->set_vexpand(true);
-    main_box->show();
+    m_main_box->set_hexpand(true);
+    m_main_box->set_vexpand(true);
+    m_main_box->set_can_focus(true);
+    m_main_box->show();
 
-    meta_box->show();
-    sub_box->show();
+    m_meta_box->set_can_focus(false);
+    m_meta_box->show();
 
-    meta_box->add(*author);
-    meta_box->add(*timestamp);
-    sub_box->add(*meta_box);
-    sub_box->add(*text);
-    main_box->add(*sub_box);
-    add(*main_box);
+    m_sub_box->set_can_focus(false);
+    m_sub_box->show();
+
+    m_meta_box->add(*m_author);
+    m_meta_box->add(*m_timestamp);
+    m_sub_box->add(*m_meta_box);
+    m_sub_box->add(*m_text);
+    m_main_box->add(*m_sub_box);
+    add(*m_main_box);
     set_margin_bottom(8);
 
     show();
+}
+
+void ChatMessageTextItem::AppendNewContent(std::string content) {
+    auto buf = m_text->get_buffer();
+    buf->set_text(buf->get_text() + "\n" + content);
 }
