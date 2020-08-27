@@ -71,19 +71,58 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
+ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
+    if (data->Type == MessageType::DEFAULT && data->Content.size() > 0)
+        return ChatDisplayType::Text;
+
+    return ChatDisplayType::Unknown;
+}
+
 ChatMessageItem *ChatWindow::CreateChatEntryComponentText(const MessageData *data) {
     return Gtk::manage(new ChatMessageTextItem(data));
 }
 
 ChatMessageItem *ChatWindow::CreateChatEntryComponent(const MessageData *data) {
     ChatMessageItem *item = nullptr;
-    if (data->Type == MessageType::DEFAULT && data->Content.size() > 0)
-        item = CreateChatEntryComponentText(data);
+    switch (GetMessageDisplayType(data)) {
+        case ChatDisplayType::Text:
+            item = CreateChatEntryComponentText(data);
+            break;
+    }
 
     if (item != nullptr)
         item->ID = data->ID;
 
     return item;
+}
+
+void ChatWindow::ProcessMessage(const MessageData *data) {
+    auto create_new_row = [&]() {
+        auto *item = CreateChatEntryComponent(data);
+        if (item != nullptr) {
+            m_listbox->add(*item);
+            m_num_rows++;
+        }
+    };
+
+    // if the last row's message's author is the same as the new one's, then append the new message content to the last row
+    if (m_num_rows > 0) {
+        auto *item = dynamic_cast<ChatMessageItem *>(m_listbox->get_row_at_index(m_num_rows - 1));
+        assert(item != nullptr);
+        auto *previous_data = m_abaddon->GetDiscordClient().GetMessage(item->ID);
+
+        auto new_type = GetMessageDisplayType(data);
+        auto old_type = GetMessageDisplayType(previous_data);
+
+        if ((data->Author.ID == previous_data->Author.ID) && (new_type == old_type && new_type == ChatDisplayType::Text)) {
+            auto *text_item = dynamic_cast<ChatMessageTextItem *>(item);
+            text_item->AppendNewContent(data->Content);
+        } else {
+            create_new_row();
+        }
+    } else {
+        create_new_row();
+    }
 }
 
 bool ChatWindow::on_key_press_event(GdkEventKey *e) {
@@ -136,9 +175,7 @@ void ChatWindow::AddNewMessageInternal() {
     }
 
     auto data = m_abaddon->GetDiscordClient().GetMessage(id);
-    auto *row = CreateChatEntryComponent(data);
-    if (row != nullptr)
-        m_listbox->add(*row);
+    ProcessMessage(data);
 }
 
 void ChatWindow::SetMessagesInternal() {
@@ -149,6 +186,8 @@ void ChatWindow::SetMessagesInternal() {
         delete *it;
         it++;
     }
+
+    m_num_rows = 0;
 
     std::unordered_set<const MessageData *> *msgs;
     {
@@ -162,9 +201,7 @@ void ChatWindow::SetMessagesInternal() {
         sorted_messages[msg->ID] = msg;
 
     for (const auto &[id, msg] : sorted_messages) {
-        auto *row = CreateChatEntryComponent(msg);
-        if (row != nullptr)
-            m_listbox->add(*row);
+        ProcessMessage(msg);
     }
 
     {
