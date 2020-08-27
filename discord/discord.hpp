@@ -268,6 +268,81 @@ enum class MessageFlags {
     URGENT = 1 << 4,
 };
 
+struct EmbedFooterData {
+    std::string Text;         //
+    std::string IconURL;      // opt
+    std::string ProxyIconURL; // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedFooterData &m);
+};
+
+struct EmbedImageData {
+    std::string URL;      // opt
+    std::string ProxyURL; // opt
+    int Height = 0;       // opt
+    int Width = 0;        // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedImageData &m);
+};
+
+struct EmbedThumbnailData {
+    std::string URL;      // opt
+    std::string ProxyURL; // opt
+    int Height = 0;       // opt
+    int Width = 0;        // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedThumbnailData &m);
+};
+
+struct EmbedVideoData {
+    std::string URL; // opt
+    int Height = 0;  // opt
+    int Width = 0;   // opt
+    friend void from_json(const nlohmann::json &j, EmbedVideoData &m);
+};
+
+struct EmbedProviderData {
+    std::string Name; // opt
+    std::string URL;  // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedProviderData &m);
+};
+
+struct EmbedAuthorData {
+    std::string Name;         // opt
+    std::string URL;          // opt
+    std::string IconURL;      // opt
+    std::string ProxyIconURL; // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedAuthorData &m);
+};
+
+struct EmbedFieldData {
+    std::string Name;    //
+    std::string Value;   //
+    bool Inline = false; // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedFieldData &m);
+};
+
+struct EmbedData {
+    std::string Title;                  // opt
+    std::string Type;                   // opt
+    std::string Description;            // opt
+    std::string URL;                    // opt
+    std::string Timestamp;              // opt
+    int Color = 0;                      // opt
+    EmbedFooterData Footer;             // opt
+    EmbedImageData Image;               // opt
+    EmbedThumbnailData Thumbnail;       // opt
+    EmbedVideoData Video;               // opt
+    EmbedProviderData Provider;         // opt
+    EmbedAuthorData Author;             // opt
+    std::vector<EmbedFieldData> Fields; // opt
+
+    friend void from_json(const nlohmann::json &j, EmbedData &m);
+};
+
 struct MessageData {
     Snowflake ID;        //
     Snowflake ChannelID; //
@@ -283,7 +358,7 @@ struct MessageData {
     // std::vector<RoleData> MentionRoles; //
     // std::vector<ChannelMentionData> MentionChannels; // opt
     // std::vector<AttachmentData> Attachments; //
-    // std::vector<EmbedData> Embeds; //
+    std::vector<EmbedData> Embeds; //
     // std::vector<ReactionData> Reactions; // opt
     std::string Nonce;   // opt
     bool IsPinned;       //

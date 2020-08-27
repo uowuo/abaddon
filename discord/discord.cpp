@@ -494,6 +494,50 @@ void from_json(const nlohmann::json &j, UserSettingsData &m) {
     JS_D("afk_timeout", m.AFKTimeout);
 }
 
+void from_json(const nlohmann::json &j, EmbedFooterData &m) {
+    JS_D("text", m.Text);
+    JS_O("icon_url", m.IconURL);
+    JS_O("proxy_icon_url", m.ProxyIconURL);
+}
+
+void from_json(const nlohmann::json &j, EmbedImageData &m) {
+    JS_O("url", m.URL);
+    JS_O("proxy_url", m.ProxyURL);
+    JS_O("height", m.Height);
+    JS_O("width", m.Width);
+}
+
+void from_json(const nlohmann::json &j, EmbedThumbnailData &m) {
+    JS_O("url", m.URL);
+    JS_O("proxy_url", m.ProxyURL);
+    JS_O("height", m.Height);
+    JS_O("width", m.Width);
+}
+
+void from_json(const nlohmann::json &j, EmbedVideoData &m) {
+    JS_O("url", m.URL);
+    JS_O("height", m.Height);
+    JS_O("width", m.Width);
+}
+
+void from_json(const nlohmann::json &j, EmbedProviderData &m) {
+    JS_O("name", m.Name);
+    JS_O("url", m.URL);
+}
+
+void from_json(const nlohmann::json &j, EmbedAuthorData &m) {
+    JS_O("name", m.Name);
+    JS_O("url", m.URL);
+    JS_O("icon_url", m.IconURL);
+    JS_O("proxy_icon_url", m.ProxyIconURL);
+}
+
+void from_json(const nlohmann::json &j, EmbedFieldData &m) {
+    JS_D("name", m.Name);
+    JS_D("value", m.Value);
+    JS_O("inline", m.Inline);
+}
+
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
     j["$os"] = m.OS;
     j["$browser"] = m.Browser;
