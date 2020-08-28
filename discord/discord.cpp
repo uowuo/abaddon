@@ -129,6 +129,18 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
     });
 }
 
+void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<MessageData> &)> cb) {
+    std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
+    m_http.MakeGET(path, [this, channel_id, cb](cpr::Response r) {
+        std::vector<MessageData> msgs;
+        nlohmann::json::parse(r.text).get_to(msgs);
+        for (const auto &msg : msgs)
+            StoreMessage(msg.ID, msg);
+
+        cb(msgs);
+    });
+}
+
 const MessageData *DiscordClient::GetMessage(Snowflake id) const {
     return &m_messages.at(id);
 }

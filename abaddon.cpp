@@ -121,7 +121,7 @@ void Abaddon::ActionMoveGuildUp(Snowflake id) {
     std::swap(*left, *target_iter);
 
     std::vector<Snowflake> new_sort;
-    for (const auto& x : order)
+    for (const auto &x : order)
         new_sort.push_back(x.first);
 
     m_discord.UpdateSettingsGuildPositions(new_sort);
@@ -156,12 +156,37 @@ void Abaddon::ActionListChannelItemClick(Snowflake id) {
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<MessageData> &msgs) {
+            if (msgs.size() > 0) {
+                m_oldest_listed_message[id] = msgs.back().ID;
+                m_main_window->UpdateChatWindowContents();
+            }
+
             m_channels_requested.insert(id);
-            m_main_window->UpdateChatWindowContents();
         });
     } else {
         m_main_window->UpdateChatWindowContents();
     }
+}
+
+void Abaddon::ActionChatLoadHistory(Snowflake id) {
+    if (m_channels_history_loaded.find(id) != m_channels_history_loaded.end())
+        return;
+
+    if (m_channels_history_loading.find(id) != m_channels_history_loading.end())
+        return;
+
+    m_channels_history_loading.insert(id);
+
+    m_discord.FetchMessagesInChannelBefore(id, m_oldest_listed_message[id], [this, id](const std::vector<MessageData> &msgs) {
+        m_channels_history_loading.erase(id);
+
+        if (msgs.size() == 0) {
+            m_channels_history_loaded.insert(id);
+        } else {
+            m_oldest_listed_message[id] = msgs.back().ID;
+            m_main_window->UpdateChatPrependHistory(msgs);
+        }
+    });
 }
 
 void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel) {

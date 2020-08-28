@@ -476,6 +476,7 @@ public:
 
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
+    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<MessageData> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
 
     void SendChatMessage(std::string content, Snowflake channel);

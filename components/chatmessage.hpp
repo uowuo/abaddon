@@ -17,6 +17,7 @@ class ChatMessageTextItem : public ChatMessageItem {
 public:
     ChatMessageTextItem(const MessageData *data);
     void AppendNewContent(std::string content);
+    void PrependNewContent(std::string content);
 
 protected:
     Gtk::Box *m_main_box;
