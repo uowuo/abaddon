@@ -255,7 +255,10 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_ready_received = true;
     ReadyEventData data = msg.Data;
     for (const auto &g : data.Guilds) {
-        StoreGuild(g.ID, g);
+        if (g.IsUnavailable)
+            printf("guild (%lld) unavailable\n", g.ID);
+        else
+            StoreGuild(g.ID, g);
     }
     m_abaddon->DiscordNotifyReady();
     m_user_settings = data.UserSettings;
@@ -368,6 +371,11 @@ void from_json(const nlohmann::json &j, UserData &m) {
 
 void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("id", m.ID);
+    if (j.contains("unavailable")) {
+        m.IsUnavailable = true;
+        return;
+    }
+
     JS_D("name", m.Name);
     JS_N("icon", m.Icon);
     JS_N("splash", m.Splash);
