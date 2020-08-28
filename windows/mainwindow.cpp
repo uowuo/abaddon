@@ -110,6 +110,10 @@ void MainWindow::UpdateChatNewMessage(Snowflake id) {
         m_chat.AddNewMessage(id);
 }
 
+void MainWindow::UpdateChatPrependHistory(const std::vector<MessageData> &msgs) {
+    m_chat.AddNewHistory(msgs);
+}
+
 void MainWindow::SetAbaddon(Abaddon *ptr) {
     m_abaddon = ptr;
     m_channel_list.SetAbaddon(ptr);

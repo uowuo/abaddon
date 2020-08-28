@@ -26,6 +26,7 @@ public:
     void ActionCopyGuildID(Snowflake id);
     void ActionListChannelItemClick(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel);
+    void ActionChatLoadHistory(Snowflake id);
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -38,7 +39,11 @@ public:
 private:
     DiscordClient m_discord;
     std::string m_discord_token;
+    // todo make these map snowflake to attribs
     std::unordered_set<Snowflake> m_channels_requested;
+    std::unordered_set<Snowflake> m_channels_history_loaded;
+    std::unordered_map<Snowflake, Snowflake> m_oldest_listed_message;
+    std::unordered_set<Snowflake> m_channels_history_loading;
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;

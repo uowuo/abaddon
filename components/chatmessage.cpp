@@ -57,3 +57,8 @@ void ChatMessageTextItem::AppendNewContent(std::string content) {
     auto buf = m_text->get_buffer();
     buf->set_text(buf->get_text() + "\n" + content);
 }
+
+void ChatMessageTextItem::PrependNewContent(std::string content) {
+    auto buf = m_text->get_buffer();
+    buf->set_text(content + "\n" + buf->get_text());
+}
