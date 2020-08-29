@@ -145,6 +145,10 @@ const MessageData *DiscordClient::GetMessage(Snowflake id) const {
     return &m_messages.at(id);
 }
 
+const ChannelData *DiscordClient::GetChannel(Snowflake id) const {
+    return &m_channels.at(id);
+}
+
 void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
     // @([^@#]{1,32})#(\\d{4})
     CreateMessageObject obj;
@@ -260,9 +264,17 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     for (const auto &g : data.Guilds) {
         if (g.IsUnavailable)
             printf("guild (%lld) unavailable\n", g.ID);
-        else
+        else {
             StoreGuild(g.ID, g);
+            for (const auto &c : g.Channels)
+                StoreChannel(c.ID, c);
+        }
     }
+
+    for (const auto &dm : data.PrivateChannels) {
+        StoreChannel(dm.ID, dm);
+    }
+
     m_abaddon->DiscordNotifyReady();
     m_user_settings = data.UserSettings;
 }
@@ -289,6 +301,21 @@ void DiscordClient::StoreMessage(Snowflake id, const MessageData &m) {
     if (it == m_chan_to_message_map.end())
         m_chan_to_message_map[m.ChannelID] = decltype(m_chan_to_message_map)::mapped_type();
     m_chan_to_message_map[m.ChannelID].insert(&m_messages[id]);
+}
+
+void DiscordClient::StoreChannel(Snowflake id, const ChannelData &c) {
+    m_channels[id] = c;
+}
+
+std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
+    auto ret = std::set<Snowflake>();
+
+    for (const auto &[id, chan] : m_channels) {
+        if (chan.Type == ChannelType::DM || chan.Type == ChannelType::GROUP_DM)
+            ret.insert(id);
+    }
+
+    return ret;
 }
 
 void DiscordClient::HeartbeatThread() {

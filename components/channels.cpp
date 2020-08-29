@@ -86,6 +86,54 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
     }
 }
 
+void ChannelList::AddPrivateChannels() {
+    auto dms = m_abaddon->GetDiscordClient().GetPrivateChannels();
+
+    auto *parent_row = Gtk::manage(new Gtk::ListBoxRow);
+    auto *parent_ev = Gtk::manage(new Gtk::EventBox);
+    auto *parent_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    auto *parent_label = Gtk::manage(new Gtk::Label);
+    parent_label->set_use_markup(true);
+    parent_label->set_markup("<b>Direct Messages</b>");
+    parent_box->set_halign(Gtk::ALIGN_START);
+    parent_box->pack_start(*parent_label);
+    parent_ev->add(*parent_box);
+    parent_row->add(*parent_ev);
+    parent_row->show_all();
+    m_list->add(*parent_row);
+
+    ListItemInfo parent_info;
+    parent_info.IsUserCollapsed = true;
+    parent_info.IsHidden = false;
+    parent_info.Type = ListItemInfo::ListItemType::Guild; // good nuf
+
+    for (const auto &dmid : dms) {
+        auto *data = m_abaddon->GetDiscordClient().GetChannel(dmid);
+
+        auto *dm_row = Gtk::manage(new Gtk::ListBoxRow);
+        auto *dm_ev = Gtk::manage(new Gtk::EventBox);
+        auto *dm_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+        auto *dm_label = Gtk::manage(new Gtk::Label);
+        dm_label->set_text(data->Recipients[0].Username);
+        dm_box->set_halign(Gtk::ALIGN_START);
+        dm_box->pack_start(*dm_label);
+        dm_ev->add(*dm_box);
+        dm_row->add(*dm_ev);
+        dm_row->show_all_children();
+        m_list->add(*dm_row);
+
+        ListItemInfo info;
+        info.ID = dmid;
+        info.IsUserCollapsed = false;
+        info.IsHidden = false;
+        info.Type = ListItemInfo::ListItemType::Channel;
+        m_infos[dm_row] = std::move(info);
+        parent_info.Children.insert(dm_row);
+    }
+
+    m_infos[parent_row] = std::move(parent_info);
+}
+
 void ChannelList::SetListingFromGuildsInternal() {
     DiscordClient::Guilds_t *guilds;
     {
@@ -108,6 +156,8 @@ void ChannelList::SetListingFromGuildsInternal() {
         m_update_queue.pop();
         return;
     }
+
+    AddPrivateChannels();
 
     // map each category to its channels
     std::unordered_map<Snowflake, std::vector<const ChannelData *>> cat_to_channels;
