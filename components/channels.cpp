@@ -114,7 +114,10 @@ void ChannelList::AddPrivateChannels() {
         auto *dm_ev = Gtk::manage(new Gtk::EventBox);
         auto *dm_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         auto *dm_label = Gtk::manage(new Gtk::Label);
-        dm_label->set_text(data->Recipients[0].Username);
+        if (data->Type == ChannelType::DM)
+            dm_label->set_text(data->Recipients[0].Username);
+        else
+            dm_label->set_text(std::to_string(data->Recipients.size()) + " users");
         dm_box->set_halign(Gtk::ALIGN_START);
         dm_box->pack_start(*dm_label);
         dm_ev->add(*dm_box);
