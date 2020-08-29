@@ -11,6 +11,8 @@ class ChatMessageItem : public Gtk::ListBoxRow {
 public:
     Snowflake ID;
     ChatDisplayType MessageType;
+
+    virtual void MarkAsDeleted() = 0;
 };
 
 class ChatMessageTextItem : public ChatMessageItem {
@@ -18,6 +20,7 @@ public:
     ChatMessageTextItem(const MessageData *data);
     void AppendNewContent(std::string content);
     void PrependNewContent(std::string content);
+    virtual void MarkAsDeleted();
 
 protected:
     Gtk::Box *m_main_box;

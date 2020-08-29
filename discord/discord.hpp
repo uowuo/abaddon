@@ -85,6 +85,7 @@ private:
     void HandleGatewayMessage(std::string str);
     void HandleGatewayReady(const GatewayMessage &msg);
     void HandleGatewayMessageCreate(const GatewayMessage &msg);
+    void HandleGatewayMessageDelete(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 

@@ -155,6 +155,12 @@ void from_json(const nlohmann::json &j, MessageData &m) {
     JS_O("flags", m.Flags);
 }
 
+void from_json(const nlohmann::json &j, MessageDeleteData &m) {
+    JS_D("id", m.ID);
+    JS_D("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.User);

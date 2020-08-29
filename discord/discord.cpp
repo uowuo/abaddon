@@ -243,6 +243,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                 case GatewayEvent::MESSAGE_CREATE: {
                     HandleGatewayMessageCreate(m);
                 } break;
+                case GatewayEvent::MESSAGE_DELETE: {
+                    HandleGatewayMessageDelete(m);
+                } break;
             }
         } break;
         default:
@@ -268,6 +271,10 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     MessageData data = msg.Data;
     StoreMessage(data.ID, data);
     m_abaddon->DiscordNotifyMessageCreate(data.ID);
+}
+void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
+    MessageDeleteData data = msg.Data;
+    m_abaddon->DiscordNotifyMessageDelete(data.ID, data.ChannelID);
 }
 
 void DiscordClient::StoreGuild(Snowflake id, const GuildData &g) {
@@ -315,4 +322,5 @@ void DiscordClient::SendIdentify() {
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
     m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
+    m_event_map["MESSAGE_DELETE"] = GatewayEvent::MESSAGE_DELETE;
 }

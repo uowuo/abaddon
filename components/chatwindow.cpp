@@ -6,6 +6,7 @@ ChatWindow::ChatWindow() {
     m_message_set_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::SetMessagesInternal));
     m_new_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewMessageInternal));
     m_new_history_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewHistoryInternal));
+    m_message_delete_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::DeleteMessageInternal));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_listbox = Gtk::manage(new Gtk::ListBox);
@@ -188,6 +189,12 @@ void ChatWindow::AddNewHistory(const std::vector<MessageData> &msgs) {
     m_new_history_dispatch.emit();
 }
 
+void ChatWindow::DeleteMessage(Snowflake id) {
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_message_delete_queue.push(id);
+    m_message_delete_dispatch.emit();
+}
+
 void ChatWindow::ClearMessages() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_message_set_queue.push(std::unordered_set<const MessageData *>());
@@ -228,6 +235,31 @@ void ChatWindow::AddNewHistoryInternal() {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
         m_new_history_queue.pop();
     }
+}
+
+void ChatWindow::DeleteMessageInternal() {
+    Snowflake id;
+    {
+        std::scoped_lock<std::mutex> guard(m_update_mutex);
+        id = m_message_delete_queue.front();
+        m_message_delete_queue.pop();
+    }
+
+    ChatMessageItem *row = nullptr;
+    for (const auto &child : m_listbox->get_children()) {
+        ChatMessageItem *tmp = dynamic_cast<ChatMessageItem *>(child);
+        if (tmp == nullptr) continue;
+        if (tmp->ID == id) {
+            row = tmp;
+            break;
+        }
+    }
+
+    if (row == nullptr) return;
+
+    // todo actually delete it when it becomes setting
+
+    row->MarkAsDeleted();
 }
 
 void ChatWindow::SetMessagesInternal() {
