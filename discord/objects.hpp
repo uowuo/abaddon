@@ -62,6 +62,7 @@ enum class GatewayOp : int {
 enum class GatewayEvent : int {
     READY,
     MESSAGE_CREATE,
+    MESSAGE_DELETE,
 };
 
 struct GatewayMessage {

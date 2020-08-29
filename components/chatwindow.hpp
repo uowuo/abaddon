@@ -17,6 +17,7 @@ public:
     void SetMessages(std::unordered_set<const MessageData *> msgs);
     void AddNewMessage(Snowflake id);
     void AddNewHistory(const std::vector<MessageData> &msgs);
+    void DeleteMessage(Snowflake id);
     void ClearMessages();
 
 protected:
@@ -24,6 +25,7 @@ protected:
     void SetMessagesInternal();
     void AddNewMessageInternal();
     void AddNewHistoryInternal();
+    void DeleteMessageInternal();
     ChatDisplayType GetMessageDisplayType(const MessageData *data);
     ChatMessageItem *CreateChatEntryComponentText(const MessageData *data);
     ChatMessageItem *CreateChatEntryComponent(const MessageData *data);
@@ -41,6 +43,8 @@ protected:
     std::queue<Snowflake> m_new_message_queue;
     Glib::Dispatcher m_new_history_dispatch;
     std::queue<std::vector<Snowflake>> m_new_history_queue;
+    Glib::Dispatcher m_message_delete_dispatch;
+    std::queue<Snowflake> m_message_delete_queue;
     std::mutex m_update_mutex;
 
     Snowflake m_active_channel;

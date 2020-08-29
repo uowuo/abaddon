@@ -62,3 +62,10 @@ void ChatMessageTextItem::PrependNewContent(std::string content) {
     auto buf = m_text->get_buffer();
     buf->set_text(content + "\n" + buf->get_text());
 }
+
+void ChatMessageTextItem::MarkAsDeleted() {
+    auto buf = m_text->get_buffer();
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_bounds(start, end);
+    buf->insert_markup(end, "<span color='#ff0000'> [deleted]</span>");
+}
