@@ -57,6 +57,7 @@ public:
     void Stop();
     bool IsStarted() const;
 
+    using Channels_t = std::unordered_map<Snowflake, ChannelData>;
     using Guilds_t = std::unordered_map<Snowflake, GuildData>;
     using Messages_t = std::unordered_map<Snowflake, MessageData>;
 
@@ -64,11 +65,13 @@ public:
     const UserSettingsData &GetUserSettings() const;
     std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
     std::unordered_set<const MessageData *> GetMessagesForChannel(Snowflake id) const;
+    std::set<Snowflake> GetPrivateChannels() const;
 
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<MessageData> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
+    const ChannelData *GetChannel(Snowflake id) const;
 
     void SendChatMessage(std::string content, Snowflake channel);
 
@@ -102,6 +105,9 @@ private:
     void StoreMessage(Snowflake id, const MessageData &m);
     Messages_t m_messages;
     std::unordered_map<Snowflake, std::unordered_set<const MessageData *>> m_chan_to_message_map;
+
+    void StoreChannel(Snowflake id, const ChannelData &c);
+    Channels_t m_channels;
 
     UserSettingsData m_user_settings;
 

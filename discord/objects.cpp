@@ -169,6 +169,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("analytics_token", m.AnalyticsToken);
     JS_D("friend_suggestion_count", m.FriendSuggestionCount);
     JS_D("user_settings", m.UserSettings);
+    JS_D("private_channels", m.PrivateChannels);
 }
 
 void from_json(const nlohmann::json &j, UserSettingsData &m) {

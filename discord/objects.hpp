@@ -361,12 +361,20 @@ struct MessageData {
     friend void from_json(const nlohmann::json &j, MessageData &m);
 };
 
+struct MessageDeleteData {
+    Snowflake ID;        //
+    Snowflake ChannelID; //
+    Snowflake GuildID;   // opt
+
+    friend void from_json(const nlohmann::json &j, MessageDeleteData &m);
+};
+
 struct ReadyEventData {
-    int GatewayVersion;            //
-    UserData User;                 //
-    std::vector<GuildData> Guilds; //
-    std::string SessionID;         //
-    // std::vector<ChannelData?/PrivateChannelData?> PrivateChannels;
+    int GatewayVersion;                       //
+    UserData User;                            //
+    std::vector<GuildData> Guilds;            //
+    std::string SessionID;                    //
+    std::vector<ChannelData> PrivateChannels; //
 
     // undocumented
     std::string AnalyticsToken;    // opt

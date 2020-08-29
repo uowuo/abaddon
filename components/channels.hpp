@@ -51,6 +51,7 @@ protected:
     Glib::Dispatcher m_update_dispatcher;
     mutable std::mutex m_update_mutex;
     std::queue<DiscordClient::Guilds_t> m_update_queue;
+    void AddPrivateChannels(); // retard moment
     void SetListingFromGuildsInternal();
     void AttachMenuHandler(Gtk::ListBoxRow* row);
 
