@@ -101,7 +101,7 @@ struct UserData {
     bool IsVerified = false;   // opt
     std::string Email;         // opt, null
     int Flags = 0;             // opt
-    int PremiumType = 0;       // opt
+    int PremiumType = 0;       // opt, null (docs wrong)
     int PublicFlags = 0;       // opt
 
     // undocumented (opt)
@@ -119,7 +119,7 @@ struct ChannelData {
     Snowflake GuildID; // opt
     int Position = -1; // opt
     // std::vector<PermissionOverwriteData> PermissionOverwrites; // opt
-    std::string Name;                 // opt
+    std::string Name;                 // opt, null (null for dm's)
     std::string Topic;                // opt, null
     bool IsNSFW = false;              // opt
     Snowflake LastMessageID;          // opt, null
