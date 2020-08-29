@@ -65,11 +65,13 @@ std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds(
 
         // unpositioned_guilds now has unpositioned guilds in ascending order
         for (auto it = unpositioned_guilds.rbegin(); it != unpositioned_guilds.rend(); it++)
-            sorted_guilds.push_back(std::make_pair(*it, m_guilds.at(*it)));
+            if (m_guilds.find(*it) != m_guilds.end())
+                sorted_guilds.push_back(std::make_pair(*it, m_guilds.at(*it)));
 
         // now the rest go at the end in the order they are sorted
         for (const auto &id : m_user_settings.GuildPositions) {
-            sorted_guilds.push_back(std::make_pair(id, m_guilds.at(id)));
+            if (m_guilds.find(id) != m_guilds.end())
+                sorted_guilds.push_back(std::make_pair(id, m_guilds.at(id)));
         }
     } else { // default sort is alphabetic
         for (auto &it : m_guilds)

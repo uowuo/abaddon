@@ -44,7 +44,7 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_O("verified", m.IsVerified);
     JS_O("email", m.Email);
     JS_O("flags", m.Flags);
-    JS_O("premium_type", m.PremiumType);
+    JS_ON("premium_type", m.PremiumType);
     JS_O("public_flags", m.PublicFlags);
     JS_O("desktop", m.IsDesktop);
     JS_O("mobile", m.IsMobile);
@@ -113,7 +113,7 @@ void from_json(const nlohmann::json &j, ChannelData &m) {
     JS_O("guild_id", m.GuildID);
     JS_O("position", m.Position);
     // JS_O("permission_overwrites", m.PermissionOverwrites);
-    JS_O("name", m.Name);
+    JS_ON("name", m.Name);
     JS_ON("topic", m.Topic);
     JS_O("nsfw", m.IsNSFW);
     JS_ON("last_message_id", m.LastMessageID);

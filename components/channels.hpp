@@ -53,7 +53,7 @@ protected:
     std::queue<DiscordClient::Guilds_t> m_update_queue;
     void AddPrivateChannels(); // retard moment
     void SetListingFromGuildsInternal();
-    void AttachMenuHandler(Gtk::ListBoxRow* row);
+    void AttachMenuHandler(Gtk::ListBoxRow *row);
 
     Abaddon *m_abaddon = nullptr;
 };

@@ -160,6 +160,7 @@ void ChannelList::SetListingFromGuildsInternal() {
     AddPrivateChannels();
 
     // map each category to its channels
+
     std::unordered_map<Snowflake, std::vector<const ChannelData *>> cat_to_channels;
     std::unordered_map<Snowflake, std::vector<const ChannelData *>> orphan_channels;
     for (const auto &[gid, guild] : *guilds) {
