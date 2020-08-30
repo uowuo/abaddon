@@ -88,60 +88,44 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
     return ChatDisplayType::Unknown;
 }
 
-ChatMessageItem *ChatWindow::CreateChatEntryComponentText(const MessageData *data) {
-    return Gtk::manage(new ChatMessageTextItem(data));
-}
-
-ChatMessageItem *ChatWindow::CreateChatEntryComponent(const MessageData *data) {
-    ChatMessageItem *item = nullptr;
-    switch (GetMessageDisplayType(data)) {
-        case ChatDisplayType::Text:
-            item = CreateChatEntryComponentText(data);
-            break;
+void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
+    ChatMessageContainer *last_row = nullptr;
+    bool should_attach = false;
+    if (m_num_rows > 0) {
+        if (prepend)
+            last_row = dynamic_cast<ChatMessageContainer *>(m_listbox->get_row_at_index(0));
+        else
+            last_row = dynamic_cast<ChatMessageContainer *>(m_listbox->get_row_at_index(m_num_rows - 1));
+        if (last_row != nullptr) { // this should always be true tbh
+            if (last_row->UserID == data->Author.ID)
+                should_attach = true;
+        }
     }
 
-    if (item != nullptr)
-        item->ID = data->ID;
+    auto type = GetMessageDisplayType(data);
 
-    return item;
-}
-
-void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
-    auto create_new_row = [&]() {
-        auto *item = CreateChatEntryComponent(data);
-        if (item != nullptr) {
-            if (prepend)
-                m_listbox->prepend(*item);
-            else
-                m_listbox->add(*item);
-            m_num_rows++;
-        }
-    };
-
-    // if the last row's message's author is the same as the new one's, then append the new message content to the last row
-    if (m_num_rows > 0) {
-        ChatMessageItem *item;
-        if (prepend)
-            item = dynamic_cast<ChatMessageItem *>(m_listbox->get_row_at_index(0));
-        else
-            item = dynamic_cast<ChatMessageItem *>(m_listbox->get_row_at_index(m_num_rows - 1));
-        assert(item != nullptr);
-        auto *previous_data = m_abaddon->GetDiscordClient().GetMessage(item->ID);
-
-        auto new_type = GetMessageDisplayType(data);
-        auto old_type = GetMessageDisplayType(previous_data);
-
-        if ((data->Author.ID == previous_data->Author.ID) && (new_type == old_type && new_type == ChatDisplayType::Text)) {
-            auto *text_item = dynamic_cast<ChatMessageTextItem *>(item);
-            if (prepend)
-                text_item->PrependNewContent(data->Content);
-            else
-                text_item->AppendNewContent(data->Content);
-        } else {
-            create_new_row();
-        }
+    ChatMessageContainer *container;
+    if (should_attach) {
+        container = last_row;
     } else {
-        create_new_row();
+        container = Gtk::manage(new ChatMessageContainer(data)); // only accesses timestamp and user
+        m_num_rows++;
+    }
+
+    // actual content
+    if (type == ChatDisplayType::Text) {
+        auto *text = Gtk::manage(new ChatMessageTextItem(data));
+        container->AddNewContent(text, prepend);
+        m_id_to_widget[data->ID] = text;
+    }
+
+    container->show_all();
+
+    if (!should_attach) {
+        if (prepend)
+            m_listbox->prepend(*container);
+        else
+            m_listbox->add(*container);
     }
 }
 
@@ -245,21 +229,13 @@ void ChatWindow::DeleteMessageInternal() {
         m_message_delete_queue.pop();
     }
 
-    ChatMessageItem *row = nullptr;
-    for (const auto &child : m_listbox->get_children()) {
-        ChatMessageItem *tmp = dynamic_cast<ChatMessageItem *>(child);
-        if (tmp == nullptr) continue;
-        if (tmp->ID == id) {
-            row = tmp;
-            break;
-        }
-    }
-
-    if (row == nullptr) return;
+    if (m_id_to_widget.find(id) == m_id_to_widget.end())
+        return;
 
     // todo actually delete it when it becomes setting
 
-    row->MarkAsDeleted();
+    auto *item = m_id_to_widget.at(id);
+    item->MarkAsDeleted();
 }
 
 void ChatWindow::SetMessagesInternal() {
@@ -272,6 +248,7 @@ void ChatWindow::SetMessagesInternal() {
     }
 
     m_num_rows = 0;
+    m_id_to_widget.clear();
 
     std::unordered_set<const MessageData *> *msgs;
     {

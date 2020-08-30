@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include <queue>
 #include <mutex>
+#include <unordered_map>
 #include "chatmessage.hpp"
 #include "../discord/discord.hpp"
 
@@ -27,10 +28,9 @@ protected:
     void AddNewHistoryInternal();
     void DeleteMessageInternal();
     ChatDisplayType GetMessageDisplayType(const MessageData *data);
-    ChatMessageItem *CreateChatEntryComponentText(const MessageData *data);
-    ChatMessageItem *CreateChatEntryComponent(const MessageData *data);
     void ProcessMessage(const MessageData *data, bool prepend = false);
     int m_num_rows = 0; // youd think thered be a Gtk::ListBox::get_row_count or something but nope
+    std::unordered_map<Snowflake, ChatMessageItem *> m_id_to_widget;
 
     bool m_scroll_to_bottom = true;
 
