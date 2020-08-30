@@ -51,6 +51,12 @@ const UserSettingsData &DiscordClient::GetUserSettings() const {
     return m_user_settings;
 }
 
+const UserData &DiscordClient::GetUserData() const {
+    std::scoped_lock<std::mutex> guard(m_mutex);
+    assert(m_ready_received);
+    return m_user_data;
+}
+
 std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds() const {
     std::vector<std::pair<Snowflake, GuildData>> sorted_guilds;
 
@@ -283,6 +289,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     }
 
     m_abaddon->DiscordNotifyReady();
+    m_user_data = data.User;
     m_user_settings = data.UserSettings;
 }
 

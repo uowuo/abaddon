@@ -62,6 +62,7 @@ public:
     using Messages_t = std::unordered_map<Snowflake, MessageData>;
 
     const Guilds_t &GetGuilds() const;
+    const UserData &GetUserData() const;
     const UserSettingsData &GetUserSettings() const;
     std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
     std::unordered_set<const MessageData *> GetMessagesForChannel(Snowflake id) const;
@@ -110,6 +111,7 @@ private:
     void StoreChannel(Snowflake id, const ChannelData &c);
     Channels_t m_channels;
 
+    UserData m_user_data;
     UserSettingsData m_user_settings;
 
     Websocket m_websocket;
