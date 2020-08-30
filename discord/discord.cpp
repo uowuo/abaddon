@@ -159,6 +159,11 @@ void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
     m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", j.dump(), [](auto) {});
 }
 
+void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
+    std::string path = "/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id);
+    m_http.MakeDELETE(path, [](auto) {});
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     m_token = token;
     m_http.SetAuth(token);
