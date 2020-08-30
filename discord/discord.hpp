@@ -8,9 +8,7 @@
 #include <set>
 #include <unordered_set>
 #include <mutex>
-#ifdef ABADDON_USE_COMPRESSED_SOCKET
-    #include <zlib.h>
-#endif
+#include <zlib.h>
 
 // bruh
 #ifdef GetMessage
@@ -42,11 +40,7 @@ class DiscordClient {
     friend class Abaddon;
 
 public:
-#ifdef ABADDON_USE_COMPRESSED_SOCKET
     static const constexpr char *DiscordGateway = "wss://gateway.discord.gg/?v=6&encoding=json&compress=zlib-stream";
-#else
-    static const constexpr char *DiscordGateway = "wss://gateway.discord.gg/?v=6&encoding=json";
-#endif
     static const constexpr char *DiscordAPI = "https://discord.com/api";
     static const constexpr char *GatewayIdentity = "Discord";
 
@@ -80,11 +74,10 @@ public:
     void UpdateToken(std::string token);
 
 private:
-#ifdef ABADDON_USE_COMPRESSED_SOCKET
     static const constexpr int InflateChunkSize = 0x10000;
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
-#endif
+    z_stream m_zstream;
     std::string DecompressGatewayMessage(std::string str);
     void HandleGatewayMessageRaw(std::string str);
     void HandleGatewayMessage(std::string str);
