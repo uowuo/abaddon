@@ -115,6 +115,9 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
     // actual content
     if (type == ChatDisplayType::Text) {
         auto *text = Gtk::manage(new ChatMessageTextItem(data));
+        text->ID = data->ID;
+        text->ChannelID = m_active_channel;
+        text->SetAbaddon(m_abaddon);
         container->AddNewContent(text, prepend);
         m_id_to_widget[data->ID] = text;
     }

@@ -7,6 +7,8 @@ enum class ChatDisplayType {
     Text,
 };
 
+class Abaddon;
+
 // contains the username and timestamp, chat items get stuck into its box
 class ChatMessageContainer : public Gtk::ListBoxRow {
 public:
@@ -25,10 +27,27 @@ protected:
 
 class ChatMessageItem {
 public:
-    Snowflake ID;
-    ChatDisplayType MessageType;
+    ChatMessageItem();
+    void SetAbaddon(Abaddon *ptr);
 
+    Snowflake ChannelID;
+    Snowflake ID;
+    ChatDisplayType MessageType = ChatDisplayType::Unknown;
+
+    virtual void ShowMenu(const GdkEvent *event);
+    void AddMenuItem(Gtk::MenuItem *item);
     virtual void MarkAsDeleted() = 0;
+
+protected:
+    void AttachMenuHandler(Gtk::Widget *widget);
+    void on_menu_copy_id();
+    void on_menu_message_delete();
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copy_id;
+    Gtk::MenuItem *m_menu_delete_message;
+
+    Abaddon *m_abaddon = nullptr;
 };
 
 class ChatMessageTextItem
@@ -37,4 +56,9 @@ class ChatMessageTextItem
 public:
     ChatMessageTextItem(const MessageData *data);
     virtual void MarkAsDeleted();
+
+protected:
+    void on_menu_copy_content();
+    Gtk::MenuItem *m_menu_copy_content;
+    Gtk::MenuItem *m_menu_delete_message;
 };

@@ -197,6 +197,10 @@ void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel) {
     m_discord.SendChatMessage(msg, channel);
 }
 
+void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {
+    m_discord.DeleteMessage(channel_id, id);
+}
+
 int main(int argc, char **argv) {
     Gtk::Main::init_gtkmm_internals(); // why???
     Abaddon abaddon;
