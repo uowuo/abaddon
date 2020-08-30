@@ -74,6 +74,7 @@ public:
     const ChannelData *GetChannel(Snowflake id) const;
 
     void SendChatMessage(std::string content, Snowflake channel);
+    void DeleteMessage(Snowflake channel_id, Snowflake id);
 
     void UpdateToken(std::string token);
 
