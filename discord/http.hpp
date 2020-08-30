@@ -19,6 +19,7 @@ public:
     HTTPClient(std::string api_base);
 
     void SetAuth(std::string auth);
+    void MakeDELETE(std::string path, std::function<void(cpr::Response r)> cb);
     void MakeGET(std::string path, std::function<void(cpr::Response r)> cb);
     void MakePATCH(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
     void MakePOST(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
