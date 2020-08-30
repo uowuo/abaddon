@@ -27,6 +27,7 @@ public:
     void ActionListChannelItemClick(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel);
     void ActionChatLoadHistory(Snowflake id);
+    void ActionChatDeleteMessage(Snowflake channel_id, Snowflake id);
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
