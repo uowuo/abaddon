@@ -1,20 +1,13 @@
 #include "chatmessage.hpp"
 
-ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
+ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
+    UserID = data->Author.ID;
+
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_sub_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
-    m_text = Gtk::manage(new Gtk::TextView);
-
-    m_text->set_can_focus(false);
-    m_text->set_editable(false);
-    m_text->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
-    m_text->set_halign(Gtk::ALIGN_FILL);
-    m_text->set_hexpand(true);
-    m_text->get_buffer()->set_text(data->Content);
-    m_text->show();
 
     m_author->set_markup("<span weight=\"bold\">" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
     m_author->set_single_line_mode(true);
@@ -39,32 +32,38 @@ ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
     m_meta_box->set_can_focus(false);
     m_meta_box->show();
 
-    m_sub_box->set_can_focus(false);
-    m_sub_box->show();
+    m_content_box->set_can_focus(false);
+    m_content_box->show();
 
     m_meta_box->add(*m_author);
     m_meta_box->add(*m_timestamp);
-    m_sub_box->add(*m_meta_box);
-    m_sub_box->add(*m_text);
-    m_main_box->add(*m_sub_box);
+    m_content_box->add(*m_meta_box);
+    m_main_box->add(*m_content_box);
     add(*m_main_box);
     set_margin_bottom(8);
 
     show();
 }
 
-void ChatMessageTextItem::AppendNewContent(std::string content) {
-    auto buf = m_text->get_buffer();
-    buf->set_text(buf->get_text() + "\n" + content);
+void ChatMessageContainer::AddNewContent(Gtk::Widget *widget, bool prepend) {
+    if (prepend)
+        m_content_box->pack_end(*widget);
+    else
+        m_content_box->pack_start(*widget);
 }
 
-void ChatMessageTextItem::PrependNewContent(std::string content) {
-    auto buf = m_text->get_buffer();
-    buf->set_text(content + "\n" + buf->get_text());
+ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
+    set_can_focus(false);
+    set_editable(false);
+    set_wrap_mode(Gtk::WRAP_WORD_CHAR);
+    set_halign(Gtk::ALIGN_FILL);
+    set_hexpand(true);
+    get_buffer()->set_text(data->Content);
+    show();
 }
 
 void ChatMessageTextItem::MarkAsDeleted() {
-    auto buf = m_text->get_buffer();
+    auto buf = get_buffer();
     Gtk::TextBuffer::iterator start, end;
     buf->get_bounds(start, end);
     buf->insert_markup(end, "<span color='#ff0000'> [deleted]</span>");
