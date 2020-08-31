@@ -295,6 +295,18 @@ void to_json(nlohmann::json &j, const CreateMessageObject &m) {
     j["content"] = m.Content;
 }
 
+void to_json(nlohmann::json &j, const MessageEditObject &m) {
+    if (m.Content.size() > 0)
+        j["content"] = m.Content;
+
+    // todo EmbedData to_json
+    // if (m.Embeds.size() > 0)
+    //    j["embeds"] = m.Embeds;
+
+    if (m.Flags != -1)
+        j["flags"] = m.Flags;
+}
+
 Snowflake::Snowflake()
     : m_num(Invalid) {}
 

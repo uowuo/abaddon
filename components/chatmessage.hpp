@@ -43,10 +43,12 @@ protected:
     void AttachMenuHandler(Gtk::Widget *widget);
     void on_menu_copy_id();
     void on_menu_message_delete();
+    void on_menu_message_edit();
 
     Gtk::Menu m_menu;
     Gtk::MenuItem *m_menu_copy_id;
     Gtk::MenuItem *m_menu_delete_message;
+    Gtk::MenuItem *m_menu_edit_message;
 
     Abaddon *m_abaddon = nullptr;
 };

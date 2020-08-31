@@ -70,6 +70,7 @@ public:
 
     void SendChatMessage(std::string content, Snowflake channel);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
+    void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
 
     void UpdateToken(std::string token);
 
