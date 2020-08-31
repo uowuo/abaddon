@@ -37,6 +37,7 @@ public:
     void DiscordNotifyChannelListFullRefresh();
     void DiscordNotifyMessageCreate(Snowflake id);
     void DiscordNotifyMessageDelete(Snowflake id, Snowflake channel_id);
+    void DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_id);
 
 private:
     DiscordClient m_discord;

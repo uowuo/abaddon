@@ -7,6 +7,7 @@ ChatWindow::ChatWindow() {
     m_new_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewMessageInternal));
     m_new_history_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewHistoryInternal));
     m_message_delete_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::DeleteMessageInternal));
+    m_message_edit_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::UpdateMessageContentInternal));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_listbox = Gtk::manage(new Gtk::ListBox);
@@ -182,6 +183,12 @@ void ChatWindow::DeleteMessage(Snowflake id) {
     m_message_delete_dispatch.emit();
 }
 
+void ChatWindow::UpdateMessageContent(Snowflake id) {
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_message_edit_queue.push(id);
+    m_message_edit_dispatch.emit();
+}
+
 void ChatWindow::ClearMessages() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_message_set_queue.push(std::unordered_set<const MessageData *>());
@@ -239,6 +246,25 @@ void ChatWindow::DeleteMessageInternal() {
 
     auto *item = m_id_to_widget.at(id);
     item->MarkAsDeleted();
+}
+
+void ChatWindow::UpdateMessageContentInternal() {
+    Snowflake id;
+    {
+        std::scoped_lock<std::mutex> guard(m_update_mutex);
+        id = m_message_edit_queue.front();
+        m_message_edit_queue.pop();
+    }
+
+    if (m_id_to_widget.find(id) == m_id_to_widget.end())
+        return;
+
+    auto *msg = m_abaddon->GetDiscordClient().GetMessage(id);
+    auto *item = dynamic_cast<ChatMessageTextItem *>(m_id_to_widget.at(id));
+    if (item != nullptr) {
+        item->EditContent(msg->Content);
+        item->MarkAsEdited();
+    }
 }
 
 void ChatWindow::SetMessagesInternal() {

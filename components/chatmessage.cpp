@@ -104,6 +104,8 @@ void ChatMessageItem::AddMenuItem(Gtk::MenuItem *item) {
 }
 
 ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
+    m_content = data->Content;
+
     set_can_focus(false);
     set_editable(false);
     set_wrap_mode(Gtk::WRAP_WORD_CHAR);
@@ -118,14 +120,38 @@ ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
     m_menu_copy_content->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageTextItem::on_menu_copy_content));
 }
 
+void ChatMessageTextItem::EditContent(std::string content) {
+    m_content = content;
+    get_buffer()->set_text(content);
+    UpdateAttributes();
+}
+
 void ChatMessageTextItem::on_menu_copy_content() {
-    auto *data = m_abaddon->GetDiscordClient().GetMessage(ID);
-    Gtk::Clipboard::get()->set_text(data->Content);
+    Gtk::Clipboard::get()->set_text(m_content);
 }
 
 void ChatMessageTextItem::MarkAsDeleted() {
+    m_was_deleted = true;
+    UpdateAttributes();
+}
+
+void ChatMessageTextItem::MarkAsEdited() {
+    m_was_edited = true;
+    UpdateAttributes();
+}
+
+void ChatMessageTextItem::UpdateAttributes() {
+    bool deleted = m_was_deleted;
+    bool edited = m_was_edited && !m_was_deleted;
+
     auto buf = get_buffer();
+    buf->set_text(m_content);
     Gtk::TextBuffer::iterator start, end;
     buf->get_bounds(start, end);
-    buf->insert_markup(end, "<span color='#ff0000'> [deleted]</span>");
+
+    if (deleted) {
+        buf->insert_markup(end, "<span color='#ff0000'> [deleted]</span>");
+    } else if (edited) {
+        buf->insert_markup(end, "<span color='#999999'> [edited]</span>");
+    }
 }

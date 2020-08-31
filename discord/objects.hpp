@@ -63,6 +63,7 @@ enum class GatewayEvent : int {
     READY,
     MESSAGE_CREATE,
     MESSAGE_DELETE,
+    MESSAGE_UPDATE,
 };
 
 struct GatewayMessage {
@@ -359,6 +360,7 @@ struct MessageData {
     MessageFlags Flags = MessageFlags::NONE; // opt
 
     friend void from_json(const nlohmann::json &j, MessageData &m);
+    void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE
 };
 
 struct MessageDeleteData {
