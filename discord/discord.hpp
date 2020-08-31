@@ -78,12 +78,12 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
-    std::string DecompressGatewayMessage(std::string str);
     void HandleGatewayMessageRaw(std::string str);
     void HandleGatewayMessage(std::string str);
     void HandleGatewayReady(const GatewayMessage &msg);
     void HandleGatewayMessageCreate(const GatewayMessage &msg);
     void HandleGatewayMessageDelete(const GatewayMessage &msg);
+    void HandleGatewayMessageUpdate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 

@@ -87,6 +87,10 @@ void Abaddon::DiscordNotifyMessageDelete(Snowflake id, Snowflake channel_id) {
     m_main_window->UpdateChatMessageDeleted(id, channel_id);
 }
 
+void Abaddon::DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_id) {
+    m_main_window->UpdateChatMessageEditContent(id, channel_id);
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();

@@ -115,6 +115,11 @@ void MainWindow::UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id) {
         m_chat.DeleteMessage(id);
 }
 
+void MainWindow::UpdateChatMessageEditContent(Snowflake id, Snowflake channel_id) {
+    if (channel_id == GetChatActiveChannel())
+        m_chat.UpdateMessageContent(id);
+}
+
 void MainWindow::UpdateChatPrependHistory(const std::vector<MessageData> &msgs) {
     m_chat.AddNewHistory(msgs);
 }

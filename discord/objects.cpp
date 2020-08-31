@@ -155,6 +155,25 @@ void from_json(const nlohmann::json &j, MessageData &m) {
     JS_O("flags", m.Flags);
 }
 
+// probably gonna need to return present keys
+void MessageData::from_json_edited(const nlohmann::json &j) {
+    JS_D("id", ID);
+    JS_D("channel_id", ChannelID);
+    JS_O("guild_id", GuildID);
+    JS_O("author", Author);
+    JS_O("content", Content);
+    JS_O("timestamp", Timestamp);
+    JS_ON("edited_timestamp", EditedTimestamp);
+    JS_O("tts", IsTTS);
+    JS_O("mention_everyone", DoesMentionEveryone);
+    JS_O("mentions", Mentions);
+    JS_O("nonce", Nonce);
+    JS_O("pinned", IsPinned);
+    JS_O("webhook_id", WebhookID);
+    JS_O("type", Type);
+    JS_O("flags", Flags);
+}
+
 void from_json(const nlohmann::json &j, MessageDeleteData &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);

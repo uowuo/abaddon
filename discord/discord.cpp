@@ -177,10 +177,6 @@ void DiscordClient::UpdateToken(std::string token) {
     m_http.SetAuth(token);
 }
 
-std::string DiscordClient::DecompressGatewayMessage(std::string str) {
-    return std::string();
-}
-
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
     // handles multiple zlib compressed messages, calling HandleGatewayMessage when a full message is received
     std::vector<uint8_t> buf(str.begin(), str.end());
@@ -254,6 +250,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                 case GatewayEvent::MESSAGE_DELETE: {
                     HandleGatewayMessageDelete(m);
                 } break;
+                case GatewayEvent::MESSAGE_UPDATE: {
+                    HandleGatewayMessageUpdate(m);
+                } break;
             }
         } break;
         default:
@@ -289,9 +288,25 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     StoreMessage(data.ID, data);
     m_abaddon->DiscordNotifyMessageCreate(data.ID);
 }
+
 void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
     MessageDeleteData data = msg.Data;
     m_abaddon->DiscordNotifyMessageDelete(data.ID, data.ChannelID);
+}
+
+void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
+    // less than stellar way of doing this probably
+    MessageData data;
+    data.from_json_edited(msg.Data);
+
+    if (m_messages.find(data.ID) == m_messages.end()) return;
+
+    auto &current = m_messages.at(data.ID);
+
+    if (data.Content != current.Content) {
+        current.Content = data.Content;
+        m_abaddon->DiscordNotifyMessageUpdateContent(data.ID, data.ChannelID);
+    }
 }
 
 void DiscordClient::StoreGuild(Snowflake id, const GuildData &g) {
@@ -355,4 +370,5 @@ void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
     m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
     m_event_map["MESSAGE_DELETE"] = GatewayEvent::MESSAGE_DELETE;
+    m_event_map["MESSAGE_UPDATE"] = GatewayEvent::MESSAGE_UPDATE;
 }
