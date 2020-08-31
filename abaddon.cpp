@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
+#include "dialogs/editmessage.hpp"
 #include "abaddon.hpp"
 
 #ifdef _WIN32
@@ -203,6 +204,15 @@ void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel) {
 
 void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {
     m_discord.DeleteMessage(channel_id, id);
+}
+
+void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
+    EditMessageDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK) {
+        auto new_content = dlg.GetContent();
+        m_discord.EditMessage(channel_id, id, new_content);
+    }
 }
 
 int main(int argc, char **argv) {

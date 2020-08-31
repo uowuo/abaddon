@@ -148,6 +148,7 @@
     <ClCompile Include="components\chatmessage.cpp" />
     <ClCompile Include="components\chatwindow.cpp" />
     <ClCompile Include="components\memberlist.cpp" />
+    <ClCompile Include="dialogs\editmessage.cpp" />
     <ClCompile Include="dialogs\token.cpp" />
     <ClCompile Include="discord\discord.cpp" />
     <ClCompile Include="discord\http.cpp" />
@@ -162,6 +163,7 @@
     <ClInclude Include="components\chatmessage.hpp" />
     <ClInclude Include="components\chatwindow.hpp" />
     <ClInclude Include="components\memberlist.hpp" />
+    <ClInclude Include="dialogs\editmessage.hpp" />
     <ClInclude Include="dialogs\token.hpp" />
     <ClInclude Include="discord\discord.hpp" />
     <ClInclude Include="discord\http.hpp" />

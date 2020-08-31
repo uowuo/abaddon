@@ -62,6 +62,10 @@ ChatMessageItem::ChatMessageItem() {
     m_menu_delete_message->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItem::on_menu_message_delete));
     m_menu.append(*m_menu_delete_message);
 
+    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("_Edit Message", true));
+    m_menu_edit_message->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItem::on_menu_message_edit));
+    m_menu.append(*m_menu_edit_message);
+
     m_menu.show_all();
 }
 
@@ -71,6 +75,10 @@ void ChatMessageItem::SetAbaddon(Abaddon *ptr) {
 
 void ChatMessageItem::on_menu_message_delete() {
     m_abaddon->ActionChatDeleteMessage(ChannelID, ID);
+}
+
+void ChatMessageItem::on_menu_message_edit() {
+    m_abaddon->ActionChatEditMessage(ChannelID, ID);
 }
 
 void ChatMessageItem::on_menu_copy_id() {
@@ -94,7 +102,9 @@ void ChatMessageItem::AttachMenuHandler(Gtk::Widget *widget) {
 void ChatMessageItem::ShowMenu(const GdkEvent *event) {
     auto &client = m_abaddon->GetDiscordClient();
     auto *data = client.GetMessage(ID);
-    m_menu_delete_message->set_sensitive(client.GetUserData().ID == data->Author.ID);
+    bool can_manage = client.GetUserData().ID == data->Author.ID;
+    m_menu_delete_message->set_sensitive(can_manage);
+    m_menu_edit_message->set_sensitive(can_manage);
     m_menu.popup_at_pointer(event);
 }
 

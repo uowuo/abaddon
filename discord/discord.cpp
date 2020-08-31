@@ -172,6 +172,14 @@ void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
     m_http.MakeDELETE(path, [](auto) {});
 }
 
+void DiscordClient::EditMessage(Snowflake channel_id, Snowflake id, std::string content) {
+    std::string path = "/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id);
+    MessageEditObject obj;
+    obj.Content = content;
+    nlohmann::json j = obj;
+    m_http.MakePATCH(path, j.dump(), [](auto) {});
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     m_token = token;
     m_http.SetAuth(token);

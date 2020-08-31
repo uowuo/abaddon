@@ -424,3 +424,11 @@ struct CreateMessageObject {
 
     friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
 };
+
+struct MessageEditObject {
+    std::string Content;           // opt, null
+    std::vector<EmbedData> Embeds; // opt, null
+    int Flags = -1;                // opt, null
+
+    friend void to_json(nlohmann::json &j, const MessageEditObject &m);
+};
