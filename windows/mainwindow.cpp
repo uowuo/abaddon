@@ -19,6 +19,13 @@ MainWindow::MainWindow()
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
     m_menu_discord.set_submenu(m_menu_discord_sub);
+
+    m_menu_file.set_label("File");
+    m_menu_file.set_submenu(m_menu_file_sub);
+    m_menu_file_reload_css.set_label("Reload CSS");
+    m_menu_file_sub.append(m_menu_file_reload_css);
+
+    m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
 
     m_menu_discord_connect.signal_activate().connect([&] {
@@ -31,6 +38,10 @@ MainWindow::MainWindow()
 
     m_menu_discord_set_token.signal_activate().connect([&] {
         m_abaddon->ActionSetToken();
+    });
+
+    m_menu_file_reload_css.signal_activate().connect([this] {
+        m_abaddon->ActionReloadCSS();
     });
 
     m_content_box.set_hexpand(true);

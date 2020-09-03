@@ -25,6 +25,11 @@ Abaddon::~Abaddon() {
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.lorpus.abaddon");
 
+    // tmp css stuff
+    m_css_provider = Gtk::CssProvider::create();
+    m_css_provider->load_from_path("./css/main.css");
+    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->SetAbaddon(this);
     m_main_window->set_title("Abaddon");
@@ -213,6 +218,12 @@ void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
         auto new_content = dlg.GetContent();
         m_discord.EditMessage(channel_id, id, new_content);
     }
+}
+
+void Abaddon::ActionReloadCSS() {
+    Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
+    m_css_provider->load_from_path("./css/main.css");
+    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 int main(int argc, char **argv) {
