@@ -191,6 +191,7 @@ void ChatMessageEmbedItem::DoLayout() {
         title_label->set_use_markup(true);
         title_label->set_markup("<b>" + Glib::Markup::escape_text(m_embed.Title) + "</b>");
         title_label->set_halign(Gtk::ALIGN_CENTER);
+        title_label->set_hexpand(false);
         m_main->pack_start(*title_label);
     }
 
@@ -201,6 +202,7 @@ void ChatMessageEmbedItem::DoLayout() {
         desc_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         desc_label->set_max_width_chars(50);
         desc_label->set_halign(Gtk::ALIGN_START);
+        desc_label->set_hexpand(false);
         m_main->pack_start(*desc_label);
     }
 
@@ -225,6 +227,10 @@ void ChatMessageEmbedItem::DoLayout() {
     style->add_class("embed");
 
     set_margin_bottom(8);
+    set_hexpand(false);
+    m_main->set_hexpand(false);
+    m_main->set_halign(Gtk::ALIGN_START);
+    set_halign(Gtk::ALIGN_START);
 
     add(*m_main);
     show_all();
