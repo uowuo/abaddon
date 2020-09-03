@@ -132,6 +132,7 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         m_id_to_widget[data->ID] = widget;
     }
 
+    container->set_margin_left(5);
     container->show_all();
 
     if (!should_attach) {

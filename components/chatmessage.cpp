@@ -206,6 +206,40 @@ void ChatMessageEmbedItem::DoLayout() {
         m_main->pack_start(*desc_label);
     }
 
+    if (m_embed.Fields.size() > 0) {
+        auto *flow = Gtk::manage(new Gtk::FlowBox);
+        flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+        flow->set_min_children_per_line(3);
+        flow->set_halign(Gtk::ALIGN_START);
+        flow->set_hexpand(false);
+        flow->set_column_spacing(10);
+        m_main->add(*flow);
+
+        for (const auto &field : m_embed.Fields) {
+            auto *field_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+            auto *field_lbl = Gtk::manage(new Gtk::Label);
+            auto *field_val = Gtk::manage(new Gtk::Label);
+            field_box->set_hexpand(false);
+            field_box->set_halign(Gtk::ALIGN_START);
+            field_lbl->set_hexpand(false);
+            field_lbl->set_halign(Gtk::ALIGN_START);
+            field_val->set_hexpand(false);
+            field_val->set_halign(Gtk::ALIGN_START);
+            field_lbl->set_use_markup(true);
+            field_lbl->set_markup("<b>" + Glib::Markup::escape_text(field.Name) + "</b>");
+            field_lbl->set_max_width_chars(20);
+            field_lbl->set_line_wrap(true);
+            field_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+            field_val->set_text(field.Value);
+            field_val->set_max_width_chars(20);
+            field_val->set_line_wrap(true);
+            field_val->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+            field_box->pack_start(*field_lbl);
+            field_box->pack_start(*field_val);
+            flow->insert(*field_box, -1);
+        }
+    }
+
     auto style = m_main->get_style_context();
 
     if (m_embed.Color != -1) {
