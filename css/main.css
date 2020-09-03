@@ -1,1 +1,6 @@
-
+.embed {
+	background-color: #eeeeee;
+	border-radius: 5px;
+	border-left: 2px solid red;
+	padding: 10px;
+}

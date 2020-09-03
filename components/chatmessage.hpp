@@ -5,6 +5,7 @@
 enum class ChatDisplayType {
     Unknown,
     Text,
+    Embed,
 };
 
 class Abaddon;
@@ -75,4 +76,25 @@ protected:
     void on_menu_copy_content();
     Gtk::MenuItem *m_menu_copy_content;
     Gtk::MenuItem *m_menu_delete_message;
+};
+
+class ChatMessageEmbedItem
+    : public Gtk::EventBox
+    , public ChatMessageItem {
+public:
+    ChatMessageEmbedItem(const MessageData *data);
+
+    virtual void MarkAsDeleted();
+    virtual void MarkAsEdited();
+
+protected:
+    void DoLayout();
+    void UpdateAttributes();
+
+    bool m_was_deleted = false;
+    bool m_was_edited = false;
+
+    EmbedData m_embed;
+    Gtk::Box *m_main;
+    Gtk::Label *m_attrib_label = nullptr;
 };

@@ -1,3 +1,5 @@
+#include <sstream>
+#include <iomanip>
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
 
@@ -164,4 +166,93 @@ void ChatMessageTextItem::UpdateAttributes() {
     } else if (edited) {
         buf->insert_markup(end, "<span color='#999999'> [edited]</span>");
     }
+}
+
+ChatMessageEmbedItem::ChatMessageEmbedItem(const MessageData *data) {
+    m_embed = data->Embeds[0];
+
+    DoLayout();
+    AttachMenuHandler(this);
+}
+
+void ChatMessageEmbedItem::DoLayout() {
+    m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+
+    auto children = get_children();
+    auto it = children.begin();
+
+    while (it != children.end()) {
+        delete *it;
+        it++;
+    }
+
+    if (m_embed.Title.length() > 0) {
+        auto *title_label = Gtk::manage(new Gtk::Label);
+        title_label->set_use_markup(true);
+        title_label->set_markup("<b>" + Glib::Markup::escape_text(m_embed.Title) + "</b>");
+        title_label->set_halign(Gtk::ALIGN_CENTER);
+        m_main->pack_start(*title_label);
+    }
+
+    if (m_embed.Description.length() > 0) {
+        auto *desc_label = Gtk::manage(new Gtk::Label);
+        desc_label->set_text(m_embed.Description);
+        desc_label->set_line_wrap(true);
+        desc_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+        desc_label->set_max_width_chars(50);
+        desc_label->set_halign(Gtk::ALIGN_START);
+        m_main->pack_start(*desc_label);
+    }
+
+    auto style = m_main->get_style_context();
+
+    if (m_embed.Color != -1) {
+        auto provider = Gtk::CssProvider::create(); // this seems wrong
+        int r = (m_embed.Color & 0xFF0000) >> 16;
+        int g = (m_embed.Color & 0x00FF00) >> 8;
+        int b = (m_embed.Color & 0x0000FF) >> 0;
+        std::stringstream css; // lol
+        css << ".embed { border-left: 2px solid #"
+            << std::hex << std::setw(2) << std::setfill('0') << r
+            << std::hex << std::setw(2) << std::setfill('0') << g
+            << std::hex << std::setw(2) << std::setfill('0') << b
+            << "; }";
+
+        provider->load_from_data(css.str());
+        style->add_provider(provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
+
+    style->add_class("embed");
+
+    set_margin_bottom(8);
+
+    add(*m_main);
+    show_all();
+}
+
+void ChatMessageEmbedItem::UpdateAttributes() {
+    bool deleted = m_was_deleted;
+    bool edited = m_was_edited && !m_was_deleted;
+
+    if (m_attrib_label == nullptr) {
+        m_attrib_label = Gtk::manage(new Gtk::Label);
+        m_attrib_label->set_use_markup(true);
+        m_attrib_label->show();
+        m_main->pack_end(*m_attrib_label);
+    }
+
+    if (deleted)
+        m_attrib_label->set_markup(" <span color='#ff0000'> [deleted]</span>");
+    else if (edited)
+        m_attrib_label->set_markup(" <span color='#999999'> [edited]</span>");
+}
+
+void ChatMessageEmbedItem::MarkAsDeleted() {
+    m_was_deleted = true;
+    // UpdateAttributes(); untested
+}
+
+void ChatMessageEmbedItem::MarkAsEdited() {
+    m_was_edited = true;
+    // UpdateAttributes();
 }

@@ -85,6 +85,8 @@ Snowflake ChatWindow::GetActiveChannel() const {
 ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
     if (data->Type == MessageType::DEFAULT && data->Content.size() > 0)
         return ChatDisplayType::Text;
+    else if (data->Type == MessageType::DEFAULT && data->Embeds.size() > 0)
+        return ChatDisplayType::Embed;
 
     return ChatDisplayType::Unknown;
 }
@@ -121,6 +123,13 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         text->SetAbaddon(m_abaddon);
         container->AddNewContent(text, prepend);
         m_id_to_widget[data->ID] = text;
+    } else if (type == ChatDisplayType::Embed) {
+        auto *widget = Gtk::manage(new ChatMessageEmbedItem(data));
+        widget->ID = data->ID;
+        widget->ChannelID = m_active_channel;
+        widget->SetAbaddon(m_abaddon);
+        container->AddNewContent(widget, prepend);
+        m_id_to_widget[data->ID] = widget;
     }
 
     container->show_all();
