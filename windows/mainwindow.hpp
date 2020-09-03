@@ -37,5 +37,9 @@ protected:
     Gtk::MenuItem m_menu_discord_disconnect;
     Gtk::MenuItem m_menu_discord_set_token;
 
+    Gtk::MenuItem m_menu_file;
+    Gtk::Menu m_menu_file_sub;
+    Gtk::MenuItem m_menu_file_reload_css;
+
     Abaddon *m_abaddon = nullptr;
 };
