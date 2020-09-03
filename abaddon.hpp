@@ -7,6 +7,8 @@
 #include "windows/mainwindow.hpp"
 #include "settings.hpp"
 
+#define APP_TITLE "Abaddon"
+
 class Abaddon {
 public:
     Abaddon();
