@@ -32,7 +32,7 @@ int Abaddon::StartGTK() {
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->SetAbaddon(this);
-    m_main_window->set_title("Abaddon");
+    m_main_window->set_title(APP_TITLE);
     m_main_window->show();
     m_main_window->UpdateComponents();
 
@@ -106,6 +106,7 @@ void Abaddon::ActionConnect() {
 void Abaddon::ActionDisconnect() {
     if (m_discord.IsStarted())
         StopDiscord();
+    m_main_window->set_title(APP_TITLE);
     m_main_window->UpdateComponents();
 }
 
@@ -167,6 +168,8 @@ void Abaddon::ActionCopyGuildID(Snowflake id) {
 }
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {
+    auto *channel = m_discord.GetChannel(id);
+    m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<MessageData> &msgs) {
