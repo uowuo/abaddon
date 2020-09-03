@@ -144,7 +144,7 @@ struct GuildData {
     std::string Name;                //
     std::string Icon;                // null
     std::string Splash;              // null
-    std::string DiscoverySplash;     // null
+    std::string DiscoverySplash;     // opt, null (docs wrong)
     bool IsOwner = false;            // opt
     Snowflake OwnerID;               //
     int Permissions = 0;             // opt
@@ -293,7 +293,7 @@ struct EmbedVideoData {
 
 struct EmbedProviderData {
     std::string Name; // opt
-    std::string URL;  // opt
+    std::string URL;  // opt, null (docs wrong)
 
     friend void from_json(const nlohmann::json &j, EmbedProviderData &m);
 };
@@ -321,7 +321,7 @@ struct EmbedData {
     std::string Description;            // opt
     std::string URL;                    // opt
     std::string Timestamp;              // opt
-    int Color = 0;                      // opt
+    int Color = -1;                     // opt
     EmbedFooterData Footer;             // opt
     EmbedImageData Image;               // opt
     EmbedThumbnailData Thumbnail;       // opt

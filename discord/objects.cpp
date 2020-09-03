@@ -62,7 +62,7 @@ void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("name", m.Name);
     JS_N("icon", m.Icon);
     JS_N("splash", m.Splash);
-    JS_N("discovery_splash", m.DiscoverySplash);
+    JS_ON("discovery_splash", m.DiscoverySplash);
     JS_O("owner", m.IsOwner);
     JS_D("owner_id", m.OwnerID);
     JS_O("permissions", m.Permissions);
@@ -143,7 +143,7 @@ void from_json(const nlohmann::json &j, MessageData &m) {
     // JS_D("mention_roles", m.MentionRoles);
     // JS_O("mention_channels", m.MentionChannels);
     // JS_D("attachments", m.Attachments);
-    // JS_D("embeds", m.Embeds);
+    JS_D("embeds", m.Embeds);
     // JS_O("reactions", m.Reactions);
     JS_O("nonce", m.Nonce);
     JS_D("pinned", m.IsPinned);
@@ -251,7 +251,7 @@ void from_json(const nlohmann::json &j, EmbedVideoData &m) {
 
 void from_json(const nlohmann::json &j, EmbedProviderData &m) {
     JS_O("name", m.Name);
-    JS_O("url", m.URL);
+    JS_ON("url", m.URL);
 }
 
 void from_json(const nlohmann::json &j, EmbedAuthorData &m) {
@@ -265,6 +265,22 @@ void from_json(const nlohmann::json &j, EmbedFieldData &m) {
     JS_D("name", m.Name);
     JS_D("value", m.Value);
     JS_O("inline", m.Inline);
+}
+
+void from_json(const nlohmann::json &j, EmbedData &m) {
+    JS_O("title", m.Title);
+    JS_O("type", m.Type);
+    JS_O("description", m.Description);
+    JS_O("url", m.URL);
+    JS_O("timestamp", m.Timestamp);
+    JS_O("color", m.Color);
+    JS_O("footer", m.Footer);
+    JS_O("image", m.Image);
+    JS_O("thumbnail", m.Thumbnail);
+    JS_O("video", m.Video);
+    JS_O("provider", m.Provider);
+    JS_O("author", m.Author);
+    JS_O("fields", m.Fields);
 }
 
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
