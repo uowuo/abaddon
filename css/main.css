@@ -3,3 +3,13 @@
 	border-radius: 5px;
 	padding: 10px;
 }
+
+.embed-footer {
+	margin-top: 5px;
+	font-size: 11px;
+}
+
+.embed-author {
+	margin-bottom: 10px;
+	font-size: 12px;
+}
