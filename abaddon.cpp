@@ -27,14 +27,18 @@ int Abaddon::StartGTK() {
 
     // tmp css stuff
     m_css_provider = Gtk::CssProvider::create();
-    m_css_provider->load_from_path("./css/main.css");
-    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
+        Gtk::MessageDialog dlg(*m_main_window, "main.css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.run();
+    });
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->SetAbaddon(this);
     m_main_window->set_title(APP_TITLE);
     m_main_window->show();
     m_main_window->UpdateComponents();
+
+    ActionReloadCSS();
 
     m_gtk_app->signal_shutdown().connect([&]() {
         StopDiscord();
@@ -226,9 +230,14 @@ void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
 }
 
 void Abaddon::ActionReloadCSS() {
-    Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
-    m_css_provider->load_from_path("./css/main.css");
-    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    try {
+        Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
+        m_css_provider->load_from_path("./css/main.css");
+        Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    } catch (Glib::Error &e) {
+        Gtk::MessageDialog dlg(*m_main_window, "main.css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.run();
+    }
 }
 
 int main(int argc, char **argv) {
