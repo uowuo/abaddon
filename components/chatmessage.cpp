@@ -186,6 +186,17 @@ void ChatMessageEmbedItem::DoLayout() {
         it++;
     }
 
+    if (m_embed.Author.Name.length() > 0) {
+        auto *author_lbl = Gtk::manage(new Gtk::Label);
+        author_lbl->set_halign(Gtk::ALIGN_START);
+        author_lbl->set_line_wrap(true);
+        author_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+        author_lbl->set_hexpand(false);
+        author_lbl->set_text(m_embed.Author.Name);
+        author_lbl->get_style_context()->add_class("embed-author");
+        m_main->pack_start(*author_lbl);
+    }
+
     if (m_embed.Title.length() > 0) {
         auto *title_label = Gtk::manage(new Gtk::Label);
         title_label->set_use_markup(true);
@@ -210,10 +221,12 @@ void ChatMessageEmbedItem::DoLayout() {
         auto *flow = Gtk::manage(new Gtk::FlowBox);
         flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         flow->set_min_children_per_line(3);
+        flow->set_max_children_per_line(3);
         flow->set_halign(Gtk::ALIGN_START);
         flow->set_hexpand(false);
         flow->set_column_spacing(10);
-        m_main->add(*flow);
+        flow->set_selection_mode(Gtk::SELECTION_NONE);
+        m_main->pack_start(*flow);
 
         for (const auto &field : m_embed.Fields) {
             auto *field_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -221,10 +234,13 @@ void ChatMessageEmbedItem::DoLayout() {
             auto *field_val = Gtk::manage(new Gtk::Label);
             field_box->set_hexpand(false);
             field_box->set_halign(Gtk::ALIGN_START);
+            field_box->set_valign(Gtk::ALIGN_START);
             field_lbl->set_hexpand(false);
             field_lbl->set_halign(Gtk::ALIGN_START);
+            field_lbl->set_valign(Gtk::ALIGN_START);
             field_val->set_hexpand(false);
             field_val->set_halign(Gtk::ALIGN_START);
+            field_val->set_valign(Gtk::ALIGN_START);
             field_lbl->set_use_markup(true);
             field_lbl->set_markup("<b>" + Glib::Markup::escape_text(field.Name) + "</b>");
             field_lbl->set_max_width_chars(20);
@@ -238,6 +254,17 @@ void ChatMessageEmbedItem::DoLayout() {
             field_box->pack_start(*field_val);
             flow->insert(*field_box, -1);
         }
+    }
+
+    if (m_embed.Footer.Text.length() > 0) {
+        auto *footer_lbl = Gtk::manage(new Gtk::Label);
+        footer_lbl->set_halign(Gtk::ALIGN_START);
+        footer_lbl->set_line_wrap(true);
+        footer_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+        footer_lbl->set_hexpand(false);
+        footer_lbl->set_text(m_embed.Footer.Text);
+        footer_lbl->get_style_context()->add_class("embed-footer");
+        m_main->pack_start(*footer_lbl);
     }
 
     auto style = m_main->get_style_context();
