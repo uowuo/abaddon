@@ -110,11 +110,16 @@ std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds(
     return sorted_guilds;
 }
 
-std::unordered_set<const MessageData *> DiscordClient::GetMessagesForChannel(Snowflake id) const {
+std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
     auto it = m_chan_to_message_map.find(id);
     if (it == m_chan_to_message_map.end())
-        return std::unordered_set<const MessageData *>();
-    return it->second;
+        return std::set<Snowflake>();
+
+    std::set<Snowflake> ret;
+    for (const auto &msg : it->second)
+        ret.insert(msg->ID);
+
+    return ret;
 }
 
 void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos) {
@@ -127,27 +132,35 @@ void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &p
     });
 }
 
-void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb) {
+void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
         std::vector<MessageData> msgs;
-        nlohmann::json::parse(r.text).get_to(msgs);
-        for (const auto &msg : msgs)
-            StoreMessage(msg.ID, msg);
+        std::vector<Snowflake> ids;
 
-        cb(msgs);
+        nlohmann::json::parse(r.text).get_to(msgs);
+        for (const auto &msg : msgs) {
+            StoreMessage(msg.ID, msg);
+            ids.push_back(msg.ID);
+        }
+
+        cb(ids);
     });
 }
 
-void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<MessageData> &)> cb) {
+void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
     m_http.MakeGET(path, [this, channel_id, cb](cpr::Response r) {
         std::vector<MessageData> msgs;
-        nlohmann::json::parse(r.text).get_to(msgs);
-        for (const auto &msg : msgs)
-            StoreMessage(msg.ID, msg);
+        std::vector<Snowflake> ids;
 
-        cb(msgs);
+        nlohmann::json::parse(r.text).get_to(msgs);
+        for (const auto &msg : msgs) {
+            StoreMessage(msg.ID, msg);
+            ids.push_back(msg.ID);
+        }
+
+        cb(ids);
     });
 }
 

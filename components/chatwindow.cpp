@@ -166,7 +166,7 @@ void ChatWindow::on_scroll_edge_overshot(Gtk::PositionType pos) {
         m_abaddon->ActionChatLoadHistory(m_active_channel);
 }
 
-void ChatWindow::SetMessages(std::unordered_set<const MessageData *> msgs) {
+void ChatWindow::SetMessages(std::set<Snowflake> msgs) {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_message_set_queue.push(msgs);
     m_message_set_dispatch.emit();
@@ -178,12 +178,9 @@ void ChatWindow::AddNewMessage(Snowflake id) {
     m_new_message_dispatch.emit();
 }
 
-void ChatWindow::AddNewHistory(const std::vector<MessageData> &msgs) {
+void ChatWindow::AddNewHistory(const std::vector<Snowflake> &msgs) {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
-    std::vector<Snowflake> x;
-    for (const auto &msg : msgs)
-        x.push_back(msg.ID);
-    m_new_history_queue.push(x);
+    m_new_history_queue.push(msgs);
     m_new_history_dispatch.emit();
 }
 
@@ -201,7 +198,7 @@ void ChatWindow::UpdateMessageContent(Snowflake id) {
 
 void ChatWindow::ClearMessages() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_message_set_queue.push(std::unordered_set<const MessageData *>());
+    m_message_set_queue.push(std::set<Snowflake>());
     m_message_set_dispatch.emit();
 }
 
@@ -289,7 +286,7 @@ void ChatWindow::SetMessagesInternal() {
     m_num_rows = 0;
     m_id_to_widget.clear();
 
-    std::unordered_set<const MessageData *> *msgs;
+    std::set<Snowflake> *msgs;
     {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
         msgs = &m_message_set_queue.front();
@@ -297,8 +294,8 @@ void ChatWindow::SetMessagesInternal() {
 
     // sort
     std::map<Snowflake, const MessageData *> sorted_messages;
-    for (const auto msg : *msgs)
-        sorted_messages[msg->ID] = msg;
+    for (const auto id : *msgs)
+        sorted_messages[id] = m_abaddon->GetDiscordClient().GetMessage(id);
 
     for (const auto &[id, msg] : sorted_messages) {
         ProcessMessage(msg);

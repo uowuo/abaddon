@@ -59,12 +59,12 @@ public:
     const UserData &GetUserData() const;
     const UserSettingsData &GetUserSettings() const;
     std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
-    std::unordered_set<const MessageData *> GetMessagesForChannel(Snowflake id) const;
+    std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
-    void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<MessageData> &)> cb);
-    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<MessageData> &)> cb);
+    void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
+    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
     const ChannelData *GetChannel(Snowflake id) const;
 
