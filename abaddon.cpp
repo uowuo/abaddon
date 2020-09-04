@@ -172,9 +172,9 @@ void Abaddon::ActionListChannelItemClick(Snowflake id) {
     m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
-        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<MessageData> &msgs) {
+        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Snowflake> &msgs) {
             if (msgs.size() > 0) {
-                m_oldest_listed_message[id] = msgs.back().ID;
+                m_oldest_listed_message[id] = msgs.back();
                 m_main_window->UpdateChatWindowContents();
             }
 
@@ -194,13 +194,13 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
 
     m_channels_history_loading.insert(id);
 
-    m_discord.FetchMessagesInChannelBefore(id, m_oldest_listed_message[id], [this, id](const std::vector<MessageData> &msgs) {
+    m_discord.FetchMessagesInChannelBefore(id, m_oldest_listed_message[id], [this, id](const std::vector<Snowflake> &msgs) {
         m_channels_history_loading.erase(id);
 
         if (msgs.size() == 0) {
             m_channels_history_loaded.insert(id);
         } else {
-            m_oldest_listed_message[id] = msgs.back().ID;
+            m_oldest_listed_message[id] = msgs.back();
             m_main_window->UpdateChatPrependHistory(msgs);
         }
     });

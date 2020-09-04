@@ -18,7 +18,7 @@ public:
     void UpdateChatNewMessage(Snowflake id);
     void UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id);
     void UpdateChatMessageEditContent(Snowflake id, Snowflake channel_id);
-    void UpdateChatPrependHistory(const std::vector<MessageData> &msgs);
+    void UpdateChatPrependHistory(const std::vector<Snowflake> &msgs);
 
 protected:
     Gtk::Box m_main_box;

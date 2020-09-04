@@ -15,9 +15,9 @@ public:
     Gtk::Widget *GetRoot() const;
     void SetActiveChannel(Snowflake id);
     Snowflake GetActiveChannel() const;
-    void SetMessages(std::unordered_set<const MessageData *> msgs);
+    void SetMessages(std::set<Snowflake> msgs);
     void AddNewMessage(Snowflake id);
-    void AddNewHistory(const std::vector<MessageData> &msgs);
+    void AddNewHistory(const std::vector<Snowflake> &msgs);
     void DeleteMessage(Snowflake id);
     void UpdateMessageContent(Snowflake id);
     void ClearMessages();
@@ -40,7 +40,7 @@ protected:
     void on_scroll_edge_overshot(Gtk::PositionType pos);
 
     Glib::Dispatcher m_message_set_dispatch;
-    std::queue<std::unordered_set<const MessageData *>> m_message_set_queue;
+    std::queue<std::set<Snowflake>> m_message_set_queue;
     Glib::Dispatcher m_new_message_dispatch;
     std::queue<Snowflake> m_new_message_queue;
     Glib::Dispatcher m_new_history_dispatch;

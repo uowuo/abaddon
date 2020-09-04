@@ -131,7 +131,7 @@ void MainWindow::UpdateChatMessageEditContent(Snowflake id, Snowflake channel_id
         m_chat.UpdateMessageContent(id);
 }
 
-void MainWindow::UpdateChatPrependHistory(const std::vector<MessageData> &msgs) {
+void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
     m_chat.AddNewHistory(msgs);
 }
 
