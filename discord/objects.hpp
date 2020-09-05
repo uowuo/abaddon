@@ -57,6 +57,7 @@ enum class GatewayOp : int {
     Identify = 2,
     Hello = 10,
     HeartbeatAck = 11,
+    LazyLoadRequest = 14,
 };
 
 enum class GatewayEvent : int {
@@ -64,6 +65,7 @@ enum class GatewayEvent : int {
     MESSAGE_CREATE,
     MESSAGE_DELETE,
     MESSAGE_UPDATE,
+    GUILD_MEMBER_LIST_UPDATE,
 };
 
 struct GatewayMessage {
@@ -369,6 +371,61 @@ struct MessageDeleteData {
     Snowflake GuildID;   // opt
 
     friend void from_json(const nlohmann::json &j, MessageDeleteData &m);
+};
+
+struct GuildMemberListUpdateMessage {
+    struct Item {
+        std::string Type;
+    };
+
+    struct GroupItem : Item {
+        std::string ID;
+        int Count;
+
+        friend void from_json(const nlohmann::json &j, GroupItem &m);
+    };
+
+    struct MemberItem : Item {
+        UserData User;                //
+        std::vector<Snowflake> Roles; //
+        // PresenceData Presence; //
+        std::string PremiumSince; // opt
+        std::string Nickname;     // opt
+        bool IsMuted;             //
+        std::string JoinedAt;     //
+        std::string HoistedRole;  // null
+        bool IsDefeaned;          //
+
+        friend void from_json(const nlohmann::json &j, MemberItem &m);
+    };
+
+    struct OpObject {
+        std::string Op;
+        int Index;
+        std::vector<std::unique_ptr<Item>> Items; // SYNC
+        std::pair<int, int> Range;                // SYNC
+
+        friend void from_json(const nlohmann::json &j, OpObject &m);
+    };
+
+    int OnlineCount;
+    int MemberCount;
+    std::string ListIDHash;
+    std::string GuildID;
+    std::vector<GroupItem> Groups;
+    std::vector<OpObject> Ops;
+
+    friend void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage &m);
+};
+
+struct LazyLoadRequestMessage {
+    Snowflake GuildID;
+    bool ShouldGetTyping = false;
+    bool ShouldGetActivities = false;
+    std::vector<std::string> Members;                                         // snowflake?
+    std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> Channels; // channel ID -> range of sidebar
+
+    friend void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m);
 };
 
 struct ReadyEventData {

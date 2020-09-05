@@ -95,7 +95,12 @@ void MainWindow::UpdateComponents() {
         m_chat.ClearMessages();
     } else {
         UpdateChannelListing();
+        m_members.UpdateMemberList();
     }
+}
+
+void MainWindow::UpdateMembers() {
+    m_members.UpdateMemberList();
 }
 
 void MainWindow::UpdateChannelListing() {
@@ -106,10 +111,13 @@ void MainWindow::UpdateChannelListing() {
 void MainWindow::UpdateChatWindowContents() {
     auto &discord = m_abaddon->GetDiscordClient();
     m_chat.SetMessages(discord.GetMessagesForChannel(m_chat.GetActiveChannel()));
+    m_members.UpdateMemberList();
 }
 
 void MainWindow::UpdateChatActiveChannel(Snowflake id) {
+    auto &discord = m_abaddon->GetDiscordClient();
     m_chat.SetActiveChannel(id);
+    m_members.SetActiveChannel(id);
 }
 
 Snowflake MainWindow::GetChatActiveChannel() const {
@@ -119,6 +127,7 @@ Snowflake MainWindow::GetChatActiveChannel() const {
 void MainWindow::UpdateChatNewMessage(Snowflake id) {
     if (m_abaddon->GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel())
         m_chat.AddNewMessage(id);
+    m_members.UpdateMemberList();
 }
 
 void MainWindow::UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id) {
@@ -133,10 +142,12 @@ void MainWindow::UpdateChatMessageEditContent(Snowflake id, Snowflake channel_id
 
 void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
     m_chat.AddNewHistory(msgs);
+    m_members.UpdateMemberList();
 }
 
 void MainWindow::SetAbaddon(Abaddon *ptr) {
     m_abaddon = ptr;
     m_channel_list.SetAbaddon(ptr);
     m_chat.SetAbaddon(ptr);
+    m_members.SetAbaddon(ptr);
 }

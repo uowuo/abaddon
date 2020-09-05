@@ -180,6 +180,60 @@ void from_json(const nlohmann::json &j, MessageDeleteData &m) {
     JS_O("guild_id", m.GuildID);
 }
 
+void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::GroupItem &m) {
+    m.Type = "group";
+    JS_D("id", m.ID);
+    JS_D("count", m.Count);
+}
+
+void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem &m) {
+    m.Type = "member";
+    JS_D("user", m.User);
+    JS_D("roles", m.Roles);
+    JS_D("mute", m.IsMuted);
+    JS_D("joined_at", m.JoinedAt);
+    JS_D("deaf", m.IsDefeaned);
+    JS_N("hoisted_role", m.HoistedRole);
+    JS_ON("premium_since", m.PremiumSince);
+    JS_ON("nick", m.Nickname);
+}
+
+void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::OpObject &m) {
+    JS_D("op", m.Op);
+    if (m.Op == "SYNC") {
+        JS_D("range", m.Range);
+        for (const auto &ij : j.at("items")) {
+            if (ij.contains("group"))
+                m.Items.push_back(std::make_unique<GuildMemberListUpdateMessage::GroupItem>(ij.at("group")));
+            else if (ij.contains("member"))
+                m.Items.push_back(std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member")));
+        }
+    }
+}
+
+void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage &m) {
+    JS_D("online_count", m.OnlineCount);
+    JS_D("member_count", m.MemberCount);
+    JS_D("id", m.ListIDHash);
+    JS_D("guild_id", m.GuildID);
+    JS_D("groups", m.Groups);
+    JS_D("ops", m.Ops);
+}
+
+void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
+    j["op"] = GatewayOp::LazyLoadRequest;
+    j["d"] = nlohmann::json::object();
+    j["d"]["guild_id"] = m.GuildID;
+    j["d"]["channels"] = nlohmann::json::object();
+    for (const auto &[key, chans] : m.Channels) { // apparently a map gets written as a list
+        j["d"]["channels"][std::to_string(key)] = chans;
+    }
+    j["d"]["typing"] = m.ShouldGetTyping;
+    j["d"]["activities"] = m.ShouldGetActivities;
+    if (m.Members.size() > 0)
+        j["d"]["members"] = m.Members;
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.User);
