@@ -177,7 +177,9 @@ void Abaddon::ActionCopyGuildID(Snowflake id) {
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {
     auto *channel = m_discord.GetChannel(id);
-    m_discord.SendLazyLoad(id);
+    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM)
+        m_discord.SendLazyLoad(id);
+
     if (channel->Type == ChannelType::GUILD_TEXT)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
     else {
