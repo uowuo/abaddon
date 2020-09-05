@@ -43,6 +43,7 @@ public:
     void DiscordNotifyMessageCreate(Snowflake id);
     void DiscordNotifyMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_id);
+    void DiscordNotifyGuildMemberListUpdate(Snowflake guild_id);
 
 private:
     DiscordClient m_discord;

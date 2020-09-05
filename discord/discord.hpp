@@ -23,6 +23,7 @@ public:
         std::unique_lock<std::mutex> lock(m);
         return !cv.wait_for(lock, time, [&] { return terminate; });
     }
+
     void kill() {
         std::unique_lock<std::mutex> lock(m);
         terminate = true;
@@ -54,6 +55,7 @@ public:
     using Channels_t = std::unordered_map<Snowflake, ChannelData>;
     using Guilds_t = std::unordered_map<Snowflake, GuildData>;
     using Messages_t = std::unordered_map<Snowflake, MessageData>;
+    using Users_t = std::unordered_map<Snowflake, UserData>;
 
     const Guilds_t &GetGuilds() const;
     const UserData &GetUserData() const;
@@ -67,10 +69,13 @@ public:
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
     const ChannelData *GetChannel(Snowflake id) const;
+    const UserData *GetUser(Snowflake id) const;
+    std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
 
     void SendChatMessage(std::string content, Snowflake channel);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
+    void SendLazyLoad(Snowflake id);
 
     void UpdateToken(std::string token);
 
@@ -85,6 +90,7 @@ private:
     void HandleGatewayMessageCreate(const GatewayMessage &msg);
     void HandleGatewayMessageDelete(const GatewayMessage &msg);
     void HandleGatewayMessageUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 
@@ -104,6 +110,11 @@ private:
 
     void StoreChannel(Snowflake id, const ChannelData &c);
     Channels_t m_channels;
+
+    void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
+    void StoreUser(const UserData &u);
+    Users_t m_users;
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
 
     UserData m_user_data;
     UserSettingsData m_user_settings;

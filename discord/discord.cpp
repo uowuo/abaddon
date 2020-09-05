@@ -141,6 +141,8 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
         nlohmann::json::parse(r.text).get_to(msgs);
         for (const auto &msg : msgs) {
             StoreMessage(msg.ID, msg);
+            StoreUser(msg.Author);
+            AddUserToGuild(msg.Author.ID, msg.GuildID);
             ids.push_back(msg.ID);
         }
 
@@ -157,6 +159,8 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
         nlohmann::json::parse(r.text).get_to(msgs);
         for (const auto &msg : msgs) {
             StoreMessage(msg.ID, msg);
+            StoreUser(msg.Author);
+            AddUserToGuild(msg.Author.ID, msg.GuildID);
             ids.push_back(msg.ID);
         }
 
@@ -165,11 +169,33 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
 }
 
 const MessageData *DiscordClient::GetMessage(Snowflake id) const {
-    return &m_messages.at(id);
+    if (m_messages.find(id) != m_messages.end())
+        return &m_messages.at(id);
+
+    return nullptr;
 }
 
 const ChannelData *DiscordClient::GetChannel(Snowflake id) const {
-    return &m_channels.at(id);
+    if (m_channels.find(id) != m_channels.end())
+        return &m_channels.at(id);
+
+    return nullptr;
+}
+
+const UserData *DiscordClient::GetUser(Snowflake id) const {
+    auto it = m_users.find(id);
+    if (it != m_users.end())
+        return &it->second;
+
+    return nullptr;
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
+    auto it = m_guild_to_users.find(id);
+    if (it != m_guild_to_users.end())
+        return it->second;
+
+    return std::unordered_set<Snowflake>();
 }
 
 void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
@@ -191,6 +217,21 @@ void DiscordClient::EditMessage(Snowflake channel_id, Snowflake id, std::string 
     obj.Content = content;
     nlohmann::json j = obj;
     m_http.MakePATCH(path, j.dump(), [](auto) {});
+}
+
+void DiscordClient::SendLazyLoad(Snowflake id) {
+    LazyLoadRequestMessage msg;
+    std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> c;
+    c[id] = {
+        std::make_pair(0, 99)
+    };
+    msg.Channels = c;
+    msg.GuildID = GetChannel(id)->GuildID;
+    msg.ShouldGetActivities = false;
+    msg.ShouldGetTyping = false;
+
+    nlohmann::json j = msg;
+    m_websocket.Send(j);
 }
 
 void DiscordClient::UpdateToken(std::string token) {
@@ -274,6 +315,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                 case GatewayEvent::MESSAGE_UPDATE: {
                     HandleGatewayMessageUpdate(m);
                 } break;
+                case GatewayEvent::GUILD_MEMBER_LIST_UPDATE: {
+                    HandleGatewayGuildMemberListUpdate(m);
+                } break;
             }
         } break;
         default:
@@ -285,13 +329,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_ready_received = true;
     ReadyEventData data = msg.Data;
-    for (const auto &g : data.Guilds) {
+    for (auto &g : data.Guilds) {
         if (g.IsUnavailable)
             printf("guild (%lld) unavailable\n", g.ID);
         else {
             StoreGuild(g.ID, g);
-            for (const auto &c : g.Channels)
+            for (auto &c : g.Channels) {
+                c.GuildID = g.ID;
                 StoreChannel(c.ID, c);
+            }
         }
     }
 
@@ -307,6 +353,8 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     MessageData data = msg.Data;
     StoreMessage(data.ID, data);
+    StoreUser(data.Author);
+    AddUserToGuild(data.Author.ID, data.GuildID);
     m_abaddon->DiscordNotifyMessageCreate(data.ID);
 }
 
@@ -330,6 +378,28 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
     }
 }
 
+void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg) {
+    GuildMemberListUpdateMessage data = msg.Data;
+    // man
+    for (const auto &op : data.Ops) {
+        if (op.Op == "SYNC") {
+            for (const auto &item : op.Items) {
+                if (item->Type == "member") {
+                    auto member = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
+                    auto known = GetUser(member->User.ID);
+                    if (known == nullptr) {
+                        StoreUser(member->User);
+                        AddUserToGuild(member->User.ID, data.GuildID);
+                        known = GetUser(member->User.ID);
+                    }
+                }
+            }
+        }
+    }
+
+    m_abaddon->DiscordNotifyGuildMemberListUpdate(data.GuildID);
+}
+
 void DiscordClient::StoreGuild(Snowflake id, const GuildData &g) {
     assert(id.IsValid() && id == g.ID);
     m_guilds[id] = g;
@@ -346,6 +416,17 @@ void DiscordClient::StoreMessage(Snowflake id, const MessageData &m) {
 
 void DiscordClient::StoreChannel(Snowflake id, const ChannelData &c) {
     m_channels[id] = c;
+}
+
+void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
+    if (m_guild_to_users.find(guild_id) == m_guild_to_users.end())
+        m_guild_to_users[guild_id] = std::unordered_set<Snowflake>();
+
+    m_guild_to_users[guild_id].insert(user_id);
+}
+
+void DiscordClient::StoreUser(const UserData &u) {
+    m_users[u.ID] = u;
 }
 
 std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
@@ -392,4 +473,5 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
     m_event_map["MESSAGE_DELETE"] = GatewayEvent::MESSAGE_DELETE;
     m_event_map["MESSAGE_UPDATE"] = GatewayEvent::MESSAGE_UPDATE;
+    m_event_map["GUILD_MEMBER_LIST_UPDATE"] = GatewayEvent::GUILD_MEMBER_LIST_UPDATE;
 }

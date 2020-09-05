@@ -11,6 +11,7 @@ public:
     void SetAbaddon(Abaddon *ptr);
 
     void UpdateComponents();
+    void UpdateMembers();
     void UpdateChannelListing();
     void UpdateChatWindowContents();
     void UpdateChatActiveChannel(Snowflake id);

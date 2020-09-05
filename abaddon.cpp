@@ -101,6 +101,10 @@ void Abaddon::DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_
     m_main_window->UpdateChatMessageEditContent(id, channel_id);
 }
 
+void Abaddon::DiscordNotifyGuildMemberListUpdate(Snowflake guild_id) {
+    m_main_window->UpdateMembers();
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
@@ -173,7 +177,17 @@ void Abaddon::ActionCopyGuildID(Snowflake id) {
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {
     auto *channel = m_discord.GetChannel(id);
-    m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
+    m_discord.SendLazyLoad(id);
+    if (channel->Type == ChannelType::GUILD_TEXT)
+        m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
+    else {
+        std::string display;
+        if (channel->Recipients.size() > 1)
+            display = std::to_string(channel->Recipients.size()) + " users";
+        else
+            display = channel->Recipients[0].Username;
+        m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
+    }
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Snowflake> &msgs) {
