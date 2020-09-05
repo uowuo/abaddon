@@ -40,7 +40,7 @@ void MemberList::UpdateMemberListInternal() {
     auto &discord = m_abaddon->GetDiscordClient();
     auto *chan = discord.GetChannel(m_chan_id);
     std::unordered_set<Snowflake> ids;
-    if (chan->Type == ChannelType::DM) {
+    if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
         for (const auto &user : chan->Recipients)
             ids.insert(user.ID);
     } else {
@@ -53,7 +53,10 @@ void MemberList::UpdateMemberListInternal() {
         auto *label = Gtk::manage(new Gtk::Label);
         label->set_single_line_mode(true);
         label->set_ellipsize(Pango::ELLIPSIZE_END);
-        label->set_text(user->Username + "#" + user->Discriminator);
+        if (user == nullptr)
+            label->set_text("[unknown user]");
+        else
+            label->set_text(user->Username + "#" + user->Discriminator);
         label->set_halign(Gtk::ALIGN_START);
         row->add(*label);
         row->show_all();
