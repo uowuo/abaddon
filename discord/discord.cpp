@@ -1,6 +1,7 @@
 #include "../abaddon.hpp"
 #include "discord.hpp"
 #include <cassert>
+#include "../util.hpp"
 
 DiscordClient::DiscordClient()
     : m_http(DiscordAPI)
@@ -84,27 +85,7 @@ std::vector<std::pair<Snowflake, GuildData>> DiscordClient::GetUserSortedGuilds(
     } else { // default sort is alphabetic
         for (auto &it : m_guilds)
             sorted_guilds.push_back(it);
-        std::sort(sorted_guilds.begin(), sorted_guilds.end(), [&](auto &a, auto &b) -> bool {
-            std::string &s1 = a.second.Name;
-            std::string &s2 = b.second.Name;
-
-            if (s1.empty() || s2.empty())
-                return s1 < s2;
-
-            bool ac[] = {
-                !isalnum(s1[0]),
-                !isalnum(s2[0]),
-                isdigit(s1[0]),
-                isdigit(s2[0]),
-                isalpha(s1[0]),
-                isalpha(s2[0]),
-            };
-
-            if ((ac[0] && ac[1]) || (ac[2] && ac[3]) || (ac[4] && ac[5]))
-                return s1 < s2;
-
-            return ac[0] || ac[5];
-        });
+        AlphabeticalSort(sorted_guilds.begin(), sorted_guilds.end(), [](auto &pair) { return pair.second.Name; });
     }
 
     return sorted_guilds;
