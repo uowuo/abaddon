@@ -21,6 +21,7 @@ public:
     void DeleteMessage(Snowflake id);
     void UpdateMessageContent(Snowflake id);
     void ClearMessages();
+    void InsertChatInput(std::string text);
 
 protected:
     void ScrollToBottom();

@@ -10,6 +10,16 @@ MemberList::MemberList() {
 
     m_listbox->set_selection_mode(Gtk::SELECTION_NONE);
 
+    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &MemberList::on_copy_id_activate));
+    m_menu.append(*m_menu_copy_id);
+
+    m_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert _Mention", true));
+    m_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &MemberList::on_insert_mention_activate));
+    m_menu.append(*m_menu_insert_mention);
+
+    m_menu.show_all();
+
     m_main->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_main->add(*m_listbox);
     m_main->show_all();
@@ -84,7 +94,9 @@ void MemberList::UpdateMemberListInternal() {
     }
 
     auto add_user = [this, &user_to_color](const UserData *data) {
-        auto *user_row = Gtk::manage(new Gtk::ListBoxRow);
+        auto *user_row = Gtk::manage(new MemberListUserRow);
+        user_row->ID = data->ID;
+        auto *user_ev = Gtk::manage(new Gtk::EventBox);
         auto *user_lbl = Gtk::manage(new Gtk::Label);
         user_lbl->set_single_line_mode(true);
         user_lbl->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -103,9 +115,11 @@ void MemberList::UpdateMemberListInternal() {
             user_lbl->set_markup("<i>[unknown user]</i>");
         }
         user_lbl->set_halign(Gtk::ALIGN_START);
-        user_row->add(*user_lbl);
+        user_ev->add(*user_lbl);
+        user_row->add(*user_ev);
         user_row->show_all();
         m_listbox->add(*user_row);
+        AttachUserMenuHandler(user_row, data->ID);
     };
 
     auto add_role = [this](std::string name) {
@@ -140,6 +154,30 @@ void MemberList::UpdateMemberListInternal() {
     for (const auto &id : roleless_users) {
         add_user(discord.GetUser(id));
     }
+}
+
+void MemberList::on_copy_id_activate() {
+    auto *row = dynamic_cast<MemberListUserRow *>(m_row_menu_target);
+    if (row == nullptr) return;
+    Gtk::Clipboard::get()->set_text(std::to_string(row->ID));
+}
+
+void MemberList::on_insert_mention_activate() {
+    auto *row = dynamic_cast<MemberListUserRow *>(m_row_menu_target);
+    if (row == nullptr) return;
+    m_abaddon->ActionInsertMention(row->ID);
+}
+
+void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
+    row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            m_row_menu_target = row;
+            m_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
+            return true;
+        }
+
+        return false;
+    });
 }
 
 void MemberList::SetAbaddon(Abaddon *ptr) {
