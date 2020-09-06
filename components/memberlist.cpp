@@ -27,7 +27,6 @@ void MemberList::SetActiveChannel(Snowflake id) {
 
 void MemberList::UpdateMemberList() {
     std::scoped_lock<std::mutex> guard(m_mutex);
-    printf("update member list\n");
     m_update_member_list_dispatcher.emit();
 }
 
