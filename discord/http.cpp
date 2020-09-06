@@ -100,5 +100,9 @@ void HTTPClient::CleanupFutures() {
 
 void HTTPClient::OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb) {
     CleanupFutures();
-    cb(r);
+    try {
+        cb(r);
+    } catch (std::exception &e) {
+        fprintf(stderr, "error handling response (%s, code %d): %s\n", r.url.c_str(), r.status_code, e.what());
+    }
 }

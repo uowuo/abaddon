@@ -108,6 +108,8 @@ void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &p
     nlohmann::json body;
     body["guild_positions"] = pos;
     m_http.MakePATCH("/users/@me/settings", body.dump(), [this, pos](const cpr::Response &r) {
+        if (!CheckCode(r)) return;
+
         m_user_settings.GuildPositions = pos;
         m_abaddon->DiscordNotifyChannelListFullRefresh();
     });
@@ -116,6 +118,8 @@ void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &p
 void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
+        if (!CheckCode(r)) return;
+
         std::vector<MessageData> msgs;
         std::vector<Snowflake> ids;
 
@@ -447,6 +451,15 @@ void DiscordClient::SendIdentify() {
     msg.Properties.Browser = GatewayIdentity;
     msg.Token = m_token;
     m_websocket.Send(msg);
+}
+
+bool DiscordClient::CheckCode(const cpr::Response &r) {
+    if (r.status_code >= 300) {
+        fprintf(stderr, "api request to %s failed with status code %d\n", r.url.c_str(), r.status_code);
+        return false;
+    }
+
+    return true;
 }
 
 void DiscordClient::LoadEventMap() {

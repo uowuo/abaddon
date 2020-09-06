@@ -94,6 +94,8 @@ private:
     void HeartbeatThread();
     void SendIdentify();
 
+    bool CheckCode(const cpr::Response &r);
+
     Abaddon *m_abaddon = nullptr;
     HTTPClient m_http;
 
