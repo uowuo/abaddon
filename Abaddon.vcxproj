@@ -170,6 +170,7 @@
     <ClInclude Include="discord\objects.hpp" />
     <ClInclude Include="discord\websocket.hpp" />
     <ClInclude Include="settings.hpp" />
+    <ClInclude Include="util.hpp" />
     <ClInclude Include="windows\mainwindow.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
