@@ -245,6 +245,10 @@ void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
     }
 }
 
+void Abaddon::ActionInsertMention(Snowflake id) {
+    m_main_window->InsertChatInput("<@" + std::to_string(id) + ">");
+}
+
 void Abaddon::ActionReloadCSS() {
     try {
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);

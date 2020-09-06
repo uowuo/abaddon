@@ -6,6 +6,11 @@
 class Abaddon;
 class MemberList {
 public:
+    class MemberListUserRow : public Gtk::ListBoxRow {
+    public:
+        Snowflake ID;
+    };
+
     MemberList();
     Gtk::Widget *GetRoot() const;
 
@@ -15,7 +20,16 @@ public:
     void SetAbaddon(Abaddon *ptr);
 
 private:
+    void on_copy_id_activate();
+    void on_insert_mention_activate();
+
     void UpdateMemberListInternal();
+    void AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id);
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copy_id;
+    Gtk::MenuItem *m_menu_insert_mention;
+    Gtk::ListBoxRow *m_row_menu_target = nullptr; // maybe hacky
 
     std::mutex m_mutex;
     Glib::Dispatcher m_update_member_list_dispatcher;

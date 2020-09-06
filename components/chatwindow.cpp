@@ -204,6 +204,12 @@ void ChatWindow::ClearMessages() {
     m_message_set_dispatch.emit();
 }
 
+void ChatWindow::InsertChatInput(std::string text) {
+    auto buf = m_input->get_buffer();
+    buf->insert_at_cursor(text);
+    m_input->grab_focus();
+}
+
 void ChatWindow::ScrollToBottom() {
     auto x = m_scroll->get_vadjustment();
     x->set_value(x->get_upper());

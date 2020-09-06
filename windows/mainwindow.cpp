@@ -146,6 +146,10 @@ void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
     m_members.UpdateMemberList();
 }
 
+void MainWindow::InsertChatInput(std::string text) {
+    m_chat.InsertChatInput(text);
+}
+
 void MainWindow::SetAbaddon(Abaddon *ptr) {
     m_abaddon = ptr;
     m_channel_list.SetAbaddon(ptr);
