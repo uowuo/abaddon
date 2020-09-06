@@ -175,6 +175,35 @@ const UserData *DiscordClient::GetUser(Snowflake id) const {
     return nullptr;
 }
 
+const RoleData *DiscordClient::GetRole(Snowflake id) const {
+    if (m_roles.find(id) != m_roles.end())
+        return &m_roles.at(id);
+
+    return nullptr;
+}
+
+Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
+    auto *data = GetGuildMemberData(user_id, guild_id);
+    if (data == nullptr) return Snowflake::Invalid;
+
+    std::vector<const RoleData *> roles;
+    for (const auto &id : data->Roles) {
+        auto *role = GetRole(id);
+        if (role != nullptr) {
+            if ((!with_color && role->IsHoisted) || role->Color != 0)
+                roles.push_back(role);
+        }
+    }
+
+    if (roles.size() == 0) return Snowflake::Invalid;
+
+    std::sort(roles.begin(), roles.end(), [this](const RoleData *a, const RoleData *b) -> bool {
+        return a->Position > b->Position;
+    });
+
+    return roles[0]->ID;
+}
+
 std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
     auto it = m_guild_to_users.find(id);
     if (it != m_guild_to_users.end())
@@ -327,6 +356,9 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
                 c.GuildID = g.ID;
                 StoreChannel(c.ID, c);
             }
+
+            for (auto &r : g.Roles)
+                StoreRole(r);
         }
     }
 
@@ -378,9 +410,10 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
                     auto known = GetUser(member->User.ID);
                     if (known == nullptr) {
                         StoreUser(member->User);
-                        AddUserToGuild(member->User.ID, data.GuildID);
                         known = GetUser(member->User.ID);
                     }
+                    AddUserToGuild(member->User.ID, data.GuildID);
+                    AddGuildMemberData(data.GuildID, member->User.ID, member->GetAsMemberData());
                 }
             }
         }
@@ -407,15 +440,30 @@ void DiscordClient::StoreChannel(Snowflake id, const ChannelData &c) {
     m_channels[id] = c;
 }
 
-void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
-    if (m_guild_to_users.find(guild_id) == m_guild_to_users.end())
-        m_guild_to_users[guild_id] = std::unordered_set<Snowflake>();
+void DiscordClient::AddGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMemberData &data) {
+    m_members[guild_id][user_id] = data;
+}
 
+const GuildMemberData *DiscordClient::GetGuildMemberData(Snowflake user_id, Snowflake guild_id) const {
+    if (m_members.find(guild_id) == m_members.end())
+        return nullptr;
+
+    if (m_members.at(guild_id).find(user_id) == m_members.at(guild_id).end())
+        return nullptr;
+
+    return &m_members.at(guild_id).at(user_id);
+}
+
+void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
     m_guild_to_users[guild_id].insert(user_id);
 }
 
 void DiscordClient::StoreUser(const UserData &u) {
     m_users[u.ID] = u;
+}
+
+void DiscordClient::StoreRole(const RoleData &r) {
+    m_roles[r.ID] = r;
 }
 
 std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
@@ -458,7 +506,7 @@ void DiscordClient::SendIdentify() {
 }
 
 bool DiscordClient::CheckCode(const cpr::Response &r) {
-    if (r.status_code >= 300) {
+    if (r.status_code >= 300 || r.error) {
         fprintf(stderr, "api request to %s failed with status code %d\n", r.url.c_str(), r.status_code);
         return false;
     }

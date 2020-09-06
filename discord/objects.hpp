@@ -92,6 +92,20 @@ enum class ChannelType : int {
     GUILD_STORE = 6,
 };
 
+struct RoleData {
+    Snowflake ID;
+    std::string Name;
+    int Color;
+    bool IsHoisted;
+    int Position;
+    int PermissionsLegacy;
+    uint64_t Permissions;
+    bool IsManaged;
+    bool IsMentionable;
+
+    friend void from_json(const nlohmann::json &j, RoleData &m);
+};
+
 struct UserData {
     Snowflake ID;              //
     std::string Username;      //
@@ -114,6 +128,18 @@ struct UserData {
     std::string Phone;          // null?
 
     friend void from_json(const nlohmann::json &j, UserData &m);
+};
+
+struct GuildMemberData {
+    UserData User;                // opt
+    std::string Nickname;         // null
+    std::vector<Snowflake> Roles; //
+    std::string JoinedAt;         //
+    std::string PremiumSince;     // opt, null
+    bool IsDeafened;              //
+    bool IsMuted;                 //
+
+    friend void from_json(const nlohmann::json &j, GuildMemberData &m);
 };
 
 struct ChannelData {
@@ -159,7 +185,7 @@ struct GuildData {
     int VerificationLevel;           //
     int DefaultMessageNotifications; //
     int ExplicitContentFilter;       //
-    // std::vector<RoleData> Roles; //
+    std::vector<RoleData> Roles;     //
     // std::vector<EmojiData> Emojis; //
     std::vector<std::string> Features; //
     int MFALevel;                      //
@@ -396,7 +422,12 @@ struct GuildMemberListUpdateMessage {
         std::string HoistedRole;  // null
         bool IsDefeaned;          //
 
+        GuildMemberData GetAsMemberData() const;
+
         friend void from_json(const nlohmann::json &j, MemberItem &m);
+
+    private:
+        GuildMemberData m_member_data;
     };
 
     struct OpObject {

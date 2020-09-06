@@ -125,9 +125,10 @@ Snowflake MainWindow::GetChatActiveChannel() const {
 }
 
 void MainWindow::UpdateChatNewMessage(Snowflake id) {
-    if (m_abaddon->GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel())
+    if (m_abaddon->GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel()) {
         m_chat.AddNewMessage(id);
-    m_members.UpdateMemberList();
+        m_members.UpdateMemberList();
+    }
 }
 
 void MainWindow::UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id) {

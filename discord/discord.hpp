@@ -56,6 +56,7 @@ public:
     using Guilds_t = std::unordered_map<Snowflake, GuildData>;
     using Messages_t = std::unordered_map<Snowflake, MessageData>;
     using Users_t = std::unordered_map<Snowflake, UserData>;
+    using Roles_t = std::unordered_map<Snowflake, RoleData>;
 
     const Guilds_t &GetGuilds() const;
     const UserData &GetUserData() const;
@@ -70,6 +71,8 @@ public:
     const MessageData *GetMessage(Snowflake id) const;
     const ChannelData *GetChannel(Snowflake id) const;
     const UserData *GetUser(Snowflake id) const;
+    const RoleData *GetRole(Snowflake id) const;
+    Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
 
     void SendChatMessage(std::string content, Snowflake channel);
@@ -113,10 +116,16 @@ private:
     void StoreChannel(Snowflake id, const ChannelData &c);
     Channels_t m_channels;
 
+    void AddGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMemberData &data);
+    const GuildMemberData *GetGuildMemberData(Snowflake user_id, Snowflake guild_id) const;
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     void StoreUser(const UserData &u);
     Users_t m_users;
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
+    std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMemberData>> m_members;
+
+    void StoreRole(const RoleData &r);
+    Roles_t m_roles;
 
     UserData m_user_data;
     UserSettingsData m_user_settings;

@@ -43,3 +43,19 @@ inline std::string IntToCSSColor(int color) {
        << std::hex << std::setw(2) << std::setfill('0') << b;
     return ss.str();
 }
+
+// https://www.compuphase.com/cmetric.htm
+inline double ColorDistance(int c1, int c2) {
+    int r1 = (c1 & 0xFF0000) >> 16;
+    int g1 = (c1 & 0x00FF00) >> 8;
+    int b1 = (c1 & 0x0000FF) >> 0;
+    int r2 = (c2 & 0xFF0000) >> 16;
+    int g2 = (c2 & 0x00FF00) >> 8;
+    int b2 = (c2 & 0x0000FF) >> 0;
+
+    int rmean = (r1 - r2) / 2;
+    int r = r1 - r2;
+    int g = g1 - g2;
+    int b = b1 - b2;
+    return sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8));
+}
