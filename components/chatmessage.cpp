@@ -2,6 +2,7 @@
 #include <iomanip>
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
+#include "../util.hpp"
 
 ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
     UserID = data->Author.ID;
@@ -271,17 +272,8 @@ void ChatMessageEmbedItem::DoLayout() {
 
     if (m_embed.Color != -1) {
         auto provider = Gtk::CssProvider::create(); // this seems wrong
-        int r = (m_embed.Color & 0xFF0000) >> 16;
-        int g = (m_embed.Color & 0x00FF00) >> 8;
-        int b = (m_embed.Color & 0x0000FF) >> 0;
-        std::stringstream css; // lol
-        css << ".embed { border-left: 2px solid #"
-            << std::hex << std::setw(2) << std::setfill('0') << r
-            << std::hex << std::setw(2) << std::setfill('0') << g
-            << std::hex << std::setw(2) << std::setfill('0') << b
-            << "; }";
-
-        provider->load_from_data(css.str());
+        std::string css = ".embed { border-left: 2px solid #" + IntToCSSColor(m_embed.Color) + "; }";
+        provider->load_from_data(css);
         style->add_provider(provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 
