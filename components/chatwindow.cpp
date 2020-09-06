@@ -112,6 +112,8 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         container = last_row;
     } else {
         container = Gtk::manage(new ChatMessageContainer(data)); // only accesses timestamp and user
+        container->SetAbaddon(m_abaddon);
+        container->Update();
         m_num_rows++;
     }
 

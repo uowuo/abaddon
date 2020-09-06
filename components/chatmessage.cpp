@@ -6,6 +6,7 @@
 
 ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
     UserID = data->Author.ID;
+    ChannelID = data->ChannelID;
 
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -47,6 +48,27 @@ ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
     set_margin_bottom(8);
 
     show();
+}
+
+void ChatMessageContainer::SetAbaddon(Abaddon *ptr) {
+    m_abaddon = ptr;
+}
+
+void ChatMessageContainer::Update() {
+    if (m_abaddon == nullptr) return;
+    auto &discord = m_abaddon->GetDiscordClient();
+    auto guild_id = discord.GetChannel(ChannelID)->GuildID;
+    auto role_id = discord.GetMemberHoistedRole(guild_id, UserID, true);
+    auto *user = discord.GetUser(UserID);
+    std::string md;
+    if (role_id.IsValid()) {
+        auto *role = discord.GetRole(role_id);
+        if (role != nullptr)
+            md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + Glib::Markup::escape_text(user->Username) + "</span>";
+    } else {
+        md = "<span weight='bold'>" + Glib::Markup::escape_text(user->Username) + "</span>";
+    }
+    m_author->set_markup(md);
 }
 
 void ChatMessageContainer::AddNewContent(Gtk::Widget *widget, bool prepend) {

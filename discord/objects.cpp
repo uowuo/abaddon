@@ -32,6 +32,20 @@ void from_json(const nlohmann::json &j, HelloMessageData &m) {
     JS_D("heartbeat_interval", m.HeartbeatInterval);
 }
 
+void from_json(const nlohmann::json &j, RoleData &m) {
+    JS_D("id", m.ID);
+    JS_D("name", m.Name);
+    JS_D("color", m.Color);
+    JS_D("hoist", m.IsHoisted);
+    JS_D("position", m.Position);
+    JS_D("permissions", m.PermissionsLegacy);
+    std::string tmp;
+    JS_D("permissions_new", tmp);
+    m.Permissions = std::stoull(tmp);
+    JS_D("managed", m.IsManaged);
+    JS_D("mentionable", m.IsMentionable);
+}
+
 void from_json(const nlohmann::json &j, UserData &m) {
     JS_D("id", m.ID);
     JS_D("username", m.Username);
@@ -50,6 +64,16 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_O("mobile", m.IsMobile);
     JS_ON("nsfw_allowed", m.IsNSFWAllowed);
     JS_ON("phone", m.Phone);
+}
+
+void from_json(const nlohmann::json &j, GuildMemberData &m) {
+    JS_O("user", m.User);
+    JS_ON("nick", m.Nickname);
+    JS_D("roles", m.Roles);
+    JS_D("joined_at", m.JoinedAt);
+    JS_ON("premium_since", m.PremiumSince);
+    JS_D("deaf", m.IsDeafened);
+    JS_D("mute", m.IsMuted);
 }
 
 void from_json(const nlohmann::json &j, GuildData &m) {
@@ -75,7 +99,7 @@ void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("verification_level", m.VerificationLevel);
     JS_D("default_message_notifications", m.DefaultMessageNotifications);
     JS_D("explicit_content_filter", m.ExplicitContentFilter);
-    // JS_D("roles", m.Roles);
+    JS_D("roles", m.Roles);
     // JS_D("emojis", m.Emojis);
     JS_D("features", m.Features);
     JS_D("mfa_level", m.MFALevel);
@@ -186,6 +210,10 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::GroupItem 
     JS_D("count", m.Count);
 }
 
+GuildMemberData GuildMemberListUpdateMessage::MemberItem::GetAsMemberData() const {
+    return m_member_data;
+}
+
 void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem &m) {
     m.Type = "member";
     JS_D("user", m.User);
@@ -196,6 +224,7 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem
     JS_N("hoisted_role", m.HoistedRole);
     JS_ON("premium_since", m.PremiumSince);
     JS_ON("nick", m.Nickname);
+    m.m_member_data = j;
 }
 
 void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::OpObject &m) {

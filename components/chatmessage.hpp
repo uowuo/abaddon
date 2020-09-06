@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm.h>
+#include <string>
 #include "../discord/discord.hpp"
 
 enum class ChatDisplayType {
@@ -14,11 +15,16 @@ class Abaddon;
 class ChatMessageContainer : public Gtk::ListBoxRow {
 public:
     Snowflake UserID;
+    Snowflake ChannelID;
 
     ChatMessageContainer(const MessageData *data);
+    void SetAbaddon(Abaddon *ptr);
     void AddNewContent(Gtk::Widget *widget, bool prepend = false);
+    void Update();
 
 protected:
+    Abaddon *m_abaddon = nullptr;
+
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;
     Gtk::Box *m_meta_box;
