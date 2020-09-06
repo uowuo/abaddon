@@ -270,44 +270,48 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
         return;
     }
 
-    switch (m.Opcode) {
-        case GatewayOp::Hello: {
-            HelloMessageData d = m.Data;
-            m_heartbeat_msec = d.HeartbeatInterval;
-            assert(!m_heartbeat_thread.joinable()); // handle reconnects later
-            m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
-            SendIdentify();
-        } break;
-        case GatewayOp::HeartbeatAck: {
-            m_heartbeat_acked = true;
-        } break;
-        case GatewayOp::Event: {
-            auto iter = m_event_map.find(m.Type);
-            if (iter == m_event_map.end()) {
-                printf("Unknown event %s\n", m.Type.c_str());
+    try {
+        switch (m.Opcode) {
+            case GatewayOp::Hello: {
+                HelloMessageData d = m.Data;
+                m_heartbeat_msec = d.HeartbeatInterval;
+                assert(!m_heartbeat_thread.joinable()); // handle reconnects later
+                m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
+                SendIdentify();
+            } break;
+            case GatewayOp::HeartbeatAck: {
+                m_heartbeat_acked = true;
+            } break;
+            case GatewayOp::Event: {
+                auto iter = m_event_map.find(m.Type);
+                if (iter == m_event_map.end()) {
+                    printf("Unknown event %s\n", m.Type.c_str());
+                    break;
+                }
+                switch (iter->second) {
+                    case GatewayEvent::READY: {
+                        HandleGatewayReady(m);
+                    } break;
+                    case GatewayEvent::MESSAGE_CREATE: {
+                        HandleGatewayMessageCreate(m);
+                    } break;
+                    case GatewayEvent::MESSAGE_DELETE: {
+                        HandleGatewayMessageDelete(m);
+                    } break;
+                    case GatewayEvent::MESSAGE_UPDATE: {
+                        HandleGatewayMessageUpdate(m);
+                    } break;
+                    case GatewayEvent::GUILD_MEMBER_LIST_UPDATE: {
+                        HandleGatewayGuildMemberListUpdate(m);
+                    } break;
+                }
+            } break;
+            default:
+                printf("Unknown opcode %d\n", m.Opcode);
                 break;
-            }
-            switch (iter->second) {
-                case GatewayEvent::READY: {
-                    HandleGatewayReady(m);
-                } break;
-                case GatewayEvent::MESSAGE_CREATE: {
-                    HandleGatewayMessageCreate(m);
-                } break;
-                case GatewayEvent::MESSAGE_DELETE: {
-                    HandleGatewayMessageDelete(m);
-                } break;
-                case GatewayEvent::MESSAGE_UPDATE: {
-                    HandleGatewayMessageUpdate(m);
-                } break;
-                case GatewayEvent::GUILD_MEMBER_LIST_UPDATE: {
-                    HandleGatewayGuildMemberListUpdate(m);
-                } break;
-            }
-        } break;
-        default:
-            printf("Unknown opcode %d\n", m.Opcode);
-            break;
+        }
+    } catch (std::exception &e) {
+        fprintf(stderr, "error handling message (opcode %d): %s\n", m.Opcode, e.what());
     }
 }
 
