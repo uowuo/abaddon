@@ -90,11 +90,19 @@ ChatMessageItem::ChatMessageItem() {
 }
 
 void ChatMessageItem::on_menu_message_delete() {
-    Abaddon::Get().ActionChatDeleteMessage(ChannelID, ID);
+    m_signal_action_message_delete.emit(ChannelID, ID);
 }
 
 void ChatMessageItem::on_menu_message_edit() {
-    Abaddon::Get().ActionChatEditMessage(ChannelID, ID);
+    m_signal_action_message_edit.emit(ChannelID, ID);
+}
+
+ChatMessageItem::type_signal_action_message_delete ChatMessageItem::signal_action_message_delete() {
+    return m_signal_action_message_delete;
+}
+
+ChatMessageItem::type_signal_action_message_edit ChatMessageItem::signal_action_message_edit() {
+    return m_signal_action_message_edit;
 }
 
 void ChatMessageItem::on_menu_copy_id() {

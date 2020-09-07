@@ -4,6 +4,7 @@
 #include <queue>
 #include <mutex>
 #include <unordered_set>
+#include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
 class ChannelList {
@@ -11,7 +12,7 @@ public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
     void SetListingFromGuilds(const DiscordClient::guilds_type &guilds);
-    void ClearListing();
+    void Clear();
 
 protected:
     Gtk::ListBox *m_list;
@@ -51,4 +52,21 @@ protected:
     void AddPrivateChannels(); // retard moment
     void SetListingFromGuildsInternal();
     void AttachMenuHandler(Gtk::ListBoxRow *row);
+
+public:
+    typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
+    typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_up;
+    typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_down;
+    typedef sigc::signal<void, Snowflake> type_signal_action_guild_copy_id;
+
+    type_signal_action_channel_item_select signal_action_channel_item_select();
+    type_signal_action_guild_move_up signal_action_guild_move_up();
+    type_signal_action_guild_move_down signal_action_guild_move_down();
+    type_signal_action_guild_copy_id signal_action_guild_copy_id();
+
+protected:
+    type_signal_action_channel_item_select m_signal_action_channel_item_select;
+    type_signal_action_guild_move_up m_signal_action_guild_move_up;
+    type_signal_action_guild_move_down m_signal_action_guild_move_down;
+    type_signal_action_guild_copy_id m_signal_action_guild_copy_id;
 };

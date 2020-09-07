@@ -48,6 +48,23 @@ int Abaddon::StartGTK() {
     m_main_window->show();
     m_main_window->UpdateComponents();
 
+    m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
+    m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
+    m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
+    m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
+
+    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionListChannelItemClick));
+    m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
+    m_main_window->GetChannelList()->signal_action_guild_move_down().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildDown));
+    m_main_window->GetChannelList()->signal_action_guild_copy_id().connect(sigc::mem_fun(*this, &Abaddon::ActionCopyGuildID));
+
+    m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
+    m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
+    m_main_window->GetChatWindow()->signal_action_chat_submit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatInputSubmit));
+    m_main_window->GetChatWindow()->signal_action_chat_load_history().connect(sigc::mem_fun(*this, &Abaddon::ActionChatLoadHistory));
+
+    m_main_window->GetMemberList()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
+
     ActionReloadCSS();
 
     m_gtk_app->signal_shutdown().connect([&]() {
@@ -124,6 +141,10 @@ void Abaddon::ActionConnect() {
 void Abaddon::ActionDisconnect() {
     if (m_discord.IsStarted())
         StopDiscord();
+    m_channels_history_loaded.clear();
+    m_channels_history_loading.clear();
+    m_channels_requested.clear();
+    m_oldest_listed_message.clear();
     m_main_window->set_title(APP_TITLE);
     m_main_window->UpdateComponents();
 }

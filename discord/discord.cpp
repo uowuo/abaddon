@@ -27,6 +27,8 @@ void DiscordClient::Stop() {
     m_client_connected = false;
 
     m_store.ClearAll();
+    m_chan_to_message_map.clear();
+    m_guild_to_users.clear();
 
     m_websocket.Stop();
 }
@@ -132,6 +134,8 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
 void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
     m_http.MakeGET(path, [this, channel_id, cb](cpr::Response r) {
+        if (!CheckCode(r)) return;
+
         std::vector<MessageData> msgs;
         std::vector<Snowflake> ids;
 
@@ -242,7 +246,7 @@ void DiscordClient::UpdateToken(std::string token) {
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
     // handles multiple zlib compressed messages, calling HandleGatewayMessage when a full message is received
     std::vector<uint8_t> buf(str.begin(), str.end());
-    int len = buf.size();
+    int len = static_cast<int>(buf.size());
     bool has_suffix = buf[len - 4] == 0x00 && buf[len - 3] == 0x00 && buf[len - 2] == 0xFF && buf[len - 1] == 0xFF;
 
     m_compressed_buf.insert(m_compressed_buf.end(), buf.begin(), buf.end());
@@ -250,13 +254,13 @@ void DiscordClient::HandleGatewayMessageRaw(std::string str) {
     if (!has_suffix) return;
 
     m_zstream.next_in = m_compressed_buf.data();
-    m_zstream.avail_in = m_compressed_buf.size();
+    m_zstream.avail_in = static_cast<uInt>(m_compressed_buf.size());
     m_zstream.total_in = m_zstream.total_out = 0;
 
     // loop in case of really big messages (e.g. READY)
     while (true) {
         m_zstream.next_out = m_decompress_buf.data() + m_zstream.total_out;
-        m_zstream.avail_out = m_decompress_buf.size() - m_zstream.total_out;
+        m_zstream.avail_out = static_cast<uInt>(m_decompress_buf.size() - m_zstream.total_out);
 
         int err = inflate(&m_zstream, Z_SYNC_FLUSH);
         if ((err == Z_OK || err == Z_BUF_ERROR) && m_zstream.avail_in > 0) {
@@ -335,7 +339,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     ReadyEventData data = msg.Data;
     for (auto &g : data.Guilds) {
         if (g.IsUnavailable)
-            printf("guild (%lld) unavailable\n", g.ID);
+            printf("guild (%lld) unavailable\n", (uint64_t)g.ID);
         else {
             m_store.SetGuild(g.ID, g);
             for (auto &c : g.Channels) {

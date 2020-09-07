@@ -3,6 +3,7 @@
 #include <queue>
 #include <mutex>
 #include <unordered_map>
+#include <sigc++/sigc++.h>
 #include "chatmessage.hpp"
 #include "../discord/discord.hpp"
 
@@ -18,7 +19,7 @@ public:
     void AddNewHistory(const std::vector<Snowflake> &msgs);
     void DeleteMessage(Snowflake id);
     void UpdateMessageContent(Snowflake id);
-    void ClearMessages();
+    void Clear();
     void InsertChatInput(std::string text);
 
 protected:
@@ -58,4 +59,21 @@ protected:
     Gtk::ScrolledWindow *m_scroll;
     Gtk::ScrolledWindow *m_entry_scroll;
     Gtk::TextView *m_input;
+
+public:
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
+    typedef sigc::signal<void, std::string, Snowflake> type_signal_action_chat_submit;
+    typedef sigc::signal<void, Snowflake> type_signal_action_chat_load_history;
+
+    type_signal_action_message_delete signal_action_message_delete();
+    type_signal_action_message_edit signal_action_message_edit();
+    type_signal_action_chat_submit signal_action_chat_submit();
+    type_signal_action_chat_load_history signal_action_chat_load_history();
+
+private:
+    type_signal_action_message_delete m_signal_action_message_delete;
+    type_signal_action_message_edit m_signal_action_message_edit;
+    type_signal_action_chat_submit m_signal_action_chat_submit;
+    type_signal_action_chat_load_history m_signal_action_chat_load_history;
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <gtkmm.h>
 #include <string>
+#include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
 enum class ChatDisplayType {
@@ -8,8 +9,6 @@ enum class ChatDisplayType {
     Text,
     Embed,
 };
-
-class Abaddon;
 
 // contains the username and timestamp, chat items get stuck into its box
 class ChatMessageContainer : public Gtk::ListBoxRow {
@@ -52,6 +51,17 @@ protected:
     Gtk::MenuItem *m_menu_copy_id;
     Gtk::MenuItem *m_menu_delete_message;
     Gtk::MenuItem *m_menu_edit_message;
+
+public:
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
+
+    type_signal_action_message_delete signal_action_message_delete();
+    type_signal_action_message_edit signal_action_message_edit();
+
+private:
+    type_signal_action_message_delete m_signal_action_message_delete;
+    type_signal_action_message_edit m_signal_action_message_edit;
 };
 
 class ChatMessageTextItem

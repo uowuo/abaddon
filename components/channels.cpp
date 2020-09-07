@@ -41,7 +41,7 @@ void ChannelList::SetListingFromGuilds(const DiscordClient::guilds_type &guilds)
     m_update_dispatcher.emit();
 }
 
-void ChannelList::ClearListing() {
+void ChannelList::Clear() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_queue.push(DiscordClient::guilds_type());
     m_update_dispatcher.emit();
@@ -53,7 +53,7 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
     info.IsUserCollapsed = new_collapsed;
 
     if (info.Type == ListItemInfo::ListItemType::Channel) {
-        Abaddon::Get().ActionListChannelItemClick(info.ID);
+        m_signal_action_channel_item_select.emit(info.ID);
     }
 
     if (info.CatArrow != nullptr)
@@ -306,17 +306,17 @@ void ChannelList::SetListingFromGuildsInternal() {
 
 void ChannelList::on_menu_move_up() {
     auto row = m_list->get_selected_row();
-    Abaddon::Get().ActionMoveGuildUp(m_infos[row].ID);
+    m_signal_action_guild_move_up.emit(m_infos[row].ID);
 }
 
 void ChannelList::on_menu_move_down() {
     auto row = m_list->get_selected_row();
-    Abaddon::Get().ActionMoveGuildDown(m_infos[row].ID);
+    m_signal_action_guild_move_down.emit(m_infos[row].ID);
 }
 
 void ChannelList::on_menu_copyid() {
     auto row = m_list->get_selected_row();
-    Abaddon::Get().ActionCopyGuildID(m_infos[row].ID);
+    m_signal_action_guild_copy_id.emit(m_infos[row].ID);
 }
 
 void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
@@ -331,4 +331,20 @@ void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
 
         return false;
     });
+}
+
+ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
+    return m_signal_action_channel_item_select;
+}
+
+ChannelList::type_signal_action_guild_move_up ChannelList::signal_action_guild_move_up() {
+    return m_signal_action_guild_move_up;
+}
+
+ChannelList::type_signal_action_guild_move_down ChannelList::signal_action_guild_move_down() {
+    return m_signal_action_guild_move_down;
+}
+
+ChannelList::type_signal_action_guild_copy_id ChannelList::signal_action_guild_copy_id() {
+    return m_signal_action_guild_copy_id;
 }

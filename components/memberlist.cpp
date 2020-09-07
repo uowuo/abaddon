@@ -29,10 +29,19 @@ Gtk::Widget *MemberList::GetRoot() const {
     return m_main;
 }
 
+void MemberList::Clear() {
+    SetActiveChannel(Snowflake::Invalid);
+    UpdateMemberList();
+}
+
 void MemberList::SetActiveChannel(Snowflake id) {
     std::scoped_lock<std::mutex> guard(m_mutex);
     m_chan_id = id;
-    m_guild_id = Abaddon::Get().GetDiscordClient().GetChannel(id)->GuildID;
+    m_guild_id = Snowflake::Invalid;
+    if (m_chan_id.IsValid()) {
+        auto *chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
+        if (chan != nullptr) m_guild_id = chan->GuildID;
+    }
 }
 
 void MemberList::UpdateMemberList() {
@@ -48,10 +57,12 @@ void MemberList::UpdateMemberListInternal() {
         it++;
     }
 
+    if (!Abaddon::Get().GetDiscordClient().IsStarted()) return;
     if (!m_chan_id.IsValid()) return;
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto *chan = discord.GetChannel(m_chan_id);
+    if (chan == nullptr) return;
     std::unordered_set<Snowflake> ids;
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
         for (const auto &user : chan->Recipients)
@@ -165,7 +176,7 @@ void MemberList::on_copy_id_activate() {
 void MemberList::on_insert_mention_activate() {
     auto *row = dynamic_cast<MemberListUserRow *>(m_row_menu_target);
     if (row == nullptr) return;
-    Abaddon::Get().ActionInsertMention(row->ID);
+    m_signal_action_insert_mention.emit(row->ID);
 }
 
 void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
@@ -178,4 +189,8 @@ void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
 
         return false;
     });
+}
+
+MemberList::type_signal_action_insert_mention MemberList::signal_action_insert_mention() {
+    return m_signal_action_insert_mention;
 }

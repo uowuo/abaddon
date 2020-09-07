@@ -20,6 +20,27 @@ public:
     void UpdateChatPrependHistory(const std::vector<Snowflake> &msgs);
     void InsertChatInput(std::string text);
 
+    ChannelList *GetChannelList();
+    ChatWindow *GetChatWindow();
+    MemberList *GetMemberList();
+
+public:
+    typedef sigc::signal<void> type_signal_action_connect;
+    typedef sigc::signal<void> type_signal_action_disconnect;
+    typedef sigc::signal<void> type_signal_action_set_token;
+    typedef sigc::signal<void> type_signal_action_reload_css;
+
+    type_signal_action_connect signal_action_connect();
+    type_signal_action_disconnect signal_action_disconnect();
+    type_signal_action_set_token signal_action_set_token();
+    type_signal_action_reload_css signal_action_reload_css();
+
+protected:
+    type_signal_action_connect m_signal_action_connect;
+    type_signal_action_disconnect m_signal_action_disconnect;
+    type_signal_action_set_token m_signal_action_set_token;
+    type_signal_action_reload_css m_signal_action_reload_css;
+
 protected:
     Gtk::Box m_main_box;
     Gtk::Box m_content_box;
