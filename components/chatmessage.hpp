@@ -18,13 +18,10 @@ public:
     Snowflake ChannelID;
 
     ChatMessageContainer(const MessageData *data);
-    void SetAbaddon(Abaddon *ptr);
     void AddNewContent(Gtk::Widget *widget, bool prepend = false);
     void Update();
 
 protected:
-    Abaddon *m_abaddon = nullptr;
-
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;
     Gtk::Box *m_meta_box;
@@ -35,7 +32,6 @@ protected:
 class ChatMessageItem {
 public:
     ChatMessageItem();
-    void SetAbaddon(Abaddon *ptr);
 
     Snowflake ChannelID;
     Snowflake ID;
@@ -56,8 +52,6 @@ protected:
     Gtk::MenuItem *m_menu_copy_id;
     Gtk::MenuItem *m_menu_delete_message;
     Gtk::MenuItem *m_menu_edit_message;
-
-    Abaddon *m_abaddon = nullptr;
 };
 
 class ChatMessageTextItem

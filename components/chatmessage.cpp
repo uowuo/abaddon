@@ -50,13 +50,8 @@ ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
     show();
 }
 
-void ChatMessageContainer::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
-}
-
 void ChatMessageContainer::Update() {
-    if (m_abaddon == nullptr) return;
-    auto &discord = m_abaddon->GetDiscordClient();
+    auto &discord = Abaddon::Get().GetDiscordClient();
     auto guild_id = discord.GetChannel(ChannelID)->GuildID;
     auto role_id = discord.GetMemberHoistedRole(guild_id, UserID, true);
     auto *user = discord.GetUser(UserID);
@@ -94,16 +89,12 @@ ChatMessageItem::ChatMessageItem() {
     m_menu.show_all();
 }
 
-void ChatMessageItem::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
-}
-
 void ChatMessageItem::on_menu_message_delete() {
-    m_abaddon->ActionChatDeleteMessage(ChannelID, ID);
+    Abaddon::Get().ActionChatDeleteMessage(ChannelID, ID);
 }
 
 void ChatMessageItem::on_menu_message_edit() {
-    m_abaddon->ActionChatEditMessage(ChannelID, ID);
+    Abaddon::Get().ActionChatEditMessage(ChannelID, ID);
 }
 
 void ChatMessageItem::on_menu_copy_id() {
@@ -125,7 +116,7 @@ void ChatMessageItem::AttachMenuHandler(Gtk::Widget *widget) {
 // clang-format on
 
 void ChatMessageItem::ShowMenu(const GdkEvent *event) {
-    auto &client = m_abaddon->GetDiscordClient();
+    auto &client = Abaddon::Get().GetDiscordClient();
     auto *data = client.GetMessage(ID);
     bool can_manage = client.GetUserData().ID == data->Author.ID;
     m_menu_delete_message->set_sensitive(can_manage);

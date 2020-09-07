@@ -6,15 +6,12 @@
 #include <unordered_set>
 #include "../discord/discord.hpp"
 
-class Abaddon;
 class ChannelList {
 public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
     void SetListingFromGuilds(const DiscordClient::guilds_type &guilds);
     void ClearListing();
-
-    void SetAbaddon(Abaddon *ptr);
 
 protected:
     Gtk::ListBox *m_list;
@@ -54,6 +51,4 @@ protected:
     void AddPrivateChannels(); // retard moment
     void SetListingFromGuildsInternal();
     void AttachMenuHandler(Gtk::ListBoxRow *row);
-
-    Abaddon *m_abaddon = nullptr;
 };

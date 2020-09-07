@@ -28,6 +28,11 @@ Abaddon::~Abaddon() {
     m_discord.Stop();
 }
 
+Abaddon &Abaddon::Get() {
+    static Abaddon instance;
+    return instance;
+}
+
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.lorpus.abaddon");
 
@@ -39,7 +44,6 @@ int Abaddon::StartGTK() {
     });
 
     m_main_window = std::make_unique<MainWindow>();
-    m_main_window->SetAbaddon(this);
     m_main_window->set_title(APP_TITLE);
     m_main_window->show();
     m_main_window->UpdateComponents();
@@ -260,6 +264,5 @@ void Abaddon::ActionReloadCSS() {
 
 int main(int argc, char **argv) {
     Gtk::Main::init_gtkmm_internals(); // why???
-    Abaddon abaddon;
-    return abaddon.StartGTK();
+    return Abaddon::Get().StartGTK();
 }

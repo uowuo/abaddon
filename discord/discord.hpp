@@ -113,7 +113,6 @@ private:
     UserData m_user_data;
     UserSettingsData m_user_settings;
 
-    Abaddon *m_abaddon = nullptr;
     Store m_store;
     HTTPClient m_http;
     Websocket m_websocket;

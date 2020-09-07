@@ -10,9 +10,16 @@
 #define APP_TITLE "Abaddon"
 
 class Abaddon {
-public:
+private:
     Abaddon();
     ~Abaddon();
+    Abaddon(const Abaddon &) = delete;
+    Abaddon &operator=(const Abaddon &) = delete;
+    Abaddon(Abaddon &&) = delete;
+    Abaddon &operator=(Abaddon &&) = delete;
+
+public:
+    static Abaddon &Get();
 
     int StartGTK();
     void StartDiscord();

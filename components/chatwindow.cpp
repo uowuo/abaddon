@@ -66,10 +66,6 @@ ChatWindow::ChatWindow() {
     m_main->add(*m_entry_scroll);
 }
 
-void ChatWindow::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
-}
-
 Gtk::Widget *ChatWindow::GetRoot() const {
     return m_main;
 }
@@ -112,7 +108,6 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         container = last_row;
     } else {
         container = Gtk::manage(new ChatMessageContainer(data)); // only accesses timestamp and user
-        container->SetAbaddon(m_abaddon);
         container->Update();
         m_num_rows++;
     }
@@ -122,14 +117,12 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         auto *text = Gtk::manage(new ChatMessageTextItem(data));
         text->ID = data->ID;
         text->ChannelID = m_active_channel;
-        text->SetAbaddon(m_abaddon);
         container->AddNewContent(text, prepend);
         m_id_to_widget[data->ID] = text;
     } else if (type == ChatDisplayType::Embed) {
         auto *widget = Gtk::manage(new ChatMessageEmbedItem(data));
         widget->ID = data->ID;
         widget->ChannelID = m_active_channel;
-        widget->SetAbaddon(m_abaddon);
         container->AddNewContent(widget, prepend);
         m_id_to_widget[data->ID] = widget;
     }
@@ -155,7 +148,7 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
         auto text = buffer->get_text();
         buffer->set_text("");
 
-        m_abaddon->ActionChatInputSubmit(text, m_active_channel);
+        Abaddon::Get().ActionChatInputSubmit(text, m_active_channel);
 
         return true;
     }
@@ -165,7 +158,7 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
 
 void ChatWindow::on_scroll_edge_overshot(Gtk::PositionType pos) {
     if (pos == Gtk::POS_TOP)
-        m_abaddon->ActionChatLoadHistory(m_active_channel);
+        Abaddon::Get().ActionChatLoadHistory(m_active_channel);
 }
 
 void ChatWindow::SetMessages(std::set<Snowflake> msgs) {
@@ -223,7 +216,7 @@ void ChatWindow::AddNewMessageInternal() {
         m_new_message_queue.pop();
     }
 
-    auto data = m_abaddon->GetDiscordClient().GetMessage(id);
+    auto data = Abaddon::Get().GetDiscordClient().GetMessage(id);
     ProcessMessage(data);
 }
 
@@ -237,7 +230,7 @@ void ChatWindow::AddNewHistoryInternal() {
     }
 
     for (auto it = msgs.rbegin(); it != msgs.rend(); it++) {
-        ProcessMessage(m_abaddon->GetDiscordClient().GetMessage(*it), true);
+        ProcessMessage(Abaddon::Get().GetDiscordClient().GetMessage(*it), true);
     }
 
     {
@@ -274,7 +267,7 @@ void ChatWindow::UpdateMessageContentInternal() {
     if (m_id_to_widget.find(id) == m_id_to_widget.end())
         return;
 
-    auto *msg = m_abaddon->GetDiscordClient().GetMessage(id);
+    auto *msg = Abaddon::Get().GetDiscordClient().GetMessage(id);
     auto *item = dynamic_cast<ChatMessageTextItem *>(m_id_to_widget.at(id));
     if (item != nullptr) {
         item->EditContent(msg->Content);
@@ -303,7 +296,7 @@ void ChatWindow::SetMessagesInternal() {
     // sort
     std::map<Snowflake, const MessageData *> sorted_messages;
     for (const auto id : *msgs)
-        sorted_messages[id] = m_abaddon->GetDiscordClient().GetMessage(id);
+        sorted_messages[id] = Abaddon::Get().GetDiscordClient().GetMessage(id);
 
     for (const auto &[id, msg] : sorted_messages) {
         ProcessMessage(msg);

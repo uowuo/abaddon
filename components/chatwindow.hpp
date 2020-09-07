@@ -6,11 +6,9 @@
 #include "chatmessage.hpp"
 #include "../discord/discord.hpp"
 
-class Abaddon;
 class ChatWindow {
 public:
     ChatWindow();
-    void SetAbaddon(Abaddon *ptr);
 
     Gtk::Widget *GetRoot() const;
     void SetActiveChannel(Snowflake id);
@@ -60,6 +58,4 @@ protected:
     Gtk::ScrolledWindow *m_scroll;
     Gtk::ScrolledWindow *m_entry_scroll;
     Gtk::TextView *m_input;
-
-    Abaddon *m_abaddon = nullptr;
 };
