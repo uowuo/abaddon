@@ -1,4 +1,3 @@
-#include "../abaddon.hpp"
 #include "discord.hpp"
 #include <cassert>
 #include "../util.hpp"
@@ -7,10 +6,6 @@ DiscordClient::DiscordClient()
     : m_http(DiscordAPI)
     , m_decompress_buf(InflateChunkSize) {
     LoadEventMap();
-}
-
-void DiscordClient::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
 }
 
 void DiscordClient::Start() {
@@ -53,7 +48,7 @@ const UserData &DiscordClient::GetUserData() const {
 }
 
 std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
-    std::vector<std::pair<Snowflake, const GuildData*>> sorted_guilds;
+    std::vector<std::pair<Snowflake, const GuildData *>> sorted_guilds;
 
     if (m_user_settings.GuildPositions.size()) {
         std::unordered_set<Snowflake> positioned_guilds(m_user_settings.GuildPositions.begin(), m_user_settings.GuildPositions.end());
@@ -109,7 +104,7 @@ void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &p
         if (!CheckCode(r)) return;
 
         m_user_settings.GuildPositions = pos;
-        m_abaddon->DiscordNotifyChannelListFullRefresh();
+        m_signal_channel_list_refresh.emit();
     });
 }
 
@@ -357,7 +352,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
         m_store.SetChannel(dm.ID, dm);
     }
 
-    m_abaddon->DiscordNotifyReady();
+    m_signal_gateway_ready.emit();
     m_user_data = data.User;
     m_user_settings = data.UserSettings;
 }
@@ -368,12 +363,12 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     AddMessageToChannel(data.ID, data.ChannelID);
     m_store.SetUser(data.Author.ID, data.Author);
     AddUserToGuild(data.Author.ID, data.GuildID);
-    m_abaddon->DiscordNotifyMessageCreate(data.ID);
+    m_signal_message_create.emit(data.ID);
 }
 
 void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
     MessageDeleteData data = msg.Data;
-    m_abaddon->DiscordNotifyMessageDelete(data.ID, data.ChannelID);
+    m_signal_message_delete.emit(data.ID, data.ChannelID);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -389,7 +384,7 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
         auto copy = *current;
         copy.Content = data.Content;
         m_store.SetMessage(copy.ID, copy);
-        m_abaddon->DiscordNotifyMessageUpdateContent(data.ID, data.ChannelID);
+        m_signal_message_update.emit(data.ID, data.ChannelID);
     }
 }
 
@@ -409,7 +404,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
         }
     }
 
-    m_abaddon->DiscordNotifyGuildMemberListUpdate(data.GuildID);
+    m_signal_guild_member_list_update.emit(data.GuildID);
 }
 
 void DiscordClient::AddMessageToChannel(Snowflake msg_id, Snowflake channel_id) {
@@ -473,4 +468,28 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_DELETE"] = GatewayEvent::MESSAGE_DELETE;
     m_event_map["MESSAGE_UPDATE"] = GatewayEvent::MESSAGE_UPDATE;
     m_event_map["GUILD_MEMBER_LIST_UPDATE"] = GatewayEvent::GUILD_MEMBER_LIST_UPDATE;
+}
+
+DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
+    return m_signal_gateway_ready;
+}
+
+DiscordClient::type_signal_channel_list_refresh DiscordClient::signal_channel_list_refresh() {
+    return m_signal_channel_list_refresh;
+}
+
+DiscordClient::type_signal_message_create DiscordClient::signal_message_create() {
+    return m_signal_message_create;
+}
+
+DiscordClient::type_signal_message_delete DiscordClient::signal_message_delete() {
+    return m_signal_message_delete;
+}
+
+DiscordClient::type_signal_message_update DiscordClient::signal_message_update() {
+    return m_signal_message_update;
+}
+
+DiscordClient::type_signal_guild_member_list_update DiscordClient::signal_guild_member_list_update() {
+    return m_signal_guild_member_list_update;
 }

@@ -3,6 +3,7 @@
 #include "http.hpp"
 #include "objects.hpp"
 #include "store.hpp"
+#include <sigc++/sigc++.h>
 #include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
@@ -48,7 +49,6 @@ public:
 
 public:
     DiscordClient();
-    void SetAbaddon(Abaddon *ptr);
     void Start();
     void Stop();
     bool IsStarted() const;
@@ -128,4 +128,28 @@ private:
     std::atomic<int> m_heartbeat_msec = 0;
     HeartbeatWaiter m_heartbeat_waiter;
     std::atomic<bool> m_heartbeat_acked = true;
+
+    // signals
+public:
+    typedef sigc::signal<void> type_signal_gateway_ready;
+    typedef sigc::signal<void> type_signal_channel_list_refresh;
+    typedef sigc::signal<void, Snowflake> type_signal_message_create;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_delete;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_update;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_member_list_update;
+
+    type_signal_gateway_ready signal_gateway_ready();
+    type_signal_channel_list_refresh signal_channel_list_refresh();
+    type_signal_message_create signal_message_create();
+    type_signal_message_delete signal_message_delete();
+    type_signal_message_update signal_message_update();
+    type_signal_guild_member_list_update signal_guild_member_list_update();
+
+protected:
+    type_signal_gateway_ready m_signal_gateway_ready;
+    type_signal_channel_list_refresh m_signal_channel_list_refresh;
+    type_signal_message_create m_signal_message_create;
+    type_signal_message_delete m_signal_message_delete;
+    type_signal_message_update m_signal_message_update;
+    type_signal_guild_member_list_update m_signal_guild_member_list_update;
 };

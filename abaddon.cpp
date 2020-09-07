@@ -13,8 +13,14 @@
 
 Abaddon::Abaddon()
     : m_settings("abaddon.ini") {
-    m_discord.SetAbaddon(this);
     LoadFromSettings();
+
+    m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
+    m_discord.signal_channel_list_refresh().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelListRefresh));
+    m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
+    m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
+    m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
+    m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
 }
 
 Abaddon::~Abaddon() {
@@ -81,27 +87,27 @@ const DiscordClient &Abaddon::GetDiscordClient() const {
     return m_discord;
 }
 
-void Abaddon::DiscordNotifyReady() {
+void Abaddon::DiscordOnReady() {
     m_main_window->UpdateComponents();
 }
 
-void Abaddon::DiscordNotifyChannelListFullRefresh() {
+void Abaddon::DiscordOnChannelListRefresh() {
     m_main_window->UpdateChannelListing();
 }
 
-void Abaddon::DiscordNotifyMessageCreate(Snowflake id) {
+void Abaddon::DiscordOnMessageCreate(Snowflake id) {
     m_main_window->UpdateChatNewMessage(id);
 }
 
-void Abaddon::DiscordNotifyMessageDelete(Snowflake id, Snowflake channel_id) {
+void Abaddon::DiscordOnMessageDelete(Snowflake id, Snowflake channel_id) {
     m_main_window->UpdateChatMessageDeleted(id, channel_id);
 }
 
-void Abaddon::DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_id) {
+void Abaddon::DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id) {
     m_main_window->UpdateChatMessageEditContent(id, channel_id);
 }
 
-void Abaddon::DiscordNotifyGuildMemberListUpdate(Snowflake guild_id) {
+void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
     m_main_window->UpdateMembers();
 }
 
