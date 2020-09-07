@@ -153,6 +153,7 @@
     <ClCompile Include="discord\discord.cpp" />
     <ClCompile Include="discord\http.cpp" />
     <ClCompile Include="discord\objects.cpp" />
+    <ClCompile Include="discord\store.cpp" />
     <ClCompile Include="discord\websocket.cpp" />
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="windows\mainwindow.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="discord\discord.hpp" />
     <ClInclude Include="discord\http.hpp" />
     <ClInclude Include="discord\objects.hpp" />
+    <ClInclude Include="discord\store.hpp" />
     <ClInclude Include="discord\websocket.hpp" />
     <ClInclude Include="settings.hpp" />
     <ClInclude Include="util.hpp" />

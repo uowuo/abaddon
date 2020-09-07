@@ -134,7 +134,7 @@ void Abaddon::ActionMoveGuildUp(Snowflake id) {
     // get iter to target
     decltype(order)::iterator target_iter;
     for (auto it = order.begin(); it != order.end(); it++) {
-        if (it->first == id) {
+        if (*it == id) {
             target_iter = it;
             break;
         }
@@ -143,11 +143,7 @@ void Abaddon::ActionMoveGuildUp(Snowflake id) {
     decltype(order)::iterator left = target_iter - 1;
     std::swap(*left, *target_iter);
 
-    std::vector<Snowflake> new_sort;
-    for (const auto &x : order)
-        new_sort.push_back(x.first);
-
-    m_discord.UpdateSettingsGuildPositions(new_sort);
+    m_discord.UpdateSettingsGuildPositions(order);
 }
 
 void Abaddon::ActionMoveGuildDown(Snowflake id) {
@@ -155,7 +151,7 @@ void Abaddon::ActionMoveGuildDown(Snowflake id) {
     // get iter to target
     decltype(order)::iterator target_iter;
     for (auto it = order.begin(); it != order.end(); it++) {
-        if (it->first == id) {
+        if (*it == id) {
             target_iter = it;
             break;
         }
@@ -164,11 +160,7 @@ void Abaddon::ActionMoveGuildDown(Snowflake id) {
     decltype(order)::iterator right = target_iter + 1;
     std::swap(*right, *target_iter);
 
-    std::vector<Snowflake> new_sort;
-    for (const auto &x : order)
-        new_sort.push_back(x.first);
-
-    m_discord.UpdateSettingsGuildPositions(new_sort);
+    m_discord.UpdateSettingsGuildPositions(order);
 }
 
 void Abaddon::ActionCopyGuildID(Snowflake id) {

@@ -2,6 +2,7 @@
 #include "websocket.hpp"
 #include "http.hpp"
 #include "objects.hpp"
+#include "store.hpp"
 #include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
@@ -52,16 +53,17 @@ public:
     void Stop();
     bool IsStarted() const;
 
-    using Channels_t = std::unordered_map<Snowflake, ChannelData>;
-    using Guilds_t = std::unordered_map<Snowflake, GuildData>;
-    using Messages_t = std::unordered_map<Snowflake, MessageData>;
-    using Users_t = std::unordered_map<Snowflake, UserData>;
-    using Roles_t = std::unordered_map<Snowflake, RoleData>;
+    using guilds_type = Store::guilds_type;
+    using channels_type = Store::channels_type;
+    using messages_type = Store::messages_type;
+    using users_type = Store::users_type;
+    using roles_type = Store::roles_type;
+    using members_type = Store::members_type;
 
-    const Guilds_t &GetGuilds() const;
+    const guilds_type &GetGuilds() const;
     const UserData &GetUserData() const;
     const UserSettingsData &GetUserSettings() const;
-    std::vector<std::pair<Snowflake, GuildData>> GetUserSortedGuilds() const;
+    std::vector<Snowflake> GetUserSortedGuilds() const;
     std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
@@ -72,6 +74,7 @@ public:
     const ChannelData *GetChannel(Snowflake id) const;
     const UserData *GetUser(Snowflake id) const;
     const RoleData *GetRole(Snowflake id) const;
+    const GuildData *GetGuild(Snowflake id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
 
@@ -99,46 +102,30 @@ private:
 
     bool CheckCode(const cpr::Response &r);
 
-    Abaddon *m_abaddon = nullptr;
-    HTTPClient m_http;
-
     std::string m_token;
 
-    mutable std::mutex m_mutex;
+    void AddMessageToChannel(Snowflake msg_id, Snowflake channel_id);
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_chan_to_message_map;
 
-    void StoreGuild(Snowflake id, const GuildData &g);
-    Guilds_t m_guilds;
-
-    void StoreMessage(Snowflake id, const MessageData &m);
-    Messages_t m_messages;
-    std::unordered_map<Snowflake, std::unordered_set<const MessageData *>> m_chan_to_message_map;
-
-    void StoreChannel(Snowflake id, const ChannelData &c);
-    Channels_t m_channels;
-
-    void AddGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMemberData &data);
-    const GuildMemberData *GetGuildMemberData(Snowflake user_id, Snowflake guild_id) const;
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
-    void StoreUser(const UserData &u);
-    Users_t m_users;
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
-    std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMemberData>> m_members;
-
-    void StoreRole(const RoleData &r);
-    Roles_t m_roles;
 
     UserData m_user_data;
     UserSettingsData m_user_settings;
 
+    Abaddon *m_abaddon = nullptr;
+    Store m_store;
+    HTTPClient m_http;
     Websocket m_websocket;
     std::atomic<bool> m_client_connected = false;
     std::atomic<bool> m_ready_received = false;
+
     std::unordered_map<std::string, GatewayEvent> m_event_map;
     void LoadEventMap();
 
     std::thread m_heartbeat_thread;
-    int m_last_sequence = -1;
-    int m_heartbeat_msec = 0;
+    std::atomic<int> m_last_sequence = -1;
+    std::atomic<int> m_heartbeat_msec = 0;
     HeartbeatWaiter m_heartbeat_waiter;
-    bool m_heartbeat_acked = true;
+    std::atomic<bool> m_heartbeat_acked = true;
 };
