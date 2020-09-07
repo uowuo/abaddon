@@ -14,6 +14,7 @@ public:
     Gtk::Widget *GetRoot() const;
 
     void UpdateMemberList();
+    void Clear();
     void SetActiveChannel(Snowflake id);
 
 private:
@@ -36,4 +37,12 @@ private:
 
     Snowflake m_guild_id;
     Snowflake m_chan_id;
+
+public:
+    typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;
+
+    type_signal_action_insert_mention signal_action_insert_mention();
+
+private:
+    type_signal_action_insert_mention m_signal_action_insert_mention;
 };

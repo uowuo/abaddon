@@ -88,6 +88,8 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
 }
 
 void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
+    if (!Abaddon::Get().GetDiscordClient().IsStarted()) return;
+
     ChatMessageContainer *last_row = nullptr;
     bool should_attach = false;
     if (m_num_rows > 0) {
@@ -117,6 +119,12 @@ void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
         auto *text = Gtk::manage(new ChatMessageTextItem(data));
         text->ID = data->ID;
         text->ChannelID = m_active_channel;
+        text->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake id) {
+            m_signal_action_message_delete.emit(channel_id, id);
+        });
+        text->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake id) {
+            m_signal_action_message_edit.emit(channel_id, id);
+        });
         container->AddNewContent(text, prepend);
         m_id_to_widget[data->ID] = text;
     } else if (type == ChatDisplayType::Embed) {
@@ -148,7 +156,7 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
         auto text = buffer->get_text();
         buffer->set_text("");
 
-        Abaddon::Get().ActionChatInputSubmit(text, m_active_channel);
+        m_signal_action_chat_submit.emit(text, m_active_channel);
 
         return true;
     }
@@ -158,7 +166,7 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
 
 void ChatWindow::on_scroll_edge_overshot(Gtk::PositionType pos) {
     if (pos == Gtk::POS_TOP)
-        Abaddon::Get().ActionChatLoadHistory(m_active_channel);
+        m_signal_action_chat_load_history.emit(m_active_channel);
 }
 
 void ChatWindow::SetMessages(std::set<Snowflake> msgs) {
@@ -191,8 +199,9 @@ void ChatWindow::UpdateMessageContent(Snowflake id) {
     m_message_edit_dispatch.emit();
 }
 
-void ChatWindow::ClearMessages() {
+void ChatWindow::Clear() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
+    m_active_channel = Snowflake::Invalid;
     m_message_set_queue.push(std::set<Snowflake>());
     m_message_set_dispatch.emit();
 }
@@ -306,4 +315,20 @@ void ChatWindow::SetMessagesInternal() {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
         m_message_set_queue.pop();
     }
+}
+
+ChatWindow::type_signal_action_message_delete ChatWindow::signal_action_message_delete() {
+    return m_signal_action_message_delete;
+}
+
+ChatWindow::type_signal_action_message_edit ChatWindow::signal_action_message_edit() {
+    return m_signal_action_message_edit;
+}
+
+ChatWindow::type_signal_action_chat_submit ChatWindow::signal_action_chat_submit() {
+    return m_signal_action_chat_submit;
+}
+
+ChatWindow::type_signal_action_chat_load_history ChatWindow::signal_action_chat_load_history() {
+    return m_signal_action_chat_load_history;
 }

@@ -29,19 +29,19 @@ MainWindow::MainWindow()
     m_menu_bar.append(m_menu_discord);
 
     m_menu_discord_connect.signal_activate().connect([&] {
-        Abaddon::Get().ActionConnect();
+        m_signal_action_connect.emit();
     });
 
     m_menu_discord_disconnect.signal_activate().connect([&] {
-        Abaddon::Get().ActionDisconnect();
+        m_signal_action_disconnect.emit();
     });
 
     m_menu_discord_set_token.signal_activate().connect([&] {
-        Abaddon::Get().ActionSetToken();
+        m_signal_action_set_token.emit();
     });
 
     m_menu_file_reload_css.signal_activate().connect([this] {
-        Abaddon::Get().ActionReloadCSS();
+        m_signal_action_reload_css.emit();
     });
 
     m_content_box.set_hexpand(true);
@@ -91,8 +91,9 @@ void MainWindow::UpdateComponents() {
     m_menu_discord_disconnect.set_sensitive(discord_active);
 
     if (!discord_active) {
-        m_channel_list.ClearListing();
-        m_chat.ClearMessages();
+        m_channel_list.Clear();
+        m_chat.Clear();
+        m_members.Clear();
     } else {
         UpdateChannelListing();
         m_members.UpdateMemberList();
@@ -148,4 +149,32 @@ void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
 
 void MainWindow::InsertChatInput(std::string text) {
     m_chat.InsertChatInput(text);
+}
+
+ChannelList *MainWindow::GetChannelList() {
+    return &m_channel_list;
+}
+
+ChatWindow *MainWindow::GetChatWindow() {
+    return &m_chat;
+}
+
+MemberList *MainWindow::GetMemberList() {
+    return &m_members;
+}
+
+MainWindow::type_signal_action_connect MainWindow::signal_action_connect() {
+    return m_signal_action_connect;
+}
+
+MainWindow::type_signal_action_disconnect MainWindow::signal_action_disconnect() {
+    return m_signal_action_disconnect;
+}
+
+MainWindow::type_signal_action_set_token MainWindow::signal_action_set_token() {
+    return m_signal_action_set_token;
+}
+
+MainWindow::type_signal_action_reload_css MainWindow::signal_action_reload_css() {
+    return m_signal_action_reload_css;
 }
