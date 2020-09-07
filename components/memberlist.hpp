@@ -3,7 +3,6 @@
 #include <mutex>
 #include "../discord/discord.hpp"
 
-class Abaddon;
 class MemberList {
 public:
     class MemberListUserRow : public Gtk::ListBoxRow {
@@ -16,8 +15,6 @@ public:
 
     void UpdateMemberList();
     void SetActiveChannel(Snowflake id);
-
-    void SetAbaddon(Abaddon *ptr);
 
 private:
     void on_copy_id_activate();
@@ -39,5 +36,4 @@ private:
 
     Snowflake m_guild_id;
     Snowflake m_chan_id;
-    Abaddon *m_abaddon = nullptr;
 };

@@ -4,11 +4,9 @@
 #include "../components/memberlist.hpp"
 #include <gtkmm.h>
 
-class Abaddon;
 class MainWindow : public Gtk::Window {
 public:
     MainWindow();
-    void SetAbaddon(Abaddon *ptr);
 
     void UpdateComponents();
     void UpdateMembers();
@@ -42,6 +40,4 @@ protected:
     Gtk::MenuItem m_menu_file;
     Gtk::Menu m_menu_file_sub;
     Gtk::MenuItem m_menu_file_reload_css;
-
-    Abaddon *m_abaddon = nullptr;
 };

@@ -29,19 +29,19 @@ MainWindow::MainWindow()
     m_menu_bar.append(m_menu_discord);
 
     m_menu_discord_connect.signal_activate().connect([&] {
-        m_abaddon->ActionConnect();
+        Abaddon::Get().ActionConnect();
     });
 
     m_menu_discord_disconnect.signal_activate().connect([&] {
-        m_abaddon->ActionDisconnect();
+        Abaddon::Get().ActionDisconnect();
     });
 
     m_menu_discord_set_token.signal_activate().connect([&] {
-        m_abaddon->ActionSetToken();
+        Abaddon::Get().ActionSetToken();
     });
 
     m_menu_file_reload_css.signal_activate().connect([this] {
-        m_abaddon->ActionReloadCSS();
+        Abaddon::Get().ActionReloadCSS();
     });
 
     m_content_box.set_hexpand(true);
@@ -83,9 +83,9 @@ MainWindow::MainWindow()
 }
 
 void MainWindow::UpdateComponents() {
-    bool discord_active = m_abaddon->IsDiscordActive();
+    bool discord_active = Abaddon::Get().IsDiscordActive();
 
-    std::string token = m_abaddon->GetDiscordToken();
+    std::string token = Abaddon::Get().GetDiscordToken();
     m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
 
     m_menu_discord_disconnect.set_sensitive(discord_active);
@@ -104,18 +104,18 @@ void MainWindow::UpdateMembers() {
 }
 
 void MainWindow::UpdateChannelListing() {
-    auto &discord = m_abaddon->GetDiscordClient();
+    auto &discord = Abaddon::Get().GetDiscordClient();
     m_channel_list.SetListingFromGuilds(discord.GetGuilds());
 }
 
 void MainWindow::UpdateChatWindowContents() {
-    auto &discord = m_abaddon->GetDiscordClient();
+    auto &discord = Abaddon::Get().GetDiscordClient();
     m_chat.SetMessages(discord.GetMessagesForChannel(m_chat.GetActiveChannel()));
     m_members.UpdateMemberList();
 }
 
 void MainWindow::UpdateChatActiveChannel(Snowflake id) {
-    auto &discord = m_abaddon->GetDiscordClient();
+    auto &discord = Abaddon::Get().GetDiscordClient();
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
 }
@@ -125,7 +125,7 @@ Snowflake MainWindow::GetChatActiveChannel() const {
 }
 
 void MainWindow::UpdateChatNewMessage(Snowflake id) {
-    if (m_abaddon->GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel()) {
+    if (Abaddon::Get().GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel()) {
         m_chat.AddNewMessage(id);
         m_members.UpdateMemberList();
     }
@@ -148,11 +148,4 @@ void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
 
 void MainWindow::InsertChatInput(std::string text) {
     m_chat.InsertChatInput(text);
-}
-
-void MainWindow::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
-    m_channel_list.SetAbaddon(ptr);
-    m_chat.SetAbaddon(ptr);
-    m_members.SetAbaddon(ptr);
 }

@@ -31,10 +31,6 @@ ChannelList::ChannelList() {
     m_update_dispatcher.connect(sigc::mem_fun(*this, &ChannelList::SetListingFromGuildsInternal));
 }
 
-void ChannelList::SetAbaddon(Abaddon *ptr) {
-    m_abaddon = ptr;
-}
-
 Gtk::Widget *ChannelList::GetRoot() const {
     return m_main;
 }
@@ -57,7 +53,7 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
     info.IsUserCollapsed = new_collapsed;
 
     if (info.Type == ListItemInfo::ListItemType::Channel) {
-        m_abaddon->ActionListChannelItemClick(info.ID);
+        Abaddon::Get().ActionListChannelItemClick(info.ID);
     }
 
     if (info.CatArrow != nullptr)
@@ -87,7 +83,7 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
 }
 
 void ChannelList::AddPrivateChannels() {
-    auto dms = m_abaddon->GetDiscordClient().GetPrivateChannels();
+    auto dms = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
 
     auto *parent_row = Gtk::manage(new Gtk::ListBoxRow);
     auto *parent_ev = Gtk::manage(new Gtk::EventBox);
@@ -108,7 +104,7 @@ void ChannelList::AddPrivateChannels() {
     parent_info.Type = ListItemInfo::ListItemType::Guild; // good nuf
 
     for (const auto &dmid : dms) {
-        auto *data = m_abaddon->GetDiscordClient().GetChannel(dmid);
+        auto *data = Abaddon::Get().GetDiscordClient().GetChannel(dmid);
 
         auto *dm_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *dm_ev = Gtk::manage(new Gtk::EventBox);
@@ -301,7 +297,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         m_infos[guild_row] = std::move(info);
     };
 
-    const auto &discord = m_abaddon->GetDiscordClient();
+    const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto &sorted_guilds = discord.GetUserSortedGuilds();
     for (const auto &id : sorted_guilds) {
         add_guild(id, *discord.GetGuild(id));
@@ -310,17 +306,17 @@ void ChannelList::SetListingFromGuildsInternal() {
 
 void ChannelList::on_menu_move_up() {
     auto row = m_list->get_selected_row();
-    m_abaddon->ActionMoveGuildUp(m_infos[row].ID);
+    Abaddon::Get().ActionMoveGuildUp(m_infos[row].ID);
 }
 
 void ChannelList::on_menu_move_down() {
     auto row = m_list->get_selected_row();
-    m_abaddon->ActionMoveGuildDown(m_infos[row].ID);
+    Abaddon::Get().ActionMoveGuildDown(m_infos[row].ID);
 }
 
 void ChannelList::on_menu_copyid() {
     auto row = m_list->get_selected_row();
-    m_abaddon->ActionCopyGuildID(m_infos[row].ID);
+    Abaddon::Get().ActionCopyGuildID(m_infos[row].ID);
 }
 
 void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
