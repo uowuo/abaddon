@@ -39,12 +39,12 @@ public:
     bool IsDiscordActive() const;
 
     const DiscordClient &GetDiscordClient() const;
-    void DiscordNotifyReady();
-    void DiscordNotifyChannelListFullRefresh();
-    void DiscordNotifyMessageCreate(Snowflake id);
-    void DiscordNotifyMessageDelete(Snowflake id, Snowflake channel_id);
-    void DiscordNotifyMessageUpdateContent(Snowflake id, Snowflake channel_id);
-    void DiscordNotifyGuildMemberListUpdate(Snowflake guild_id);
+    void DiscordOnReady();
+    void DiscordOnChannelListRefresh();
+    void DiscordOnMessageCreate(Snowflake id);
+    void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
+    void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
+    void DiscordOnGuildMemberListUpdate(Snowflake guild_id);
 
 private:
     DiscordClient m_discord;
