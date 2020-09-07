@@ -39,7 +39,7 @@ Gtk::Widget *ChannelList::GetRoot() const {
     return m_main;
 }
 
-void ChannelList::SetListingFromGuilds(const DiscordClient::Guilds_t &guilds) {
+void ChannelList::SetListingFromGuilds(const DiscordClient::guilds_type &guilds) {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_queue.push(guilds);
     m_update_dispatcher.emit();
@@ -47,7 +47,7 @@ void ChannelList::SetListingFromGuilds(const DiscordClient::Guilds_t &guilds) {
 
 void ChannelList::ClearListing() {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_queue.push(DiscordClient::Guilds_t());
+    m_update_queue.push(DiscordClient::guilds_type());
     m_update_dispatcher.emit();
 }
 
@@ -138,10 +138,11 @@ void ChannelList::AddPrivateChannels() {
 }
 
 void ChannelList::SetListingFromGuildsInternal() {
-    DiscordClient::Guilds_t *guilds;
+    DiscordClient::guilds_type guilds;
     {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
-        guilds = &m_update_queue.front();
+        guilds = m_update_queue.front();
+        m_update_queue.pop();
     }
 
     auto children = m_list->get_children();
@@ -154,19 +155,13 @@ void ChannelList::SetListingFromGuildsInternal() {
 
     m_guild_count = 0;
 
-    if (guilds->empty()) {
-        std::scoped_lock<std::mutex> guard(m_update_mutex);
-        m_update_queue.pop();
-        return;
-    }
-
     AddPrivateChannels();
 
     // map each category to its channels
 
     std::unordered_map<Snowflake, std::vector<const ChannelData *>> cat_to_channels;
     std::unordered_map<Snowflake, std::vector<const ChannelData *>> orphan_channels;
-    for (const auto &[gid, guild] : *guilds) {
+    for (const auto &[gid, guild] : guilds) {
         for (const auto &chan : guild.Channels) {
             switch (chan.Type) {
                 case ChannelType::GUILD_TEXT: {
@@ -306,14 +301,10 @@ void ChannelList::SetListingFromGuildsInternal() {
         m_infos[guild_row] = std::move(info);
     };
 
-    const auto &sorted_guilds = m_abaddon->GetDiscordClient().GetUserSortedGuilds();
-    for (const auto &[id, guild] : sorted_guilds) {
-        add_guild(id, guild);
-    }
-
-    {
-        std::scoped_lock<std::mutex> guard(m_update_mutex);
-        m_update_queue.pop();
+    const auto &discord = m_abaddon->GetDiscordClient();
+    const auto &sorted_guilds = discord.GetUserSortedGuilds();
+    for (const auto &id : sorted_guilds) {
+        add_guild(id, *discord.GetGuild(id));
     }
 }
 

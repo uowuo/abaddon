@@ -11,7 +11,7 @@ class ChannelList {
 public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
-    void SetListingFromGuilds(const DiscordClient::Guilds_t &guilds);
+    void SetListingFromGuilds(const DiscordClient::guilds_type &guilds);
     void ClearListing();
 
     void SetAbaddon(Abaddon *ptr);
@@ -50,7 +50,7 @@ protected:
 
     Glib::Dispatcher m_update_dispatcher;
     mutable std::mutex m_update_mutex;
-    std::queue<DiscordClient::Guilds_t> m_update_queue;
+    std::queue<DiscordClient::guilds_type> m_update_queue;
     void AddPrivateChannels(); // retard moment
     void SetListingFromGuildsInternal();
     void AttachMenuHandler(Gtk::ListBoxRow *row);
