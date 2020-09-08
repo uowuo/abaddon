@@ -1,4 +1,5 @@
 #pragma once
+#include <cctype>
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
@@ -9,7 +10,7 @@
 #include <iomanip>
 
 template<typename T>
-inline void AlphabeticalSort(typename T start, typename T end, std::function<std::string(const typename std::iterator_traits<T>::value_type &)> get_string) {
+inline void AlphabeticalSort(T start, T end, std::function<std::string(const typename std::iterator_traits<T>::value_type &)> get_string) {
     std::sort(start, end, [&](const auto &a, const auto &b) -> bool {
         const std::string &s1 = get_string(a);
         const std::string &s2 = get_string(b);
