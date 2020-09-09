@@ -1,0 +1,6 @@
+[submodule "thirdparty/simpleini"]
+	path = thirdparty/simpleini
+	url = https://github.com/brofield/simpleini
+[submodule "thirdparty/IXWebSocket"]
+	path = thirdparty/IXWebSocket
+	url = https://github.com/machinezone/IXWebSocket
