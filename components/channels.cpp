@@ -8,6 +8,8 @@ ChannelList::ChannelList() {
     m_main = Gtk::manage(new Gtk::ScrolledWindow);
     m_list = Gtk::manage(new Gtk::ListBox);
 
+    m_list->get_style_context()->add_class("channel-list");
+
     m_guild_menu_up = Gtk::manage(new Gtk::MenuItem("Move _Up", true));
     m_guild_menu_up->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_move_up));
     m_guild_menu.append(*m_guild_menu_up);
@@ -96,6 +98,8 @@ void ChannelList::AddPrivateChannels() {
     parent_ev->add(*parent_box);
     parent_row->add(*parent_ev);
     parent_row->show_all();
+    parent_row->get_style_context()->add_class("channel-row");
+    parent_label->get_style_context()->add_class("channel-row-label");
     m_list->add(*parent_row);
 
     ListItemInfo parent_info;
@@ -110,6 +114,10 @@ void ChannelList::AddPrivateChannels() {
         auto *dm_ev = Gtk::manage(new Gtk::EventBox);
         auto *dm_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         auto *dm_label = Gtk::manage(new Gtk::Label);
+
+        dm_row->get_style_context()->add_class("channel-row");
+        dm_label->get_style_context()->add_class("channel-row-label");
+
         if (data->Type == ChannelType::DM)
             dm_label->set_text(data->Recipients[0].Username);
         else
@@ -184,6 +192,11 @@ void ChannelList::SetListingFromGuildsInternal() {
         auto *channel_ev = Gtk::manage(new Gtk::EventBox);
         auto *channel_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         auto *channel_label = Gtk::manage(new Gtk::Label);
+
+        channel_row->get_style_context()->add_class("channel-row");
+        channel_row->get_style_context()->add_class("channel-row-channel");
+        channel_label->get_style_context()->add_class("channel-row-label");
+
         channel_label->set_text("#" + channel.Name);
         channel_box->set_halign(Gtk::ALIGN_START);
         channel_box->pack_start(*channel_label);
@@ -208,6 +221,11 @@ void ChannelList::SetListingFromGuildsInternal() {
         auto *category_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         auto *category_label = Gtk::manage(new Gtk::Label);
         auto *category_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
+
+        category_row->get_style_context()->add_class("channel-row");
+        category_row->get_style_context()->add_class("channel-row-category");
+        category_label->get_style_context()->add_class("channel-row-label");
+
         category_label->set_text(channel.Name);
         category_box->set_halign(Gtk::ALIGN_START);
         category_box->pack_start(*category_arrow);
@@ -247,6 +265,11 @@ void ChannelList::SetListingFromGuildsInternal() {
         auto *guild_ev = Gtk::manage(new Gtk::EventBox);
         auto *guild_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         auto *guild_label = Gtk::manage(new Gtk::Label);
+
+        guild_row->get_style_context()->add_class("channel-row");
+        guild_row->get_style_context()->add_class("channel-row-guild");
+        guild_label->get_style_context()->add_class("channel-row-label");
+
         guild_label->set_markup("<b>" + Glib::Markup::escape_text(guild.Name) + "</b>");
         guild_box->set_halign(Gtk::ALIGN_START);
         guild_box->pack_start(*guild_label);

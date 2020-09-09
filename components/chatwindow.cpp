@@ -16,6 +16,9 @@ ChatWindow::ChatWindow() {
     m_input = Gtk::manage(new Gtk::TextView);
     m_entry_scroll = Gtk::manage(new Gtk::ScrolledWindow);
 
+    m_listbox->get_style_context()->add_class("messages");
+    m_input->get_style_context()->add_class("message-input");
+
     m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
 
     m_main->set_hexpand(true);
