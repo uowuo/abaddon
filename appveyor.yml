@@ -1,10 +1,6 @@
 version: '{branch}-{build}'
 configuration: RelWithDebInfo
 
-branches:
-  only:
-    - cmake
-
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   AWS_ACCESS_KEY:
