@@ -14,6 +14,10 @@ ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
 
+    get_style_context()->add_class("message-container");
+    m_author->get_style_context()->add_class("message-container-author");
+    m_timestamp->get_style_context()->add_class("message-container-timestamp");
+
     m_author->set_markup("<span weight=\"bold\">" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
     m_author->set_single_line_mode(true);
     m_author->set_line_wrap(false);
@@ -140,6 +144,8 @@ void ChatMessageItem::AddMenuItem(Gtk::MenuItem *item) {
 ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
     m_content = data->Content;
 
+    get_style_context()->add_class("message-text");
+
     set_can_focus(false);
     set_editable(false);
     set_wrap_mode(Gtk::WRAP_WORD_CHAR);
@@ -225,6 +231,7 @@ void ChatMessageEmbedItem::DoLayout() {
         title_label->set_markup("<b>" + Glib::Markup::escape_text(m_embed.Title) + "</b>");
         title_label->set_halign(Gtk::ALIGN_CENTER);
         title_label->set_hexpand(false);
+        title_label->get_style_context()->add_class("embed-title");
         m_main->pack_start(*title_label);
     }
 
@@ -236,6 +243,7 @@ void ChatMessageEmbedItem::DoLayout() {
         desc_label->set_max_width_chars(50);
         desc_label->set_halign(Gtk::ALIGN_START);
         desc_label->set_hexpand(false);
+        desc_label->get_style_context()->add_class("embed-description");
         m_main->pack_start(*desc_label);
     }
 
@@ -274,6 +282,8 @@ void ChatMessageEmbedItem::DoLayout() {
             field_val->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
             field_box->pack_start(*field_lbl);
             field_box->pack_start(*field_val);
+            field_lbl->get_style_context()->add_class("embed-field-title");
+            field_val->get_style_context()->add_class("embed-field-value");
             flow->insert(*field_box, -1);
         }
     }

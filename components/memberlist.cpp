@@ -8,6 +8,8 @@ MemberList::MemberList() {
     m_main = Gtk::manage(new Gtk::ScrolledWindow);
     m_listbox = Gtk::manage(new Gtk::ListBox);
 
+    m_listbox->get_style_context()->add_class("members");
+
     m_listbox->set_selection_mode(Gtk::SELECTION_NONE);
 
     m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
@@ -109,6 +111,11 @@ void MemberList::UpdateMemberListInternal() {
         user_row->ID = data->ID;
         auto *user_ev = Gtk::manage(new Gtk::EventBox);
         auto *user_lbl = Gtk::manage(new Gtk::Label);
+
+        user_row->get_style_context()->add_class("members-row");
+        user_row->get_style_context()->add_class("members-row-member");
+        user_lbl->get_style_context()->add_class("members-row-label");
+
         user_lbl->set_single_line_mode(true);
         user_lbl->set_ellipsize(Pango::ELLIPSIZE_END);
         if (data != nullptr) {
@@ -121,6 +128,8 @@ void MemberList::UpdateMemberListInternal() {
             } else {
                 user_lbl->set_text(display);
             }
+
+            AttachUserMenuHandler(user_row, data->ID);
         } else {
             user_lbl->set_use_markup(true);
             user_lbl->set_markup("<i>[unknown user]</i>");
@@ -130,12 +139,16 @@ void MemberList::UpdateMemberListInternal() {
         user_row->add(*user_ev);
         user_row->show_all();
         m_listbox->add(*user_row);
-        AttachUserMenuHandler(user_row, data->ID);
     };
 
     auto add_role = [this](std::string name) {
         auto *role_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *role_lbl = Gtk::manage(new Gtk::Label);
+
+        role_row->get_style_context()->add_class("members-row");
+        role_row->get_style_context()->add_class("members-row-role");
+        role_lbl->get_style_context()->add_class("members-row-label");
+
         role_lbl->set_single_line_mode(true);
         role_lbl->set_ellipsize(Pango::ELLIPSIZE_END);
         role_lbl->set_use_markup(true);

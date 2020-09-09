@@ -351,3 +351,6 @@ MigrationBackup/
 
 abaddon.ini
 testdata/
+
+build/
+out/
