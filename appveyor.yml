@@ -1,0 +1,51 @@
+version: '{branch}-{build}'
+configuration: RelWithDebInfo
+
+branches:
+  only:
+    - cmake
+
+environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+  AWS_ACCESS_KEY:
+    secure: tKX1t+B688FTnQihwAuDRAdHScCQtKpbIqHdvE1Ei/k=
+  AWS_SECRET_KEY:
+    secure: 3MTsVgpfoO5Jcs4Dl7WPKMPxNC0WC3ffOhIxRWdsU+8N7FEzKO53SbdjjkvgIcrI
+  AWS_BUCKET: pogger-space
+  AWS_ENDPOINT: nyc3.digitaloceanspaces.com
+  AWS_REGION: nyc3
+  APPVEYOR_RDP_PASSWORD:
+    secure: bAN2gK+THkzXNApDmTf05lfQDDq8s4itTyl7faCcanw=
+  matrix:
+    - job_name: Windows
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+
+for:
+  - matrix:
+      only:
+        - job_name: Windows
+
+    cache:
+      - c:\tools\vcpkg\installed
+
+    install:
+    - cmd: |
+        vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows
+
+        cd c:\projects\abaddon
+        mkdir build && cd build
+        cmake -G"Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=c:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DVCPKG_TARGET_TRIPLET=x64-windows ..
+        cd ..
+
+    build:
+      project: c:\projects\abaddon
+      parallel: true
+
+    after_build:
+    - cmd: |
+        xcopy /E /I %APPVEYOR_BUILD_FOLDER%\css "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\css\"
+        7z a %APPVEYOR_BUILD_FOLDER%\out\abaddon.zip "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%"
+
+    artifacts:
+      - path: out\abaddon.zip
+        name: Abaddon
