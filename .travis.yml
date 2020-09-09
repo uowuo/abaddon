@@ -11,10 +11,6 @@ matrix:
           - openssl
           - nlohmann-json
 
-branches:
-  only:
-    - cmake
-
 script:
   - |
     git submodule init
