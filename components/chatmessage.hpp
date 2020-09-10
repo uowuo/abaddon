@@ -27,6 +27,7 @@ protected:
     Gtk::Box *m_meta_box;
     Gtk::Label *m_author;
     Gtk::Label *m_timestamp;
+    Gtk::Image *m_avatar;
 };
 
 class ChatMessageItem {

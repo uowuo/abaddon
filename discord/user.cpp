@@ -1,5 +1,13 @@
 #include "user.hpp"
 
+bool User::HasAvatar() const {
+    return Avatar.size() > 0;
+}
+
+std::string User::GetAvatarURL(std::string ext, std::string size) const {
+    return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
+}
+
 void from_json(const nlohmann::json &j, User &m) {
     JS_D("id", m.ID);
     JS_D("username", m.Username);

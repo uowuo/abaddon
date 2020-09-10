@@ -14,6 +14,18 @@ ChatMessageContainer::ChatMessageContainer(const Message *data) {
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
 
+    static Glib::RefPtr<Gdk::Pixbuf> test = Gdk::Pixbuf::create_from_file("res/decamarks.png", 32, 32);
+    m_avatar = Gtk::manage(new Gtk::Image(test));
+    m_avatar->set_valign(Gtk::ALIGN_START);
+    m_avatar->set_margin_right(10);
+
+    if (data->Author.HasAvatar()) {
+        Abaddon::Get().GetCache().GetFileFromURL(data->Author.GetAvatarURL(), [this](std::string filepath) {
+            auto buf = Gdk::Pixbuf::create_from_file(filepath, 32, 32);
+            m_avatar->property_pixbuf() = buf;
+        });
+    }
+
     get_style_context()->add_class("message-container");
     m_author->get_style_context()->add_class("message-container-author");
     m_timestamp->get_style_context()->add_class("message-container-timestamp");
@@ -47,6 +59,7 @@ ChatMessageContainer::ChatMessageContainer(const Message *data) {
     m_meta_box->add(*m_author);
     m_meta_box->add(*m_timestamp);
     m_content_box->add(*m_meta_box);
+    m_main_box->add(*m_avatar);
     m_main_box->add(*m_content_box);
     add(*m_main_box);
     set_margin_bottom(8);
