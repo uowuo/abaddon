@@ -60,6 +60,16 @@ void from_json(const nlohmann::json &j, EmbedData &m) {
     JS_O("fields", m.Fields);
 }
 
+void from_json(const nlohmann::json &j, AttachmentData &m) {
+    JS_D("id", m.ID);
+    JS_D("filename", m.Filename);
+    JS_D("size", m.Bytes);
+    JS_D("url", m.URL);
+    JS_D("proxy_url", m.ProxyURL);
+    JS_N("height", m.Height);
+    JS_N("width", m.Width);
+}
+
 void from_json(const nlohmann::json &j, Message &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);
