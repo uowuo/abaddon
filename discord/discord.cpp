@@ -115,7 +115,7 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
     m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
         if (!CheckCode(r)) return;
 
-        std::vector<MessageData> msgs;
+        std::vector<Message> msgs;
         std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
@@ -136,7 +136,7 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
     m_http.MakeGET(path, [this, channel_id, cb](cpr::Response r) {
         if (!CheckCode(r)) return;
 
-        std::vector<MessageData> msgs;
+        std::vector<Message> msgs;
         std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
@@ -152,7 +152,7 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
     });
 }
 
-const MessageData *DiscordClient::GetMessage(Snowflake id) const {
+const Message *DiscordClient::GetMessage(Snowflake id) const {
     return m_store.GetMessage(id);
 }
 
@@ -362,7 +362,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 }
 
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
-    MessageData data = msg.Data;
+    Message data = msg.Data;
     m_store.SetMessage(data.ID, data);
     AddMessageToChannel(data.ID, data.ChannelID);
     m_store.SetUser(data.Author.ID, data.Author);
@@ -377,7 +377,7 @@ void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
     // less than stellar way of doing this probably
-    MessageData data;
+    Message data;
     data.from_json_edited(msg.Data);
 
     auto *current = m_store.GetMessage(data.ID);

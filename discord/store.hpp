@@ -13,21 +13,21 @@ public:
     void SetChannel(Snowflake id, const Channel &channel);
     void SetGuild(Snowflake id, const Guild &guild);
     void SetRole(Snowflake id, const Role &role);
-    void SetMessage(Snowflake id, const MessageData &message);
+    void SetMessage(Snowflake id, const Message &message);
     void SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
 
     const User *GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
     const Role *GetRole(Snowflake id) const;
-    const MessageData *GetMessage(Snowflake id) const;
+    const Message *GetMessage(Snowflake id) const;
     const GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const;
 
     using users_type = std::unordered_map<Snowflake, User>;
     using channels_type = std::unordered_map<Snowflake, Channel>;
     using guilds_type = std::unordered_map<Snowflake, Guild>;
     using roles_type = std::unordered_map<Snowflake, Role>;
-    using messages_type = std::unordered_map<Snowflake, MessageData>;
+    using messages_type = std::unordered_map<Snowflake, Message>;
     using members_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMember>>;
 
     const channels_type &GetChannels() const;

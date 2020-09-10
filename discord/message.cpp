@@ -60,7 +60,7 @@ void from_json(const nlohmann::json &j, EmbedData &m) {
     JS_O("fields", m.Fields);
 }
 
-void from_json(const nlohmann::json &j, MessageData &m) {
+void from_json(const nlohmann::json &j, Message &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);
     JS_O("guild_id", m.GuildID);
@@ -88,7 +88,7 @@ void from_json(const nlohmann::json &j, MessageData &m) {
 }
 
 // probably gonna need to return present keys
-void MessageData::from_json_edited(const nlohmann::json &j) {
+void Message::from_json_edited(const nlohmann::json &j) {
     JS_D("id", ID);
     JS_D("channel_id", ChannelID);
     JS_O("guild_id", GuildID);

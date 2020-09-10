@@ -16,7 +16,7 @@ void Store::SetRole(Snowflake id, const Role &role) {
     m_roles[id] = role;
 }
 
-void Store::SetMessage(Snowflake id, const MessageData &message) {
+void Store::SetMessage(Snowflake id, const Message &message) {
     m_messages[id] = message;
 }
 
@@ -52,7 +52,7 @@ const Role *Store::GetRole(Snowflake id) const {
     return &it->second;
 }
 
-const MessageData *Store::GetMessage(Snowflake id) const {
+const Message *Store::GetMessage(Snowflake id) const {
     auto it = m_messages.find(id);
     if (it == m_messages.end())
         return nullptr;

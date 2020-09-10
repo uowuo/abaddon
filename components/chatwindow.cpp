@@ -82,7 +82,7 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
+ChatDisplayType ChatWindow::GetMessageDisplayType(const Message *data) {
     if (data->Type == MessageType::DEFAULT && data->Content.size() > 0)
         return ChatDisplayType::Text;
     else if (data->Type == MessageType::DEFAULT && data->Embeds.size() > 0)
@@ -91,7 +91,7 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const MessageData *data) {
     return ChatDisplayType::Unknown;
 }
 
-void ChatWindow::ProcessMessage(const MessageData *data, bool prepend) {
+void ChatWindow::ProcessMessage(const Message *data, bool prepend) {
     if (!Abaddon::Get().GetDiscordClient().IsStarted()) return;
 
     ChatMessageContainer *last_row = nullptr;
@@ -307,7 +307,7 @@ void ChatWindow::SetMessagesInternal() {
     }
 
     // sort
-    std::map<Snowflake, const MessageData *> sorted_messages;
+    std::map<Snowflake, const Message *> sorted_messages;
     for (const auto id : *msgs)
         sorted_messages[id] = Abaddon::Get().GetDiscordClient().GetMessage(id);
 
