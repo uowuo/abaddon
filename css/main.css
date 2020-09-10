@@ -1,5 +1,6 @@
 .embed {
-    background-color: #eeeeee;
+    background-color: #364759;
+    color: #cbcbcb;
     border-radius: 5px;
     padding: 10px;
 }
@@ -94,6 +95,6 @@ scrollbar {
 }
 
 menubar, menu {
-	background: #263238;
-	color: #cccccc;
+    background: #263238;
+    color: #cccccc;
 }
