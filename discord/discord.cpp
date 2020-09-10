@@ -41,16 +41,16 @@ const Store::guilds_type &DiscordClient::GetGuilds() const {
     return m_store.GetGuilds();
 }
 
-const UserSettingsData &DiscordClient::GetUserSettings() const {
+const UserSettings &DiscordClient::GetUserSettings() const {
     return m_user_settings;
 }
 
-const UserData &DiscordClient::GetUserData() const {
+const User &DiscordClient::GetUserData() const {
     return m_user_data;
 }
 
 std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
-    std::vector<std::pair<Snowflake, const GuildData *>> sorted_guilds;
+    std::vector<std::pair<Snowflake, const Guild *>> sorted_guilds;
 
     if (m_user_settings.GuildPositions.size()) {
         std::unordered_set<Snowflake> positioned_guilds(m_user_settings.GuildPositions.begin(), m_user_settings.GuildPositions.end());
@@ -156,19 +156,19 @@ const MessageData *DiscordClient::GetMessage(Snowflake id) const {
     return m_store.GetMessage(id);
 }
 
-const ChannelData *DiscordClient::GetChannel(Snowflake id) const {
+const Channel *DiscordClient::GetChannel(Snowflake id) const {
     return m_store.GetChannel(id);
 }
 
-const UserData *DiscordClient::GetUser(Snowflake id) const {
+const User *DiscordClient::GetUser(Snowflake id) const {
     return m_store.GetUser(id);
 }
 
-const RoleData *DiscordClient::GetRole(Snowflake id) const {
+const Role *DiscordClient::GetRole(Snowflake id) const {
     return m_store.GetRole(id);
 }
 
-const GuildData *DiscordClient::GetGuild(Snowflake id) const {
+const Guild *DiscordClient::GetGuild(Snowflake id) const {
     return m_store.GetGuild(id);
 }
 
@@ -176,7 +176,7 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     auto *data = m_store.GetGuildMemberData(guild_id, user_id);
     if (data == nullptr) return Snowflake::Invalid;
 
-    std::vector<const RoleData *> roles;
+    std::vector<const Role *> roles;
     for (const auto &id : data->Roles) {
         auto *role = GetRole(id);
         if (role != nullptr) {
@@ -187,7 +187,7 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
 
     if (roles.size() == 0) return Snowflake::Invalid;
 
-    std::sort(roles.begin(), roles.end(), [this](const RoleData *a, const RoleData *b) -> bool {
+    std::sort(roles.begin(), roles.end(), [this](const Role *a, const Role *b) -> bool {
         return a->Position > b->Position;
     });
 

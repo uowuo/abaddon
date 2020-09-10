@@ -148,6 +148,23 @@ add_executable(abaddon
 	discord/store.cpp
 	discord/websocket.hpp
 	discord/websocket.cpp
+	discord/user.hpp
+	discord/snowflake.hpp
+	discord/snowflake.cpp
+	discord/user.cpp
+	discord/json.hpp
+	discord/role.hpp
+	discord/role.cpp
+	discord/member.hpp
+	discord/member.cpp
+	discord/channel.hpp
+	discord/channel.cpp
+	discord/guild.hpp
+	discord/guild.cpp
+	discord/usersettings.hpp
+	discord/usersettings.cpp
+	discord/message.hpp
+	discord/message.cpp
 	windows/mainwindow.hpp
 	windows/mainwindow.cpp
 )

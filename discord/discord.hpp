@@ -61,8 +61,8 @@ public:
     using members_type = Store::members_type;
 
     const guilds_type &GetGuilds() const;
-    const UserData &GetUserData() const;
-    const UserSettingsData &GetUserSettings() const;
+    const User &GetUserData() const;
+    const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
     std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
@@ -71,10 +71,10 @@ public:
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     const MessageData *GetMessage(Snowflake id) const;
-    const ChannelData *GetChannel(Snowflake id) const;
-    const UserData *GetUser(Snowflake id) const;
-    const RoleData *GetRole(Snowflake id) const;
-    const GuildData *GetGuild(Snowflake id) const;
+    const Channel *GetChannel(Snowflake id) const;
+    const User *GetUser(Snowflake id) const;
+    const Role *GetRole(Snowflake id) const;
+    const Guild *GetGuild(Snowflake id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
 
@@ -110,8 +110,8 @@ private:
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
 
-    UserData m_user_data;
-    UserSettingsData m_user_settings;
+    User m_user_data;
+    UserSettings m_user_settings;
 
     Store m_store;
     HTTPClient m_http;

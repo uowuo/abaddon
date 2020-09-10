@@ -163,8 +163,8 @@ void ChannelList::SetListingFromGuildsInternal() {
 
     // map each category to its channels
 
-    std::unordered_map<Snowflake, std::vector<const ChannelData *>> cat_to_channels;
-    std::unordered_map<Snowflake, std::vector<const ChannelData *>> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
+    std::unordered_map<Snowflake, std::vector<const Channel *>> orphan_channels;
     for (const auto &[gid, guild] : guilds) {
         for (const auto &chan : guild.Channels) {
             switch (chan.Type) {
@@ -172,12 +172,12 @@ void ChannelList::SetListingFromGuildsInternal() {
                     if (chan.ParentID.IsValid()) {
                         auto it = cat_to_channels.find(chan.ParentID);
                         if (it == cat_to_channels.end())
-                            cat_to_channels[chan.ParentID] = std::vector<const ChannelData *>();
+                            cat_to_channels[chan.ParentID] = std::vector<const Channel *>();
                         cat_to_channels[chan.ParentID].push_back(&chan);
                     } else {
                         auto it = orphan_channels.find(gid);
                         if (it == orphan_channels.end())
-                            orphan_channels[gid] = std::vector<const ChannelData *>();
+                            orphan_channels[gid] = std::vector<const Channel *>();
                         orphan_channels[gid].push_back(&chan);
                     }
                 } break;
@@ -187,7 +187,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         }
     }
 
-    auto add_channel = [&](const Snowflake &id, const ChannelData &channel) -> Gtk::ListBoxRow * {
+    auto add_channel = [&](const Snowflake &id, const Channel &channel) -> Gtk::ListBoxRow * {
         auto *channel_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *channel_ev = Gtk::manage(new Gtk::EventBox);
         auto *channel_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -215,7 +215,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         return channel_row;
     };
 
-    auto add_category = [&](const Snowflake &id, const ChannelData &channel) -> Gtk::ListBoxRow * {
+    auto add_category = [&](const Snowflake &id, const Channel &channel) -> Gtk::ListBoxRow * {
         auto *category_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *category_ev = Gtk::manage(new Gtk::EventBox);
         auto *category_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -243,7 +243,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         info.Type = ListItemInfo::ListItemType::Category;
 
         if (cat_to_channels.find(id) != cat_to_channels.end()) {
-            std::map<int, const ChannelData *> sorted_channels;
+            std::map<int, const Channel *> sorted_channels;
 
             for (const auto channel : cat_to_channels[id]) {
                 assert(channel->Position != -1);
@@ -260,7 +260,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         return category_row;
     };
 
-    auto add_guild = [&](const Snowflake &id, const GuildData &guild) {
+    auto add_guild = [&](const Snowflake &id, const Guild &guild) {
         auto *guild_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *guild_ev = Gtk::manage(new Gtk::EventBox);
         auto *guild_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -287,7 +287,7 @@ void ChannelList::SetListingFromGuildsInternal() {
         info.Type = ListItemInfo::ListItemType::Guild;
 
         if (orphan_channels.find(id) != orphan_channels.end()) {
-            std::map<int, const ChannelData *> sorted_orphans;
+            std::map<int, const Channel *> sorted_orphans;
 
             for (const auto channel : orphan_channels[id]) {
                 assert(channel->Position != -1); // can this trigger?
@@ -301,7 +301,7 @@ void ChannelList::SetListingFromGuildsInternal() {
             }
         }
 
-        std::map<int, const ChannelData *> sorted_categories;
+        std::map<int, const Channel *> sorted_categories;
 
         for (const auto &channel : guild.Channels) {
             if (channel.Type == ChannelType::GUILD_CATEGORY) {
