@@ -8,6 +8,7 @@ enum class ChatDisplayType {
     Unknown,
     Text,
     Embed,
+    Image,
 };
 
 // contains the username and timestamp, chat items get stuck into its box
@@ -16,7 +17,7 @@ public:
     Snowflake UserID;
     Snowflake ChannelID;
 
-    ChatMessageContainer(const MessageData *data);
+    ChatMessageContainer(const Message *data);
     void AddNewContent(Gtk::Widget *widget, bool prepend = false);
     void Update();
 
@@ -68,7 +69,7 @@ class ChatMessageTextItem
     : public Gtk::TextView // oh well
     , public ChatMessageItem {
 public:
-    ChatMessageTextItem(const MessageData *data);
+    ChatMessageTextItem(const Message *data);
 
     void EditContent(std::string content);
 
@@ -92,7 +93,7 @@ class ChatMessageEmbedItem
     : public Gtk::EventBox
     , public ChatMessageItem {
 public:
-    ChatMessageEmbedItem(const MessageData *data);
+    ChatMessageEmbedItem(const Message *data);
 
     virtual void MarkAsDeleted();
     virtual void MarkAsEdited();

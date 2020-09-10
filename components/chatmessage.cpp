@@ -4,7 +4,7 @@
 #include "../abaddon.hpp"
 #include "../util.hpp"
 
-ChatMessageContainer::ChatMessageContainer(const MessageData *data) {
+ChatMessageContainer::ChatMessageContainer(const Message *data) {
     UserID = data->Author.ID;
     ChannelID = data->ChannelID;
 
@@ -141,7 +141,7 @@ void ChatMessageItem::AddMenuItem(Gtk::MenuItem *item) {
     m_menu.append(*item);
 }
 
-ChatMessageTextItem::ChatMessageTextItem(const MessageData *data) {
+ChatMessageTextItem::ChatMessageTextItem(const Message *data) {
     m_content = data->Content;
 
     get_style_context()->add_class("message-text");
@@ -196,7 +196,7 @@ void ChatMessageTextItem::UpdateAttributes() {
     }
 }
 
-ChatMessageEmbedItem::ChatMessageEmbedItem(const MessageData *data) {
+ChatMessageEmbedItem::ChatMessageEmbedItem(const Message *data) {
     m_embed = data->Embeds[0];
 
     DoLayout();

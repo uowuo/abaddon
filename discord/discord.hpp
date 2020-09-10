@@ -70,7 +70,7 @@ public:
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
-    const MessageData *GetMessage(Snowflake id) const;
+    const Message *GetMessage(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const User *GetUser(Snowflake id) const;
     const Role *GetRole(Snowflake id) const;

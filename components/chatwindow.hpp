@@ -29,8 +29,8 @@ protected:
     void AddNewHistoryInternal();
     void DeleteMessageInternal();
     void UpdateMessageContentInternal();
-    ChatDisplayType GetMessageDisplayType(const MessageData *data);
-    void ProcessMessage(const MessageData *data, bool prepend = false);
+    ChatDisplayType GetMessageDisplayType(const Message *data);
+    void ProcessMessage(const Message *data, bool prepend = false);
     int m_num_rows = 0; // youd think thered be a Gtk::ListBox::get_row_count or something but nope
     std::unordered_map<Snowflake, ChatMessageItem *> m_id_to_widget;
 

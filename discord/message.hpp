@@ -107,7 +107,7 @@ struct EmbedData {
     friend void from_json(const nlohmann::json &j, EmbedData &m);
 };
 
-struct MessageData {
+struct Message {
     Snowflake ID;        //
     Snowflake ChannelID; //
     Snowflake GuildID;   // opt
@@ -133,6 +133,6 @@ struct MessageData {
     // MessageReferenceData MessageReference; // opt
     MessageFlags Flags = MessageFlags::NONE; // opt
 
-    friend void from_json(const nlohmann::json &j, MessageData &m);
+    friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE
 };
