@@ -74,8 +74,8 @@ void MemberList::UpdateMemberListInternal() {
     }
 
     // process all the shit first so its in proper order
-    std::map<int, const RoleData *> pos_to_role;
-    std::map<int, std::vector<const UserData *>> pos_to_users;
+    std::map<int, const Role *> pos_to_role;
+    std::map<int, std::vector<const User *>> pos_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
 
@@ -106,7 +106,7 @@ void MemberList::UpdateMemberListInternal() {
         }
     }
 
-    auto add_user = [this, &user_to_color](const UserData *data) {
+    auto add_user = [this, &user_to_color](const User *data) {
         auto *user_row = Gtk::manage(new MemberListUserRow);
         user_row->ID = data->ID;
         auto *user_ev = Gtk::manage(new Gtk::EventBox);

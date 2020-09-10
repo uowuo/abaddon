@@ -1,18 +1,18 @@
 #include "store.hpp"
 
-void Store::SetUser(Snowflake id, const UserData &user) {
+void Store::SetUser(Snowflake id, const User &user) {
     m_users[id] = user;
 }
 
-void Store::SetChannel(Snowflake id, const ChannelData &channel) {
+void Store::SetChannel(Snowflake id, const Channel &channel) {
     m_channels[id] = channel;
 }
 
-void Store::SetGuild(Snowflake id, const GuildData &guild) {
+void Store::SetGuild(Snowflake id, const Guild &guild) {
     m_guilds[id] = guild;
 }
 
-void Store::SetRole(Snowflake id, const RoleData &role) {
+void Store::SetRole(Snowflake id, const Role &role) {
     m_roles[id] = role;
 }
 
@@ -20,32 +20,32 @@ void Store::SetMessage(Snowflake id, const MessageData &message) {
     m_messages[id] = message;
 }
 
-void Store::SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMemberData &data) {
+void Store::SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
     m_members[guild_id][user_id] = data;
 }
 
-const UserData *Store::GetUser(Snowflake id) const {
+const User *Store::GetUser(Snowflake id) const {
     auto it = m_users.find(id);
     if (it == m_users.end())
         return nullptr;
     return &it->second;
 }
 
-const ChannelData *Store::GetChannel(Snowflake id) const {
+const Channel *Store::GetChannel(Snowflake id) const {
     auto it = m_channels.find(id);
     if (it == m_channels.end())
         return nullptr;
     return &it->second;
 }
 
-const GuildData *Store::GetGuild(Snowflake id) const {
+const Guild *Store::GetGuild(Snowflake id) const {
     auto it = m_guilds.find(id);
     if (it == m_guilds.end())
         return nullptr;
     return &it->second;
 }
 
-const RoleData *Store::GetRole(Snowflake id) const {
+const Role *Store::GetRole(Snowflake id) const {
     auto it = m_roles.find(id);
     if (it == m_roles.end())
         return nullptr;
@@ -59,7 +59,7 @@ const MessageData *Store::GetMessage(Snowflake id) const {
     return &it->second;
 }
 
-const GuildMemberData *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {
+const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {
     auto git = m_members.find(guild_id);
     if (git == m_members.end())
         return nullptr;
