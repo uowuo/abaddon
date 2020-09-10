@@ -107,6 +107,18 @@ struct EmbedData {
     friend void from_json(const nlohmann::json &j, EmbedData &m);
 };
 
+struct AttachmentData {
+    Snowflake ID;         //
+    std::string Filename; //
+    int Bytes;            //
+    std::string URL;      //
+    std::string ProxyURL; //
+    int Height = -1;      // null
+    int Width = -1;       // null
+
+    friend void from_json(const nlohmann::json &j, AttachmentData &m);
+};
+
 struct Message {
     Snowflake ID;        //
     Snowflake ChannelID; //
@@ -121,8 +133,8 @@ struct Message {
     std::vector<User> Mentions;  //
     // std::vector<Role> MentionRoles; //
     // std::vector<ChannelMentionData> MentionChannels; // opt
-    // std::vector<AttachmentData> Attachments; //
-    std::vector<EmbedData> Embeds; //
+    std::vector<AttachmentData> Attachments; //
+    std::vector<EmbedData> Embeds;           //
     // std::vector<ReactionData> Reactions; // opt
     std::string Nonce;   // opt
     bool IsPinned;       //
