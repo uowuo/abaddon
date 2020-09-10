@@ -6,6 +6,7 @@
 #include "discord/discord.hpp"
 #include "windows/mainwindow.hpp"
 #include "settings.hpp"
+#include "filecache.hpp"
 
 #define APP_TITLE "Abaddon"
 
@@ -42,6 +43,8 @@ public:
 
     void ActionReloadCSS();
 
+    Cache &GetCache();
+
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
 
@@ -61,6 +64,8 @@ private:
     std::unordered_set<Snowflake> m_channels_history_loaded;
     std::unordered_map<Snowflake, Snowflake> m_oldest_listed_message;
     std::unordered_set<Snowflake> m_channels_history_loading;
+
+    Cache m_cache;
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;

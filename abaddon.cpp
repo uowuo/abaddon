@@ -283,6 +283,10 @@ void Abaddon::ActionReloadCSS() {
     }
 }
 
+Cache &Abaddon::GetCache() {
+    return m_cache;
+}
+
 int main(int argc, char **argv) {
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();

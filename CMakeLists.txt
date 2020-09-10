@@ -126,6 +126,8 @@ add_executable(abaddon
 	settings.hpp
 	settings.cpp
 	abaddon.cpp
+	filecache.hpp
+	filecache.cpp
 	components/channels.hpp
 	components/channels.cpp
 	components/chatmessage.hpp
