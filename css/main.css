@@ -1,15 +1,99 @@
 .embed {
-	background-color: #eeeeee;
-	border-radius: 5px;
-	padding: 10px;
+    background-color: #eeeeee;
+    border-radius: 5px;
+    padding: 10px;
 }
 
 .embed-footer {
-	margin-top: 5px;
-	font-size: 11px;
+    margin-top: 5px;
+    font-size: 11px;
 }
 
 .embed-author {
-	margin-bottom: 10px;
-	font-size: 12px;
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+
+.channel-list {
+    background-color: #2c3e50;
+}
+
+.channel-row-label {
+    padding: 5px;
+    color: #cfd8dc;
+}
+
+.channel-row:focus {
+    background-color: #34495e;
+}
+
+.channel-row-category {
+    padding-left: 15px;
+}
+
+.channel-row-channel {
+    padding-left: 30px;
+}
+
+.messages, .message-container {
+    background-color: #263238;
+}
+
+.messages {
+    padding: 15px;
+}
+
+.message-container + .message-container {
+    margin-top: 10px;
+}
+
+.message-container-timestamp {
+    color: #78909c;
+}
+
+.message-text {
+    padding-top: 5px;
+}
+
+.message-text + .message-text {
+    padding-top: 5px;
+}
+
+.message-text text {
+    background-color: #263238;
+    color: #cfd8dc;
+}
+
+.message-input, .message-input text {
+    padding: 10px 20px;
+    background-color: #37474f;
+    color: #cfd8dc;
+}
+
+.members {
+    background-color: #263238;
+}
+
+.members-row-label {
+    color: #cfd8dc;
+    padding: 5px;
+}
+
+.members-row-member {
+    padding: 0;
+    padding-left: 15px;
+}
+
+paned separator {
+    background: #37474f;
+}
+
+scrollbar {
+    background: #263238;
+    border-left: 1px solid transparent;
+}
+
+menubar, menu {
+	background: #263238;
+	color: #cccccc;
 }
