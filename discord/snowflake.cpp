@@ -3,8 +3,6 @@
 Snowflake::Snowflake()
     : m_num(Invalid) {}
 
-Snowflake::Snowflake(const Snowflake &s)
-    : m_num(s.m_num) {}
 
 Snowflake::Snowflake(uint64_t n)
     : m_num(n) {}

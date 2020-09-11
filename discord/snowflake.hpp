@@ -4,7 +4,6 @@
 
 struct Snowflake {
     Snowflake();
-    Snowflake(const Snowflake &s);
     Snowflake(uint64_t n);
     Snowflake(const std::string &str);
 
