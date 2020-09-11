@@ -115,3 +115,20 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("type", Type);
     JS_O("flags", Flags);
 }
+
+void Message::SetDeleted() {
+    m_deleted = true;
+}
+
+void Message::SetEdited(std::string new_content) {
+    m_edited = true;
+    Content = new_content;
+}
+
+bool Message::IsDeleted() const {
+    return m_deleted;
+}
+
+bool Message::IsEdited() const {
+    return m_edited;
+}

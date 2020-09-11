@@ -24,9 +24,23 @@ void Store::SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const Guil
     m_members[guild_id][user_id] = data;
 }
 
+User *Store::GetUser(Snowflake id) {
+    auto it = m_users.find(id);
+    if (it == m_users.end())
+        return nullptr;
+    return &it->second;
+}
+
 const User *Store::GetUser(Snowflake id) const {
     auto it = m_users.find(id);
     if (it == m_users.end())
+        return nullptr;
+    return &it->second;
+}
+
+Channel *Store::GetChannel(Snowflake id) {
+    auto it = m_channels.find(id);
+    if (it == m_channels.end())
         return nullptr;
     return &it->second;
 }
@@ -38,9 +52,23 @@ const Channel *Store::GetChannel(Snowflake id) const {
     return &it->second;
 }
 
+Guild *Store::GetGuild(Snowflake id) {
+    auto it = m_guilds.find(id);
+    if (it == m_guilds.end())
+        return nullptr;
+    return &it->second;
+}
+
 const Guild *Store::GetGuild(Snowflake id) const {
     auto it = m_guilds.find(id);
     if (it == m_guilds.end())
+        return nullptr;
+    return &it->second;
+}
+
+Role *Store::GetRole(Snowflake id) {
+    auto it = m_roles.find(id);
+    if (it == m_roles.end())
         return nullptr;
     return &it->second;
 }
@@ -52,11 +80,28 @@ const Role *Store::GetRole(Snowflake id) const {
     return &it->second;
 }
 
+Message *Store::GetMessage(Snowflake id) {
+    auto it = m_messages.find(id);
+    if (it == m_messages.end())
+        return nullptr;
+    return &it->second;
+}
+
 const Message *Store::GetMessage(Snowflake id) const {
     auto it = m_messages.find(id);
     if (it == m_messages.end())
         return nullptr;
     return &it->second;
+}
+
+GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) {
+    auto git = m_members.find(guild_id);
+    if (git == m_members.end())
+        return nullptr;
+    auto mit = git->second.find(user_id);
+    if (mit == git->second.end())
+        return nullptr;
+    return &mit->second;
 }
 
 const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {

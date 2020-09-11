@@ -373,6 +373,9 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
     MessageDeleteData data = msg.Data;
     m_signal_message_delete.emit(data.ID, data.ChannelID);
+    auto *cur = m_store.GetMessage(data.ID);
+    if (cur != nullptr)
+        cur->SetDeleted();
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -385,9 +388,7 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
         return;
 
     if (data.Content != current->Content) {
-        auto copy = *current;
-        copy.Content = data.Content;
-        m_store.SetMessage(copy.ID, copy);
+        current->SetEdited(data.Content);
         m_signal_message_update.emit(data.ID, data.ChannelID);
     }
 }

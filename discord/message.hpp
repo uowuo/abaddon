@@ -147,4 +147,14 @@ struct Message {
 
     friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE
+
+    // custom fields to track changes
+    void SetDeleted();
+    void SetEdited(std::string new_content);
+    bool IsDeleted() const;
+    bool IsEdited() const;
+
+private:
+    bool m_deleted = false;
+    bool m_edited = false;
 };

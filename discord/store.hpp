@@ -16,6 +16,12 @@ public:
     void SetMessage(Snowflake id, const Message &message);
     void SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
 
+    User *GetUser(Snowflake id);
+    Channel *GetChannel(Snowflake id);
+    Guild *GetGuild(Snowflake id);
+    Role *GetRole(Snowflake id);
+    Message *GetMessage(Snowflake id);
+    GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id);
     const User *GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
