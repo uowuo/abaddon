@@ -40,8 +40,7 @@ public:
 
     virtual void ShowMenu(const GdkEvent *event);
     void AddMenuItem(Gtk::MenuItem *item);
-    virtual void MarkAsDeleted() = 0;
-    virtual void MarkAsEdited() = 0;
+    virtual void Update() = 0;
 
 protected:
     void AttachMenuHandler(Gtk::Widget *widget);
@@ -74,16 +73,12 @@ public:
 
     void EditContent(std::string content);
 
-    virtual void MarkAsDeleted();
-    virtual void MarkAsEdited();
+    virtual void Update();
 
 protected:
     void UpdateAttributes();
 
     std::string m_content;
-
-    bool m_was_deleted = false;
-    bool m_was_edited = false;
 
     void on_menu_copy_content();
     Gtk::MenuItem *m_menu_copy_content;
@@ -96,15 +91,11 @@ class ChatMessageEmbedItem
 public:
     ChatMessageEmbedItem(const Message *data);
 
-    virtual void MarkAsDeleted();
-    virtual void MarkAsEdited();
+    virtual void Update();
 
 protected:
     void DoLayout();
     void UpdateAttributes();
-
-    bool m_was_deleted = false;
-    bool m_was_edited = false;
 
     EmbedData m_embed;
     Gtk::Box *m_main;

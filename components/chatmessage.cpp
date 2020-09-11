@@ -183,19 +183,15 @@ void ChatMessageTextItem::on_menu_copy_content() {
     Gtk::Clipboard::get()->set_text(m_content);
 }
 
-void ChatMessageTextItem::MarkAsDeleted() {
-    m_was_deleted = true;
-    UpdateAttributes();
-}
-
-void ChatMessageTextItem::MarkAsEdited() {
-    m_was_edited = true;
+void ChatMessageTextItem::Update() {
     UpdateAttributes();
 }
 
 void ChatMessageTextItem::UpdateAttributes() {
-    bool deleted = m_was_deleted;
-    bool edited = m_was_edited && !m_was_deleted;
+    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (data == nullptr) return;
+    bool deleted = data->IsDeleted();
+    bool edited = data->IsEdited();
 
     auto buf = get_buffer();
     buf->set_text(m_content);
@@ -334,14 +330,16 @@ void ChatMessageEmbedItem::DoLayout() {
 }
 
 void ChatMessageEmbedItem::UpdateAttributes() {
-    bool deleted = m_was_deleted;
-    bool edited = m_was_edited && !m_was_deleted;
+    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (data == nullptr) return;
+    bool deleted = data->IsDeleted();
+    bool edited = data->IsEdited();
 
     if (m_attrib_label == nullptr) {
         m_attrib_label = Gtk::manage(new Gtk::Label);
         m_attrib_label->set_use_markup(true);
         m_attrib_label->show();
-        m_main->pack_end(*m_attrib_label);
+        m_main->pack_start(*m_attrib_label);
     }
 
     if (deleted)
@@ -350,12 +348,6 @@ void ChatMessageEmbedItem::UpdateAttributes() {
         m_attrib_label->set_markup(" <span color='#999999'> [edited]</span>");
 }
 
-void ChatMessageEmbedItem::MarkAsDeleted() {
-    m_was_deleted = true;
-    // UpdateAttributes(); untested
-}
-
-void ChatMessageEmbedItem::MarkAsEdited() {
-    m_was_edited = true;
-    // UpdateAttributes();
+void ChatMessageEmbedItem::Update() {
+    UpdateAttributes();
 }
