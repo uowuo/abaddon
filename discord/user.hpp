@@ -28,4 +28,5 @@ struct User {
 
     bool HasAvatar() const;
     std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;
+    Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
 };
