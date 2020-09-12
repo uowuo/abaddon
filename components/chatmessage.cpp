@@ -14,12 +14,11 @@ ChatMessageContainer::ChatMessageContainer(const Message *data) {
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
 
-    static auto placeholder = Gdk::Pixbuf::create_from_file("res/decamarks.png", 32, 32);
     auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Author.GetAvatarURL());
     if (buf)
         m_avatar = Gtk::manage(new Gtk::Image(buf));
     else
-        m_avatar = Gtk::manage(new Gtk::Image(placeholder));
+        m_avatar = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(32)));
 
     m_avatar->set_valign(Gtk::ALIGN_START);
     m_avatar->set_margin_right(10);

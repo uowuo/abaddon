@@ -1,4 +1,5 @@
 #include "user.hpp"
+#include "../abaddon.hpp"
 
 bool User::HasAvatar() const {
     return Avatar.size() > 0;
@@ -6,6 +7,10 @@ bool User::HasAvatar() const {
 
 std::string User::GetAvatarURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
+}
+
+Snowflake User::GetHoistedRole(Snowflake guild_id, bool with_color) const {
+    return Abaddon::Get().GetDiscordClient().GetMemberHoistedRole(guild_id, ID, with_color);
 }
 
 void from_json(const nlohmann::json &j, User &m) {

@@ -2,6 +2,44 @@
 #include "../abaddon.hpp"
 #include "../util.hpp"
 
+MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
+    ID = data->ID;
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_label = Gtk::manage(new Gtk::Label);
+    m_avatar = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(16)));
+
+    get_style_context()->add_class("members-row");
+    get_style_context()->add_class("members-row-member");
+    m_label->get_style_context()->add_class("members-row-label");
+
+    m_label->set_single_line_mode(true);
+    m_label->set_ellipsize(Pango::ELLIPSIZE_END);
+    if (data != nullptr) {
+        std::string display = data->Username + "#" + data->Discriminator;
+        auto col_id = data->GetHoistedRole(guild_id, true);
+        if (col_id.IsValid()) {
+            auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
+            m_label->set_use_markup(true);
+            m_label->set_markup("<span color='#" + IntToCSSColor(color) + "'>" + Glib::Markup::escape_text(display) + "</span>");
+
+        } else {
+            m_label->set_text(display);
+        }
+    } else {
+        m_label->set_use_markup(true);
+        m_label->set_markup("<i>[unknown user]</i>");
+    }
+    m_label->set_halign(Gtk::ALIGN_START);
+    m_box->add(*m_avatar);
+    m_box->add(*m_label);
+    add(*m_box);
+    show_all();
+}
+
+void MemberListUserRow::SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf) {
+    m_avatar->property_pixbuf() = pixbuf;
+}
+
 MemberList::MemberList() {
     m_update_member_list_dispatcher.connect(sigc::mem_fun(*this, &MemberList::UpdateMemberListInternal));
 
@@ -52,6 +90,8 @@ void MemberList::UpdateMemberList() {
 }
 
 void MemberList::UpdateMemberListInternal() {
+    m_id_to_row.clear();
+
     auto children = m_listbox->get_children();
     auto it = children.begin();
     while (it != children.end()) {
@@ -107,38 +147,31 @@ void MemberList::UpdateMemberListInternal() {
     }
 
     auto add_user = [this, &user_to_color](const User *data) {
-        auto *user_row = Gtk::manage(new MemberListUserRow);
-        user_row->ID = data->ID;
-        auto *user_ev = Gtk::manage(new Gtk::EventBox);
-        auto *user_lbl = Gtk::manage(new Gtk::Label);
+        auto *row = Gtk::manage(new MemberListUserRow(m_guild_id, data));
+        m_id_to_row[data->ID] = row;
 
-        user_row->get_style_context()->add_class("members-row");
-        user_row->get_style_context()->add_class("members-row-member");
-        user_lbl->get_style_context()->add_class("members-row-label");
-
-        user_lbl->set_single_line_mode(true);
-        user_lbl->set_ellipsize(Pango::ELLIPSIZE_END);
-        if (data != nullptr) {
-            std::string display = data->Username + "#" + data->Discriminator;
-            if (user_to_color.find(data->ID) != user_to_color.end()) {
-                auto color = user_to_color.at(data->ID);
-                user_lbl->set_use_markup(true);
-                user_lbl->set_markup("<span color='#" + IntToCSSColor(color) + "'>" + Glib::Markup::escape_text(display) + "</span>");
-
+        if (data->HasAvatar()) {
+            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetAvatarURL("png", "16"));
+            if (buf) {
+                row->SetAvatarFromPixbuf(buf);
             } else {
-                user_lbl->set_text(display);
-            }
+                Snowflake id = data->ID;
+                Abaddon::Get().GetImageManager().LoadFromURL(data->GetAvatarURL("png", "16"), [this, id](Glib::RefPtr<Gdk::Pixbuf> pbuf) {
+                    Glib::signal_idle().connect([this, id, pbuf]() -> bool {
+                        if (m_id_to_row.find(id) != m_id_to_row.end()) {
+                            auto *foundrow = static_cast<MemberListUserRow *>(m_id_to_row.at(id));
+                            if (foundrow != nullptr)
+                                foundrow->SetAvatarFromPixbuf(pbuf);
+                        }
 
-            AttachUserMenuHandler(user_row, data->ID);
-        } else {
-            user_lbl->set_use_markup(true);
-            user_lbl->set_markup("<i>[unknown user]</i>");
+                        return false;
+                    });
+                });
+            }
         }
-        user_lbl->set_halign(Gtk::ALIGN_START);
-        user_ev->add(*user_lbl);
-        user_row->add(*user_ev);
-        user_row->show_all();
-        m_listbox->add(*user_row);
+
+        AttachUserMenuHandler(row, data->ID);
+        m_listbox->add(*row);
     };
 
     auto add_role = [this](std::string name) {
