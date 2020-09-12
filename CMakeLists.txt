@@ -128,6 +128,8 @@ add_executable(abaddon
 	abaddon.cpp
 	filecache.hpp
 	filecache.cpp
+	"imgmanager.hpp"
+	"imgmanager.cpp"
 	components/channels.hpp
 	components/channels.cpp
 	components/chatmessage.hpp

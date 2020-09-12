@@ -199,6 +199,8 @@ void Abaddon::ActionCopyGuildID(Snowflake id) {
 }
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {
+    if (id == m_main_window->GetChatActiveChannel()) return;
+
     auto *channel = m_discord.GetChannel(id);
     if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM)
         m_discord.SendLazyLoad(id);
@@ -283,8 +285,8 @@ void Abaddon::ActionReloadCSS() {
     }
 }
 
-Cache &Abaddon::GetCache() {
-    return m_cache;
+ImageManager &Abaddon::GetImageManager() {
+    return m_img_mgr;
 }
 
 int main(int argc, char **argv) {

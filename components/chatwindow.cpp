@@ -115,6 +115,25 @@ void ChatWindow::ProcessMessage(const Message *data, bool prepend) {
     } else {
         container = Gtk::manage(new ChatMessageContainer(data)); // only accesses timestamp and user
         container->Update();
+
+        auto user_id = data->Author.ID;
+        const auto *user = Abaddon::Get().GetDiscordClient().GetUser(user_id);
+        if (user == nullptr) return;
+        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL(), [this, user_id](Glib::RefPtr<Gdk::Pixbuf> buf) {
+            // am i retarded?
+            Glib::signal_idle().connect([this, buf, user_id]() -> bool {
+                auto children = m_listbox->get_children();
+                for (auto child : children) {
+                    auto *row = dynamic_cast<ChatMessageContainer *>(child);
+                    if (row == nullptr) continue;
+                    if (row->UserID == user_id) {
+                        row->SetAvatarFromPixbuf(buf);
+                    }
+                }
+
+                return false;
+            });
+        });
         m_num_rows++;
     }
 
