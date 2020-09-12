@@ -19,6 +19,7 @@ public:
 
     ChatMessageContainer(const Message *data);
     void AddNewContent(Gtk::Widget *widget, bool prepend = false);
+    void SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
     void Update();
 
 protected:
