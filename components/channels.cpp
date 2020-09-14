@@ -301,19 +301,21 @@ void ChannelList::SetListingFromGuildsInternal() {
             }
         }
 
-        std::map<int, const Channel *> sorted_categories;
+        std::map<int, std::vector<const Channel *>> sorted_categories;
 
         for (const auto &channel : guild.Channels) {
             if (channel.Type == ChannelType::GUILD_CATEGORY) {
-                assert(channel.Position != -1);
-                sorted_categories[channel.Position] = &channel;
+                sorted_categories[channel.Position].push_back(&channel);
             }
         }
 
-        for (const auto &[pos, channel] : sorted_categories) {
-            if (channel->Type == ChannelType::GUILD_CATEGORY) {
-                auto category_row = add_category(channel->ID, *channel);
-                info.Children.insert(category_row);
+        for (auto &[pos, channelvec] : sorted_categories) {
+            std::sort(channelvec.begin(), channelvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
+            for (const auto channel : channelvec) {
+                if (channel->Type == ChannelType::GUILD_CATEGORY) {
+                    auto category_row = add_category(channel->ID, *channel);
+                    info.Children.insert(category_row);
+                }
             }
         }
 
