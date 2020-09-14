@@ -21,6 +21,7 @@ public:
     void UpdateMessageContent(Snowflake id);
     void Clear();
     void InsertChatInput(std::string text);
+    Snowflake GetOldestListedMessage();
 
 protected:
     void ScrollToBottom();

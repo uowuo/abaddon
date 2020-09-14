@@ -237,6 +237,18 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     if (m_channels_history_loading.find(id) != m_channels_history_loading.end())
         return;
 
+    Snowflake before_id = m_main_window->GetChatOldestListedMessage();
+    auto knownset = m_discord.GetMessagesForChannel(id);
+    std::vector<Snowflake> knownvec(knownset.begin(), knownset.end());
+    std::sort(knownvec.begin(), knownvec.end());
+    auto latest = std::find_if(knownvec.begin(), knownvec.end(), [&before_id](Snowflake x) -> bool { return x == before_id; });
+    int distance = std::distance(knownvec.begin(), latest);
+
+    if (distance >= 50) {
+        m_main_window->UpdateChatPrependHistory(std::vector<Snowflake>(knownvec.begin() + distance - 50, knownvec.begin() + distance));
+        return;
+    }
+
     m_channels_history_loading.insert(id);
 
     m_discord.FetchMessagesInChannelBefore(id, m_oldest_listed_message[id], [this, id](const std::vector<Snowflake> &msgs) {

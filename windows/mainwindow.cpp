@@ -111,7 +111,17 @@ void MainWindow::UpdateChannelListing() {
 
 void MainWindow::UpdateChatWindowContents() {
     auto &discord = Abaddon::Get().GetDiscordClient();
-    m_chat.SetMessages(discord.GetMessagesForChannel(m_chat.GetActiveChannel()));
+    auto allmsgs = discord.GetMessagesForChannel(m_chat.GetActiveChannel());
+    if (allmsgs.size() > 50) {
+        std::vector<Snowflake> msgvec(allmsgs.begin(), allmsgs.end());
+        std::vector<Snowflake> cutvec(msgvec.end() - 50, msgvec.end());
+        std::set<Snowflake> msgs;
+        for (const auto s : cutvec)
+            msgs.insert(s);
+        m_chat.SetMessages(msgs);
+    } else {
+        m_chat.SetMessages(allmsgs);
+    }
     m_members.UpdateMemberList();
 }
 
@@ -149,6 +159,10 @@ void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
 
 void MainWindow::InsertChatInput(std::string text) {
     m_chat.InsertChatInput(text);
+}
+
+Snowflake MainWindow::GetChatOldestListedMessage() {
+    return m_chat.GetOldestListedMessage();
 }
 
 ChannelList *MainWindow::GetChannelList() {
