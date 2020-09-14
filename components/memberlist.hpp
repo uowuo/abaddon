@@ -12,6 +12,7 @@ public:
     Snowflake ID;
 
 private:
+    Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::Image *m_avatar;
     Gtk::Label *m_label;

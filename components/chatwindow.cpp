@@ -237,6 +237,17 @@ void ChatWindow::InsertChatInput(std::string text) {
     m_input->grab_focus();
 }
 
+Snowflake ChatWindow::GetOldestListedMessage() {
+    Snowflake m;
+
+    for (const auto& [id, widget] : m_id_to_widget) {
+        if (id < m)
+            m = id;
+    }
+
+    return m;
+}
+
 void ChatWindow::ScrollToBottom() {
     auto x = m_scroll->get_vadjustment();
     x->set_value(x->get_upper());

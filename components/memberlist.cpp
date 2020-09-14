@@ -4,6 +4,7 @@
 
 MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
     ID = data->ID;
+    m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_label = Gtk::manage(new Gtk::Label);
     m_avatar = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(16)));
@@ -11,6 +12,7 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
     get_style_context()->add_class("members-row");
     get_style_context()->add_class("members-row-member");
     m_label->get_style_context()->add_class("members-row-label");
+    m_avatar->get_style_context()->add_class("members-row-avatar");
 
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -32,7 +34,8 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
     m_label->set_halign(Gtk::ALIGN_START);
     m_box->add(*m_avatar);
     m_box->add(*m_label);
-    add(*m_box);
+    m_ev->add(*m_box);
+    add(*m_ev);
     show_all();
 }
 

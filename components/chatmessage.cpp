@@ -26,6 +26,7 @@ ChatMessageContainer::ChatMessageContainer(const Message *data) {
     get_style_context()->add_class("message-container");
     m_author->get_style_context()->add_class("message-container-author");
     m_timestamp->get_style_context()->add_class("message-container-timestamp");
+    m_avatar->get_style_context()->add_class("message-container-avatar");
 
     m_author->set_markup("<span weight=\"bold\">" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
     m_author->set_single_line_mode(true);
