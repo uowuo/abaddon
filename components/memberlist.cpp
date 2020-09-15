@@ -212,7 +212,9 @@ void MemberList::UpdateMemberListInternal() {
 
     add_role("@everyone");
     for (const auto &id : roleless_users) {
-        add_user(discord.GetUser(id));
+        const auto *user = discord.GetUser(id);
+        if (user != nullptr)
+            add_user(user);
     }
 }
 
