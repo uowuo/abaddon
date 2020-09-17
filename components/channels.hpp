@@ -7,33 +7,87 @@
 #include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
+class ChannelListRow : public Gtk::ListBoxRow {
+public:
+    bool IsUserCollapsed;
+    bool IsHidden;
+    Snowflake ID;
+    std::unordered_set<ChannelListRow *> Children;
+
+    typedef sigc::signal<void> type_signal_list_collapse;
+    typedef sigc::signal<void> type_signal_list_uncollapse;
+
+    type_signal_list_collapse signal_list_collapse();
+    type_signal_list_uncollapse signal_list_uncollapse();
+
+protected:
+    type_signal_list_collapse m_signal_list_collapse;
+    type_signal_list_uncollapse m_signal_list_uncollapse;
+};
+
+class ChannelListRowDMHeader : public ChannelListRow {
+public:
+    ChannelListRowDMHeader();
+
+protected:
+    Gtk::EventBox *m_ev;
+    Gtk::Box *m_box;
+    Gtk::Label *m_lbl;
+};
+
+class ChannelListRowDMChannel : public ChannelListRow {
+public:
+    ChannelListRowDMChannel(const Channel *data);
+
+protected:
+    Gtk::EventBox *m_ev;
+    Gtk::Box *m_box;
+    Gtk::Label *m_lbl;
+};
+
+class ChannelListRowGuild : public ChannelListRow {
+public:
+    ChannelListRowGuild(const Guild *data);
+
+    int GuildIndex;
+
+protected:
+    Gtk::EventBox *m_ev;
+    Gtk::Box *m_box;
+    Gtk::Label *m_lbl;
+};
+
+class ChannelListRowCategory : public ChannelListRow {
+public:
+    ChannelListRowCategory(const Channel *data);
+
+protected:
+    Gtk::EventBox *m_ev;
+    Gtk::Box *m_box;
+    Gtk::Label *m_lbl;
+    Gtk::Arrow *m_arrow;
+};
+
+class ChannelListRowChannel : public ChannelListRow {
+public:
+    ChannelListRowChannel(const Channel *data);
+
+protected:
+    Gtk::EventBox *m_ev;
+    Gtk::Box *m_box;
+    Gtk::Label *m_lbl;
+};
+
 class ChannelList {
 public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
-    void SetListingFromGuilds(const DiscordClient::guilds_type &guilds);
+    void UpdateListing();
     void Clear();
 
 protected:
     Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_main;
-
-    struct ListItemInfo {
-        enum ListItemType {
-            Guild,
-            Category,
-            Channel,
-        };
-        int GuildIndex;
-        Snowflake ID;
-        std::unordered_set<Gtk::ListBoxRow *> Children;
-        bool IsUserCollapsed;
-        bool IsHidden;
-        ListItemType Type;
-        // for categories
-        Gtk::Arrow *CatArrow = nullptr;
-    };
-    std::unordered_map<Gtk::ListBoxRow *, ListItemInfo> m_infos;
 
     void on_row_activated(Gtk::ListBoxRow *row);
 
@@ -47,10 +101,10 @@ protected:
     void on_menu_copyid();
 
     Glib::Dispatcher m_update_dispatcher;
-    mutable std::mutex m_update_mutex;
-    std::queue<DiscordClient::guilds_type> m_update_queue;
+    //mutable std::mutex m_update_mutex;
+    //std::queue<std::unordered_set<Snowflake>> m_update_queue;
     void AddPrivateChannels(); // retard moment
-    void SetListingFromGuildsInternal();
+    void UpdateListingInternal();
     void AttachMenuHandler(Gtk::ListBoxRow *row);
 
 public:

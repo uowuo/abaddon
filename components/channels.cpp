@@ -4,6 +4,117 @@
 #include <unordered_map>
 #include "../abaddon.hpp"
 
+ChannelListRow::type_signal_list_collapse ChannelListRow::signal_list_collapse() {
+    return m_signal_list_collapse;
+}
+
+ChannelListRow::type_signal_list_uncollapse ChannelListRow::signal_list_uncollapse() {
+    return m_signal_list_uncollapse;
+}
+
+ChannelListRowDMHeader::ChannelListRowDMHeader() {
+    m_ev = Gtk::manage(new Gtk::EventBox);
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_lbl = Gtk::manage(new Gtk::Label);
+
+    get_style_context()->add_class("channel-row");
+    m_lbl->get_style_context()->add_class("channel-row-label");
+
+    m_lbl->set_use_markup(true);
+    m_lbl->set_markup("<b>Direct Messages</b>");
+    m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_lbl);
+
+    m_ev->add(*m_box);
+    add(*m_ev);
+    show_all_children();
+}
+
+ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
+    ID = data->ID;
+    m_ev = Gtk::manage(new Gtk::EventBox);
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_lbl = Gtk::manage(new Gtk::Label);
+
+    get_style_context()->add_class("channel-row");
+    m_lbl->get_style_context()->add_class("channel-row-label");
+
+    if (data->Type == ChannelType::DM)
+        m_lbl->set_text(data->Recipients[0].Username);
+    else if (data->Type == ChannelType::GROUP_DM)
+        m_lbl->set_text(std::to_string(data->Recipients.size()) + " users");
+
+    m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_lbl);
+    m_ev->add(*m_box);
+    add(*m_ev);
+    show_all_children();
+}
+
+ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
+    ID = data->ID;
+    m_ev = Gtk::manage(new Gtk::EventBox);
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_lbl = Gtk::manage(new Gtk::Label);
+
+    get_style_context()->add_class("channel-row");
+    get_style_context()->add_class("channel-row-guild");
+    m_lbl->get_style_context()->add_class("channel-row-label");
+
+    m_lbl->set_markup("<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
+    m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_lbl);
+    m_ev->add(*m_box);
+    add(*m_ev);
+    show_all_children();
+}
+
+ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
+    ID = data->ID;
+    m_ev = Gtk::manage(new Gtk::EventBox);
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_lbl = Gtk::manage(new Gtk::Label);
+    m_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
+
+    get_style_context()->add_class("channel-row");
+    get_style_context()->add_class("channel-row-category");
+    m_lbl->get_style_context()->add_class("channel-row-label");
+
+    m_signal_list_collapse.connect([this]() {
+        m_arrow->set(Gtk::ARROW_RIGHT, Gtk::SHADOW_NONE);
+    });
+
+    m_signal_list_uncollapse.connect([this]() {
+        m_arrow->set(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
+    });
+
+    m_lbl->set_text(data->Name);
+    m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_arrow);
+    m_box->pack_start(*m_lbl);
+    m_ev->add(*m_box);
+    add(*m_ev);
+    show_all_children();
+}
+
+ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
+    ID = data->ID;
+    m_ev = Gtk::manage(new Gtk::EventBox);
+    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_lbl = Gtk::manage(new Gtk::Label);
+
+    get_style_context()->add_class("channel-row");
+    get_style_context()->add_class("channel-row-channel");
+    m_lbl->get_style_context()->add_class("channel-row-label");
+
+    m_lbl->set_text("#" + data->Name);
+    m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_lbl);
+    m_ev->add(*m_box);
+    add(*m_ev);
+    show_all_children();
+}
+
 ChannelList::ChannelList() {
     m_main = Gtk::manage(new Gtk::ScrolledWindow);
     m_list = Gtk::manage(new Gtk::ListBox);
@@ -30,54 +141,50 @@ ChannelList::ChannelList() {
     m_main->add(*m_list);
     m_main->show_all();
 
-    m_update_dispatcher.connect(sigc::mem_fun(*this, &ChannelList::SetListingFromGuildsInternal));
+    m_update_dispatcher.connect(sigc::mem_fun(*this, &ChannelList::UpdateListingInternal));
 }
 
 Gtk::Widget *ChannelList::GetRoot() const {
     return m_main;
 }
 
-void ChannelList::SetListingFromGuilds(const DiscordClient::guilds_type &guilds) {
-    std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_queue.push(guilds);
+void ChannelList::UpdateListing() {
+    //std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_dispatcher.emit();
 }
 
 void ChannelList::Clear() {
-    std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_queue.push(DiscordClient::guilds_type());
+    //std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_dispatcher.emit();
 }
 
-void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
-    auto &info = m_infos[row];
-    bool new_collapsed = !info.IsUserCollapsed;
-    info.IsUserCollapsed = new_collapsed;
+void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
+    auto row = dynamic_cast<ChannelListRow *>(tmprow);
+    if (row == nullptr) return;
+    bool new_collapsed = !row->IsUserCollapsed;
+    row->IsUserCollapsed = new_collapsed;
 
-    if (info.Type == ListItemInfo::ListItemType::Channel) {
-        m_signal_action_channel_item_select.emit(info.ID);
-    }
-
-    if (info.CatArrow != nullptr)
-        info.CatArrow->set(new_collapsed ? Gtk::ARROW_RIGHT : Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
+    // kinda ugly
+    if (dynamic_cast<ChannelListRowChannel *>(row) != nullptr || dynamic_cast<ChannelListRowDMChannel *>(row) != nullptr)
+        m_signal_action_channel_item_select.emit(row->ID);
 
     if (new_collapsed) {
-        std::function<void(Gtk::ListBoxRow *)> collapse_children = [&](Gtk::ListBoxRow *row) {
-            for (auto child : m_infos[row].Children) {
-                auto &row_info = m_infos[child];
-                row_info.IsHidden = true;
+        std::function<void(ChannelListRow *)> collapse_children = [&](ChannelListRow *row) {
+            row->signal_list_collapse().emit();
+            for (auto child : row->Children) {
+                row->IsHidden = true;
                 child->hide();
                 collapse_children(child);
             }
         };
         collapse_children(row);
     } else {
-        std::function<void(Gtk::ListBoxRow *)> restore_children = [&](Gtk::ListBoxRow *row) {
-            auto &row_info = m_infos[row];
+        std::function<void(ChannelListRow *)> restore_children = [&](ChannelListRow *row) {
+            row->signal_list_uncollapse().emit();
             row->show();
-            row_info.IsHidden = false;
-            if (!row_info.IsUserCollapsed)
-                for (auto row : row_info.Children)
+            row->IsHidden = false;
+            if (!row->IsUserCollapsed)
+                for (auto row : row->Children)
                     restore_children(row);
         };
         restore_children(row);
@@ -87,67 +194,23 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *row) {
 void ChannelList::AddPrivateChannels() {
     auto dms = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
 
-    auto *parent_row = Gtk::manage(new Gtk::ListBoxRow);
-    auto *parent_ev = Gtk::manage(new Gtk::EventBox);
-    auto *parent_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    auto *parent_label = Gtk::manage(new Gtk::Label);
-    parent_label->set_use_markup(true);
-    parent_label->set_markup("<b>Direct Messages</b>");
-    parent_box->set_halign(Gtk::ALIGN_START);
-    parent_box->pack_start(*parent_label);
-    parent_ev->add(*parent_box);
-    parent_row->add(*parent_ev);
+    auto *parent_row = Gtk::manage(new ChannelListRowDMHeader);
     parent_row->show_all();
-    parent_row->get_style_context()->add_class("channel-row");
-    parent_label->get_style_context()->add_class("channel-row-label");
+    parent_row->IsUserCollapsed = true;
+    parent_row->IsHidden = false;
     m_list->add(*parent_row);
 
-    ListItemInfo parent_info;
-    parent_info.IsUserCollapsed = true;
-    parent_info.IsHidden = false;
-    parent_info.Type = ListItemInfo::ListItemType::Guild; // good nuf
-
-    for (const auto &dmid : dms) {
-        auto *data = Abaddon::Get().GetDiscordClient().GetChannel(dmid);
-
-        auto *dm_row = Gtk::manage(new Gtk::ListBoxRow);
-        auto *dm_ev = Gtk::manage(new Gtk::EventBox);
-        auto *dm_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        auto *dm_label = Gtk::manage(new Gtk::Label);
-
-        dm_row->get_style_context()->add_class("channel-row");
-        dm_label->get_style_context()->add_class("channel-row-label");
-
-        if (data->Type == ChannelType::DM)
-            dm_label->set_text(data->Recipients[0].Username);
-        else
-            dm_label->set_text(std::to_string(data->Recipients.size()) + " users");
-        dm_box->set_halign(Gtk::ALIGN_START);
-        dm_box->pack_start(*dm_label);
-        dm_ev->add(*dm_box);
-        dm_row->add(*dm_ev);
-        dm_row->show_all_children();
+    for (const auto &dm : dms) {
+        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(dm)));
+        dm_row->IsUserCollapsed = false;
+        dm_row->IsHidden = false;
         m_list->add(*dm_row);
-
-        ListItemInfo info;
-        info.ID = dmid;
-        info.IsUserCollapsed = false;
-        info.IsHidden = false;
-        info.Type = ListItemInfo::ListItemType::Channel;
-        m_infos[dm_row] = std::move(info);
-        parent_info.Children.insert(dm_row);
+        parent_row->Children.insert(dm_row);
     }
-
-    m_infos[parent_row] = std::move(parent_info);
 }
 
-void ChannelList::SetListingFromGuildsInternal() {
-    DiscordClient::guilds_type guilds;
-    {
-        std::scoped_lock<std::mutex> guard(m_update_mutex);
-        guilds = m_update_queue.front();
-        m_update_queue.pop();
-    }
+void ChannelList::UpdateListingInternal() {
+    std::unordered_set<Snowflake> guilds = Abaddon::Get().GetDiscordClient().GetGuildsID();
 
     auto children = m_list->get_children();
     auto it = children.begin();
@@ -164,22 +227,16 @@ void ChannelList::SetListingFromGuildsInternal() {
     // map each category to its channels
 
     std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
-    std::unordered_map<Snowflake, std::vector<const Channel *>> orphan_channels;
-    for (const auto &[gid, guild] : guilds) {
-        for (const auto &chan : guild.Channels) {
+    std::unordered_map<Snowflake, std::map<Snowflake, const Channel *>> orphan_channels;
+    for (const auto gid : guilds) {
+        const auto *guild = Abaddon::Get().GetDiscordClient().GetGuild(gid);
+        for (const auto &chan : guild->Channels) {
             switch (chan.Type) {
                 case ChannelType::GUILD_TEXT: {
-                    if (chan.ParentID.IsValid()) {
-                        auto it = cat_to_channels.find(chan.ParentID);
-                        if (it == cat_to_channels.end())
-                            cat_to_channels[chan.ParentID] = std::vector<const Channel *>();
+                    if (chan.ParentID.IsValid())
                         cat_to_channels[chan.ParentID].push_back(&chan);
-                    } else {
-                        auto it = orphan_channels.find(gid);
-                        if (it == orphan_channels.end())
-                            orphan_channels[gid] = std::vector<const Channel *>();
-                        orphan_channels[gid].push_back(&chan);
-                    }
+                    else
+                        orphan_channels[gid][chan.Position] = &chan;
                 } break;
                 default:
                     break;
@@ -187,170 +244,95 @@ void ChannelList::SetListingFromGuildsInternal() {
         }
     }
 
-    auto add_channel = [&](const Snowflake &id, const Channel &channel) -> Gtk::ListBoxRow * {
-        auto *channel_row = Gtk::manage(new Gtk::ListBoxRow);
-        auto *channel_ev = Gtk::manage(new Gtk::EventBox);
-        auto *channel_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        auto *channel_label = Gtk::manage(new Gtk::Label);
-
-        channel_row->get_style_context()->add_class("channel-row");
-        channel_row->get_style_context()->add_class("channel-row-channel");
-        channel_label->get_style_context()->add_class("channel-row-label");
-
-        channel_label->set_text("#" + channel.Name);
-        channel_box->set_halign(Gtk::ALIGN_START);
-        channel_box->pack_start(*channel_label);
-        channel_ev->add(*channel_box);
-        channel_row->add(*channel_ev);
-        channel_row->show_all_children();
-        m_list->add(*channel_row);
-
-        ListItemInfo info;
-        info.ID = id;
-        info.IsUserCollapsed = false;
-        info.IsHidden = false;
-        info.Type = ListItemInfo::ListItemType::Channel;
-
-        m_infos[channel_row] = std::move(info);
-        return channel_row;
-    };
-
-    auto add_category = [&](const Snowflake &id, const Channel &channel) -> Gtk::ListBoxRow * {
-        auto *category_row = Gtk::manage(new Gtk::ListBoxRow);
-        auto *category_ev = Gtk::manage(new Gtk::EventBox);
-        auto *category_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        auto *category_label = Gtk::manage(new Gtk::Label);
-        auto *category_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
-
-        category_row->get_style_context()->add_class("channel-row");
-        category_row->get_style_context()->add_class("channel-row-category");
-        category_label->get_style_context()->add_class("channel-row-label");
-
-        category_label->set_text(channel.Name);
-        category_box->set_halign(Gtk::ALIGN_START);
-        category_box->pack_start(*category_arrow);
-        category_box->pack_start(*category_label);
-        category_ev->add(*category_box);
-        category_row->add(*category_ev);
-        category_row->show_all_children();
-        m_list->add(*category_row);
-
-        ListItemInfo info;
-        info.ID = id;
-        info.IsUserCollapsed = false;
-        info.IsHidden = true;
-        info.CatArrow = category_arrow;
-        info.Type = ListItemInfo::ListItemType::Category;
-
-        if (cat_to_channels.find(id) != cat_to_channels.end()) {
-            std::map<int, const Channel *> sorted_channels;
-
-            for (const auto channel : cat_to_channels[id]) {
-                assert(channel->Position != -1);
-                sorted_channels[channel->Position] = channel;
-            }
-
-            for (const auto &[pos, channel] : sorted_channels) {
-                auto channel_row = add_channel(channel->ID, *channel);
-                info.Children.insert(channel_row);
-            }
-        }
-
-        m_infos[category_row] = std::move(info);
-        return category_row;
-    };
-
-    auto add_guild = [&](const Snowflake &id, const Guild &guild) {
-        auto *guild_row = Gtk::manage(new Gtk::ListBoxRow);
-        auto *guild_ev = Gtk::manage(new Gtk::EventBox);
-        auto *guild_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        auto *guild_label = Gtk::manage(new Gtk::Label);
-
-        guild_row->get_style_context()->add_class("channel-row");
-        guild_row->get_style_context()->add_class("channel-row-guild");
-        guild_label->get_style_context()->add_class("channel-row-label");
-
-        guild_label->set_markup("<b>" + Glib::Markup::escape_text(guild.Name) + "</b>");
-        guild_box->set_halign(Gtk::ALIGN_START);
-        guild_box->pack_start(*guild_label);
-        guild_ev->add(*guild_box);
-        guild_row->add(*guild_ev);
+    // idk why i even bother with the queue
+    auto sorted_guilds = Abaddon::Get().GetDiscordClient().GetUserSortedGuilds();
+    for (auto gid : sorted_guilds) {
+        // add guild row
+        const auto *guild_data = Abaddon::Get().GetDiscordClient().GetGuild(gid);
+        auto *guild_row = Gtk::manage(new ChannelListRowGuild(guild_data));
         guild_row->show_all();
+        guild_row->IsUserCollapsed = true;
+        guild_row->IsHidden = false;
+        guild_row->GuildIndex = m_guild_count++;
         m_list->add(*guild_row);
         AttachMenuHandler(guild_row);
 
-        ListItemInfo info;
-        info.ID = id;
-        info.IsUserCollapsed = true;
-        info.IsHidden = false;
-        info.GuildIndex = m_guild_count++;
-        info.Type = ListItemInfo::ListItemType::Guild;
-
-        if (orphan_channels.find(id) != orphan_channels.end()) {
-            std::map<int, const Channel *> sorted_orphans;
-
-            for (const auto channel : orphan_channels[id]) {
-                assert(channel->Position != -1); // can this trigger?
-                sorted_orphans[channel->Position] = channel;
-            }
-
-            for (const auto &[pos, channel] : sorted_orphans) {
-                auto channel_row = add_channel(channel->ID, *channel);
-                m_infos[channel_row].IsHidden = true;
-                info.Children.insert(channel_row);
+        // add channels with no parent category
+        if (orphan_channels.find(gid) != orphan_channels.end()) {
+            for (const auto &[pos, channel] : orphan_channels.at(gid)) {
+                auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+                chan_row->IsUserCollapsed = false;
+                chan_row->IsHidden = true;
+                m_list->add(*chan_row);
+                guild_row->Children.insert(chan_row);
             }
         }
 
+        // categories
         std::map<int, std::vector<const Channel *>> sorted_categories;
-
-        for (const auto &channel : guild.Channels) {
-            if (channel.Type == ChannelType::GUILD_CATEGORY) {
+        for (const auto &channel : guild_data->Channels)
+            if (channel.Type == ChannelType::GUILD_CATEGORY)
                 sorted_categories[channel.Position].push_back(&channel);
-            }
-        }
 
-        for (auto &[pos, channelvec] : sorted_categories) {
-            std::sort(channelvec.begin(), channelvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
-            for (const auto channel : channelvec) {
-                if (channel->Type == ChannelType::GUILD_CATEGORY) {
-                    auto category_row = add_category(channel->ID, *channel);
-                    info.Children.insert(category_row);
+        for (auto &[pos, catvec] : sorted_categories) {
+            std::sort(catvec.begin(), catvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
+            for (const auto cat : catvec) {
+                auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
+                cat_row->IsUserCollapsed = false;
+                cat_row->IsHidden = true;
+                m_list->add(*cat_row);
+                guild_row->Children.insert(cat_row);
+
+                // child channels
+                if (cat_to_channels.find(cat->ID) == cat_to_channels.end()) continue;
+                std::map<int, const Channel *> sorted_channels;
+
+                for (const auto channel : cat_to_channels.at(cat->ID))
+                    sorted_channels[channel->Position] = channel;
+
+                for (const auto &[pos, channel] : sorted_channels) {
+                    auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+                    chan_row->IsHidden = false;
+                    chan_row->IsUserCollapsed = false;
+                    m_list->add(*chan_row);
+                    cat_row->Children.insert(chan_row);
                 }
             }
         }
-
-        m_infos[guild_row] = std::move(info);
-    };
-
-    const auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto &sorted_guilds = discord.GetUserSortedGuilds();
-    for (const auto &id : sorted_guilds) {
-        add_guild(id, *discord.GetGuild(id));
     }
 }
 
 void ChannelList::on_menu_move_up() {
-    auto row = m_list->get_selected_row();
-    m_signal_action_guild_move_up.emit(m_infos[row].ID);
+    auto tmp = m_list->get_selected_row();
+    auto row = dynamic_cast<ChannelListRow *>(tmp);
+    if (row != nullptr)
+        m_signal_action_guild_move_up.emit(row->ID);
 }
 
 void ChannelList::on_menu_move_down() {
-    auto row = m_list->get_selected_row();
-    m_signal_action_guild_move_down.emit(m_infos[row].ID);
+    auto tmp = m_list->get_selected_row();
+    auto row = dynamic_cast<ChannelListRow *>(tmp);
+    if (row != nullptr)
+        m_signal_action_guild_move_down.emit(row->ID);
 }
 
 void ChannelList::on_menu_copyid() {
-    auto row = m_list->get_selected_row();
-    m_signal_action_guild_copy_id.emit(m_infos[row].ID);
+    auto tmp = m_list->get_selected_row();
+    auto row = dynamic_cast<ChannelListRow *>(tmp);
+    if (row != nullptr)
+        m_signal_action_guild_copy_id.emit(row->ID);
 }
 
 void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
     row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            m_list->select_row(*row);
-            m_guild_menu_up->set_sensitive(m_infos[row].GuildIndex != 0);
-            m_guild_menu_down->set_sensitive(m_infos[row].GuildIndex != m_guild_count - 1);
-            m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
+            auto grow = dynamic_cast<ChannelListRowGuild *>(row);
+            if (grow != nullptr) {
+                m_list->select_row(*row);
+                m_guild_menu_up->set_sensitive(grow->GuildIndex != 0);
+                m_guild_menu_down->set_sensitive(grow->GuildIndex != m_guild_count - 1);
+                m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
+            }
             return true;
         }
 
