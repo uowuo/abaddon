@@ -37,6 +37,14 @@ bool DiscordClient::IsStarted() const {
     return m_client_connected;
 }
 
+std::unordered_set<Snowflake> DiscordClient::GetGuildsID() const {
+    const auto &guilds = m_store.GetGuilds();
+    std::unordered_set<Snowflake> ret;
+    for (const auto &[gid, data] : guilds)
+        ret.insert(gid);
+    return ret;
+}
+
 const Store::guilds_type &DiscordClient::GetGuilds() const {
     return m_store.GetGuilds();
 }

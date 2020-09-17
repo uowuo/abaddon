@@ -105,8 +105,7 @@ void MainWindow::UpdateMembers() {
 }
 
 void MainWindow::UpdateChannelListing() {
-    auto &discord = Abaddon::Get().GetDiscordClient();
-    m_channel_list.SetListingFromGuilds(discord.GetGuilds());
+    m_channel_list.UpdateListing();
 }
 
 void MainWindow::UpdateChatWindowContents() {

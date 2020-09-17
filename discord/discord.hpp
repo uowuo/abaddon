@@ -60,6 +60,7 @@ public:
     using roles_type = Store::roles_type;
     using members_type = Store::members_type;
 
+    std::unordered_set<Snowflake> GetGuildsID() const;
     const guilds_type &GetGuilds() const;
     const User &GetUserData() const;
     const UserSettings &GetUserSettings() const;
