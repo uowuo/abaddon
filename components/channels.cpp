@@ -3,6 +3,7 @@
 #include <map>
 #include <unordered_map>
 #include "../abaddon.hpp"
+#include "../imgmanager.hpp"
 
 ChannelListRow::type_signal_list_collapse ChannelListRow::signal_list_collapse() {
     return m_signal_list_collapse;
@@ -57,12 +58,27 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_lbl = Gtk::manage(new Gtk::Label);
 
+    auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
+    if (buf)
+        m_icon = Gtk::manage(new Gtk::Image(buf));
+    else {
+        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+        Abaddon::Get().GetImageManager().LoadFromURL(data->GetIconURL("png", "32"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
+            Glib::signal_idle().connect([this, ldbuf]() -> bool {
+                m_icon->property_pixbuf() = ldbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+
+                return false;
+            });
+        });
+    }
+
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-guild");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
     m_lbl->set_markup("<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
     m_box->set_halign(Gtk::ALIGN_START);
+    m_box->pack_start(*m_icon);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
     add(*m_ev);
