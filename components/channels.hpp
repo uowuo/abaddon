@@ -55,6 +55,7 @@ protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::Label *m_lbl;
+    Gtk::Image *m_icon;
 };
 
 class ChannelListRowCategory : public ChannelListRow {
