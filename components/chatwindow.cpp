@@ -7,7 +7,7 @@ ChatWindow::ChatWindow() {
     m_new_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewMessageInternal));
     m_new_history_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewHistoryInternal));
     m_message_delete_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::DeleteMessageInternal));
-    m_message_edit_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::UpdateMessageContentInternal));
+    m_message_edit_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::UpdateMessageInternal));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_listbox = Gtk::manage(new Gtk::ListBox);
@@ -91,6 +91,29 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const Message *data) {
     return ChatDisplayType::Unknown;
 }
 
+ChatMessageItem *ChatWindow::CreateMessageComponent(const Message *data) {
+    auto type = GetMessageDisplayType(data);
+    ChatMessageItem *widget = nullptr;
+
+    if (type == ChatDisplayType::Text) {
+        widget = Gtk::manage(new ChatMessageTextItem(data));
+
+        widget->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake id) {
+            m_signal_action_message_delete.emit(channel_id, id);
+        });
+        widget->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake id) {
+            m_signal_action_message_edit.emit(channel_id, id);
+        });
+    } else if (type == ChatDisplayType::Embed) {
+        widget = Gtk::manage(new ChatMessageEmbedItem(data));
+    }
+
+    if (widget == nullptr) return nullptr;
+    widget->ChannelID = m_active_channel;
+    m_id_to_widget[data->ID] = widget;
+    return widget;
+}
+
 void ChatWindow::ProcessMessage(const Message *data, bool prepend) {
     if (!Abaddon::Get().GetDiscordClient().IsStarted()) return;
 
@@ -106,8 +129,6 @@ void ChatWindow::ProcessMessage(const Message *data, bool prepend) {
                 should_attach = true;
         }
     }
-
-    auto type = GetMessageDisplayType(data);
 
     ChatMessageContainer *container;
     if (should_attach) {
@@ -137,27 +158,11 @@ void ChatWindow::ProcessMessage(const Message *data, bool prepend) {
         m_num_rows++;
     }
 
-    // actual content
-    if (type == ChatDisplayType::Text) {
-        auto *text = Gtk::manage(new ChatMessageTextItem(data));
-        text->ID = data->ID;
-        text->ChannelID = m_active_channel;
-        text->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake id) {
-            m_signal_action_message_delete.emit(channel_id, id);
-        });
-        text->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake id) {
-            m_signal_action_message_edit.emit(channel_id, id);
-        });
-        text->Update();
-        container->AddNewContent(text, prepend);
-        m_id_to_widget[data->ID] = text;
-    } else if (type == ChatDisplayType::Embed) {
-        auto *widget = Gtk::manage(new ChatMessageEmbedItem(data));
-        widget->ID = data->ID;
-        widget->ChannelID = m_active_channel;
-        widget->Update();
-        container->AddNewContent(widget, prepend);
-        m_id_to_widget[data->ID] = widget;
+    ChatMessageItem *widget = CreateMessageComponent(data);
+
+    if (widget != nullptr) {
+        widget->SetContainer(container);
+        container->AddNewContent(dynamic_cast<Gtk::Widget *>(widget), prepend);
     }
 
     container->set_margin_left(5);
@@ -218,7 +223,7 @@ void ChatWindow::DeleteMessage(Snowflake id) {
     m_message_delete_dispatch.emit();
 }
 
-void ChatWindow::UpdateMessageContent(Snowflake id) {
+void ChatWindow::UpdateMessage(Snowflake id) {
     std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_message_edit_queue.push(id);
     m_message_edit_dispatch.emit();
@@ -240,7 +245,7 @@ void ChatWindow::InsertChatInput(std::string text) {
 Snowflake ChatWindow::GetOldestListedMessage() {
     Snowflake m;
 
-    for (const auto& [id, widget] : m_id_to_widget) {
+    for (const auto &[id, widget] : m_id_to_widget) {
         if (id < m)
             m = id;
     }
@@ -301,7 +306,7 @@ void ChatWindow::DeleteMessageInternal() {
     item->Update();
 }
 
-void ChatWindow::UpdateMessageContentInternal() {
+void ChatWindow::UpdateMessageInternal() {
     Snowflake id;
     {
         std::scoped_lock<std::mutex> guard(m_update_mutex);
@@ -312,11 +317,16 @@ void ChatWindow::UpdateMessageContentInternal() {
     if (m_id_to_widget.find(id) == m_id_to_widget.end())
         return;
 
+    // GetMessage should give us the new object at this point
     auto *msg = Abaddon::Get().GetDiscordClient().GetMessage(id);
-    auto *item = dynamic_cast<ChatMessageTextItem *>(m_id_to_widget.at(id));
+    auto *item = dynamic_cast<Gtk::Widget *>(m_id_to_widget.at(id));
     if (item != nullptr) {
-        item->EditContent(msg->Content);
-        item->Update();
+        ChatMessageContainer *container = dynamic_cast<ChatMessageItem *>(item)->GetContainer();
+        int idx = container->RemoveItem(item);
+        if (idx == -1) return;
+        auto *new_widget = CreateMessageComponent(msg);
+        new_widget->SetContainer(container);
+        container->AddNewContentAtIndex(dynamic_cast<Gtk::Widget *>(new_widget), idx);
     }
 }
 

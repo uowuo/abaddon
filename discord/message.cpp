@@ -79,6 +79,8 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_D("content", m.Content);
     JS_D("timestamp", m.Timestamp);
     JS_N("edited_timestamp", m.EditedTimestamp);
+    if (!j.at("edited_timestamp").is_null())
+        m.SetEdited();
     JS_D("tts", m.IsTTS);
     JS_D("mention_everyone", m.DoesMentionEveryone);
     JS_D("mentions", m.Mentions);
@@ -97,7 +99,6 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_O("flags", m.Flags);
 }
 
-// probably gonna need to return present keys
 void Message::from_json_edited(const nlohmann::json &j) {
     JS_D("id", ID);
     JS_D("channel_id", ChannelID);
@@ -109,6 +110,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("tts", IsTTS);
     JS_O("mention_everyone", DoesMentionEveryone);
     JS_O("mentions", Mentions);
+    JS_O("embeds", Embeds);
     JS_O("nonce", Nonce);
     JS_O("pinned", IsPinned);
     JS_O("webhook_id", WebhookID);
@@ -120,9 +122,8 @@ void Message::SetDeleted() {
     m_deleted = true;
 }
 
-void Message::SetEdited(std::string new_content) {
+void Message::SetEdited() {
     m_edited = true;
-    Content = new_content;
 }
 
 bool Message::IsDeleted() const {
