@@ -60,7 +60,7 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
 
     auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
     if (buf)
-        m_icon = Gtk::manage(new Gtk::Image(buf));
+        m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
     else {
         m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
         Abaddon::Get().GetImageManager().LoadFromURL(data->GetIconURL("png", "32"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
