@@ -150,7 +150,7 @@ struct Message {
 
     // custom fields to track changes
     void SetDeleted();
-    void SetEdited(std::string new_content);
+    void SetEdited();
     bool IsDeleted() const;
     bool IsEdited() const;
 

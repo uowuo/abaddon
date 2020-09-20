@@ -18,7 +18,7 @@ public:
     void AddNewMessage(Snowflake id);
     void AddNewHistory(const std::vector<Snowflake> &msgs);
     void DeleteMessage(Snowflake id);
-    void UpdateMessageContent(Snowflake id);
+    void UpdateMessage(Snowflake id);
     void Clear();
     void InsertChatInput(std::string text);
     Snowflake GetOldestListedMessage();
@@ -29,8 +29,9 @@ protected:
     void AddNewMessageInternal();
     void AddNewHistoryInternal();
     void DeleteMessageInternal();
-    void UpdateMessageContentInternal();
+    void UpdateMessageInternal();
     ChatDisplayType GetMessageDisplayType(const Message *data);
+    ChatMessageItem *CreateMessageComponent(const Message *data);
     void ProcessMessage(const Message *data, bool prepend = false);
     int m_num_rows = 0; // youd think thered be a Gtk::ListBox::get_row_count or something but nope
     std::unordered_map<Snowflake, ChatMessageItem *> m_id_to_widget;

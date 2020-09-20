@@ -85,11 +85,31 @@ void ChatMessageContainer::Update() {
     m_author->set_markup(md);
 }
 
+// returns index (1-based) of removed item
+int ChatMessageContainer::RemoveItem(Gtk::Widget *widget) {
+    auto children = m_content_box->get_children();
+    for (auto i = 0; i < children.size(); i++) {
+        if (widget == children[i]) {
+            m_content_box->remove(*widget);
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void ChatMessageContainer::AddNewContent(Gtk::Widget *widget, bool prepend) {
-    if (prepend)
-        m_content_box->pack_end(*widget);
-    else
-        m_content_box->pack_start(*widget);
+    if (prepend) {
+        m_content_box->add(*widget);
+        m_content_box->reorder_child(*widget, 1);
+    } else {
+        m_content_box->add(*widget);
+    }
+}
+
+void ChatMessageContainer::AddNewContentAtIndex(Gtk::Widget *widget, int index) {
+    m_content_box->add(*widget);
+    m_content_box->reorder_child(*widget, index); // this doesn't seem very reliable
 }
 
 ChatMessageItem::ChatMessageItem() {
@@ -156,8 +176,17 @@ void ChatMessageItem::AddMenuItem(Gtk::MenuItem *item) {
     m_menu.append(*item);
 }
 
+void ChatMessageItem::SetContainer(ChatMessageContainer *container) {
+    m_container = container;
+}
+
+ChatMessageContainer *ChatMessageItem::GetContainer() const {
+    return m_container;
+}
+
 ChatMessageTextItem::ChatMessageTextItem(const Message *data) {
     m_content = data->Content;
+    ID = data->ID;
 
     get_style_context()->add_class("message-text");
 
@@ -173,12 +202,8 @@ ChatMessageTextItem::ChatMessageTextItem(const Message *data) {
     m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy _Message", true));
     AddMenuItem(m_menu_copy_content);
     m_menu_copy_content->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageTextItem::on_menu_copy_content));
-}
 
-void ChatMessageTextItem::EditContent(std::string content) {
-    m_content = content;
-    get_buffer()->set_text(content);
-    UpdateAttributes();
+    Update();
 }
 
 void ChatMessageTextItem::on_menu_copy_content() {
@@ -209,9 +234,12 @@ void ChatMessageTextItem::UpdateAttributes() {
 
 ChatMessageEmbedItem::ChatMessageEmbedItem(const Message *data) {
     m_embed = data->Embeds[0];
+    ID = data->ID;
 
     DoLayout();
     AttachMenuHandler(this);
+
+    Update();
 }
 
 void ChatMessageEmbedItem::DoLayout() {

@@ -125,7 +125,7 @@ void Abaddon::DiscordOnMessageDelete(Snowflake id, Snowflake channel_id) {
 }
 
 void Abaddon::DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id) {
-    m_main_window->UpdateChatMessageEditContent(id, channel_id);
+    m_main_window->UpdateChatMessageUpdated(id, channel_id);
 }
 
 void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {

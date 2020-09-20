@@ -387,18 +387,16 @@ void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
-    // less than stellar way of doing this probably
-    Message data;
-    data.from_json_edited(msg.Data);
+    Snowflake id = msg.Data.at("id");
 
-    auto *current = m_store.GetMessage(data.ID);
+    auto *current = m_store.GetMessage(id);
     if (current == nullptr)
         return;
 
-    if (data.Content != current->Content) {
-        current->SetEdited(data.Content);
-        m_signal_message_update.emit(data.ID, data.ChannelID);
-    }
+    current->from_json_edited(msg.Data);
+
+    current->SetEdited();
+    m_signal_message_update.emit(id, current->ChannelID);
 }
 
 void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg) {

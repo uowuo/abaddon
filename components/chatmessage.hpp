@@ -19,8 +19,10 @@ public:
 
     ChatMessageContainer(const Message *data);
     void AddNewContent(Gtk::Widget *widget, bool prepend = false);
+    void AddNewContentAtIndex(Gtk::Widget *widget, int index);
     void SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
     void Update();
+    int RemoveItem(Gtk::Widget *widget);
 
 protected:
     Gtk::Box *m_main_box;
@@ -43,7 +45,12 @@ public:
     void AddMenuItem(Gtk::MenuItem *item);
     virtual void Update() = 0;
 
+    void SetContainer(ChatMessageContainer *container);
+    ChatMessageContainer *GetContainer() const;
+
 protected:
+    ChatMessageContainer *m_container = nullptr;
+
     void AttachMenuHandler(Gtk::Widget *widget);
     void on_menu_copy_id();
     void on_menu_message_delete();
