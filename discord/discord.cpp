@@ -108,6 +108,19 @@ std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
     return ret;
 }
 
+void DiscordClient::FetchInviteData(std::string code, std::function<void(Invite)> cb, std::function<void(bool)> err) {
+    //printf("test: %s\n", code.c_str());
+    //err(true);
+    m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, cb, err](cpr::Response r) {
+        if (!CheckCode(r)) {
+            err(r.status_code == 404);
+            return;
+        };
+
+        cb(nlohmann::json::parse(r.text));
+    });
+}
+
 void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos) {
     nlohmann::json body;
     body["guild_positions"] = pos;
@@ -247,6 +260,14 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     m_websocket.Send(j);
 }
 
+void DiscordClient::JoinGuild(std::string code) {
+    m_http.MakePOST("/invites/" + code, "", [](auto) {});
+}
+
+void DiscordClient::LeaveGuild(Snowflake id) {
+    m_http.MakeDELETE("/users/@me/guilds/" + std::to_string(id), [](auto) {});
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     m_token = token;
     m_http.SetAuth(token);
@@ -332,6 +353,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBER_LIST_UPDATE: {
                         HandleGatewayGuildMemberListUpdate(m);
                     } break;
+                    case GatewayEvent::GUILD_CREATE: {
+                        HandleGatewayGuildCreate(m);
+                    } break;
+                    case GatewayEvent::GUILD_DELETE: {
+                        HandleGatewayGuildDelete(m);
+                    } break;
                 }
             } break;
             default:
@@ -343,23 +370,27 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
     }
 }
 
+void DiscordClient::ProcessNewGuild(Guild &guild) {
+    if (guild.IsUnavailable) {
+        printf("guild (%lld) unavailable\n", static_cast<uint64_t>(guild.ID));
+        return;
+    }
+
+    m_store.SetGuild(guild.ID, guild);
+    for (auto &c : guild.Channels) {
+        c.GuildID = guild.ID;
+        m_store.SetChannel(c.ID, c);
+    }
+
+    for (auto &r : guild.Roles)
+        m_store.SetRole(r.ID, r);
+}
+
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_ready_received = true;
     ReadyEventData data = msg.Data;
-    for (auto &g : data.Guilds) {
-        if (g.IsUnavailable)
-            printf("guild (%lld) unavailable\n", (uint64_t)g.ID);
-        else {
-            m_store.SetGuild(g.ID, g);
-            for (auto &c : g.Channels) {
-                c.GuildID = g.ID;
-                m_store.SetChannel(c.ID, c);
-            }
-
-            for (auto &r : g.Roles)
-                m_store.SetRole(r.ID, r);
-        }
-    }
+    for (auto &g : data.Guilds)
+        ProcessNewGuild(g);
 
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
@@ -417,6 +448,34 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
     }
 
     m_signal_guild_member_list_update.emit(data.GuildID);
+}
+
+void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {
+    Guild data = msg.Data;
+    ProcessNewGuild(data);
+
+    m_signal_guild_create.emit(data.ID);
+}
+
+void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
+    Snowflake id = msg.Data.at("id");
+    bool unavailable = msg.Data.contains("unavilable") && msg.Data.at("unavailable").get<bool>();
+
+    if (unavailable)
+        printf("guild %llu became unavailable\n", static_cast<uint64_t>(id));
+
+    auto *guild = m_store.GetGuild(id);
+    if (guild == nullptr) {
+        m_store.ClearGuild(id);
+        m_signal_guild_delete.emit(id);
+        return;
+    }
+
+    m_store.ClearGuild(id);
+    for (const auto &c : guild->Channels)
+        m_store.ClearChannel(c.ID);
+
+    m_signal_guild_delete.emit(id);
 }
 
 void DiscordClient::AddMessageToChannel(Snowflake msg_id, Snowflake channel_id) {
@@ -480,6 +539,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_DELETE"] = GatewayEvent::MESSAGE_DELETE;
     m_event_map["MESSAGE_UPDATE"] = GatewayEvent::MESSAGE_UPDATE;
     m_event_map["GUILD_MEMBER_LIST_UPDATE"] = GatewayEvent::GUILD_MEMBER_LIST_UPDATE;
+    m_event_map["GUILD_CREATE"] = GatewayEvent::GUILD_CREATE;
+    m_event_map["GUILD_DELETE"] = GatewayEvent::GUILD_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -504,4 +565,12 @@ DiscordClient::type_signal_message_update DiscordClient::signal_message_update()
 
 DiscordClient::type_signal_guild_member_list_update DiscordClient::signal_guild_member_list_update() {
     return m_signal_guild_member_list_update;
+}
+
+DiscordClient::type_signal_guild_create DiscordClient::signal_guild_create() {
+    return m_signal_guild_create;
+}
+
+DiscordClient::type_signal_guild_delete DiscordClient::signal_guild_delete() {
+    return m_signal_guild_delete;
 }

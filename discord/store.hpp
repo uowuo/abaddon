@@ -29,6 +29,9 @@ public:
     const Message *GetMessage(Snowflake id) const;
     const GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const;
 
+    void ClearGuild(Snowflake id);
+    void ClearChannel(Snowflake id);
+
     using users_type = std::unordered_map<Snowflake, User>;
     using channels_type = std::unordered_map<Snowflake, Channel>;
     using guilds_type = std::unordered_map<Snowflake, Guild>;

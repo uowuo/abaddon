@@ -11,6 +11,7 @@
 #include "guild.hpp"
 #include "usersettings.hpp"
 #include "message.hpp"
+#include "invite.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -29,6 +30,8 @@ enum class GatewayEvent : int {
     MESSAGE_DELETE,
     MESSAGE_UPDATE,
     GUILD_MEMBER_LIST_UPDATE,
+    GUILD_CREATE,
+    GUILD_DELETE,
 };
 
 struct GatewayMessage {

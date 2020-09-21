@@ -149,6 +149,10 @@ ChannelList::ChannelList() {
     m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_copyid));
     m_guild_menu.append(*m_guild_menu_copyid);
 
+    m_guild_menu_leave = Gtk::manage(new Gtk::MenuItem("_Leave Guild", true));
+    m_guild_menu_leave->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_leave));
+    m_guild_menu.append(*m_guild_menu_leave);
+
     m_guild_menu.show_all();
 
     m_list->set_activate_on_single_click(true);
@@ -339,6 +343,12 @@ void ChannelList::on_menu_copyid() {
         m_signal_action_guild_copy_id.emit(row->ID);
 }
 
+void ChannelList::on_menu_leave() {
+    auto row = dynamic_cast<ChannelListRow *>(m_list->get_selected_row());
+    if (row != nullptr)
+        m_signal_action_guild_leave.emit(row->ID);
+}
+
 void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
     row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
@@ -370,4 +380,8 @@ ChannelList::type_signal_action_guild_move_down ChannelList::signal_action_guild
 
 ChannelList::type_signal_action_guild_copy_id ChannelList::signal_action_guild_copy_id() {
     return m_signal_action_guild_copy_id;
+}
+
+ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_leave() {
+    return m_signal_action_guild_leave;
 }
