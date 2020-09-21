@@ -128,8 +128,8 @@ add_executable(abaddon
 	abaddon.cpp
 	filecache.hpp
 	filecache.cpp
-	"imgmanager.hpp"
-	"imgmanager.cpp"
+	imgmanager.hpp
+	imgmanager.cpp
 	components/channels.hpp
 	components/channels.cpp
 	components/chatmessage.hpp
@@ -140,6 +140,8 @@ add_executable(abaddon
 	components/memberlist.cpp
 	dialogs/editmessage.hpp
 	dialogs/editmessage.cpp
+	dialogs/joinguild.hpp
+	dialogs/joinguild.cpp
 	dialogs/token.hpp
 	dialogs/token.cpp
 	discord/discord.hpp
@@ -169,6 +171,8 @@ add_executable(abaddon
 	discord/usersettings.cpp
 	discord/message.hpp
 	discord/message.cpp
+	discord/invite.hpp
+	discord/invite.cpp
 	windows/mainwindow.hpp
 	windows/mainwindow.cpp
 )

@@ -68,6 +68,7 @@ public:
     std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
+    void FetchInviteData(std::string code, std::function<void(Invite)> cb, std::function<void(bool)> err);
     void UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
@@ -83,6 +84,8 @@ public:
     void DeleteMessage(Snowflake channel_id, Snowflake id);
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
+    void JoinGuild(std::string code);
+    void LeaveGuild(Snowflake id);
 
     void UpdateToken(std::string token);
 
@@ -91,6 +94,9 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
+
+    void ProcessNewGuild(Guild &guild);
+
     void HandleGatewayMessageRaw(std::string str);
     void HandleGatewayMessage(std::string str);
     void HandleGatewayReady(const GatewayMessage &msg);
@@ -98,6 +104,8 @@ private:
     void HandleGatewayMessageDelete(const GatewayMessage &msg);
     void HandleGatewayMessageUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildCreate(const GatewayMessage &msg);
+    void HandleGatewayGuildDelete(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 
@@ -137,6 +145,8 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_update;
     typedef sigc::signal<void, Snowflake> type_signal_guild_member_list_update;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_create;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_delete;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_channel_list_refresh signal_channel_list_refresh();
@@ -144,6 +154,8 @@ public:
     type_signal_message_delete signal_message_delete();
     type_signal_message_update signal_message_update();
     type_signal_guild_member_list_update signal_guild_member_list_update();
+    type_signal_guild_create signal_guild_create();
+    type_signal_guild_delete signal_guild_delete();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -152,4 +164,6 @@ protected:
     type_signal_message_delete m_signal_message_delete;
     type_signal_message_update m_signal_message_update;
     type_signal_guild_member_list_update m_signal_guild_member_list_update;
+    type_signal_guild_create m_signal_guild_create;
+    type_signal_guild_delete m_signal_guild_delete;
 };

@@ -1,5 +1,6 @@
 #include "http.hpp"
 
+//#define USE_LOCAL_PROXY
 HTTPClient::HTTPClient(std::string api_base)
     : m_api_base(api_base) {}
 

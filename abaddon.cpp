@@ -5,6 +5,7 @@
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
+#include "dialogs/joinguild.hpp"
 #include "abaddon.hpp"
 
 #ifdef _WIN32
@@ -21,6 +22,8 @@ Abaddon::Abaddon()
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
     m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
+    m_discord.signal_guild_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildCreate));
+    m_discord.signal_guild_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildDelete));
 }
 
 Abaddon::~Abaddon() {
@@ -52,11 +55,13 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
+    m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionListChannelItemClick));
     m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
     m_main_window->GetChannelList()->signal_action_guild_move_down().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildDown));
     m_main_window->GetChannelList()->signal_action_guild_copy_id().connect(sigc::mem_fun(*this, &Abaddon::ActionCopyGuildID));
+    m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
 
     m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
@@ -103,6 +108,11 @@ std::string Abaddon::GetDiscordToken() const {
     return m_discord_token;
 }
 
+DiscordClient &Abaddon::GetDiscordClient() {
+    std::scoped_lock<std::mutex> guard(m_mutex);
+    return m_discord;
+}
+
 const DiscordClient &Abaddon::GetDiscordClient() const {
     std::scoped_lock<std::mutex> guard(m_mutex);
     return m_discord;
@@ -132,6 +142,14 @@ void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
     m_main_window->UpdateMembers();
 }
 
+void Abaddon::DiscordOnGuildCreate(Snowflake guild_id) {
+    m_main_window->UpdateChannelListing();
+}
+
+void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
+    m_main_window->UpdateChannelListing();
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
@@ -157,6 +175,15 @@ void Abaddon::ActionSetToken() {
         m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
         m_settings.SetSetting("discord", "token", m_discord_token);
+    }
+}
+
+void Abaddon::ActionJoinGuildDialog() {
+    JoinGuildDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK) {
+        auto code = dlg.GetCode();
+        m_discord.JoinGuild(code);
     }
 }
 
@@ -284,6 +311,10 @@ void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
 
 void Abaddon::ActionInsertMention(Snowflake id) {
     m_main_window->InsertChatInput("<@" + std::to_string(id) + ">");
+}
+
+void Abaddon::ActionLeaveGuild(Snowflake id) {
+    m_discord.LeaveGuild(id);
 }
 
 void Abaddon::ActionReloadCSS() {

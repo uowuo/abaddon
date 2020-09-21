@@ -114,6 +114,14 @@ const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_
     return &mit->second;
 }
 
+void Store::ClearGuild(Snowflake id) {
+    m_guilds.erase(id);
+}
+
+void Store::ClearChannel(Snowflake id) {
+    m_channels.erase(id);
+}
+
 const Store::channels_type &Store::GetChannels() const {
     return m_channels;
 }

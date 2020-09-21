@@ -97,9 +97,11 @@ protected:
     Gtk::MenuItem *m_guild_menu_up;
     Gtk::MenuItem *m_guild_menu_down;
     Gtk::MenuItem *m_guild_menu_copyid;
+    Gtk::MenuItem *m_guild_menu_leave;
     void on_menu_move_up();
     void on_menu_move_down();
     void on_menu_copyid();
+    void on_menu_leave();
 
     Glib::Dispatcher m_update_dispatcher;
     //mutable std::mutex m_update_mutex;
@@ -113,15 +115,18 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_up;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_down;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_copy_id;
+    typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
 
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_move_up signal_action_guild_move_up();
     type_signal_action_guild_move_down signal_action_guild_move_down();
     type_signal_action_guild_copy_id signal_action_guild_copy_id();
+    type_signal_action_guild_leave signal_action_guild_leave();
 
 protected:
     type_signal_action_channel_item_select m_signal_action_channel_item_select;
     type_signal_action_guild_move_up m_signal_action_guild_move_up;
     type_signal_action_guild_move_down m_signal_action_guild_move_down;
     type_signal_action_guild_copy_id m_signal_action_guild_copy_id;
+    type_signal_action_guild_leave m_signal_action_guild_leave;
 };

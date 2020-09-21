@@ -31,6 +31,7 @@ public:
     void ActionConnect();
     void ActionDisconnect();
     void ActionSetToken();
+    void ActionJoinGuildDialog();
     void ActionMoveGuildUp(Snowflake id);
     void ActionMoveGuildDown(Snowflake id);
     void ActionCopyGuildID(Snowflake id);
@@ -40,6 +41,7 @@ public:
     void ActionChatDeleteMessage(Snowflake channel_id, Snowflake id);
     void ActionChatEditMessage(Snowflake channel_id, Snowflake id);
     void ActionInsertMention(Snowflake id);
+    void ActionLeaveGuild(Snowflake id);
 
     void ActionReloadCSS();
 
@@ -48,6 +50,7 @@ public:
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
 
+    DiscordClient &GetDiscordClient();
     const DiscordClient &GetDiscordClient() const;
     void DiscordOnReady();
     void DiscordOnChannelListRefresh();
@@ -55,6 +58,8 @@ public:
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
     void DiscordOnGuildMemberListUpdate(Snowflake guild_id);
+    void DiscordOnGuildCreate(Snowflake guild_id);
+    void DiscordOnGuildDelete(Snowflake guild_id);
 
 private:
     DiscordClient m_discord;
