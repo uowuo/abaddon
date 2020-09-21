@@ -18,7 +18,6 @@ JoinGuildDialog::JoinGuildDialog(Gtk::Window &parent)
     m_ok.set_sensitive(false);
 
     m_ok.signal_clicked().connect([&]() {
-        m_code = m_entry.get_text();
         response(Gtk::RESPONSE_OK);
     });
 
