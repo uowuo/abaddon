@@ -80,7 +80,7 @@ void ChatMessageContainer::Update() {
         if (role != nullptr)
             md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + Glib::Markup::escape_text(user->Username) + "</span>";
     } else {
-        md = "<span weight='bold'>" + Glib::Markup::escape_text(user->Username) + "</span>";
+        md = "<span weight='bold' color='#eeeeee'>" + Glib::Markup::escape_text(user->Username) + "</span>";
     }
     m_author->set_markup(md);
 }
