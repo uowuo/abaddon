@@ -395,8 +395,15 @@ ChatMessageUserEventItem::ChatMessageUserEventItem(const Message *data) {
     set_hexpand(true);
     m_label->set_halign(Gtk::ALIGN_START);
     m_label->set_use_markup();
-    if (data->Type == MessageType::GUILD_MEMBER_JOIN)
-        m_label->set_markup("<span color='#999999'><i>[user joined]</i></span>");
+    switch (data->Type) {
+        case MessageType::GUILD_MEMBER_JOIN:
+            m_label->set_markup("<span color='#999999'><i>[user joined]</i></span>");
+            break;
+        case MessageType::CHANNEL_PINNED_MESSAGE:
+            m_label->set_markup("<span color='#999999'><i>[message pinned]</i></span>");
+            break;
+        default: break;
+    }
     add(*m_label);
     show_all();
 

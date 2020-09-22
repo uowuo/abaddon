@@ -10,6 +10,7 @@ enum class ChatDisplayType {
     Embed,
     Image,
     GuildMemberJoin,
+    ChannelPinnedMessage,
 };
 
 // contains the username and timestamp, chat items get stuck into its box
