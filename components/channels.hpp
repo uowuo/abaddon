@@ -43,6 +43,7 @@ protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::Label *m_lbl;
+    Gtk::Image *m_icon = nullptr;
 };
 
 class ChannelListRowGuild : public ChannelListRow {
