@@ -87,6 +87,8 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const Message *data) {
         return ChatDisplayType::Text;
     else if (data->Type == MessageType::DEFAULT && data->Embeds.size() > 0)
         return ChatDisplayType::Embed;
+    else if (data->Type == MessageType::GUILD_MEMBER_JOIN)
+        return ChatDisplayType::GuildMemberJoin;
 
     return ChatDisplayType::Unknown;
 }
@@ -106,6 +108,8 @@ ChatMessageItem *ChatWindow::CreateMessageComponent(const Message *data) {
         });
     } else if (type == ChatDisplayType::Embed) {
         widget = Gtk::manage(new ChatMessageEmbedItem(data));
+    } else if (type == ChatDisplayType::GuildMemberJoin) {
+        widget = Gtk::manage(new ChatMessageUserEventItem(data));
     }
 
     if (widget == nullptr) return nullptr;

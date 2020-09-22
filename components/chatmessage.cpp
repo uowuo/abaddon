@@ -381,3 +381,26 @@ void ChatMessageEmbedItem::UpdateAttributes() {
 void ChatMessageEmbedItem::Update() {
     UpdateAttributes();
 }
+
+ChatMessageUserEventItem::ChatMessageUserEventItem(const Message *data) {
+    ID = data->ID;
+
+    m_label = Gtk::manage(new Gtk::Label);
+
+    get_style_context()->add_class("message-text");
+    get_style_context()->add_class("message-text-user-event");
+
+    set_can_focus(false);
+    set_halign(Gtk::ALIGN_FILL);
+    set_hexpand(true);
+    m_label->set_halign(Gtk::ALIGN_START);
+    m_label->set_use_markup();
+    if (data->Type == MessageType::GUILD_MEMBER_JOIN)
+        m_label->set_markup("<span color='#999999'><i>[user joined]</i></span>");
+    add(*m_label);
+    show_all();
+
+    AttachMenuHandler(this);
+}
+
+void ChatMessageUserEventItem::Update() {}
