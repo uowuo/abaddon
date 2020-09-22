@@ -89,6 +89,8 @@ ChatDisplayType ChatWindow::GetMessageDisplayType(const Message *data) {
         return ChatDisplayType::Embed;
     else if (data->Type == MessageType::GUILD_MEMBER_JOIN)
         return ChatDisplayType::GuildMemberJoin;
+    else if (data->Type == MessageType::CHANNEL_PINNED_MESSAGE)
+        return ChatDisplayType::ChannelPinnedMessage;
 
     return ChatDisplayType::Unknown;
 }
@@ -97,19 +99,25 @@ ChatMessageItem *ChatWindow::CreateMessageComponent(const Message *data) {
     auto type = GetMessageDisplayType(data);
     ChatMessageItem *widget = nullptr;
 
-    if (type == ChatDisplayType::Text) {
-        widget = Gtk::manage(new ChatMessageTextItem(data));
+    switch (type) {
+        case ChatDisplayType::Text: {
+            widget = Gtk::manage(new ChatMessageTextItem(data));
 
-        widget->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake id) {
-            m_signal_action_message_delete.emit(channel_id, id);
-        });
-        widget->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake id) {
-            m_signal_action_message_edit.emit(channel_id, id);
-        });
-    } else if (type == ChatDisplayType::Embed) {
-        widget = Gtk::manage(new ChatMessageEmbedItem(data));
-    } else if (type == ChatDisplayType::GuildMemberJoin) {
-        widget = Gtk::manage(new ChatMessageUserEventItem(data));
+            widget->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake id) {
+                m_signal_action_message_delete.emit(channel_id, id);
+            });
+            widget->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake id) {
+                m_signal_action_message_edit.emit(channel_id, id);
+            });
+        } break;
+        case ChatDisplayType::Embed: {
+            widget = Gtk::manage(new ChatMessageEmbedItem(data));
+        } break;
+        case ChatDisplayType::GuildMemberJoin:
+        case ChatDisplayType::ChannelPinnedMessage: {
+            widget = Gtk::manage(new ChatMessageUserEventItem(data));
+        } break;
+        default: break;
     }
 
     if (widget == nullptr) return nullptr;
