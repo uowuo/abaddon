@@ -40,12 +40,30 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
+    if (data->Type == ChannelType::DM) {
+        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Recipients[0].GetAvatarURL("png", "16"));
+        if (buf)
+            m_icon = Gtk::manage(new Gtk::Image(buf));
+        else {
+            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+            Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
+                Glib::signal_idle().connect([this, ldbuf]() -> bool {
+                    m_icon->property_pixbuf() = ldbuf;
+
+                    return false;
+                });
+            });
+        }
+    }
+
     if (data->Type == ChannelType::DM)
         m_lbl->set_text(data->Recipients[0].Username);
     else if (data->Type == ChannelType::GROUP_DM)
         m_lbl->set_text(std::to_string(data->Recipients.size()) + " users");
 
     m_box->set_halign(Gtk::ALIGN_START);
+    if (m_icon != nullptr)
+        m_box->pack_start(*m_icon);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
     add(*m_ev);
