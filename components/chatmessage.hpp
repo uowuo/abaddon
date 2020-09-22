@@ -9,6 +9,7 @@ enum class ChatDisplayType {
     Text,
     Embed,
     Image,
+    GuildMemberJoin,
 };
 
 // contains the username and timestamp, chat items get stuck into its box
@@ -108,4 +109,16 @@ protected:
     EmbedData m_embed;
     Gtk::Box *m_main;
     Gtk::Label *m_attrib_label = nullptr;
+};
+
+class ChatMessageUserEventItem
+    : public Gtk::EventBox
+    , public ChatMessageItem {
+public:
+    ChatMessageUserEventItem(const Message *data);
+
+    virtual void Update();
+
+protected:
+    Gtk::Label *m_label;
 };
