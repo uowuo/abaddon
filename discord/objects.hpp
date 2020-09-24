@@ -12,6 +12,7 @@
 #include "usersettings.hpp"
 #include "message.hpp"
 #include "invite.hpp"
+#include "permissions.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 

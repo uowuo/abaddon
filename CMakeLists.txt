@@ -173,6 +173,8 @@ add_executable(abaddon
 	discord/message.cpp
 	discord/invite.hpp
 	discord/invite.cpp
+	discord/permissions.hpp
+	discord/permissions.cpp
 	windows/mainwindow.hpp
 	windows/mainwindow.cpp
 )

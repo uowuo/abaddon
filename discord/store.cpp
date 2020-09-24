@@ -130,6 +130,10 @@ const Store::guilds_type &Store::GetGuilds() const {
     return m_guilds;
 }
 
+const Store::roles_type &Store::GetRoles() const {
+    return m_roles;
+}
+
 void Store::ClearAll() {
     m_channels.clear();
     m_guilds.clear();

@@ -163,11 +163,12 @@ void ChatMessageItem::AttachMenuHandler(Gtk::Widget *widget) {
 // clang-format on
 
 void ChatMessageItem::ShowMenu(const GdkEvent *event) {
-    auto &client = Abaddon::Get().GetDiscordClient();
-    auto *data = client.GetMessage(ID);
-    bool can_manage = client.GetUserData().ID == data->Author.ID;
-    m_menu_delete_message->set_sensitive(can_manage);
-    m_menu_edit_message->set_sensitive(can_manage);
+    const auto &client = Abaddon::Get().GetDiscordClient();
+    const auto *data = client.GetMessage(ID);
+    const bool can_edit = client.GetUserData().ID == data->Author.ID;
+    const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, ChannelID, Permission::MANAGE_MESSAGES);
+    m_menu_delete_message->set_sensitive(can_delete);
+    m_menu_edit_message->set_sensitive(can_edit);
     m_menu.popup_at_pointer(event);
 }
 
