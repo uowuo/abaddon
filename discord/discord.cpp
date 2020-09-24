@@ -198,6 +198,10 @@ const GuildMember *DiscordClient::GetMember(Snowflake user_id, Snowflake guild_i
     return m_store.GetGuildMemberData(guild_id, user_id);
 }
 
+const PermissionOverwrite *DiscordClient::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
+    return m_store.GetPermissionOverwrite(channel_id, id);
+}
+
 Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
     auto *data = m_store.GetGuildMemberData(guild_id, user_id);
     if (data == nullptr) return Snowflake::Invalid;
@@ -285,8 +289,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
         return Permission::NONE;
 
     Permission perms = base;
-    auto overwrite_everyone = channel->GetOverwrite(channel->GuildID);
-    if (overwrite_everyone.has_value()) {
+    const auto *overwrite_everyone = GetPermissionOverwrite(channel_id, channel->GuildID);
+    if (overwrite_everyone != nullptr) {
         perms &= ~overwrite_everyone->Deny;
         perms |= overwrite_everyone->Allow;
     }
@@ -294,8 +298,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
     Permission allow = Permission::NONE;
     Permission deny = Permission::NONE;
     for (const auto role_id : member->Roles) {
-        const auto overwrite = channel->GetOverwrite(role_id);
-        if (overwrite.has_value()) {
+        const auto *overwrite = GetPermissionOverwrite(channel_id, role_id);
+        if (overwrite != nullptr) {
             allow |= overwrite->Allow;
             deny |= overwrite->Deny;
         }
@@ -304,8 +308,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
     perms &= ~deny;
     perms |= allow;
 
-    const auto member_overwrite = channel->GetOverwrite(member_id);
-    if (member_overwrite.has_value()) {
+    const auto *member_overwrite = GetPermissionOverwrite(channel_id, member_id);
+    if (member_overwrite != nullptr) {
         perms &= ~member_overwrite->Deny;
         perms |= member_overwrite->Allow;
     }
@@ -469,6 +473,9 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
     for (auto &c : guild.Channels) {
         c.GuildID = guild.ID;
         m_store.SetChannel(c.ID, c);
+        for (auto& p : c.PermissionOverwrites) {
+            m_store.SetPermissionOverwrite(c.ID, p.ID, p);
+        }
     }
 
     for (auto &r : guild.Roles)

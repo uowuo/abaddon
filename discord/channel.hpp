@@ -3,7 +3,6 @@
 #include "json.hpp"
 #include "user.hpp"
 #include "permissions.hpp"
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -39,5 +38,5 @@ struct Channel {
 
     friend void from_json(const nlohmann::json &j, Channel &m);
 
-    std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
+    const PermissionOverwrite *GetOverwrite(Snowflake id) const;
 };
