@@ -42,7 +42,7 @@ typename std::enable_if<Bitwise<T>::enable, T>::type operator&=(T &a, T b) {
 
 template<typename T>
 typename std::enable_if<Bitwise<T>::enable, T>::type operator~(T a) {
-    return static_cast<T>(~static_cast<std::underlying_type<T>::type>(a));
+    return static_cast<T>(~static_cast<typename std::underlying_type<T>::type>(a));
 }
 
 template<typename T>
