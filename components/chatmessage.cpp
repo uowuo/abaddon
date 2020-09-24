@@ -165,10 +165,15 @@ void ChatMessageItem::AttachMenuHandler(Gtk::Widget *widget) {
 void ChatMessageItem::ShowMenu(const GdkEvent *event) {
     const auto &client = Abaddon::Get().GetDiscordClient();
     const auto *data = client.GetMessage(ID);
-    const bool can_edit = client.GetUserData().ID == data->Author.ID;
-    const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, ChannelID, Permission::MANAGE_MESSAGES);
-    m_menu_delete_message->set_sensitive(can_delete);
-    m_menu_edit_message->set_sensitive(can_edit);
+    if (data->IsDeleted()) {
+        m_menu_delete_message->set_sensitive(false);
+        m_menu_edit_message->set_sensitive(false);
+    } else {
+        const bool can_edit = client.GetUserData().ID == data->Author.ID;
+        const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, ChannelID, Permission::MANAGE_MESSAGES);
+        m_menu_delete_message->set_sensitive(can_delete);
+        m_menu_edit_message->set_sensitive(can_edit);
+    }
     m_menu.popup_at_pointer(event);
 }
 

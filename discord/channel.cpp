@@ -1,3 +1,4 @@
+#include "../abaddon.hpp"
 #include "channel.hpp"
 
 void from_json(const nlohmann::json &j, Channel &m) {
@@ -21,9 +22,6 @@ void from_json(const nlohmann::json &j, Channel &m) {
     JS_ON("last_pin_timestamp", m.LastPinTimestamp);
 }
 
-std::optional<PermissionOverwrite> Channel::GetOverwrite(Snowflake id) const {
-    auto ret = std::find_if(PermissionOverwrites.begin(), PermissionOverwrites.end(), [id](const auto x) { return x.ID == id; });
-    if (ret != PermissionOverwrites.end())
-        return *ret;
-    return std::nullopt;
+const PermissionOverwrite *Channel::GetOverwrite(Snowflake id) const {
+    return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

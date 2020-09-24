@@ -24,6 +24,10 @@ void Store::SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const Guil
     m_members[guild_id][user_id] = data;
 }
 
+void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
+    m_permissions[channel_id][id] = perm;
+}
+
 User *Store::GetUser(Snowflake id) {
     auto it = m_users.find(id);
     if (it == m_users.end())
@@ -104,6 +108,16 @@ GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) {
     return &mit->second;
 }
 
+PermissionOverwrite *Store::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) {
+    auto cit = m_permissions.find(channel_id);
+    if (cit == m_permissions.end())
+        return nullptr;
+    auto pit = cit->second.find(id);
+    if (pit == cit->second.end())
+        return nullptr;
+    return &pit->second;
+}
+
 const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {
     auto git = m_members.find(guild_id);
     if (git == m_members.end())
@@ -112,6 +126,16 @@ const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_
     if (mit == git->second.end())
         return nullptr;
     return &mit->second;
+}
+
+const PermissionOverwrite *Store::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
+    auto cit = m_permissions.find(channel_id);
+    if (cit == m_permissions.end())
+        return nullptr;
+    auto pit = cit->second.find(id);
+    if (pit == cit->second.end())
+        return nullptr;
+    return &pit->second;
 }
 
 void Store::ClearGuild(Snowflake id) {
