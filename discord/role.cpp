@@ -9,7 +9,7 @@ void from_json(const nlohmann::json &j, Role &m) {
     JS_D("permissions", m.PermissionsLegacy);
     std::string tmp;
     JS_D("permissions_new", tmp);
-    m.Permissions = std::stoull(tmp);
+    m.Permissions = static_cast<Permission>(std::stoull(tmp));
     JS_D("managed", m.IsManaged);
     JS_D("mentionable", m.IsMentionable);
 }

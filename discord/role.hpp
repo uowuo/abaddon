@@ -1,6 +1,7 @@
 #pragma once
 #include "snowflake.hpp"
 #include "json.hpp"
+#include "permissions.hpp"
 #include <string>
 #include <cstdint>
 
@@ -11,7 +12,7 @@ struct Role {
     bool IsHoisted;
     int Position;
     int PermissionsLegacy;
-    uint64_t Permissions;
+    Permission Permissions;
     bool IsManaged;
     bool IsMentionable;
 

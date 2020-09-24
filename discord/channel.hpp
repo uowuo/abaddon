@@ -2,6 +2,8 @@
 #include "snowflake.hpp"
 #include "json.hpp"
 #include "user.hpp"
+#include "permissions.hpp"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,24 +18,26 @@ enum class ChannelType : int {
 };
 
 struct Channel {
-    Snowflake ID;      //
-    ChannelType Type;  //
-    Snowflake GuildID; // opt
-    int Position = -1; // opt
-    // std::vector<PermissionOverwriteData> PermissionOverwrites; // opt
-    std::string Name;             // opt, null (null for dm's)
-    std::string Topic;            // opt, null
-    bool IsNSFW = false;          // opt
-    Snowflake LastMessageID;      // opt, null
-    int Bitrate = 0;              // opt
-    int UserLimit = 0;            // opt
-    int RateLimitPerUser = 0;     // opt
-    std::vector<User> Recipients; // opt
-    std::string Icon;             // opt, null
-    Snowflake OwnerID;            // opt
-    Snowflake ApplicationID;      // opt
-    Snowflake ParentID;           // opt, null
-    std::string LastPinTimestamp; // opt, can be null even tho docs say otherwise
+    Snowflake ID;                                          //
+    ChannelType Type;                                      //
+    Snowflake GuildID;                                     // opt
+    int Position = -1;                                     // opt
+    std::vector<PermissionOverwrite> PermissionOverwrites; // opt
+    std::string Name;                                      // opt, null (null for dm's)
+    std::string Topic;                                     // opt, null
+    bool IsNSFW = false;                                   // opt
+    Snowflake LastMessageID;                               // opt, null
+    int Bitrate = 0;                                       // opt
+    int UserLimit = 0;                                     // opt
+    int RateLimitPerUser = 0;                              // opt
+    std::vector<User> Recipients;                          // opt
+    std::string Icon;                                      // opt, null
+    Snowflake OwnerID;                                     // opt
+    Snowflake ApplicationID;                               // opt
+    Snowflake ParentID;                                    // opt, null
+    std::string LastPinTimestamp;                          // opt, can be null even tho docs say otherwise
 
     friend void from_json(const nlohmann::json &j, Channel &m);
+
+    std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
 };

@@ -41,6 +41,7 @@ public:
 
     const channels_type &GetChannels() const;
     const guilds_type &GetGuilds() const;
+    const roles_type &GetRoles() const;
 
     void ClearAll();
 

@@ -194,6 +194,10 @@ const Guild *DiscordClient::GetGuild(Snowflake id) const {
     return m_store.GetGuild(id);
 }
 
+const GuildMember *DiscordClient::GetMember(Snowflake user_id, Snowflake guild_id) const {
+    return m_store.GetGuildMemberData(guild_id, user_id);
+}
+
 Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
     auto *data = m_store.GetGuildMemberData(guild_id, user_id);
     if (data == nullptr) return Snowflake::Invalid;
@@ -222,6 +226,91 @@ std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const
         return it->second;
 
     return std::unordered_set<Snowflake>();
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetRolesInGuild(Snowflake id) const {
+    std::unordered_set<Snowflake> ret;
+    const auto &roles = m_store.GetRoles();
+    for (const auto &[rid, rdata] : roles)
+        ret.insert(rid);
+    return ret;
+}
+
+bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
+    const auto base = ComputePermissions(user_id, guild_id);
+    return (base & perm) == perm;
+}
+
+bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
+    const auto *channel = m_store.GetChannel(channel_id);
+    if (channel == nullptr) return false;
+    const auto base = ComputePermissions(user_id, channel->GuildID);
+    const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
+    return (overwrites & perm) == perm;
+}
+
+Permission DiscordClient::ComputePermissions(Snowflake member_id, Snowflake guild_id) const {
+    const auto *member = GetMember(member_id, guild_id);
+    const auto *guild = GetGuild(guild_id);
+    if (member == nullptr || guild == nullptr)
+        return Permission::NONE;
+
+    if (guild->OwnerID == member_id)
+        return Permission::ALL;
+
+    const auto *everyone = GetRole(guild_id);
+    if (everyone == nullptr)
+        return Permission::NONE;
+
+    Permission perms = everyone->Permissions;
+    for (const auto role_id : member->Roles) {
+        const auto *role = GetRole(role_id);
+        if (role != nullptr)
+            perms |= role->Permissions;
+    }
+
+    if ((perms & Permission::ADMINISTRATOR) == Permission::ADMINISTRATOR)
+        return Permission::ALL;
+
+    return perms;
+}
+
+Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const {
+    if ((base & Permission::ADMINISTRATOR) == Permission::ADMINISTRATOR)
+        return Permission::ALL;
+
+    const auto *channel = GetChannel(channel_id);
+    const auto *member = GetMember(member_id, channel->GuildID);
+    if (member == nullptr || channel == nullptr)
+        return Permission::NONE;
+
+    Permission perms = base;
+    auto overwrite_everyone = channel->GetOverwrite(channel->GuildID);
+    if (overwrite_everyone.has_value()) {
+        perms &= ~overwrite_everyone->Deny;
+        perms |= overwrite_everyone->Allow;
+    }
+
+    Permission allow = Permission::NONE;
+    Permission deny = Permission::NONE;
+    for (const auto role_id : member->Roles) {
+        const auto overwrite = channel->GetOverwrite(role_id);
+        if (overwrite.has_value()) {
+            allow |= overwrite->Allow;
+            deny |= overwrite->Deny;
+        }
+    }
+
+    perms &= ~deny;
+    perms |= allow;
+
+    const auto member_overwrite = channel->GetOverwrite(member_id);
+    if (member_overwrite.has_value()) {
+        perms &= ~member_overwrite->Deny;
+        perms |= member_overwrite->Allow;
+    }
+
+    return perms;
 }
 
 void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
