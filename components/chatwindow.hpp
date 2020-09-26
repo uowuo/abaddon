@@ -1,66 +1,68 @@
 #pragma once
 #include <gtkmm.h>
-#include <queue>
+#include <string>
 #include <mutex>
-#include <unordered_map>
-#include <sigc++/sigc++.h>
-#include "chatmessage.hpp"
+#include <queue>
+#include <set>
 #include "../discord/discord.hpp"
+#include "chatmessage.hpp"
 
 class ChatWindow {
 public:
     ChatWindow();
 
     Gtk::Widget *GetRoot() const;
-    void SetActiveChannel(Snowflake id);
     Snowflake GetActiveChannel() const;
-    void SetMessages(std::set<Snowflake> msgs);
-    void AddNewMessage(Snowflake id);
-    void AddNewHistory(const std::vector<Snowflake> &msgs);
-    void DeleteMessage(Snowflake id);
-    void UpdateMessage(Snowflake id);
+
     void Clear();
+    void SetMessages(const std::set<Snowflake> &msgs); // clear contents and replace with given set
+    void SetActiveChannel(Snowflake id);
+    void AddNewMessage(Snowflake id); // append new message to bottom
+    void DeleteMessage(Snowflake id); // add [deleted] indicator
+    void UpdateMessage(Snowflake id); // add [edited] indicator
+    void AddNewHistory(const std::vector<Snowflake> &id); // prepend messages
     void InsertChatInput(std::string text);
-    Snowflake GetOldestListedMessage();
+    Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
 
 protected:
-    void ScrollToBottom();
+    ChatMessageItemContainer *CreateMessageComponent(Snowflake id); // to be inserted into header's content box
+    void ProcessNewMessage(Snowflake id, bool prepend); // creates and adds components
+
     void SetMessagesInternal();
     void AddNewMessageInternal();
-    void AddNewHistoryInternal();
     void DeleteMessageInternal();
     void UpdateMessageInternal();
-    ChatDisplayType GetMessageDisplayType(const Message *data);
-    ChatMessageItem *CreateMessageComponent(const Message *data);
-    void ProcessMessage(const Message *data, bool prepend = false);
-    int m_num_rows = 0; // youd think thered be a Gtk::ListBox::get_row_count or something but nope
-    std::unordered_map<Snowflake, ChatMessageItem *> m_id_to_widget;
+    void AddNewHistoryInternal();
 
-    bool m_scroll_to_bottom = true;
+    int m_num_rows = 0;
+    std::unordered_map<Snowflake, Gtk::Widget *> m_id_to_widget;
+
+    Glib::Dispatcher m_set_messsages_dispatch;
+    std::queue<std::set<Snowflake>> m_set_messages_queue;
+    Glib::Dispatcher m_new_message_dispatch;
+    std::queue<Snowflake> m_new_message_queue;
+    Glib::Dispatcher m_delete_message_dispatch;
+    std::queue<Snowflake> m_delete_message_queue;
+    Glib::Dispatcher m_update_message_dispatch;
+    std::queue<Snowflake> m_update_message_queue;
+    Glib::Dispatcher m_history_dispatch;
+    std::queue<std::set<Snowflake>> m_history_queue;
+    mutable std::mutex m_update_mutex;
+
+    Snowflake m_active_channel;
 
     bool on_key_press_event(GdkEventKey *e);
     void on_scroll_edge_overshot(Gtk::PositionType pos);
 
-    Glib::Dispatcher m_message_set_dispatch;
-    std::queue<std::set<Snowflake>> m_message_set_queue;
-    Glib::Dispatcher m_new_message_dispatch;
-    std::queue<Snowflake> m_new_message_queue;
-    Glib::Dispatcher m_new_history_dispatch;
-    std::queue<std::vector<Snowflake>> m_new_history_queue;
-    Glib::Dispatcher m_message_delete_dispatch;
-    std::queue<Snowflake> m_message_delete_queue;
-    Glib::Dispatcher m_message_edit_dispatch;
-    std::queue<Snowflake> m_message_edit_queue;
-    std::mutex m_update_mutex;
-
-    Snowflake m_active_channel;
+    void ScrollToBottom();
+    bool m_should_scroll_to_bottom = true;
 
     Gtk::Box *m_main;
-    Gtk::ListBox *m_listbox;
-    Gtk::Viewport *m_viewport;
+    Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_scroll;
-    Gtk::ScrolledWindow *m_entry_scroll;
+
     Gtk::TextView *m_input;
+    Gtk::ScrolledWindow *m_input_scroll;
 
 public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;

@@ -107,6 +107,8 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("content", Content);
     JS_O("timestamp", Timestamp);
     JS_ON("edited_timestamp", EditedTimestamp);
+    if (EditedTimestamp.size() > 0)
+        SetEdited();
     JS_O("tts", IsTTS);
     JS_O("mention_everyone", DoesMentionEveryone);
     JS_O("mentions", Mentions);
