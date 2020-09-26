@@ -523,7 +523,6 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
 
     current->from_json_edited(msg.Data);
 
-    current->SetEdited();
     m_signal_message_update.emit(id, current->ChannelID);
 }
 
