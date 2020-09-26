@@ -29,7 +29,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     container->ID = data->ID;
     container->ChannelID = data->ChannelID;
 
-    if (data->Content.size() > 0) {
+    if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
         container->m_text_component = CreateTextComponent(data);
         container->AttachMenuHandler(container->m_text_component);
         container->m_main->add(*container->m_text_component);
@@ -95,7 +95,22 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data
     tv->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
     tv->set_halign(Gtk::ALIGN_FILL);
     tv->set_hexpand(true);
-    tv->get_buffer()->set_text(data->Content);
+
+    auto b = tv->get_buffer();
+    Gtk::TextBuffer::iterator s, e; // lame
+    b->get_bounds(s, e);
+    switch (data->Type) {
+        case MessageType::DEFAULT:
+            b->set_text(data->Content);
+            break;
+        case MessageType::GUILD_MEMBER_JOIN:
+            b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
+            break;
+        case MessageType::CHANNEL_PINNED_MESSAGE:
+            b->insert_markup(s, "<span color='#999999'><i>[message pinned]</i></span>");
+            break;
+        default: break;
+    }
 
     return tv;
 }
