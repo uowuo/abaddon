@@ -16,6 +16,8 @@ public:
     void UpdateImage();
 
 protected:
+    bool EmitImageLoad(std::string url);
+
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message *data);  // Message.Content
     Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]

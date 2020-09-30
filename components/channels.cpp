@@ -46,13 +46,7 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
             m_icon = Gtk::manage(new Gtk::Image(buf));
         else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-            Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
-                Glib::signal_idle().connect([this, ldbuf]() -> bool {
-                    m_icon->property_pixbuf() = ldbuf;
-
-                    return false;
-                });
-            });
+            Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
         }
     }
 
@@ -68,6 +62,11 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     m_ev->add(*m_box);
     add(*m_ev);
     show_all_children();
+}
+
+void ChannelListRowDMChannel::OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf) {
+    if (m_icon != nullptr)
+        m_icon->property_pixbuf() = buf;
 }
 
 ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {

@@ -132,6 +132,11 @@ void ChatMessageItemContainer::UpdateAttributes() {
         m_attrib_label->set_markup("<span color='#999999'>[edited]</span>");
 }
 
+bool ChatMessageItemContainer::EmitImageLoad(std::string url) {
+    m_signal_image_load.emit(url);
+    return false;
+}
+
 void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string url) {
     // clang-format off
     widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
@@ -258,27 +263,24 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
         }
     }
 
-    bool img = embed.Image.URL.size() > 0;
-    bool thumb = embed.Thumbnail.URL.size() > 0;
-    if (img || thumb) {
+    bool is_img = embed.Image.URL.size() > 0;
+    bool is_thumb = embed.Thumbnail.URL.size() > 0;
+    if (is_img || is_thumb) {
         auto *img = Gtk::manage(new Gtk::Image);
         img->set_halign(Gtk::ALIGN_CENTER);
         int w, h;
-        if (img)
+        if (is_img)
             std::tie(w, h) = GetImageDimensions(embed.Image.Width, embed.Image.Height, 200, 150);
         else
             std::tie(w, h) = GetImageDimensions(embed.Thumbnail.Width, embed.Thumbnail.Height, 200, 150);
         img->set_size_request(w, h);
         main->pack_start(*img);
         m_embed_img = img;
-        if (img)
+        if (is_img)
             m_embed_imgurl = embed.Image.ProxyURL;
         else
             m_embed_imgurl = embed.Thumbnail.ProxyURL;
-        Glib::signal_idle().connect([this]() -> bool {
-            m_signal_image_load.emit(m_embed_imgurl);
-            return false;
-        });
+        Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), m_embed_imgurl));
     }
 
     if (embed.Footer.Text.length() > 0) {
@@ -366,10 +368,8 @@ std::pair<int, int> ChatMessageItemContainer::GetImageDimensions(int width, int 
 
 void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url) {
     m_img_loadmap[url] = std::make_pair(img, data);
-    Glib::signal_idle().connect([this, url]() -> bool {
-        m_signal_image_load.emit(url); // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
-        return false;
-    });
+    // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
+    Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {

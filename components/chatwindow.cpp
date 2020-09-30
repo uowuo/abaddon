@@ -232,9 +232,8 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
 }
 
 void ChatWindow::SetMessagesInternal() {
-    m_update_mutex.lock();
+    std::scoped_lock<std::mutex> guard(m_update_mutex);
     const auto *msgs = &m_set_messages_queue.front();
-    m_update_mutex.unlock();
 
     // empty the listbox
     auto children = m_list->get_children();
@@ -251,9 +250,7 @@ void ChatWindow::SetMessagesInternal() {
         ProcessNewMessage(id, false);
     }
 
-    m_update_mutex.lock();
     m_set_messages_queue.pop();
-    m_update_mutex.unlock();
 }
 
 void ChatWindow::AddNewMessageInternal() {
