@@ -40,6 +40,8 @@ public:
     ChannelListRowDMChannel(const Channel *data);
 
 protected:
+    void OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf);
+
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::Label *m_lbl;
