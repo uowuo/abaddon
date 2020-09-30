@@ -66,8 +66,8 @@ void from_json(const nlohmann::json &j, AttachmentData &m) {
     JS_D("size", m.Bytes);
     JS_D("url", m.URL);
     JS_D("proxy_url", m.ProxyURL);
-    JS_N("height", m.Height);
-    JS_N("width", m.Width);
+    JS_ON("height", m.Height);
+    JS_ON("width", m.Width);
 }
 
 void from_json(const nlohmann::json &j, Message &m) {
@@ -86,7 +86,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_D("mentions", m.Mentions);
     // JS_D("mention_roles", m.MentionRoles);
     // JS_O("mention_channels", m.MentionChannels);
-    // JS_D("attachments", m.Attachments);
+    JS_D("attachments", m.Attachments);
     JS_D("embeds", m.Embeds);
     // JS_O("reactions", m.Reactions);
     JS_O("nonce", m.Nonce);

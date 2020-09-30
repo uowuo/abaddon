@@ -85,8 +85,14 @@
     padding-left: 15px;
 }
 
+.message-attachment-box {
+    color: #aaaaaa;
+    border: 1px solid #aaaaaa;
+    padding: 2px 5px 2px 5px;
+}
+
 paned separator {
-    background: #37474f;
+    background:#37474f;
 }
 
 scrollbar {

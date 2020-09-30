@@ -13,10 +13,19 @@ public:
     // attributes = edited, deleted
     void UpdateAttributes();
     void UpdateContent();
+    void UpdateImage();
 
 protected:
-    static Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
-    static Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
+    void AddClickHandler(Gtk::Widget *widget, std::string);
+    Gtk::TextView *CreateTextComponent(const Message *data);  // Message.Content
+    Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
+    Gtk::Image *CreateImageComponent(const AttachmentData &data);
+    Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
+    void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
+    static std::pair<int, int> GetImageDimensions(int width, int height, int clampw = 400, int clamph = 300);
+
+    std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
+
     void AttachMenuHandler(Gtk::Widget *widget);
     void ShowMenu(GdkEvent *event);
 
@@ -31,20 +40,28 @@ protected:
 
     Gtk::Box *m_main;
     Gtk::Label *m_attrib_label = nullptr;
+    Gtk::Image *m_embed_img = nullptr; // yes this is hacky no i dont care (for now)
+    std::string m_embed_imgurl;
 
     Gtk::TextView *m_text_component = nullptr;
     Gtk::EventBox *m_embed_component = nullptr;
 
 public:
+    typedef sigc::signal<void, std::string> type_signal_image_load;
+
     typedef sigc::signal<void> type_signal_action_delete;
     typedef sigc::signal<void> type_signal_action_edit;
 
     type_signal_action_delete signal_action_delete();
     type_signal_action_edit signal_action_edit();
 
+    type_signal_image_load signal_image_load();
+
 private:
     type_signal_action_delete m_signal_action_delete;
     type_signal_action_edit m_signal_action_edit;
+
+    type_signal_image_load m_signal_image_load;
 };
 
 class ChatMessageHeader : public Gtk::ListBoxRow {
