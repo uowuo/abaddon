@@ -5,6 +5,7 @@ void from_json(const nlohmann::json &j, GatewayMessage &m) {
     m.Data = j.at("d");
 
     JS_ON("t", m.Type);
+    JS_ON("s", m.Sequence);
 }
 
 void from_json(const nlohmann::json &j, HelloMessageData &m) {

@@ -39,6 +39,7 @@ struct GatewayMessage {
     GatewayOp Opcode;
     nlohmann::json Data;
     std::string Type;
+    int Sequence = -1;
 
     friend void from_json(const nlohmann::json &j, GatewayMessage &m);
 };

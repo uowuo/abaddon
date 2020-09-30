@@ -412,6 +412,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
         return;
     }
 
+    if (m.Sequence != -1)
+        m_last_sequence = m.Sequence;
+
     try {
         switch (m.Opcode) {
             case GatewayOp::Hello: {
