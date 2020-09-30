@@ -9,6 +9,36 @@
 #include <string>
 #include <iomanip>
 
+// gtkmm doesnt seem to work
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
+    #include <shellapi.h>
+#endif
+
+inline void LaunchBrowser(std::string url) {
+#if defined(_WIN32)
+    // wtf i love the win32 api now ???
+    ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+    std::system(("open " + url).c_str());
+#elif defined(__linux__)
+    std::system(("xdg-open" + url).c_str());
+#else
+    printf("can't open url on this platform\n");
+#endif
+}
+
+inline std::string HumanReadableBytes(uint64_t bytes) {
+    constexpr static const char *x[] = { "B", "KB", "MB", "GB", "TB" };
+    int order = 0;
+    while (bytes >= 1000 && order < 4) { // 4=len(x)-1
+        order++;
+        bytes /= 1000;
+    }
+    return std::to_string(bytes) + x[order];
+}
+
 template<typename T>
 struct Bitwise {
     static const bool enable = false;

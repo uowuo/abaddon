@@ -30,16 +30,36 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     container->ChannelID = data->ChannelID;
 
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
-        container->m_text_component = CreateTextComponent(data);
+        container->m_text_component = container->CreateTextComponent(data);
         container->AttachMenuHandler(container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
-        container->m_embed_component = CreateEmbedComponent(data);
+        container->m_embed_component = container->CreateEmbedComponent(data);
         container->AttachMenuHandler(container->m_embed_component);
         container->m_main->add(*container->m_embed_component);
+    }
+
+    // i dont think attachments can be edited
+    // also this can definitely be done much better holy shit
+    for (const auto &a : data->Attachments) {
+        const auto last3 = a.ProxyURL.substr(a.ProxyURL.length() - 3);
+        if (last3 == "png" || last3 == "jpg") {
+            auto *widget = container->CreateImageComponent(a);
+            auto *ev = Gtk::manage(new Gtk::EventBox);
+            ev->add(*widget);
+            container->AttachMenuHandler(ev);
+            container->AddClickHandler(ev, a.URL);
+            container->m_main->add(*ev);
+            container->HandleImage(a, widget, a.ProxyURL);
+        } else {
+            auto *widget = container->CreateAttachmentComponent(a);
+            container->AttachMenuHandler(widget);
+            container->AddClickHandler(widget, a.URL);
+            container->m_main->add(*widget);
+        }
     }
 
     container->UpdateAttributes();
@@ -47,6 +67,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     return container;
 }
 
+// this doesnt rly make sense
 void ChatMessageItemContainer::UpdateContent() {
     const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (m_text_component != nullptr)
@@ -58,8 +79,33 @@ void ChatMessageItemContainer::UpdateContent() {
 
         if (data->Embeds.size() == 1) {
             m_embed_component = CreateEmbedComponent(data);
+            if (m_embed_imgurl.size() > 0) {
+                m_signal_image_load.emit(m_embed_imgurl);
+            }
             AttachMenuHandler(m_embed_component);
             m_main->add(*m_embed_component);
+        }
+    }
+}
+
+void ChatMessageItemContainer::UpdateImage() {
+    for (auto it = m_img_loadmap.cbegin(); it != m_img_loadmap.cend();) {
+        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(it->first);
+        if (buf) {
+            int w, h;
+            std::tie(w, h) = GetImageDimensions(it->second.second.Width, it->second.second.Height);
+            it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
+            it = m_img_loadmap.erase(it);
+        } else
+            it++;
+    }
+
+    if (m_embed_img != nullptr) {
+        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(m_embed_imgurl);
+        if (buf) {
+            int w, h;
+            m_embed_img->get_size_request(w, h);
+            m_embed_img->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
         }
     }
 }
@@ -84,6 +130,18 @@ void ChatMessageItemContainer::UpdateAttributes() {
         m_attrib_label->set_markup("<span color='#ff0000'>[deleted]</span>");
     else if (edited)
         m_attrib_label->set_markup("<span color='#999999'>[edited]</span>");
+}
+
+void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string url) {
+    // clang-format off
+    widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
+        if (event->type == Gdk::BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+            LaunchBrowser(url);
+            return false;
+        }
+        return true;
+    }, false);
+    // clang-format on
 }
 
 Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data) {
@@ -200,6 +258,29 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
         }
     }
 
+    bool img = embed.Image.URL.size() > 0;
+    bool thumb = embed.Thumbnail.URL.size() > 0;
+    if (img || thumb) {
+        auto *img = Gtk::manage(new Gtk::Image);
+        img->set_halign(Gtk::ALIGN_CENTER);
+        int w, h;
+        if (img)
+            std::tie(w, h) = GetImageDimensions(embed.Image.Width, embed.Image.Height, 200, 150);
+        else
+            std::tie(w, h) = GetImageDimensions(embed.Thumbnail.Width, embed.Thumbnail.Height, 200, 150);
+        img->set_size_request(w, h);
+        main->pack_start(*img);
+        m_embed_img = img;
+        if (img)
+            m_embed_imgurl = embed.Image.ProxyURL;
+        else
+            m_embed_imgurl = embed.Thumbnail.ProxyURL;
+        Glib::signal_idle().connect([this]() -> bool {
+            m_signal_image_load.emit(m_embed_imgurl);
+            return false;
+        });
+    }
+
     if (embed.Footer.Text.length() > 0) {
         auto *footer_lbl = Gtk::manage(new Gtk::Label);
         footer_lbl->set_halign(Gtk::ALIGN_START);
@@ -232,6 +313,63 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
     ev->show_all();
 
     return ev;
+}
+
+Gtk::Image *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
+    int w, h;
+    std::tie(w, h) = GetImageDimensions(data.Width, data.Height);
+
+    auto &im = Abaddon::Get().GetImageManager();
+    Gtk::Image *widget = Gtk::manage(new Gtk::Image);
+    widget->set_halign(Gtk::ALIGN_START);
+    widget->set_size_request(w, h);
+
+    // clang-format off
+    const auto url = data.URL;
+    widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
+        if (event->type == Gdk::BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+            LaunchBrowser(url);
+            return false;
+        }
+        return true;
+    }, false);
+    // clang-format on
+
+    return widget;
+}
+
+Gtk::Box *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentData &data) {
+    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    auto *ev = Gtk::manage(new Gtk::EventBox);
+    auto *btn = Gtk::manage(new Gtk::Label(data.Filename + " " + HumanReadableBytes(data.Bytes))); // Gtk::LinkButton flat out doesn't work :D
+    box->get_style_context()->add_class("message-attachment-box");
+    ev->add(*btn);
+    box->add(*ev);
+    return box;
+}
+
+std::pair<int, int> ChatMessageItemContainer::GetImageDimensions(int width, int height, int clampw, int clamph) {
+    const auto frac = static_cast<float>(width) / height;
+
+    if (width > clampw) {
+        width = clampw;
+        height = clampw / frac;
+    }
+
+    if (height > clamph) {
+        height = clamph;
+        width = clamph * frac;
+    }
+
+    return std::make_pair(static_cast<int>(width), static_cast<int>(height));
+}
+
+void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url) {
+    m_img_loadmap[url] = std::make_pair(img, data);
+    Glib::signal_idle().connect([this, url]() -> bool {
+        m_signal_image_load.emit(url); // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
+        return false;
+    });
 }
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {
@@ -268,6 +406,10 @@ ChatMessageItemContainer::type_signal_action_delete ChatMessageItemContainer::si
 
 ChatMessageItemContainer::type_signal_action_edit ChatMessageItemContainer::signal_action_edit() {
     return m_signal_action_edit;
+}
+
+ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {
+    return m_signal_image_load;
 }
 
 // clang-format off

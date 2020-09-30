@@ -51,6 +51,15 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
     }
 }
 
+std::string Cache::GetPathIfCached(std::string url) {
+    auto cache_path = m_tmp_path / SanitizeString(url);
+    if (std::filesystem::exists(cache_path)) {
+        return cache_path.string();
+    }
+
+    return "";
+}
+
 // this just seems really yucky
 void Cache::CleanupFutures() {
     for (auto it = m_futures.begin(); it != m_futures.end();) {

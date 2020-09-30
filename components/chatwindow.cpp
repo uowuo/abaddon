@@ -199,14 +199,25 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
 
     auto *content = CreateMessageComponent(id);
     if (content != nullptr) {
+        header->AddContent(content, prepend);
+        m_id_to_widget[id] = content;
+
         content->signal_action_delete().connect([this, id] {
             m_signal_action_message_delete.emit(m_active_channel, id);
         });
         content->signal_action_edit().connect([this, id] {
             m_signal_action_message_edit.emit(m_active_channel, id);
         });
-        header->AddContent(content, prepend);
-        m_id_to_widget[id] = content;
+        content->signal_image_load().connect([this, id](std::string url) {
+            auto &mgr = Abaddon::Get().GetImageManager();
+            mgr.LoadFromURL(url, [this, id](Glib::RefPtr<Gdk::Pixbuf> buf) {
+                if (m_id_to_widget.find(id) != m_id_to_widget.end()) {
+                    auto *x = dynamic_cast<ChatMessageItemContainer *>(m_id_to_widget.at(id));
+                    if (x != nullptr)
+                        x->UpdateImage();
+                }
+            });
+        });
     }
 
     header->set_margin_left(5);
