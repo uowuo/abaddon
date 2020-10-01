@@ -18,6 +18,12 @@ void from_json(const nlohmann::json &j, MessageDeleteData &m) {
     JS_O("guild_id", m.GuildID);
 }
 
+void from_json(const nlohmann::json &j, MessageDeleteBulkData &m) {
+    JS_D("ids", m.IDs);
+    JS_D("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+}
+
 void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::GroupItem &m) {
     m.Type = "group";
     JS_D("id", m.ID);
