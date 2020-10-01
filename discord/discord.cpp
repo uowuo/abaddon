@@ -476,7 +476,7 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
     for (auto &c : guild.Channels) {
         c.GuildID = guild.ID;
         m_store.SetChannel(c.ID, c);
-        for (auto& p : c.PermissionOverwrites) {
+        for (auto &p : c.PermissionOverwrites) {
             m_store.SetPermissionOverwrite(c.ID, p.ID, p);
         }
     }

@@ -13,8 +13,10 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_ON("discovery_splash", m.DiscoverySplash);
     JS_O("owner", m.IsOwner);
     JS_D("owner_id", m.OwnerID);
-    JS_O("permissions", m.Permissions);
-    JS_O("permissions_new", m.PermissionsNew);
+    std::string tmp;
+    JS_O("permissions", tmp);
+    if (tmp != "")
+        m.Permissions = std::stoull(tmp);
     JS_D("region", m.VoiceRegion);
     JS_N("afk_channel_id", m.AFKChannelID);
     JS_D("afk_timeout", m.AFKTimeout);
