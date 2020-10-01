@@ -33,6 +33,7 @@ enum class GatewayEvent : int {
     GUILD_MEMBER_LIST_UPDATE,
     GUILD_CREATE,
     GUILD_DELETE,
+    MESSAGE_DELETE_BULK,
 };
 
 struct GatewayMessage {
@@ -56,6 +57,14 @@ struct MessageDeleteData {
     Snowflake GuildID;   // opt
 
     friend void from_json(const nlohmann::json &j, MessageDeleteData &m);
+};
+
+struct MessageDeleteBulkData {
+    std::vector<Snowflake> IDs; //
+    Snowflake ChannelID;        //
+    Snowflake GuildID;          // opt
+
+    friend void from_json(const nlohmann::json &j, MessageDeleteBulkData &m);
 };
 
 struct GuildMemberListUpdateMessage {
