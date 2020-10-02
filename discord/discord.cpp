@@ -544,9 +544,11 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg) {
     GuildMemberListUpdateMessage data = msg.Data;
-    // man
+
+    bool has_sync = false;
     for (const auto &op : data.Ops) {
         if (op.Op == "SYNC") {
+            has_sync = true;
             for (const auto &item : op.Items) {
                 if (item->Type == "member") {
                     auto member = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
@@ -558,7 +560,9 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
         }
     }
 
-    m_signal_guild_member_list_update.emit(data.GuildID);
+    // todo: manage this event a little better
+    if (has_sync)
+        m_signal_guild_member_list_update.emit(data.GuildID);
 }
 
 void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {

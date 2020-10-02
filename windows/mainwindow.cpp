@@ -144,7 +144,6 @@ Snowflake MainWindow::GetChatActiveChannel() const {
 void MainWindow::UpdateChatNewMessage(Snowflake id) {
     if (Abaddon::Get().GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel()) {
         m_chat.AddNewMessage(id);
-        m_members.UpdateMemberList();
     }
 }
 
@@ -160,7 +159,6 @@ void MainWindow::UpdateChatMessageUpdated(Snowflake id, Snowflake channel_id) {
 
 void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
     m_chat.AddNewHistory(msgs);
-    m_members.UpdateMemberList();
 }
 
 void MainWindow::InsertChatInput(std::string text) {
