@@ -342,7 +342,8 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     LazyLoadRequestMessage msg;
     std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> c;
     c[id] = {
-        std::make_pair(0, 99)
+        std::make_pair(0, 99),
+        std::make_pair(100, 199)
     };
     msg.Channels = c;
     msg.GuildID = GetChannel(id)->GuildID;
