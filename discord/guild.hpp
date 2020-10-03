@@ -65,5 +65,6 @@ struct Guild {
 
     friend void from_json(const nlohmann::json &j, Guild &m);
 
+    bool HasIcon() const;
     std::string GetIconURL(std::string ext = "png", std::string size = "32") const;
 };

@@ -41,12 +41,16 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     m_lbl->get_style_context()->add_class("channel-row-label");
 
     if (data->Type == ChannelType::DM) {
-        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Recipients[0].GetAvatarURL("png", "16"));
-        if (buf)
-            m_icon = Gtk::manage(new Gtk::Image(buf));
-        else {
+        if (data->Recipients[0].HasAvatar()) {
+            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Recipients[0].GetAvatarURL("png", "16"));
+            if (buf)
+                m_icon = Gtk::manage(new Gtk::Image(buf));
+            else {
+                m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+                Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
+            }
+        } else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-            Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
         }
     }
 
@@ -75,18 +79,22 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_lbl = Gtk::manage(new Gtk::Label);
 
-    auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
-    if (buf)
-        m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
-    else {
-        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-        Abaddon::Get().GetImageManager().LoadFromURL(data->GetIconURL("png", "32"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
-            Glib::signal_idle().connect([this, ldbuf]() -> bool {
-                m_icon->property_pixbuf() = ldbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+    if (data->HasIcon()) {
+        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
+        if (buf)
+            m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
+        else {
+            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+            Abaddon::Get().GetImageManager().LoadFromURL(data->GetIconURL("png", "32"), [this](Glib::RefPtr<Gdk::Pixbuf> ldbuf) {
+                Glib::signal_idle().connect([this, ldbuf]() -> bool {
+                    m_icon->property_pixbuf() = ldbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
 
-                return false;
+                    return false;
+                });
             });
-        });
+        }
+    } else {
+        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
     }
 
     get_style_context()->add_class("channel-row");
