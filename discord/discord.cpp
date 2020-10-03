@@ -525,7 +525,8 @@ void DiscordClient::HandleGatewayMessageDeleteBulk(const GatewayMessage &msg) {
     MessageDeleteBulkData data = msg.Data;
     for (const auto &id : data.IDs) {
         auto *cur = m_store.GetMessage(id);
-        cur->SetDeleted();
+        if (cur != nullptr)
+            cur->SetDeleted();
         m_signal_message_delete.emit(id, data.ChannelID);
     }
 }
