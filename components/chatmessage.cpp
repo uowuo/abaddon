@@ -88,25 +88,22 @@ void ChatMessageItemContainer::UpdateContent() {
     }
 }
 
-void ChatMessageItemContainer::UpdateImage() {
-    for (auto it = m_img_loadmap.cbegin(); it != m_img_loadmap.cend();) {
-        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(it->first);
-        if (buf) {
-            int w, h;
-            std::tie(w, h) = GetImageDimensions(it->second.second.Width, it->second.second.Height);
-            it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
-            it = m_img_loadmap.erase(it);
-        } else
-            it++;
+void ChatMessageItemContainer::UpdateImage(std::string url, Glib::RefPtr<Gdk::Pixbuf> buf) {
+    if (!buf) return;
+
+    if (m_embed_img != nullptr && m_embed_imgurl == url) {
+        int w, h;
+        m_embed_img->get_size_request(w, h);
+        m_embed_img->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
+
+        return;
     }
 
-    if (m_embed_img != nullptr) {
-        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(m_embed_imgurl);
-        if (buf) {
-            int w, h;
-            m_embed_img->get_size_request(w, h);
-            m_embed_img->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
-        }
+    auto it = m_img_loadmap.find(url);
+    if (it != m_img_loadmap.end()) {
+        int w, h;
+        GetImageDimensions(it->second.second.Width, it->second.second.Height, w, h);
+        it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
     }
 }
 
@@ -270,9 +267,9 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
         img->set_halign(Gtk::ALIGN_CENTER);
         int w, h;
         if (is_img)
-            std::tie(w, h) = GetImageDimensions(embed.Image.Width, embed.Image.Height, 200, 150);
+            GetImageDimensions(embed.Image.Width, embed.Image.Height, w, h, 200, 150);
         else
-            std::tie(w, h) = GetImageDimensions(embed.Thumbnail.Width, embed.Thumbnail.Height, 200, 150);
+            GetImageDimensions(embed.Thumbnail.Width, embed.Thumbnail.Height, w, h, 200, 150);
         img->set_size_request(w, h);
         main->pack_start(*img);
         m_embed_img = img;
@@ -319,7 +316,7 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
 
 Gtk::Image *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
     int w, h;
-    std::tie(w, h) = GetImageDimensions(data.Width, data.Height);
+    GetImageDimensions(data.Width, data.Height, w, h);
 
     auto &im = Abaddon::Get().GetImageManager();
     Gtk::Image *widget = Gtk::manage(new Gtk::Image);
@@ -348,22 +345,6 @@ Gtk::Box *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentDa
     ev->add(*btn);
     box->add(*ev);
     return box;
-}
-
-std::pair<int, int> ChatMessageItemContainer::GetImageDimensions(int width, int height, int clampw, int clamph) {
-    const auto frac = static_cast<float>(width) / height;
-
-    if (width > clampw) {
-        width = clampw;
-        height = clampw / frac;
-    }
-
-    if (height > clamph) {
-        height = clamph;
-        width = clamph * frac;
-    }
-
-    return std::make_pair(static_cast<int>(width), static_cast<int>(height));
 }
 
 void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url) {

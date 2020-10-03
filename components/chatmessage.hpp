@@ -13,7 +13,7 @@ public:
     // attributes = edited, deleted
     void UpdateAttributes();
     void UpdateContent();
-    void UpdateImage();
+    void UpdateImage(std::string url, Glib::RefPtr<Gdk::Pixbuf> buf);
 
 protected:
     bool EmitImageLoad(std::string url);
@@ -24,7 +24,6 @@ protected:
     Gtk::Image *CreateImageComponent(const AttachmentData &data);
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
-    static std::pair<int, int> GetImageDimensions(int width, int height, int clampw = 400, int clamph = 300);
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
