@@ -29,6 +29,37 @@ inline void LaunchBrowser(std::string url) {
 #endif
 }
 
+inline void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300) {
+    const auto frac = static_cast<float>(inw) / inh;
+
+    outw = inw;
+    outh = inh;
+
+    if (outw > clampw) {
+        outw = clampw;
+        outh = clampw / frac;
+    }
+
+    if (outh > clamph) {
+        outh = clamph;
+        outw = clamph * frac;
+    }
+}
+
+inline std::vector<uint8_t> ReadWholeFile(std::string path) {
+    std::vector<uint8_t> ret;
+    FILE *fp = std::fopen(path.c_str(), "rb");
+    if (fp == nullptr)
+        return ret;
+    std::fseek(fp, 0, SEEK_END);
+    int len = std::ftell(fp);
+    std::rewind(fp);
+    ret.resize(len);
+    std::fread(ret.data(), 1, ret.size(), fp);
+    std::fclose(fp);
+    return ret;
+}
+
 inline std::string HumanReadableBytes(uint64_t bytes) {
     constexpr static const char *x[] = { "B", "KB", "MB", "GB", "TB" };
     int order = 0;

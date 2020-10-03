@@ -23,23 +23,14 @@ std::string Cache::SanitizeString(std::string str) {
 }
 
 void Cache::RespondFromPath(std::filesystem::path path, callback_type cb) {
-    /*if (!std::filesystem::exists(path)) return;
-    FILE *fp = std::fopen(path.string().c_str(), "rb");
-    if (fp == nullptr) return;
-    std::fseek(fp, 0, SEEK_END);
-    int len = std::ftell(fp);
-    std::rewind(fp);
-    std::vector<uint8_t> ret;
-    ret.resize(len);
-    std::fread(ret.data(), 1, len, fp);
-    std::fclose(fp);*/
     cb(path.string());
 }
 
 void Cache::GetFileFromURL(std::string url, callback_type cb) {
     auto cache_path = m_tmp_path / SanitizeString(url);
     if (std::filesystem::exists(cache_path)) {
-        RespondFromPath(cache_path, cb);
+        m_futures.push_back(std::async(std::launch::async, [this, cache_path, cb]() {
+            RespondFromPath(cache_path, cb); }));
         return;
     }
 
