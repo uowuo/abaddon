@@ -57,6 +57,10 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_O("approximate_presence_count", m.ApproximatePresenceCount);
 }
 
+bool Guild::HasIcon() const {
+    return Icon != "";
+}
+
 std::string Guild::GetIconURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/icons/" + std::to_string(ID) + "/" + Icon + "." + ext + "?size=" + size;
 }
