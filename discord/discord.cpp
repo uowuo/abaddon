@@ -12,6 +12,7 @@ void DiscordClient::Start() {
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
 
+    m_last_sequence = -1;
     m_heartbeat_acked = true;
     m_client_connected = true;
     m_websocket.StartConnection(DiscordGateway);
