@@ -26,11 +26,13 @@ Glib::RefPtr<Gdk::Pixbuf> ImageManager::ReadFileToPixbuf(std::string path) {
 }
 
 void ImageManager::LoadFromURL(std::string url, callback_type cb) {
-    m_cache.GetFileFromURL(url, [this, url, cb](std::string path) {
+    sigc::signal<void(Glib::RefPtr<Gdk::Pixbuf>)> signal;
+    signal.connect(cb);
+    m_cache.GetFileFromURL(url, [this, url, signal](std::string path) {
         try {
             auto buf = ReadFileToPixbuf(path);
             m_cb_mutex.lock();
-            m_cb_queue.push(std::make_pair(buf, cb));
+            m_cb_queue.push([signal, buf]() { signal.emit(buf); });
             m_cb_dispatcher.emit();
             m_cb_mutex.unlock();
         } catch (std::exception &e) {
@@ -41,8 +43,7 @@ void ImageManager::LoadFromURL(std::string url, callback_type cb) {
 
 void ImageManager::RunCallbacks() {
     m_cb_mutex.lock();
-    const auto &pair = m_cb_queue.front();
-    pair.second(pair.first);
+    m_cb_queue.front()();
     m_cb_queue.pop();
     m_cb_mutex.unlock();
 }

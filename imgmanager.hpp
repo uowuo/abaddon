@@ -10,7 +10,7 @@ class ImageManager {
 public:
     ImageManager();
 
-    using callback_type = std::function<void(Glib::RefPtr<Gdk::Pixbuf>)>;
+    using callback_type = sigc::slot<void(Glib::RefPtr<Gdk::Pixbuf>)>;
 
     Cache &GetCache();
     void LoadFromURL(std::string url, callback_type cb);
@@ -24,7 +24,7 @@ private:
     void RunCallbacks();
     Glib::Dispatcher m_cb_dispatcher;
     mutable std::mutex m_cb_mutex;
-    std::queue<std::pair<Glib::RefPtr<Gdk::Pixbuf>, callback_type>> m_cb_queue;
+    std::queue<std::function<void()>> m_cb_queue;
 
     std::unordered_map<std::string, Glib::RefPtr<Gdk::Pixbuf>> m_pixs;
     Cache m_cache;
