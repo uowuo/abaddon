@@ -14,12 +14,12 @@ SettingsManager::SettingsManager(std::string filename)
     m_ok = rc == SI_OK;
 }
 
-std::string SettingsManager::GetSetting(std::string section, std::string key, std::string fallback) {
+std::string SettingsManager::GetSettingString(std::string section, std::string key, std::string fallback) const {
     return m_ini.GetValue(section.c_str(), key.c_str(), fallback.c_str());
 }
 
-void SettingsManager::SetSetting(std::string section, std::string key, std::string value) {
-    m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
+int SettingsManager::GetSettingInt(std::string section, std::string key, int fallback) const {
+    return std::stoul(GetSettingString(section, key, std::to_string(fallback)));
 }
 
 bool SettingsManager::IsValid() const {
