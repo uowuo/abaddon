@@ -18,6 +18,8 @@ public:
             m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
         else
             m_ini.SetValue(section.c_str(), key.c_str(), std::to_string(value).c_str());
+
+        m_ini.SaveFile(m_filename.c_str());
     }
     bool IsValid() const;
 
