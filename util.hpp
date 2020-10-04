@@ -50,7 +50,7 @@ inline void LaunchBrowser(std::string url) {
 #elif defined(__APPLE__)
     std::system(("open " + url).c_str());
 #elif defined(__linux__)
-    std::system(("xdg-open" + url).c_str());
+    std::system(("xdg-open " + url).c_str());
 #else
     printf("can't open url on this platform\n");
 #endif
