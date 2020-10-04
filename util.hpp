@@ -8,7 +8,34 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <regex>
+#include <mutex>
+#include <condition_variable>
 
+class Semaphore {
+public:
+    Semaphore(int count = 0)
+        : m_count(count) {}
+
+    inline void notify() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_count++;
+        lock.unlock();
+        m_cv.notify_one();
+    }
+
+    inline void wait() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        while (m_count == 0)
+            m_cv.wait(lock);
+        m_count--;
+    }
+
+private:
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    int m_count;
+};
 // gtkmm doesnt seem to work
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN

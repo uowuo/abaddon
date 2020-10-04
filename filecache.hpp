@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
+#include "util.hpp"
 
 // todo throttle requests and keep track of active requests to stop redundant requests
 
@@ -22,6 +23,8 @@ private:
     void CleanupFutures();
     void RespondFromPath(std::filesystem::path path, callback_type cb);
     void OnResponse(const cpr::Response &r);
+
+    std::unique_ptr<Semaphore> m_semaphore;
 
     std::unordered_map<std::string, std::vector<callback_type>> m_callbacks;
     std::vector<std::future<void>> m_futures;

@@ -1,4 +1,7 @@
+#include "abaddon.hpp"
 #include "filecache.hpp"
+
+constexpr static const int MaxConcurrentCacheHTTP = 10;
 
 Cache::Cache() {
     m_tmp_path = std::filesystem::temp_directory_path() / "abaddon-cache";
@@ -29,16 +32,25 @@ void Cache::RespondFromPath(std::filesystem::path path, callback_type cb) {
 void Cache::GetFileFromURL(std::string url, callback_type cb) {
     auto cache_path = m_tmp_path / SanitizeString(url);
     if (std::filesystem::exists(cache_path)) {
-        m_futures.push_back(std::async(std::launch::async, [this, cache_path, cb]() {
-            RespondFromPath(cache_path, cb); }));
+        m_futures.push_back(std::async(std::launch::async, [this, cache_path, cb]() { RespondFromPath(cache_path, cb); }));
         return;
     }
+
+    // needs to be initialized like this or else ::Get() is called recursively
+    if (!m_semaphore)
+        m_semaphore = std::make_unique<Semaphore>(Abaddon::Get().GetSettings().GetSettingInt("http", "concurrent", MaxConcurrentCacheHTTP));
 
     if (m_callbacks.find(url) != m_callbacks.end()) {
         m_callbacks[url].push_back(cb);
     } else {
-        m_futures.push_back(cpr::GetCallback(std::bind(&Cache::OnResponse, this, std::placeholders::_1), cpr::Url { url }));
         m_callbacks[url].push_back(cb);
+        auto future = std::async(std::launch::async, [this, url]() {
+            m_semaphore->wait();
+            const auto &r = cpr::Get(cpr::Url { url });
+            m_semaphore->notify();
+            OnResponse(r);
+        });
+        m_futures.push_back(std::move(future));
     }
 }
 

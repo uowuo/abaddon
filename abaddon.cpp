@@ -85,7 +85,7 @@ int Abaddon::StartGTK() {
 }
 
 void Abaddon::LoadFromSettings() {
-    std::string token = m_settings.GetSetting("discord", "token");
+    std::string token = m_settings.GetSettingString("discord", "token");
     if (token.size()) {
         m_discord_token = token;
         m_discord.UpdateToken(m_discord_token);
@@ -148,6 +148,10 @@ void Abaddon::DiscordOnGuildCreate(Snowflake guild_id) {
 
 void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
     m_main_window->UpdateChannelListing();
+}
+
+const SettingsManager &Abaddon::GetSettings() const {
+    return m_settings;
 }
 
 void Abaddon::ActionConnect() {

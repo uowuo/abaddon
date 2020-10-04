@@ -61,6 +61,8 @@ public:
     void DiscordOnGuildCreate(Snowflake guild_id);
     void DiscordOnGuildDelete(Snowflake guild_id);
 
+    const SettingsManager &GetSettings() const;
+
 private:
     DiscordClient m_discord;
     std::string m_discord_token;
