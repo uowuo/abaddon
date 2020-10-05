@@ -73,18 +73,16 @@ void ChatMessageItemContainer::UpdateContent() {
     if (m_text_component != nullptr)
         m_text_component->get_buffer()->set_text(data->Content);
 
-    if (m_embed_component != nullptr) {
-        // easier to delete and remake than really update it
+    if (m_embed_component != nullptr)
         delete m_embed_component;
 
-        if (data->Embeds.size() == 1) {
-            m_embed_component = CreateEmbedComponent(data);
-            if (m_embed_imgurl.size() > 0) {
-                m_signal_image_load.emit(m_embed_imgurl);
-            }
-            AttachMenuHandler(m_embed_component);
-            m_main->add(*m_embed_component);
+    if (data->Embeds.size() == 1) {
+        m_embed_component = CreateEmbedComponent(data);
+        if (m_embed_imgurl.size() > 0) {
+            m_signal_image_load.emit(m_embed_imgurl);
         }
+        AttachMenuHandler(m_embed_component);
+        m_main->add(*m_embed_component);
     }
 }
 
