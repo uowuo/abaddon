@@ -96,6 +96,7 @@ void MainWindow::UpdateComponents() {
     m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
     m_menu_discord_disconnect.set_sensitive(discord_active);
     m_menu_discord_join_guild.set_sensitive(discord_active);
+    m_menu_discord_set_token.set_sensitive(!discord_active);
 
     if (!discord_active) {
         m_channel_list.Clear();
