@@ -20,10 +20,15 @@ protected:
 
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message *data);  // Message.Content
+    void UpdateTextComponent(Gtk::TextView *tv);
     Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
     Gtk::Image *CreateImageComponent(const AttachmentData &data);
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
+
+    // expects content run through Glib::Markup::escape_text
+    std::string ParseMessageContent(std::string content);
+    std::string ParseMentions(std::string content);
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
