@@ -71,7 +71,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 void ChatMessageItemContainer::UpdateContent() {
     const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (m_text_component != nullptr)
-        m_text_component->get_buffer()->set_text(data->Content);
+        UpdateTextComponent(m_text_component);
 
     if (m_embed_component != nullptr)
         delete m_embed_component;
@@ -154,12 +154,23 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data
     tv->set_halign(Gtk::ALIGN_FILL);
     tv->set_hexpand(true);
 
+    UpdateTextComponent(tv);
+
+    return tv;
+}
+
+void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
+    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (data == nullptr)
+        return;
+
     auto b = tv->get_buffer();
-    Gtk::TextBuffer::iterator s, e; // lame
+    b->set_text("");
+    Gtk::TextBuffer::iterator s, e;
     b->get_bounds(s, e);
     switch (data->Type) {
         case MessageType::DEFAULT:
-            b->set_text(data->Content);
+            b->insert_markup(s, ParseMessageContent(Glib::Markup::escape_text(data->Content)));
             break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
@@ -169,8 +180,6 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data
             break;
         default: break;
     }
-
-    return tv;
 }
 
 Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *data) {
@@ -349,6 +358,34 @@ void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Imag
     m_img_loadmap[url] = std::make_pair(img, data);
     // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
+}
+
+std::string ChatMessageItemContainer::ParseMessageContent(std::string content) {
+    content = ParseMentions(content);
+
+    return content;
+}
+
+std::string ChatMessageItemContainer::ParseMentions(std::string content) {
+    constexpr static const auto mentions_regex = R"(&lt;@(\d+)&gt;)";
+
+    return RegexReplaceMany(content, mentions_regex, [this](const std::string &idstr) -> std::string {
+        const Snowflake id(idstr);
+        const auto &discord = Abaddon::Get().GetDiscordClient();
+        const auto *user = discord.GetUser(id);
+        const auto *channel = discord.GetChannel(ChannelID);
+        if (channel == nullptr || user == nullptr) return idstr;
+
+        if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
+            return "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+
+        const auto colorid = user->GetHoistedRole(channel->GuildID, true);
+        const auto *role = discord.GetRole(colorid);
+        if (role == nullptr)
+            return "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+
+        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
+    });
 }
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {

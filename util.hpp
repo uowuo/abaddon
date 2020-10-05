@@ -184,3 +184,39 @@ inline double ColorDistance(int c1, int c2) {
     int b = b1 - b2;
     return sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8));
 }
+
+// somehow this works
+template<typename F>
+std::string RegexReplaceMany(std::string str, std::string regexstr, F func) {
+    std::regex reg(regexstr, std::regex_constants::ECMAScript);
+    std::smatch match;
+
+    std::vector<std::tuple<int, int, std::string, int>> matches;
+
+    std::string::const_iterator sstart(str.cbegin());
+    while (std::regex_search(sstart, str.cend(), match, reg)) {
+        const auto start = std::distance(str.cbegin(), sstart) + match.position();
+        const auto end = start + match.length();
+        matches.push_back(std::make_tuple(static_cast<int>(start), static_cast<int>(end), match[1].str(), static_cast<int>(match.str().size())));
+        sstart = match.suffix().first;
+    }
+
+    int offset = 0;
+    for (auto it = matches.begin(); it != matches.end(); it++) {
+        const auto start = std::get<0>(*it);
+        const auto end = std::get<1>(*it);
+        const auto match = std::get<2>(*it);
+        const auto full_match_size = std::get<3>(*it);
+        const auto replacement = func(match);
+        const auto diff = full_match_size - replacement.size();
+
+        str = str.substr(0, start) + replacement + str.substr(end);
+
+        offset += diff;
+
+        std::get<0>(*(it + 1)) -= offset;
+        std::get<1>(*(it + 1)) -= offset;
+    }
+
+    return str;
+}
