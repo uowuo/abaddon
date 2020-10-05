@@ -364,8 +364,10 @@ void DiscordClient::LeaveGuild(Snowflake id) {
 }
 
 void DiscordClient::UpdateToken(std::string token) {
-    m_token = token;
-    m_http.SetAuth(token);
+    if (!IsStarted()) {
+        m_token = token;
+        m_http.SetAuth(token);
+    }
 }
 
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
