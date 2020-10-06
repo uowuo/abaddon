@@ -48,6 +48,12 @@
     margin-top: 10px;
 }
 
+.message-container-extra {
+    color: #78909c;
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
 .message-container-timestamp {
     color: #78909c;
 }

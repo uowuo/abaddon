@@ -472,6 +472,25 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_author->set_xalign(0.f);
     m_author->set_can_focus(false);
 
+    if (data->WebhookID.IsValid()) {
+        m_extra = Gtk::manage(new Gtk::Label);
+        m_extra->get_style_context()->add_class("message-container-extra");
+        m_extra->set_single_line_mode(true);
+        m_extra->set_margin_start(12);
+        m_extra->set_can_focus(false);
+        m_extra->set_use_markup(true);
+        m_extra->set_markup("<b>Webhook</b>");
+    }
+    else if (data->Author.IsBot) {
+        m_extra = Gtk::manage(new Gtk::Label);
+        m_extra->get_style_context()->add_class("message-container-extra");
+        m_extra->set_single_line_mode(true);
+        m_extra->set_margin_start(12);
+        m_extra->set_can_focus(false);
+        m_extra->set_use_markup(true);
+        m_extra->set_markup("<b>BOT</b>");
+    }
+
     m_timestamp->set_text(data->Timestamp);
     m_timestamp->set_opacity(0.5);
     m_timestamp->set_single_line_mode(true);
@@ -487,6 +506,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_content_box->set_can_focus(false);
 
     m_meta_box->add(*m_author);
+    if (m_extra != nullptr)
+        m_meta_box->add(*m_extra);
     m_meta_box->add(*m_timestamp);
     m_content_box->add(*m_meta_box);
     m_main_box->add(*m_avatar);

@@ -86,5 +86,6 @@ protected:
     Gtk::Box *m_meta_box;
     Gtk::Label *m_author;
     Gtk::Label *m_timestamp;
+    Gtk::Label *m_extra = nullptr;
     Gtk::Image *m_avatar;
 };

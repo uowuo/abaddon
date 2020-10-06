@@ -40,6 +40,7 @@
 .message-container - The container which holds a user's messages  
 .message-container-author - The author label for a message container  
 .message-container-timestamp - The timestamp label for a message container  
+.message-container-extra - Label containing BOT/Webhook  
 .message-text - The TextView of a user message  
   
 .embed - Container for a message embed  
