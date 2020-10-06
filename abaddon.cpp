@@ -249,11 +249,10 @@ void Abaddon::ActionListChannelItemClick(Snowflake id) {
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Snowflake> &msgs) {
-            if (msgs.size() > 0) {
+            if (msgs.size() > 0)
                 m_oldest_listed_message[id] = msgs.back();
-                m_main_window->UpdateChatWindowContents();
-            }
 
+            m_main_window->UpdateChatWindowContents();
             m_channels_requested.insert(id);
         });
     } else {

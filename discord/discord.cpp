@@ -5,6 +5,9 @@
 DiscordClient::DiscordClient()
     : m_http(DiscordAPI)
     , m_decompress_buf(InflateChunkSize) {
+
+    m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
+
     LoadEventMap();
 }
 
@@ -396,7 +399,10 @@ void DiscordClient::HandleGatewayMessageRaw(std::string str) {
             if (err != Z_OK) {
                 fprintf(stderr, "Error decompressing input buffer %d (%d/%d)\n", err, m_zstream.avail_in, m_zstream.avail_out);
             } else {
-                HandleGatewayMessage(std::string(m_decompress_buf.begin(), m_decompress_buf.begin() + m_zstream.total_out));
+                m_msg_mutex.lock();
+                m_msg_queue.push(std::string(m_decompress_buf.begin(), m_decompress_buf.begin() + m_zstream.total_out));
+                m_msg_dispatch.emit();
+                m_msg_mutex.unlock();
                 if (m_decompress_buf.size() > InflateChunkSize)
                     m_decompress_buf.resize(InflateChunkSize);
             }
@@ -405,6 +411,14 @@ void DiscordClient::HandleGatewayMessageRaw(std::string str) {
     }
 
     m_compressed_buf.clear();
+}
+
+void DiscordClient::MessageDispatch() {
+    m_msg_mutex.lock();
+    auto msg = m_msg_queue.front();
+    m_msg_queue.pop();
+    m_msg_mutex.unlock();
+    HandleGatewayMessage(msg);
 }
 
 void DiscordClient::HandleGatewayMessage(std::string str) {

@@ -66,7 +66,7 @@ std::string Cache::GetPathIfCached(std::string url) {
 // this just seems really yucky
 void Cache::CleanupFutures() {
     for (auto it = m_futures.begin(); it != m_futures.end();) {
-        if (it->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        if (it->valid() && it->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
             it = m_futures.erase(it);
         else
             it++;

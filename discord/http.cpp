@@ -2,7 +2,9 @@
 
 //#define USE_LOCAL_PROXY
 HTTPClient::HTTPClient(std::string api_base)
-    : m_api_base(api_base) {}
+    : m_api_base(api_base) {
+    m_dispatcher.connect(sigc::mem_fun(*this, &HTTPClient::RunCallbacks));
+}
 
 void HTTPClient::SetAuth(std::string auth) {
     m_authorization = auth;
@@ -98,10 +100,20 @@ void HTTPClient::CleanupFutures() {
     }
 }
 
+void HTTPClient::RunCallbacks() {
+    m_mutex.lock();
+    m_queue.front()();
+    m_queue.pop();
+    m_mutex.unlock();
+}
+
 void HTTPClient::OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb) {
     CleanupFutures();
     try {
-        cb(r);
+        m_mutex.lock();
+        m_queue.push([this, r, cb] { cb(r); });
+        m_dispatcher.emit();
+        m_mutex.unlock();
     } catch (std::exception &e) {
         fprintf(stderr, "error handling response (%s, code %d): %s\n", r.url.c_str(), r.status_code, e.what());
     }

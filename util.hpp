@@ -214,8 +214,10 @@ std::string RegexReplaceMany(std::string str, std::string regexstr, F func) {
 
         offset += diff;
 
-        std::get<0>(*(it + 1)) -= offset;
-        std::get<1>(*(it + 1)) -= offset;
+        if (it + 1 != matches.end()) {
+            std::get<0>(*(it + 1)) -= offset;
+            std::get<1>(*(it + 1)) -= offset;
+        }
     }
 
     return str;
