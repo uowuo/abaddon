@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <mutex>
 #include <zlib.h>
+#include <glibmm.h>
+#include <queue>
 
 // bruh
 #ifdef GetMessage
@@ -146,6 +148,11 @@ private:
     std::atomic<int> m_heartbeat_msec = 0;
     HeartbeatWaiter m_heartbeat_waiter;
     std::atomic<bool> m_heartbeat_acked = true;
+
+    mutable std::mutex m_msg_mutex;
+    Glib::Dispatcher m_msg_dispatch;
+    std::queue<std::string> m_msg_queue;
+    void MessageDispatch();
 
     // signals
 public:

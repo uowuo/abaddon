@@ -5,14 +5,9 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
-
-template<typename F>
-void fire_and_forget(F &&func) {
-    auto ptr = std::make_shared<std::future<void>>();
-    *ptr = std::async(std::launch::async, [ptr, func]() {
-        func();
-    });
-}
+#include <mutex>
+#include <queue>
+#include <glibmm.h>
 
 class HTTPClient {
 public:
@@ -27,6 +22,11 @@ public:
 private:
     void OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb);
     void CleanupFutures();
+
+    mutable std::mutex m_mutex;
+    Glib::Dispatcher m_dispatcher;
+    std::queue<std::function<void()>> m_queue;
+    void RunCallbacks();
 
     std::vector<std::future<void>> m_futures;
     std::string m_api_base;

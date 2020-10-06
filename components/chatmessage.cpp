@@ -367,7 +367,7 @@ std::string ChatMessageItemContainer::ParseMessageContent(std::string content) {
 }
 
 std::string ChatMessageItemContainer::ParseMentions(std::string content) {
-    constexpr static const auto mentions_regex = R"(&lt;@(\d+)&gt;)";
+    constexpr static const auto mentions_regex = R"(&lt;@!?(\d+)&gt;)";
 
     return RegexReplaceMany(content, mentions_regex, [this](const std::string &idstr) -> std::string {
         const Snowflake id(idstr);
