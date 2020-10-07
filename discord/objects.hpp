@@ -13,6 +13,7 @@
 #include "message.hpp"
 #include "invite.hpp"
 #include "permissions.hpp"
+#include "emoji.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 

@@ -5,7 +5,6 @@
 DiscordClient::DiscordClient()
     : m_http(DiscordAPI)
     , m_decompress_buf(InflateChunkSize) {
-
     m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
 
     LoadEventMap();
@@ -204,6 +203,10 @@ const GuildMember *DiscordClient::GetMember(Snowflake user_id, Snowflake guild_i
 
 const PermissionOverwrite *DiscordClient::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
     return m_store.GetPermissionOverwrite(channel_id, id);
+}
+
+const Emoji *DiscordClient::GetEmoji(Snowflake id) const {
+    return m_store.GetEmoji(id);
 }
 
 Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
@@ -504,6 +507,9 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
 
     for (auto &r : guild.Roles)
         m_store.SetRole(r.ID, r);
+
+    for (auto &e : guild.Emojis)
+        m_store.SetEmoji(e.ID, e);
 }
 
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {

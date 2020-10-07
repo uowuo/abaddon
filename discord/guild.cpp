@@ -26,7 +26,7 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_D("default_message_notifications", m.DefaultMessageNotifications);
     JS_D("explicit_content_filter", m.ExplicitContentFilter);
     JS_D("roles", m.Roles);
-    // JS_D("emojis", m.Emojis);
+    JS_D("emojis", m.Emojis);
     JS_D("features", m.Features);
     JS_D("mfa_level", m.MFALevel);
     JS_N("application_id", m.ApplicationID);

@@ -82,6 +82,7 @@ public:
     const Guild *GetGuild(Snowflake id) const;
     const GuildMember *GetMember(Snowflake user_id, Snowflake guild_id) const;
     const PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
+    const Emoji *GetEmoji(Snowflake id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::unordered_set<Snowflake> GetRolesInGuild(Snowflake id) const;

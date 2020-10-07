@@ -16,6 +16,7 @@ public:
     void SetMessage(Snowflake id, const Message &message);
     void SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
+    void SetEmoji(Snowflake id, const Emoji &emoji);
 
     User *GetUser(Snowflake id);
     Channel *GetChannel(Snowflake id);
@@ -24,6 +25,7 @@ public:
     Message *GetMessage(Snowflake id);
     GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id);
     PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id);
+    Emoji *GetEmoji(Snowflake id);
     const User *GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
@@ -31,6 +33,7 @@ public:
     const Message *GetMessage(Snowflake id) const;
     const GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const;
     const PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
+    const Emoji *GetEmoji(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
@@ -40,8 +43,9 @@ public:
     using guilds_type = std::unordered_map<Snowflake, Guild>;
     using roles_type = std::unordered_map<Snowflake, Role>;
     using messages_type = std::unordered_map<Snowflake, Message>;
-    using members_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMember>>; // [guild][user]
+    using members_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMember>>;                       // [guild][user]
     using permission_overwrites_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>>; // [channel][user/role]
+    using emojis_type = std::unordered_map<Snowflake, Emoji>;
 
     const channels_type &GetChannels() const;
     const guilds_type &GetGuilds() const;
@@ -57,4 +61,5 @@ private:
     messages_type m_messages;
     members_type m_members;
     permission_overwrites_type m_permissions;
+    emojis_type m_emojis;
 };

@@ -175,6 +175,8 @@ add_executable(abaddon
 	discord/invite.cpp
 	discord/permissions.hpp
 	discord/permissions.cpp
+	discord/emoji.hpp
+	discord/emoji.cpp
 	windows/mainwindow.hpp
 	windows/mainwindow.cpp
 )

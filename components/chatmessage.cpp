@@ -480,8 +480,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
         m_extra->set_can_focus(false);
         m_extra->set_use_markup(true);
         m_extra->set_markup("<b>Webhook</b>");
-    }
-    else if (data->Author.IsBot) {
+    } else if (data->Author.IsBot) {
         m_extra = Gtk::manage(new Gtk::Label);
         m_extra->get_style_context()->add_class("message-container-extra");
         m_extra->set_single_line_mode(true);

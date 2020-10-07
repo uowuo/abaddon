@@ -28,6 +28,10 @@ void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const Per
     m_permissions[channel_id][id] = perm;
 }
 
+void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
+    m_emojis[id] = emoji;
+}
+
 User *Store::GetUser(Snowflake id) {
     auto it = m_users.find(id);
     if (it == m_users.end())
@@ -118,6 +122,13 @@ PermissionOverwrite *Store::GetPermissionOverwrite(Snowflake channel_id, Snowfla
     return &pit->second;
 }
 
+Emoji *Store::GetEmoji(Snowflake id) {
+    auto it = m_emojis.find(id);
+    if (it != m_emojis.end())
+        return &it->second;
+    return nullptr;
+}
+
 const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {
     auto git = m_members.find(guild_id);
     if (git == m_members.end())
@@ -136,6 +147,13 @@ const PermissionOverwrite *Store::GetPermissionOverwrite(Snowflake channel_id, S
     if (pit == cit->second.end())
         return nullptr;
     return &pit->second;
+}
+
+const Emoji *Store::GetEmoji(Snowflake id) const {
+    auto it = m_emojis.find(id);
+    if (it != m_emojis.end())
+        return &it->second;
+    return nullptr;
 }
 
 void Store::ClearGuild(Snowflake id) {

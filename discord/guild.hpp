@@ -3,31 +3,32 @@
 #include "snowflake.hpp"
 #include "role.hpp"
 #include "channel.hpp"
+#include "emoji.hpp"
 #include <vector>
 #include <string>
 
 // a bot is apparently only supposed to receive the `id` and `unavailable` as false
 // but user tokens seem to get the full objects (minus users)
 struct Guild {
-    Snowflake ID;                    //
-    std::string Name;                //
-    std::string Icon;                // null
-    std::string Splash;              // null
-    std::string DiscoverySplash;     // opt, null (docs wrong)
-    bool IsOwner = false;            // opt
-    Snowflake OwnerID;               //
-    int Permissions = 0;             // opt
-    std::string PermissionsNew;      // opt
-    std::string VoiceRegion;         // opt
-    Snowflake AFKChannelID;          // null
-    int AFKTimeout;                  //
-    bool IsEmbedEnabled = false;     // opt, deprecated
-    Snowflake EmbedChannelID;        // opt, null, deprecated
-    int VerificationLevel;           //
-    int DefaultMessageNotifications; //
-    int ExplicitContentFilter;       //
-    std::vector<Role> Roles;         //
-    // std::vector<EmojiData> Emojis; //
+    Snowflake ID;                      //
+    std::string Name;                  //
+    std::string Icon;                  // null
+    std::string Splash;                // null
+    std::string DiscoverySplash;       // opt, null (docs wrong)
+    bool IsOwner = false;              // opt
+    Snowflake OwnerID;                 //
+    int Permissions = 0;               // opt
+    std::string PermissionsNew;        // opt
+    std::string VoiceRegion;           // opt
+    Snowflake AFKChannelID;            // null
+    int AFKTimeout;                    //
+    bool IsEmbedEnabled = false;       // opt, deprecated
+    Snowflake EmbedChannelID;          // opt, null, deprecated
+    int VerificationLevel;             //
+    int DefaultMessageNotifications;   //
+    int ExplicitContentFilter;         //
+    std::vector<Role> Roles;           //
+    std::vector<Emoji> Emojis;         //
     std::vector<std::string> Features; //
     int MFALevel;                      //
     Snowflake ApplicationID;           // null
