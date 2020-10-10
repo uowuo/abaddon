@@ -30,6 +30,10 @@ protected:
     std::string ParseMessageContent(std::string content);
     std::string ParseMentions(std::string content);
 
+    void HandleLinks(Gtk::TextView *tv);
+    bool OnLinkClick(GdkEventButton *ev);
+    std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_linkmap; // sue me
+
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
     void AttachMenuHandler(Gtk::Widget *widget);

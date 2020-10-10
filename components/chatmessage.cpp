@@ -171,6 +171,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     switch (data->Type) {
         case MessageType::DEFAULT:
             b->insert_markup(s, ParseMessageContent(Glib::Markup::escape_text(data->Content)));
+            HandleLinks(tv);
             break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
@@ -386,6 +387,82 @@ std::string ChatMessageItemContainer::ParseMentions(std::string content) {
 
         return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
     });
+}
+
+void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
+    constexpr static const auto links_regex = R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)";
+
+    std::regex rgx(links_regex, std::regex_constants::ECMAScript);
+
+    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
+
+    auto buf = tv->get_buffer();
+    std::string text = buf->get_text();
+    buf->set_text("");
+
+    std::string::const_iterator sstart(text.begin());
+    std::smatch match;
+    bool any = false;
+
+    // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
+    auto &settings = Abaddon::Get().GetSettings();
+    auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
+
+    while (std::regex_search(sstart, text.cend(), match, rgx)) {
+        any = true;
+
+        Gtk::TextBuffer::iterator start, end;
+        buf->get_bounds(start, end);
+
+        std::string pre = match.prefix().str();
+
+        std::string link = match.str();
+        auto tag = buf->create_tag();
+        m_linkmap[tag] = link;
+        tag->property_foreground_rgba() = Gdk::RGBA(link_color);
+        buf->get_bounds(start, end);
+        end = buf->insert(end, pre);
+        end = buf->insert_with_tag(end, link, tag);
+
+        sstart = match.suffix().first;
+    }
+
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_bounds(start, end);
+    if (any) {
+        buf->insert(end, match.suffix().str());
+    } else {
+        buf->insert(end, text);
+    }
+}
+
+bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
+    if (m_text_component == nullptr) return false;
+    if (ev->type != Gdk::BUTTON_PRESS) return false;
+    if (ev->button != GDK_BUTTON_PRIMARY) return false;
+
+    auto buf = m_text_component->get_buffer();
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_selection_bounds(start, end); // no open if selection
+    if (start.get_offset() != end.get_offset())
+        return false;
+
+    int x, y;
+    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, ev->x, ev->y, x, y);
+    Gtk::TextBuffer::iterator iter;
+    m_text_component->get_iter_at_location(iter, x, y);
+
+    const auto tags = iter.get_tags();
+    for (auto tag : tags) {
+        const auto it = m_linkmap.find(tag);
+        if (it != m_linkmap.end()) {
+            LaunchBrowser(it->second);
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {
