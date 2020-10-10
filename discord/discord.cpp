@@ -217,7 +217,7 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     for (const auto &id : data->Roles) {
         auto *role = GetRole(id);
         if (role != nullptr) {
-            if ((!with_color && role->IsHoisted) || role->Color != 0)
+            if (role->IsHoisted || (with_color && role->Color != 0))
                 roles.push_back(role);
         }
     }
