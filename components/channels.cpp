@@ -161,22 +161,28 @@ ChannelList::ChannelList() {
     m_list->get_style_context()->add_class("channel-list");
 
     m_guild_menu_up = Gtk::manage(new Gtk::MenuItem("Move _Up", true));
-    m_guild_menu_up->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_move_up));
+    m_guild_menu_up->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_up));
     m_guild_menu.append(*m_guild_menu_up);
 
     m_guild_menu_down = Gtk::manage(new Gtk::MenuItem("Move _Down", true));
-    m_guild_menu_down->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_move_down));
+    m_guild_menu_down->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_down));
     m_guild_menu.append(*m_guild_menu_down);
 
     m_guild_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_copyid));
+    m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_copyid));
     m_guild_menu.append(*m_guild_menu_copyid);
 
     m_guild_menu_leave = Gtk::manage(new Gtk::MenuItem("_Leave Guild", true));
-    m_guild_menu_leave->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_menu_leave));
+    m_guild_menu_leave->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_leave));
     m_guild_menu.append(*m_guild_menu_leave);
 
     m_guild_menu.show_all();
+
+    m_channel_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_channel_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_channel_menu_copyid));
+    m_channel_menu.append(*m_channel_menu_copyid);
+
+    m_channel_menu.show_all();
 
     m_list->set_activate_on_single_click(true);
     m_list->signal_row_activated().connect(sigc::mem_fun(*this, &ChannelList::on_row_activated));
@@ -298,7 +304,7 @@ void ChannelList::UpdateListingInternal() {
         guild_row->IsHidden = false;
         guild_row->GuildIndex = m_guild_count++;
         m_list->add(*guild_row);
-        AttachMenuHandler(guild_row);
+        AttachGuildMenuHandler(guild_row);
 
         // add channels with no parent category
         if (orphan_channels.find(gid) != orphan_channels.end()) {
@@ -323,6 +329,7 @@ void ChannelList::UpdateListingInternal() {
                 auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
                 cat_row->IsUserCollapsed = false;
                 cat_row->IsHidden = true;
+                AttachChannelMenuHandler(cat_row);
                 m_list->add(*cat_row);
                 guild_row->Children.insert(cat_row);
 
@@ -337,6 +344,7 @@ void ChannelList::UpdateListingInternal() {
                     auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
                     chan_row->IsHidden = false;
                     chan_row->IsUserCollapsed = false;
+                    AttachChannelMenuHandler(chan_row);
                     m_list->add(*chan_row);
                     cat_row->Children.insert(chan_row);
                 }
@@ -345,34 +353,34 @@ void ChannelList::UpdateListingInternal() {
     }
 }
 
-void ChannelList::on_menu_move_up() {
+void ChannelList::on_guild_menu_move_up() {
     auto tmp = m_list->get_selected_row();
     auto row = dynamic_cast<ChannelListRow *>(tmp);
     if (row != nullptr)
         m_signal_action_guild_move_up.emit(row->ID);
 }
 
-void ChannelList::on_menu_move_down() {
+void ChannelList::on_guild_menu_move_down() {
     auto tmp = m_list->get_selected_row();
     auto row = dynamic_cast<ChannelListRow *>(tmp);
     if (row != nullptr)
         m_signal_action_guild_move_down.emit(row->ID);
 }
 
-void ChannelList::on_menu_copyid() {
+void ChannelList::on_guild_menu_copyid() {
     auto tmp = m_list->get_selected_row();
     auto row = dynamic_cast<ChannelListRow *>(tmp);
     if (row != nullptr)
-        m_signal_action_guild_copy_id.emit(row->ID);
+        Gtk::Clipboard::get()->set_text(std::to_string(row->ID));
 }
 
-void ChannelList::on_menu_leave() {
+void ChannelList::on_guild_menu_leave() {
     auto row = dynamic_cast<ChannelListRow *>(m_list->get_selected_row());
     if (row != nullptr)
         m_signal_action_guild_leave.emit(row->ID);
 }
 
-void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
+void ChannelList::AttachGuildMenuHandler(Gtk::ListBoxRow *row) {
     row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
             auto grow = dynamic_cast<ChannelListRowGuild *>(row);
@@ -381,6 +389,28 @@ void ChannelList::AttachMenuHandler(Gtk::ListBoxRow *row) {
                 m_guild_menu_up->set_sensitive(grow->GuildIndex != 0);
                 m_guild_menu_down->set_sensitive(grow->GuildIndex != m_guild_count - 1);
                 m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
+            }
+            return true;
+        }
+
+        return false;
+    });
+}
+
+void ChannelList::on_channel_menu_copyid() {
+    auto tmp = m_list->get_selected_row();
+    auto row = dynamic_cast<ChannelListRow *>(tmp);
+    if (row != nullptr)
+        Gtk::Clipboard::get()->set_text(std::to_string(row->ID));
+}
+
+void ChannelList::AttachChannelMenuHandler(Gtk::ListBoxRow *row) {
+    row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            auto grow = dynamic_cast<ChannelListRow *>(row);
+            if (grow != nullptr) {
+                m_list->select_row(*row);
+                m_channel_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
             }
             return true;
         }
@@ -399,10 +429,6 @@ ChannelList::type_signal_action_guild_move_up ChannelList::signal_action_guild_m
 
 ChannelList::type_signal_action_guild_move_down ChannelList::signal_action_guild_move_down() {
     return m_signal_action_guild_move_down;
-}
-
-ChannelList::type_signal_action_guild_copy_id ChannelList::signal_action_guild_copy_id() {
-    return m_signal_action_guild_copy_id;
 }
 
 ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_leave() {

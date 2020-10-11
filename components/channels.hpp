@@ -103,35 +103,37 @@ protected:
     Gtk::MenuItem *m_guild_menu_down;
     Gtk::MenuItem *m_guild_menu_copyid;
     Gtk::MenuItem *m_guild_menu_leave;
-    void on_menu_move_up();
-    void on_menu_move_down();
-    void on_menu_copyid();
-    void on_menu_leave();
+    void on_guild_menu_move_up();
+    void on_guild_menu_move_down();
+    void on_guild_menu_copyid();
+    void on_guild_menu_leave();
+
+    Gtk::Menu m_channel_menu;
+    Gtk::MenuItem *m_channel_menu_copyid;
+    void on_channel_menu_copyid();
 
     Glib::Dispatcher m_update_dispatcher;
     //mutable std::mutex m_update_mutex;
     //std::queue<std::unordered_set<Snowflake>> m_update_queue;
     void AddPrivateChannels(); // retard moment
     void UpdateListingInternal();
-    void AttachMenuHandler(Gtk::ListBoxRow *row);
+    void AttachGuildMenuHandler(Gtk::ListBoxRow *row);
+    void AttachChannelMenuHandler(Gtk::ListBoxRow *row);
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_up;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_move_down;
-    typedef sigc::signal<void, Snowflake> type_signal_action_guild_copy_id;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
 
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_move_up signal_action_guild_move_up();
     type_signal_action_guild_move_down signal_action_guild_move_down();
-    type_signal_action_guild_copy_id signal_action_guild_copy_id();
     type_signal_action_guild_leave signal_action_guild_leave();
 
 protected:
     type_signal_action_channel_item_select m_signal_action_channel_item_select;
     type_signal_action_guild_move_up m_signal_action_guild_move_up;
     type_signal_action_guild_move_down m_signal_action_guild_move_down;
-    type_signal_action_guild_copy_id m_signal_action_guild_copy_id;
     type_signal_action_guild_leave m_signal_action_guild_leave;
 };

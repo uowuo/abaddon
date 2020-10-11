@@ -40,7 +40,7 @@ protected:
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
-    void AttachMenuHandler(Gtk::Widget *widget);
+    void AttachGuildMenuHandler(Gtk::Widget *widget);
     void ShowMenu(GdkEvent *event);
 
     Gtk::Menu m_menu;

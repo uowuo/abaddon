@@ -60,7 +60,6 @@ int Abaddon::StartGTK() {
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionListChannelItemClick));
     m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
     m_main_window->GetChannelList()->signal_action_guild_move_down().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildDown));
-    m_main_window->GetChannelList()->signal_action_guild_copy_id().connect(sigc::mem_fun(*this, &Abaddon::ActionCopyGuildID));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
 
     m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
@@ -224,10 +223,6 @@ void Abaddon::ActionMoveGuildDown(Snowflake id) {
     std::swap(*right, *target_iter);
 
     m_discord.UpdateSettingsGuildPositions(order);
-}
-
-void Abaddon::ActionCopyGuildID(Snowflake id) {
-    Gtk::Clipboard::get()->set_text(std::to_string(id));
 }
 
 void Abaddon::ActionListChannelItemClick(Snowflake id) {

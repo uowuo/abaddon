@@ -31,14 +31,14 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(data);
-        container->AttachMenuHandler(container->m_text_component);
+        container->AttachGuildMenuHandler(container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
         container->m_embed_component = container->CreateEmbedComponent(data);
-        container->AttachMenuHandler(container->m_embed_component);
+        container->AttachGuildMenuHandler(container->m_embed_component);
         container->m_main->add(*container->m_embed_component);
     }
 
@@ -50,13 +50,13 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
             auto *widget = container->CreateImageComponent(a);
             auto *ev = Gtk::manage(new Gtk::EventBox);
             ev->add(*widget);
-            container->AttachMenuHandler(ev);
+            container->AttachGuildMenuHandler(ev);
             container->AddClickHandler(ev, a.URL);
             container->m_main->add(*ev);
             container->HandleImage(a, widget, a.ProxyURL);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
-            container->AttachMenuHandler(widget);
+            container->AttachGuildMenuHandler(widget);
             container->AddClickHandler(widget, a.URL);
             container->m_main->add(*widget);
         }
@@ -81,7 +81,7 @@ void ChatMessageItemContainer::UpdateContent() {
         if (m_embed_imgurl.size() > 0) {
             m_signal_image_load.emit(m_embed_imgurl);
         }
-        AttachMenuHandler(m_embed_component);
+        AttachGuildMenuHandler(m_embed_component);
         m_main->add(*m_embed_component);
     }
 }
@@ -567,7 +567,7 @@ ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signa
 }
 
 // clang-format off
-void ChatMessageItemContainer::AttachMenuHandler(Gtk::Widget *widget) {
+void ChatMessageItemContainer::AttachGuildMenuHandler(Gtk::Widget *widget) {
     widget->signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
             ShowMenu(reinterpret_cast<GdkEvent*>(event));
