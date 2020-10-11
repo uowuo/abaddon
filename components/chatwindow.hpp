@@ -69,15 +69,18 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
     typedef sigc::signal<void, std::string, Snowflake> type_signal_action_chat_submit;
     typedef sigc::signal<void, Snowflake> type_signal_action_chat_load_history;
+    typedef sigc::signal<void, Snowflake> type_signal_action_channel_click;
 
     type_signal_action_message_delete signal_action_message_delete();
     type_signal_action_message_edit signal_action_message_edit();
     type_signal_action_chat_submit signal_action_chat_submit();
     type_signal_action_chat_load_history signal_action_chat_load_history();
+    type_signal_action_channel_click signal_action_channel_click();
 
 private:
     type_signal_action_message_delete m_signal_action_message_delete;
     type_signal_action_message_edit m_signal_action_message_edit;
     type_signal_action_chat_submit m_signal_action_chat_submit;
     type_signal_action_chat_load_history m_signal_action_chat_load_history;
+    type_signal_action_channel_click m_signal_action_channel_click;
 };

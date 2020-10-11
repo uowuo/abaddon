@@ -45,7 +45,8 @@ ChatWindow::ChatWindow() {
     m_list->set_focus_hadjustment(m_scroll->get_hadjustment());
     m_list->set_focus_vadjustment(m_scroll->get_vadjustment());
 
-    m_input->set_hexpand(true);
+    m_input->set_hexpand(false);
+    m_input->set_halign(Gtk::ALIGN_FILL);
     m_input->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
 
     m_input_scroll->set_max_content_height(170);
@@ -218,6 +219,9 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
                 }
             });
         });
+        content->signal_action_channel_click().connect([this](const Snowflake &id) {
+            m_signal_action_channel_click.emit(id);
+        });
     }
 
     header->set_margin_left(5);
@@ -325,4 +329,8 @@ ChatWindow::type_signal_action_chat_submit ChatWindow::signal_action_chat_submit
 
 ChatWindow::type_signal_action_chat_load_history ChatWindow::signal_action_chat_load_history() {
     return m_signal_action_chat_load_history;
+}
+
+ChatWindow::type_signal_action_channel_click ChatWindow::signal_action_channel_click() {
+    return m_signal_action_channel_click;
 }

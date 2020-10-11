@@ -19,7 +19,7 @@ protected:
     bool EmitImageLoad(std::string url);
 
     void AddClickHandler(Gtk::Widget *widget, std::string);
-    Gtk::TextView *CreateTextComponent(const Message *data);  // Message.Content
+    Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
     Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
     Gtk::Image *CreateImageComponent(const AttachmentData &data);
@@ -30,9 +30,14 @@ protected:
     std::string ParseMessageContent(std::string content);
     std::string ParseMentions(std::string content);
 
-    void HandleLinks(Gtk::TextView *tv);
+    void HandleChannelMentions(Gtk::TextView *tv);
+    bool OnClickChannel(GdkEventButton *ev);
+
+    void
+    HandleLinks(Gtk::TextView *tv);
     bool OnLinkClick(GdkEventButton *ev);
-    std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_linkmap; // sue me
+    std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
+    std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
@@ -61,15 +66,18 @@ public:
 
     typedef sigc::signal<void> type_signal_action_delete;
     typedef sigc::signal<void> type_signal_action_edit;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_click;
 
     type_signal_action_delete signal_action_delete();
     type_signal_action_edit signal_action_edit();
+    type_signal_channel_click signal_action_channel_click();
 
     type_signal_image_load signal_image_load();
 
 private:
     type_signal_action_delete m_signal_action_delete;
     type_signal_action_edit m_signal_action_edit;
+    type_signal_channel_click m_signal_action_channel_click;
 
     type_signal_image_load m_signal_image_load;
 };

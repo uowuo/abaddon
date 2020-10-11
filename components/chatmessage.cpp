@@ -172,6 +172,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::DEFAULT:
             b->insert_markup(s, ParseMessageContent(Glib::Markup::escape_text(data->Content)));
             HandleLinks(tv);
+            HandleChannelMentions(tv);
             break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
@@ -389,6 +390,75 @@ std::string ChatMessageItemContainer::ParseMentions(std::string content) {
     });
 }
 
+void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
+    constexpr static const auto chan_regex = R"(<#(\d+)>)";
+
+    std::regex rgx(chan_regex, std::regex_constants::ECMAScript);
+
+    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
+
+    auto buf = tv->get_buffer();
+    std::string text = buf->get_text();
+
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+
+    std::string::const_iterator sstart(text.begin());
+    std::smatch match;
+    while (std::regex_search(sstart, text.cend(), match, rgx)) {
+        std::string channel_id = match.str(1);
+        const auto *chan = discord.GetChannel(channel_id);
+        if (chan == nullptr) {
+            sstart = match.suffix().first;
+            continue;
+        }
+
+        auto tag = buf->create_tag();
+        m_channel_tagmap[tag] = channel_id;
+        tag->property_weight() = Pango::WEIGHT_BOLD;
+
+        const auto start = std::distance(text.cbegin(), sstart) + match.position();
+        auto erase_from = buf->get_iter_at_offset(start);
+        auto erase_to = buf->get_iter_at_offset(start + match.length());
+        auto it = buf->erase(erase_from, erase_to);
+        const std::string replacement = "#" + chan->Name;
+        it = buf->insert_with_tag(it, "#" + chan->Name, tag);
+
+        // rescan the whole thing so i dont have to deal with fixing match positions
+        text = buf->get_text();
+        sstart = text.begin();
+    }
+}
+
+// a lot of repetition here so there should probably just be one slot for textview's button-press
+bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
+    if (m_text_component == nullptr) return false;
+    if (ev->type != Gdk::BUTTON_PRESS) return false;
+    if (ev->button != GDK_BUTTON_PRIMARY) return false;
+
+    auto buf = m_text_component->get_buffer();
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_selection_bounds(start, end); // no open if selection
+    if (start.get_offset() != end.get_offset())
+        return false;
+
+    int x, y;
+    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, ev->x, ev->y, x, y);
+    Gtk::TextBuffer::iterator iter;
+    m_text_component->get_iter_at_location(iter, x, y);
+
+    const auto tags = iter.get_tags();
+    for (auto tag : tags) {
+        const auto it = m_channel_tagmap.find(tag);
+        if (it != m_channel_tagmap.end()) {
+            m_signal_action_channel_click.emit(it->second);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
     constexpr static const auto links_regex = R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)";
 
@@ -397,42 +467,29 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
     tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
 
     auto buf = tv->get_buffer();
-    std::string text = buf->get_text();
-    buf->set_text("");
-
-    std::string::const_iterator sstart(text.begin());
-    std::smatch match;
-    bool any = false;
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_bounds(start, end);
+    std::string text = buf->get_slice(start, end);
 
     // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
     auto &settings = Abaddon::Get().GetSettings();
     auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
 
+    std::string::const_iterator sstart(text.begin());
+    std::smatch match;
     while (std::regex_search(sstart, text.cend(), match, rgx)) {
-        any = true;
-
-        Gtk::TextBuffer::iterator start, end;
-        buf->get_bounds(start, end);
-
-        std::string pre = match.prefix().str();
-
         std::string link = match.str();
         auto tag = buf->create_tag();
-        m_linkmap[tag] = link;
+        m_link_tagmap[tag] = link;
         tag->property_foreground_rgba() = Gdk::RGBA(link_color);
-        buf->get_bounds(start, end);
-        end = buf->insert(end, pre);
-        end = buf->insert_with_tag(end, link, tag);
+
+        const auto start = std::distance(text.cbegin(), sstart) + match.position();
+        auto erase_from = buf->get_iter_at_offset(start);
+        auto erase_to = buf->get_iter_at_offset(start + match.length());
+        auto it = buf->erase(erase_from, erase_to);
+        it = buf->insert_with_tag(it, link, tag);
 
         sstart = match.suffix().first;
-    }
-
-    Gtk::TextBuffer::iterator start, end;
-    buf->get_bounds(start, end);
-    if (any) {
-        buf->insert(end, match.suffix().str());
-    } else {
-        buf->insert(end, text);
     }
 }
 
@@ -454,8 +511,8 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
 
     const auto tags = iter.get_tags();
     for (auto tag : tags) {
-        const auto it = m_linkmap.find(tag);
-        if (it != m_linkmap.end()) {
+        const auto it = m_link_tagmap.find(tag);
+        if (it != m_link_tagmap.end()) {
             LaunchBrowser(it->second);
 
             return true;
@@ -499,6 +556,10 @@ ChatMessageItemContainer::type_signal_action_delete ChatMessageItemContainer::si
 
 ChatMessageItemContainer::type_signal_action_edit ChatMessageItemContainer::signal_action_edit() {
     return m_signal_action_edit;
+}
+
+ChatMessageItemContainer::type_signal_channel_click ChatMessageItemContainer::signal_action_channel_click() {
+    return m_signal_action_channel_click;
 }
 
 ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {
