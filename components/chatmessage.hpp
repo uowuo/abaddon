@@ -33,8 +33,7 @@ protected:
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
 
-    void
-    HandleLinks(Gtk::TextView *tv);
+    void HandleLinks(Gtk::TextView *tv);
     bool OnLinkClick(GdkEventButton *ev);
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
     std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;

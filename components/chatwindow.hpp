@@ -17,16 +17,16 @@ public:
     void Clear();
     void SetMessages(const std::set<Snowflake> &msgs); // clear contents and replace with given set
     void SetActiveChannel(Snowflake id);
-    void AddNewMessage(Snowflake id); // append new message to bottom
-    void DeleteMessage(Snowflake id); // add [deleted] indicator
-    void UpdateMessage(Snowflake id); // add [edited] indicator
+    void AddNewMessage(Snowflake id);                     // append new message to bottom
+    void DeleteMessage(Snowflake id);                     // add [deleted] indicator
+    void UpdateMessage(Snowflake id);                     // add [edited] indicator
     void AddNewHistory(const std::vector<Snowflake> &id); // prepend messages
     void InsertChatInput(std::string text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
 
 protected:
     ChatMessageItemContainer *CreateMessageComponent(Snowflake id); // to be inserted into header's content box
-    void ProcessNewMessage(Snowflake id, bool prepend); // creates and adds components
+    void ProcessNewMessage(Snowflake id, bool prepend);             // creates and adds components
 
     void SetMessagesInternal();
     void AddNewMessageInternal();
