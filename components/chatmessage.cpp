@@ -586,6 +586,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    m_author_ev = Gtk::manage(new Gtk::EventBox);
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
 
@@ -609,6 +610,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_author->set_ellipsize(Pango::ELLIPSIZE_END);
     m_author->set_xalign(0.f);
     m_author->set_can_focus(false);
+    m_author_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
     if (data->WebhookID.IsValid()) {
         m_extra = Gtk::manage(new Gtk::Label);
@@ -642,7 +644,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_content_box->set_can_focus(false);
 
-    m_meta_box->add(*m_author);
+    m_author_ev->add(*m_author);
+    m_meta_box->add(*m_author_ev);
     if (m_extra != nullptr)
         m_meta_box->add(*m_extra);
     m_meta_box->add(*m_timestamp);
@@ -673,6 +676,19 @@ void ChatMessageHeader::UpdateNameColor() {
         md = "<span weight='bold' color='#eeeeee'>" + Glib::Markup::escape_text(user->Username) + "</span>";
 
     m_author->set_markup(md);
+}
+
+bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {
+    if (ev->button == GDK_BUTTON_PRIMARY && (ev->state & GDK_SHIFT_MASK)) {
+        m_signal_action_insert_mention.emit(UserID);
+        return true;
+    }
+
+    return false;
+}
+
+ChatMessageHeader::type_signal_action_insert_mention ChatMessageHeader::signal_action_insert_mention() {
+    return m_signal_action_insert_mention;
 }
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {

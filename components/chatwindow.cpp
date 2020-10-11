@@ -182,6 +182,9 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         if (user == nullptr) return;
 
         header = Gtk::manage(new ChatMessageHeader(data));
+        header->signal_action_insert_mention().connect([this](const Snowflake &id) {
+            m_signal_action_insert_mention.emit(id);
+        });
         m_num_rows++;
         Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "32"), [this, user_id](Glib::RefPtr<Gdk::Pixbuf> buf) {
             Glib::signal_idle().connect([this, buf, user_id]() -> bool {
@@ -333,4 +336,8 @@ ChatWindow::type_signal_action_chat_load_history ChatWindow::signal_action_chat_
 
 ChatWindow::type_signal_action_channel_click ChatWindow::signal_action_channel_click() {
     return m_signal_action_channel_click;
+}
+
+ChatWindow::type_signal_action_insert_mention ChatWindow::signal_action_insert_mention() {
+    return m_signal_action_insert_mention;
 }

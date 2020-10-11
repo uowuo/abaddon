@@ -92,11 +92,20 @@ public:
     void UpdateNameColor();
 
 protected:
+    bool on_author_button_press(GdkEventButton *ev);
+
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;
     Gtk::Box *m_meta_box;
+    Gtk::EventBox *m_author_ev;
     Gtk::Label *m_author;
     Gtk::Label *m_timestamp;
     Gtk::Label *m_extra = nullptr;
     Gtk::Image *m_avatar;
+
+    typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;
+    type_signal_action_insert_mention m_signal_action_insert_mention;
+
+public:
+    type_signal_action_insert_mention signal_action_insert_mention();
 };
