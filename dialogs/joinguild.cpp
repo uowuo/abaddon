@@ -42,11 +42,11 @@ JoinGuildDialog::JoinGuildDialog(Gtk::Window &parent)
 
 void JoinGuildDialog::on_entry_changed() {
     std::string s = m_entry.get_text();
-    std::regex invite_regex(R"~(discord\.(gg|com)\/([a-zA-Z0-9]+)$)~", std::regex_constants::ECMAScript);
+    std::regex invite_regex(R"((https?:\/\/)?discord\.(gg(\/invite)?\/|com\/invite\/)([A-Za-z0-9\-]+))", std::regex_constants::ECMAScript);
     std::smatch match;
     bool full_url = std::regex_search(s, match, invite_regex);
     if (full_url || IsCode(s)) {
-        m_code = full_url ? match[2].str() : s;
+        m_code = full_url ? match[4].str() : s;
         m_needs_request = true;
         m_ok.set_sensitive(false);
     } else {
