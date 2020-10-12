@@ -6,6 +6,7 @@
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
 #include "dialogs/joinguild.hpp"
+#include "dialogs/confirm.hpp"
 #include "abaddon.hpp"
 
 #ifdef _WIN32
@@ -314,7 +315,10 @@ void Abaddon::ActionInsertMention(Snowflake id) {
 }
 
 void Abaddon::ActionLeaveGuild(Snowflake id) {
-    m_discord.LeaveGuild(id);
+    ConfirmDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK)
+        m_discord.LeaveGuild(id);
 }
 
 void Abaddon::ActionReloadCSS() {

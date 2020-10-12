@@ -138,6 +138,8 @@ add_executable(abaddon
 	components/chatwindow.cpp
 	components/memberlist.hpp
 	components/memberlist.cpp
+	dialogs/confirm.hpp
+	dialogs/confirm.cpp
 	dialogs/editmessage.hpp
 	dialogs/editmessage.cpp
 	dialogs/joinguild.hpp
