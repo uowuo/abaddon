@@ -61,6 +61,14 @@ MemberList::MemberList() {
     m_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &MemberList::on_insert_mention_activate));
     m_menu.append(*m_menu_insert_mention);
 
+    m_menu_kick = Gtk::manage(new Gtk::MenuItem("_Kick User", true));
+    m_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &MemberList::on_kick_activate));
+    m_menu.append(*m_menu_kick);
+
+    m_menu_ban = Gtk::manage(new Gtk::MenuItem("_Ban User", true));
+    m_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &MemberList::on_ban_activate));
+    m_menu.append(*m_menu_ban);
+
     m_menu.show_all();
 
     m_main->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -230,10 +238,30 @@ void MemberList::on_insert_mention_activate() {
     m_signal_action_insert_mention.emit(row->ID);
 }
 
+void MemberList::on_kick_activate() {
+    auto *row = dynamic_cast<MemberListUserRow *>(m_row_menu_target);
+    if (row == nullptr) return;
+    m_signal_action_kick.emit(row->ID, m_guild_id);
+}
+
+void MemberList::on_ban_activate() {
+    auto *row = dynamic_cast<MemberListUserRow *>(m_row_menu_target);
+    if (row == nullptr) return;
+    m_signal_action_ban.emit(row->ID, m_guild_id);
+}
+
 void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
-    row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
+    row->signal_button_press_event().connect([this, row, id](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            const auto &discord = Abaddon::Get().GetDiscordClient();
+            const auto me = discord.GetUserData().ID;
+            const bool has_kick = discord.HasGuildPermission(me, m_guild_id, Permission::KICK_MEMBERS);
+            const bool has_ban = discord.HasGuildPermission(me, m_guild_id, Permission::BAN_MEMBERS);
+            const bool can_manage = discord.CanManageMember(m_chan_id, discord.GetUserData().ID, id);
+
             m_row_menu_target = row;
+            m_menu_kick->set_sensitive(has_kick && can_manage);
+            m_menu_ban->set_sensitive(has_ban && can_manage);
             m_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
             return true;
         }
@@ -244,4 +272,12 @@ void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
 
 MemberList::type_signal_action_insert_mention MemberList::signal_action_insert_mention() {
     return m_signal_action_insert_mention;
+}
+
+MemberList::type_signal_action_kick MemberList::signal_action_kick() {
+    return m_signal_action_kick;
+}
+
+MemberList::type_signal_action_ban MemberList::signal_action_ban() {
+    return m_signal_action_ban;
 }

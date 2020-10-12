@@ -18,6 +18,7 @@ public:
     void MakeGET(std::string path, std::function<void(cpr::Response r)> cb);
     void MakePATCH(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
     void MakePOST(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
+    void MakePUT(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
 
 private:
     void OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb);

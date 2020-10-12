@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(USE_PKGCONFIG "Use pkg-config" OFF)
 option(DISABLE_MBEDTLS "Disable mbedtls" OFF)
 
+add_compile_definitions(NOMINMAX)
+
 if(NOT USE_PKGCONFIG)
 	find_path(GTKMM_INCLUDE_DIRS gtkmm.h REQUIRED)
 	find_library(GTKMM_LIBRARY gtkmm)

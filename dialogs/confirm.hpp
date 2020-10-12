@@ -4,6 +4,7 @@
 class ConfirmDialog : public Gtk::Dialog {
 public:
     ConfirmDialog(Gtk::Window &parent);
+    void SetConfirmText(const Glib::ustring &text);
 
 protected:
     Gtk::Label m_label;

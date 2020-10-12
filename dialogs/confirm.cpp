@@ -28,3 +28,7 @@ ConfirmDialog::ConfirmDialog(Gtk::Window &parent)
 
     show_all_children();
 }
+
+void ConfirmDialog::SetConfirmText(const Glib::ustring &text) {
+    m_label.set_text(text);
+}

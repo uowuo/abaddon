@@ -231,6 +231,21 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     return roles[0]->ID;
 }
 
+Snowflake DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const {
+    const auto *data = GetMember(user_id, guild_id);
+    if (data == nullptr) return Snowflake::Invalid;
+
+    if (data->Roles.size() == 0) return Snowflake::Invalid;
+    if (data->Roles.size() == 1) return data->Roles[0];
+
+    return *std::max(data->Roles.begin(), data->Roles.end(), [this](const auto &a, const auto &b) -> bool {
+        const auto *role_a = GetRole(*a);
+        const auto *role_b = GetRole(*b);
+        if (role_a == nullptr || role_b == nullptr) return false; // for some reason a Snowflake(0) sneaks into here
+        return role_a->Position < role_b->Position;
+    });
+}
+
 std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
     auto it = m_guild_to_users.find(id);
     if (it != m_guild_to_users.end())
@@ -324,6 +339,20 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
     return perms;
 }
 
+bool DiscordClient::CanManageMember(Snowflake channel_id, Snowflake actor, Snowflake target) const {
+    const auto *channel = GetChannel(channel_id);
+    if (channel == nullptr) return false;
+    const auto *guild = GetGuild(channel->GuildID);
+    if (guild != nullptr && guild->OwnerID == target) return false;
+    const auto actor_highest_id = GetMemberHighestRole(channel->GuildID, actor);
+    const auto target_highest_id = GetMemberHighestRole(channel->GuildID, target);
+    const auto *actor_highest = GetRole(actor_highest_id);
+    const auto *target_highest = GetRole(target_highest_id);
+    if (actor_highest == nullptr) return false;
+    if (target_highest == nullptr) return true;
+    return actor_highest->Position > target_highest->Position;
+}
+
 void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
     // @([^@#]{1,32})#(\\d{4})
     CreateMessageObject obj;
@@ -367,6 +396,14 @@ void DiscordClient::JoinGuild(std::string code) {
 
 void DiscordClient::LeaveGuild(Snowflake id) {
     m_http.MakeDELETE("/users/@me/guilds/" + std::to_string(id), [](auto) {});
+}
+
+void DiscordClient::KickUser(Snowflake user_id, Snowflake guild_id) {
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/members/" + std::to_string(user_id), [](auto) {});
+}
+
+void DiscordClient::BanUser(Snowflake user_id, Snowflake guild_id) {
+    m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), "{}", [](auto) {});
 }
 
 void DiscordClient::UpdateToken(std::string token) {

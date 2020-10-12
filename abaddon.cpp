@@ -71,6 +71,8 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
 
     m_main_window->GetMemberList()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
+    m_main_window->GetMemberList()->signal_action_kick().connect(sigc::mem_fun(*this, &Abaddon::ActionKickMember));
+    m_main_window->GetMemberList()->signal_action_ban().connect(sigc::mem_fun(*this, &Abaddon::ActionBanMember));
 
     ActionReloadCSS();
 
@@ -316,9 +318,32 @@ void Abaddon::ActionInsertMention(Snowflake id) {
 
 void Abaddon::ActionLeaveGuild(Snowflake id) {
     ConfirmDialog dlg(*m_main_window);
+    const auto *guild = m_discord.GetGuild(id);
+    if (guild != nullptr)
+        dlg.SetConfirmText("Are you sure you want to leave " + guild->Name + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.LeaveGuild(id);
+}
+
+void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
+    ConfirmDialog dlg(*m_main_window);
+    const auto *user = m_discord.GetUser(user_id);
+    if (user != nullptr)
+        dlg.SetConfirmText("Are you sure you want to kick " + user->Username + "#" + user->Discriminator + "?");
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK)
+        m_discord.KickUser(user_id, guild_id);
+}
+
+void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
+    ConfirmDialog dlg(*m_main_window);
+    const auto *user = m_discord.GetUser(user_id);
+    if (user != nullptr)
+        dlg.SetConfirmText("Are you sure you want to ban " + user->Username + "#" + user->Discriminator + "?");
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK)
+        m_discord.BanUser(user_id, guild_id);
 }
 
 void Abaddon::ActionReloadCSS() {

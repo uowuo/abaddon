@@ -84,6 +84,7 @@ public:
     const PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     const Emoji *GetEmoji(Snowflake id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
+    Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::unordered_set<Snowflake> GetRolesInGuild(Snowflake id) const;
 
@@ -91,6 +92,7 @@ public:
     bool HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
+    bool CanManageMember(Snowflake channel_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
 
     void SendChatMessage(std::string content, Snowflake channel);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
@@ -98,6 +100,8 @@ public:
     void SendLazyLoad(Snowflake id);
     void JoinGuild(std::string code);
     void LeaveGuild(Snowflake id);
+    void KickUser(Snowflake user_id, Snowflake guild_id);
+    void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
 
     void UpdateToken(std::string token);
 

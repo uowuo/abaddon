@@ -41,6 +41,8 @@ public:
     void ActionChatEditMessage(Snowflake channel_id, Snowflake id);
     void ActionInsertMention(Snowflake id);
     void ActionLeaveGuild(Snowflake id);
+    void ActionKickMember(Snowflake user_id, Snowflake guild_id);
+    void ActionBanMember(Snowflake user_id, Snowflake guild_id);
 
     void ActionReloadCSS();
 
