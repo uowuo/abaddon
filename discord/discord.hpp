@@ -124,6 +124,7 @@ private:
     void HandleGatewayGuildDelete(const GatewayMessage &msg);
     void HandleGatewayMessageDeleteBulk(const GatewayMessage &msg);
     void HandleGatewayGuildMemberUpdate(const GatewayMessage &msg);
+    void HandleGatewayPresenceUpdate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 

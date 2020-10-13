@@ -32,3 +32,22 @@ void from_json(const nlohmann::json &j, User &m) {
     JS_ON("nsfw_allowed", m.IsNSFWAllowed);
     JS_ON("phone", m.Phone);
 }
+
+void User::update_from_json(const nlohmann::json &j, User &m) {
+    JS_ON("username", m.Username);
+    JS_ON("discriminator", m.Discriminator);
+    JS_ON("avatar", m.Avatar);
+    JS_ON("bot", m.IsBot);
+    JS_ON("system", m.IsSystem);
+    JS_ON("mfa_enabled", m.IsMFAEnabled);
+    JS_ON("locale", m.Locale);
+    JS_ON("verified", m.IsVerified);
+    JS_ON("email", m.Email);
+    JS_ON("flags", m.Flags);
+    JS_ON("premium_type", m.PremiumType);
+    JS_ON("public_flags", m.PublicFlags);
+    JS_ON("desktop", m.IsDesktop);
+    JS_ON("mobile", m.IsMobile);
+    JS_ON("nsfw_allowed", m.IsNSFWAllowed);
+    JS_ON("phone", m.Phone);
+}

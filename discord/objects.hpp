@@ -36,6 +36,7 @@ enum class GatewayEvent : int {
     GUILD_DELETE,
     MESSAGE_DELETE_BULK,
     GUILD_MEMBER_UPDATE,
+    PRESENCE_UPDATE,
 };
 
 struct GatewayMessage {
@@ -200,4 +201,22 @@ struct GuildMemberUpdateMessage {
     std::string PremiumSince; // opt, null
 
     friend void from_json(const nlohmann::json &j, GuildMemberUpdateMessage &m);
+};
+
+struct ClientStatus {
+    std::string Desktop; // opt
+    std::string Mobile; // opt
+    std::string Web; // opt
+
+    friend void from_json(const nlohmann::json &j, ClientStatus &m);
+};
+
+struct PresenceUpdateMessage {
+    nlohmann::json User; // the client updates an existing object from this data
+    Snowflake GuildID;
+    std::string Status;
+    // std::vector<Activity> Activities;
+    ClientStatus ClientStatus;
+
+    friend void from_json(const nlohmann::json &j, PresenceUpdateMessage &m);
 };

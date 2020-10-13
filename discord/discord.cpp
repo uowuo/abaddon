@@ -519,6 +519,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBER_UPDATE: {
                         HandleGatewayGuildMemberUpdate(m);
                     } break;
+                    case GatewayEvent::PRESENCE_UPDATE: {
+                        HandleGatewayPresenceUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -598,6 +601,12 @@ void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
     GuildMemberUpdateMessage data = msg.Data;
     auto member = GuildMember::from_update_json(msg.Data); // meh
     m_store.SetGuildMemberData(data.GuildID, data.User.ID, member);
+}
+
+void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
+    PresenceUpdateMessage data = msg.Data;
+    auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
+    User::update_from_json(data.User, *cur);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -728,6 +737,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_DELETE"] = GatewayEvent::GUILD_DELETE;
     m_event_map["MESSAGE_DELETE_BULK"] = GatewayEvent::MESSAGE_DELETE_BULK;
     m_event_map["GUILD_MEMBER_UPDATE"] = GatewayEvent::GUILD_MEMBER_UPDATE;
+    m_event_map["PRESENCE_UPDATE"] = GatewayEvent::PRESENCE_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

@@ -25,6 +25,7 @@ struct User {
     std::string Phone;          // null?
 
     friend void from_json(const nlohmann::json &j, User &m);
+    static void update_from_json(const nlohmann::json &j, User &m);
 
     bool HasAvatar() const;
     std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;

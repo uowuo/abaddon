@@ -141,3 +141,17 @@ void from_json(const nlohmann::json &j, GuildMemberUpdateMessage &m) {
     JS_ON("nick", m.Nick);
     JS_D("joined_at", m.JoinedAt);
 }
+
+void from_json(const nlohmann::json &j, ClientStatus &m) {
+    JS_O("desktop", m.Desktop);
+    JS_O("mobile", m.Mobile);
+    JS_O("web", m.Web);
+}
+
+void from_json(const nlohmann::json &j, PresenceUpdateMessage &m) {
+    m.User = j.at("user");
+    JS_D("guild_id", m.GuildID);
+    JS_D("status", m.Status);
+    // JS_D("activities", m.Activities);
+    JS_D("client_status", m.ClientStatus);
+}
