@@ -43,12 +43,14 @@ protected:
 
     Gtk::Menu m_menu;
     Gtk::MenuItem *m_menu_copy_id;
+    Gtk::MenuItem *m_menu_copy_content;
     Gtk::MenuItem *m_menu_delete_message;
     Gtk::MenuItem *m_menu_edit_message;
 
     void on_menu_copy_id();
     void on_menu_delete_message();
     void on_menu_edit_message();
+    void on_menu_copy_content();
 
     Gtk::Box *m_main;
     Gtk::Label *m_attrib_label = nullptr;

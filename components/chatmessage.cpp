@@ -18,6 +18,10 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
     m_menu_edit_message->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_edit_message));
     m_menu.append(*m_menu_edit_message);
 
+    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
+    m_menu_copy_content->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_copy_content));
+    m_menu.append(*m_menu_copy_content);
+
     m_menu.show_all();
 }
 
@@ -566,6 +570,12 @@ void ChatMessageItemContainer::on_menu_delete_message() {
 
 void ChatMessageItemContainer::on_menu_edit_message() {
     m_signal_action_edit.emit();
+}
+
+void ChatMessageItemContainer::on_menu_copy_content() {
+    const auto *msg = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (msg != nullptr)
+        Gtk::Clipboard::get()->set_text(msg->Content);
 }
 
 ChatMessageItemContainer::type_signal_action_delete ChatMessageItemContainer::signal_action_delete() {
