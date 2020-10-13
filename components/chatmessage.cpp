@@ -170,7 +170,8 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     b->get_bounds(s, e);
     switch (data->Type) {
         case MessageType::DEFAULT:
-            b->insert_markup(s, ParseMessageContent(Glib::Markup::escape_text(data->Content)));
+            b->insert_markup(s, Glib::Markup::escape_text(data->Content));
+            HandleUserMentions(tv);
             HandleLinks(tv);
             HandleChannelMentions(tv);
             break;
@@ -362,32 +363,49 @@ void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Imag
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
 
-std::string ChatMessageItemContainer::ParseMessageContent(std::string content) {
-    content = ParseMentions(content);
+void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
+    constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
-    return content;
-}
+    std::regex rgx(mentions_regex, std::regex_constants::ECMAScript);
 
-std::string ChatMessageItemContainer::ParseMentions(std::string content) {
-    constexpr static const auto mentions_regex = R"(&lt;@!?(\d+)&gt;)";
+    auto buf = tv->get_buffer();
+    std::string text = buf->get_text();
+    const auto &discord = Abaddon::Get().GetDiscordClient();
 
-    return RegexReplaceMany(content, mentions_regex, [this](const std::string &idstr) -> std::string {
-        const Snowflake id(idstr);
-        const auto &discord = Abaddon::Get().GetDiscordClient();
-        const auto *user = discord.GetUser(id);
+    std::string::const_iterator sstart(text.begin());
+    std::smatch match;
+    while (std::regex_search(sstart, text.cend(), match, rgx)) {
+        const std::string user_id = match.str(1);
+        const auto *user = discord.GetUser(user_id);
         const auto *channel = discord.GetChannel(ChannelID);
-        if (channel == nullptr || user == nullptr) return idstr;
+        if (user == nullptr || channel == nullptr) {
+            sstart = match.suffix().first;
+            continue;
+        }
+
+        std::string replacement;
 
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
-            return "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+            replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+        else {
+            const auto role_id = user->GetHoistedRole(channel->GuildID, true);
+            const auto *role = discord.GetRole(role_id);
+            if (role == nullptr)
+                replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+            else
+                replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
+        }
 
-        const auto colorid = user->GetHoistedRole(channel->GuildID, true);
-        const auto *role = discord.GetRole(colorid);
-        if (role == nullptr)
-            return "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+        const auto start = std::distance(text.cbegin(), sstart) + match.position();
+        auto erase_from = buf->get_iter_at_offset(start);
+        auto erase_to = buf->get_iter_at_offset(start + match.length());
+        auto it = buf->erase(erase_from, erase_to);
 
-        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
-    });
+        buf->insert_markup(it, replacement);
+
+        text = buf->get_text();
+        sstart = text.begin();
+    }
 }
 
 void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {

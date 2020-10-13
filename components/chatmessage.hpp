@@ -26,9 +26,7 @@ protected:
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
-    // expects content run through Glib::Markup::escape_text
-    std::string ParseMessageContent(std::string content);
-    std::string ParseMentions(std::string content);
+    void HandleUserMentions(Gtk::TextView *tv);
 
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
