@@ -133,3 +133,11 @@ void to_json(nlohmann::json &j, const MessageEditObject &m) {
     if (m.Flags != -1)
         j["flags"] = m.Flags;
 }
+
+void from_json(const nlohmann::json &j, GuildMemberUpdateMessage &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("roles", m.Roles);
+    JS_D("user", m.User);
+    JS_ON("nick", m.Nick);
+    JS_D("joined_at", m.JoinedAt);
+}

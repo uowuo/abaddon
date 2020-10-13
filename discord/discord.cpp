@@ -516,6 +516,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::MESSAGE_DELETE_BULK: {
                         HandleGatewayMessageDeleteBulk(m);
                     } break;
+                    case GatewayEvent::GUILD_MEMBER_UPDATE: {
+                        HandleGatewayGuildMemberUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -589,6 +592,12 @@ void DiscordClient::HandleGatewayMessageDeleteBulk(const GatewayMessage &msg) {
             cur->SetDeleted();
         m_signal_message_delete.emit(id, data.ChannelID);
     }
+}
+
+void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
+    GuildMemberUpdateMessage data = msg.Data;
+    auto member = GuildMember::from_update_json(msg.Data); // meh
+    m_store.SetGuildMemberData(data.GuildID, data.User.ID, member);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -718,6 +727,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_CREATE"] = GatewayEvent::GUILD_CREATE;
     m_event_map["GUILD_DELETE"] = GatewayEvent::GUILD_DELETE;
     m_event_map["MESSAGE_DELETE_BULK"] = GatewayEvent::MESSAGE_DELETE_BULK;
+    m_event_map["GUILD_MEMBER_UPDATE"] = GatewayEvent::GUILD_MEMBER_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

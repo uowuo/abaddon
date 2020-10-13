@@ -15,4 +15,5 @@ struct GuildMember {
     bool IsMuted;                 //
 
     friend void from_json(const nlohmann::json &j, GuildMember &m);
+    static GuildMember from_update_json(const nlohmann::json &j);
 };
