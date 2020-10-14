@@ -62,40 +62,24 @@ const User &DiscordClient::GetUserData() const {
 }
 
 std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
-    std::vector<std::pair<Snowflake, const Guild *>> sorted_guilds;
-
-    if (m_user_settings.GuildPositions.size()) {
-        std::unordered_set<Snowflake> positioned_guilds(m_user_settings.GuildPositions.begin(), m_user_settings.GuildPositions.end());
-        // guilds not in the guild_positions object are at the top of the list, descending by guild ID
-        std::set<Snowflake> unpositioned_guilds;
-        for (const auto &[id, guild] : m_store.GetGuilds()) {
-            if (positioned_guilds.find(id) == positioned_guilds.end())
-                unpositioned_guilds.insert(id);
+    // sort order is unfolder'd guilds sorted by id descending, then guilds in folders in array order
+    // todo: make sure folder'd guilds are sorted properly
+    std::vector<Snowflake> folder_order;
+    auto guilds = GetGuildsID();
+    for (const auto &entry : m_user_settings.GuildFolders) { // can contain guilds not a part of
+        for (const auto &id : entry.GuildIDs) {
+            if (std::find(guilds.begin(), guilds.end(), id) != guilds.end())
+                folder_order.push_back(id);
         }
-
-        // unpositioned_guilds now has unpositioned guilds in ascending order
-        for (auto it = unpositioned_guilds.rbegin(); it != unpositioned_guilds.rend(); it++) {
-            auto *data = m_store.GetGuild(*it);
-            if (data != nullptr)
-                sorted_guilds.push_back(std::make_pair(*it, data));
-        }
-
-        // now the rest go at the end in the order they are sorted
-        for (const auto &id : m_user_settings.GuildPositions) {
-            auto *data = m_store.GetGuild(id);
-            if (data != nullptr)
-                sorted_guilds.push_back(std::make_pair(id, data));
-        }
-    } else { // default sort is alphabetic
-        for (auto &it : m_store.GetGuilds())
-            sorted_guilds.push_back(std::make_pair(it.first, &it.second));
-        AlphabeticalSort(sorted_guilds.begin(), sorted_guilds.end(), [](auto &pair) { return pair.second->Name; });
     }
-
     std::vector<Snowflake> ret;
-    for (const auto &pair : sorted_guilds)
-        ret.push_back(pair.first);
-
+    for (const auto &gid : guilds) {
+        if (std::find(folder_order.begin(), folder_order.end(), gid) == folder_order.end()) {
+            ret.push_back(gid);
+        }
+    }
+    for (const auto &gid : folder_order)
+        ret.push_back(gid);
     return ret;
 }
 

@@ -1,5 +1,13 @@
 #include "usersettings.hpp"
 
+void from_json(const nlohmann::json &j, UserSettingsGuildFoldersEntry &m) {
+    JS_N("color", m.Color);
+    JS_D("guild_ids", m.GuildIDs);
+    JS_N("id", m.ID);
+    JS_N("name", m.Name);
+
+}
+
 void from_json(const nlohmann::json &j, UserSettings &m) {
     JS_D("timezone_offset", m.TimezoneOffset);
     JS_D("theme", m.Theme);
@@ -15,7 +23,7 @@ void from_json(const nlohmann::json &j, UserSettings &m) {
     JS_D("inline_embed_media", m.ShouldInlineEmbedMedia);
     JS_D("inline_attachment_media", m.ShouldInlineAttachmentMedia);
     JS_D("guild_positions", m.GuildPositions);
-    // JS_D("guild_folders", m.GuildFolders);
+    JS_D("guild_folders", m.GuildFolders);
     JS_D("gif_auto_play", m.ShouldGIFAutoplay);
     // JS_D("friend_source_flags", m.FriendSourceFlags);
     JS_D("explicit_content_filter", m.ExplicitContentFilter);
