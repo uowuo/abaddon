@@ -150,7 +150,7 @@ void from_json(const nlohmann::json &j, ClientStatus &m) {
 
 void from_json(const nlohmann::json &j, PresenceUpdateMessage &m) {
     m.User = j.at("user");
-    JS_D("guild_id", m.GuildID);
+    JS_O("guild_id", m.GuildID);
     JS_D("status", m.Status);
     // JS_D("activities", m.Activities);
     JS_D("client_status", m.ClientStatus);

@@ -606,7 +606,8 @@ void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     PresenceUpdateMessage data = msg.Data;
     auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
-    User::update_from_json(data.User, *cur);
+    if (cur != nullptr)
+        User::update_from_json(data.User, *cur);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {

@@ -213,7 +213,7 @@ struct ClientStatus {
 
 struct PresenceUpdateMessage {
     nlohmann::json User; // the client updates an existing object from this data
-    Snowflake GuildID;
+    Snowflake GuildID; // opt
     std::string Status;
     // std::vector<Activity> Activities;
     ClientStatus ClientStatus;
