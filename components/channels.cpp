@@ -5,13 +5,9 @@
 #include "../abaddon.hpp"
 #include "../imgmanager.hpp"
 
-ChannelListRow::type_signal_list_collapse ChannelListRow::signal_list_collapse() {
-    return m_signal_list_collapse;
-}
+void ChannelListRow::Collapse() {}
 
-ChannelListRow::type_signal_list_uncollapse ChannelListRow::signal_list_uncollapse() {
-    return m_signal_list_uncollapse;
-}
+void ChannelListRow::Expand() {}
 
 ChannelListRowDMHeader::ChannelListRowDMHeader() {
     m_ev = Gtk::manage(new Gtk::EventBox);
@@ -119,14 +115,6 @@ ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     get_style_context()->add_class("channel-row-category");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    m_signal_list_collapse.connect([this]() {
-        m_arrow->set(Gtk::ARROW_RIGHT, Gtk::SHADOW_NONE);
-    });
-
-    m_signal_list_uncollapse.connect([this]() {
-        m_arrow->set(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
-    });
-
     m_lbl->set_text(data->Name);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_arrow);
@@ -134,6 +122,14 @@ ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     m_ev->add(*m_box);
     add(*m_ev);
     show_all_children();
+}
+
+void ChannelListRowCategory::Collapse() {
+    m_arrow->set(Gtk::ARROW_RIGHT, Gtk::SHADOW_NONE);
+}
+
+void ChannelListRowCategory::Expand() {
+    m_arrow->set(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
 }
 
 ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
@@ -202,9 +198,77 @@ void ChannelList::UpdateListing() {
     m_update_dispatcher.emit();
 }
 
+void ChannelList::UpdateNewGuild(Snowflake id) {
+    auto sort = Abaddon::Get().GetDiscordClient().GetUserSortedGuilds();
+    if (sort.size() == 1) {
+        UpdateListing();
+        return;
+    }
+
+    const auto insert_at = [this, id](int listpos) {
+        InsertGuildAt(id, listpos);
+    };
+
+    auto it = std::find(sort.begin(), sort.end(), id);
+    if (it == sort.end()) return;
+    // if the new guild pos is at the end use -1
+    if (it + 1 == sort.end()) {
+        insert_at(-1);
+        return;
+    }
+    // find the position of the guild below it into the listbox
+    auto below_id = *(it + 1);
+    auto below_it = m_id_to_row.find(below_id);
+    if (below_it == m_id_to_row.end()) {
+        UpdateListing();
+        return;
+    }
+    auto below_pos = below_it->second->get_index();
+    // stick it just above
+    insert_at(below_pos - 1);
+}
+
+void ChannelList::UpdateRemoveGuild(Snowflake id) {
+    auto it = m_guild_id_to_row.find(id);
+    if (it == m_guild_id_to_row.end()) return;
+    auto row = dynamic_cast<ChannelListRow *>(it->second);
+    if (row == nullptr) return;
+    DeleteRow(row);
+}
+
 void ChannelList::Clear() {
     //std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_dispatcher.emit();
+}
+
+void ChannelList::CollapseRow(ChannelListRow *row) {
+    row->Collapse();
+    for (auto child : row->Children) {
+        row->IsHidden = true;
+        child->hide();
+        CollapseRow(child);
+    }
+}
+
+void ChannelList::ExpandRow(ChannelListRow *row) {
+    row->Expand();
+    row->show();
+    row->IsHidden = false;
+    if (!row->IsUserCollapsed)
+        for (auto child : row->Children)
+            ExpandRow(child);
+}
+
+void ChannelList::DeleteRow(ChannelListRow *row) {
+    for (auto child : row->Children)
+        DeleteRow(child);
+    if (row->Parent != nullptr)
+        row->Parent->Children.erase(row);
+    if (dynamic_cast<ChannelListRowGuild *>(row) != nullptr)
+        m_guild_id_to_row.erase(row->ID);
+    else
+        m_id_to_row.erase(row->ID);
+    delete row;
 }
 
 void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
@@ -217,26 +281,89 @@ void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
     if (dynamic_cast<ChannelListRowChannel *>(row) != nullptr || dynamic_cast<ChannelListRowDMChannel *>(row) != nullptr)
         m_signal_action_channel_item_select.emit(row->ID);
 
-    if (new_collapsed) {
-        std::function<void(ChannelListRow *)> collapse_children = [&](ChannelListRow *row) {
-            row->signal_list_collapse().emit();
-            for (auto child : row->Children) {
-                row->IsHidden = true;
-                child->hide();
-                collapse_children(child);
+    if (new_collapsed)
+        CollapseRow(row);
+    else
+        ExpandRow(row);
+}
+
+void ChannelList::InsertGuildAt(Snowflake id, int pos) {
+    const auto insert_and_adjust = [&](Gtk::Widget &widget) {
+        m_list->insert(widget, pos);
+        if (pos != -1) pos++;
+    };
+
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto *guild_data = discord.GetGuild(id);
+    if (guild_data == nullptr) return;
+
+    std::map<int, const Channel *> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
+    for (const auto &channel : guild_data->Channels) {
+        if (channel.Type != ChannelType::GUILD_TEXT) continue;
+
+        if (channel.ParentID.IsValid())
+            cat_to_channels[channel.ParentID].push_back(&channel);
+        else
+            orphan_channels[channel.Position] = &channel;
+    }
+
+    auto *guild_row = Gtk::manage(new ChannelListRowGuild(guild_data));
+    guild_row->show_all();
+    guild_row->IsUserCollapsed = true;
+    guild_row->IsHidden = false;
+    guild_row->GuildIndex = m_guild_count++;
+    insert_and_adjust(*guild_row);
+    m_guild_id_to_row[guild_row->ID] = guild_row;
+    AttachGuildMenuHandler(guild_row);
+
+    // add channels with no parent category
+    for (const auto &[pos, channel] : orphan_channels) {
+        auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+        chan_row->IsUserCollapsed = false;
+        chan_row->IsHidden = true;
+        insert_and_adjust(*chan_row);
+        guild_row->Children.insert(chan_row);
+        chan_row->Parent = guild_row;
+        m_id_to_row[chan_row->ID] = chan_row;
+    }
+
+    // categories
+    std::map<int, std::vector<const Channel *>> sorted_categories;
+    for (const auto &channel : guild_data->Channels)
+        if (channel.Type == ChannelType::GUILD_CATEGORY)
+            sorted_categories[channel.Position].push_back(&channel);
+
+    for (auto &[pos, catvec] : sorted_categories) {
+        std::sort(catvec.begin(), catvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
+        for (const auto cat : catvec) {
+            auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
+            cat_row->IsUserCollapsed = false;
+            cat_row->IsHidden = true;
+            AttachChannelMenuHandler(cat_row);
+            insert_and_adjust(*cat_row);
+            guild_row->Children.insert(cat_row);
+            cat_row->Parent = guild_row;
+            m_id_to_row[cat_row->ID] = cat_row;
+
+            // child channels
+            if (cat_to_channels.find(cat->ID) == cat_to_channels.end()) continue;
+            std::map<int, const Channel *> sorted_channels;
+
+            for (const auto channel : cat_to_channels.at(cat->ID))
+                sorted_channels[channel->Position] = channel;
+
+            for (const auto &[pos, channel] : sorted_channels) {
+                auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+                chan_row->IsHidden = false;
+                chan_row->IsUserCollapsed = false;
+                AttachChannelMenuHandler(chan_row);
+                insert_and_adjust(*chan_row);
+                cat_row->Children.insert(chan_row);
+                chan_row->Parent = cat_row;
+                m_id_to_row[chan_row->ID] = chan_row;
             }
-        };
-        collapse_children(row);
-    } else {
-        std::function<void(ChannelListRow *)> restore_children = [&](ChannelListRow *row) {
-            row->signal_list_uncollapse().emit();
-            row->show();
-            row->IsHidden = false;
-            if (!row->IsUserCollapsed)
-                for (auto row : row->Children)
-                    restore_children(row);
-        };
-        restore_children(row);
+        }
     }
 }
 
@@ -269,87 +396,15 @@ void ChannelList::UpdateListingInternal() {
         it++;
     }
 
+    m_id_to_row.clear();
+
     m_guild_count = 0;
 
     AddPrivateChannels();
 
-    // map each category to its channels
-
-    std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
-    std::unordered_map<Snowflake, std::map<Snowflake, const Channel *>> orphan_channels;
-    for (const auto gid : guilds) {
-        const auto *guild = Abaddon::Get().GetDiscordClient().GetGuild(gid);
-        for (const auto &chan : guild->Channels) {
-            switch (chan.Type) {
-                case ChannelType::GUILD_TEXT: {
-                    if (chan.ParentID.IsValid())
-                        cat_to_channels[chan.ParentID].push_back(&chan);
-                    else
-                        orphan_channels[gid][chan.Position] = &chan;
-                } break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    // idk why i even bother with the queue
     auto sorted_guilds = Abaddon::Get().GetDiscordClient().GetUserSortedGuilds();
     for (auto gid : sorted_guilds) {
-        // add guild row
-        const auto *guild_data = Abaddon::Get().GetDiscordClient().GetGuild(gid);
-        auto *guild_row = Gtk::manage(new ChannelListRowGuild(guild_data));
-        guild_row->show_all();
-        guild_row->IsUserCollapsed = true;
-        guild_row->IsHidden = false;
-        guild_row->GuildIndex = m_guild_count++;
-        m_list->add(*guild_row);
-        AttachGuildMenuHandler(guild_row);
-
-        // add channels with no parent category
-        if (orphan_channels.find(gid) != orphan_channels.end()) {
-            for (const auto &[pos, channel] : orphan_channels.at(gid)) {
-                auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
-                chan_row->IsUserCollapsed = false;
-                chan_row->IsHidden = true;
-                m_list->add(*chan_row);
-                guild_row->Children.insert(chan_row);
-            }
-        }
-
-        // categories
-        std::map<int, std::vector<const Channel *>> sorted_categories;
-        for (const auto &channel : guild_data->Channels)
-            if (channel.Type == ChannelType::GUILD_CATEGORY)
-                sorted_categories[channel.Position].push_back(&channel);
-
-        for (auto &[pos, catvec] : sorted_categories) {
-            std::sort(catvec.begin(), catvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
-            for (const auto cat : catvec) {
-                auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
-                cat_row->IsUserCollapsed = false;
-                cat_row->IsHidden = true;
-                AttachChannelMenuHandler(cat_row);
-                m_list->add(*cat_row);
-                guild_row->Children.insert(cat_row);
-
-                // child channels
-                if (cat_to_channels.find(cat->ID) == cat_to_channels.end()) continue;
-                std::map<int, const Channel *> sorted_channels;
-
-                for (const auto channel : cat_to_channels.at(cat->ID))
-                    sorted_channels[channel->Position] = channel;
-
-                for (const auto &[pos, channel] : sorted_channels) {
-                    auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
-                    chan_row->IsHidden = false;
-                    chan_row->IsUserCollapsed = false;
-                    AttachChannelMenuHandler(chan_row);
-                    m_list->add(*chan_row);
-                    cat_row->Children.insert(chan_row);
-                }
-            }
-        }
+        InsertGuildAt(gid, -1);
     }
 }
 

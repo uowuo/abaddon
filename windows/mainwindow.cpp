@@ -116,6 +116,14 @@ void MainWindow::UpdateChannelListing() {
     m_channel_list.UpdateListing();
 }
 
+void MainWindow::UpdateChannelsNewGuild(Snowflake id) {
+    m_channel_list.UpdateNewGuild(id);
+}
+
+void MainWindow::UpdateChannelsRemoveGuild(Snowflake id) {
+    m_channel_list.UpdateRemoveGuild(id);
+}
+
 void MainWindow::UpdateChatWindowContents() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto allmsgs = discord.GetMessagesForChannel(m_chat.GetActiveChannel());

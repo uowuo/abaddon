@@ -4,6 +4,7 @@
 #include <queue>
 #include <mutex>
 #include <unordered_set>
+#include <unordered_map>
 #include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
@@ -13,16 +14,10 @@ public:
     bool IsHidden;
     Snowflake ID;
     std::unordered_set<ChannelListRow *> Children;
+    ChannelListRow *Parent = nullptr;
 
-    typedef sigc::signal<void> type_signal_list_collapse;
-    typedef sigc::signal<void> type_signal_list_uncollapse;
-
-    type_signal_list_collapse signal_list_collapse();
-    type_signal_list_uncollapse signal_list_uncollapse();
-
-protected:
-    type_signal_list_collapse m_signal_list_collapse;
-    type_signal_list_uncollapse m_signal_list_uncollapse;
+    virtual void Collapse();
+    virtual void Expand();
 };
 
 class ChannelListRowDMHeader : public ChannelListRow {
@@ -67,6 +62,9 @@ class ChannelListRowCategory : public ChannelListRow {
 public:
     ChannelListRowCategory(const Channel *data);
 
+    virtual void Collapse();
+    virtual void Expand();
+
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
@@ -89,11 +87,17 @@ public:
     ChannelList();
     Gtk::Widget *GetRoot() const;
     void UpdateListing();
+    void UpdateNewGuild(Snowflake id);
+    void UpdateRemoveGuild(Snowflake id);
     void Clear();
 
 protected:
     Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_main;
+
+    void CollapseRow(ChannelListRow *row);
+    void ExpandRow(ChannelListRow *row);
+    void DeleteRow(ChannelListRow *row);
 
     void on_row_activated(Gtk::ListBoxRow *row);
 
@@ -115,6 +119,13 @@ protected:
     Glib::Dispatcher m_update_dispatcher;
     //mutable std::mutex m_update_mutex;
     //std::queue<std::unordered_set<Snowflake>> m_update_queue;
+
+    // i would use one map but in really old guilds there can be a channel w/ same id as the guild so this hacky shit has to do
+    std::unordered_map<Snowflake, ChannelListRow *> m_guild_id_to_row;
+    std::unordered_map<Snowflake, ChannelListRow *> m_id_to_row;
+
+    void InsertGuildAt(Snowflake id, int pos);
+
     void AddPrivateChannels(); // retard moment
     void UpdateListingInternal();
     void AttachGuildMenuHandler(Gtk::ListBoxRow *row);

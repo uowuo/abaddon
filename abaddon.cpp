@@ -147,11 +147,11 @@ void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
 }
 
 void Abaddon::DiscordOnGuildCreate(Snowflake guild_id) {
-    m_main_window->UpdateChannelListing();
+    m_main_window->UpdateChannelsNewGuild(guild_id);
 }
 
 void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
-    m_main_window->UpdateChannelListing();
+    m_main_window->UpdateChannelsRemoveGuild(guild_id);
 }
 
 const SettingsManager &Abaddon::GetSettings() const {
