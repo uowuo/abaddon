@@ -246,6 +246,13 @@ std::unordered_set<Snowflake> DiscordClient::GetRolesInGuild(Snowflake id) const
     return ret;
 }
 
+std::unordered_set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
+    auto it = m_guild_to_channels.find(id);
+    if (it != m_guild_to_channels.end())
+        return it->second;
+    return std::unordered_set<Snowflake>();
+}
+
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
     const auto base = ComputePermissions(user_id, guild_id);
     return (base & perm) == perm;
@@ -506,6 +513,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::PRESENCE_UPDATE: {
                         HandleGatewayPresenceUpdate(m);
                     } break;
+                    case GatewayEvent::CHANNEL_DELETE: {
+                        HandleGatewayChannelDelete(m);
+                    } break;
+                    case GatewayEvent::CHANNEL_UPDATE: {
+                        HandleGatewayChannelUpdate(m);
+                    } break;
+                    case GatewayEvent::CHANNEL_CREATE: {
+                        HandleGatewayChannelCreate(m);
+                    } break;
                 }
             } break;
             default:
@@ -527,6 +543,7 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
     for (auto &c : guild.Channels) {
         c.GuildID = guild.ID;
         m_store.SetChannel(c.ID, c);
+        m_guild_to_channels[guild.ID].insert(c.ID);
         for (auto &p : c.PermissionOverwrites) {
             m_store.SetPermissionOverwrite(c.ID, p.ID, p);
         }
@@ -592,6 +609,34 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
     if (cur != nullptr)
         User::update_from_json(data.User, *cur);
+}
+
+void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
+    const auto id = msg.Data.at("id").get<Snowflake>();
+    const auto *channel = GetChannel(id);
+    auto it = m_guild_to_channels.find(channel->GuildID);
+    if (it != m_guild_to_channels.end())
+        it->second.erase(id);
+    m_store.ClearChannel(id);
+    m_signal_channel_delete.emit(id);
+}
+
+void DiscordClient::HandleGatewayChannelUpdate(const GatewayMessage &msg) {
+    const auto id = msg.Data.at("id").get<Snowflake>();
+    auto *cur = m_store.GetChannel(id);
+    if (cur != nullptr) {
+        cur->update_from_json(msg.Data);
+        m_signal_channel_update.emit(id);
+    }
+}
+
+void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
+    Channel data = msg.Data;
+    m_store.SetChannel(data.ID, data);
+    m_guild_to_channels[data.GuildID].insert(data.ID);
+    for (const auto &p : data.PermissionOverwrites)
+        m_store.SetPermissionOverwrite(data.ID, p.ID, p);
+    m_signal_channel_create.emit(data.ID);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -723,6 +768,9 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_DELETE_BULK"] = GatewayEvent::MESSAGE_DELETE_BULK;
     m_event_map["GUILD_MEMBER_UPDATE"] = GatewayEvent::GUILD_MEMBER_UPDATE;
     m_event_map["PRESENCE_UPDATE"] = GatewayEvent::PRESENCE_UPDATE;
+    m_event_map["CHANNEL_DELETE"] = GatewayEvent::CHANNEL_DELETE;
+    m_event_map["CHANNEL_UPDATE"] = GatewayEvent::CHANNEL_UPDATE;
+    m_event_map["CHANNEL_CREATE"] = GatewayEvent::CHANNEL_CREATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -755,4 +803,16 @@ DiscordClient::type_signal_guild_create DiscordClient::signal_guild_create() {
 
 DiscordClient::type_signal_guild_delete DiscordClient::signal_guild_delete() {
     return m_signal_guild_delete;
+}
+
+DiscordClient::type_signal_channel_delete DiscordClient::signal_channel_delete() {
+    return m_signal_channel_delete;
+}
+
+DiscordClient::type_signal_channel_update DiscordClient::signal_channel_update() {
+    return m_signal_channel_update;
+}
+
+DiscordClient::type_signal_channel_create DiscordClient::signal_channel_create() {
+    return m_signal_channel_create;
 }

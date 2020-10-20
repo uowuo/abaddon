@@ -22,6 +22,26 @@ void from_json(const nlohmann::json &j, Channel &m) {
     JS_ON("last_pin_timestamp", m.LastPinTimestamp);
 }
 
+void Channel::update_from_json(const nlohmann::json &j) {
+    JS_RD("type", Type);
+    JS_RD("guild_id", GuildID);
+    JS_RV("position", Position, -1);
+    JS_RD("permission_overwrites", PermissionOverwrites);
+    JS_RD("name", Name);
+    JS_RD("topic", Topic);
+    JS_RD("nsfw", IsNSFW);
+    JS_RD("last_message_id", LastMessageID);
+    JS_RD("bitrate", Bitrate);
+    JS_RD("user_limit", UserLimit);
+    JS_RD("rate_limit_per_user", RateLimitPerUser);
+    JS_RD("recipients", Recipients);
+    JS_RD("icon", Icon);
+    JS_RD("owner_id", OwnerID);
+    JS_RD("application_id", ApplicationID);
+    JS_RD("parent_id", ParentID);
+    JS_RD("last_pin_timestamp", LastPinTimestamp);
+}
+
 const PermissionOverwrite *Channel::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

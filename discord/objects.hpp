@@ -37,6 +37,9 @@ enum class GatewayEvent : int {
     MESSAGE_DELETE_BULK,
     GUILD_MEMBER_UPDATE,
     PRESENCE_UPDATE,
+    CHANNEL_DELETE,
+    CHANNEL_UPDATE,
+    CHANNEL_CREATE,
 };
 
 struct GatewayMessage {

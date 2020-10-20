@@ -37,6 +37,7 @@ struct Channel {
     std::string LastPinTimestamp;                          // opt, can be null even tho docs say otherwise
 
     friend void from_json(const nlohmann::json &j, Channel &m);
+    void update_from_json(const nlohmann::json &j);
 
     const PermissionOverwrite *GetOverwrite(Snowflake id) const;
 };

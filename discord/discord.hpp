@@ -87,6 +87,7 @@ public:
     Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::unordered_set<Snowflake> GetRolesInGuild(Snowflake id) const;
+    std::unordered_set<Snowflake> GetChannelsInGuild(Snowflake id) const;
 
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
     bool HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
@@ -125,6 +126,9 @@ private:
     void HandleGatewayMessageDeleteBulk(const GatewayMessage &msg);
     void HandleGatewayGuildMemberUpdate(const GatewayMessage &msg);
     void HandleGatewayPresenceUpdate(const GatewayMessage &msg);
+    void HandleGatewayChannelDelete(const GatewayMessage &msg);
+    void HandleGatewayChannelUpdate(const GatewayMessage &msg);
+    void HandleGatewayChannelCreate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 
@@ -137,6 +141,8 @@ private:
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
+
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
 
     User m_user_data;
     UserSettings m_user_settings;
@@ -171,6 +177,9 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_guild_member_list_update;
     typedef sigc::signal<void, Snowflake> type_signal_guild_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_delete;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_delete;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_update;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_create;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_channel_list_refresh signal_channel_list_refresh();
@@ -180,6 +189,9 @@ public:
     type_signal_guild_member_list_update signal_guild_member_list_update();
     type_signal_guild_create signal_guild_create();
     type_signal_guild_delete signal_guild_delete();
+    type_signal_channel_delete signal_channel_delete();
+    type_signal_channel_update signal_channel_update();
+    type_signal_channel_create signal_channel_create();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -190,4 +202,7 @@ protected:
     type_signal_guild_member_list_update m_signal_guild_member_list_update;
     type_signal_guild_create m_signal_guild_create;
     type_signal_guild_delete m_signal_guild_delete;
+    type_signal_channel_delete m_signal_channel_delete;
+    type_signal_channel_update m_signal_channel_update;
+    type_signal_channel_create m_signal_channel_create;
 };

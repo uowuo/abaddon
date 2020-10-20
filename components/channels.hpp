@@ -11,7 +11,6 @@
 class ChannelListRow : public Gtk::ListBoxRow {
 public:
     bool IsUserCollapsed;
-    bool IsHidden;
     Snowflake ID;
     std::unordered_set<ChannelListRow *> Children;
     ChannelListRow *Parent = nullptr;
@@ -89,6 +88,9 @@ public:
     void UpdateListing();
     void UpdateNewGuild(Snowflake id);
     void UpdateRemoveGuild(Snowflake id);
+    void UpdateRemoveChannel(Snowflake id);
+    void UpdateChannel(Snowflake id);
+    void UpdateCreateChannel(Snowflake id);
     void Clear();
 
 protected:
@@ -98,6 +100,8 @@ protected:
     void CollapseRow(ChannelListRow *row);
     void ExpandRow(ChannelListRow *row);
     void DeleteRow(ChannelListRow *row);
+
+    void UpdateChannelCategory(Snowflake id);
 
     void on_row_activated(Gtk::ListBoxRow *row);
 

@@ -156,6 +156,7 @@ ChannelList::ChannelList() {
 
     m_list->get_style_context()->add_class("channel-list");
 
+    /*
     m_guild_menu_up = Gtk::manage(new Gtk::MenuItem("Move _Up", true));
     m_guild_menu_up->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_up));
     m_guild_menu.append(*m_guild_menu_up);
@@ -163,6 +164,7 @@ ChannelList::ChannelList() {
     m_guild_menu_down = Gtk::manage(new Gtk::MenuItem("Move _Down", true));
     m_guild_menu_down->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_down));
     m_guild_menu.append(*m_guild_menu_down);
+    */
 
     m_guild_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
     m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_copyid));
@@ -236,6 +238,153 @@ void ChannelList::UpdateRemoveGuild(Snowflake id) {
     DeleteRow(row);
 }
 
+void ChannelList::UpdateRemoveChannel(Snowflake id) {
+    auto it = m_id_to_row.find(id);
+    if (it == m_id_to_row.end()) return;
+    auto row = dynamic_cast<ChannelListRow *>(it->second);
+    if (row == nullptr) return;
+    DeleteRow(row);
+}
+
+// this is total shit
+void ChannelList::UpdateChannelCategory(Snowflake id) {
+    const auto *data = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    const auto *guild = Abaddon::Get().GetDiscordClient().GetGuild(data->GuildID);
+    auto git = m_guild_id_to_row.find(data->GuildID);
+    if (git == m_guild_id_to_row.end()) return;
+    auto *guild_row = git->second;
+    if (data == nullptr || guild == nullptr) return;
+    auto it = m_id_to_row.find(id);
+    if (it == m_id_to_row.end()) return;
+    auto row = dynamic_cast<ChannelListRowCategory *>(it->second);
+    if (row == nullptr) return;
+    const bool old_collapsed = row->IsUserCollapsed;
+    const bool visible = row->is_visible();
+    std::map<int, Snowflake> child_rows;
+    for (auto child : row->Children) {
+        child_rows[child->get_index()] = child->ID;
+    }
+    guild_row->Children.erase(row);
+    DeleteRow(row);
+
+    int pos = guild_row->get_index();
+    const auto sorted = guild->GetSortedChannels(id);
+    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
+    if (sorted_it == sorted.end()) return;
+    if (std::next(sorted_it) == sorted.end()) {
+        const auto x = m_id_to_row.find(*std::prev(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index() + 1;
+    } else {
+        const auto x = m_id_to_row.find(*std::next(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index();
+    }
+
+    auto *new_row = Gtk::manage(new ChannelListRowCategory(data));
+    new_row->IsUserCollapsed = old_collapsed;
+    if (visible)
+        new_row->show();
+    m_id_to_row[id] = new_row;
+    AttachChannelMenuHandler(new_row);
+    new_row->Parent = guild_row;
+    guild_row->Children.insert(new_row);
+    m_list->insert(*new_row, pos);
+    int i = 1;
+    for (const auto &[idx, child_id] : child_rows) {
+        const auto *channel = Abaddon::Get().GetDiscordClient().GetChannel(child_id);
+        if (channel != nullptr) {
+            auto *new_child = Gtk::manage(new ChannelListRowChannel(channel));
+            new_row->Children.insert(new_child);
+            new_child->Parent = new_row;
+            AttachChannelMenuHandler(new_child);
+            m_id_to_row[child_id] = new_child;
+            if (visible && !new_row->IsUserCollapsed)
+                new_child->show();
+            m_list->insert(*new_child, pos + i++);
+        }
+    }
+}
+
+// so is this
+void ChannelList::UpdateChannel(Snowflake id) {
+    const auto *data = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    const auto *guild = Abaddon::Get().GetDiscordClient().GetGuild(data->GuildID);
+    const auto *guild_row = m_guild_id_to_row.at(data->GuildID);
+    if (data->Type == ChannelType::GUILD_CATEGORY) {
+        UpdateChannelCategory(id);
+        return;
+    }
+    auto row = dynamic_cast<ChannelListRowChannel *>(m_id_to_row.at(id));
+    const bool old_collapsed = row->IsUserCollapsed;
+    const bool old_visible = row->is_visible();
+    DeleteRow(row);
+
+    int pos = guild_row->get_index() + 1; // fallback
+    const auto sorted = guild->GetSortedChannels();
+    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
+    if (sorted_it + 1 == sorted.end()) {
+        const auto x = m_id_to_row.find(*std::prev(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index() + 1;
+    } else {
+        const auto x = m_id_to_row.find(*std::next(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index();
+    }
+
+    auto *new_row = Gtk::manage(new ChannelListRowChannel(data));
+    new_row->IsUserCollapsed = old_collapsed;
+    m_id_to_row[id] = new_row;
+    if (data->ParentID.IsValid()) {
+        new_row->Parent = m_id_to_row.at(data->ParentID);
+    } else {
+        new_row->Parent = m_guild_id_to_row.at(data->GuildID);
+    }
+
+    new_row->Parent->Children.insert(new_row);
+    if (new_row->Parent->is_visible() && !new_row->Parent->IsUserCollapsed)
+        new_row->show();
+    AttachChannelMenuHandler(new_row);
+    m_list->insert(*new_row, pos);
+}
+
+void ChannelList::UpdateCreateChannel(Snowflake id) {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto *data = discord.GetChannel(id);
+    const auto *guild = discord.GetGuild(data->GuildID);
+    auto *guild_row = m_guild_id_to_row.at(data->GuildID);
+
+    int pos = guild_row->get_index() + 1;
+    const auto sorted = guild->GetSortedChannels();
+    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
+    if (sorted_it + 1 == sorted.end()) {
+        const auto x = m_id_to_row.find(*std::prev(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index() + 1;
+    } else {
+        const auto x = m_id_to_row.find(*std::next(sorted_it));
+        if (x != m_id_to_row.end())
+            pos = x->second->get_index();
+    }
+
+    ChannelListRow *row;
+    if (data->Type == ChannelType::GUILD_TEXT) {
+        row = Gtk::manage(new ChannelListRowChannel(data));
+    } else if (data->Type == ChannelType::GUILD_CATEGORY) {
+        row = Gtk::manage(new ChannelListRowCategory(data));
+    } else
+        return;
+    row->IsUserCollapsed = false;
+    if (guild_row->is_visible())
+        row->show();
+    AttachChannelMenuHandler(row);
+    row->Parent = guild_row;
+    guild_row->Children.insert(row);
+    m_id_to_row[id] = row;
+    m_list->insert(*row, pos);
+}
+
 void ChannelList::Clear() {
     //std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_dispatcher.emit();
@@ -244,7 +393,6 @@ void ChannelList::Clear() {
 void ChannelList::CollapseRow(ChannelListRow *row) {
     row->Collapse();
     for (auto child : row->Children) {
-        row->IsHidden = true;
         child->hide();
         CollapseRow(child);
     }
@@ -253,7 +401,6 @@ void ChannelList::CollapseRow(ChannelListRow *row) {
 void ChannelList::ExpandRow(ChannelListRow *row) {
     row->Expand();
     row->show();
-    row->IsHidden = false;
     if (!row->IsUserCollapsed)
         for (auto child : row->Children)
             ExpandRow(child);
@@ -264,13 +411,14 @@ void ChannelList::DeleteRow(ChannelListRow *row) {
         DeleteRow(child);
     if (row->Parent != nullptr)
         row->Parent->Children.erase(row);
+    else
+        printf("row has no parent!\n");
     if (dynamic_cast<ChannelListRowGuild *>(row) != nullptr)
         m_guild_id_to_row.erase(row->ID);
     else
         m_id_to_row.erase(row->ID);
     delete row;
 }
-
 void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
     auto row = dynamic_cast<ChannelListRow *>(tmprow);
     if (row == nullptr) return;
@@ -311,7 +459,6 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     auto *guild_row = Gtk::manage(new ChannelListRowGuild(guild_data));
     guild_row->show_all();
     guild_row->IsUserCollapsed = true;
-    guild_row->IsHidden = false;
     guild_row->GuildIndex = m_guild_count++;
     insert_and_adjust(*guild_row);
     m_guild_id_to_row[guild_row->ID] = guild_row;
@@ -321,7 +468,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     for (const auto &[pos, channel] : orphan_channels) {
         auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
         chan_row->IsUserCollapsed = false;
-        chan_row->IsHidden = true;
+        AttachChannelMenuHandler(chan_row);
         insert_and_adjust(*chan_row);
         guild_row->Children.insert(chan_row);
         chan_row->Parent = guild_row;
@@ -339,7 +486,6 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
         for (const auto cat : catvec) {
             auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
             cat_row->IsUserCollapsed = false;
-            cat_row->IsHidden = true;
             AttachChannelMenuHandler(cat_row);
             insert_and_adjust(*cat_row);
             guild_row->Children.insert(cat_row);
@@ -355,7 +501,6 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 
             for (const auto &[pos, channel] : sorted_channels) {
                 auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
-                chan_row->IsHidden = false;
                 chan_row->IsUserCollapsed = false;
                 AttachChannelMenuHandler(chan_row);
                 insert_and_adjust(*chan_row);
@@ -373,13 +518,11 @@ void ChannelList::AddPrivateChannels() {
     auto *parent_row = Gtk::manage(new ChannelListRowDMHeader);
     parent_row->show_all();
     parent_row->IsUserCollapsed = true;
-    parent_row->IsHidden = false;
     m_list->add(*parent_row);
 
     for (const auto &dm : dms) {
         auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(dm)));
         dm_row->IsUserCollapsed = false;
-        dm_row->IsHidden = false;
         m_list->add(*dm_row);
         parent_row->Children.insert(dm_row);
     }

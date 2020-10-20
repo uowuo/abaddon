@@ -25,6 +25,9 @@ Abaddon::Abaddon()
     m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
     m_discord.signal_guild_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildCreate));
     m_discord.signal_guild_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildDelete));
+    m_discord.signal_channel_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelDelete));
+    m_discord.signal_channel_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelUpdate));
+    m_discord.signal_channel_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelCreate));
 }
 
 Abaddon::~Abaddon() {
@@ -152,6 +155,18 @@ void Abaddon::DiscordOnGuildCreate(Snowflake guild_id) {
 
 void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
     m_main_window->UpdateChannelsRemoveGuild(guild_id);
+}
+
+void Abaddon::DiscordOnChannelDelete(Snowflake channel_id) {
+    m_main_window->UpdateChannelsRemoveChannel(channel_id);
+}
+
+void Abaddon::DiscordOnChannelUpdate(Snowflake channel_id) {
+    m_main_window->UpdateChannelsUpdateChannel(channel_id);
+}
+
+void Abaddon::DiscordOnChannelCreate(Snowflake channel_id) {
+    m_main_window->UpdateChannelsCreateChannel(channel_id);
 }
 
 const SettingsManager &Abaddon::GetSettings() const {
