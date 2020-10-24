@@ -26,7 +26,12 @@ protected:
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
+    static Glib::ustring GetTextFiltered(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+
     void HandleUserMentions(Gtk::TextView *tv);
+    void HandleStockEmojis(Gtk::TextView *tv);
+    void HandleCustomEmojis(Gtk::TextView *tv);
+    void HandleEmojis(Gtk::TextView *tv);
 
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);

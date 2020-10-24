@@ -7,6 +7,7 @@
 #include "windows/mainwindow.hpp"
 #include "settings.hpp"
 #include "imgmanager.hpp"
+#include "emojis.hpp"
 
 #define APP_TITLE "Abaddon"
 
@@ -47,6 +48,7 @@ public:
     void ActionReloadCSS();
 
     ImageManager &GetImageManager();
+    EmojiResource &GetEmojis();
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -77,6 +79,7 @@ private:
     std::unordered_set<Snowflake> m_channels_history_loading;
 
     ImageManager m_img_mgr;
+    EmojiResource m_emojis;
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;

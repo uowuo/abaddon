@@ -1,6 +1,7 @@
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
 #include "../util.hpp"
+#include <unordered_map>
 
 ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -178,6 +179,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             HandleUserMentions(tv);
             HandleLinks(tv);
             HandleChannelMentions(tv);
+            HandleEmojis(tv);
             break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
@@ -367,6 +369,22 @@ void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Imag
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
 
+Glib::ustring ChatMessageItemContainer::GetTextFiltered(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
+    Gtk::TextBuffer::iterator a, b;
+    buf->get_bounds(a, b);
+    auto slice = buf->get_slice(a, b, true);
+    // make all the 0xFFFC chars fuck off because it breaks regex
+    while (true) {
+        int r = slice.find(u8"\uFFFC");
+        if (r == Glib::ustring::npos) break;
+        auto iter = buf->get_iter_at_offset(r);
+        auto len = Glib::ustring(u8"\uFFFC").size();
+        slice.erase(r, len);
+        slice.insert(r, "\x80");
+    }
+    return slice;
+}
+
 void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
@@ -409,6 +427,97 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
 
         text = buf->get_text();
         sstart = text.begin();
+    }
+}
+
+void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
+    auto get_text = [&]() -> Glib::ustring {
+        auto x = tv->get_buffer();
+        Gtk::TextBuffer::iterator a, b;
+        x->get_bounds(a, b);
+        return x->get_slice(a, b, true);
+    };
+
+    auto buf = tv->get_buffer();
+    auto text = get_text();
+
+    auto &emojis = Abaddon::Get().GetEmojis();
+    int searchpos;
+    Glib::MatchInfo match;
+    for (const auto &pattern : emojis.GetPatterns()) {
+        searchpos = 0;
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+        while (true) {
+            size_t r = text.find(pattern, searchpos);
+            if (r == Glib::ustring::npos) break;
+            if (!pixbuf) pixbuf = emojis.GetPixBuf(pattern);
+            if (!pixbuf) break;
+            searchpos = r + pattern.size();
+            auto start_it = buf->get_iter_at_offset(r);
+            auto end_it = buf->get_iter_at_offset(r + pattern.size());
+            auto it = buf->erase(start_it, end_it);
+            buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
+            int alen = text.size();
+            text = get_text();
+            int blen = text.size();
+            searchpos -= (alen - blen);
+        }
+    }
+}
+
+void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
+    static auto rgx = Glib::Regex::create(R"(<a?:([\w\d_]+):(\d+)>)");
+
+    auto &img = Abaddon::Get().GetImageManager();
+
+    auto buf = tv->get_buffer();
+    auto text = GetTextFiltered(buf);
+
+    Glib::MatchInfo match;
+    int startpos = 0;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        if (!match.fetch_pos(0, mstart, mend)) break;
+        auto start_it = buf->get_iter_at_offset(mstart);
+        auto end_it = buf->get_iter_at_offset(mend);
+        startpos = mend;
+        auto pixbuf = img.GetFromURLIfCached(Emoji::URLFromID(match.fetch(2)));
+        if (pixbuf) {
+            auto it = buf->erase(start_it, end_it);
+            int alen = text.size();
+            text = GetTextFiltered(buf);
+            int blen = text.size();
+            startpos -= (alen - blen);
+            buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
+        } else {
+            // clang-format off
+            // can't erase before pixbuf is ready or else marks that are in the same pos get mixed up
+            auto mark_start = buf->create_mark(start_it, false);
+            end_it.backward_char();
+            auto mark_end = buf->create_mark(end_it, false);
+            img.LoadFromURL(Emoji::URLFromID(match.fetch(2)), sigc::track_obj([this, buf, mark_start, mark_end](Glib::RefPtr<Gdk::Pixbuf> pixbuf) {
+                auto start_it = mark_start->get_iter();
+                auto end_it = mark_end->get_iter();
+                end_it.forward_char();
+                buf->delete_mark(mark_start);
+                buf->delete_mark(mark_end);
+                auto it = buf->erase(start_it, end_it);
+                buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
+            }, tv));
+            // clang-format on
+        }
+
+        int alen = text.size();
+        text = GetTextFiltered(buf);
+        int blen = text.size();
+    }
+}
+
+void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
+    static bool emojis = Abaddon::Get().GetSettings().GetSettingString("gui", "emojis", "true") != "false";
+    if (emojis) {
+        HandleStockEmojis(tv);
+        HandleCustomEmojis(tv);
     }
 }
 

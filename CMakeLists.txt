@@ -132,6 +132,8 @@ add_executable(abaddon
 	filecache.cpp
 	imgmanager.hpp
 	imgmanager.cpp
+	emojis.hpp
+	emojis.cpp
 	components/channels.hpp
 	components/channels.cpp
 	components/chatmessage.hpp

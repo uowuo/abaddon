@@ -14,7 +14,8 @@
 #endif
 
 Abaddon::Abaddon()
-    : m_settings("abaddon.ini") {
+    : m_settings("abaddon.ini")
+    , m_emojis("res/emojis.bin") {
     LoadFromSettings();
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
@@ -85,6 +86,11 @@ int Abaddon::StartGTK() {
 
     if (!m_settings.IsValid()) {
         Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.run();
+    }
+
+    if (!m_emojis.Load()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The emoji file couldn't be loaded!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.run();
     }
 
@@ -374,6 +380,10 @@ void Abaddon::ActionReloadCSS() {
 
 ImageManager &Abaddon::GetImageManager() {
     return m_img_mgr;
+}
+
+EmojiResource &Abaddon::GetEmojis() {
+    return m_emojis;
 }
 
 int main(int argc, char **argv) {
