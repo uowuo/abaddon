@@ -29,4 +29,6 @@ private:
     std::unordered_map<std::string, std::vector<callback_type>> m_callbacks;
     std::vector<std::future<void>> m_futures;
     std::filesystem::path m_tmp_path;
+
+    bool m_canceled = false;
 };

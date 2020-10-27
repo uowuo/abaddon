@@ -9,6 +9,10 @@ Cache::Cache() {
 }
 
 Cache::~Cache() {
+    m_canceled = true;
+    for (auto &future : m_futures)
+        if (future.valid()) future.get();
+
     std::error_code err;
     if (!std::filesystem::remove_all(m_tmp_path, err))
         fprintf(stderr, "error removing tmp dir\n");
@@ -45,9 +49,12 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
     } else {
         m_callbacks[url].push_back(cb);
         auto future = std::async(std::launch::async, [this, url]() {
+            if (m_canceled) return;
             m_semaphore->wait();
+            if (m_canceled) return;
             const auto &r = cpr::Get(cpr::Url { url });
             m_semaphore->notify();
+            if (m_canceled) return;
             OnResponse(r);
         });
         m_futures.push_back(std::move(future));
