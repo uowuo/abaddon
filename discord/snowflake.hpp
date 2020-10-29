@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
 #include <nlohmann/json.hpp>
+#include <glibmm/ustring.h>
 
 struct Snowflake {
     Snowflake();
     Snowflake(uint64_t n);
     Snowflake(const std::string &str);
+    Snowflake(const Glib::ustring &str);
 
     bool IsValid() const;
 

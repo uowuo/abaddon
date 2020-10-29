@@ -3,13 +3,18 @@
 Snowflake::Snowflake()
     : m_num(Invalid) {}
 
-
 Snowflake::Snowflake(uint64_t n)
     : m_num(n) {}
 
 Snowflake::Snowflake(const std::string &str) {
     if (str.size())
         m_num = std::stoull(str);
+    else
+        m_num = Invalid;
+}
+Snowflake::Snowflake(const Glib::ustring &str) {
+    if (str.size())
+        m_num = std::strtoull(str.c_str(), nullptr, 10);
     else
         m_num = Invalid;
 };
