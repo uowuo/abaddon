@@ -17,7 +17,7 @@
 
 ### Downloads (from CI):
 - Windows: [here](https://ci.appveyor.com/project/lorpus/abaddon/build/artifacts)
-- OSX: [here](https://i.owo.okinawa/travis/abaddon) (downloading css from here is still necessary)
+- OSX: [here](https://i.owo.okinawa/travis-master/abaddon) (downloading css/ and res/ from here is still necessary)
 
 #### Dependencies:  
 * [gtkmm](https://www.gtkmm.org/en/)

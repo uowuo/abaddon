@@ -28,7 +28,7 @@ before_deploy:
 deploy:
   provider: s3
   local_dir: out
-  upload-dir: travis
+  upload-dir: travis-$TRAVIS_BRANCH
   skip_cleanup: true
   bucket: "pogger-space"
   access_key_id: $S3_ACCESS_KEY
