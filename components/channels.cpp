@@ -584,8 +584,8 @@ void ChannelList::AttachGuildMenuHandler(Gtk::ListBoxRow *row) {
             auto grow = dynamic_cast<ChannelListRowGuild *>(row);
             if (grow != nullptr) {
                 m_list->select_row(*row);
-                m_guild_menu_up->set_sensitive(grow->GuildIndex != 0);
-                m_guild_menu_down->set_sensitive(grow->GuildIndex != m_guild_count - 1);
+                //m_guild_menu_up->set_sensitive(grow->GuildIndex != 0);
+                //m_guild_menu_down->set_sensitive(grow->GuildIndex != m_guild_count - 1);
                 m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
             }
             return true;
