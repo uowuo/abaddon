@@ -369,43 +369,36 @@ void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Imag
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
 
-Glib::ustring ChatMessageItemContainer::GetTextFiltered(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
+Glib::ustring ChatMessageItemContainer::GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
     Gtk::TextBuffer::iterator a, b;
     buf->get_bounds(a, b);
     auto slice = buf->get_slice(a, b, true);
-    // make all the 0xFFFC chars fuck off because it breaks regex
-    while (true) {
-        int r = slice.find(u8"\uFFFC");
-        if (r == Glib::ustring::npos) break;
-        auto iter = buf->get_iter_at_offset(r);
-        auto len = Glib::ustring(u8"\uFFFC").size();
-        slice.erase(r, len);
-        slice.insert(r, "\x80");
-    }
     return slice;
 }
 
 void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
-    std::regex rgx(mentions_regex, std::regex_constants::ECMAScript);
+    static auto rgx = Glib::Regex::create(mentions_regex);
 
     auto buf = tv->get_buffer();
-    std::string text = buf->get_text();
+    Glib::ustring text = GetText(buf);
     const auto &discord = Abaddon::Get().GetDiscordClient();
 
-    std::string::const_iterator sstart(text.begin());
-    std::smatch match;
-    while (std::regex_search(sstart, text.cend(), match, rgx)) {
-        const std::string user_id = match.str(1);
+    int startpos = 0;
+    Glib::MatchInfo match;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        if (!match.fetch_pos(0, mstart, mend)) break;
+        const Glib::ustring user_id = match.fetch(1);
         const auto *user = discord.GetUser(user_id);
         const auto *channel = discord.GetChannel(ChannelID);
         if (user == nullptr || channel == nullptr) {
-            sstart = match.suffix().first;
+            startpos = mend;
             continue;
         }
 
-        std::string replacement;
+        Glib::ustring replacement;
 
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
             replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
@@ -418,32 +411,26 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
                 replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
         }
 
-        const auto start = std::distance(text.cbegin(), sstart) + match.position();
-        auto erase_from = buf->get_iter_at_offset(start);
-        auto erase_to = buf->get_iter_at_offset(start + match.length());
-        auto it = buf->erase(erase_from, erase_to);
+        // regex returns byte positions and theres no straightforward way in the c++ bindings to deal with that :(
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        const auto start_it = buf->get_iter_at_offset(chars_start);
+        const auto end_it = buf->get_iter_at_offset(chars_end);
 
+        auto it = buf->erase(start_it, end_it);
         buf->insert_markup(it, replacement);
 
-        text = buf->get_text();
-        sstart = text.begin();
+        text = GetText(buf);
+        startpos = 0;
     }
 }
 
 void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
-    auto get_text = [&]() -> Glib::ustring {
-        auto x = tv->get_buffer();
-        Gtk::TextBuffer::iterator a, b;
-        x->get_bounds(a, b);
-        return x->get_slice(a, b, true);
-    };
-
     auto buf = tv->get_buffer();
-    auto text = get_text();
+    auto text = GetText(buf);
 
     auto &emojis = Abaddon::Get().GetEmojis();
     int searchpos;
-    Glib::MatchInfo match;
     for (const auto &pattern : emojis.GetPatterns()) {
         searchpos = 0;
         Glib::RefPtr<Gdk::Pixbuf> pixbuf;
@@ -453,12 +440,15 @@ void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
             if (!pixbuf) pixbuf = emojis.GetPixBuf(pattern);
             if (!pixbuf) break;
             searchpos = r + pattern.size();
-            auto start_it = buf->get_iter_at_offset(r);
-            auto end_it = buf->get_iter_at_offset(r + pattern.size());
+
+            const auto start_it = buf->get_iter_at_offset(r);
+            const auto end_it = buf->get_iter_at_offset(r + pattern.size());
+
             auto it = buf->erase(start_it, end_it);
             buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
+
             int alen = text.size();
-            text = get_text();
+            text = GetText(buf);
             int blen = text.size();
             searchpos -= (alen - blen);
         }
@@ -471,21 +461,25 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
     auto &img = Abaddon::Get().GetImageManager();
 
     auto buf = tv->get_buffer();
-    auto text = GetTextFiltered(buf);
+    auto text = GetText(buf);
 
     Glib::MatchInfo match;
     int startpos = 0;
     while (rgx->match(text, startpos, match)) {
         int mstart, mend;
         if (!match.fetch_pos(0, mstart, mend)) break;
-        auto start_it = buf->get_iter_at_offset(mstart);
-        auto end_it = buf->get_iter_at_offset(mend);
+
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        auto start_it = buf->get_iter_at_offset(chars_start);
+        auto end_it = buf->get_iter_at_offset(chars_end);
+
         startpos = mend;
         auto pixbuf = img.GetFromURLIfCached(Emoji::URLFromID(match.fetch(2)));
         if (pixbuf) {
             auto it = buf->erase(start_it, end_it);
             int alen = text.size();
-            text = GetTextFiltered(buf);
+            text = GetText(buf);
             int blen = text.size();
             startpos -= (alen - blen);
             buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
@@ -507,9 +501,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
             // clang-format on
         }
 
-        int alen = text.size();
-        text = GetTextFiltered(buf);
-        int blen = text.size();
+        text = GetText(buf);
     }
 }
 
@@ -522,24 +514,24 @@ void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
 }
 
 void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
-    constexpr static const auto chan_regex = R"(<#(\d+)>)";
-
-    std::regex rgx(chan_regex, std::regex_constants::ECMAScript);
+    static auto rgx = Glib::Regex::create(R"(<#(\d+)>)");
 
     tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
 
     auto buf = tv->get_buffer();
-    std::string text = buf->get_text();
+    Glib::ustring text = GetText(buf);
 
     const auto &discord = Abaddon::Get().GetDiscordClient();
 
-    std::string::const_iterator sstart(text.begin());
-    std::smatch match;
-    while (std::regex_search(sstart, text.cend(), match, rgx)) {
-        std::string channel_id = match.str(1);
+    int startpos = 0;
+    Glib::MatchInfo match;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        match.fetch_pos(0, mstart, mend);
+        std::string channel_id = match.fetch(1);
         const auto *chan = discord.GetChannel(channel_id);
         if (chan == nullptr) {
-            sstart = match.suffix().first;
+            startpos = mend;
             continue;
         }
 
@@ -547,16 +539,17 @@ void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
         m_channel_tagmap[tag] = channel_id;
         tag->property_weight() = Pango::WEIGHT_BOLD;
 
-        const auto start = std::distance(text.cbegin(), sstart) + match.position();
-        auto erase_from = buf->get_iter_at_offset(start);
-        auto erase_to = buf->get_iter_at_offset(start + match.length());
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        const auto erase_from = buf->get_iter_at_offset(chars_start);
+        const auto erase_to = buf->get_iter_at_offset(chars_end);
         auto it = buf->erase(erase_from, erase_to);
         const std::string replacement = "#" + chan->Name;
         it = buf->insert_with_tag(it, "#" + chan->Name, tag);
 
         // rescan the whole thing so i dont have to deal with fixing match positions
-        text = buf->get_text();
-        sstart = text.begin();
+        text = GetText(buf);
+        startpos = 0;
     }
 }
 
@@ -591,36 +584,35 @@ bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
 }
 
 void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
-    constexpr static const auto links_regex = R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)";
-
-    std::regex rgx(links_regex, std::regex_constants::ECMAScript);
+    const auto rgx = Glib::Regex::create(R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)");
 
     tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
 
     auto buf = tv->get_buffer();
-    Gtk::TextBuffer::iterator start, end;
-    buf->get_bounds(start, end);
-    std::string text = buf->get_slice(start, end);
+    Glib::ustring text = GetText(buf);
 
     // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
     auto &settings = Abaddon::Get().GetSettings();
     auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
 
-    std::string::const_iterator sstart(text.begin());
-    std::smatch match;
-    while (std::regex_search(sstart, text.cend(), match, rgx)) {
-        std::string link = match.str();
+    int startpos = 0;
+    Glib::MatchInfo match;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        match.fetch_pos(0, mstart, mend);
+        std::string link = match.fetch(0);
         auto tag = buf->create_tag();
         m_link_tagmap[tag] = link;
         tag->property_foreground_rgba() = Gdk::RGBA(link_color);
 
-        const auto start = std::distance(text.cbegin(), sstart) + match.position();
-        auto erase_from = buf->get_iter_at_offset(start);
-        auto erase_to = buf->get_iter_at_offset(start + match.length());
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        const auto erase_from = buf->get_iter_at_offset(chars_start);
+        const auto erase_to = buf->get_iter_at_offset(chars_end);
         auto it = buf->erase(erase_from, erase_to);
         it = buf->insert_with_tag(it, link, tag);
 
-        sstart = match.suffix().first;
+        startpos = mend;
     }
 }
 

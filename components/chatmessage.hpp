@@ -26,7 +26,7 @@ protected:
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
-    static Glib::ustring GetTextFiltered(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+    static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
     void HandleUserMentions(Gtk::TextView *tv);
     void HandleStockEmojis(Gtk::TextView *tv);
