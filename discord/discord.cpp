@@ -132,7 +132,7 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
             m_store.SetMessage(msg.ID, msg);
             AddMessageToChannel(msg.ID, id);
             m_store.SetUser(msg.Author.ID, msg.Author);
-            AddUserToGuild(msg.Author.ID, msg.GuildID);
+            AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
 
@@ -153,7 +153,7 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
             m_store.SetMessage(msg.ID, msg);
             AddMessageToChannel(msg.ID, channel_id);
             m_store.SetUser(msg.Author.ID, msg.Author);
-            AddUserToGuild(msg.Author.ID, msg.GuildID);
+            AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
 
@@ -588,7 +588,7 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     m_store.SetMessage(data.ID, data);
     AddMessageToChannel(data.ID, data.ChannelID);
     m_store.SetUser(data.Author.ID, data.Author);
-    AddUserToGuild(data.Author.ID, data.GuildID);
+    AddUserToGuild(data.Author.ID, *data.GuildID);
     m_signal_message_create.emit(data.ID);
 }
 

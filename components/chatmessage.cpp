@@ -741,7 +741,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_author->set_can_focus(false);
     m_author_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
-    if (data->WebhookID.IsValid()) {
+    if (data->WebhookID.has_value()) {
         m_extra = Gtk::manage(new Gtk::Label);
         m_extra->get_style_context()->add_class("message-container-extra");
         m_extra->set_single_line_mode(true);

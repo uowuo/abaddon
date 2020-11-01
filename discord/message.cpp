@@ -70,6 +70,18 @@ void from_json(const nlohmann::json &j, AttachmentData &m) {
     JS_ON("width", m.Width);
 }
 
+void from_json(const nlohmann::json &j, MessageReferenceData &m) {
+    JS_O("message_id", m.MessageID);
+    JS_O("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+}
+
+void to_json(nlohmann::json &j, const MessageReferenceData &m) {
+    JS_IF("message_id", m.MessageID);
+    JS_IF("channel_id", m.ChannelID);
+    JS_IF("guild_id", m.GuildID);
+}
+
 void from_json(const nlohmann::json &j, Message &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);

@@ -21,6 +21,7 @@ enum class MessageType {
     CHANNEL_FOLLOW_ADD = 12,
     GUILD_DISCOVERY_DISQUALIFIED = 14,
     GUILD_DISCOVERY_REQUALIFIED = 15,
+    INLINE_REPLY = 19,
 };
 
 enum class MessageFlags {
@@ -119,31 +120,40 @@ struct AttachmentData {
     friend void from_json(const nlohmann::json &j, AttachmentData &m);
 };
 
+struct MessageReferenceData {
+    std::optional<Snowflake> MessageID;
+    std::optional<Snowflake> ChannelID;
+    std::optional<Snowflake> GuildID;
+
+    friend void from_json(const nlohmann::json &j, MessageReferenceData &m);
+    friend void to_json(nlohmann::json &j, const MessageReferenceData &m);
+};
+
 struct Message {
-    Snowflake ID;        //
-    Snowflake ChannelID; //
-    Snowflake GuildID;   // opt
-    User Author;         //
-    // GuildMember Member; // opt
-    std::string Content;         //
-    std::string Timestamp;       //
+    Snowflake ID;
+    Snowflake ChannelID;
+    std::optional<Snowflake> GuildID;
+    User Author;
+    // std::optional<GuildMember> Member;
+    std::string Content;
+    std::string Timestamp;
     std::string EditedTimestamp; // null
-    bool IsTTS;                  //
-    bool DoesMentionEveryone;    //
-    std::vector<User> Mentions;  //
-    // std::vector<Role> MentionRoles; //
-    // std::vector<ChannelMentionData> MentionChannels; // opt
-    std::vector<AttachmentData> Attachments; //
-    std::vector<EmbedData> Embeds;           //
-    // std::vector<ReactionData> Reactions; // opt
-    std::string Nonce;   // opt
-    bool IsPinned;       //
-    Snowflake WebhookID; // opt
-    MessageType Type;    //
-    // MessageActivityData Activity; // opt
-    // MessageApplicationData Application; // opt
-    // MessageReferenceData MessageReference; // opt
-    MessageFlags Flags = MessageFlags::NONE; // opt
+    bool IsTTS;
+    bool DoesMentionEveryone;
+    std::vector<User> Mentions;
+    // std::vector<Role> MentionRoles;
+    // std::optional<std::vector<ChannelMentionData>> MentionChannels;
+    std::vector<AttachmentData> Attachments;
+    std::vector<EmbedData> Embeds;
+    // std::optional<std::vector<ReactionData>> Reactions;
+    std::optional<std::string> Nonce;
+    bool IsPinned;
+    std::optional<Snowflake> WebhookID;
+    MessageType Type;
+    // std::optional<MessageActivityData> Activity;
+    // std::optional<MessageApplicationData> Application;
+    std::optional<MessageReferenceData> MessageReference;
+    std::optional<MessageFlags> Flags = MessageFlags::NONE;
 
     friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE
