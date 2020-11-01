@@ -264,7 +264,7 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM)
         m_discord.SendLazyLoad(id);
 
-    if (channel->Type == ChannelType::GUILD_TEXT)
+    if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
     else {
         std::string display;

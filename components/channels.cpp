@@ -369,7 +369,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     }
 
     ChannelListRow *row;
-    if (data->Type == ChannelType::GUILD_TEXT) {
+    if (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS) {
         row = Gtk::manage(new ChannelListRowChannel(data));
     } else if (data->Type == ChannelType::GUILD_CATEGORY) {
         row = Gtk::manage(new ChannelListRowCategory(data));
@@ -478,7 +478,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     std::map<int, const Channel *> orphan_channels;
     std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
     for (const auto &channel : guild_data->Channels) {
-        if (channel.Type != ChannelType::GUILD_TEXT) continue;
+        if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS) continue;
 
         if (channel.ParentID.IsValid())
             cat_to_channels[channel.ParentID].push_back(&channel);
