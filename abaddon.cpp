@@ -63,7 +63,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
 
-    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionListChannelItemClick));
+    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
     m_main_window->GetChannelList()->signal_action_guild_move_down().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildDown));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
@@ -72,7 +72,7 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
     m_main_window->GetChatWindow()->signal_action_chat_submit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatInputSubmit));
     m_main_window->GetChatWindow()->signal_action_chat_load_history().connect(sigc::mem_fun(*this, &Abaddon::ActionChatLoadHistory));
-    m_main_window->GetChatWindow()->signal_action_channel_click().connect(sigc::mem_fun(*this, &Abaddon::ActionListChannelItemClick)); // rename me
+    m_main_window->GetChatWindow()->signal_action_channel_click().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChatWindow()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
 
     m_main_window->GetMemberList()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
@@ -255,7 +255,7 @@ void Abaddon::ActionMoveGuildDown(Snowflake id) {
     m_discord.UpdateSettingsGuildPositions(order);
 }
 
-void Abaddon::ActionListChannelItemClick(Snowflake id) {
+void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
     auto *channel = m_discord.GetChannel(id);

@@ -414,6 +414,12 @@ void ChannelList::Clear() {
     m_update_dispatcher.emit();
 }
 
+void ChannelList::SetActiveChannel(Snowflake id) {
+    auto it = m_id_to_row.find(id);
+    if (it == m_id_to_row.end()) return;
+    m_list->select_row(*it->second);
+}
+
 void ChannelList::CollapseRow(ChannelListRow *row) {
     row->Collapse();
     for (auto child : row->Children) {

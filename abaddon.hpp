@@ -35,7 +35,7 @@ public:
     void ActionJoinGuildDialog();
     void ActionMoveGuildUp(Snowflake id);
     void ActionMoveGuildDown(Snowflake id);
-    void ActionListChannelItemClick(Snowflake id);
+    void ActionChannelOpened(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel);
     void ActionChatLoadHistory(Snowflake id);
     void ActionChatDeleteMessage(Snowflake channel_id, Snowflake id);

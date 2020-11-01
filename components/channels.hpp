@@ -94,6 +94,8 @@ public:
     void UpdateGuild(Snowflake id);
     void Clear();
 
+    void SetActiveChannel(Snowflake id);
+
 protected:
     Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_main;
