@@ -129,7 +129,7 @@ void ChannelListRowCategory::Collapse() {
 }
 
 void ChannelListRowCategory::Expand() {
-    m_arrow->set(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
+    m_arrow->set(IsUserCollapsed ? Gtk::ARROW_RIGHT : Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
 }
 
 ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
