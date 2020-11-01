@@ -14,6 +14,7 @@
 #include "invite.hpp"
 #include "permissions.hpp"
 #include "emoji.hpp"
+#include "activity.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -21,6 +22,7 @@ enum class GatewayOp : int {
     Event = 0,
     Heartbeat = 1,
     Identify = 2,
+    UpdateStatus = 3,
     Hello = 10,
     HeartbeatAck = 11,
     LazyLoadRequest = 14,
@@ -132,6 +134,14 @@ struct LazyLoadRequestMessage {
     std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> Channels; // channel ID -> range of sidebar
 
     friend void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m);
+};
+
+struct UpdateStatusMessage {
+    std::vector<Activity> Activities; // null (but never sent as such)
+    std::string Status;
+    bool IsAFK;
+
+    friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
 
 struct ReadyEventData {

@@ -37,12 +37,14 @@ public:
     typedef sigc::signal<void> type_signal_action_set_token;
     typedef sigc::signal<void> type_signal_action_reload_css;
     typedef sigc::signal<void> type_signal_action_join_guild;
+    typedef sigc::signal<void> type_signal_action_set_status;
 
     type_signal_action_connect signal_action_connect();
     type_signal_action_disconnect signal_action_disconnect();
     type_signal_action_set_token signal_action_set_token();
     type_signal_action_reload_css signal_action_reload_css();
     type_signal_action_join_guild signal_action_join_guild();
+    type_signal_action_set_status signal_action_set_status();
 
 protected:
     type_signal_action_connect m_signal_action_connect;
@@ -50,6 +52,7 @@ protected:
     type_signal_action_set_token m_signal_action_set_token;
     type_signal_action_reload_css m_signal_action_reload_css;
     type_signal_action_join_guild m_signal_action_join_guild;
+    type_signal_action_set_status m_signal_action_set_status;
 
 protected:
     Gtk::Box m_main_box;
@@ -68,6 +71,7 @@ protected:
     Gtk::MenuItem m_menu_discord_disconnect;
     Gtk::MenuItem m_menu_discord_set_token;
     Gtk::MenuItem m_menu_discord_join_guild;
+    Gtk::MenuItem m_menu_discord_set_status;
 
     Gtk::MenuItem m_menu_file;
     Gtk::Menu m_menu_file_sub;

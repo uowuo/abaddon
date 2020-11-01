@@ -83,6 +83,15 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
         j["d"]["members"] = m.Members;
 }
 
+void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
+    j["op"] = GatewayOp::UpdateStatus;
+    j["d"] = nlohmann::json::object();
+    j["d"]["activities"] = m.Activities;
+    j["d"]["status"] = m.Status;
+    j["d"]["afk"] = m.IsAFK;
+    j["d"]["since"] = nullptr;
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.User);

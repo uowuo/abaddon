@@ -397,6 +397,15 @@ void DiscordClient::BanUser(Snowflake user_id, Snowflake guild_id) {
     m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), "{}", [](auto) {});
 }
 
+void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const Activity &obj) {
+    UpdateStatusMessage msg;
+    msg.Status = status;
+    msg.IsAFK = is_afk;
+    msg.Activities.push_back(obj);
+
+    m_websocket.Send(nlohmann::json(msg));
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;

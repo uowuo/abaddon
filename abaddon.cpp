@@ -7,6 +7,7 @@
 #include "dialogs/editmessage.hpp"
 #include "dialogs/joinguild.hpp"
 #include "dialogs/confirm.hpp"
+#include "dialogs/setstatus.hpp"
 #include "abaddon.hpp"
 
 #ifdef _WIN32
@@ -62,6 +63,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
+    m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
@@ -370,6 +372,19 @@ void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.BanUser(user_id, guild_id);
+}
+
+void Abaddon::ActionSetStatus() {
+    SetStatusDialog dlg(*m_main_window);
+    const auto response = dlg.run();
+    if (response != Gtk::RESPONSE_OK || !m_discord.IsStarted()) return;
+    const auto status = dlg.GetStatusType();
+    const auto activity_type = dlg.GetActivityType();
+    const auto activity_name = dlg.GetActivityName();
+    Activity activity;
+    activity.Name = activity_name;
+    activity.Type = activity_type;
+    m_discord.UpdateStatus(status, false, activity);
 }
 
 void Abaddon::ActionReloadCSS() {

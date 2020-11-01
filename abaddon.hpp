@@ -44,6 +44,7 @@ public:
     void ActionLeaveGuild(Snowflake id);
     void ActionKickMember(Snowflake user_id, Snowflake guild_id);
     void ActionBanMember(Snowflake user_id, Snowflake guild_id);
+    void ActionSetStatus();
 
     void ActionReloadCSS();
 

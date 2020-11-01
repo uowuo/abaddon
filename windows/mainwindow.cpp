@@ -17,10 +17,13 @@ MainWindow::MainWindow()
     m_menu_discord_set_token.set_label("Set Token");
     m_menu_discord_join_guild.set_label("Join Guild");
     m_menu_discord_join_guild.set_sensitive(false);
+    m_menu_discord_set_status.set_label("Set Status");
+    m_menu_discord_set_status.set_sensitive(false);
     m_menu_discord_sub.append(m_menu_discord_connect);
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
     m_menu_discord_sub.append(m_menu_discord_join_guild);
+    m_menu_discord_sub.append(m_menu_discord_set_status);
     m_menu_discord.set_submenu(m_menu_discord_sub);
 
     m_menu_file.set_label("File");
@@ -31,24 +34,28 @@ MainWindow::MainWindow()
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
 
-    m_menu_discord_connect.signal_activate().connect([&] {
+    m_menu_discord_connect.signal_activate().connect([this] {
         m_signal_action_connect.emit();
     });
 
-    m_menu_discord_disconnect.signal_activate().connect([&] {
+    m_menu_discord_disconnect.signal_activate().connect([this] {
         m_signal_action_disconnect.emit();
     });
 
-    m_menu_discord_set_token.signal_activate().connect([&] {
+    m_menu_discord_set_token.signal_activate().connect([this] {
         m_signal_action_set_token.emit();
     });
 
-    m_menu_discord_join_guild.signal_activate().connect([&] {
+    m_menu_discord_join_guild.signal_activate().connect([this] {
         m_signal_action_join_guild.emit();
     });
 
     m_menu_file_reload_css.signal_activate().connect([this] {
         m_signal_action_reload_css.emit();
+    });
+
+    m_menu_discord_set_status.signal_activate().connect([this] {
+        m_signal_action_set_status.emit();
     });
 
     m_content_box.set_hexpand(true);
@@ -97,6 +104,7 @@ void MainWindow::UpdateComponents() {
     m_menu_discord_disconnect.set_sensitive(discord_active);
     m_menu_discord_join_guild.set_sensitive(discord_active);
     m_menu_discord_set_token.set_sensitive(!discord_active);
+    m_menu_discord_set_status.set_sensitive(discord_active);
 
     if (!discord_active) {
         m_channel_list.Clear();
@@ -225,4 +233,8 @@ MainWindow::type_signal_action_reload_css MainWindow::signal_action_reload_css()
 
 MainWindow::type_signal_action_join_guild MainWindow::signal_action_join_guild() {
     return m_signal_action_join_guild;
+}
+
+MainWindow::type_signal_action_set_status MainWindow::signal_action_set_status() {
+    return m_signal_action_set_status;
 }

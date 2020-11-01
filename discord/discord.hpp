@@ -103,6 +103,7 @@ public:
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
+    void UpdateStatus(const std::string &status, bool is_afk, const Activity &obj);
 
     void UpdateToken(std::string token);
 
