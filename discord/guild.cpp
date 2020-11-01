@@ -58,6 +58,62 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_O("approximate_presence_count", m.ApproximatePresenceCount);
 }
 
+void Guild::update_from_json(const nlohmann::json &j) {
+    if (j.contains("unavailable")) {
+        IsUnavailable = true;
+        return;
+    }
+
+    JS_RD("name", Name);
+    JS_RD("icon", Icon);
+    JS_RD("splash", Splash);
+    JS_RD("discovery_splash", DiscoverySplash);
+    JS_RD("owner", IsOwner);
+    JS_RD("owner_id", OwnerID);
+    std::string tmp;
+    JS_RD("permissions", tmp);
+    if (tmp != "")
+        Permissions = std::stoull(tmp);
+    JS_RD("region", VoiceRegion);
+    JS_RD("afk_channel_id", AFKChannelID);
+    JS_RD("afk_timeout", AFKTimeout);
+    JS_RD("embed_enabled", IsEmbedEnabled);
+    JS_RD("embed_channel_id", EmbedChannelID);
+    JS_RD("verification_level", VerificationLevel);
+    JS_RD("default_message_notifications", DefaultMessageNotifications);
+    JS_RD("explicit_content_filter", ExplicitContentFilter);
+    JS_RD("roles", Roles);
+    JS_RD("emojis", Emojis);
+    JS_RD("features", Features);
+    JS_RD("mfa_level", MFALevel);
+    JS_RD("application_id", ApplicationID);
+    JS_RD("widget_enabled", IsWidgetEnabled);
+    JS_RD("widget_channel_id", WidgetChannelID);
+    JS_RD("system_channel_id", SystemChannelID);
+    JS_RD("system_channel_flags", SystemChannelFlags);
+    JS_RD("rules_channel_id", RulesChannelID);
+    JS_RD("joined_at", JoinedAt);
+    JS_RD("large", IsLarge);
+    JS_RD("unavailable", IsUnavailable);
+    JS_RD("member_count", MemberCount);
+    // JS_O("voice_states", m.VoiceStates);
+    // JS_O("members", m.Members);
+    JS_RD("channels", Channels);
+    // JS_O("presences", m.Presences);
+    JS_RD("max_presences", MaxPresences);
+    JS_RD("max_members", MaxMembers);
+    JS_RD("vanity_url_code", VanityURL);
+    JS_RD("description", Description);
+    JS_RD("banner", BannerHash);
+    JS_RD("premium_tier", PremiumTier);
+    JS_RD("premium_subscription_count", PremiumSubscriptionCount);
+    JS_RD("preferred_locale", PreferredLocale);
+    JS_RD("public_updates_channel_id", PublicUpdatesChannelID);
+    JS_RD("max_video_channel_users", MaxVideoChannelUsers);
+    JS_RD("approximate_member_count", ApproximateMemberCount);
+    JS_RD("approximate_presence_count", ApproximatePresenceCount);
+}
+
 bool Guild::HasIcon() const {
     return Icon != "";
 }

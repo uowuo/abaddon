@@ -16,6 +16,7 @@ public:
     void UpdateChannelsRemoveChannel(Snowflake id);
     void UpdateChannelsUpdateChannel(Snowflake id);
     void UpdateChannelsCreateChannel(Snowflake id);
+    void UpdateChannelsUpdateGuild(Snowflake id);
     void UpdateChatWindowContents();
     void UpdateChatActiveChannel(Snowflake id);
     Snowflake GetChatActiveChannel() const;

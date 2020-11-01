@@ -65,6 +65,7 @@ struct Guild {
     // * - documentation says only sent in GUILD_CREATE, but these can be sent anyways in the READY event
 
     friend void from_json(const nlohmann::json &j, Guild &m);
+    void update_from_json(const nlohmann::json &j);
 
     bool HasIcon() const;
     std::string GetIconURL(std::string ext = "png", std::string size = "32") const;

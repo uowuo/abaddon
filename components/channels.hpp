@@ -91,6 +91,7 @@ public:
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
     void UpdateCreateChannel(Snowflake id);
+    void UpdateGuild(Snowflake id);
     void Clear();
 
 protected:

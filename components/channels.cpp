@@ -385,6 +385,30 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     m_list->insert(*row, pos);
 }
 
+void ChannelList::UpdateGuild(Snowflake id) {
+    // the only thing changed is the row containing the guild item so just recreate it
+    const auto *data = Abaddon::Get().GetDiscordClient().GetGuild(id);
+    if (data == nullptr) return;
+    auto it = m_guild_id_to_row.find(id);
+    if (it == m_guild_id_to_row.end()) return;
+    auto *row = dynamic_cast<ChannelListRowGuild *>(it->second);
+    const auto children = row->Children;
+    const auto index = row->get_index();
+    const bool old_collapsed = row->IsUserCollapsed;
+    const bool old_gindex = row->GuildIndex;
+    delete row;
+    auto *new_row = Gtk::manage(new ChannelListRowGuild(data));
+    new_row->IsUserCollapsed = old_collapsed;
+    new_row->GuildIndex = old_gindex;
+    m_guild_id_to_row[new_row->ID] = new_row;
+    AttachGuildMenuHandler(new_row);
+    new_row->Children = children;
+    for (auto child : children)
+        child->Parent = new_row;
+    new_row->show_all();
+    m_list->insert(*new_row, index);
+}
+
 void ChannelList::Clear() {
     //std::scoped_lock<std::mutex> guard(m_update_mutex);
     m_update_dispatcher.emit();

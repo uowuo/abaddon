@@ -66,6 +66,7 @@ public:
     void DiscordOnChannelDelete(Snowflake channel_id);
     void DiscordOnChannelUpdate(Snowflake channel_id);
     void DiscordOnChannelCreate(Snowflake channel_id);
+    void DiscordOnGuildUpdate(Snowflake guild_id);
 
     const SettingsManager &GetSettings() const;
 

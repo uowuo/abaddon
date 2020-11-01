@@ -522,6 +522,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::CHANNEL_CREATE: {
                         HandleGatewayChannelCreate(m);
                     } break;
+                    case GatewayEvent::GUILD_UPDATE: {
+                        HandleGatewayGuildUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -637,6 +640,14 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
     for (const auto &p : data.PermissionOverwrites)
         m_store.SetPermissionOverwrite(data.ID, p.ID, p);
     m_signal_channel_create.emit(data.ID);
+}
+
+void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
+    Snowflake id = msg.Data.at("id");
+    auto *current = m_store.GetGuild(id);
+    if (current == nullptr) return;
+    current->update_from_json(msg.Data);
+    m_signal_guild_update.emit(id);
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -771,6 +782,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["CHANNEL_DELETE"] = GatewayEvent::CHANNEL_DELETE;
     m_event_map["CHANNEL_UPDATE"] = GatewayEvent::CHANNEL_UPDATE;
     m_event_map["CHANNEL_CREATE"] = GatewayEvent::CHANNEL_CREATE;
+    m_event_map["GUILD_UPDATE"] = GatewayEvent::GUILD_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -815,4 +827,8 @@ DiscordClient::type_signal_channel_update DiscordClient::signal_channel_update()
 
 DiscordClient::type_signal_channel_create DiscordClient::signal_channel_create() {
     return m_signal_channel_create;
+}
+
+DiscordClient::type_signal_guild_update DiscordClient::signal_guild_update() {
+    return m_signal_guild_update;
 }

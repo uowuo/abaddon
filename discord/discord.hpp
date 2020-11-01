@@ -129,6 +129,7 @@ private:
     void HandleGatewayChannelDelete(const GatewayMessage &msg);
     void HandleGatewayChannelUpdate(const GatewayMessage &msg);
     void HandleGatewayChannelCreate(const GatewayMessage &msg);
+    void HandleGatewayGuildUpdate(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
 
@@ -180,6 +181,7 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
     typedef sigc::signal<void, Snowflake> type_signal_channel_create;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_update;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_channel_list_refresh signal_channel_list_refresh();
@@ -192,6 +194,7 @@ public:
     type_signal_channel_delete signal_channel_delete();
     type_signal_channel_update signal_channel_update();
     type_signal_channel_create signal_channel_create();
+    type_signal_guild_update signal_guild_update();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -205,4 +208,5 @@ protected:
     type_signal_channel_delete m_signal_channel_delete;
     type_signal_channel_update m_signal_channel_update;
     type_signal_channel_create m_signal_channel_create;
+    type_signal_guild_update m_signal_guild_update;
 };
