@@ -67,6 +67,16 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         }
     }
 
+    // only 1?
+    if (data->Stickers.has_value()) {
+        const auto &sticker = data->Stickers.value()[0];
+        // todo: lottie
+        if (sticker.FormatType == StickerFormatType::PNG || sticker.FormatType == StickerFormatType::APNG) {
+            auto *widget = container->CreateStickerComponent(sticker);
+            container->m_main->add(*widget);
+        }
+    }
+
     container->UpdateAttributes();
 
     return container;
@@ -360,6 +370,23 @@ Gtk::Box *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentDa
     box->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
     box->add(*ev);
+    return box;
+}
+
+Gtk::Box *ChatMessageItemContainer::CreateStickerComponent(const Sticker &data) {
+    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    auto *imgw = Gtk::manage(new Gtk::Image);
+    auto &img = Abaddon::Get().GetImageManager();
+
+    if (data.FormatType == StickerFormatType::PNG || data.FormatType == StickerFormatType::APNG) {
+        // clang-format off
+        img.LoadFromURL(data.GetURL(), sigc::track_obj([this, imgw](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+            imgw->property_pixbuf() = pixbuf;
+        }, imgw));
+        // clang-format on
+    }
+
+    box->add(*imgw);
     return box;
 }
 

@@ -15,6 +15,7 @@
 #include "permissions.hpp"
 #include "emoji.hpp"
 #include "activity.hpp"
+#include "sticker.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 

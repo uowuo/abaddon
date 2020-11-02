@@ -24,6 +24,7 @@ protected:
     Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
     Gtk::Image *CreateImageComponent(const AttachmentData &data);
     Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
+    Gtk::Box *CreateStickerComponent(const Sticker &data);
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);

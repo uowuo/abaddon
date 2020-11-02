@@ -2,6 +2,7 @@
 #include "snowflake.hpp"
 #include "json.hpp"
 #include "user.hpp"
+#include "sticker.hpp"
 #include <string>
 #include <vector>
 
@@ -154,6 +155,7 @@ struct Message {
     // std::optional<MessageApplicationData> Application;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<MessageFlags> Flags = MessageFlags::NONE;
+    std::optional<std::vector<Sticker>> Stickers;
 
     friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE

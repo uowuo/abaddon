@@ -109,6 +109,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     // JS_O("application", m.Application);
     // JS_O("message_reference", m.MessageReference);
     JS_O("flags", m.Flags);
+    JS_O("stickers", m.Stickers);
 }
 
 void Message::from_json_edited(const nlohmann::json &j) {
@@ -130,6 +131,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("webhook_id", WebhookID);
     JS_O("type", Type);
     JS_O("flags", Flags);
+    JS_O("stickers", Stickers);
 }
 
 void Message::SetDeleted() {
