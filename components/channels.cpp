@@ -349,9 +349,22 @@ void ChannelList::UpdateChannel(Snowflake id) {
     m_list->insert(*new_row, pos);
 }
 
+void ChannelList::UpdateCreateDMChannel(Snowflake id) {
+    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(id)));
+    dm_row->IsUserCollapsed = false;
+    m_list->insert(*dm_row, m_dm_header_row->get_index() + 1);
+    m_dm_header_row->Children.insert(dm_row);
+    if (!m_dm_header_row->IsUserCollapsed)
+        dm_row->show();
+}
+
 void ChannelList::UpdateCreateChannel(Snowflake id) {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto *data = discord.GetChannel(id);
+    if (data->Type == ChannelType::DM || data->Type == ChannelType::GROUP_DM) {
+        UpdateCreateDMChannel(id);
+        return;
+    }
     const auto *guild = discord.GetGuild(data->GuildID);
     auto *guild_row = m_guild_id_to_row.at(data->GuildID);
 
@@ -545,16 +558,16 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 void ChannelList::AddPrivateChannels() {
     auto dms = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
 
-    auto *parent_row = Gtk::manage(new ChannelListRowDMHeader);
-    parent_row->show_all();
-    parent_row->IsUserCollapsed = true;
-    m_list->add(*parent_row);
+    m_dm_header_row = Gtk::manage(new ChannelListRowDMHeader);
+    m_dm_header_row->show_all();
+    m_dm_header_row->IsUserCollapsed = true;
+    m_list->add(*m_dm_header_row);
 
     for (const auto &dm : dms) {
         auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(dm)));
         dm_row->IsUserCollapsed = false;
         m_list->add(*dm_row);
-        parent_row->Children.insert(dm_row);
+        m_dm_header_row->Children.insert(dm_row);
     }
 }
 

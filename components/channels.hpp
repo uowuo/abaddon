@@ -90,6 +90,7 @@ public:
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
+    void UpdateCreateDMChannel(Snowflake id);
     void UpdateCreateChannel(Snowflake id);
     void UpdateGuild(Snowflake id);
     void Clear();
@@ -99,6 +100,8 @@ public:
 protected:
     Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_main;
+
+    ChannelListRowDMHeader *m_dm_header_row = nullptr;
 
     void CollapseRow(ChannelListRow *row);
     void ExpandRow(ChannelListRow *row);
