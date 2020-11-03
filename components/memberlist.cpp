@@ -17,7 +17,10 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
     if (data != nullptr) {
-        std::string display = data->Username + "#" + data->Discriminator;
+        static bool show_discriminator = Abaddon::Get().GetSettings().GetSettingString("gui", "member_list_discriminator", "true") != "false";
+        std::string display = data->Username;
+        if (show_discriminator)
+            display += "#" + data->Discriminator;
         auto col_id = data->GetHoistedRole(guild_id, true);
         if (col_id.IsValid()) {
             auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
