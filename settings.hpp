@@ -8,12 +8,12 @@ public:
     SettingsManager(std::string filename);
 
     void Close();
-    std::string GetSettingString(std::string section, std::string key, std::string fallback = "") const;
-    int GetSettingInt(std::string section, std::string key, int fallback) const;
+    std::string GetSettingString(const std::string &section, const std::string &key, std::string fallback = "") const;
+    int GetSettingInt(const std::string &section, const std::string &key, int fallback) const;
+    bool GetSettingBool(const std::string &section, const std::string &key, bool fallback) const;
 
     template<typename T>
     void SetSetting(std::string section, std::string key, T value) {
-        static_assert(std::is_convertible<T, std::string>::value);
         if constexpr (std::is_same<T, std::string>::value)
             m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
         else
@@ -21,6 +21,7 @@ public:
 
         m_ini.SaveFile(m_filename.c_str());
     }
+
     bool IsValid() const;
 
 private:

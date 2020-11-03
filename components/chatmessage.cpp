@@ -533,7 +533,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
 }
 
 void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
-    static bool emojis = Abaddon::Get().GetSettings().GetSettingString("gui", "emojis", "true") != "false";
+    static bool emojis = Abaddon::Get().GetSettings().GetSettingBool("gui", "emojis", true);
     if (emojis) {
         HandleStockEmojis(tv);
         HandleCustomEmojis(tv);
