@@ -37,6 +37,12 @@ protected:
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
 
+    Gtk::Menu m_link_menu;
+    Gtk::MenuItem *m_link_menu_copy;
+
+    void on_link_menu_copy();
+    Glib::ustring m_selected_link;
+
     void HandleLinks(Gtk::TextView *tv);
     bool OnLinkClick(GdkEventButton *ev);
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;

@@ -24,6 +24,12 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
     m_menu.append(*m_menu_copy_content);
 
     m_menu.show_all();
+
+    m_link_menu_copy = Gtk::manage(new Gtk::MenuItem("Copy Link"));
+    m_link_menu_copy->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_link_menu_copy));
+    m_link_menu.append(*m_link_menu_copy);
+
+    m_link_menu.show_all();
 }
 
 ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
@@ -464,15 +470,20 @@ void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
         while (true) {
             size_t r = text.find(pattern, searchpos);
             if (r == Glib::ustring::npos) break;
-            if (!pixbuf) pixbuf = emojis.GetPixBuf(pattern);
-            if (!pixbuf) break;
+            if (!pixbuf) {
+                pixbuf = emojis.GetPixBuf(pattern);
+                if (pixbuf)
+                    pixbuf = pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+                else
+                    break;
+            }
             searchpos = r + pattern.size();
 
             const auto start_it = buf->get_iter_at_offset(r);
             const auto end_it = buf->get_iter_at_offset(r + pattern.size());
 
             auto it = buf->erase(start_it, end_it);
-            buf->insert_pixbuf(it, pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR));
+            buf->insert_pixbuf(it, pixbuf);
 
             int alen = text.size();
             text = GetText(buf);
@@ -610,6 +621,10 @@ bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
     return false;
 }
 
+void ChatMessageItemContainer::on_link_menu_copy() {
+    Gtk::Clipboard::get()->set_text(m_selected_link);
+}
+
 void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
     const auto rgx = Glib::Regex::create(R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)");
 
@@ -620,7 +635,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
 
     // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
     auto &settings = Abaddon::Get().GetSettings();
-    auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
+    static auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
 
     int startpos = 0;
     Glib::MatchInfo match;
@@ -631,6 +646,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
         auto tag = buf->create_tag();
         m_link_tagmap[tag] = link;
         tag->property_foreground_rgba() = Gdk::RGBA(link_color);
+        tag->set_property("underline", 1); // stupid workaround for vcpkg bug (i think)
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
         const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
@@ -646,7 +662,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
 bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
     if (m_text_component == nullptr) return false;
     if (ev->type != Gdk::BUTTON_PRESS) return false;
-    if (ev->button != GDK_BUTTON_PRIMARY) return false;
+    if (ev->button != GDK_BUTTON_PRIMARY && ev->button != GDK_BUTTON_SECONDARY) return false;
 
     auto buf = m_text_component->get_buffer();
     Gtk::TextBuffer::iterator start, end;
@@ -663,11 +679,18 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
     for (auto tag : tags) {
         const auto it = m_link_tagmap.find(tag);
         if (it != m_link_tagmap.end()) {
-            LaunchBrowser(it->second);
-
-            return true;
+            if (ev->button == GDK_BUTTON_PRIMARY) {
+                LaunchBrowser(it->second);
+                return true;
+            } else if (ev->button == GDK_BUTTON_SECONDARY) {
+                m_selected_link = it->second;
+                m_link_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                return true;
+            }
         }
     }
+
+    return false;
 
     return false;
 }
