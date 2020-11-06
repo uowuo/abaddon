@@ -21,10 +21,10 @@ protected:
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
-    Gtk::EventBox *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
-    Gtk::Image *CreateImageComponent(const AttachmentData &data);
-    Gtk::Box *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
-    Gtk::Box *CreateStickerComponent(const Sticker &data);
+    Gtk::Widget *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
+    Gtk::Widget *CreateImageComponent(const AttachmentData &data);
+    Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
+    Gtk::Widget *CreateStickerComponent(const Sticker &data);
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
@@ -37,6 +37,7 @@ protected:
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
 
+    // reused for images and links
     Gtk::Menu m_link_menu;
     Gtk::MenuItem *m_link_menu_copy;
 
@@ -64,13 +65,14 @@ protected:
     void on_menu_edit_message();
     void on_menu_copy_content();
 
+    Gtk::EventBox *m_ev;
     Gtk::Box *m_main;
     Gtk::Label *m_attrib_label = nullptr;
     Gtk::Image *m_embed_img = nullptr; // yes this is hacky no i dont care (for now)
     std::string m_embed_imgurl;
 
     Gtk::TextView *m_text_component = nullptr;
-    Gtk::EventBox *m_embed_component = nullptr;
+    Gtk::Widget *m_embed_component = nullptr;
 
 public:
     typedef sigc::signal<void, std::string> type_signal_image_load;

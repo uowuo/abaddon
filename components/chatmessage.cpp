@@ -59,16 +59,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         const auto last3 = a.ProxyURL.substr(a.ProxyURL.length() - 3);
         if (last3 == "png" || last3 == "jpg") {
             auto *widget = container->CreateImageComponent(a);
-            auto *ev = Gtk::manage(new Gtk::EventBox);
-            ev->add(*widget);
-            container->AttachGuildMenuHandler(ev);
-            container->AddClickHandler(ev, a.URL);
-            container->m_main->add(*ev);
-            container->HandleImage(a, widget, a.ProxyURL);
+            container->m_main->add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
-            container->AttachGuildMenuHandler(widget);
-            container->AddClickHandler(widget, a.URL);
             container->m_main->add(*widget);
         }
     }
@@ -76,7 +69,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     // only 1?
     if (data->Stickers.has_value()) {
         const auto &sticker = data->Stickers.value()[0];
-        // todo: lottie
+        // todo: lottie, proper apng
         if (sticker.FormatType == StickerFormatType::PNG || sticker.FormatType == StickerFormatType::APNG) {
             auto *widget = container->CreateStickerComponent(sticker);
             container->m_main->add(*widget);
@@ -207,7 +200,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     }
 }
 
-Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *data) {
+Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data) {
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     ev->set_can_focus(true);
     Gtk::Box *main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -346,42 +339,39 @@ Gtk::EventBox *ChatMessageItemContainer::CreateEmbedComponent(const Message *dat
     return ev;
 }
 
-Gtk::Image *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
+Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
     int w, h;
     GetImageDimensions(data.Width, data.Height, w, h);
 
-    auto &im = Abaddon::Get().GetImageManager();
+    Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new Gtk::Image);
+    ev->add(*widget);
     widget->set_halign(Gtk::ALIGN_START);
     widget->set_size_request(w, h);
 
-    // clang-format off
-    const auto url = data.URL;
-    widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
-        if (event->type == Gdk::BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
-            LaunchBrowser(url);
-            return false;
-        }
-        return true;
-    }, false);
-    // clang-format on
+    AttachGuildMenuHandler(ev);
+    AddClickHandler(ev, data.URL);
+    HandleImage(data, widget, data.ProxyURL);
 
-    return widget;
+    return ev;
 }
 
-Gtk::Box *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentData &data) {
-    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentData &data) {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *btn = Gtk::manage(new Gtk::Label(data.Filename + " " + HumanReadableBytes(data.Bytes))); // Gtk::LinkButton flat out doesn't work :D
-    box->get_style_context()->add_class("message-attachment-box");
+    ev->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
-    box->add(*ev);
-    return box;
+
+    AttachGuildMenuHandler(ev);
+    AddClickHandler(ev, data.URL);
+
+    return ev;
 }
 
-Gtk::Box *ChatMessageItemContainer::CreateStickerComponent(const Sticker &data) {
+Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const Sticker &data) {
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *imgw = Gtk::manage(new Gtk::Image);
+    box->add(*imgw);
     auto &img = Abaddon::Get().GetImageManager();
 
     if (data.FormatType == StickerFormatType::PNG || data.FormatType == StickerFormatType::APNG) {
@@ -392,7 +382,7 @@ Gtk::Box *ChatMessageItemContainer::CreateStickerComponent(const Sticker &data) 
         // clang-format on
     }
 
-    box->add(*imgw);
+    AttachGuildMenuHandler(box);
     return box;
 }
 
@@ -745,8 +735,8 @@ ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signa
     return m_signal_image_load;
 }
 
-// clang-format off
 void ChatMessageItemContainer::AttachGuildMenuHandler(Gtk::Widget *widget) {
+    // clang-format off
     widget->signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
             ShowMenu(reinterpret_cast<GdkEvent*>(event));
@@ -755,8 +745,8 @@ void ChatMessageItemContainer::AttachGuildMenuHandler(Gtk::Widget *widget) {
 
         return false;
     }, false);
+    // clang-format on
 }
-// clang-format on
 
 ChatMessageHeader::ChatMessageHeader(const Message *data) {
     UserID = data->Author.ID;
