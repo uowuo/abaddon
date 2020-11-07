@@ -87,8 +87,10 @@ void ChatMessageItemContainer::UpdateContent() {
     if (m_text_component != nullptr)
         UpdateTextComponent(m_text_component);
 
-    if (m_embed_component != nullptr)
+    if (m_embed_component != nullptr) {
         delete m_embed_component;
+        m_embed_component = nullptr;
+    }
 
     if (data->Embeds.size() == 1) {
         m_embed_component = CreateEmbedComponent(data);
