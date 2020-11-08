@@ -64,13 +64,16 @@ int Abaddon::StartGTK() {
     m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
     m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
     m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
     m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
     m_user_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_ban));
     m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
     m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
+    m_user_menu_open_dm->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_open_dm));
     m_user_menu->append(*m_user_menu_insert_mention);
     m_user_menu->append(*m_user_menu_ban);
     m_user_menu->append(*m_user_menu_kick);
+    m_user_menu->append(*m_user_menu_open_dm);
     m_user_menu->append(*m_user_menu_copy_id);
     m_user_menu->show_all();
 
@@ -229,6 +232,14 @@ void Abaddon::on_user_menu_kick() {
 
 void Abaddon::on_user_menu_copy_id() {
     Gtk::Clipboard::get()->set_text(std::to_string(m_shown_user_menu_id));
+}
+
+void Abaddon::on_user_menu_open_dm() {
+    const auto existing = m_discord.FindDM(m_shown_user_menu_id);
+    if (existing.has_value())
+        ActionChannelOpened(*existing);
+    else
+        m_discord.CreateDM(m_shown_user_menu_id);
 }
 
 void Abaddon::ActionConnect() {

@@ -404,6 +404,23 @@ void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const A
     m_websocket.Send(nlohmann::json(msg));
 }
 
+void DiscordClient::CreateDM(Snowflake user_id) {
+    // actual client uses an array called recipients
+    CreateDMObject obj;
+    obj.Recipients.push_back(user_id);
+    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [](auto) {});
+}
+
+std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
+    const auto &channels = m_store.GetChannels();
+    for (const auto &[id, channel] : channels) {
+        if (channel.Recipients.size() == 1 && channel.Recipients[0].ID == user_id)
+            return id;
+    }
+
+    return std::nullopt;
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;

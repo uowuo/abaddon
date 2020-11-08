@@ -104,6 +104,8 @@ public:
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
     void UpdateStatus(const std::string &status, bool is_afk, const Activity &obj);
+    void CreateDM(Snowflake user_id);
+    std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
 
     void UpdateToken(std::string token);
 

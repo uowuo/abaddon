@@ -164,3 +164,10 @@ void from_json(const nlohmann::json &j, PresenceUpdateMessage &m) {
     // JS_D("activities", m.Activities);
     JS_D("client_status", m.ClientStatus);
 }
+
+void to_json(nlohmann::json &j, const CreateDMObject &m) {
+    std::vector<std::string> conv;
+    for (const auto &id : m.Recipients)
+        conv.push_back(std::to_string(id));
+    j["recipients"] = conv;
+}

@@ -235,3 +235,9 @@ struct PresenceUpdateMessage {
 
     friend void from_json(const nlohmann::json &j, PresenceUpdateMessage &m);
 };
+
+struct CreateDMObject {
+    std::vector<Snowflake> Recipients;
+
+    friend void to_json(nlohmann::json &j, const CreateDMObject &m);
+};
