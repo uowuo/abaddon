@@ -106,20 +106,27 @@ public:
     void UpdateNameColor();
 
 protected:
+    void AttachUserMenuHandler(Gtk::Widget &widget);
+
     bool on_author_button_press(GdkEventButton *ev);
 
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;
     Gtk::Box *m_meta_box;
-    Gtk::EventBox *m_author_ev;
+    Gtk::EventBox *m_meta_ev;
     Gtk::Label *m_author;
     Gtk::Label *m_timestamp;
     Gtk::Label *m_extra = nullptr;
     Gtk::Image *m_avatar;
+    Gtk::EventBox *m_avatar_ev;
 
-    typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;
+    typedef sigc::signal<void> type_signal_action_insert_mention;
+    typedef sigc::signal<void, const GdkEvent *> type_signal_action_open_user_menu;
+
     type_signal_action_insert_mention m_signal_action_insert_mention;
+    type_signal_action_open_user_menu m_signal_action_open_user_menu;
 
 public:
     type_signal_action_insert_mention signal_action_insert_mention();
+    type_signal_action_open_user_menu signal_action_open_user_menu();
 };

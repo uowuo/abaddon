@@ -38,6 +38,7 @@ public:
     typedef sigc::signal<void> type_signal_action_reload_css;
     typedef sigc::signal<void> type_signal_action_join_guild;
     typedef sigc::signal<void> type_signal_action_set_status;
+    typedef sigc::signal<void, const GdkEvent *, Snowflake, Snowflake> type_signal_action_show_user_menu;
 
     type_signal_action_connect signal_action_connect();
     type_signal_action_disconnect signal_action_disconnect();
@@ -45,6 +46,7 @@ public:
     type_signal_action_reload_css signal_action_reload_css();
     type_signal_action_join_guild signal_action_join_guild();
     type_signal_action_set_status signal_action_set_status();
+    type_signal_action_show_user_menu signal_action_show_user_menu();
 
 protected:
     type_signal_action_connect m_signal_action_connect;
@@ -53,6 +55,7 @@ protected:
     type_signal_action_reload_css m_signal_action_reload_css;
     type_signal_action_join_guild m_signal_action_join_guild;
     type_signal_action_set_status m_signal_action_set_status;
+    type_signal_action_show_user_menu m_signal_action_show_user_menu;
 
 protected:
     Gtk::Box m_main_box;

@@ -58,12 +58,30 @@ int Abaddon::StartGTK() {
     m_main_window->show();
     m_main_window->UpdateComponents();
 
+    // crashes for some stupid reason if i put it somewhere else
+    m_user_menu = Gtk::manage(new Gtk::Menu);
+    m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert Mention"));
+    m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
+    m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
+    m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
+    m_user_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_ban));
+    m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
+    m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
+    m_user_menu->append(*m_user_menu_insert_mention);
+    m_user_menu->append(*m_user_menu_ban);
+    m_user_menu->append(*m_user_menu_kick);
+    m_user_menu->append(*m_user_menu_copy_id);
+    m_user_menu->show_all();
+
     m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
+
+    m_main_window->signal_action_show_user_menu().connect(sigc::mem_fun(*this, &Abaddon::ShowUserMenu));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
@@ -76,10 +94,6 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_chat_load_history().connect(sigc::mem_fun(*this, &Abaddon::ActionChatLoadHistory));
     m_main_window->GetChatWindow()->signal_action_channel_click().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChatWindow()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
-
-    m_main_window->GetMemberList()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
-    m_main_window->GetMemberList()->signal_action_kick().connect(sigc::mem_fun(*this, &Abaddon::ActionKickMember));
-    m_main_window->GetMemberList()->signal_action_ban().connect(sigc::mem_fun(*this, &Abaddon::ActionBanMember));
 
     ActionReloadCSS();
 
@@ -184,6 +198,37 @@ void Abaddon::DiscordOnGuildUpdate(Snowflake guild_id) {
 
 const SettingsManager &Abaddon::GetSettings() const {
     return m_settings;
+}
+
+void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id) {
+    m_shown_user_menu_id = id;
+    m_shown_user_menu_guild_id = guild_id;
+
+    const auto me = m_discord.GetUserData().ID;
+    const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
+    const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
+    const bool can_manage = m_discord.CanManageMember(guild_id, me, id);
+
+    m_user_menu_kick->set_sensitive(has_kick && can_manage);
+    m_user_menu_ban->set_sensitive(has_ban && can_manage);
+
+    m_user_menu->popup_at_pointer(event);
+}
+
+void Abaddon::on_user_menu_insert_mention() {
+    ActionInsertMention(m_shown_user_menu_id);
+}
+
+void Abaddon::on_user_menu_ban() {
+    ActionBanMember(m_shown_user_menu_id, m_shown_user_menu_guild_id);
+}
+
+void Abaddon::on_user_menu_kick() {
+    ActionKickMember(m_shown_user_menu_id, m_shown_user_menu_guild_id);
+}
+
+void Abaddon::on_user_menu_copy_id() {
+    Gtk::Clipboard::get()->set_text(std::to_string(m_shown_user_menu_id));
 }
 
 void Abaddon::ActionConnect() {

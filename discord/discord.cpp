@@ -330,13 +330,11 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
     return perms;
 }
 
-bool DiscordClient::CanManageMember(Snowflake channel_id, Snowflake actor, Snowflake target) const {
-    const auto *channel = GetChannel(channel_id);
-    if (channel == nullptr) return false;
-    const auto *guild = GetGuild(channel->GuildID);
+bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const {
+    const auto *guild = GetGuild(guild_id);
     if (guild != nullptr && guild->OwnerID == target) return false;
-    const auto actor_highest_id = GetMemberHighestRole(channel->GuildID, actor);
-    const auto target_highest_id = GetMemberHighestRole(channel->GuildID, target);
+    const auto actor_highest_id = GetMemberHighestRole(guild_id, actor);
+    const auto target_highest_id = GetMemberHighestRole(guild_id, target);
     const auto *actor_highest = GetRole(actor_highest_id);
     const auto *target_highest = GetRole(target_highest_id);
     if (actor_highest == nullptr) return false;

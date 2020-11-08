@@ -177,14 +177,20 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     if (should_attach) {
         header = last_row;
     } else {
+        const auto guild_id = client.GetChannel(m_active_channel)->GuildID;
         const auto user_id = data->Author.ID;
         const auto *user = client.GetUser(user_id);
         if (user == nullptr) return;
 
         header = Gtk::manage(new ChatMessageHeader(data));
-        header->signal_action_insert_mention().connect([this](const Snowflake &id) {
-            m_signal_action_insert_mention.emit(id);
+        header->signal_action_insert_mention().connect([this, user_id]() {
+            m_signal_action_insert_mention.emit(user_id);
         });
+
+        header->signal_action_open_user_menu().connect([this, user_id, guild_id](const GdkEvent *event) {
+            m_signal_action_open_user_menu.emit(event, user_id, guild_id);
+        });
+
         m_num_rows++;
         Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "32"), [this, user_id](Glib::RefPtr<Gdk::Pixbuf> buf) {
             Glib::signal_idle().connect([this, buf, user_id]() -> bool {
@@ -340,4 +346,8 @@ ChatWindow::type_signal_action_channel_click ChatWindow::signal_action_channel_c
 
 ChatWindow::type_signal_action_insert_mention ChatWindow::signal_action_insert_mention() {
     return m_signal_action_insert_mention;
+}
+
+ChatWindow::type_signal_action_open_user_menu ChatWindow::signal_action_open_user_menu() {
+    return m_signal_action_open_user_menu;
 }

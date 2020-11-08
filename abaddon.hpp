@@ -71,6 +71,22 @@ public:
 
     const SettingsManager &GetSettings() const;
 
+protected:
+    Snowflake m_shown_user_menu_id;
+    Snowflake m_shown_user_menu_guild_id;
+    void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
+
+    Gtk::Menu *m_user_menu;
+    Gtk::MenuItem *m_user_menu_insert_mention;
+    Gtk::MenuItem *m_user_menu_ban;
+    Gtk::MenuItem *m_user_menu_kick;
+    Gtk::MenuItem *m_user_menu_copy_id;
+
+    void on_user_menu_insert_mention();
+    void on_user_menu_ban();
+    void on_user_menu_kick();
+    void on_user_menu_copy_id();
+
 private:
     DiscordClient m_discord;
     std::string m_discord_token;

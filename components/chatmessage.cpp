@@ -757,9 +757,10 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_author_ev = Gtk::manage(new Gtk::EventBox);
+    m_meta_ev = Gtk::manage(new Gtk::EventBox);
     m_author = Gtk::manage(new Gtk::Label);
     m_timestamp = Gtk::manage(new Gtk::Label);
+    m_avatar_ev = Gtk::manage(new Gtk::EventBox);
 
     auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Author.GetAvatarURL());
     if (buf)
@@ -781,7 +782,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_author->set_ellipsize(Pango::ELLIPSIZE_END);
     m_author->set_xalign(0.f);
     m_author->set_can_focus(false);
-    m_author_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
+
+    m_meta_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
     if (data->WebhookID.has_value()) {
         m_extra = Gtk::manage(new Gtk::Label);
@@ -815,13 +817,15 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_content_box->set_can_focus(false);
 
-    m_author_ev->add(*m_author);
-    m_meta_box->add(*m_author_ev);
+    m_meta_box->add(*m_author);
     if (m_extra != nullptr)
         m_meta_box->add(*m_extra);
+
     m_meta_box->add(*m_timestamp);
-    m_content_box->add(*m_meta_box);
-    m_main_box->add(*m_avatar);
+    m_meta_ev->add(*m_meta_box);
+    m_content_box->add(*m_meta_ev);
+    m_avatar_ev->add(*m_avatar);
+    m_main_box->add(*m_avatar_ev);
     m_main_box->add(*m_content_box);
     add(*m_main_box);
 
@@ -830,6 +834,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     show_all();
 
     UpdateNameColor();
+    AttachUserMenuHandler(*m_meta_ev);
+    AttachUserMenuHandler(*m_avatar_ev);
 }
 
 void ChatMessageHeader::UpdateNameColor() {
@@ -849,9 +855,20 @@ void ChatMessageHeader::UpdateNameColor() {
     m_author->set_markup(md);
 }
 
+void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
+    widget.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
+        if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
+            m_signal_action_open_user_menu.emit(reinterpret_cast<GdkEvent *>(ev));
+            return true;
+        }
+
+        return false;
+    });
+}
+
 bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_PRIMARY && (ev->state & GDK_SHIFT_MASK)) {
-        m_signal_action_insert_mention.emit(UserID);
+        m_signal_action_insert_mention.emit();
         return true;
     }
 
@@ -860,6 +877,10 @@ bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {
 
 ChatMessageHeader::type_signal_action_insert_mention ChatMessageHeader::signal_action_insert_mention() {
     return m_signal_action_insert_mention;
+}
+
+ChatMessageHeader::type_signal_action_open_user_menu ChatMessageHeader::signal_action_open_user_menu() {
+    return m_signal_action_open_user_menu;
 }
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
