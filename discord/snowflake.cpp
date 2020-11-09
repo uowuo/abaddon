@@ -24,9 +24,13 @@ bool Snowflake::IsValid() const {
 }
 
 void from_json(const nlohmann::json &j, Snowflake &s) {
-    std::string tmp;
-    j.get_to(tmp);
-    s.m_num = std::stoull(tmp);
+    if (j.is_string()) {
+        std::string tmp;
+        j.get_to(tmp);
+        s.m_num = std::stoull(tmp);
+    } else {
+        j.get_to(s.m_num);
+    }
 }
 
 void to_json(nlohmann::json &j, const Snowflake &s) {

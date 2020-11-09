@@ -23,7 +23,7 @@ int SettingsManager::GetSettingInt(const std::string &section, const std::string
 }
 
 bool SettingsManager::GetSettingBool(const std::string &section, const std::string &key, bool fallback) const {
-    return GetSettingString(section, key, "false") != "false";
+    return GetSettingString(section, key, fallback ? "true" : "false") != "false";
 }
 
 bool SettingsManager::IsValid() const {

@@ -6,7 +6,7 @@
 struct UserSettingsGuildFoldersEntry {
     int Color = -1; // null
     std::vector<Snowflake> GuildIDs;
-    int ID = -1; // null
+    Snowflake ID; // null (this can be a snowflake as a string or an int that isnt a snowflake lol)
     std::string Name; // null
 
     friend void from_json(const nlohmann::json &j, UserSettingsGuildFoldersEntry &m);
