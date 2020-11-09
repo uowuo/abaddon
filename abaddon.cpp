@@ -208,12 +208,19 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     m_shown_user_menu_guild_id = guild_id;
 
     const auto me = m_discord.GetUserData().ID;
-    const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
-    const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
-    const bool can_manage = m_discord.CanManageMember(guild_id, me, id);
+    if (me == id) {
+        m_user_menu_ban->set_sensitive(false);
+        m_user_menu_kick->set_sensitive(false);
+        m_user_menu_open_dm->set_sensitive(false);
+    } else {
+        const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
+        const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
+        const bool can_manage = m_discord.CanManageMember(guild_id, me, id);
 
-    m_user_menu_kick->set_sensitive(has_kick && can_manage);
-    m_user_menu_ban->set_sensitive(has_ban && can_manage);
+        m_user_menu_kick->set_sensitive(has_kick && can_manage);
+        m_user_menu_ban->set_sensitive(has_ban && can_manage);
+        m_user_menu_open_dm->set_sensitive(true);
+    }
 
     m_user_menu->popup_at_pointer(event);
 }
