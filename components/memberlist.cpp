@@ -105,6 +105,7 @@ void MemberList::UpdateMemberListInternal() {
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
         for (const auto &user : chan->Recipients)
             ids.insert(user.ID);
+        ids.insert(discord.GetUserData().ID);
     } else {
         ids = discord.GetUsersInGuild(m_guild_id);
     }
@@ -203,7 +204,10 @@ void MemberList::UpdateMemberListInternal() {
             add_user(data);
     }
 
-    add_role("@everyone");
+    if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
+        add_role("Users");
+    else
+        add_role("@everyone");
     for (const auto &id : roleless_users) {
         const auto *user = discord.GetUser(id);
         if (user != nullptr)

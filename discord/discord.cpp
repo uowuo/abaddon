@@ -591,6 +591,8 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
+        for (const auto &recipient : dm.Recipients)
+            m_store.SetUser(recipient.ID, recipient);
     }
 
     m_signal_gateway_ready.emit();
