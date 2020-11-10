@@ -32,7 +32,7 @@ ChatWindow::ChatWindow() {
     });
 
     m_scroll->set_can_focus(false);
-    m_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_ALWAYS);
+    m_scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
 
     m_list->signal_size_allocate().connect([this](Gtk::Allocation &) {
         if (m_should_scroll_to_bottom)

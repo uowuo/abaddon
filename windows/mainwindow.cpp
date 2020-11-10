@@ -93,8 +93,8 @@ MainWindow::MainWindow()
 
     m_chat_members_paned.pack1(*chat);
     m_chat_members_paned.pack2(*member_list);
-    m_chat_members_paned.child_property_shrink(*member_list) = true;
-    m_chat_members_paned.child_property_resize(*member_list) = true;
+    m_chat_members_paned.child_property_shrink(*member_list) = false;
+    m_chat_members_paned.child_property_resize(*member_list) = false;
     int w, h;
     get_default_size(w, h); // :s
     m_chat_members_paned.set_position(w - m_chan_chat_paned.get_position() - 150);

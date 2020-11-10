@@ -186,7 +186,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     b->get_bounds(s, e);
     switch (data->Type) {
         case MessageType::DEFAULT:
-            b->insert_markup(s, Glib::Markup::escape_text(data->Content));
+            b->insert(s, data->Content);
             HandleUserMentions(tv);
             HandleLinks(tv);
             HandleChannelMentions(tv);
