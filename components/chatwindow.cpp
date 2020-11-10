@@ -49,7 +49,7 @@ ChatWindow::ChatWindow() {
     m_input->set_halign(Gtk::ALIGN_FILL);
     m_input->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
 
-    m_input_scroll->set_max_content_height(170);
+    m_input_scroll->set_max_content_height(200);
     m_input_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
 
     m_input_scroll->add(*m_input);

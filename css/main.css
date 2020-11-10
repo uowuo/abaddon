@@ -21,7 +21,11 @@
 
 .channel-row-label {
     padding: 5px;
+}
+
+.channel-row-label, .channel-row-label text {
     color: #cfd8dc;
+    background: rgba(0, 0, 0, 0);
 }
 
 .channel-row:focus {

@@ -8,6 +8,8 @@
 #include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
+static const constexpr int ChannelEmojiSize = 16;
+
 class ChannelListRow : public Gtk::ListBoxRow {
 public:
     bool IsUserCollapsed;
@@ -17,6 +19,8 @@ public:
 
     virtual void Collapse();
     virtual void Expand();
+
+    static void MakeReadOnly(Gtk::TextView *tv);
 };
 
 class ChannelListRowDMHeader : public ChannelListRow {
@@ -38,7 +42,7 @@ protected:
 
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::Label *m_lbl;
+    Gtk::TextView *m_lbl;
     Gtk::Image *m_icon = nullptr;
 };
 
@@ -53,7 +57,7 @@ protected:
 
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::Label *m_lbl;
+    Gtk::TextView *m_lbl;
     Gtk::Image *m_icon;
 };
 
@@ -67,7 +71,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::Label *m_lbl;
+    Gtk::TextView *m_lbl;
     Gtk::Arrow *m_arrow;
 };
 
@@ -78,7 +82,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::Label *m_lbl;
+    Gtk::TextView *m_lbl;
 };
 
 class ChannelList {
@@ -133,6 +137,7 @@ protected:
     // i would use one map but in really old guilds there can be a channel w/ same id as the guild so this hacky shit has to do
     std::unordered_map<Snowflake, ChannelListRow *> m_guild_id_to_row;
     std::unordered_map<Snowflake, ChannelListRow *> m_id_to_row;
+    std::unordered_map<Snowflake, ChannelListRow *> m_dm_id_to_row;
 
     void InsertGuildAt(Snowflake id, int pos);
 
@@ -140,6 +145,8 @@ protected:
     void UpdateListingInternal();
     void AttachGuildMenuHandler(Gtk::ListBoxRow *row);
     void AttachChannelMenuHandler(Gtk::ListBoxRow *row);
+
+    void CheckBumpDM(Snowflake channel_id);
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

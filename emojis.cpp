@@ -72,6 +72,43 @@ Glib::ustring EmojiResource::HexToPattern(Glib::ustring hex) {
     }
     return ret;
 }
+void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
+    auto get_text = [&]() -> auto {
+        Gtk::TextBuffer::iterator a, b;
+        buf->get_bounds(a, b);
+        return buf->get_slice(a, b, true);
+    };
+    auto text = get_text();
+
+    int searchpos;
+    for (const auto &pattern : m_patterns) {
+        searchpos = 0;
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+        while (true) {
+            size_t r = text.find(pattern, searchpos);
+            if (r == Glib::ustring::npos) break;
+            if (!pixbuf) {
+                pixbuf = GetPixBuf(pattern);
+                if (pixbuf)
+                    pixbuf = pixbuf->scale_simple(size, size, Gdk::INTERP_BILINEAR);
+                else
+                    break;
+            }
+            searchpos = r + pattern.size();
+
+            const auto start_it = buf->get_iter_at_offset(r);
+            const auto end_it = buf->get_iter_at_offset(r + pattern.size());
+
+            auto it = buf->erase(start_it, end_it);
+            buf->insert_pixbuf(it, pixbuf);
+
+            int alen = text.size();
+            text = get_text();
+            int blen = text.size();
+            searchpos -= (alen - blen);
+        }
+    }
+}
 
 const std::vector<Glib::ustring> &EmojiResource::GetPatterns() const {
     return m_patterns;

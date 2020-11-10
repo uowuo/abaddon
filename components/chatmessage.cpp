@@ -451,38 +451,7 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
 }
 
 void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
-    auto buf = tv->get_buffer();
-    auto text = GetText(buf);
-
-    auto &emojis = Abaddon::Get().GetEmojis();
-    int searchpos;
-    for (const auto &pattern : emojis.GetPatterns()) {
-        searchpos = 0;
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-        while (true) {
-            size_t r = text.find(pattern, searchpos);
-            if (r == Glib::ustring::npos) break;
-            if (!pixbuf) {
-                pixbuf = emojis.GetPixBuf(pattern);
-                if (pixbuf)
-                    pixbuf = pixbuf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-                else
-                    break;
-            }
-            searchpos = r + pattern.size();
-
-            const auto start_it = buf->get_iter_at_offset(r);
-            const auto end_it = buf->get_iter_at_offset(r + pattern.size());
-
-            auto it = buf->erase(start_it, end_it);
-            buf->insert_pixbuf(it, pixbuf);
-
-            int alen = text.size();
-            text = GetText(buf);
-            int blen = text.size();
-            searchpos -= (alen - blen);
-        }
-    }
+    Abaddon::Get().GetEmojis().ReplaceEmojis(tv->get_buffer());
 }
 
 void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {

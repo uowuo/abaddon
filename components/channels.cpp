@@ -9,6 +9,24 @@ void ChannelListRow::Collapse() {}
 
 void ChannelListRow::Expand() {}
 
+void ChannelListRow::MakeReadOnly(Gtk::TextView *tv) {
+    tv->set_can_focus(false);
+    tv->set_editable(false);
+    tv->signal_realize().connect([tv]() {
+        auto window = tv->get_window(Gtk::TEXT_WINDOW_TEXT);
+        auto display = window->get_display();
+        auto cursor = Gdk::Cursor::create(display, "default"); // textview uses "text" which looks out of place
+        window->set_cursor(cursor);
+    });
+    // stupid hack to prevent selection
+    auto buf = tv->get_buffer();
+    buf->property_has_selection().signal_changed().connect([tv, buf]() {
+        Gtk::TextBuffer::iterator a, b;
+        buf->get_bounds(a, b);
+        buf->select_range(a, a);
+    });
+}
+
 ChannelListRowDMHeader::ChannelListRowDMHeader() {
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -31,7 +49,8 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::Label);
+    m_lbl = Gtk::manage(new Gtk::TextView);
+    MakeReadOnly(m_lbl);
 
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
@@ -50,10 +69,12 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
         }
     }
 
+    auto buf = m_lbl->get_buffer();
     if (data->Type == ChannelType::DM)
-        m_lbl->set_text(data->Recipients[0].Username);
+        buf->set_text(data->Recipients[0].Username);
     else if (data->Type == ChannelType::GROUP_DM)
-        m_lbl->set_text(std::to_string(data->Recipients.size()) + " users");
+        buf->set_text(std::to_string(data->Recipients.size()) + " users");
+    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
     m_box->set_halign(Gtk::ALIGN_START);
     if (m_icon != nullptr)
@@ -73,7 +94,8 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::Label);
+    m_lbl = Gtk::manage(new Gtk::TextView);
+    MakeReadOnly(m_lbl);
 
     if (data->HasIcon()) {
         auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
@@ -91,7 +113,11 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     get_style_context()->add_class("channel-row-guild");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    m_lbl->set_markup("<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
+    auto buf = m_lbl->get_buffer();
+    Gtk::TextBuffer::iterator start, end;
+    buf->get_bounds(start, end);
+    buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
+    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_icon);
     m_box->pack_start(*m_lbl);
@@ -108,14 +134,17 @@ ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::Label);
+    m_lbl = Gtk::manage(new Gtk::TextView);
+    MakeReadOnly(m_lbl);
     m_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
 
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-category");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    m_lbl->set_text(data->Name);
+    auto buf = m_lbl->get_buffer();
+    buf->set_text(data->Name);
+    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_arrow);
     m_box->pack_start(*m_lbl);
@@ -136,13 +165,16 @@ ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::Label);
+    m_lbl = Gtk::manage(new Gtk::TextView);
+    MakeReadOnly(m_lbl);
 
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-channel");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    m_lbl->set_text("#" + data->Name);
+    auto buf = m_lbl->get_buffer();
+    buf->set_text("#" + data->Name);
+    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
@@ -189,6 +221,18 @@ ChannelList::ChannelList() {
     m_main->show_all();
 
     m_update_dispatcher.connect(sigc::mem_fun(*this, &ChannelList::UpdateListingInternal));
+
+    // maybe will regret doing it this way
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_message_create().connect(sigc::track_obj([this, &discord](Snowflake message_id) {
+        const auto *message = discord.GetMessage(message_id);
+        const auto *channel = discord.GetChannel(message->ChannelID);
+        if (channel == nullptr) return;
+        if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
+            CheckBumpDM(message->ChannelID);
+        // clang-format off
+    }, this));
+    // clang-format on
 }
 
 Gtk::Widget *ChannelList::GetRoot() const {
@@ -462,6 +506,7 @@ void ChannelList::DeleteRow(ChannelListRow *row) {
         m_id_to_row.erase(row->ID);
     delete row;
 }
+
 void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
     auto row = dynamic_cast<ChannelListRow *>(tmprow);
     if (row == nullptr) return;
@@ -556,7 +601,14 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 }
 
 void ChannelList::AddPrivateChannels() {
-    auto dms = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
+    auto dms_ = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
+    std::vector<const Channel *> dms;
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    for (const auto &x : dms_)
+        dms.push_back(discord.GetChannel(x));
+    std::sort(dms.begin(), dms.end(), [&](const Channel *a, const Channel *b) -> bool {
+        return a->LastMessageID > b->LastMessageID;
+    });
 
     m_dm_header_row = Gtk::manage(new ChannelListRowDMHeader);
     m_dm_header_row->show_all();
@@ -564,7 +616,9 @@ void ChannelList::AddPrivateChannels() {
     m_list->add(*m_dm_header_row);
 
     for (const auto &dm : dms) {
-        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(dm)));
+        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(dm));
+        dm_row->Parent = m_dm_header_row;
+        m_dm_id_to_row[dm->ID] = dm_row;
         dm_row->IsUserCollapsed = false;
         m_list->add(*dm_row);
         m_dm_header_row->Children.insert(dm_row);
@@ -658,6 +712,28 @@ void ChannelList::AttachChannelMenuHandler(Gtk::ListBoxRow *row) {
 
         return false;
     });
+}
+
+void ChannelList::CheckBumpDM(Snowflake channel_id) {
+    auto it = m_dm_id_to_row.find(channel_id);
+    if (it == m_dm_id_to_row.end()) return;
+    auto *row = it->second;
+    const auto index = row->get_index();
+    if (index == 1) return; // 1 is top of dm list
+    const bool selected = row->is_selected();
+    row->Parent->Children.erase(row);
+    delete row;
+    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(channel_id)));
+    dm_row->Parent = m_dm_header_row;
+    m_dm_header_row->Children.insert(dm_row);
+    m_dm_id_to_row[channel_id] = dm_row;
+    dm_row->IsUserCollapsed = false;
+    m_list->insert(*dm_row, 1);
+    m_dm_header_row->Children.insert(dm_row);
+    if (selected)
+        m_list->select_row(*dm_row);
+    if (m_dm_header_row->is_visible() && !m_dm_header_row->IsUserCollapsed)
+        dm_row->show();
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {

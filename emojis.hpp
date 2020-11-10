@@ -15,6 +15,7 @@ public:
     static Glib::ustring PatternToHex(const Glib::ustring &pattern);
     static Glib::ustring HexToPattern(Glib::ustring hex);
     const std::vector<Glib::ustring> &GetPatterns() const;
+    void ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size = 24);
 
 private:
     std::unordered_map<std::string, std::pair<int, int>> m_index; // pattern -> [pos, len]

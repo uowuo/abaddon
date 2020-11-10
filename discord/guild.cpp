@@ -14,10 +14,10 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_ON("discovery_splash", m.DiscoverySplash);
     JS_O("owner", m.IsOwner);
     JS_D("owner_id", m.OwnerID);
-    std::string tmp;
+    std::optional<std::string> tmp;
     JS_O("permissions", tmp);
-    if (tmp != "")
-        m.Permissions = std::stoull(tmp);
+    if (tmp.has_value())
+        m.Permissions = std::stoull(*tmp);
     JS_D("region", m.VoiceRegion);
     JS_N("afk_channel_id", m.AFKChannelID);
     JS_D("afk_timeout", m.AFKTimeout);
@@ -54,8 +54,12 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_D("preferred_locale", m.PreferredLocale);
     JS_N("public_updates_channel_id", m.PublicUpdatesChannelID);
     JS_O("max_video_channel_users", m.MaxVideoChannelUsers);
-    JS_O("approximate_member_count", m.ApproximateMemberCount);
-    JS_O("approximate_presence_count", m.ApproximatePresenceCount);
+    JS_O("approximate_member_count", tmp);
+    if (tmp.has_value())
+        m.ApproximateMemberCount = std::stoull(*tmp);
+    JS_O("approximate_presence_count", tmp);
+    if (tmp.has_value())
+        m.ApproximatePresenceCount = std::stoull(*tmp);
 }
 
 void Guild::update_from_json(const nlohmann::json &j) {
