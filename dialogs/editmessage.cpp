@@ -34,6 +34,10 @@ EditMessageDialog::EditMessageDialog(Gtk::Window &parent)
     show_all_children();
 }
 
-std::string EditMessageDialog::GetContent() {
+Glib::ustring EditMessageDialog::GetContent() {
     return m_content;
+}
+
+void EditMessageDialog::SetContent(const Glib::ustring &str) {
+    m_text.get_buffer()->set_text(str);
 }

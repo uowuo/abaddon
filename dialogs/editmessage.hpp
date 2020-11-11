@@ -5,7 +5,8 @@
 class EditMessageDialog : public Gtk::Dialog {
 public:
     EditMessageDialog(Gtk::Window &parent);
-    std::string GetContent();
+    Glib::ustring GetContent();
+    void SetContent(const Glib::ustring &str);
 
 protected:
     Gtk::Box m_layout;
@@ -16,5 +17,5 @@ protected:
     Gtk::TextView m_text;
 
 private:
-    std::string m_content;
+    Glib::ustring m_content;
 };
