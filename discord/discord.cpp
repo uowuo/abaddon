@@ -108,17 +108,6 @@ void DiscordClient::FetchInviteData(std::string code, std::function<void(Invite)
     });
 }
 
-void DiscordClient::UpdateSettingsGuildPositions(const std::vector<Snowflake> &pos) {
-    nlohmann::json body;
-    body["guild_positions"] = pos;
-    m_http.MakePATCH("/users/@me/settings", body.dump(), [this, pos](const cpr::Response &r) {
-        if (!CheckCode(r)) return;
-
-        m_user_settings.GuildPositions = pos;
-        m_signal_channel_list_refresh.emit();
-    });
-}
-
 void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
@@ -813,10 +802,6 @@ void DiscordClient::LoadEventMap() {
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
     return m_signal_gateway_ready;
-}
-
-DiscordClient::type_signal_channel_list_refresh DiscordClient::signal_channel_list_refresh() {
-    return m_signal_channel_list_refresh;
 }
 
 DiscordClient::type_signal_message_create DiscordClient::signal_message_create() {

@@ -33,8 +33,6 @@ public:
     void ActionDisconnect();
     void ActionSetToken();
     void ActionJoinGuildDialog();
-    void ActionMoveGuildUp(Snowflake id);
-    void ActionMoveGuildDown(Snowflake id);
     void ActionChannelOpened(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel);
     void ActionChatLoadHistory(Snowflake id);
@@ -57,7 +55,6 @@ public:
     DiscordClient &GetDiscordClient();
     const DiscordClient &GetDiscordClient() const;
     void DiscordOnReady();
-    void DiscordOnChannelListRefresh();
     void DiscordOnMessageCreate(Snowflake id);
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);

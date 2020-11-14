@@ -20,7 +20,6 @@ Abaddon::Abaddon()
     LoadFromSettings();
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
-    m_discord.signal_channel_list_refresh().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelListRefresh));
     m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
@@ -87,8 +86,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_show_user_menu().connect(sigc::mem_fun(*this, &Abaddon::ShowUserMenu));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
-    m_main_window->GetChannelList()->signal_action_guild_move_up().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildUp));
-    m_main_window->GetChannelList()->signal_action_guild_move_down().connect(sigc::mem_fun(*this, &Abaddon::ActionMoveGuildDown));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
 
     m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
@@ -153,10 +150,6 @@ const DiscordClient &Abaddon::GetDiscordClient() const {
 
 void Abaddon::DiscordOnReady() {
     m_main_window->UpdateComponents();
-}
-
-void Abaddon::DiscordOnChannelListRefresh() {
-    m_main_window->UpdateChannelListing();
 }
 
 void Abaddon::DiscordOnMessageCreate(Snowflake id) {
@@ -284,40 +277,6 @@ void Abaddon::ActionJoinGuildDialog() {
         auto code = dlg.GetCode();
         m_discord.JoinGuild(code);
     }
-}
-
-void Abaddon::ActionMoveGuildUp(Snowflake id) {
-    auto order = m_discord.GetUserSortedGuilds();
-    // get iter to target
-    decltype(order)::iterator target_iter;
-    for (auto it = order.begin(); it != order.end(); it++) {
-        if (*it == id) {
-            target_iter = it;
-            break;
-        }
-    }
-
-    decltype(order)::iterator left = target_iter - 1;
-    std::swap(*left, *target_iter);
-
-    m_discord.UpdateSettingsGuildPositions(order);
-}
-
-void Abaddon::ActionMoveGuildDown(Snowflake id) {
-    auto order = m_discord.GetUserSortedGuilds();
-    // get iter to target
-    decltype(order)::iterator target_iter;
-    for (auto it = order.begin(); it != order.end(); it++) {
-        if (*it == id) {
-            target_iter = it;
-            break;
-        }
-    }
-
-    decltype(order)::iterator right = target_iter + 1;
-    std::swap(*right, *target_iter);
-
-    m_discord.UpdateSettingsGuildPositions(order);
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id) {

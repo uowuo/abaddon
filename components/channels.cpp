@@ -188,16 +188,6 @@ ChannelList::ChannelList() {
 
     m_list->get_style_context()->add_class("channel-list");
 
-    /*
-    m_guild_menu_up = Gtk::manage(new Gtk::MenuItem("Move _Up", true));
-    m_guild_menu_up->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_up));
-    m_guild_menu.append(*m_guild_menu_up);
-
-    m_guild_menu_down = Gtk::manage(new Gtk::MenuItem("Move _Down", true));
-    m_guild_menu_down->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_move_down));
-    m_guild_menu.append(*m_guild_menu_down);
-    */
-
     m_guild_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
     m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_copyid));
     m_guild_menu.append(*m_guild_menu_copyid);
@@ -648,20 +638,6 @@ void ChannelList::UpdateListingInternal() {
     }
 }
 
-void ChannelList::on_guild_menu_move_up() {
-    auto tmp = m_list->get_selected_row();
-    auto row = dynamic_cast<ChannelListRow *>(tmp);
-    if (row != nullptr)
-        m_signal_action_guild_move_up.emit(row->ID);
-}
-
-void ChannelList::on_guild_menu_move_down() {
-    auto tmp = m_list->get_selected_row();
-    auto row = dynamic_cast<ChannelListRow *>(tmp);
-    if (row != nullptr)
-        m_signal_action_guild_move_down.emit(row->ID);
-}
-
 void ChannelList::on_guild_menu_copyid() {
     auto tmp = m_list->get_selected_row();
     auto row = dynamic_cast<ChannelListRow *>(tmp);
@@ -681,8 +657,6 @@ void ChannelList::AttachGuildMenuHandler(Gtk::ListBoxRow *row) {
             auto grow = dynamic_cast<ChannelListRowGuild *>(row);
             if (grow != nullptr) {
                 m_list->select_row(*row);
-                //m_guild_menu_up->set_sensitive(grow->GuildIndex != 0);
-                //m_guild_menu_down->set_sensitive(grow->GuildIndex != m_guild_count - 1);
                 m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
             }
             return true;
@@ -738,14 +712,6 @@ void ChannelList::CheckBumpDM(Snowflake channel_id) {
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
     return m_signal_action_channel_item_select;
-}
-
-ChannelList::type_signal_action_guild_move_up ChannelList::signal_action_guild_move_up() {
-    return m_signal_action_guild_move_up;
-}
-
-ChannelList::type_signal_action_guild_move_down ChannelList::signal_action_guild_move_down() {
-    return m_signal_action_guild_move_down;
 }
 
 ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_leave() {
