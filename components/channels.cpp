@@ -349,7 +349,10 @@ void ChannelList::UpdateChannel(Snowflake id) {
         UpdateChannelCategory(id);
         return;
     }
-    auto row = dynamic_cast<ChannelListRowChannel *>(m_id_to_row.at(id));
+
+    auto it = m_id_to_row.find(id);
+    if (it == m_id_to_row.end()) return; // stuff like voice doesnt have a row yet
+    auto row = dynamic_cast<ChannelListRowChannel *>(it->second);
     const bool old_collapsed = row->IsUserCollapsed;
     const bool old_visible = row->is_visible();
     DeleteRow(row);
