@@ -25,6 +25,7 @@ void DiscordClient::Stop() {
     if (!m_client_connected) return;
 
     inflateEnd(&m_zstream);
+    m_compressed_buf.clear();
 
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
@@ -35,6 +36,8 @@ void DiscordClient::Stop() {
     m_guild_to_users.clear();
 
     m_websocket.Stop();
+
+    m_signal_disconnected.emit(false);
 }
 
 bool DiscordClient::IsStarted() const {
@@ -480,14 +483,13 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
     try {
         switch (m.Opcode) {
             case GatewayOp::Hello: {
-                HelloMessageData d = m.Data;
-                m_heartbeat_msec = d.HeartbeatInterval;
-                assert(!m_heartbeat_thread.joinable()); // handle reconnects later
-                m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
-                SendIdentify();
+                HandleGatewayHello(m);
             } break;
             case GatewayOp::HeartbeatAck: {
                 m_heartbeat_acked = true;
+            } break;
+            case GatewayOp::Reconnect: {
+                HandleGatewayReconnect(m);
             } break;
             case GatewayOp::Event: {
                 auto iter = m_event_map.find(m.Type);
@@ -549,6 +551,18 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
     }
 }
 
+void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
+    HelloMessageData d = msg.Data;
+    m_heartbeat_msec = d.HeartbeatInterval;
+    m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
+    m_signal_connected.emit(); // socket is connected before this but emitting here should b fine
+    if (m_wants_resume) {
+        m_wants_resume = false;
+        SendResume();
+    } else
+        SendIdentify();
+}
+
 void DiscordClient::ProcessNewGuild(Guild &guild) {
     if (guild.IsUnavailable) {
         printf("guild (%lld) unavailable\n", static_cast<uint64_t>(guild.ID));
@@ -584,9 +598,10 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
             m_store.SetUser(recipient.ID, recipient);
     }
 
-    m_signal_gateway_ready.emit();
+    m_session_id = data.SessionID;
     m_user_data = data.User;
     m_user_settings = data.UserSettings;
+    m_signal_gateway_ready.emit();
 }
 
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
@@ -663,6 +678,25 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
     if (current == nullptr) return;
     current->update_from_json(msg.Data);
     m_signal_guild_update.emit(id);
+}
+
+void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
+    m_signal_disconnected.emit(true);
+    inflateEnd(&m_zstream);
+    m_compressed_buf.clear();
+
+    m_heartbeat_waiter.kill();
+    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+
+    m_websocket.Stop(1002); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
+
+    std::memset(&m_zstream, 0, sizeof(m_zstream));
+    inflateInit2(&m_zstream, MAX_WBITS + 32);
+
+    m_heartbeat_acked = true;
+    m_wants_resume = true;
+    m_websocket.StartConnection(DiscordGateway);
+    m_websocket.SetMessageCallback(std::bind(&DiscordClient::HandleGatewayMessageRaw, this, std::placeholders::_1));
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -774,6 +808,14 @@ void DiscordClient::SendIdentify() {
     m_websocket.Send(msg);
 }
 
+void DiscordClient::SendResume() {
+    ResumeMessage msg;
+    msg.Sequence = m_last_sequence;
+    msg.SessionID = m_session_id;
+    msg.Token = m_token;
+    m_websocket.Send(msg);
+}
+
 bool DiscordClient::CheckCode(const cpr::Response &r) {
     if (r.status_code >= 300 || r.error) {
         fprintf(stderr, "api request to %s failed with status code %d\n", r.url.c_str(), r.status_code);
@@ -842,4 +884,12 @@ DiscordClient::type_signal_channel_create DiscordClient::signal_channel_create()
 
 DiscordClient::type_signal_guild_update DiscordClient::signal_guild_update() {
     return m_signal_guild_update;
+}
+
+DiscordClient::type_signal_disconnected DiscordClient::signal_disconnected() {
+    return m_signal_disconnected;
+}
+
+DiscordClient::type_signal_connected DiscordClient::signal_connected() {
+    return m_signal_connected;
 }

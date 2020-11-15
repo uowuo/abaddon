@@ -15,6 +15,7 @@ public:
     void Send(const std::string &str);
     void Send(const nlohmann::json &j);
     void Stop();
+    void Stop(uint16_t code);
     bool IsOpen() const;
 
 private:

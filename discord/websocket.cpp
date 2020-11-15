@@ -14,6 +14,10 @@ void Websocket::Stop() {
     m_websocket.stop();
 }
 
+void Websocket::Stop(uint16_t code) {
+    m_websocket.stop(code);
+}
+
 bool Websocket::IsOpen() const {
     auto state = m_websocket.getReadyState();
     return state == ix::ReadyState::Open;
@@ -35,10 +39,6 @@ void Websocket::Send(const nlohmann::json &j) {
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
         case ix::WebSocketMessageType::Message: {
-            //if (msg->str.size() > 1000)
-            //    printf("%s\n", msg->str.substr(0, 1000).c_str());
-            //else
-            //    printf("%s\n", msg->str.c_str());
             if (m_callback)
                 m_callback(msg->str);
         } break;

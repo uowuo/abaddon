@@ -171,3 +171,11 @@ void to_json(nlohmann::json &j, const CreateDMObject &m) {
         conv.push_back(std::to_string(id));
     j["recipients"] = conv;
 }
+
+void to_json(nlohmann::json &j, const ResumeMessage &m) {
+    j["op"] = GatewayOp::Resume;
+    j["d"] = nlohmann::json::object();
+    j["d"]["token"] = m.Token;
+    j["d"]["session_id"] = m.SessionID;
+    j["d"]["seq"] = m.Sequence;
+}

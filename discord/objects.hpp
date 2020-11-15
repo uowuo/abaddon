@@ -24,6 +24,8 @@ enum class GatewayOp : int {
     Heartbeat = 1,
     Identify = 2,
     UpdateStatus = 3,
+    Resume = 6,
+    Reconnect = 7,
     Hello = 10,
     HeartbeatAck = 11,
     LazyLoadRequest = 14,
@@ -240,4 +242,12 @@ struct CreateDMObject {
     std::vector<Snowflake> Recipients;
 
     friend void to_json(nlohmann::json &j, const CreateDMObject &m);
+};
+
+struct ResumeMessage : GatewayMessage {
+    std::string Token;
+    std::string SessionID;
+    int Sequence;
+
+    friend void to_json(nlohmann::json &j, const ResumeMessage &m);
 };

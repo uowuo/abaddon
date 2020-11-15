@@ -118,6 +118,7 @@ private:
 
     void HandleGatewayMessageRaw(std::string str);
     void HandleGatewayMessage(std::string str);
+    void HandleGatewayHello(const GatewayMessage &msg);
     void HandleGatewayReady(const GatewayMessage &msg);
     void HandleGatewayMessageCreate(const GatewayMessage &msg);
     void HandleGatewayMessageDelete(const GatewayMessage &msg);
@@ -132,8 +133,10 @@ private:
     void HandleGatewayChannelUpdate(const GatewayMessage &msg);
     void HandleGatewayChannelCreate(const GatewayMessage &msg);
     void HandleGatewayGuildUpdate(const GatewayMessage &msg);
+    void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
+    void SendResume();
 
     bool CheckCode(const cpr::Response &r);
 
@@ -165,6 +168,9 @@ private:
     HeartbeatWaiter m_heartbeat_waiter;
     std::atomic<bool> m_heartbeat_acked = true;
 
+    bool m_wants_resume = false;
+    std::string m_session_id;
+
     mutable std::mutex m_msg_mutex;
     Glib::Dispatcher m_msg_dispatch;
     std::queue<std::string> m_msg_queue;
@@ -183,6 +189,8 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
     typedef sigc::signal<void, Snowflake> type_signal_channel_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_update;
+    typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
+    typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_message_create signal_message_create();
@@ -195,6 +203,8 @@ public:
     type_signal_channel_update signal_channel_update();
     type_signal_channel_create signal_channel_create();
     type_signal_guild_update signal_guild_update();
+    type_signal_disconnected signal_disconnected();
+    type_signal_connected signal_connected();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -208,4 +218,6 @@ protected:
     type_signal_channel_update m_signal_channel_update;
     type_signal_channel_create m_signal_channel_create;
     type_signal_guild_update m_signal_guild_update;
+    type_signal_disconnected m_signal_disconnected;
+    type_signal_connected m_signal_connected;
 };

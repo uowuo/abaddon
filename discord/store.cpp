@@ -178,8 +178,11 @@ const Store::roles_type &Store::GetRoles() const {
 
 void Store::ClearAll() {
     m_channels.clear();
+    m_emojis.clear();
     m_guilds.clear();
+    m_members.clear();
     m_messages.clear();
+    m_permissions.clear();
     m_roles.clear();
     m_users.clear();
 }
