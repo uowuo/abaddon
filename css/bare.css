@@ -1,0 +1,19 @@
+.embed {
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.embed-footer {
+    margin-top: 5px;
+    font-size: 11px;
+}
+
+.embed-author {
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+
+.message-attachment-box {
+    border: 1px solid #aaaaaa;
+    padding: 2px 5px 2px 5px;
+}
