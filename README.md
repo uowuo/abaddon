@@ -1,3 +1,15 @@
+#### Screenshots
+<table>
+  <tr>
+    <td><img src="/.readme/s1.png"></td>
+    <td><img src="/.readme/s2.png"></td>
+  </tr>
+  <tr>
+    <td><img src="/.readme/s3.png"></td>
+    <td><img src="/.readme/s4.png"></td>
+  </tr>
+</table>
+
 ### Building:
 #### Windows:
 1. `git clone https://github.com/lorpus/abaddon && cd abaddon`
@@ -26,6 +38,14 @@
 * [C++ Requests: Curl for People](https://github.com/whoshuu/cpr/)
 * [zlib](https://zlib.net/)
 * [simpleini](https://github.com/brofield/simpleini)
+
+### TODO:
+* Voice support
+* Unread indicators
+* User status
+* Nicknames
+* Server/user management
+* A bunch of other stuff
 
 ### Styling
 #### CSS selectors
