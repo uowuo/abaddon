@@ -4,14 +4,13 @@
 #include <string>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <sigc++/sigc++.h>
 
 class Websocket {
 public:
     Websocket();
     void StartConnection(std::string url);
 
-    using MessageCallback_t = std::function<void(std::string data)>;
-    void SetMessageCallback(MessageCallback_t func);
     void Send(const std::string &str);
     void Send(const nlohmann::json &j);
     void Stop();
@@ -21,6 +20,19 @@ public:
 private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);
 
-    MessageCallback_t m_callback;
     ix::WebSocket m_websocket;
+
+public:
+    typedef sigc::signal<void> type_signal_open;
+    typedef sigc::signal<void, uint16_t> type_signal_close;
+    typedef sigc::signal<void, std::string> type_signal_message;
+
+    type_signal_open signal_open();
+    type_signal_close signal_close();
+    type_signal_message signal_message();
+
+private:
+    type_signal_open m_signal_open;
+    type_signal_close m_signal_close;
+    type_signal_message m_signal_message;
 };

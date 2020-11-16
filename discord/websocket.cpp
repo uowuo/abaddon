@@ -23,10 +23,6 @@ bool Websocket::IsOpen() const {
     return state == ix::ReadyState::Open;
 }
 
-void Websocket::SetMessageCallback(MessageCallback_t func) {
-    m_callback = func;
-}
-
 void Websocket::Send(const std::string &str) {
     printf("sending %s\n", str.c_str());
     m_websocket.sendText(str);
@@ -38,9 +34,26 @@ void Websocket::Send(const nlohmann::json &j) {
 
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
+        case ix::WebSocketMessageType::Open: {
+            m_signal_open.emit();
+        } break;
+        case ix::WebSocketMessageType::Close: {
+            m_signal_close.emit(msg->closeInfo.code);
+        } break;
         case ix::WebSocketMessageType::Message: {
-            if (m_callback)
-                m_callback(msg->str);
+            m_signal_message.emit(msg->str);
         } break;
     }
+}
+
+Websocket::type_signal_open Websocket::signal_open() {
+    return m_signal_open;
+}
+
+Websocket::type_signal_close Websocket::signal_close() {
+    return m_signal_close;
+}
+
+Websocket::type_signal_message Websocket::signal_message() {
+    return m_signal_message;
 }

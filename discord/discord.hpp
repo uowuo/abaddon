@@ -34,6 +34,11 @@ public:
         cv.notify_all();
     }
 
+    void revive() {
+        std::unique_lock<std::mutex> lock(m);
+        terminate = false;
+    }
+
 private:
     mutable std::condition_variable cv;
     mutable std::mutex m;
@@ -137,6 +142,9 @@ private:
     void HeartbeatThread();
     void SendIdentify();
     void SendResume();
+
+    void HandleSocketOpen();
+    void HandleSocketClose(uint16_t code);
 
     bool CheckCode(const cpr::Response &r);
 

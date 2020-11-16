@@ -7,6 +7,10 @@ DiscordClient::DiscordClient()
     , m_decompress_buf(InflateChunkSize) {
     m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
 
+    m_websocket.signal_message().connect(sigc::mem_fun(*this, &DiscordClient::HandleGatewayMessageRaw));
+    m_websocket.signal_open().connect(sigc::mem_fun(*this, &DiscordClient::HandleSocketOpen));
+    m_websocket.signal_close().connect(sigc::mem_fun(*this, &DiscordClient::HandleSocketClose));
+
     LoadEventMap();
 }
 
@@ -18,7 +22,6 @@ void DiscordClient::Start() {
     m_heartbeat_acked = true;
     m_client_connected = true;
     m_websocket.StartConnection(DiscordGateway);
-    m_websocket.SetMessageCallback(std::bind(&DiscordClient::HandleGatewayMessageRaw, this, std::placeholders::_1));
 }
 
 void DiscordClient::Stop() {
@@ -99,8 +102,6 @@ std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
 }
 
 void DiscordClient::FetchInviteData(std::string code, std::function<void(Invite)> cb, std::function<void(bool)> err) {
-    //printf("test: %s\n", code.c_str());
-    //err(true);
     m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, cb, err](cpr::Response r) {
         if (!CheckCode(r)) {
             err(r.status_code == 404);
@@ -554,6 +555,7 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
 void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
     HelloMessageData d = msg.Data;
     m_heartbeat_msec = d.HeartbeatInterval;
+    m_heartbeat_waiter.revive();
     m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
     m_signal_connected.emit(); // socket is connected before this but emitting here should b fine
     if (m_wants_resume) {
@@ -688,7 +690,7 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
 
-    m_websocket.Stop(1002); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
+    m_websocket.Stop(1012); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
@@ -696,7 +698,6 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_heartbeat_acked = true;
     m_wants_resume = true;
     m_websocket.StartConnection(DiscordGateway);
-    m_websocket.SetMessageCallback(std::bind(&DiscordClient::HandleGatewayMessageRaw, this, std::placeholders::_1));
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
@@ -814,6 +815,12 @@ void DiscordClient::SendResume() {
     msg.SessionID = m_session_id;
     msg.Token = m_token;
     m_websocket.Send(msg);
+}
+
+void DiscordClient::HandleSocketOpen() {
+}
+
+void DiscordClient::HandleSocketClose(uint16_t code) {
 }
 
 bool DiscordClient::CheckCode(const cpr::Response &r) {
