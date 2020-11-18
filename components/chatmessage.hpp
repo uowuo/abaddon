@@ -101,11 +101,12 @@ public:
     Snowflake ChannelID;
 
     ChatMessageHeader(const Message *data);
-    void SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
     void AddContent(Gtk::Widget *widget, bool prepend);
     void UpdateNameColor();
 
 protected:
+    void OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
+
     void AttachUserMenuHandler(Gtk::Widget &widget);
 
     bool on_author_button_press(GdkEventButton *ev);

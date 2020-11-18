@@ -731,11 +731,14 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_timestamp = Gtk::manage(new Gtk::Label);
     m_avatar_ev = Gtk::manage(new Gtk::EventBox);
 
-    auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Author.GetAvatarURL());
+    auto &img = Abaddon::Get().GetImageManager();
+    auto buf = img.GetFromURLIfCached(data->Author.GetAvatarURL());
     if (buf)
         m_avatar = Gtk::manage(new Gtk::Image(buf));
-    else
-        m_avatar = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(32)));
+    else {
+        m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(32)));
+        img.LoadFromURL(data->Author.GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
+    }
 
     get_style_context()->add_class("message-container");
     m_author->get_style_context()->add_class("message-container-author");
@@ -824,6 +827,10 @@ void ChatMessageHeader::UpdateNameColor() {
     m_author->set_markup(md);
 }
 
+void ChatMessageHeader::OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+    m_avatar->property_pixbuf() = pixbuf;
+}
+
 void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
     widget.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
@@ -856,8 +863,4 @@ void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
     m_content_box->add(*widget);
     if (prepend)
         m_content_box->reorder_child(*widget, 1);
-}
-
-void ChatMessageHeader::SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf) {
-    m_avatar->property_pixbuf() = pixbuf;
 }

@@ -192,19 +192,6 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         });
 
         m_num_rows++;
-        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "32"), [this, user_id](Glib::RefPtr<Gdk::Pixbuf> buf) {
-            Glib::signal_idle().connect([this, buf, user_id]() -> bool {
-                auto children = m_list->get_children();
-                for (auto child : children) {
-                    auto *row = dynamic_cast<ChatMessageHeader *>(child);
-                    if (row == nullptr) continue;
-                    if (row->UserID == user_id)
-                        row->SetAvatarFromPixbuf(buf);
-                }
-
-                return false;
-            });
-        });
     }
 
     auto *content = CreateMessageComponent(id);
