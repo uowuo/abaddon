@@ -1,7 +1,10 @@
 #pragma once
+#include "../util.hpp"
 #include "objects.hpp"
 #include <unordered_map>
 #include <mutex>
+#include <filesystem>
+#include <sqlite3.h>
 
 #ifdef GetMessage // fuck you windows.h
     #undef GetMessage
@@ -9,6 +12,11 @@
 
 class Store {
 public:
+    Store();
+    ~Store();
+
+    bool IsValid() const;
+
     void SetUser(Snowflake id, const User &user);
     void SetChannel(Snowflake id, const Channel &channel);
     void SetGuild(Snowflake id, const Guild &guild);
@@ -18,7 +26,8 @@ public:
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
     void SetEmoji(Snowflake id, const Emoji &emoji);
 
-    User *GetUser(Snowflake id);
+    // slap const on everything even tho its not *really* const
+
     Channel *GetChannel(Snowflake id);
     Guild *GetGuild(Snowflake id);
     Role *GetRole(Snowflake id);
@@ -26,7 +35,7 @@ public:
     GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id);
     PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id);
     Emoji *GetEmoji(Snowflake id);
-    const User *GetUser(Snowflake id) const;
+    std::optional<User> GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
     const Role *GetRole(Snowflake id) const;
@@ -53,6 +62,9 @@ public:
 
     void ClearAll();
 
+    void BeginTransaction();
+    void EndTransaction();
+
 private:
     users_type m_users;
     channels_type m_channels;
@@ -62,4 +74,50 @@ private:
     members_type m_members;
     permission_overwrites_type m_permissions;
     emojis_type m_emojis;
+
+    bool CreateTables();
+    bool CreateStatements();
+    void Cleanup();
+
+    template<typename T>
+    void Bind(sqlite3_stmt *stmt, int index, const std::optional<T> &opt) const;
+    void Bind(sqlite3_stmt *stmt, int index, int num) const;
+    void Bind(sqlite3_stmt *stmt, int index, uint64_t num) const;
+    void Bind(sqlite3_stmt *stmt, int index, const std::string &str) const;
+    void Bind(sqlite3_stmt *stmt, int index, bool val) const;
+    bool RunInsert(sqlite3_stmt *stmt);
+    bool FetchOne(sqlite3_stmt *stmt) const;
+    template<typename T>
+    void Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) const;
+    void Get(sqlite3_stmt *stmt, int index, int &out) const;
+    void Get(sqlite3_stmt *stmt, int index, uint64_t &out) const;
+    void Get(sqlite3_stmt *stmt, int index, std::string &out) const;
+    void Get(sqlite3_stmt *stmt, int index, bool &out) const;
+    void Get(sqlite3_stmt *stmt, int index, Snowflake &out) const;
+    void Reset(sqlite3_stmt *stmt) const;
+
+    std::filesystem::path m_db_path;
+    mutable sqlite3 *m_db;
+    mutable int m_db_err;
+    mutable sqlite3_stmt *m_set_user_stmt;
+    mutable sqlite3_stmt *m_get_user_stmt;
 };
+
+template<typename T>
+inline void Store::Bind(sqlite3_stmt *stmt, int index, const std::optional<T> &opt) const {
+    if (opt.has_value())
+        Bind(stmt, index, *opt);
+    else
+        sqlite3_bind_null(stmt, index);
+}
+
+template<typename T>
+inline void Store::Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) const {
+    if (sqlite3_column_type(stmt, index) == SQLITE_NULL)
+        out = std::nullopt;
+    else {
+        T v;
+        Get(stmt, index, v);
+        out = std::optional<T>(v);
+    }
+}

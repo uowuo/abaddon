@@ -54,7 +54,6 @@ int Abaddon::StartGTK() {
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
-    m_main_window->show();
     m_main_window->UpdateComponents();
 
     // crashes for some stupid reason if i put it somewhere else
@@ -111,6 +110,13 @@ int Abaddon::StartGTK() {
         dlg.run();
     }
 
+    if (!m_discord.IsStoreValid()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The Discord cache could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.run();
+        return 1;
+    }
+
+    m_main_window->show();
     return m_gtk_app->run(*m_main_window);
 }
 
@@ -380,8 +386,8 @@ void Abaddon::ActionLeaveGuild(Snowflake id) {
 
 void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
-    const auto *user = m_discord.GetUser(user_id);
-    if (user != nullptr)
+    const auto user = m_discord.GetUser(user_id);
+    if (user.has_value())
         dlg.SetConfirmText("Are you sure you want to kick " + user->Username + "#" + user->Discriminator + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
@@ -390,8 +396,8 @@ void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
 
 void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
-    const auto *user = m_discord.GetUser(user_id);
-    if (user != nullptr)
+    const auto user = m_discord.GetUser(user_id);
+    if (user.has_value())
         dlg.SetConfirmText("Are you sure you want to ban " + user->Username + "#" + user->Discriminator + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)

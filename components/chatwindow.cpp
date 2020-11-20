@@ -179,8 +179,8 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     } else {
         const auto guild_id = client.GetChannel(m_active_channel)->GuildID;
         const auto user_id = data->Author.ID;
-        const auto *user = client.GetUser(user_id);
-        if (user == nullptr) return;
+        const auto user = client.GetUser(user_id);
+        if (!user.has_value()) return;
 
         header = Gtk::manage(new ChatMessageHeader(data));
         header->signal_action_insert_mention().connect([this, user_id]() {

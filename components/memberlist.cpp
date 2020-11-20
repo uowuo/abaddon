@@ -112,13 +112,13 @@ void MemberList::UpdateMemberListInternal() {
 
     // process all the shit first so its in proper order
     std::map<int, const Role *> pos_to_role;
-    std::map<int, std::vector<const User *>> pos_to_users;
+    std::map<int, std::vector<User>> pos_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
 
     for (const auto &id : ids) {
-        auto *user = discord.GetUser(id);
-        if (user == nullptr) {
+        auto user = discord.GetUser(id);
+        if (!user.has_value()) {
             roleless_users.push_back(id);
             continue;
         }
@@ -134,7 +134,7 @@ void MemberList::UpdateMemberListInternal() {
         };
 
         pos_to_role[pos_role->Position] = pos_role;
-        pos_to_users[pos_role->Position].push_back(user);
+        pos_to_users[pos_role->Position].push_back(std::move(*user));
         if (col_role != nullptr) {
             if (ColorDistance(col_role->Color, 0xFFFFFF) < 15)
                 user_to_color[id] = 0x000000;
@@ -198,10 +198,10 @@ void MemberList::UpdateMemberListInternal() {
         if (pos_to_users.find(pos) == pos_to_users.end()) continue;
 
         auto &users = pos_to_users.at(pos);
-        AlphabeticalSort(users.begin(), users.end(), [](auto e) { return e->Username; });
+        AlphabeticalSort(users.begin(), users.end(), [](const auto &e) { return e.Username; });
 
         for (const auto data : users)
-            add_user(data);
+            add_user(&data);
     }
 
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
@@ -209,9 +209,9 @@ void MemberList::UpdateMemberListInternal() {
     else
         add_role("@everyone");
     for (const auto &id : roleless_users) {
-        const auto *user = discord.GetUser(id);
-        if (user != nullptr)
-            add_user(user);
+        const auto user = discord.GetUser(id);
+        if (user.has_value())
+            add_user(&*user);
     }
 }
 

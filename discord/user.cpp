@@ -34,20 +34,20 @@ void from_json(const nlohmann::json &j, User &m) {
 }
 
 void User::update_from_json(const nlohmann::json &j, User &m) {
-    JS_ON("username", m.Username);
-    JS_ON("discriminator", m.Discriminator);
-    JS_ON("avatar", m.Avatar);
-    JS_ON("bot", m.IsBot);
-    JS_ON("system", m.IsSystem);
-    JS_ON("mfa_enabled", m.IsMFAEnabled);
-    JS_ON("locale", m.Locale);
-    JS_ON("verified", m.IsVerified);
-    JS_ON("email", m.Email);
-    JS_ON("flags", m.Flags);
-    JS_ON("premium_type", m.PremiumType);
-    JS_ON("public_flags", m.PublicFlags);
-    JS_ON("desktop", m.IsDesktop);
-    JS_ON("mobile", m.IsMobile);
-    JS_ON("nsfw_allowed", m.IsNSFWAllowed);
-    JS_ON("phone", m.Phone);
+    JS_RD("username", m.Username);
+    JS_RD("discriminator", m.Discriminator);
+    JS_RD("avatar", m.Avatar);
+    JS_RD("bot", m.IsBot);
+    JS_RD("system", m.IsSystem);
+    JS_RD("mfa_enabled", m.IsMFAEnabled);
+    JS_RD("locale", m.Locale);
+    JS_RD("verified", m.IsVerified);
+    JS_RD("email", m.Email);
+    JS_RD("flags", m.Flags);
+    JS_RD("premium_type", m.PremiumType);
+    JS_RD("public_flags", m.PublicFlags);
+    JS_RD("desktop", m.IsDesktop);
+    JS_RD("mobile", m.IsMobile);
+    JS_RD("nsfw_allowed", m.IsNSFWAllowed);
+    JS_RD("phone", m.Phone);
 }

@@ -416,9 +416,9 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
         int mstart, mend;
         if (!match.fetch_pos(0, mstart, mend)) break;
         const Glib::ustring user_id = match.fetch(1);
-        const auto *user = discord.GetUser(user_id);
+        const auto user = discord.GetUser(user_id);
         const auto *channel = discord.GetChannel(ChannelID);
-        if (user == nullptr || channel == nullptr) {
+        if (!user.has_value() || channel == nullptr) {
             startpos = mend;
             continue;
         }
@@ -814,8 +814,8 @@ void ChatMessageHeader::UpdateNameColor() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild_id = discord.GetChannel(ChannelID)->GuildID;
     const auto role_id = discord.GetMemberHoistedRole(guild_id, UserID, true);
-    const auto *user = discord.GetUser(UserID);
-    if (user == nullptr) return;
+    const auto user = discord.GetUser(UserID);
+    if (!user.has_value()) return;
     const auto *role = discord.GetRole(role_id);
 
     std::string md;

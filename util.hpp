@@ -11,6 +11,16 @@
 #include <regex>
 #include <mutex>
 #include <condition_variable>
+#include <optional>
+#include <type_traits>
+
+namespace util {
+template<typename T>
+struct is_optional : ::std::false_type {};
+
+template<typename T>
+struct is_optional<::std::optional<T>> : ::std::true_type {};
+}
 
 class Semaphore {
 public:

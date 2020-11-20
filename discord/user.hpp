@@ -4,19 +4,19 @@
 #include <string>
 
 struct User {
-    Snowflake ID;              //
-    std::string Username;      //
-    std::string Discriminator; //
-    std::string Avatar;        // null
-    bool IsBot = false;        // opt
-    bool IsSystem = false;     // opt
-    bool IsMFAEnabled = false; // opt
-    std::string Locale;        // opt
-    bool IsVerified = false;   // opt
-    std::string Email;         // opt, null
-    int Flags = 0;             // opt
-    int PremiumType = 0;       // opt, null (docs wrong)
-    int PublicFlags = 0;       // opt
+    Snowflake ID;
+    std::string Username;
+    std::string Discriminator;
+    std::string Avatar; // null
+    std::optional<bool> IsBot;
+    std::optional<bool> IsSystem;
+    std::optional<bool> IsMFAEnabled;
+    std::optional<std::string> Locale;
+    std::optional<bool> IsVerified;
+    std::optional<std::string> Email; // null
+    std::optional<int> Flags;
+    std::optional<int> PremiumType; // null
+    std::optional<int> PublicFlags;
 
     // undocumented (opt)
     bool IsDesktop = false;     //

@@ -59,6 +59,7 @@ public:
     void Start();
     void Stop();
     bool IsStarted() const;
+    bool IsStoreValid() const;
 
     using guilds_type = Store::guilds_type;
     using channels_type = Store::channels_type;
@@ -81,7 +82,7 @@ public:
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     const Message *GetMessage(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
-    const User *GetUser(Snowflake id) const;
+    std::optional<User> GetUser(Snowflake id) const;
     const Role *GetRole(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
     const GuildMember *GetMember(Snowflake user_id, Snowflake guild_id) const;

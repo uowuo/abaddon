@@ -69,6 +69,9 @@ if(NOT USE_PKGCONFIG)
 
 	find_package(nlohmann_json 3.2.0 REQUIRED)
 
+	find_package(unofficial-sqlite3 CONFIG REQUIRED)
+	link_libraries(unofficial::sqlite3::sqlite3)
+
 	find_path(IXWEBSOCKET_INCLUDE_DIRS ixwebsocket/ixwebsocket.h)
 	find_library(IXWEBSOCKET_LIBRARY ixwebsocket)
 	link_libraries(${IXWEBSOCKET_LIBRARY})

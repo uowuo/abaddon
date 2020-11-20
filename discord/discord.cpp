@@ -47,6 +47,10 @@ bool DiscordClient::IsStarted() const {
     return m_client_connected;
 }
 
+bool DiscordClient::IsStoreValid() const {
+    return m_store.IsValid();
+}
+
 std::unordered_set<Snowflake> DiscordClient::GetGuildsID() const {
     const auto &guilds = m_store.GetGuilds();
     std::unordered_set<Snowflake> ret;
@@ -121,6 +125,8 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
         std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
+
+        m_store.BeginTransaction();
         for (const auto &msg : msgs) {
             m_store.SetMessage(msg.ID, msg);
             AddMessageToChannel(msg.ID, id);
@@ -128,6 +134,7 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
+        m_store.EndTransaction();
 
         cb(ids);
     });
@@ -142,6 +149,8 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
         std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
+
+        m_store.BeginTransaction();
         for (const auto &msg : msgs) {
             m_store.SetMessage(msg.ID, msg);
             AddMessageToChannel(msg.ID, channel_id);
@@ -149,6 +158,7 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
+        m_store.EndTransaction();
 
         cb(ids);
     });
@@ -162,7 +172,7 @@ const Channel *DiscordClient::GetChannel(Snowflake id) const {
     return m_store.GetChannel(id);
 }
 
-const User *DiscordClient::GetUser(Snowflake id) const {
+std::optional<User> DiscordClient::GetUser(Snowflake id) const {
     return m_store.GetUser(id);
 }
 
@@ -594,11 +604,13 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     for (auto &g : data.Guilds)
         ProcessNewGuild(g);
 
+    m_store.BeginTransaction();
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
         for (const auto &recipient : dm.Recipients)
             m_store.SetUser(recipient.ID, recipient);
     }
+    m_store.EndTransaction();
 
     m_session_id = data.SessionID;
     m_user_data = data.User;
@@ -642,8 +654,10 @@ void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     PresenceUpdateMessage data = msg.Data;
     auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
-    if (cur != nullptr)
+    if (cur.has_value()) {
         User::update_from_json(data.User, *cur);
+        m_store.SetUser(cur->ID, *cur);
+    }
 }
 
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
@@ -715,6 +729,8 @@ void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg) {
     GuildMemberListUpdateMessage data = msg.Data;
 
+    m_store.BeginTransaction();
+
     bool has_sync = false;
     for (const auto &op : data.Ops) {
         if (op.Op == "SYNC") {
@@ -729,6 +745,8 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
             }
         }
     }
+
+    m_store.EndTransaction();
 
     // todo: manage this event a little better
     if (has_sync)
