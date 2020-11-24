@@ -16,7 +16,8 @@
 
 Abaddon::Abaddon()
     : m_settings("abaddon.ini")
-    , m_emojis("res/emojis.bin") {
+    , m_emojis("res/emojis.bin")
+    , m_discord(m_settings.GetSettingBool("discord", "memory_db", false)) { // stupid but easy
     LoadFromSettings();
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
@@ -360,7 +361,7 @@ void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
-    const auto *msg = m_discord.GetMessage(id);
+    const auto msg = m_discord.GetMessage(id);
     EditMessageDialog dlg(*m_main_window);
     dlg.SetContent(msg->Content);
     auto response = dlg.run();

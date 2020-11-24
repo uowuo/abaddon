@@ -215,7 +215,7 @@ ChannelList::ChannelList() {
     // maybe will regret doing it this way
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_message_create().connect(sigc::track_obj([this, &discord](Snowflake message_id) {
-        const auto *message = discord.GetMessage(message_id);
+        const auto message = discord.GetMessage(message_id);
         const auto *channel = discord.GetChannel(message->ChannelID);
         if (channel == nullptr) return;
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)

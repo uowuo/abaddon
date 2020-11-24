@@ -55,7 +55,7 @@ public:
     static const constexpr char *GatewayIdentity = "Discord";
 
 public:
-    DiscordClient();
+    DiscordClient(bool mem_store = false);
     void Start();
     void Stop();
     bool IsStarted() const;
@@ -80,18 +80,17 @@ public:
     void FetchInviteData(std::string code, std::function<void(Invite)> cb, std::function<void(bool)> err);
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
-    const Message *GetMessage(Snowflake id) const;
+    std::optional<Message> GetMessage(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
+    std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
-    const Role *GetRole(Snowflake id) const;
+    std::optional<Role> GetRole(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
     const GuildMember *GetMember(Snowflake user_id, Snowflake guild_id) const;
-    const PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     const Emoji *GetEmoji(Snowflake id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
-    std::unordered_set<Snowflake> GetRolesInGuild(Snowflake id) const;
     std::unordered_set<Snowflake> GetChannelsInGuild(Snowflake id) const;
 
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;

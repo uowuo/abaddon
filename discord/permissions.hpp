@@ -46,9 +46,9 @@ struct Bitwise<Permission> {
 };
 
 struct PermissionOverwrite {
-    enum OverwriteType {
-        ROLE,
-        MEMBER,
+    enum OverwriteType : uint8_t {
+        ROLE = 0,
+        MEMBER = 1,
     };
 
     Snowflake ID;

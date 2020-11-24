@@ -111,7 +111,7 @@ void MemberList::UpdateMemberListInternal() {
     }
 
     // process all the shit first so its in proper order
-    std::map<int, const Role *> pos_to_role;
+    std::map<int, Role> pos_to_role;
     std::map<int, std::vector<User>> pos_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
@@ -128,19 +128,15 @@ void MemberList::UpdateMemberListInternal() {
         auto pos_role = discord.GetRole(pos_role_id);
         auto col_role = discord.GetRole(col_role_id);
 
-        if (pos_role == nullptr) {
+        if (!pos_role.has_value()) {
             roleless_users.push_back(id);
             continue;
         };
 
-        pos_to_role[pos_role->Position] = pos_role;
+        pos_to_role[pos_role->Position] = *pos_role;
         pos_to_users[pos_role->Position].push_back(std::move(*user));
-        if (col_role != nullptr) {
-            if (ColorDistance(col_role->Color, 0xFFFFFF) < 15)
-                user_to_color[id] = 0x000000;
-            else
-                user_to_color[id] = col_role->Color;
-        }
+        if (col_role.has_value())
+            user_to_color[id] = col_role->Color;
     }
 
     auto add_user = [this, &user_to_color](const User *data) {
@@ -191,9 +187,9 @@ void MemberList::UpdateMemberListInternal() {
 
     for (auto it = pos_to_role.crbegin(); it != pos_to_role.crend(); it++) {
         auto pos = it->first;
-        auto role = it->second;
+        const auto &role = it->second;
 
-        add_role(role->Name);
+        add_role(role.Name);
 
         if (pos_to_users.find(pos) == pos_to_users.end()) continue;
 

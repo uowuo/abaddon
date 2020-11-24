@@ -39,5 +39,5 @@ struct Channel {
     friend void from_json(const nlohmann::json &j, Channel &m);
     void update_from_json(const nlohmann::json &j);
 
-    const PermissionOverwrite *GetOverwrite(Snowflake id) const;
+    std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
 };

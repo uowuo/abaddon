@@ -1,12 +1,23 @@
 #include "sticker.hpp"
 
+void to_json(nlohmann::json &j, const Sticker &m) {
+    j["id"] = m.ID;
+    j["pack_id"] = m.PackID;
+    j["name"] = m.Name;
+    j["description"] = m.Description;
+    JS_IF("tags", m.Tags);
+    JS_IF("asset", m.AssetHash);
+    JS_IF("preview_asset", m.PreviewAssetHash);
+    j["format_type"] = m.FormatType;
+}
+
 void from_json(const nlohmann::json &j, Sticker &m) {
     JS_D("id", m.ID);
     JS_D("pack_id", m.PackID);
     JS_D("name", m.Name);
     JS_D("description", m.Description);
     JS_O("tags", m.Tags);
-    JS_D("asset", m.AssetHash);
+    JS_O("asset", m.AssetHash);
     JS_N("preview_asset", m.PreviewAssetHash);
     JS_D("format_type", m.FormatType);
 }

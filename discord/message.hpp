@@ -35,89 +35,99 @@ enum class MessageFlags {
 };
 
 struct EmbedFooterData {
-    std::string Text;         //
-    std::string IconURL;      // opt
-    std::string ProxyIconURL; // opt
+    std::string Text;
+    std::optional<std::string> IconURL;
+    std::optional<std::string> ProxyIconURL;
 
+    friend void to_json(nlohmann::json &j, const EmbedFooterData &m);
     friend void from_json(const nlohmann::json &j, EmbedFooterData &m);
 };
 
 struct EmbedImageData {
-    std::string URL;      // opt
-    std::string ProxyURL; // opt
-    int Height = 0;       // opt
-    int Width = 0;        // opt
+    std::optional<std::string> URL;
+    std::optional<std::string> ProxyURL;
+    std::optional<int> Height;
+    std::optional<int> Width;
 
+    friend void to_json(nlohmann::json &j, const EmbedImageData &m);
     friend void from_json(const nlohmann::json &j, EmbedImageData &m);
 };
 
 struct EmbedThumbnailData {
-    std::string URL;      // opt
-    std::string ProxyURL; // opt
-    int Height = 0;       // opt
-    int Width = 0;        // opt
+    std::optional<std::string> URL;
+    std::optional<std::string> ProxyURL;
+    std::optional<int> Height;
+    std::optional<int> Width;
 
+    friend void to_json(nlohmann::json &j, const EmbedThumbnailData &m);
     friend void from_json(const nlohmann::json &j, EmbedThumbnailData &m);
 };
 
 struct EmbedVideoData {
-    std::string URL; // opt
-    int Height = 0;  // opt
-    int Width = 0;   // opt
+    std::optional<std::string> URL;
+    std::optional<int> Height;
+    std::optional<int> Width;
+
+    friend void to_json(nlohmann::json &j, const EmbedVideoData &m);
     friend void from_json(const nlohmann::json &j, EmbedVideoData &m);
 };
 
 struct EmbedProviderData {
-    std::string Name; // opt
-    std::string URL;  // opt, null (docs wrong)
+    std::optional<std::string> Name;
+    std::optional<std::string> URL; // null
 
+    friend void to_json(nlohmann::json &j, const EmbedProviderData &m);
     friend void from_json(const nlohmann::json &j, EmbedProviderData &m);
 };
 
 struct EmbedAuthorData {
-    std::string Name;         // opt
-    std::string URL;          // opt
-    std::string IconURL;      // opt
-    std::string ProxyIconURL; // opt
+    std::optional<std::string> Name;
+    std::optional<std::string> URL;
+    std::optional<std::string> IconURL;
+    std::optional<std::string> ProxyIconURL;
 
+    friend void to_json(nlohmann::json &j, const EmbedAuthorData &m);
     friend void from_json(const nlohmann::json &j, EmbedAuthorData &m);
 };
 
 struct EmbedFieldData {
-    std::string Name;    //
-    std::string Value;   //
-    bool Inline = false; // opt
+    std::string Name;
+    std::string Value;
+    std::optional<bool> Inline;
 
+    friend void to_json(nlohmann::json &j, const EmbedFieldData &m);
     friend void from_json(const nlohmann::json &j, EmbedFieldData &m);
 };
 
 struct EmbedData {
-    std::string Title;                  // opt
-    std::string Type;                   // opt
-    std::string Description;            // opt
-    std::string URL;                    // opt
-    std::string Timestamp;              // opt
-    int Color = -1;                     // opt
-    EmbedFooterData Footer;             // opt
-    EmbedImageData Image;               // opt
-    EmbedThumbnailData Thumbnail;       // opt
-    EmbedVideoData Video;               // opt
-    EmbedProviderData Provider;         // opt
-    EmbedAuthorData Author;             // opt
-    std::vector<EmbedFieldData> Fields; // opt
+    std::optional<std::string> Title;
+    std::optional<std::string> Type;
+    std::optional<std::string> Description;
+    std::optional<std::string> URL;
+    std::optional<std::string> Timestamp;
+    std::optional<int> Color;
+    std::optional<EmbedFooterData> Footer;
+    std::optional<EmbedImageData> Image;
+    std::optional<EmbedThumbnailData> Thumbnail;
+    std::optional<EmbedVideoData> Video;
+    std::optional<EmbedProviderData> Provider;
+    std::optional<EmbedAuthorData> Author;
+    std::optional<std::vector<EmbedFieldData>> Fields;
 
+    friend void to_json(nlohmann::json &j, const EmbedData &m);
     friend void from_json(const nlohmann::json &j, EmbedData &m);
 };
 
 struct AttachmentData {
-    Snowflake ID;         //
-    std::string Filename; //
-    int Bytes;            //
-    std::string URL;      //
-    std::string ProxyURL; //
-    int Height = -1;      // opt, null
-    int Width = -1;       // opt, null
+    Snowflake ID;
+    std::string Filename;
+    int Bytes;
+    std::string URL;
+    std::string ProxyURL;
+    std::optional<int> Height; // null
+    std::optional<int> Width;  // null
 
+    friend void to_json(nlohmann::json &j, const AttachmentData &m);
     friend void from_json(const nlohmann::json &j, AttachmentData &m);
 };
 
@@ -141,7 +151,7 @@ struct Message {
     std::string EditedTimestamp; // null
     bool IsTTS;
     bool DoesMentionEveryone;
-    std::vector<User> Mentions;
+    std::vector<User> Mentions; // currently discarded in store
     // std::vector<Role> MentionRoles;
     // std::optional<std::vector<ChannelMentionData>> MentionChannels;
     std::vector<AttachmentData> Attachments;

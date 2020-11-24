@@ -1,9 +1,22 @@
 #include "message.hpp"
 
+void to_json(nlohmann::json &j, const EmbedFooterData &m) {
+    j["text"] = m.Text;
+    JS_IF("icon_url", m.IconURL);
+    JS_IF("proxy_icon_url", m.ProxyIconURL);
+}
+
 void from_json(const nlohmann::json &j, EmbedFooterData &m) {
     JS_D("text", m.Text);
     JS_O("icon_url", m.IconURL);
     JS_O("proxy_icon_url", m.ProxyIconURL);
+}
+
+void to_json(nlohmann::json &j, const EmbedImageData &m) {
+    JS_IF("url", m.URL);
+    JS_IF("proxy_url", m.ProxyURL);
+    JS_IF("height", m.Height);
+    JS_IF("width", m.Width);
 }
 
 void from_json(const nlohmann::json &j, EmbedImageData &m) {
@@ -13,11 +26,24 @@ void from_json(const nlohmann::json &j, EmbedImageData &m) {
     JS_O("width", m.Width);
 }
 
+void to_json(nlohmann::json &j, const EmbedThumbnailData &m) {
+    JS_IF("url", m.URL);
+    JS_IF("proxy_url", m.ProxyURL);
+    JS_IF("height", m.Height);
+    JS_IF("width", m.Width);
+}
+
 void from_json(const nlohmann::json &j, EmbedThumbnailData &m) {
     JS_O("url", m.URL);
     JS_O("proxy_url", m.ProxyURL);
     JS_O("height", m.Height);
     JS_O("width", m.Width);
+}
+
+void to_json(nlohmann::json &j, const EmbedVideoData &m) {
+    JS_IF("url", m.URL);
+    JS_IF("height", m.Height);
+    JS_IF("width", m.Width);
 }
 
 void from_json(const nlohmann::json &j, EmbedVideoData &m) {
@@ -26,9 +52,21 @@ void from_json(const nlohmann::json &j, EmbedVideoData &m) {
     JS_O("width", m.Width);
 }
 
+void to_json(nlohmann::json &j, const EmbedProviderData &m) {
+    JS_IF("name", m.Name);
+    JS_IF("url", m.URL);
+}
+
 void from_json(const nlohmann::json &j, EmbedProviderData &m) {
     JS_O("name", m.Name);
     JS_ON("url", m.URL);
+}
+
+void to_json(nlohmann::json &j, const EmbedAuthorData &m) {
+    JS_IF("name", m.Name);
+    JS_IF("url", m.URL);
+    JS_IF("icon_url", m.IconURL);
+    JS_IF("proxy_icon_url", m.ProxyIconURL);
 }
 
 void from_json(const nlohmann::json &j, EmbedAuthorData &m) {
@@ -38,10 +76,32 @@ void from_json(const nlohmann::json &j, EmbedAuthorData &m) {
     JS_O("proxy_icon_url", m.ProxyIconURL);
 }
 
+void to_json(nlohmann::json &j, const EmbedFieldData &m) {
+    j["name"] = m.Name;
+    j["value"] = m.Value;
+    JS_IF("inline", m.Inline);
+}
+
 void from_json(const nlohmann::json &j, EmbedFieldData &m) {
     JS_D("name", m.Name);
     JS_D("value", m.Value);
     JS_O("inline", m.Inline);
+}
+
+void to_json(nlohmann::json &j, const EmbedData &m) {
+    JS_IF("title", m.Title);
+    JS_IF("type", m.Type);
+    JS_IF("description", m.Description);
+    JS_IF("url", m.URL);
+    JS_IF("timestamp", m.Timestamp);
+    JS_IF("color", m.Color);
+    JS_IF("footer", m.Footer);
+    JS_IF("image", m.Image);
+    JS_IF("thumbnail", m.Thumbnail);
+    JS_IF("video", m.Video);
+    JS_IF("provider", m.Provider);
+    JS_IF("author", m.Author);
+    JS_IF("fields", m.Fields);
 }
 
 void from_json(const nlohmann::json &j, EmbedData &m) {
@@ -58,6 +118,16 @@ void from_json(const nlohmann::json &j, EmbedData &m) {
     JS_O("provider", m.Provider);
     JS_O("author", m.Author);
     JS_O("fields", m.Fields);
+}
+
+void to_json(nlohmann::json &j, const AttachmentData &m) {
+    j["id"] = m.ID;
+    j["filename"] = m.Filename;
+    j["size"] = m.Bytes;
+    j["url"] = m.URL;
+    j["proxy_url"] = m.ProxyURL;
+    JS_IF("height", m.Height);
+    JS_IF("width", m.Width);
 }
 
 void from_json(const nlohmann::json &j, AttachmentData &m) {
@@ -107,7 +177,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_D("type", m.Type);
     // JS_O("activity", m.Activity);
     // JS_O("application", m.Application);
-    // JS_O("message_reference", m.MessageReference);
+    JS_O("message_reference", m.MessageReference);
     JS_O("flags", m.Flags);
     JS_O("stickers", m.Stickers);
 }

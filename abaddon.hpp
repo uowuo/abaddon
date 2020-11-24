@@ -87,6 +87,8 @@ protected:
     void on_user_menu_open_dm();
 
 private:
+    SettingsManager m_settings;
+
     DiscordClient m_discord;
     std::string m_discord_token;
     // todo make these map snowflake to attribs
@@ -101,6 +103,5 @@ private:
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     Glib::RefPtr<Gtk::CssProvider> m_css_provider;
-    SettingsManager m_settings;
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
 };

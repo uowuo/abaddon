@@ -6,14 +6,14 @@
 #include "user.hpp"
 
 struct Emoji {
-    Snowflake ID;                 // null
-    std::string Name;             // null (in reactions)
-    std::vector<Snowflake> Roles; // opt
-    User Creator;                 // opt
-    bool NeedsColons = false;     // opt
-    bool IsManaged = false;       // opt
-    bool IsAnimated = false;      // opt
-    bool IsAvailable = false;     // opt
+    Snowflake ID;     // null
+    std::string Name; // null (in reactions)
+    std::optional<std::vector<Snowflake>> Roles;
+    std::optional<User> Creator; // only reliable to access ID
+    std::optional<bool> NeedsColons;
+    std::optional<bool> IsManaged;
+    std::optional<bool> IsAnimated;
+    std::optional<bool> IsAvailable;
 
     friend void from_json(const nlohmann::json &j, Emoji &m);
 

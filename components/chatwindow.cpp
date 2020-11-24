@@ -157,8 +157,8 @@ ChatMessageItemContainer *ChatWindow::CreateMessageComponent(Snowflake id) {
 void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     const auto &client = Abaddon::Get().GetDiscordClient();
     if (!client.IsStarted()) return; // e.g. load channel and then dc
-    const auto *data = client.GetMessage(id);
-    if (data == nullptr) return;
+    const auto data = client.GetMessage(id);
+    if (!data.has_value()) return;
 
     ChatMessageHeader *last_row = nullptr;
     bool should_attach = false;
@@ -182,7 +182,7 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         const auto user = client.GetUser(user_id);
         if (!user.has_value()) return;
 
-        header = Gtk::manage(new ChatMessageHeader(data));
+        header = Gtk::manage(new ChatMessageHeader(&*data));
         header->signal_action_insert_mention().connect([this, user_id]() {
             m_signal_action_insert_mention.emit(user_id);
         });

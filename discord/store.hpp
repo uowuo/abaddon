@@ -12,7 +12,7 @@
 
 class Store {
 public:
-    Store();
+    Store(bool mem_store = false);
     ~Store();
 
     bool IsValid() const;
@@ -30,18 +30,15 @@ public:
 
     Channel *GetChannel(Snowflake id);
     Guild *GetGuild(Snowflake id);
-    Role *GetRole(Snowflake id);
-    Message *GetMessage(Snowflake id);
     GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id);
-    PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id);
     Emoji *GetEmoji(Snowflake id);
+    std::optional<Message> GetMessage(Snowflake id) const;
+    std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
+    std::optional<Role> GetRole(Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
-    const Role *GetRole(Snowflake id) const;
-    const Message *GetMessage(Snowflake id) const;
     const GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const;
-    const PermissionOverwrite *GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     const Emoji *GetEmoji(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
@@ -58,7 +55,6 @@ public:
 
     const channels_type &GetChannels() const;
     const guilds_type &GetGuilds() const;
-    const roles_type &GetRoles() const;
 
     void ClearAll();
 
@@ -66,13 +62,9 @@ public:
     void EndTransaction();
 
 private:
-    users_type m_users;
     channels_type m_channels;
     guilds_type m_guilds;
-    roles_type m_roles;
-    messages_type m_messages;
     members_type m_members;
-    permission_overwrites_type m_permissions;
     emojis_type m_emojis;
 
     bool CreateTables();
@@ -85,6 +77,7 @@ private:
     void Bind(sqlite3_stmt *stmt, int index, uint64_t num) const;
     void Bind(sqlite3_stmt *stmt, int index, const std::string &str) const;
     void Bind(sqlite3_stmt *stmt, int index, bool val) const;
+    void Bind(sqlite3_stmt *stmt, int index, std::nullptr_t) const;
     bool RunInsert(sqlite3_stmt *stmt);
     bool FetchOne(sqlite3_stmt *stmt) const;
     template<typename T>
@@ -101,6 +94,14 @@ private:
     mutable int m_db_err;
     mutable sqlite3_stmt *m_set_user_stmt;
     mutable sqlite3_stmt *m_get_user_stmt;
+    mutable sqlite3_stmt *m_set_perm_stmt;
+    mutable sqlite3_stmt *m_get_perm_stmt;
+    mutable sqlite3_stmt *m_set_msg_stmt;
+    mutable sqlite3_stmt *m_get_msg_stmt;
+    mutable sqlite3_stmt *m_set_role_stmt;
+    mutable sqlite3_stmt *m_get_role_stmt;
+    mutable sqlite3_stmt *m_set_emote_stmt;
+    mutable sqlite3_stmt *m_get_emote_stmt;
 };
 
 template<typename T>

@@ -33,22 +33,22 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
 }
 
 ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(id);
-    if (data == nullptr) return nullptr;
+    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(id);
+    if (!data.has_value()) return nullptr;
 
     auto *container = Gtk::manage(new ChatMessageItemContainer);
     container->ID = data->ID;
     container->ChannelID = data->ChannelID;
 
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
-        container->m_text_component = container->CreateTextComponent(data);
+        container->m_text_component = container->CreateTextComponent(&*data);
         container->AttachGuildMenuHandler(container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
-        container->m_embed_component = container->CreateEmbedComponent(data);
+        container->m_embed_component = container->CreateEmbedComponent(&*data);
         container->AttachGuildMenuHandler(container->m_embed_component);
         container->m_main->add(*container->m_embed_component);
     }
@@ -83,7 +83,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
 // this doesnt rly make sense
 void ChatMessageItemContainer::UpdateContent() {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (m_text_component != nullptr)
         UpdateTextComponent(m_text_component);
 
@@ -93,7 +93,7 @@ void ChatMessageItemContainer::UpdateContent() {
     }
 
     if (data->Embeds.size() == 1) {
-        m_embed_component = CreateEmbedComponent(data);
+        m_embed_component = CreateEmbedComponent(&*data);
         if (m_embed_imgurl.size() > 0) {
             m_signal_image_load.emit(m_embed_imgurl);
         }
@@ -115,15 +115,19 @@ void ChatMessageItemContainer::UpdateImage(std::string url, Glib::RefPtr<Gdk::Pi
 
     auto it = m_img_loadmap.find(url);
     if (it != m_img_loadmap.end()) {
-        int w, h;
-        GetImageDimensions(it->second.second.Width, it->second.second.Height, w, h);
-        it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
+        const auto inw = it->second.second.Width;
+        const auto inh = it->second.second.Height;
+        if (inw.has_value() && inh.has_value()) {
+            int w, h;
+            GetImageDimensions(*inw, *inh, w, h);
+            it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
+        }
     }
 }
 
 void ChatMessageItemContainer::UpdateAttributes() {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
-    if (data == nullptr) return;
+    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (!data.has_value()) return;
 
     const bool deleted = data->IsDeleted();
     const bool edited = data->IsEdited();
@@ -176,9 +180,8 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data
 }
 
 void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
-    if (data == nullptr)
-        return;
+    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (!data.has_value()) return;
 
     auto b = tv->get_buffer();
     b->set_text("");
@@ -208,21 +211,21 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
     Gtk::Box *main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     const auto &embed = data->Embeds[0];
 
-    if (embed.Author.Name.length() > 0) {
+    if (embed.Author.has_value() && embed.Author->Name.has_value()) {
         auto *author_lbl = Gtk::manage(new Gtk::Label);
         author_lbl->set_halign(Gtk::ALIGN_START);
         author_lbl->set_line_wrap(true);
         author_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         author_lbl->set_hexpand(false);
-        author_lbl->set_text(embed.Author.Name);
+        author_lbl->set_text(*embed.Author->Name);
         author_lbl->get_style_context()->add_class("embed-author");
         main->pack_start(*author_lbl);
     }
 
-    if (embed.Title.length() > 0) {
+    if (embed.Title.has_value()) {
         auto *title_label = Gtk::manage(new Gtk::Label);
         title_label->set_use_markup(true);
-        title_label->set_markup("<b>" + Glib::Markup::escape_text(embed.Title) + "</b>");
+        title_label->set_markup("<b>" + Glib::Markup::escape_text(*embed.Title) + "</b>");
         title_label->set_halign(Gtk::ALIGN_CENTER);
         title_label->set_hexpand(false);
         title_label->get_style_context()->add_class("embed-title");
@@ -233,9 +236,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
         main->pack_start(*title_label);
     }
 
-    if (embed.Description.length() > 0) {
+    if (embed.Description.has_value()) {
         auto *desc_label = Gtk::manage(new Gtk::Label);
-        desc_label->set_text(embed.Description);
+        desc_label->set_text(*embed.Description);
         desc_label->set_line_wrap(true);
         desc_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         desc_label->set_max_width_chars(50);
@@ -246,7 +249,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
     }
 
     // todo: handle inline fields
-    if (embed.Fields.size() > 0) {
+    if (embed.Fields.has_value() && embed.Fields->size() > 0) {
         auto *flow = Gtk::manage(new Gtk::FlowBox);
         flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         flow->set_min_children_per_line(3);
@@ -257,7 +260,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
         flow->set_selection_mode(Gtk::SELECTION_NONE);
         main->pack_start(*flow);
 
-        for (const auto &field : embed.Fields) {
+        for (const auto &field : *embed.Fields) {
             auto *field_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
             auto *field_lbl = Gtk::manage(new Gtk::Label);
             auto *field_val = Gtk::manage(new Gtk::Label);
@@ -287,42 +290,44 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
         }
     }
 
-    bool is_img = embed.Image.URL.size() > 0;
-    bool is_thumb = embed.Thumbnail.URL.size() > 0;
-    if (is_img || is_thumb) {
-        auto *img = Gtk::manage(new Gtk::Image);
-        img->set_halign(Gtk::ALIGN_CENTER);
-        int w, h;
-        if (is_img)
-            GetImageDimensions(embed.Image.Width, embed.Image.Height, w, h, 200, 150);
-        else
-            GetImageDimensions(embed.Thumbnail.Width, embed.Thumbnail.Height, w, h, 200, 150);
-        img->set_size_request(w, h);
-        main->pack_start(*img);
-        m_embed_img = img;
-        if (is_img)
-            m_embed_imgurl = embed.Image.ProxyURL;
-        else
-            m_embed_imgurl = embed.Thumbnail.ProxyURL;
-        Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), m_embed_imgurl));
+    if (embed.Image.has_value()) {
+        bool is_img = embed.Image->URL.has_value();
+        bool is_thumb = embed.Thumbnail.has_value();
+        if (is_img || is_thumb) {
+            auto *img = Gtk::manage(new Gtk::Image);
+            img->set_halign(Gtk::ALIGN_CENTER);
+            int w = 0, h = 0;
+            if (is_img)
+                GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, 200, 150);
+            else
+                GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, 200, 150);
+            img->set_size_request(w, h);
+            main->pack_start(*img);
+            m_embed_img = img;
+            if (is_img)
+                m_embed_imgurl = *embed.Image->ProxyURL;
+            else
+                m_embed_imgurl = *embed.Thumbnail->ProxyURL;
+            Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), m_embed_imgurl));
+        }
     }
 
-    if (embed.Footer.Text.length() > 0) {
+    if (embed.Footer.has_value()) {
         auto *footer_lbl = Gtk::manage(new Gtk::Label);
         footer_lbl->set_halign(Gtk::ALIGN_START);
         footer_lbl->set_line_wrap(true);
         footer_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         footer_lbl->set_hexpand(false);
-        footer_lbl->set_text(embed.Footer.Text);
+        footer_lbl->set_text(embed.Footer->Text);
         footer_lbl->get_style_context()->add_class("embed-footer");
         main->pack_start(*footer_lbl);
     }
 
     auto style = main->get_style_context();
 
-    if (embed.Color != -1) {
+    if (embed.Color.has_value()) {
         auto provider = Gtk::CssProvider::create(); // this seems wrong
-        std::string css = ".embed { border-left: 2px solid #" + IntToCSSColor(embed.Color) + "; }";
+        std::string css = ".embed { border-left: 2px solid #" + IntToCSSColor(*embed.Color) + "; }";
         provider->load_from_data(css);
         style->add_provider(provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
@@ -343,7 +348,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
 
 Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
     int w, h;
-    GetImageDimensions(data.Width, data.Height, w, h);
+    GetImageDimensions(*data.Width, *data.Height, w, h);
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new Gtk::Image);
@@ -429,8 +434,8 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
             replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
         else {
             const auto role_id = user->GetHoistedRole(channel->GuildID, true);
-            const auto *role = discord.GetRole(role_id);
-            if (role == nullptr)
+            const auto role = discord.GetRole(role_id);
+            if (!role.has_value())
                 replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
             else
                 replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
@@ -658,7 +663,7 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {
     const auto &client = Abaddon::Get().GetDiscordClient();
-    const auto *data = client.GetMessage(ID);
+    const auto data = client.GetMessage(ID);
     if (data->IsDeleted()) {
         m_menu_delete_message->set_sensitive(false);
         m_menu_edit_message->set_sensitive(false);
@@ -685,8 +690,8 @@ void ChatMessageItemContainer::on_menu_edit_message() {
 }
 
 void ChatMessageItemContainer::on_menu_copy_content() {
-    const auto *msg = Abaddon::Get().GetDiscordClient().GetMessage(ID);
-    if (msg != nullptr)
+    const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (msg.has_value())
         Gtk::Clipboard::get()->set_text(msg->Content);
 }
 
@@ -731,13 +736,18 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_timestamp = Gtk::manage(new Gtk::Label);
     m_avatar_ev = Gtk::manage(new Gtk::EventBox);
 
+    const auto author = Abaddon::Get().GetDiscordClient().GetUser(UserID);
     auto &img = Abaddon::Get().GetImageManager();
-    auto buf = img.GetFromURLIfCached(data->Author.GetAvatarURL());
+    Glib::RefPtr<Gdk::Pixbuf> buf;
+    if (author.has_value())
+        buf = img.GetFromURLIfCached(author->GetAvatarURL());
+
     if (buf)
         m_avatar = Gtk::manage(new Gtk::Image(buf));
     else {
         m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(32)));
-        img.LoadFromURL(data->Author.GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
+        if (author.has_value())
+            img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
     }
 
     get_style_context()->add_class("message-container");
@@ -816,10 +826,10 @@ void ChatMessageHeader::UpdateNameColor() {
     const auto role_id = discord.GetMemberHoistedRole(guild_id, UserID, true);
     const auto user = discord.GetUser(UserID);
     if (!user.has_value()) return;
-    const auto *role = discord.GetRole(role_id);
+    const auto role = discord.GetRole(role_id);
 
     std::string md;
-    if (role != nullptr)
+    if (role.has_value())
         md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + Glib::Markup::escape_text(user->Username) + "</span>";
     else
         md = "<span weight='bold' color='#eeeeee'>" + Glib::Markup::escape_text(user->Username) + "</span>";

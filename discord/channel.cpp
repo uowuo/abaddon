@@ -42,6 +42,6 @@ void Channel::update_from_json(const nlohmann::json &j) {
     JS_RD("last_pin_timestamp", LastPinTimestamp);
 }
 
-const PermissionOverwrite *Channel::GetOverwrite(Snowflake id) const {
+std::optional<PermissionOverwrite> Channel::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

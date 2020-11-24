@@ -22,6 +22,7 @@ struct Sticker {
     std::optional<std::string> PreviewAssetHash;
     StickerFormatType FormatType;
 
+    friend void to_json(nlohmann::json &j, const Sticker &m);
     friend void from_json(const nlohmann::json &j, Sticker &m);
 
     std::string GetURL() const;
