@@ -85,15 +85,15 @@ void Cache::OnResponse(const cpr::Response &r) {
     if (r.error || r.status_code > 300) return;
 
     std::vector<uint8_t> data(r.text.begin(), r.text.end());
-    auto path = m_tmp_path / SanitizeString(r.url);
+    auto path = m_tmp_path / SanitizeString(static_cast<std::string>(r.url));
     FILE *fp = std::fopen(path.string().c_str(), "wb");
     if (fp == nullptr)
         return;
     std::fwrite(data.data(), 1, data.size(), fp);
     std::fclose(fp);
 
-    for (const auto &cb : m_callbacks[r.url]) {
+    for (const auto &cb : m_callbacks[static_cast<std::string>(r.url)]) {
         cb(path.string());
     }
-    m_callbacks.erase(r.url);
+    m_callbacks.erase(static_cast<std::string>(r.url));
 }
