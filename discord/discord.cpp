@@ -421,6 +421,11 @@ void DiscordClient::UpdateToken(std::string token) {
     }
 }
 
+void DiscordClient::SetUserAgent(std::string agent) {
+    m_http.SetUserAgent(agent);
+    m_websocket.SetUserAgent(agent);
+}
+
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
     // handles multiple zlib compressed messages, calling HandleGatewayMessage when a full message is received
     std::vector<uint8_t> buf(str.begin(), str.end());

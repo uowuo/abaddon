@@ -19,6 +19,11 @@ Abaddon::Abaddon()
     , m_emojis("res/emojis.bin") {
     LoadFromSettings();
 
+    // todo: set user agent for non-client(?)
+    std::string ua = m_settings.GetSettingString("http", "user_agent", "");
+    if (ua != "")
+        m_discord.SetUserAgent(ua);
+
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
     m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
