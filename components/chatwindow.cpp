@@ -139,6 +139,7 @@ bool ChatWindow::on_key_press_event(GdkEventKey *e) {
 
         auto buf = m_input->get_buffer();
         auto text = buf->get_text();
+        if (text.size() == 0) return true;
         buf->set_text("");
 
         m_signal_action_chat_submit.emit(text, m_active_channel);
