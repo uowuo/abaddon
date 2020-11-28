@@ -6,6 +6,10 @@ HTTPClient::HTTPClient(std::string api_base)
     m_dispatcher.connect(sigc::mem_fun(*this, &HTTPClient::RunCallbacks));
 }
 
+void HTTPClient::SetUserAgent(std::string agent) {
+    m_agent = agent;
+}
+
 void HTTPClient::SetAuth(std::string auth) {
     m_authorization = auth;
 }
@@ -16,16 +20,18 @@ void HTTPClient::MakeDELETE(std::string path, std::function<void(cpr::Response r
     auto headers = cpr::Header {
         { "Authorization", m_authorization },
     };
+    auto ua = cpr::UserAgent {m_agent != "" ? m_agent : "Abaddon" };
+
 #ifdef USE_LOCAL_PROXY
     m_futures.push_back(cpr::DeleteCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers,
+        url, headers, ua,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
     m_futures.push_back(cpr::DeleteCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers));
+        url, headers, ua));
 #endif
 }
 
@@ -36,17 +42,19 @@ void HTTPClient::MakePATCH(std::string path, std::string payload, std::function<
         { "Authorization", m_authorization },
         { "Content-Type", "application/json" },
     };
+    auto ua = cpr::UserAgent { m_agent != "" ? m_agent : "Abaddon" };
+
     auto body = cpr::Body { payload };
 #ifdef USE_LOCAL_PROXY
     m_futures.push_back(cpr::PatchCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body,
+        url, headers, body, ua,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
     m_futures.push_back(cpr::PatchCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body));
+        url, headers, body, ua));
 #endif
 }
 
@@ -57,17 +65,19 @@ void HTTPClient::MakePOST(std::string path, std::string payload, std::function<v
         { "Authorization", m_authorization },
         { "Content-Type", "application/json" },
     };
+    auto ua = cpr::UserAgent { m_agent != "" ? m_agent : "Abaddon" };
+
     auto body = cpr::Body { payload };
 #ifdef USE_LOCAL_PROXY
     m_futures.push_back(cpr::PostCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body,
+        url, headers, body, ua,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
     m_futures.push_back(cpr::PostCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body));
+        url, headers, body, ua));
 #endif
 }
 
@@ -78,17 +88,19 @@ void HTTPClient::MakePUT(std::string path, std::string payload, std::function<vo
         { "Authorization", m_authorization },
         { "Content-Type", "application/json" },
     };
+    auto ua = cpr::UserAgent { m_agent != "" ? m_agent : "Abaddon" };
+
     auto body = cpr::Body { payload };
 #ifdef USE_LOCAL_PROXY
     m_futures.push_back(cpr::PutCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body,
+        url, headers, body, ua,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
     m_futures.push_back(cpr::PutCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers, body));
+        url, headers, body, ua));
 #endif
 }
 
@@ -99,16 +111,19 @@ void HTTPClient::MakeGET(std::string path, std::function<void(cpr::Response r)> 
         { "Authorization", m_authorization },
         { "Content-Type", "application/json" },
     };
+    auto ua = cpr::UserAgent { m_agent != "" ? m_agent : "Abaddon" };
+
+    auto x = cpr::UserAgent {};
 #ifdef USE_LOCAL_PROXY
     m_futures.push_back(cpr::GetCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers,
+        url, headers, ua,
         cpr::Proxies { { "http", "127.0.0.1:8888" }, { "https", "127.0.0.1:8888" } },
         cpr::VerifySsl { false }));
 #else
     m_futures.push_back(cpr::GetCallback(
         std::bind(&HTTPClient::OnResponse, this, std::placeholders::_1, cb),
-        url, headers));
+        url, headers, ua));
 #endif
 }
 

@@ -86,8 +86,8 @@ MainWindow::MainWindow()
 
     m_chan_chat_paned.pack1(*channel_list);
     m_chan_chat_paned.pack2(m_chat_members_paned);
-    m_chan_chat_paned.child_property_shrink(*channel_list) = true;
-    m_chan_chat_paned.child_property_resize(*channel_list) = true;
+    m_chan_chat_paned.child_property_shrink(*channel_list) = false;
+    m_chan_chat_paned.child_property_resize(*channel_list) = false;
     m_chan_chat_paned.set_position(200);
     m_content_box.add(m_chan_chat_paned);
 

@@ -112,6 +112,7 @@ public:
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
 
     void UpdateToken(std::string token);
+    void SetUserAgent(std::string agent);
 
 private:
     static const constexpr int InflateChunkSize = 0x10000;

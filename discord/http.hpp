@@ -13,6 +13,7 @@ class HTTPClient {
 public:
     HTTPClient(std::string api_base);
 
+    void SetUserAgent(std::string agent);
     void SetAuth(std::string auth);
     void MakeDELETE(std::string path, std::function<void(cpr::Response r)> cb);
     void MakeGET(std::string path, std::function<void(cpr::Response r)> cb);
@@ -32,4 +33,5 @@ private:
     std::vector<std::future<void>> m_futures;
     std::string m_api_base;
     std::string m_authorization;
+    std::string m_agent;
 };

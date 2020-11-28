@@ -11,6 +11,8 @@ public:
     Websocket();
     void StartConnection(std::string url);
 
+    void SetUserAgent(std::string agent);
+
     void Send(const std::string &str);
     void Send(const nlohmann::json &j);
     void Stop();
@@ -21,6 +23,7 @@ private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);
 
     ix::WebSocket m_websocket;
+    std::string m_agent;
 
 public:
     typedef sigc::signal<void> type_signal_open;

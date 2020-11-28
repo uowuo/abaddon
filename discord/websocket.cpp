@@ -7,7 +7,12 @@ void Websocket::StartConnection(std::string url) {
     m_websocket.disableAutomaticReconnection();
     m_websocket.setUrl(url);
     m_websocket.setOnMessageCallback(std::bind(&Websocket::OnMessage, this, std::placeholders::_1));
+    m_websocket.setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent } }); // idk if this actually works
     m_websocket.start();
+}
+
+void Websocket::SetUserAgent(std::string agent) {
+    m_agent = agent;
 }
 
 void Websocket::Stop() {
