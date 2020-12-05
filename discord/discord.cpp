@@ -185,21 +185,21 @@ const Guild *DiscordClient::GetGuild(Snowflake id) const {
     return m_store.GetGuild(id);
 }
 
-const GuildMember *DiscordClient::GetMember(Snowflake user_id, Snowflake guild_id) const {
-    return m_store.GetGuildMemberData(guild_id, user_id);
+std::optional<GuildMember> DiscordClient::GetMember(Snowflake user_id, Snowflake guild_id) const {
+    return m_store.GetGuildMember(guild_id, user_id);
 }
 
 std::optional<PermissionOverwrite> DiscordClient::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
     return m_store.GetPermissionOverwrite(channel_id, id);
 }
 
-const Emoji *DiscordClient::GetEmoji(Snowflake id) const {
+std::optional<Emoji> DiscordClient::GetEmoji(Snowflake id) const {
     return m_store.GetEmoji(id);
 }
 
 Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
-    auto *data = m_store.GetGuildMemberData(guild_id, user_id);
-    if (data == nullptr) return Snowflake::Invalid;
+    const auto data = GetMember(guild_id, user_id);
+    if (!data.has_value()) return Snowflake::Invalid;
 
     std::vector<Role> roles;
     for (const auto &id : data->Roles) {
@@ -220,8 +220,8 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
 }
 
 Snowflake DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const {
-    const auto *data = GetMember(user_id, guild_id);
-    if (data == nullptr) return Snowflake::Invalid;
+    const auto data = GetMember(user_id, guild_id);
+    if (!data.has_value()) return Snowflake::Invalid;
 
     if (data->Roles.size() == 0) return Snowflake::Invalid;
     if (data->Roles.size() == 1) return data->Roles[0];
@@ -263,9 +263,9 @@ bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id
 }
 
 Permission DiscordClient::ComputePermissions(Snowflake member_id, Snowflake guild_id) const {
-    const auto *member = GetMember(member_id, guild_id);
+    const auto member = GetMember(member_id, guild_id);
     const auto *guild = GetGuild(guild_id);
-    if (member == nullptr || guild == nullptr)
+    if (!member.has_value() || guild == nullptr)
         return Permission::NONE;
 
     if (guild->OwnerID == member_id)
@@ -293,8 +293,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
         return Permission::ALL;
 
     const auto *channel = GetChannel(channel_id);
-    const auto *member = GetMember(member_id, channel->GuildID);
-    if (member == nullptr || channel == nullptr)
+    const auto member = GetMember(member_id, channel->GuildID);
+    if (!member.has_value() || channel == nullptr)
         return Permission::NONE;
 
     Permission perms = base;
@@ -658,7 +658,7 @@ void DiscordClient::HandleGatewayMessageDeleteBulk(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
     GuildMemberUpdateMessage data = msg.Data;
     auto member = GuildMember::from_update_json(msg.Data); // meh
-    m_store.SetGuildMemberData(data.GuildID, data.User.ID, member);
+    m_store.SetGuildMember(data.GuildID, data.User.ID, member);
 }
 
 void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
@@ -753,7 +753,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
                     auto member = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
                     m_store.SetUser(member->User.ID, member->User);
                     AddUserToGuild(member->User.ID, data.GuildID);
-                    m_store.SetGuildMemberData(data.GuildID, member->User.ID, member->GetAsMemberData());
+                    m_store.SetGuildMember(data.GuildID, member->User.ID, member->GetAsMemberData());
                 }
             }
         }

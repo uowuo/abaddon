@@ -103,7 +103,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
     Bind(m_set_msg_stmt, 7, message.EditedTimestamp);
     Bind(m_set_msg_stmt, 8, message.IsTTS);
     Bind(m_set_msg_stmt, 9, message.DoesMentionEveryone);
-    Bind(m_set_msg_stmt, 10, "[]"s); // mentions
+    Bind(m_set_msg_stmt, 10, "[]"s); // mentions, a const char* literal will call the bool overload instead of std::string
     {
         std::string tmp;
         tmp = nlohmann::json(message.Attachments).dump();
@@ -141,8 +141,18 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
-    m_members[guild_id][user_id] = data;
+void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
+    Bind(m_set_member_stmt, 1, user_id);
+    Bind(m_set_member_stmt, 2, guild_id);
+    Bind(m_set_member_stmt, 3, data.Nickname);
+    Bind(m_set_member_stmt, 4, nlohmann::json(data.Roles).dump());
+    Bind(m_set_member_stmt, 5, data.JoinedAt);
+    Bind(m_set_member_stmt, 6, data.PremiumSince);
+    Bind(m_set_member_stmt, 7, data.IsDeafened);
+    Bind(m_set_member_stmt, 8, data.IsMuted);
+    
+    if (!RunInsert(m_set_member_stmt))
+        fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
 void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
@@ -177,8 +187,59 @@ void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
 
     if (!RunInsert(m_set_emote_stmt))
         fprintf(stderr, "emoji insert failed: %s\n", sqlite3_errstr(m_db_err));
+}
 
-    m_emojis[id] = emoji;
+std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
+    Bind(m_get_emote_stmt, 1, id);
+    if (!FetchOne(m_get_emote_stmt)) {
+        if (m_db_err != SQLITE_DONE)
+            fprintf(stderr, "error while fetching emoji: %s\n", sqlite3_errstr(m_db_err));
+        Reset(m_get_emote_stmt);
+        return std::nullopt;
+    }
+
+    Emoji ret;
+    ret.ID = id;
+    Get(m_get_emote_stmt, 1, ret.Name);
+    std::string tmp;
+    Get(m_get_emote_stmt, 2, tmp);
+    ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
+    ret.Creator = std::optional<User>(User());
+    Get(m_get_emote_stmt, 3, ret.Creator->ID);
+    Get(m_get_emote_stmt, 3, ret.NeedsColons);
+    Get(m_get_emote_stmt, 4, ret.IsManaged);
+    Get(m_get_emote_stmt, 5, ret.IsAnimated);
+    Get(m_get_emote_stmt, 6, ret.IsAvailable);
+
+    Reset(m_get_emote_stmt);
+
+    return ret;
+}
+
+std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake user_id) const {
+    Bind(m_get_member_stmt, 1, guild_id);
+    Bind(m_get_member_stmt, 2, user_id);
+    if (!FetchOne(m_get_member_stmt)) {
+        if (m_db_err != SQLITE_DONE)
+            fprintf(stderr, "error while fetching member: %s\n", sqlite3_errstr(m_db_err));
+        Reset(m_get_member_stmt);
+        return std::nullopt;
+    }
+
+    GuildMember ret;
+    ret.User.emplace().ID = user_id;
+    Get(m_get_member_stmt, 2, ret.Nickname);
+    std::string tmp;
+    Get(m_get_member_stmt, 3, tmp);
+    ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
+    Get(m_get_member_stmt, 4, ret.JoinedAt);
+    Get(m_get_member_stmt, 5, ret.PremiumSince);
+    Get(m_get_member_stmt, 6, ret.IsDeafened);
+    Get(m_get_member_stmt, 7, ret.IsMuted);
+
+    Reset(m_get_member_stmt);
+
+    return ret;
 }
 
 std::optional<Message> Store::GetMessage(Snowflake id) const {
@@ -253,7 +314,7 @@ std::optional<PermissionOverwrite> Store::GetPermissionOverwrite(Snowflake chann
 
     Reset(m_get_perm_stmt);
 
-    return std::optional<PermissionOverwrite>(std::move(ret));
+    return ret;
 }
 
 std::optional<Role> Store::GetRole(Snowflake id) const {
@@ -279,7 +340,7 @@ std::optional<Role> Store::GetRole(Snowflake id) const {
 
     Reset(m_get_role_stmt);
 
-    return std::optional<Role>(std::move(ret));
+    return ret;
 }
 
 std::optional<User> Store::GetUser(Snowflake id) const {
@@ -308,7 +369,7 @@ std::optional<User> Store::GetUser(Snowflake id) const {
 
     Reset(m_get_user_stmt);
 
-    return std::optional<User>(std::move(ret));
+    return ret;
 }
 
 Channel *Store::GetChannel(Snowflake id) {
@@ -339,40 +400,6 @@ const Guild *Store::GetGuild(Snowflake id) const {
     return &it->second;
 }
 
-GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) {
-    auto git = m_members.find(guild_id);
-    if (git == m_members.end())
-        return nullptr;
-    auto mit = git->second.find(user_id);
-    if (mit == git->second.end())
-        return nullptr;
-    return &mit->second;
-}
-
-Emoji *Store::GetEmoji(Snowflake id) {
-    auto it = m_emojis.find(id);
-    if (it != m_emojis.end())
-        return &it->second;
-    return nullptr;
-}
-
-const GuildMember *Store::GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const {
-    auto git = m_members.find(guild_id);
-    if (git == m_members.end())
-        return nullptr;
-    auto mit = git->second.find(user_id);
-    if (mit == git->second.end())
-        return nullptr;
-    return &mit->second;
-}
-
-const Emoji *Store::GetEmoji(Snowflake id) const {
-    auto it = m_emojis.find(id);
-    if (it != m_emojis.end())
-        return &it->second;
-    return nullptr;
-}
-
 void Store::ClearGuild(Snowflake id) {
     m_guilds.erase(id);
 }
@@ -390,7 +417,6 @@ const Store::guilds_type &Store::GetGuilds() const {
 }
 void Store::ClearAll() {
     m_channels.clear();
-    m_emojis.clear();
     m_guilds.clear();
     m_members.clear();
 }
@@ -484,6 +510,19 @@ available BOOL
 )
 )";
 
+    constexpr const char *create_members = R"(
+CREATE TABLE IF NOT EXISTS members (
+user_id INTEGER PRIMARY KEY,
+guild_id INTEGER NOT NULL,
+nickname TEXT,
+roles TEXT NOT NULL, /* json */
+joined_at TEXT NOT NULL,
+premium_since TEXT,
+deaf BOOL NOT NULL,
+mute BOOL NOT NULL
+)
+)";
+
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
@@ -511,6 +550,12 @@ available BOOL
     m_db_err = sqlite3_exec(m_db, create_emojis, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "faile to create emojis table: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_exec(m_db, create_members, nullptr, nullptr, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to create members table: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -566,6 +611,16 @@ REPLACE INTO emojis VALUES (
 
     constexpr const char *get_emoji = R"(
 SELECT * FROM emojis WHERE id = ?
+)";
+
+    constexpr const char *set_member = R"(
+REPLACE INTO members VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?
+)
+)";
+
+    constexpr const char *get_member = R"(
+SELECT * FROM members WHERE user_id = ? AND guild_id = ?
 )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -628,6 +683,18 @@ SELECT * FROM emojis WHERE id = ?
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, set_member, -1, &m_set_member_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare set member statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_member, -1, &m_get_member_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get member statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -642,6 +709,8 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_role_stmt);
     sqlite3_finalize(m_set_emote_stmt);
     sqlite3_finalize(m_get_emote_stmt);
+    sqlite3_finalize(m_set_member_stmt);
+    sqlite3_finalize(m_get_member_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {

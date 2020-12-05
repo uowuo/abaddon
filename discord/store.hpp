@@ -22,7 +22,7 @@ public:
     void SetGuild(Snowflake id, const Guild &guild);
     void SetRole(Snowflake id, const Role &role);
     void SetMessage(Snowflake id, const Message &message);
-    void SetGuildMemberData(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
+    void SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
     void SetEmoji(Snowflake id, const Emoji &emoji);
 
@@ -30,16 +30,14 @@ public:
 
     Channel *GetChannel(Snowflake id);
     Guild *GetGuild(Snowflake id);
-    GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id);
-    Emoji *GetEmoji(Snowflake id);
+    std::optional<Emoji> GetEmoji(Snowflake id) const;
+    std::optional<GuildMember> GetGuildMember(Snowflake guild_id, Snowflake user_id) const;
     std::optional<Message> GetMessage(Snowflake id) const;
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<Role> GetRole(Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
     const Guild *GetGuild(Snowflake id) const;
-    const GuildMember *GetGuildMemberData(Snowflake guild_id, Snowflake user_id) const;
-    const Emoji *GetEmoji(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
@@ -65,7 +63,6 @@ private:
     channels_type m_channels;
     guilds_type m_guilds;
     members_type m_members;
-    emojis_type m_emojis;
 
     bool CreateTables();
     bool CreateStatements();
@@ -102,6 +99,8 @@ private:
     mutable sqlite3_stmt *m_get_role_stmt;
     mutable sqlite3_stmt *m_set_emote_stmt;
     mutable sqlite3_stmt *m_get_emote_stmt;
+    mutable sqlite3_stmt *m_set_member_stmt;
+    mutable sqlite3_stmt *m_get_member_stmt;
 };
 
 template<typename T>
