@@ -69,8 +69,7 @@ public:
     using members_type = Store::members_type;
     using permission_overwrites_type = Store::permission_overwrites_type;
 
-    std::unordered_set<Snowflake> GetGuildsID() const;
-    const guilds_type &GetGuilds() const;
+    std::unordered_set<Snowflake> GetGuilds() const;
     const User &GetUserData() const;
     const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
@@ -86,7 +85,7 @@ public:
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
     std::optional<Role> GetRole(Snowflake id) const;
-    const Guild *GetGuild(Snowflake id) const;
+    std::optional<Guild> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;

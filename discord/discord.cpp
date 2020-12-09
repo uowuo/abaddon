@@ -52,20 +52,12 @@ bool DiscordClient::IsStoreValid() const {
     return m_store.IsValid();
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetGuildsID() const {
-    const auto &guilds = m_store.GetGuilds();
-    std::unordered_set<Snowflake> ret;
-    for (const auto &[gid, data] : guilds)
-        ret.insert(gid);
-    return ret;
-}
-
-const Store::guilds_type &DiscordClient::GetGuilds() const {
-    return m_store.GetGuilds();
-}
-
 const UserSettings &DiscordClient::GetUserSettings() const {
     return m_user_settings;
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetGuilds() const {
+    return m_store.GetGuilds();
 }
 
 const User &DiscordClient::GetUserData() const {
@@ -76,7 +68,7 @@ std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
     // sort order is unfolder'd guilds sorted by id descending, then guilds in folders in array order
     // todo: make sure folder'd guilds are sorted properly
     std::vector<Snowflake> folder_order;
-    auto guilds = GetGuildsID();
+    auto guilds = GetGuilds();
     for (const auto &entry : m_user_settings.GuildFolders) { // can contain guilds not a part of
         for (const auto &id : entry.GuildIDs) {
             if (std::find(guilds.begin(), guilds.end(), id) != guilds.end())
@@ -181,7 +173,7 @@ std::optional<Role> DiscordClient::GetRole(Snowflake id) const {
     return m_store.GetRole(id);
 }
 
-const Guild *DiscordClient::GetGuild(Snowflake id) const {
+std::optional<Guild> DiscordClient::GetGuild(Snowflake id) const {
     return m_store.GetGuild(id);
 }
 
@@ -264,8 +256,8 @@ bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id
 
 Permission DiscordClient::ComputePermissions(Snowflake member_id, Snowflake guild_id) const {
     const auto member = GetMember(member_id, guild_id);
-    const auto *guild = GetGuild(guild_id);
-    if (!member.has_value() || guild == nullptr)
+    const auto guild = GetGuild(guild_id);
+    if (!member.has_value() || !guild.has_value())
         return Permission::NONE;
 
     if (guild->OwnerID == member_id)
@@ -327,8 +319,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
 }
 
 bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const {
-    const auto *guild = GetGuild(guild_id);
-    if (guild != nullptr && guild->OwnerID == target) return false;
+    const auto guild = GetGuild(guild_id);
+    if (guild.has_value() && guild->OwnerID == target) return false;
     const auto actor_highest_id = GetMemberHighestRole(guild_id, actor);
     const auto target_highest_id = GetMemberHighestRole(guild_id, target);
     const auto actor_highest = GetRole(actor_highest_id);
@@ -582,14 +574,15 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
     m_store.BeginTransaction();
 
     m_store.SetGuild(guild.ID, guild);
-    for (auto &c : guild.Channels) {
-        c.GuildID = guild.ID;
-        m_store.SetChannel(c.ID, c);
-        m_guild_to_channels[guild.ID].insert(c.ID);
-        for (auto &p : c.PermissionOverwrites) {
-            m_store.SetPermissionOverwrite(c.ID, p.ID, p);
+    if (guild.Channels.has_value())
+        for (auto &c : *guild.Channels) {
+            c.GuildID = guild.ID;
+            m_store.SetChannel(c.ID, c);
+            m_guild_to_channels[guild.ID].insert(c.ID);
+            for (auto &p : c.PermissionOverwrites) {
+                m_store.SetPermissionOverwrite(c.ID, p.ID, p);
+            }
         }
-    }
 
     for (auto &r : guild.Roles)
         m_store.SetRole(r.ID, r);
@@ -702,8 +695,8 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
     Snowflake id = msg.Data.at("id");
-    auto *current = m_store.GetGuild(id);
-    if (current == nullptr) return;
+    auto current = m_store.GetGuild(id);
+    if (!current.has_value()) return;
     current->update_from_json(msg.Data);
     m_signal_guild_update.emit(id);
 }
@@ -780,16 +773,17 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     if (unavailable)
         printf("guild %llu became unavailable\n", static_cast<uint64_t>(id));
 
-    auto *guild = m_store.GetGuild(id);
-    if (guild == nullptr) {
+    const auto guild = m_store.GetGuild(id);
+    if (!guild.has_value()) {
         m_store.ClearGuild(id);
         m_signal_guild_delete.emit(id);
         return;
     }
 
     m_store.ClearGuild(id);
-    for (const auto &c : guild->Channels)
-        m_store.ClearChannel(c.ID);
+    if (guild->Channels.has_value())
+        for (const auto &c : *guild->Channels)
+            m_store.ClearChannel(c.ID);
 
     m_signal_guild_delete.emit(id);
 }

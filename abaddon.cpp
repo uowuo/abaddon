@@ -382,8 +382,8 @@ void Abaddon::ActionInsertMention(Snowflake id) {
 
 void Abaddon::ActionLeaveGuild(Snowflake id) {
     ConfirmDialog dlg(*m_main_window);
-    const auto *guild = m_discord.GetGuild(id);
-    if (guild != nullptr)
+    const auto guild = m_discord.GetGuild(id);
+    if (guild.has_value())
         dlg.SetConfirmText("Are you sure you want to leave " + guild->Name + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)

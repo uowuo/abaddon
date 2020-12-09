@@ -56,10 +56,10 @@ void from_json(const nlohmann::json &j, Guild &m) {
     JS_O("max_video_channel_users", m.MaxVideoChannelUsers);
     JS_O("approximate_member_count", tmp);
     if (tmp.has_value())
-        m.ApproximateMemberCount = std::stoull(*tmp);
+        m.ApproximateMemberCount = std::stol(*tmp);
     JS_O("approximate_presence_count", tmp);
     if (tmp.has_value())
-        m.ApproximatePresenceCount = std::stoull(*tmp);
+        m.ApproximatePresenceCount = std::stol(*tmp);
 }
 
 void Guild::update_from_json(const nlohmann::json &j) {

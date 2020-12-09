@@ -10,53 +10,53 @@
 // a bot is apparently only supposed to receive the `id` and `unavailable` as false
 // but user tokens seem to get the full objects (minus users)
 struct Guild {
-    Snowflake ID;                      //
-    std::string Name;                  //
-    std::string Icon;                  // null
-    std::string Splash;                // null
-    std::string DiscoverySplash;       // opt, null (docs wrong)
-    bool IsOwner = false;              // opt
-    Snowflake OwnerID;                 //
-    int Permissions = 0;               // opt
-    std::string PermissionsNew;        // opt
-    std::string VoiceRegion;           // opt
-    Snowflake AFKChannelID;            // null
-    int AFKTimeout;                    //
-    bool IsEmbedEnabled = false;       // opt, deprecated
-    Snowflake EmbedChannelID;          // opt, null, deprecated
-    int VerificationLevel;             //
-    int DefaultMessageNotifications;   //
-    int ExplicitContentFilter;         //
-    std::vector<Role> Roles;           //
-    std::vector<Emoji> Emojis;         //
-    std::vector<std::string> Features; //
-    int MFALevel;                      //
-    Snowflake ApplicationID;           // null
-    bool IsWidgetEnabled = false;      // opt
-    Snowflake WidgetChannelID;         // opt, null
-    Snowflake SystemChannelID;         // null
-    int SystemChannelFlags;            //
-    Snowflake RulesChannelID;          // null
-    std::string JoinedAt;              // opt*
-    bool IsLarge = false;              // opt*
-    bool IsUnavailable = false;        // opt*
-    int MemberCount = 0;               // opt*
+    Snowflake ID;
+    std::string Name;
+    std::string Icon;                           // null
+    std::string Splash;                         // null
+    std::optional<std::string> DiscoverySplash; // null
+    std::optional<bool> IsOwner;
+    Snowflake OwnerID;
+    std::optional<uint64_t> Permissions;
+    std::optional<std::string> PermissionsNew;
+    std::optional<std::string> VoiceRegion;
+    Snowflake AFKChannelID; // null
+    int AFKTimeout;
+    std::optional<bool> IsEmbedEnabled;      // deprecated
+    std::optional<Snowflake> EmbedChannelID; // null, deprecated
+    int VerificationLevel;
+    int DefaultMessageNotifications;
+    int ExplicitContentFilter;
+    std::vector<Role> Roles; // only access id
+    std::vector<Emoji> Emojis; // only access id
+    std::vector<std::string> Features;
+    int MFALevel;
+    Snowflake ApplicationID; // null
+    std::optional<bool> IsWidgetEnabled;
+    std::optional<Snowflake> WidgetChannelID; // null
+    Snowflake SystemChannelID;                // null
+    int SystemChannelFlags;
+    Snowflake RulesChannelID;            // null
+    std::optional<std::string> JoinedAt; // *
+    std::optional<bool> IsLarge;         // *
+    std::optional<bool> IsUnavailable;   // *
+    std::optional<int> MemberCount;      // *
     // std::vector<VoiceStateData> VoiceStates; // opt*
     // std::vector<MemberData> Members; // opt* - incomplete anyways
-    std::vector<Channel> Channels; // opt*
+    std::optional<std::vector<Channel>> Channels; // *
     // std::vector<PresenceUpdateData> Presences; // opt*
-    int MaxPresences = 0;             // opt, null
-    int MaxMembers = 0;               // opt
-    std::string VanityURL;            // null
-    std::string Description;          // null
-    std::string BannerHash;           // null
-    int PremiumTier;                  //
-    int PremiumSubscriptionCount = 0; // opt
-    std::string PreferredLocale;      //
+    std::optional<int> MaxPresences; // null
+    std::optional<int> MaxMembers;
+    std::string VanityURL;   // null
+    std::string Description; // null
+    std::string BannerHash;  // null
+    int PremiumTier;
+    std::optional<int> PremiumSubscriptionCount;
+    std::string PreferredLocale;
     Snowflake PublicUpdatesChannelID; // null
-    int MaxVideoChannelUsers = 0;     // opt
-    int ApproximateMemberCount = 0;   // opt
-    int ApproximatePresenceCount = 0; // opt
+    std::optional<int> MaxVideoChannelUsers;
+    std::optional<int> ApproximateMemberCount;
+    std::optional<int> ApproximatePresenceCount;
 
     // undocumented
     // std::map<std::string, Unknown> GuildHashes;

@@ -2,6 +2,7 @@
 #include "../util.hpp"
 #include "objects.hpp"
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <filesystem>
 #include <sqlite3.h>
@@ -29,15 +30,14 @@ public:
     // slap const on everything even tho its not *really* const
 
     Channel *GetChannel(Snowflake id);
-    Guild *GetGuild(Snowflake id);
     std::optional<Emoji> GetEmoji(Snowflake id) const;
+    std::optional<Guild> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetGuildMember(Snowflake guild_id, Snowflake user_id) const;
     std::optional<Message> GetMessage(Snowflake id) const;
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<Role> GetRole(Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
     const Channel *GetChannel(Snowflake id) const;
-    const Guild *GetGuild(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
@@ -52,7 +52,7 @@ public:
     using emojis_type = std::unordered_map<Snowflake, Emoji>;
 
     const channels_type &GetChannels() const;
-    const guilds_type &GetGuilds() const;
+    const std::unordered_set<Snowflake> &GetGuilds() const;
 
     void ClearAll();
 
@@ -61,8 +61,7 @@ public:
 
 private:
     channels_type m_channels;
-    guilds_type m_guilds;
-    members_type m_members;
+    std::unordered_set<Snowflake> m_guilds;
 
     bool CreateTables();
     bool CreateStatements();
@@ -101,6 +100,8 @@ private:
     mutable sqlite3_stmt *m_get_emote_stmt;
     mutable sqlite3_stmt *m_set_member_stmt;
     mutable sqlite3_stmt *m_get_member_stmt;
+    mutable sqlite3_stmt *m_set_guild_stmt;
+    mutable sqlite3_stmt *m_get_guild_stmt;
 };
 
 template<typename T>

@@ -76,7 +76,59 @@ void Store::SetChannel(Snowflake id, const Channel &channel) {
 }
 
 void Store::SetGuild(Snowflake id, const Guild &guild) {
-    m_guilds[id] = guild;
+    Bind(m_set_guild_stmt, 1, id);
+    Bind(m_set_guild_stmt, 2, guild.Name);
+    Bind(m_set_guild_stmt, 3, guild.Icon);
+    Bind(m_set_guild_stmt, 4, guild.Splash);
+    Bind(m_set_guild_stmt, 5, guild.IsOwner);
+    Bind(m_set_guild_stmt, 6, guild.OwnerID);
+    Bind(m_set_guild_stmt, 7, guild.PermissionsNew);
+    Bind(m_set_guild_stmt, 8, guild.VoiceRegion);
+    Bind(m_set_guild_stmt, 9, guild.AFKChannelID);
+    Bind(m_set_guild_stmt, 10, guild.AFKTimeout);
+    Bind(m_set_guild_stmt, 11, guild.VerificationLevel);
+    Bind(m_set_guild_stmt, 12, guild.DefaultMessageNotifications);
+    std::vector<Snowflake> snowflakes;
+    for (const auto &x : guild.Roles) snowflakes.push_back(x.ID);
+    Bind(m_set_guild_stmt, 13, nlohmann::json(snowflakes).dump());
+    snowflakes.clear();
+    for (const auto &x : guild.Emojis) snowflakes.push_back(x.ID);
+    Bind(m_set_guild_stmt, 14, nlohmann::json(snowflakes).dump());
+    Bind(m_set_guild_stmt, 15, nlohmann::json(guild.Features).dump());
+    Bind(m_set_guild_stmt, 16, guild.MFALevel);
+    Bind(m_set_guild_stmt, 17, guild.ApplicationID);
+    Bind(m_set_guild_stmt, 18, guild.IsWidgetEnabled);
+    Bind(m_set_guild_stmt, 19, guild.WidgetChannelID);
+    Bind(m_set_guild_stmt, 20, guild.SystemChannelFlags);
+    Bind(m_set_guild_stmt, 21, guild.RulesChannelID);
+    Bind(m_set_guild_stmt, 22, guild.JoinedAt);
+    Bind(m_set_guild_stmt, 23, guild.IsLarge);
+    Bind(m_set_guild_stmt, 24, guild.IsUnavailable);
+    Bind(m_set_guild_stmt, 25, guild.MemberCount);
+    if (guild.Channels.has_value()) {
+        snowflakes.clear();
+        for (const auto &x : *guild.Channels) snowflakes.push_back(x.ID);
+        Bind(m_set_guild_stmt, 26, nlohmann::json(snowflakes).dump());
+    } else
+        Bind(m_set_guild_stmt, 26, "[]"s);
+    Bind(m_set_guild_stmt, 27, guild.MaxPresences);
+    Bind(m_set_guild_stmt, 28, guild.MaxMembers);
+    Bind(m_set_guild_stmt, 29, guild.VanityURL);
+    Bind(m_set_guild_stmt, 30, guild.Description);
+    Bind(m_set_guild_stmt, 31, guild.BannerHash);
+    Bind(m_set_guild_stmt, 32, guild.PremiumTier);
+    Bind(m_set_guild_stmt, 33, guild.PremiumSubscriptionCount);
+    Bind(m_set_guild_stmt, 34, guild.PreferredLocale);
+    Bind(m_set_guild_stmt, 35, guild.PublicUpdatesChannelID);
+    Bind(m_set_guild_stmt, 36, guild.MaxVideoChannelUsers);
+    Bind(m_set_guild_stmt, 37, guild.ApproximateMemberCount);
+    Bind(m_set_guild_stmt, 38, guild.ApproximatePresenceCount);
+    Bind(m_set_guild_stmt, 39, guild.IsLazy);
+
+    if (!RunInsert(m_set_guild_stmt))
+        fprintf(stderr, "guild insert failed: %s\n", sqlite3_errstr(m_db_err));
+
+    m_guilds.insert(id);
 }
 
 void Store::SetRole(Snowflake id, const Role &role) {
@@ -150,7 +202,7 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
     Bind(m_set_member_stmt, 6, data.PremiumSince);
     Bind(m_set_member_stmt, 7, data.IsDeafened);
     Bind(m_set_member_stmt, 8, data.IsMuted);
-    
+
     if (!RunInsert(m_set_member_stmt))
         fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
@@ -212,6 +264,70 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
     Get(m_get_emote_stmt, 6, ret.IsAvailable);
 
     Reset(m_get_emote_stmt);
+
+    return ret;
+}
+
+std::optional<Guild> Store::GetGuild(Snowflake id) const {
+    Bind(m_get_guild_stmt, 1, id);
+    if (!FetchOne(m_get_guild_stmt)) {
+        if (m_db_err != SQLITE_DONE)
+            fprintf(stderr, "error while fetching guild: %s\n", sqlite3_errstr(m_db_err));
+        Reset(m_get_guild_stmt);
+        return std::nullopt;
+    }
+
+    Guild ret;
+    ret.ID = id;
+    Get(m_get_guild_stmt, 1, ret.Name);
+    Get(m_get_guild_stmt, 2, ret.Icon);
+    Get(m_get_guild_stmt, 3, ret.Splash);
+    Get(m_get_guild_stmt, 4, ret.IsOwner);
+    Get(m_get_guild_stmt, 5, ret.OwnerID);
+    Get(m_get_guild_stmt, 6, ret.PermissionsNew);
+    Get(m_get_guild_stmt, 7, ret.VoiceRegion);
+    Get(m_get_guild_stmt, 8, ret.AFKChannelID);
+    Get(m_get_guild_stmt, 9, ret.AFKTimeout);
+    Get(m_get_guild_stmt, 10, ret.VerificationLevel);
+    Get(m_get_guild_stmt, 11, ret.DefaultMessageNotifications);
+    std::string tmp;
+    Get(m_get_guild_stmt, 12, tmp);
+    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
+        ret.Roles.emplace_back().ID = id;
+    Get(m_get_guild_stmt, 13, tmp);
+    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
+        ret.Emojis.emplace_back().ID = id;
+    Get(m_get_guild_stmt, 14, tmp);
+    ret.Features = nlohmann::json::parse(tmp).get<std::vector<std::string>>();
+    Get(m_get_guild_stmt, 15, ret.MFALevel);
+    Get(m_get_guild_stmt, 16, ret.ApplicationID);
+    Get(m_get_guild_stmt, 17, ret.IsWidgetEnabled);
+    Get(m_get_guild_stmt, 18, ret.WidgetChannelID);
+    Get(m_get_guild_stmt, 19, ret.SystemChannelFlags);
+    Get(m_get_guild_stmt, 20, ret.RulesChannelID);
+    Get(m_get_guild_stmt, 21, ret.JoinedAt);
+    Get(m_get_guild_stmt, 22, ret.IsLarge);
+    Get(m_get_guild_stmt, 23, ret.IsUnavailable);
+    Get(m_get_guild_stmt, 24, ret.MemberCount);
+    Get(m_get_guild_stmt, 25, tmp);
+    ret.Channels.emplace();
+    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
+        ret.Channels->emplace_back().ID = id;
+    Get(m_get_guild_stmt, 26, ret.MaxPresences);
+    Get(m_get_guild_stmt, 27, ret.MaxMembers);
+    Get(m_get_guild_stmt, 28, ret.VanityURL);
+    Get(m_get_guild_stmt, 29, ret.Description);
+    Get(m_get_guild_stmt, 30, ret.BannerHash);
+    Get(m_get_guild_stmt, 31, ret.PremiumTier);
+    Get(m_get_guild_stmt, 32, ret.PremiumSubscriptionCount);
+    Get(m_get_guild_stmt, 33, ret.PreferredLocale);
+    Get(m_get_guild_stmt, 34, ret.PublicUpdatesChannelID);
+    Get(m_get_guild_stmt, 35, ret.MaxVideoChannelUsers);
+    Get(m_get_guild_stmt, 36, ret.ApproximateMemberCount);
+    Get(m_get_guild_stmt, 37, ret.ApproximatePresenceCount);
+    Get(m_get_guild_stmt, 38, ret.IsLazy);
+
+    Reset(m_get_guild_stmt);
 
     return ret;
 }
@@ -386,20 +502,6 @@ const Channel *Store::GetChannel(Snowflake id) const {
     return &it->second;
 }
 
-Guild *Store::GetGuild(Snowflake id) {
-    auto it = m_guilds.find(id);
-    if (it == m_guilds.end())
-        return nullptr;
-    return &it->second;
-}
-
-const Guild *Store::GetGuild(Snowflake id) const {
-    auto it = m_guilds.find(id);
-    if (it == m_guilds.end())
-        return nullptr;
-    return &it->second;
-}
-
 void Store::ClearGuild(Snowflake id) {
     m_guilds.erase(id);
 }
@@ -412,13 +514,12 @@ const Store::channels_type &Store::GetChannels() const {
     return m_channels;
 }
 
-const Store::guilds_type &Store::GetGuilds() const {
+const std::unordered_set<Snowflake> &Store::GetGuilds() const {
     return m_guilds;
 }
 void Store::ClearAll() {
     m_channels.clear();
     m_guilds.clear();
-    m_members.clear();
 }
 
 void Store::BeginTransaction() {
@@ -523,6 +624,50 @@ mute BOOL NOT NULL
 )
 )";
 
+    constexpr char *create_guilds = R"(
+CREATE TABLE IF NOT EXISTS guilds (
+id INTEGER PRIMARY KEY,
+name TEXT NOT NULL,
+icon TEXT NOT NULL,
+splash TEXT,
+owner BOOL,
+owner_id INTEGER NOT NULL,
+permissions INTEGER, /* new */
+voice_region TEXT,
+afk_id INTEGER,
+afk_timeout INTEGER NOT NULL,
+verification INTEGER NOT NULL,
+notifications INTEGER NOT NULL,
+roles TEXT NOT NULL, /* json */
+emojis TEXT NOT NULL, /* json */
+features TEXT NOT NULL, /* json */
+mfa INTEGER NOT NULL,
+application INTEGER,
+widget BOOL,
+widget_channel INTEGER,
+system_flags INTEGER NOT NULL,
+rules_channel INTEGER,
+joined_at TEXT,
+large BOOL,
+unavailable BOOL,
+member_count INTEGER,
+channels TEXT NOT NULL, /* json */
+max_presences INTEGER,
+max_members INTEGER,
+vanity TEXT,
+description TEXT,
+banner_hash TEXT,
+premium_tier INTEGER NOT NULL,
+premium_count INTEGER,
+locale TEXT NOT NULL,
+public_updates_id INTEGER,
+max_video_users INTEGER,
+approx_members INTEGER,
+approx_presences INTEGER,
+lazy BOOL
+)
+)";
+
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
@@ -556,6 +701,12 @@ mute BOOL NOT NULL
     m_db_err = sqlite3_exec(m_db, create_members, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create members table: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_exec(m_db, create_guilds, nullptr, nullptr, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to create guilds table: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -621,6 +772,16 @@ REPLACE INTO members VALUES (
 
     constexpr const char *get_member = R"(
 SELECT * FROM members WHERE user_id = ? AND guild_id = ?
+)";
+
+    constexpr const char *set_guild = R"(
+REPLACE INTO guilds VALUES (
+?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+)";
+
+    constexpr const char *get_guild = R"(
+SELECT * FROM guilds WHERE id = ?
 )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -695,6 +856,18 @@ SELECT * FROM members WHERE user_id = ? AND guild_id = ?
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, set_guild, -1, &m_set_guild_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare set guild statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_guild, -1, &m_get_guild_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get guild statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -711,6 +884,8 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_emote_stmt);
     sqlite3_finalize(m_set_member_stmt);
     sqlite3_finalize(m_get_member_stmt);
+    sqlite3_finalize(m_set_guild_stmt);
+    sqlite3_finalize(m_get_guild_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {
