@@ -178,7 +178,7 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     if (should_attach) {
         header = last_row;
     } else {
-        const auto guild_id = client.GetChannel(m_active_channel)->GuildID;
+        const auto guild_id = *client.GetChannel(m_active_channel)->GuildID;
         const auto user_id = data->Author.ID;
         const auto user = client.GetUser(user_id);
         if (!user.has_value()) return;

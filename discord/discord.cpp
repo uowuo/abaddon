@@ -161,7 +161,7 @@ std::optional<Message> DiscordClient::GetMessage(Snowflake id) const {
     return m_store.GetMessage(id);
 }
 
-const Channel *DiscordClient::GetChannel(Snowflake id) const {
+std::optional<Channel> DiscordClient::GetChannel(Snowflake id) const {
     return m_store.GetChannel(id);
 }
 
@@ -247,9 +247,9 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
 }
 
 bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
-    const auto *channel = m_store.GetChannel(channel_id);
-    if (channel == nullptr) return false;
-    const auto base = ComputePermissions(user_id, channel->GuildID);
+    const auto channel = m_store.GetChannel(channel_id);
+    if (!channel.has_value()) return false;
+    const auto base = ComputePermissions(user_id, *channel->GuildID);
     const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
     return (overwrites & perm) == perm;
 }
@@ -284,13 +284,13 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
     if ((base & Permission::ADMINISTRATOR) == Permission::ADMINISTRATOR)
         return Permission::ALL;
 
-    const auto *channel = GetChannel(channel_id);
-    const auto member = GetMember(member_id, channel->GuildID);
-    if (!member.has_value() || channel == nullptr)
+    const auto channel = GetChannel(channel_id);
+    const auto member = GetMember(member_id, *channel->GuildID);
+    if (!member.has_value() || !channel.has_value())
         return Permission::NONE;
 
     Permission perms = base;
-    const auto overwrite_everyone = GetPermissionOverwrite(channel_id, channel->GuildID);
+    const auto overwrite_everyone = GetPermissionOverwrite(channel_id, *channel->GuildID);
     if (overwrite_everyone.has_value()) {
         perms &= ~overwrite_everyone->Deny;
         perms |= overwrite_everyone->Allow;
@@ -359,7 +359,7 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
         std::make_pair(100, 199)
     };
     msg.Channels = c;
-    msg.GuildID = GetChannel(id)->GuildID;
+    msg.GuildID = *GetChannel(id)->GuildID;
     msg.ShouldGetActivities = false;
     msg.ShouldGetTyping = false;
 
@@ -401,8 +401,9 @@ void DiscordClient::CreateDM(Snowflake user_id) {
 
 std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
     const auto &channels = m_store.GetChannels();
-    for (const auto &[id, channel] : channels) {
-        if (channel.Recipients.size() == 1 && channel.Recipients[0].ID == user_id)
+    for (const auto &id : channels) {
+        const auto channel = m_store.GetChannel(id);
+        if (channel->Recipients->size() == 1 && channel->Recipients.value()[0].ID == user_id)
             return id;
     }
 
@@ -579,7 +580,7 @@ void DiscordClient::ProcessNewGuild(Guild &guild) {
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
             m_guild_to_channels[guild.ID].insert(c.ID);
-            for (auto &p : c.PermissionOverwrites) {
+            for (auto &p : *c.PermissionOverwrites) {
                 m_store.SetPermissionOverwrite(c.ID, p.ID, p);
             }
         }
@@ -602,7 +603,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_store.BeginTransaction();
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
-        for (const auto &recipient : dm.Recipients)
+        for (const auto &recipient : *dm.Recipients)
             m_store.SetUser(recipient.ID, recipient);
     }
     m_store.EndTransaction();
@@ -665,8 +666,8 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
     const auto id = msg.Data.at("id").get<Snowflake>();
-    const auto *channel = GetChannel(id);
-    auto it = m_guild_to_channels.find(channel->GuildID);
+    const auto channel = GetChannel(id);
+    auto it = m_guild_to_channels.find(*channel->GuildID);
     if (it != m_guild_to_channels.end())
         it->second.erase(id);
     m_store.ClearChannel(id);
@@ -675,9 +676,10 @@ void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayChannelUpdate(const GatewayMessage &msg) {
     const auto id = msg.Data.at("id").get<Snowflake>();
-    auto *cur = m_store.GetChannel(id);
-    if (cur != nullptr) {
+    auto cur = m_store.GetChannel(id);
+    if (cur.has_value()) {
         cur->update_from_json(msg.Data);
+        m_store.SetChannel(id, *cur);
         m_signal_channel_update.emit(id);
     }
 }
@@ -686,8 +688,8 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
     Channel data = msg.Data;
     m_store.BeginTransaction();
     m_store.SetChannel(data.ID, data);
-    m_guild_to_channels[data.GuildID].insert(data.ID);
-    for (const auto &p : data.PermissionOverwrites)
+    m_guild_to_channels[*data.GuildID].insert(data.ID);
+    for (const auto &p : *data.PermissionOverwrites)
         m_store.SetPermissionOverwrite(data.ID, p.ID, p);
     m_store.EndTransaction();
     m_signal_channel_create.emit(data.ID);
@@ -799,8 +801,9 @@ void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
 std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
     auto ret = std::set<Snowflake>();
 
-    for (const auto &[id, chan] : m_store.GetChannels()) {
-        if (chan.Type == ChannelType::DM || chan.Type == ChannelType::GROUP_DM)
+    for (const auto &id : m_store.GetChannels()) {
+        const auto chan = m_store.GetChannel(id);
+        if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
             ret.insert(id);
     }
 

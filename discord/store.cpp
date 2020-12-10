@@ -51,28 +51,60 @@ bool Store::IsValid() const {
     return m_db_err == SQLITE_OK;
 }
 
-void Store::SetUser(Snowflake id, const User &user) {
-    Bind(m_set_user_stmt, 1, id);
-    Bind(m_set_user_stmt, 2, user.Username);
-    Bind(m_set_user_stmt, 3, user.Discriminator);
-    Bind(m_set_user_stmt, 4, user.Avatar);
-    Bind(m_set_user_stmt, 5, user.IsBot);
-    Bind(m_set_user_stmt, 6, user.IsSystem);
-    Bind(m_set_user_stmt, 7, user.IsMFAEnabled);
-    Bind(m_set_user_stmt, 8, user.Locale);
-    Bind(m_set_user_stmt, 9, user.IsVerified);
-    Bind(m_set_user_stmt, 10, user.Email);
-    Bind(m_set_user_stmt, 11, user.Flags);
-    Bind(m_set_user_stmt, 12, user.PremiumType);
-    Bind(m_set_user_stmt, 13, user.PublicFlags);
-
-    if (!RunInsert(m_set_user_stmt)) {
-        fprintf(stderr, "user insert failed: %s\n", sqlite3_errstr(m_db_err));
+void Store::SetChannel(Snowflake id, const Channel &chan) {
+    Bind(m_set_chan_stmt, 1, id);
+    Bind(m_set_chan_stmt, 2, static_cast<int>(chan.Type));
+    Bind(m_set_chan_stmt, 3, chan.GuildID);
+    Bind(m_set_chan_stmt, 4, chan.Position);
+    Bind(m_set_chan_stmt, 5, nullptr); // unused
+    Bind(m_set_chan_stmt, 6, chan.Name);
+    Bind(m_set_chan_stmt, 7, chan.Topic);
+    Bind(m_set_chan_stmt, 8, chan.IsNSFW);
+    Bind(m_set_chan_stmt, 9, chan.LastMessageID);
+    Bind(m_set_chan_stmt, 10, chan.Bitrate);
+    Bind(m_set_chan_stmt, 11, chan.UserLimit);
+    Bind(m_set_chan_stmt, 12, chan.RateLimitPerUser);
+    if (chan.Recipients.has_value()) {
+        std::vector<Snowflake> ids;
+        for (const auto &u : *chan.Recipients)
+            ids.push_back(u.ID);
+        Bind(m_set_chan_stmt, 13, nlohmann::json(ids).dump());
+    } else {
+        Bind(m_set_chan_stmt, 13, nullptr);
     }
+    Bind(m_set_chan_stmt, 14, chan.Icon);
+    Bind(m_set_chan_stmt, 15, chan.OwnerID);
+    Bind(m_set_chan_stmt, 16, chan.ApplicationID);
+    Bind(m_set_chan_stmt, 17, chan.ParentID);
+    Bind(m_set_chan_stmt, 18, chan.LastPinTimestamp);
+
+    if (!RunInsert(m_set_chan_stmt))
+        fprintf(stderr, "channel insert failed: %s\n", sqlite3_errstr(m_db_err));
+
+    m_channels.insert(id);
 }
 
-void Store::SetChannel(Snowflake id, const Channel &channel) {
-    m_channels[id] = channel;
+void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
+    Bind(m_set_emote_stmt, 1, id);
+    Bind(m_set_emote_stmt, 2, emoji.Name);
+
+    if (emoji.Roles.has_value())
+        Bind(m_set_emote_stmt, 3, nlohmann::json(*emoji.Roles).dump());
+    else
+        Bind(m_set_emote_stmt, 3, nullptr);
+
+    if (emoji.Creator.has_value())
+        Bind(m_set_emote_stmt, 4, emoji.Creator->ID);
+    else
+        Bind(m_set_emote_stmt, 4, nullptr);
+
+    Bind(m_set_emote_stmt, 5, emoji.NeedsColons);
+    Bind(m_set_emote_stmt, 6, emoji.IsManaged);
+    Bind(m_set_emote_stmt, 7, emoji.IsAnimated);
+    Bind(m_set_emote_stmt, 8, emoji.IsAvailable);
+
+    if (!RunInsert(m_set_emote_stmt))
+        fprintf(stderr, "emoji insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
 void Store::SetGuild(Snowflake id, const Guild &guild) {
@@ -131,18 +163,18 @@ void Store::SetGuild(Snowflake id, const Guild &guild) {
     m_guilds.insert(id);
 }
 
-void Store::SetRole(Snowflake id, const Role &role) {
-    Bind(m_set_role_stmt, 1, id);
-    Bind(m_set_role_stmt, 2, role.Name);
-    Bind(m_set_role_stmt, 3, role.Color);
-    Bind(m_set_role_stmt, 4, role.IsHoisted);
-    Bind(m_set_role_stmt, 5, role.Position);
-    Bind(m_set_role_stmt, 6, static_cast<uint64_t>(role.Permissions));
-    Bind(m_set_role_stmt, 7, role.IsManaged);
-    Bind(m_set_role_stmt, 8, role.IsMentionable);
+void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
+    Bind(m_set_member_stmt, 1, user_id);
+    Bind(m_set_member_stmt, 2, guild_id);
+    Bind(m_set_member_stmt, 3, data.Nickname);
+    Bind(m_set_member_stmt, 4, nlohmann::json(data.Roles).dump());
+    Bind(m_set_member_stmt, 5, data.JoinedAt);
+    Bind(m_set_member_stmt, 6, data.PremiumSince);
+    Bind(m_set_member_stmt, 7, data.IsDeafened);
+    Bind(m_set_member_stmt, 8, data.IsMuted);
 
-    if (!RunInsert(m_set_role_stmt))
-        fprintf(stderr, "role insert failed: %s\n", sqlite3_errstr(m_db_err));
+    if (!RunInsert(m_set_member_stmt))
+        fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
 void Store::SetMessage(Snowflake id, const Message &message) {
@@ -193,20 +225,6 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
-    Bind(m_set_member_stmt, 1, user_id);
-    Bind(m_set_member_stmt, 2, guild_id);
-    Bind(m_set_member_stmt, 3, data.Nickname);
-    Bind(m_set_member_stmt, 4, nlohmann::json(data.Roles).dump());
-    Bind(m_set_member_stmt, 5, data.JoinedAt);
-    Bind(m_set_member_stmt, 6, data.PremiumSince);
-    Bind(m_set_member_stmt, 7, data.IsDeafened);
-    Bind(m_set_member_stmt, 8, data.IsMuted);
-
-    if (!RunInsert(m_set_member_stmt))
-        fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
-}
-
 void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
     Bind(m_set_perm_stmt, 1, perm.ID);
     Bind(m_set_perm_stmt, 2, channel_id);
@@ -218,27 +236,82 @@ void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const Per
         fprintf(stderr, "permission insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
-    Bind(m_set_emote_stmt, 1, id);
-    Bind(m_set_emote_stmt, 2, emoji.Name);
+void Store::SetRole(Snowflake id, const Role &role) {
+    Bind(m_set_role_stmt, 1, id);
+    Bind(m_set_role_stmt, 2, role.Name);
+    Bind(m_set_role_stmt, 3, role.Color);
+    Bind(m_set_role_stmt, 4, role.IsHoisted);
+    Bind(m_set_role_stmt, 5, role.Position);
+    Bind(m_set_role_stmt, 6, static_cast<uint64_t>(role.Permissions));
+    Bind(m_set_role_stmt, 7, role.IsManaged);
+    Bind(m_set_role_stmt, 8, role.IsMentionable);
 
-    if (emoji.Roles.has_value())
-        Bind(m_set_emote_stmt, 3, nlohmann::json(*emoji.Roles).dump());
-    else
-        Bind(m_set_emote_stmt, 3, nullptr);
+    if (!RunInsert(m_set_role_stmt))
+        fprintf(stderr, "role insert failed: %s\n", sqlite3_errstr(m_db_err));
+}
 
-    if (emoji.Creator.has_value())
-        Bind(m_set_emote_stmt, 4, emoji.Creator->ID);
-    else
-        Bind(m_set_emote_stmt, 4, nullptr);
+void Store::SetUser(Snowflake id, const User &user) {
+    Bind(m_set_user_stmt, 1, id);
+    Bind(m_set_user_stmt, 2, user.Username);
+    Bind(m_set_user_stmt, 3, user.Discriminator);
+    Bind(m_set_user_stmt, 4, user.Avatar);
+    Bind(m_set_user_stmt, 5, user.IsBot);
+    Bind(m_set_user_stmt, 6, user.IsSystem);
+    Bind(m_set_user_stmt, 7, user.IsMFAEnabled);
+    Bind(m_set_user_stmt, 8, user.Locale);
+    Bind(m_set_user_stmt, 9, user.IsVerified);
+    Bind(m_set_user_stmt, 10, user.Email);
+    Bind(m_set_user_stmt, 11, user.Flags);
+    Bind(m_set_user_stmt, 12, user.PremiumType);
+    Bind(m_set_user_stmt, 13, user.PublicFlags);
 
-    Bind(m_set_emote_stmt, 5, emoji.NeedsColons);
-    Bind(m_set_emote_stmt, 6, emoji.IsManaged);
-    Bind(m_set_emote_stmt, 7, emoji.IsAnimated);
-    Bind(m_set_emote_stmt, 8, emoji.IsAvailable);
+    if (!RunInsert(m_set_user_stmt)) {
+        fprintf(stderr, "user insert failed: %s\n", sqlite3_errstr(m_db_err));
+    }
+}
 
-    if (!RunInsert(m_set_emote_stmt))
-        fprintf(stderr, "emoji insert failed: %s\n", sqlite3_errstr(m_db_err));
+std::optional<Channel> Store::GetChannel(Snowflake id) const {
+    Bind(m_get_chan_stmt, 1, id);
+    if (!FetchOne(m_get_chan_stmt)) {
+        if (m_db_err != SQLITE_DONE)
+            fprintf(stderr, "error while fetching channel: %s\n", sqlite3_errstr(m_db_err));
+        Reset(m_get_chan_stmt);
+        return std::nullopt;
+    }
+
+    Channel ret;
+    ret.ID = id;
+    int tmpi;
+    Get(m_get_chan_stmt, 1, tmpi);
+    ret.Type = static_cast<ChannelType>(tmpi);
+    Get(m_get_chan_stmt, 2, ret.GuildID);
+    Get(m_get_chan_stmt, 3, ret.Position);
+    ret.PermissionOverwrites = std::nullopt;
+    Get(m_get_chan_stmt, 5, ret.Name);
+    Get(m_get_chan_stmt, 6, ret.Topic);
+    Get(m_get_chan_stmt, 7, ret.IsNSFW);
+    Get(m_get_chan_stmt, 8, ret.LastMessageID);
+    Get(m_get_chan_stmt, 9, ret.Bitrate);
+    Get(m_get_chan_stmt, 10, ret.UserLimit);
+    Get(m_get_chan_stmt, 11, ret.RateLimitPerUser);
+    if (!IsNull(m_get_chan_stmt, 12)) {
+        std::string tmps;
+        Get(m_get_chan_stmt, 12, tmps);
+        // dummy users
+        ret.Recipients = std::vector<User>();
+        auto ids = nlohmann::json::parse(tmps).get<std::vector<Snowflake>>();
+        for (const auto &id : ids)
+            ret.Recipients->emplace_back().ID = id;
+    }
+    Get(m_get_chan_stmt, 13, ret.Icon);
+    Get(m_get_chan_stmt, 14, ret.OwnerID);
+    Get(m_get_chan_stmt, 15, ret.ApplicationID);
+    Get(m_get_chan_stmt, 16, ret.ParentID);
+    Get(m_get_chan_stmt, 17, ret.LastPinTimestamp);
+
+    Reset(m_get_chan_stmt);
+
+    return ret;
 }
 
 std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
@@ -488,20 +561,6 @@ std::optional<User> Store::GetUser(Snowflake id) const {
     return ret;
 }
 
-Channel *Store::GetChannel(Snowflake id) {
-    auto it = m_channels.find(id);
-    if (it == m_channels.end())
-        return nullptr;
-    return &it->second;
-}
-
-const Channel *Store::GetChannel(Snowflake id) const {
-    auto it = m_channels.find(id);
-    if (it == m_channels.end())
-        return nullptr;
-    return &it->second;
-}
-
 void Store::ClearGuild(Snowflake id) {
     m_guilds.erase(id);
 }
@@ -510,7 +569,7 @@ void Store::ClearChannel(Snowflake id) {
     m_channels.erase(id);
 }
 
-const Store::channels_type &Store::GetChannels() const {
+const std::unordered_set<Snowflake> &Store::GetChannels() const {
     return m_channels;
 }
 
@@ -668,6 +727,29 @@ lazy BOOL
 )
 )";
 
+    constexpr char *create_channels = R"(
+CREATE TABLE IF NOT EXISTS channels (
+id INTEGER PRIMARY KEY,
+type INTEGER NOT NULL,
+guild_id INTEGER,
+position INTEGER,
+overwrites TEXT, /* json */
+name TEXT,
+topic TEXT,
+is_nsfw BOOL,
+last_message_id INTEGER,
+bitrate INTEGER,
+user_limit INTEGER,
+rate_limit INTEGER,
+recipients TEXT, /* json */
+icon TEXT,
+owner_id INTEGER,
+application_id INTEGER,
+parent_id INTEGER,
+last_pin_timestamp TEXT
+)
+)";
+
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
@@ -707,6 +789,12 @@ lazy BOOL
     m_db_err = sqlite3_exec(m_db, create_guilds, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create guilds table: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_exec(m_db, create_channels, nullptr, nullptr, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to create channels table: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -776,12 +864,22 @@ SELECT * FROM members WHERE user_id = ? AND guild_id = ?
 
     constexpr const char *set_guild = R"(
 REPLACE INTO guilds VALUES (
-?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 )";
 
     constexpr const char *get_guild = R"(
 SELECT * FROM guilds WHERE id = ?
+)";
+
+    constexpr const char *set_chan = R"(
+REPLACE INTO channels VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+)";
+
+    constexpr const char *get_chan = R"(
+SELECT * FROM channels WHERE id = ?
 )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -868,6 +966,18 @@ SELECT * FROM guilds WHERE id = ?
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, set_chan, -1, &m_set_chan_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare set channel statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_chan, -1, &m_get_chan_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get channel statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -886,6 +996,8 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_member_stmt);
     sqlite3_finalize(m_set_guild_stmt);
     sqlite3_finalize(m_get_guild_stmt);
+    sqlite3_finalize(m_set_chan_stmt);
+    sqlite3_finalize(m_get_chan_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {
@@ -957,6 +1069,10 @@ void Store::Get(sqlite3_stmt *stmt, int index, bool &out) const {
 void Store::Get(sqlite3_stmt *stmt, int index, Snowflake &out) const {
     const int64_t num = sqlite3_column_int64(stmt, index);
     out = static_cast<uint64_t>(num);
+}
+
+bool Store::IsNull(sqlite3_stmt *stmt, int index) const {
+    return sqlite3_column_type(stmt, index) == SQLITE_NULL;
 }
 
 void Store::Reset(sqlite3_stmt *stmt) const {

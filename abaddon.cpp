@@ -293,18 +293,18 @@ void Abaddon::ActionJoinGuildDialog() {
 void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
-    auto *channel = m_discord.GetChannel(id);
+    const auto channel = m_discord.GetChannel(id);
     if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM)
         m_discord.SendLazyLoad(id);
 
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
-        m_main_window->set_title(std::string(APP_TITLE) + " - #" + channel->Name);
+        m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
         std::string display;
-        if (channel->Recipients.size() > 1)
-            display = std::to_string(channel->Recipients.size()) + " users";
+        if (channel->Recipients->size() > 1)
+            display = std::to_string(channel->Recipients->size()) + " users";
         else
-            display = channel->Recipients[0].Username;
+            display = channel->Recipients.value()[0].Username;
         m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
     }
     m_main_window->UpdateChatActiveChannel(id);

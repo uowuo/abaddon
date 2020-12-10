@@ -75,8 +75,8 @@ void MemberList::SetActiveChannel(Snowflake id) {
     m_chan_id = id;
     m_guild_id = Snowflake::Invalid;
     if (m_chan_id.IsValid()) {
-        auto *chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
-        if (chan != nullptr) m_guild_id = chan->GuildID;
+        const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
+        if (chan.has_value()) m_guild_id = *chan->GuildID;
     }
 }
 
@@ -99,11 +99,11 @@ void MemberList::UpdateMemberListInternal() {
     if (!m_chan_id.IsValid()) return;
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto *chan = discord.GetChannel(m_chan_id);
-    if (chan == nullptr) return;
+    const auto chan = discord.GetChannel(m_chan_id);
+    if (!chan.has_value()) return;
     std::unordered_set<Snowflake> ids;
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
-        for (const auto &user : chan->Recipients)
+        for (const auto &user : *chan->Recipients)
             ids.insert(user.ID);
         ids.insert(discord.GetUserData().ID);
     } else {

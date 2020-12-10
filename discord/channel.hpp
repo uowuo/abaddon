@@ -17,24 +17,24 @@ enum class ChannelType : int {
 };
 
 struct Channel {
-    Snowflake ID;                                          //
-    ChannelType Type;                                      //
-    Snowflake GuildID;                                     // opt
-    int Position = -1;                                     // opt
-    std::vector<PermissionOverwrite> PermissionOverwrites; // opt
-    std::string Name;                                      // opt, null (null for dm's)
-    std::string Topic;                                     // opt, null
-    bool IsNSFW = false;                                   // opt
-    Snowflake LastMessageID;                               // opt, null
-    int Bitrate = 0;                                       // opt
-    int UserLimit = 0;                                     // opt
-    int RateLimitPerUser = 0;                              // opt
-    std::vector<User> Recipients;                          // opt
-    std::string Icon;                                      // opt, null
-    Snowflake OwnerID;                                     // opt
-    Snowflake ApplicationID;                               // opt
-    Snowflake ParentID;                                    // opt, null
-    std::string LastPinTimestamp;                          // opt, can be null even tho docs say otherwise
+    Snowflake ID;
+    ChannelType Type;
+    std::optional<Snowflake> GuildID;
+    std::optional<int> Position;
+    std::optional<std::vector<PermissionOverwrite>> PermissionOverwrites; // shouldnt be accessed
+    std::optional<std::string> Name;                                      // null for dm's
+    std::optional<std::string> Topic;                                     // null
+    std::optional<bool> IsNSFW;
+    std::optional<Snowflake> LastMessageID; // null
+    std::optional<int> Bitrate;
+    std::optional<int> UserLimit;
+    std::optional<int> RateLimitPerUser;
+    std::optional<std::vector<User>> Recipients; // only access id
+    std::optional<std::string> Icon;             // null
+    std::optional<Snowflake> OwnerID;
+    std::optional<Snowflake> ApplicationID;
+    std::optional<Snowflake> ParentID;           // null
+    std::optional<std::string> LastPinTimestamp; // null
 
     friend void from_json(const nlohmann::json &j, Channel &m);
     void update_from_json(const nlohmann::json &j);

@@ -80,7 +80,7 @@ public:
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     std::optional<Message> GetMessage(Snowflake id) const;
-    const Channel *GetChannel(Snowflake id) const;
+    std::optional<Channel> GetChannel(Snowflake id) const;
     std::optional<Emoji> GetEmoji(Snowflake id) const;
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;

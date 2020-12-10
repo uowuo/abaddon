@@ -55,14 +55,15 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
+    const auto top_recipient = Abaddon::Get().GetDiscordClient().GetUser(data->Recipients.value()[0].ID);
     if (data->Type == ChannelType::DM) {
-        if (data->Recipients[0].HasAvatar()) {
-            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->Recipients[0].GetAvatarURL("png", "16"));
+        if (top_recipient->HasAvatar()) {
+            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(top_recipient->GetAvatarURL("png", "16"));
             if (buf)
                 m_icon = Gtk::manage(new Gtk::Image(buf));
             else {
                 m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-                Abaddon::Get().GetImageManager().LoadFromURL(data->Recipients[0].GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
+                Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
             }
         } else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
@@ -71,9 +72,9 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
 
     auto buf = m_lbl->get_buffer();
     if (data->Type == ChannelType::DM)
-        buf->set_text(data->Recipients[0].Username);
+        buf->set_text(top_recipient->Username);
     else if (data->Type == ChannelType::GROUP_DM)
-        buf->set_text(std::to_string(data->Recipients.size()) + " users");
+        buf->set_text(std::to_string(data->Recipients->size()) + " users");
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
     m_box->set_halign(Gtk::ALIGN_START);
@@ -143,7 +144,7 @@ ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     m_lbl->get_style_context()->add_class("channel-row-label");
 
     auto buf = m_lbl->get_buffer();
-    buf->set_text(data->Name);
+    buf->set_text(*data->Name);
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_arrow);
@@ -173,7 +174,7 @@ ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
     m_lbl->get_style_context()->add_class("channel-row-label");
 
     auto buf = m_lbl->get_buffer();
-    buf->set_text("#" + data->Name);
+    buf->set_text("#" + *data->Name);
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_lbl);
@@ -216,8 +217,8 @@ ChannelList::ChannelList() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_message_create().connect(sigc::track_obj([this, &discord](Snowflake message_id) {
         const auto message = discord.GetMessage(message_id);
-        const auto *channel = discord.GetChannel(message->ChannelID);
-        if (channel == nullptr) return;
+        const auto channel = discord.GetChannel(message->ChannelID);
+        if (!channel.has_value()) return;
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
             CheckBumpDM(message->ChannelID);
         // clang-format off
@@ -282,12 +283,12 @@ void ChannelList::UpdateRemoveChannel(Snowflake id) {
 
 // this is total shit
 void ChannelList::UpdateChannelCategory(Snowflake id) {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(data->GuildID);
-    auto git = m_guild_id_to_row.find(data->GuildID);
+    const auto data = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
+    auto git = m_guild_id_to_row.find(*data->GuildID);
     if (git == m_guild_id_to_row.end()) return;
     auto *guild_row = git->second;
-    if (data == nullptr || !guild.has_value()) return;
+    if (!data.has_value() || !guild.has_value()) return;
     auto it = m_id_to_row.find(id);
     if (it == m_id_to_row.end()) return;
     auto row = dynamic_cast<ChannelListRowCategory *>(it->second);
@@ -315,7 +316,7 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
             pos = x->second->get_index();
     }
 
-    auto *new_row = Gtk::manage(new ChannelListRowCategory(data));
+    auto *new_row = Gtk::manage(new ChannelListRowCategory(&*data));
     new_row->IsUserCollapsed = old_collapsed;
     if (visible)
         new_row->show();
@@ -326,9 +327,9 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
     m_list->insert(*new_row, pos);
     int i = 1;
     for (const auto &[idx, child_id] : child_rows) {
-        const auto *channel = Abaddon::Get().GetDiscordClient().GetChannel(child_id);
-        if (channel != nullptr) {
-            auto *new_child = Gtk::manage(new ChannelListRowChannel(channel));
+        const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(child_id);
+        if (channel.has_value()) {
+            auto *new_child = Gtk::manage(new ChannelListRowChannel(&*channel));
             new_row->Children.insert(new_child);
             new_child->Parent = new_row;
             AttachChannelMenuHandler(new_child);
@@ -342,9 +343,9 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
 
 // so is this
 void ChannelList::UpdateChannel(Snowflake id) {
-    const auto *data = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(data->GuildID);
-    const auto *guild_row = m_guild_id_to_row.at(data->GuildID);
+    const auto data = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
+    const auto *guild_row = m_guild_id_to_row.at(*data->GuildID);
     if (data->Type == ChannelType::GUILD_CATEGORY) {
         UpdateChannelCategory(id);
         return;
@@ -370,13 +371,13 @@ void ChannelList::UpdateChannel(Snowflake id) {
             pos = x->second->get_index();
     }
 
-    auto *new_row = Gtk::manage(new ChannelListRowChannel(data));
+    auto *new_row = Gtk::manage(new ChannelListRowChannel(&*data));
     new_row->IsUserCollapsed = old_collapsed;
     m_id_to_row[id] = new_row;
-    if (data->ParentID.IsValid()) {
-        new_row->Parent = m_id_to_row.at(data->ParentID);
+    if (data->ParentID->IsValid()) {
+        new_row->Parent = m_id_to_row.at(*data->ParentID);
     } else {
-        new_row->Parent = m_guild_id_to_row.at(data->GuildID);
+        new_row->Parent = m_guild_id_to_row.at(*data->GuildID);
     }
 
     new_row->Parent->Children.insert(new_row);
@@ -387,7 +388,8 @@ void ChannelList::UpdateChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateCreateDMChannel(Snowflake id) {
-    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(id)));
+    const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
     dm_row->IsUserCollapsed = false;
     m_list->insert(*dm_row, m_dm_header_row->get_index() + 1);
     m_dm_header_row->Children.insert(dm_row);
@@ -397,13 +399,13 @@ void ChannelList::UpdateCreateDMChannel(Snowflake id) {
 
 void ChannelList::UpdateCreateChannel(Snowflake id) {
     const auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto *data = discord.GetChannel(id);
+    const auto data = discord.GetChannel(id);
     if (data->Type == ChannelType::DM || data->Type == ChannelType::GROUP_DM) {
         UpdateCreateDMChannel(id);
         return;
     }
-    const auto guild = discord.GetGuild(data->GuildID);
-    auto *guild_row = m_guild_id_to_row.at(data->GuildID);
+    const auto guild = discord.GetGuild(*data->GuildID);
+    auto *guild_row = m_guild_id_to_row.at(*data->GuildID);
 
     int pos = guild_row->get_index() + 1;
     const auto sorted = guild->GetSortedChannels();
@@ -420,9 +422,9 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
 
     ChannelListRow *row;
     if (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS) {
-        row = Gtk::manage(new ChannelListRowChannel(data));
+        row = Gtk::manage(new ChannelListRowChannel(&*data));
     } else if (data->Type == ChannelType::GUILD_CATEGORY) {
-        row = Gtk::manage(new ChannelListRowCategory(data));
+        row = Gtk::manage(new ChannelListRowCategory(&*data));
     } else
         return;
     row->IsUserCollapsed = false;
@@ -526,18 +528,18 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     const auto guild_data = discord.GetGuild(id);
     if (!guild_data.has_value()) return;
 
-    std::map<int, const Channel *> orphan_channels;
-    std::unordered_map<Snowflake, std::vector<const Channel *>> cat_to_channels;
+    std::map<int, Channel> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<Channel>> cat_to_channels;
     if (guild_data->Channels.has_value())
         for (const auto &dc : *guild_data->Channels) {
             const auto channel = discord.GetChannel(dc.ID);
-            if (channel == nullptr) continue;
+            if (!channel.has_value()) continue;
             if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) continue;
 
-            if (channel->ParentID.IsValid())
-                cat_to_channels[channel->ParentID].push_back(&*channel);
+            if (channel->ParentID->IsValid())
+                cat_to_channels[*channel->ParentID].push_back(*channel);
             else
-                orphan_channels[channel->Position] = &*channel;
+                orphan_channels[*channel->Position] = *channel;
         }
 
     auto *guild_row = Gtk::manage(new ChannelListRowGuild(&*guild_data));
@@ -550,7 +552,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 
     // add channels with no parent category
     for (const auto &[pos, channel] : orphan_channels) {
-        auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+        auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
         chan_row->IsUserCollapsed = false;
         AttachChannelMenuHandler(chan_row);
         insert_and_adjust(*chan_row);
@@ -560,19 +562,19 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     }
 
     // categories
-    std::map<int, std::vector<const Channel *>> sorted_categories;
+    std::map<int, std::vector<Channel>> sorted_categories;
     if (guild_data->Channels.has_value())
         for (const auto &dc : *guild_data->Channels) {
             const auto channel = discord.GetChannel(dc.ID);
-            if (channel == nullptr) continue;
+            if (!channel.has_value()) continue;
             if (channel->Type == ChannelType::GUILD_CATEGORY)
-                sorted_categories[channel->Position].push_back(&*channel);
+                sorted_categories[*channel->Position].push_back(*channel);
         }
 
     for (auto &[pos, catvec] : sorted_categories) {
-        std::sort(catvec.begin(), catvec.end(), [](const Channel *a, const Channel *b) { return a->ID < b->ID; });
+        std::sort(catvec.begin(), catvec.end(), [](const Channel &a, const Channel &b) { return a.ID < b.ID; });
         for (const auto cat : catvec) {
-            auto *cat_row = Gtk::manage(new ChannelListRowCategory(cat));
+            auto *cat_row = Gtk::manage(new ChannelListRowCategory(&cat));
             cat_row->IsUserCollapsed = false;
             AttachChannelMenuHandler(cat_row);
             insert_and_adjust(*cat_row);
@@ -581,14 +583,14 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
             m_id_to_row[cat_row->ID] = cat_row;
 
             // child channels
-            if (cat_to_channels.find(cat->ID) == cat_to_channels.end()) continue;
-            std::map<int, const Channel *> sorted_channels;
+            if (cat_to_channels.find(cat.ID) == cat_to_channels.end()) continue;
+            std::map<int, Channel> sorted_channels;
 
-            for (const auto channel : cat_to_channels.at(cat->ID))
-                sorted_channels[channel->Position] = channel;
+            for (const auto channel : cat_to_channels.at(cat.ID))
+                sorted_channels[*channel.Position] = channel;
 
             for (const auto &[pos, channel] : sorted_channels) {
-                auto *chan_row = Gtk::manage(new ChannelListRowChannel(channel));
+                auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
                 chan_row->IsUserCollapsed = false;
                 AttachChannelMenuHandler(chan_row);
                 insert_and_adjust(*chan_row);
@@ -601,13 +603,15 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 }
 
 void ChannelList::AddPrivateChannels() {
-    auto dms_ = Abaddon::Get().GetDiscordClient().GetPrivateChannels();
-    std::vector<const Channel *> dms;
     const auto &discord = Abaddon::Get().GetDiscordClient();
-    for (const auto &x : dms_)
-        dms.push_back(discord.GetChannel(x));
-    std::sort(dms.begin(), dms.end(), [&](const Channel *a, const Channel *b) -> bool {
-        return a->LastMessageID > b->LastMessageID;
+    auto dms_ = discord.GetPrivateChannels();
+    std::vector<Channel> dms;
+    for (const auto &x : dms_) {
+        const auto chan = discord.GetChannel(x);
+        dms.push_back(*chan);
+    }
+    std::sort(dms.begin(), dms.end(), [&](const Channel &a, const Channel &b) -> bool {
+        return a.LastMessageID > b.LastMessageID;
     });
 
     m_dm_header_row = Gtk::manage(new ChannelListRowDMHeader);
@@ -616,9 +620,9 @@ void ChannelList::AddPrivateChannels() {
     m_list->add(*m_dm_header_row);
 
     for (const auto &dm : dms) {
-        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(dm));
+        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&dm));
         dm_row->Parent = m_dm_header_row;
-        m_dm_id_to_row[dm->ID] = dm_row;
+        m_dm_id_to_row[dm.ID] = dm_row;
         dm_row->IsUserCollapsed = false;
         m_list->add(*dm_row);
         m_dm_header_row->Children.insert(dm_row);
@@ -707,7 +711,8 @@ void ChannelList::CheckBumpDM(Snowflake channel_id) {
     const bool selected = row->is_selected();
     row->Parent->Children.erase(row);
     delete row;
-    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(Abaddon::Get().GetDiscordClient().GetChannel(channel_id)));
+    const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
+    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
     dm_row->Parent = m_dm_header_row;
     m_dm_header_row->Children.insert(dm_row);
     m_dm_id_to_row[channel_id] = dm_row;

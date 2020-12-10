@@ -19,7 +19,7 @@ public:
     bool IsValid() const;
 
     void SetUser(Snowflake id, const User &user);
-    void SetChannel(Snowflake id, const Channel &channel);
+    void SetChannel(Snowflake id, const Channel &chan);
     void SetGuild(Snowflake id, const Guild &guild);
     void SetRole(Snowflake id, const Role &role);
     void SetMessage(Snowflake id, const Message &message);
@@ -29,7 +29,7 @@ public:
 
     // slap const on everything even tho its not *really* const
 
-    Channel *GetChannel(Snowflake id);
+    std::optional<Channel> GetChannel(Snowflake id) const;
     std::optional<Emoji> GetEmoji(Snowflake id) const;
     std::optional<Guild> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetGuildMember(Snowflake guild_id, Snowflake user_id) const;
@@ -37,7 +37,6 @@ public:
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<Role> GetRole(Snowflake id) const;
     std::optional<User> GetUser(Snowflake id) const;
-    const Channel *GetChannel(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
@@ -51,7 +50,7 @@ public:
     using permission_overwrites_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>>; // [channel][user/role]
     using emojis_type = std::unordered_map<Snowflake, Emoji>;
 
-    const channels_type &GetChannels() const;
+    const std::unordered_set<Snowflake> &GetChannels() const;
     const std::unordered_set<Snowflake> &GetGuilds() const;
 
     void ClearAll();
@@ -60,7 +59,7 @@ public:
     void EndTransaction();
 
 private:
-    channels_type m_channels;
+    std::unordered_set<Snowflake> m_channels;
     std::unordered_set<Snowflake> m_guilds;
 
     bool CreateTables();
@@ -83,6 +82,7 @@ private:
     void Get(sqlite3_stmt *stmt, int index, std::string &out) const;
     void Get(sqlite3_stmt *stmt, int index, bool &out) const;
     void Get(sqlite3_stmt *stmt, int index, Snowflake &out) const;
+    bool IsNull(sqlite3_stmt *stmt, int index) const;
     void Reset(sqlite3_stmt *stmt) const;
 
     std::filesystem::path m_db_path;
@@ -102,6 +102,8 @@ private:
     mutable sqlite3_stmt *m_get_member_stmt;
     mutable sqlite3_stmt *m_set_guild_stmt;
     mutable sqlite3_stmt *m_get_guild_stmt;
+    mutable sqlite3_stmt *m_set_chan_stmt;
+    mutable sqlite3_stmt *m_get_chan_stmt;
 };
 
 template<typename T>

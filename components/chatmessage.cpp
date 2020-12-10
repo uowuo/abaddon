@@ -422,8 +422,8 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
         if (!match.fetch_pos(0, mstart, mend)) break;
         const Glib::ustring user_id = match.fetch(1);
         const auto user = discord.GetUser(user_id);
-        const auto *channel = discord.GetChannel(ChannelID);
-        if (!user.has_value() || channel == nullptr) {
+        const auto channel = discord.GetChannel(ChannelID);
+        if (!user.has_value() || !channel.has_value()) {
             startpos = mend;
             continue;
         }
@@ -433,7 +433,7 @@ void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
             replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
         else {
-            const auto role_id = user->GetHoistedRole(channel->GuildID, true);
+            const auto role_id = user->GetHoistedRole(*channel->GuildID, true);
             const auto role = discord.GetRole(role_id);
             if (!role.has_value())
                 replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
@@ -533,8 +533,8 @@ void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
         int mstart, mend;
         match.fetch_pos(0, mstart, mend);
         std::string channel_id = match.fetch(1);
-        const auto *chan = discord.GetChannel(channel_id);
-        if (chan == nullptr) {
+        const auto chan = discord.GetChannel(channel_id);
+        if (!chan.has_value()) {
             startpos = mend;
             continue;
         }
@@ -548,8 +548,8 @@ void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
         const auto erase_from = buf->get_iter_at_offset(chars_start);
         const auto erase_to = buf->get_iter_at_offset(chars_end);
         auto it = buf->erase(erase_from, erase_to);
-        const std::string replacement = "#" + chan->Name;
-        it = buf->insert_with_tag(it, "#" + chan->Name, tag);
+        const std::string replacement = "#" + *chan->Name;
+        it = buf->insert_with_tag(it, "#" + *chan->Name, tag);
 
         // rescan the whole thing so i dont have to deal with fixing match positions
         text = GetText(buf);
@@ -823,7 +823,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 void ChatMessageHeader::UpdateNameColor() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild_id = discord.GetChannel(ChannelID)->GuildID;
-    const auto role_id = discord.GetMemberHoistedRole(guild_id, UserID, true);
+    const auto role_id = discord.GetMemberHoistedRole(*guild_id, UserID, true);
     const auto user = discord.GetUser(UserID);
     if (!user.has_value()) return;
     const auto role = discord.GetRole(role_id);
