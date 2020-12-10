@@ -77,7 +77,7 @@ void JoinGuildDialog::CheckCode() {
 }
 
 bool JoinGuildDialog::IsCode(std::string str) {
-    return str.length() >= 2 && std::all_of(str.begin(), str.end(), [](char c) -> bool { return std::isalnum(c); });
+    return str.length() >= 2 && std::all_of(str.begin(), str.end(), [](char c) -> bool { return std::isalnum(c) || c == '-'; });
 }
 
 std::string JoinGuildDialog::GetCode() {
