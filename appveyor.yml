@@ -26,7 +26,7 @@ for:
 
     install:
     - cmd: |
-        vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows
+        vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows sqlite3:x64-windows
 
         cd c:\projects\abaddon
         mkdir build && cd build

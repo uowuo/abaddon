@@ -10,6 +10,7 @@ matrix:
           - zlib
           - openssl
           - nlohmann-json
+          - sqlite
 
 script:
   - |

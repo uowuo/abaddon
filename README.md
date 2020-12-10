@@ -38,6 +38,7 @@
 * [C++ Requests: Curl for People](https://github.com/whoshuu/cpr/)
 * [zlib](https://zlib.net/)
 * [simpleini](https://github.com/brofield/simpleini)
+* [SQLite3](https://www.sqlite.org/index.html)
 
 ### TODO:
 * Voice support
