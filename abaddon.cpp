@@ -21,9 +21,8 @@ Abaddon::Abaddon()
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
-    std::string ua = m_settings.GetSettingString("http", "user_agent", "");
-    if (ua != "")
-        m_discord.SetUserAgent(ua);
+    std::string ua = m_settings.GetSettingString("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.308 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36");
+    m_discord.SetUserAgent(ua);
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
     m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
