@@ -290,26 +290,26 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
         }
     }
 
-    if (embed.Image.has_value()) {
-        bool is_img = embed.Image->URL.has_value();
-        bool is_thumb = embed.Thumbnail.has_value();
-        if (is_img || is_thumb) {
-            auto *img = Gtk::manage(new Gtk::Image);
-            img->set_halign(Gtk::ALIGN_CENTER);
-            int w = 0, h = 0;
-            if (is_img)
-                GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, 200, 150);
-            else
-                GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, 200, 150);
-            img->set_size_request(w, h);
-            main->pack_start(*img);
-            m_embed_img = img;
-            if (is_img)
-                m_embed_imgurl = *embed.Image->ProxyURL;
-            else
-                m_embed_imgurl = *embed.Thumbnail->ProxyURL;
-            Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), m_embed_imgurl));
-        }
+    bool is_img = embed.Image.has_value() && embed.Image->ProxyURL.has_value();
+    bool is_thumb = embed.Thumbnail.has_value() && embed.Thumbnail->ProxyURL.has_value();
+    if (is_img || is_thumb) {
+        auto *img = Gtk::manage(new Gtk::Image);
+        img->set_halign(Gtk::ALIGN_CENTER);
+        int w = 0, h = 0;
+        if (is_img)
+            GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, 200, 150);
+        else
+            GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, 200, 150);
+        img->set_size_request(w, h);
+        main->pack_start(*img);
+        m_embed_img = img;
+        if (is_img)
+            m_embed_imgurl = *embed.Image->ProxyURL;
+        else
+            m_embed_imgurl = *embed.Thumbnail->ProxyURL;
+
+        Abaddon::Get().GetImageManager().LoadFromURL(m_embed_imgurl,
+                                                     sigc::mem_fun(*this, &ChatMessageItemContainer::OnEmbedImageLoad));
     }
 
     if (embed.Footer.has_value()) {
@@ -397,6 +397,12 @@ void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Imag
     m_img_loadmap[url] = std::make_pair(img, data);
     // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
+}
+
+void ChatMessageItemContainer::OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+    int w, h;
+    m_embed_img->get_size_request(w, h);
+    m_embed_img->property_pixbuf() = pixbuf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
 }
 
 Glib::ustring ChatMessageItemContainer::GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf) {

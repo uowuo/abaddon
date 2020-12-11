@@ -27,6 +27,8 @@ protected:
     Gtk::Widget *CreateStickerComponent(const Sticker &data);
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
+    void OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
+
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
     void HandleUserMentions(Gtk::TextView *tv);

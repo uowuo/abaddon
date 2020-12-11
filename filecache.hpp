@@ -19,7 +19,7 @@ public:
     std::string GetPathIfCached(std::string url);
 
 private:
-    std::string SanitizeString(std::string str);
+    std::string GetCachedName(std::string str);
     void CleanupFutures();
     void RespondFromPath(std::filesystem::path path, callback_type cb);
     void OnResponse(const cpr::Response &r);

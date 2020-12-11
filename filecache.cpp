@@ -1,5 +1,6 @@
 #include "abaddon.hpp"
 #include "filecache.hpp"
+#include "murmurhash3.h"
 
 constexpr static const int MaxConcurrentCacheHTTP = 10;
 
@@ -18,15 +19,10 @@ Cache::~Cache() {
         fprintf(stderr, "error removing tmp dir\n");
 }
 
-std::string Cache::SanitizeString(std::string str) {
-    std::string ret;
-    for (const char c : str) {
-        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z'))
-            ret += c;
-        else
-            ret += '_';
-    }
-    return ret;
+std::string Cache::GetCachedName(std::string str) {
+    uint32_t out;
+    MurmurHash3_x86_32(str.c_str(), str.size(), 0, &out);
+    return std::to_string(out);
 }
 
 void Cache::RespondFromPath(std::filesystem::path path, callback_type cb) {
@@ -34,7 +30,7 @@ void Cache::RespondFromPath(std::filesystem::path path, callback_type cb) {
 }
 
 void Cache::GetFileFromURL(std::string url, callback_type cb) {
-    auto cache_path = m_tmp_path / SanitizeString(url);
+    auto cache_path = m_tmp_path / GetCachedName(url);
     if (std::filesystem::exists(cache_path)) {
         m_futures.push_back(std::async(std::launch::async, [this, cache_path, cb]() { RespondFromPath(cache_path, cb); }));
         return;
@@ -62,7 +58,7 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
 }
 
 std::string Cache::GetPathIfCached(std::string url) {
-    auto cache_path = m_tmp_path / SanitizeString(url);
+    auto cache_path = m_tmp_path / GetCachedName(url);
     if (std::filesystem::exists(cache_path)) {
         return cache_path.string();
     }
@@ -85,7 +81,7 @@ void Cache::OnResponse(const cpr::Response &r) {
     if (r.error || r.status_code > 300) return;
 
     std::vector<uint8_t> data(r.text.begin(), r.text.end());
-    auto path = m_tmp_path / SanitizeString(static_cast<std::string>(r.url));
+    auto path = m_tmp_path / GetCachedName(static_cast<std::string>(r.url));
     FILE *fp = std::fopen(path.string().c_str(), "wb");
     if (fp == nullptr)
         return;
