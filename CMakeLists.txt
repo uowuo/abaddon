@@ -115,6 +115,10 @@ else()
 	link_directories(${GLIBMM_LIBRARY_DIRS})
 	include_directories(${GLIBMM_INCLUDE_DIRS})
 
+	pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+	link_directories(${SQLITE_LIBRARY_DIRS})
+	include_directories(${SQLITE_INCLUDE_DIRS})
+
 	set(USE_TLS TRUE)
 	set(USE_OPEN_SSL TRUE)
 	add_subdirectory(thirdparty/IXWebSocket)
