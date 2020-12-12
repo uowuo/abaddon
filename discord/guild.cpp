@@ -132,43 +132,43 @@ std::vector<Snowflake> Guild::GetSortedChannels(Snowflake ignore) const {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     auto channels = discord.GetChannelsInGuild(ID);
 
-    std::unordered_map<Snowflake, std::vector<const Channel *>> category_to_channels;
-    std::map<int, std::vector<const Channel *>> position_to_categories;
-    std::map<int, std::vector<const Channel *>> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<Channel>> category_to_channels;
+    std::map<int, std::vector<Channel>> position_to_categories;
+    std::map<int, std::vector<Channel>> orphan_channels;
     for (const auto &channel_id : channels) {
         const auto data = discord.GetChannel(channel_id);
         if (!data.has_value()) continue;
         if (!data->ParentID->IsValid() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
-            orphan_channels[*data->Position].push_back(&*data);
+            orphan_channels[*data->Position].push_back(*data);
         else if (data->ParentID->IsValid() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
-            category_to_channels[*data->ParentID].push_back(&*data);
+            category_to_channels[*data->ParentID].push_back(*data);
         else if (data->Type == ChannelType::GUILD_CATEGORY)
-            position_to_categories[*data->Position].push_back(&*data);
+            position_to_categories[*data->Position].push_back(*data);
     }
 
     for (auto &[pos, channels] : orphan_channels) {
-        std::sort(channels.begin(), channels.end(), [&](const Channel *a, const Channel *b) -> bool {
-            return a->ID < b->ID;
+        std::sort(channels.begin(), channels.end(), [&](const Channel &a, const Channel &b) -> bool {
+            return a.ID < b.ID;
         });
-        for (auto &chan : channels)
-            ret.push_back(chan->ID);
+        for (const auto &chan : channels)
+            ret.push_back(chan.ID);
     }
 
     for (auto &[pos, categories] : position_to_categories) {
-        std::sort(categories.begin(), categories.end(), [&](const Channel *a, const Channel *b) -> bool {
-            return a->ID < b->ID;
+        std::sort(categories.begin(), categories.end(), [&](const Channel &a, const Channel &b) -> bool {
+            return a.ID < b.ID;
         });
-        for (auto &category : categories) {
-            ret.push_back(category->ID);
-            if (ignore == category->ID) continue; // stupid hack to save me some time
-            auto it = category_to_channels.find(category->ID);
+        for (const auto &category : categories) {
+            ret.push_back(category.ID);
+            if (ignore == category.ID) continue; // stupid hack to save me some time
+            auto it = category_to_channels.find(category.ID);
             if (it == category_to_channels.end()) continue;
             auto &channels = it->second;
-            std::sort(channels.begin(), channels.end(), [&](const Channel *a, const Channel *b) -> bool {
-                return a->Position < b->Position;
+            std::sort(channels.begin(), channels.end(), [&](const Channel &a, const Channel &b) -> bool {
+                return a.Position < b.Position;
             });
             for (auto &channel : channels) {
-                ret.push_back(channel->ID);
+                ret.push_back(channel.ID);
             }
         }
     }
