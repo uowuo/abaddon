@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "../abaddon.hpp"
 #include "../imgmanager.hpp"
+#include "../util.hpp"
 
 void ChannelListRow::Collapse() {}
 
@@ -98,6 +99,23 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     m_lbl = Gtk::manage(new Gtk::TextView);
     MakeReadOnly(m_lbl);
 
+    AddWidgetMenuHandler(m_ev, m_menu);
+    AddWidgetMenuHandler(m_lbl, m_menu);
+
+    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_menu_copyid->signal_activate().connect([this]() {
+        m_signal_copy_id.emit();
+    });
+    m_menu.append(*m_menu_copyid);
+
+    m_menu_leave = Gtk::manage(new Gtk::MenuItem("_Leave Guild", true));
+    m_menu_leave->signal_activate().connect([this]() {
+        m_signal_leave.emit();
+    });
+    m_menu.append(*m_menu_leave);
+
+    m_menu.show_all();
+
     if (data->HasIcon()) {
         auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
         if (buf)
@@ -131,6 +149,14 @@ void ChannelListRowGuild::OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf) {
     m_icon->property_pixbuf() = buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
 }
 
+ChannelListRowGuild::type_signal_copy_id ChannelListRowGuild::signal_copy_id() {
+    return m_signal_copy_id;
+}
+
+ChannelListRowGuild::type_signal_leave ChannelListRowGuild::signal_leave() {
+    return m_signal_leave;
+}
+
 ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
@@ -138,6 +164,17 @@ ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
     m_lbl = Gtk::manage(new Gtk::TextView);
     MakeReadOnly(m_lbl);
     m_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
+
+    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_menu_copyid->signal_activate().connect([this]() {
+        m_signal_copy_id.emit();
+    });
+    m_menu.append(*m_menu_copyid);
+
+    m_menu.show_all();
+
+    AddWidgetMenuHandler(m_ev, m_menu);
+    AddWidgetMenuHandler(m_lbl, m_menu);
 
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-category");
@@ -162,12 +199,27 @@ void ChannelListRowCategory::Expand() {
     m_arrow->set(IsUserCollapsed ? Gtk::ARROW_RIGHT : Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
 }
 
+ChannelListRowCategory::type_signal_copy_id ChannelListRowCategory::signal_copy_id() {
+    return m_signal_copy_id;
+}
+
 ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_lbl = Gtk::manage(new Gtk::TextView);
     MakeReadOnly(m_lbl);
+
+    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_menu_copyid->signal_activate().connect([this]() {
+        m_signal_copy_id.emit();
+    });
+    m_menu.append(*m_menu_copyid);
+
+    m_menu.show_all();
+
+    AddWidgetMenuHandler(m_ev, m_menu);
+    AddWidgetMenuHandler(m_lbl, m_menu);
 
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-channel");
@@ -183,27 +235,15 @@ ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
     show_all_children();
 }
 
+ChannelListRowChannel::type_signal_copy_id ChannelListRowChannel::signal_copy_id() {
+    return m_signal_copy_id;
+}
+
 ChannelList::ChannelList() {
     m_main = Gtk::manage(new Gtk::ScrolledWindow);
     m_list = Gtk::manage(new Gtk::ListBox);
 
     m_list->get_style_context()->add_class("channel-list");
-
-    m_guild_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_guild_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_copyid));
-    m_guild_menu.append(*m_guild_menu_copyid);
-
-    m_guild_menu_leave = Gtk::manage(new Gtk::MenuItem("_Leave Guild", true));
-    m_guild_menu_leave->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_guild_menu_leave));
-    m_guild_menu.append(*m_guild_menu_leave);
-
-    m_guild_menu.show_all();
-
-    m_channel_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_channel_menu_copyid->signal_activate().connect(sigc::mem_fun(*this, &ChannelList::on_channel_menu_copyid));
-    m_channel_menu.append(*m_channel_menu_copyid);
-
-    m_channel_menu.show_all();
 
     m_list->set_activate_on_single_click(true);
     m_list->signal_row_activated().connect(sigc::mem_fun(*this, &ChannelList::on_row_activated));
@@ -321,7 +361,7 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
     if (visible)
         new_row->show();
     m_id_to_row[id] = new_row;
-    AttachChannelMenuHandler(new_row);
+    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
     new_row->Parent = guild_row;
     guild_row->Children.insert(new_row);
     m_list->insert(*new_row, pos);
@@ -332,7 +372,7 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
             auto *new_child = Gtk::manage(new ChannelListRowChannel(&*channel));
             new_row->Children.insert(new_child);
             new_child->Parent = new_row;
-            AttachChannelMenuHandler(new_child);
+            new_child->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_child->ID));
             m_id_to_row[child_id] = new_child;
             if (visible && !new_row->IsUserCollapsed)
                 new_child->show();
@@ -383,7 +423,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     new_row->Parent->Children.insert(new_row);
     if (new_row->Parent->is_visible() && !new_row->Parent->IsUserCollapsed)
         new_row->show();
-    AttachChannelMenuHandler(new_row);
+    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
     m_list->insert(*new_row, pos);
 }
 
@@ -422,15 +462,18 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
 
     ChannelListRow *row;
     if (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS) {
-        row = Gtk::manage(new ChannelListRowChannel(&*data));
+        auto *tmp = Gtk::manage(new ChannelListRowChannel(&*data));
+        tmp->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), tmp->ID));
+        row = tmp;
     } else if (data->Type == ChannelType::GUILD_CATEGORY) {
-        row = Gtk::manage(new ChannelListRowCategory(&*data));
+        auto *tmp = Gtk::manage(new ChannelListRowCategory(&*data));
+        tmp->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), tmp->ID));
+        row = tmp;
     } else
         return;
     row->IsUserCollapsed = false;
     if (guild_row->is_visible())
         row->show();
-    AttachChannelMenuHandler(row);
     row->Parent = guild_row;
     guild_row->Children.insert(row);
     m_id_to_row[id] = row;
@@ -453,7 +496,8 @@ void ChannelList::UpdateGuild(Snowflake id) {
     new_row->IsUserCollapsed = old_collapsed;
     new_row->GuildIndex = old_gindex;
     m_guild_id_to_row[new_row->ID] = new_row;
-    AttachGuildMenuHandler(new_row);
+    new_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), new_row->ID));
+    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
     new_row->Children = children;
     for (auto child : children)
         child->Parent = new_row;
@@ -548,13 +592,14 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     guild_row->GuildIndex = m_guild_count++;
     insert_and_adjust(*guild_row);
     m_guild_id_to_row[guild_row->ID] = guild_row;
-    AttachGuildMenuHandler(guild_row);
+    guild_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), guild_row->ID));
+    guild_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), guild_row->ID));
 
     // add channels with no parent category
     for (const auto &[pos, channel] : orphan_channels) {
         auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
         chan_row->IsUserCollapsed = false;
-        AttachChannelMenuHandler(chan_row);
+        chan_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), chan_row->ID));
         insert_and_adjust(*chan_row);
         guild_row->Children.insert(chan_row);
         chan_row->Parent = guild_row;
@@ -576,7 +621,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
         for (const auto cat : catvec) {
             auto *cat_row = Gtk::manage(new ChannelListRowCategory(&cat));
             cat_row->IsUserCollapsed = false;
-            AttachChannelMenuHandler(cat_row);
+            cat_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), cat_row->ID));
             insert_and_adjust(*cat_row);
             guild_row->Children.insert(cat_row);
             cat_row->Parent = guild_row;
@@ -592,7 +637,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
             for (const auto &[pos, channel] : sorted_channels) {
                 auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
                 chan_row->IsUserCollapsed = false;
-                AttachChannelMenuHandler(chan_row);
+                chan_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), chan_row->ID));
                 insert_and_adjust(*chan_row);
                 cat_row->Children.insert(chan_row);
                 chan_row->Parent = cat_row;
@@ -652,54 +697,12 @@ void ChannelList::UpdateListingInternal() {
     }
 }
 
-void ChannelList::on_guild_menu_copyid() {
-    auto tmp = m_list->get_selected_row();
-    auto row = dynamic_cast<ChannelListRow *>(tmp);
-    if (row != nullptr)
-        Gtk::Clipboard::get()->set_text(std::to_string(row->ID));
+void ChannelList::OnMenuCopyID(Snowflake id) {
+    Gtk::Clipboard::get()->set_text(std::to_string(id));
 }
 
-void ChannelList::on_guild_menu_leave() {
-    auto row = dynamic_cast<ChannelListRow *>(m_list->get_selected_row());
-    if (row != nullptr)
-        m_signal_action_guild_leave.emit(row->ID);
-}
-
-void ChannelList::AttachGuildMenuHandler(Gtk::ListBoxRow *row) {
-    row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
-        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            auto grow = dynamic_cast<ChannelListRowGuild *>(row);
-            if (grow != nullptr) {
-                m_list->select_row(*row);
-                m_guild_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
-            }
-            return true;
-        }
-
-        return false;
-    });
-}
-
-void ChannelList::on_channel_menu_copyid() {
-    auto tmp = m_list->get_selected_row();
-    auto row = dynamic_cast<ChannelListRow *>(tmp);
-    if (row != nullptr)
-        Gtk::Clipboard::get()->set_text(std::to_string(row->ID));
-}
-
-void ChannelList::AttachChannelMenuHandler(Gtk::ListBoxRow *row) {
-    row->signal_button_press_event().connect([&, row](GdkEventButton *e) -> bool {
-        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            auto grow = dynamic_cast<ChannelListRow *>(row);
-            if (grow != nullptr) {
-                m_list->select_row(*row);
-                m_channel_menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(e));
-            }
-            return true;
-        }
-
-        return false;
-    });
+void ChannelList::OnGuildMenuLeave(Snowflake id) {
+    m_signal_action_guild_leave.emit(id);
 }
 
 void ChannelList::CheckBumpDM(Snowflake channel_id) {

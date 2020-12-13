@@ -59,6 +59,21 @@ protected:
     Gtk::Box *m_box;
     Gtk::TextView *m_lbl;
     Gtk::Image *m_icon;
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copyid;
+    Gtk::MenuItem *m_menu_leave;
+
+private:
+    typedef sigc::signal<void> type_signal_copy_id;
+    typedef sigc::signal<void> type_signal_leave;
+
+    type_signal_copy_id m_signal_copy_id;
+    type_signal_leave m_signal_leave;
+
+public:
+    type_signal_copy_id signal_copy_id();
+    type_signal_leave signal_leave();
 };
 
 class ChannelListRowCategory : public ChannelListRow {
@@ -73,6 +88,17 @@ protected:
     Gtk::Box *m_box;
     Gtk::TextView *m_lbl;
     Gtk::Arrow *m_arrow;
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copyid;
+
+private:
+    typedef sigc::signal<void> type_signal_copy_id;
+
+    type_signal_copy_id m_signal_copy_id;
+
+public:
+    type_signal_copy_id signal_copy_id();
 };
 
 class ChannelListRowChannel : public ChannelListRow {
@@ -83,6 +109,17 @@ protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::TextView *m_lbl;
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copyid;
+
+private:
+    typedef sigc::signal<void> type_signal_copy_id;
+
+    type_signal_copy_id m_signal_copy_id;
+
+public:
+    type_signal_copy_id signal_copy_id();
 };
 
 class ChannelList {
@@ -116,15 +153,11 @@ protected:
     void on_row_activated(Gtk::ListBoxRow *row);
 
     int m_guild_count;
-    Gtk::Menu m_guild_menu;
-    Gtk::MenuItem *m_guild_menu_copyid;
-    Gtk::MenuItem *m_guild_menu_leave;
-    void on_guild_menu_copyid();
-    void on_guild_menu_leave();
+    void OnMenuCopyID(Snowflake id);
+    void OnGuildMenuLeave(Snowflake id);
 
     Gtk::Menu m_channel_menu;
     Gtk::MenuItem *m_channel_menu_copyid;
-    void on_channel_menu_copyid();
 
     Glib::Dispatcher m_update_dispatcher;
     //mutable std::mutex m_update_mutex;
@@ -139,8 +172,6 @@ protected:
 
     void AddPrivateChannels(); // retard moment
     void UpdateListingInternal();
-    void AttachGuildMenuHandler(Gtk::ListBoxRow *row);
-    void AttachChannelMenuHandler(Gtk::ListBoxRow *row);
 
     void CheckBumpDM(Snowflake channel_id);
 

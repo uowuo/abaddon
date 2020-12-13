@@ -13,6 +13,7 @@
 #include <condition_variable>
 #include <optional>
 #include <type_traits>
+#include <gtkmm.h>
 
 namespace util {
 template<typename T>
@@ -20,7 +21,7 @@ struct is_optional : ::std::false_type {};
 
 template<typename T>
 struct is_optional<::std::optional<T>> : ::std::true_type {};
-}
+} // namespace util
 
 class Semaphore {
 public:
@@ -231,4 +232,16 @@ std::string RegexReplaceMany(std::string str, std::string regexstr, F func) {
     }
 
     return str;
+}
+
+inline void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu) {
+    widget->signal_button_press_event().connect([&menu](GdkEventButton *ev) -> bool {
+        if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
+            menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(ev));
+            return true;
+        }
+        return false;
+        // clang-format off
+    }, false);
+    // clang-format on
 }
