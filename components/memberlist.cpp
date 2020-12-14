@@ -103,7 +103,7 @@ void MemberList::UpdateMemberListInternal() {
     if (!chan.has_value()) return;
     std::unordered_set<Snowflake> ids;
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
-        for (const auto &user : *chan->Recipients)
+        for (const auto &user : chan->GetDMRecipients())
             ids.insert(user.ID);
         ids.insert(discord.GetUserData().ID);
     } else {

@@ -30,7 +30,8 @@ struct Channel {
     std::optional<int> UserLimit;
     std::optional<int> RateLimitPerUser;
     std::optional<std::vector<User>> Recipients; // only access id
-    std::optional<std::string> Icon;             // null
+    std::optional<std::vector<Snowflake>> RecipientIDs;
+    std::optional<std::string> Icon; // null
     std::optional<Snowflake> OwnerID;
     std::optional<Snowflake> ApplicationID;
     std::optional<Snowflake> ParentID;           // null
@@ -40,4 +41,5 @@ struct Channel {
     void update_from_json(const nlohmann::json &j);
 
     std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
+    std::vector<User> GetDMRecipients() const;
 };

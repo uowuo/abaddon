@@ -15,6 +15,7 @@ void from_json(const nlohmann::json &j, Channel &m) {
     JS_O("user_limit", m.UserLimit);
     JS_O("rate_limit_per_user", m.RateLimitPerUser);
     JS_O("recipients", m.Recipients);
+    JS_O("recipient_ids", m.RecipientIDs);
     JS_ON("icon", m.Icon);
     JS_O("owner_id", m.OwnerID);
     JS_O("application_id", m.ApplicationID);
@@ -44,4 +45,23 @@ void Channel::update_from_json(const nlohmann::json &j) {
 
 std::optional<PermissionOverwrite> Channel::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
+}
+
+std::vector<User> Channel::GetDMRecipients() const {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    if (Recipients.has_value())
+        return *Recipients;
+
+    if (RecipientIDs.has_value()) {
+        std::vector<User> ret;
+        for (const auto &id : *RecipientIDs) {
+            auto user = discord.GetUser(id);
+            if (user.has_value())
+                ret.push_back(std::move(*user));
+        }
+
+        return ret;
+    }
+
+    return std::vector<User>();
 }

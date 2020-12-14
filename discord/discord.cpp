@@ -403,7 +403,8 @@ std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
     const auto &channels = m_store.GetChannels();
     for (const auto &id : channels) {
         const auto channel = m_store.GetChannel(id);
-        if (channel->Recipients->size() == 1 && channel->Recipients.value()[0].ID == user_id)
+        const auto recipients = channel->GetDMRecipients();
+        if (recipients.size() == 1 && recipients[0].ID == user_id)
             return id;
     }
 
@@ -612,13 +613,17 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_store.BeginTransaction();
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
-        for (const auto &recipient : *dm.Recipients)
-            m_store.SetUser(recipient.ID, recipient);
+        if (dm.Recipients.has_value())
+            for (const auto &recipient : *dm.Recipients)
+                m_store.SetUser(recipient.ID, recipient);
     }
+    if (data.Users.has_value())
+        for (const auto &user : *data.Users)
+            m_store.SetUser(user.ID, user);
     m_store.EndTransaction();
 
     m_session_id = data.SessionID;
-    m_user_data = data.User;
+    m_user_data = data.SelfUser;
     m_user_settings = data.UserSettings;
     m_signal_gateway_ready.emit();
 }
@@ -857,10 +862,28 @@ void DiscordClient::HeartbeatThread() {
 
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
-    msg.Properties.OS = "OpenBSD";
-    msg.Properties.Device = GatewayIdentity;
-    msg.Properties.Browser = GatewayIdentity;
     msg.Token = m_token;
+    msg.Capabilities = 61; // no idea what 61 means
+    msg.Properties.OS = "Windows";
+    msg.Properties.Browser = "";
+    msg.Properties.Device = "Chrome";
+    msg.Properties.BrowserUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36";
+    msg.Properties.BrowserVersion = "67.0.3396.87";
+    msg.Properties.OSVersion = "10";
+    msg.Properties.Referrer = "";
+    msg.Properties.ReferringDomain = "";
+    msg.Properties.ReferrerCurrent = "";
+    msg.Properties.ReferringDomainCurrent = "";
+    msg.Properties.ReleaseChannel = "stable";
+    msg.Properties.ClientBuildNumber = 73363;
+    msg.Properties.ClientEventSource = "";
+    msg.Presence.Status = "online";
+    msg.Presence.Since = 0;
+    msg.Presence.IsAFK = false;
+    msg.DoesSupportCompression = false;
+    msg.ClientState.HighestLastMessageID = "0";
+    msg.ClientState.ReadStateVersion = 0;
+    msg.ClientState.UserGuildSettingsVersion = -1;
     m_websocket.Send(msg);
 }
 

@@ -52,7 +52,6 @@ class DiscordClient {
 public:
     static const constexpr char *DiscordGateway = "wss://gateway.discord.gg/?v=8&encoding=json&compress=zlib-stream";
     static const constexpr char *DiscordAPI = "https://discord.com/api";
-    static const constexpr char *GatewayIdentity = "Discord";
 
 public:
     DiscordClient(bool mem_store = false);

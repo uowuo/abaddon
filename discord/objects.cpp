@@ -94,29 +94,51 @@ void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
 
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
-    JS_D("user", m.User);
+    JS_D("user", m.SelfUser);
     JS_D("guilds", m.Guilds);
     JS_D("session_id", m.SessionID);
-    JS_D("analytics_token", m.AnalyticsToken);
-    JS_D("friend_suggestion_count", m.FriendSuggestionCount);
+    JS_O("analytics_token", m.AnalyticsToken);
+    JS_O("friend_suggestion_count", m.FriendSuggestionCount);
     JS_D("user_settings", m.UserSettings);
     JS_D("private_channels", m.PrivateChannels);
+    JS_O("users", m.Users);
 }
 
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
-    j["$os"] = m.OS;
-    j["$browser"] = m.Browser;
-    j["$device"] = m.Device;
+    j["os"] = m.OS;
+    j["browser"] = m.Browser;
+    j["device"] = m.Device;
+    j["browser_user_agent"] = m.BrowserUserAgent;
+    j["browser_version"] = m.BrowserVersion;
+    j["os_version"] = m.OSVersion;
+    j["referrer"] = m.Referrer;
+    j["referring_domain"] = m.ReferringDomain;
+    j["referrer_current"] = m.ReferrerCurrent;
+    j["referring_domain_current"] = m.ReferringDomainCurrent;
+    j["release_channel"] = m.ReleaseChannel;
+    j["client_build_number"] = m.ClientBuildNumber;
+    if (m.ClientEventSource == "")
+        j["client_event_source"] = nullptr;
+    else
+        j["client_event_source"] = m.ClientEventSource;
+}
+
+void to_json(nlohmann::json &j, const ClientStateProperties &m) {
+    j["guild_hashes"] = m.GuildHashes;
+    j["highest_last_message_id"] = m.HighestLastMessageID;
+    j["read_state_version"] = m.ReadStateVersion;
+    j["user_guild_settings_version"] = m.UserGuildSettingsVersion;
 }
 
 void to_json(nlohmann::json &j, const IdentifyMessage &m) {
     j["op"] = GatewayOp::Identify;
     j["d"] = nlohmann::json::object();
     j["d"]["token"] = m.Token;
+    j["d"]["capabilities"] = m.Capabilities;
     j["d"]["properties"] = m.Properties;
-
-    if (m.LargeThreshold)
-        j["d"]["large_threshold"] = m.LargeThreshold;
+    j["d"]["presence"] = m.Presence;
+    j["d"]["compress"] = m.DoesSupportCompression;
+    j["d"]["client_state"] = m.ClientState;
 }
 
 void to_json(nlohmann::json &j, const HeartbeatMessage &m) {

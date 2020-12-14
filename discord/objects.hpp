@@ -146,21 +146,23 @@ struct UpdateStatusMessage {
     std::vector<Activity> Activities; // null (but never sent as such)
     std::string Status;
     bool IsAFK;
+    int Since = 0;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
 
 struct ReadyEventData {
-    int GatewayVersion;                   //
-    User User;                            //
-    std::vector<Guild> Guilds;            //
-    std::string SessionID;                //
-    std::vector<Channel> PrivateChannels; //
+    int GatewayVersion;
+    User SelfUser;
+    std::vector<Guild> Guilds;
+    std::string SessionID;
+    std::vector<Channel> PrivateChannels;
 
     // undocumented
-    std::string AnalyticsToken; // opt
-    int FriendSuggestionCount;  // opt
-    UserSettings UserSettings;  // opt
+    std::optional<std::vector<User>> Users;
+    std::optional<std::string> AnalyticsToken;
+    std::optional<int> FriendSuggestionCount;
+    UserSettings UserSettings;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt
@@ -179,15 +181,36 @@ struct IdentifyProperties {
     std::string OS;
     std::string Browser;
     std::string Device;
+    std::string BrowserUserAgent;
+    std::string BrowserVersion;
+    std::string OSVersion;
+    std::string Referrer;
+    std::string ReferringDomain;
+    std::string ReferrerCurrent;
+    std::string ReferringDomainCurrent;
+    std::string ReleaseChannel;
+    int ClientBuildNumber;
+    std::string ClientEventSource; // empty -> null
 
     friend void to_json(nlohmann::json &j, const IdentifyProperties &m);
+};
+
+struct ClientStateProperties {
+    std::map<std::string, std::string> GuildHashes;
+    std::string HighestLastMessageID = "0";
+    int ReadStateVersion = 0;
+    int UserGuildSettingsVersion = -1;
+
+    friend void to_json(nlohmann::json &j, const ClientStateProperties &m);
 };
 
 struct IdentifyMessage : GatewayMessage {
     std::string Token;
     IdentifyProperties Properties;
+    UpdateStatusMessage Presence;
+    ClientStateProperties ClientState;
     bool DoesSupportCompression = false;
-    int LargeThreshold = 0;
+    int Capabilities;
 
     friend void to_json(nlohmann::json &j, const IdentifyMessage &m);
 };

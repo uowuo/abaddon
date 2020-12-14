@@ -69,6 +69,8 @@ void Store::SetChannel(Snowflake id, const Channel &chan) {
         for (const auto &u : *chan.Recipients)
             ids.push_back(u.ID);
         Bind(m_set_chan_stmt, 13, nlohmann::json(ids).dump());
+    } else if (chan.RecipientIDs.has_value()) {
+        Bind(m_set_chan_stmt, 13, nlohmann::json(*chan.RecipientIDs).dump());
     } else {
         Bind(m_set_chan_stmt, 13, nullptr);
     }
@@ -297,11 +299,7 @@ std::optional<Channel> Store::GetChannel(Snowflake id) const {
     if (!IsNull(m_get_chan_stmt, 12)) {
         std::string tmps;
         Get(m_get_chan_stmt, 12, tmps);
-        // dummy users
-        ret.Recipients = std::vector<User>();
-        auto ids = nlohmann::json::parse(tmps).get<std::vector<Snowflake>>();
-        for (const auto &id : ids)
-            ret.Recipients->emplace_back().ID = id;
+        ret.RecipientIDs = nlohmann::json::parse(tmps).get<std::vector<Snowflake>>();
     }
     Get(m_get_chan_stmt, 13, ret.Icon);
     Get(m_get_chan_stmt, 14, ret.OwnerID);

@@ -56,15 +56,18 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    const auto top_recipient = Abaddon::Get().GetDiscordClient().GetUser(data->Recipients.value()[0].ID);
+    User top_recipient;
+    const auto recipients = data->GetDMRecipients();
+    top_recipient = recipients[0];
+
     if (data->Type == ChannelType::DM) {
-        if (top_recipient->HasAvatar()) {
-            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(top_recipient->GetAvatarURL("png", "16"));
+        if (top_recipient.HasAvatar()) {
+            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(top_recipient.GetAvatarURL("png", "16"));
             if (buf)
                 m_icon = Gtk::manage(new Gtk::Image(buf));
             else {
                 m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-                Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
+                Abaddon::Get().GetImageManager().LoadFromURL(top_recipient.GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
             }
         } else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
@@ -73,9 +76,9 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
 
     auto buf = m_lbl->get_buffer();
     if (data->Type == ChannelType::DM)
-        buf->set_text(top_recipient->Username);
+        buf->set_text(top_recipient.Username);
     else if (data->Type == ChannelType::GROUP_DM)
-        buf->set_text(std::to_string(data->Recipients->size()) + " users");
+        buf->set_text(std::to_string(recipients.size()) + " users");
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
     m_box->set_halign(Gtk::ALIGN_START);

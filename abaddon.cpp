@@ -21,7 +21,7 @@ Abaddon::Abaddon()
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
-    std::string ua = m_settings.GetSettingString("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.308 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36");
+    std::string ua = m_settings.GetSettingString("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36");
     m_discord.SetUserAgent(ua);
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
@@ -301,10 +301,11 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
         std::string display;
-        if (channel->Recipients->size() > 1)
-            display = std::to_string(channel->Recipients->size()) + " users";
+        const auto recipients = channel->GetDMRecipients();
+        if (recipients.size() > 1)
+            display = std::to_string(recipients.size()) + " users";
         else
-            display = channel->Recipients.value()[0].Username;
+            display = recipients[0].Username;
         m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
     }
     m_main_window->UpdateChatActiveChannel(id);
