@@ -542,6 +542,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_UPDATE: {
                         HandleGatewayGuildUpdate(m);
                     } break;
+                    case GatewayEvent::GUILD_ROLE_UPDATE: {
+                        HandleGatewayGuildRoleUpdate(m);
+                    } break;
+                    case GatewayEvent::GUILD_ROLE_CREATE: {
+                        HandleGatewayGuildRoleCreate(m);
+                    } break;
+                    case GatewayEvent::GUILD_ROLE_DELETE: {
+                        HandleGatewayGuildRoleDelete(m);
+                    } break;
                 }
             } break;
             default:
@@ -701,6 +710,24 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
     if (!current.has_value()) return;
     current->update_from_json(msg.Data);
     m_signal_guild_update.emit(id);
+}
+
+void DiscordClient::HandleGatewayGuildRoleUpdate(const GatewayMessage &msg) {
+    GuildRoleUpdateObject data = msg.Data;
+    m_store.SetRole(data.Role.ID, data.Role);
+    m_signal_role_update.emit(data.Role.ID);
+}
+
+void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
+    GuildRoleCreateObject data = msg.Data;
+    m_store.SetRole(data.Role.ID, data.Role);
+    m_signal_role_create.emit(data.Role.ID);
+}
+
+void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
+    GuildRoleDeleteObject data = msg.Data;
+    // todo: actually delete it
+    m_signal_role_delete.emit(data.RoleID);
 }
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
@@ -875,6 +902,9 @@ void DiscordClient::LoadEventMap() {
     m_event_map["CHANNEL_UPDATE"] = GatewayEvent::CHANNEL_UPDATE;
     m_event_map["CHANNEL_CREATE"] = GatewayEvent::CHANNEL_CREATE;
     m_event_map["GUILD_UPDATE"] = GatewayEvent::GUILD_UPDATE;
+    m_event_map["GUILD_ROLE_UPDATE"] = GatewayEvent::GUILD_ROLE_UPDATE;
+    m_event_map["GUILD_ROLE_CREATE"] = GatewayEvent::GUILD_ROLE_CREATE;
+    m_event_map["GUILD_ROLE_DELETE"] = GatewayEvent::GUILD_ROLE_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -927,4 +957,16 @@ DiscordClient::type_signal_disconnected DiscordClient::signal_disconnected() {
 
 DiscordClient::type_signal_connected DiscordClient::signal_connected() {
     return m_signal_connected;
+}
+
+DiscordClient::type_signal_role_update DiscordClient::signal_role_update() {
+    return m_signal_role_update;
+}
+
+DiscordClient::type_signal_role_create DiscordClient::signal_role_create() {
+    return m_signal_role_create;
+}
+
+DiscordClient::type_signal_role_delete DiscordClient::signal_role_delete() {
+    return m_signal_role_delete;
 }

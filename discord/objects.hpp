@@ -46,6 +46,9 @@ enum class GatewayEvent : int {
     CHANNEL_UPDATE,
     CHANNEL_CREATE,
     GUILD_UPDATE,
+    GUILD_ROLE_UPDATE,
+    GUILD_ROLE_CREATE,
+    GUILD_ROLE_DELETE,
 };
 
 struct GatewayMessage {
@@ -250,4 +253,25 @@ struct ResumeMessage : GatewayMessage {
     int Sequence;
 
     friend void to_json(nlohmann::json &j, const ResumeMessage &m);
+};
+
+struct GuildRoleUpdateObject {
+    Snowflake GuildID;
+    Role Role;
+
+    friend void from_json(const nlohmann::json &j, GuildRoleUpdateObject &m);
+};
+
+struct GuildRoleCreateObject {
+    Snowflake GuildID;
+    Role Role;
+
+    friend void from_json(const nlohmann::json &j, GuildRoleCreateObject &m);
+};
+
+struct GuildRoleDeleteObject {
+    Snowflake GuildID;
+    Snowflake RoleID;
+
+    friend void from_json(const nlohmann::json &j, GuildRoleDeleteObject &m);
 };

@@ -138,6 +138,9 @@ private:
     void HandleGatewayChannelUpdate(const GatewayMessage &msg);
     void HandleGatewayChannelCreate(const GatewayMessage &msg);
     void HandleGatewayGuildUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildRoleUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildRoleCreate(const GatewayMessage &msg);
+    void HandleGatewayGuildRoleDelete(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
@@ -197,6 +200,9 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
     typedef sigc::signal<void, Snowflake> type_signal_channel_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_update;
+    typedef sigc::signal<void, Snowflake> type_signal_role_update;
+    typedef sigc::signal<void, Snowflake> type_signal_role_create;
+    typedef sigc::signal<void, Snowflake> type_signal_role_delete;
     typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -211,6 +217,9 @@ public:
     type_signal_channel_update signal_channel_update();
     type_signal_channel_create signal_channel_create();
     type_signal_guild_update signal_guild_update();
+    type_signal_role_update signal_role_update();
+    type_signal_role_create signal_role_create();
+    type_signal_role_delete signal_role_delete();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -226,6 +235,9 @@ protected:
     type_signal_channel_update m_signal_channel_update;
     type_signal_channel_create m_signal_channel_create;
     type_signal_guild_update m_signal_guild_update;
+    type_signal_role_update m_signal_role_update;
+    type_signal_role_create m_signal_role_create;
+    type_signal_role_delete m_signal_role_delete;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

@@ -179,3 +179,18 @@ void to_json(nlohmann::json &j, const ResumeMessage &m) {
     j["d"]["session_id"] = m.SessionID;
     j["d"]["seq"] = m.Sequence;
 }
+
+void from_json(const nlohmann::json &j, GuildRoleUpdateObject &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("role", m.Role);
+}
+
+void from_json(const nlohmann::json &j, GuildRoleCreateObject &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("role", m.Role);
+}
+
+void from_json(const nlohmann::json &j, GuildRoleDeleteObject &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("role_id", m.RoleID);
+}
