@@ -465,7 +465,11 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *d
         // image
         if (is_stock) { // unicode/stock
             const auto &pb = emojis.GetPixBuf(reaction.Emoji.Name);
-            auto *img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
+            Gtk::Image *img;
+            if (pb)
+                img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
+            else
+                img = Gtk::manage(new Gtk::Image(placeholder));
             img->set_can_focus(false);
             box->add(*img);
         } else { // custom

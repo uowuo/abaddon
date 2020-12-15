@@ -328,11 +328,17 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
     Emoji ret;
     ret.ID = id;
     Get(m_get_emote_stmt, 1, ret.Name);
-    std::string tmp;
-    Get(m_get_emote_stmt, 2, tmp);
-    ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
-    ret.Creator = std::optional<User>(User());
-    Get(m_get_emote_stmt, 3, ret.Creator->ID);
+
+    if (!IsNull(m_get_emote_stmt, 2)) {
+        std::string tmp;
+        Get(m_get_emote_stmt, 2, tmp);
+        ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
+    }
+
+    if (!IsNull(m_get_emote_stmt, 3)) {
+        ret.Creator = std::optional<User>(User());
+        Get(m_get_emote_stmt, 3, ret.Creator->ID);
+    }
     Get(m_get_emote_stmt, 3, ret.NeedsColons);
     Get(m_get_emote_stmt, 4, ret.IsManaged);
     Get(m_get_emote_stmt, 5, ret.IsAnimated);

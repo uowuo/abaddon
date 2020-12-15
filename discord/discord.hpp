@@ -154,6 +154,8 @@ private:
 
     bool CheckCode(const cpr::Response &r);
 
+    void StoreMessageData(const Message &msg);
+
     std::string m_token;
 
     void AddMessageToChannel(Snowflake msg_id, Snowflake channel_id);

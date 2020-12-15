@@ -121,9 +121,8 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
 
         m_store.BeginTransaction();
         for (const auto &msg : msgs) {
-            m_store.SetMessage(msg.ID, msg);
+            StoreMessageData(msg);
             AddMessageToChannel(msg.ID, id);
-            m_store.SetUser(msg.Author.ID, msg.Author);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
@@ -145,9 +144,8 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
 
         m_store.BeginTransaction();
         for (const auto &msg : msgs) {
-            m_store.SetMessage(msg.ID, msg);
+            StoreMessageData(msg);
             AddMessageToChannel(msg.ID, channel_id);
-            m_store.SetUser(msg.Author.ID, msg.Author);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
             ids.push_back(msg.ID);
         }
@@ -664,9 +662,8 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     Message data = msg.Data;
-    m_store.SetMessage(data.ID, data);
+    StoreMessageData(data);
     AddMessageToChannel(data.ID, data.ChannelID);
-    m_store.SetUser(data.Author.ID, data.Author);
     AddUserToGuild(data.Author.ID, *data.GuildID);
     m_signal_message_create.emit(data.ID);
 }
@@ -772,6 +769,11 @@ void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageReactionAdd(const GatewayMessage &msg) {
     MessageReactionAddObject data = msg.Data;
     auto to = m_store.GetMessage(data.MessageID);
+    if (data.Emoji.ID.IsValid()) {
+        const auto cur_emoji = m_store.GetEmoji(data.Emoji.ID);
+        if (!cur_emoji.has_value())
+            m_store.SetEmoji(data.Emoji.ID, data.Emoji);
+    }
     if (!to.has_value()) return;
     if (!to->Reactions.has_value()) to->Reactions.emplace();
     // add if present
@@ -1016,6 +1018,18 @@ bool DiscordClient::CheckCode(const cpr::Response &r) {
     }
 
     return true;
+}
+
+void DiscordClient::StoreMessageData(const Message &msg) {
+    m_store.SetMessage(msg.ID, msg);
+    m_store.SetUser(msg.Author.ID, msg.Author);
+    if (msg.Reactions.has_value())
+        for (const auto &r : *msg.Reactions) {
+            if (!r.Emoji.ID.IsValid()) continue;
+            const auto cur = m_store.GetEmoji(r.Emoji.ID);
+            if (!cur.has_value())
+                m_store.SetEmoji(r.Emoji.ID, r.Emoji);
+        }
 }
 
 void DiscordClient::LoadEventMap() {
