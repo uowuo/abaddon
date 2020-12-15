@@ -219,9 +219,13 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         Bind(m_set_msg_stmt, 18, tmp);
     } else
         Bind(m_set_msg_stmt, 18, nullptr);
-
-    Bind(m_set_msg_stmt, 19, message.IsDeleted());
-    Bind(m_set_msg_stmt, 20, message.IsEdited());
+    if (message.Reactions.has_value()) {
+        std::string tmp = nlohmann::json(*message.Reactions).dump();
+        Bind(m_set_msg_stmt, 19, tmp);
+    } else
+        Bind(m_set_msg_stmt, 19, nullptr);
+    Bind(m_set_msg_stmt, 20, message.IsDeleted());
+    Bind(m_set_msg_stmt, 21, message.IsEdited());
 
     if (!RunInsert(m_set_msg_stmt))
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -468,10 +472,13 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     Get(m_get_msg_stmt, 17, tmps);
     if (tmps != "")
         ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<Sticker>>();
+    Get(m_get_msg_stmt, 18, tmps);
+    if (tmps != "")
+        ret.Reactions = nlohmann::json::parse(tmps).get<std::vector<ReactionData>>();
     bool tmpb = false;
-    Get(m_get_msg_stmt, 18, tmpb);
-    if (tmpb) ret.SetDeleted();
     Get(m_get_msg_stmt, 19, tmpb);
+    if (tmpb) ret.SetDeleted();
+    Get(m_get_msg_stmt, 20, tmpb);
     if (tmpb) ret.SetEdited();
 
     Reset(m_get_msg_stmt);
@@ -589,164 +596,165 @@ void Store::EndTransaction() {
 
 bool Store::CreateTables() {
     constexpr const char *create_users = R"(
-CREATE TABLE IF NOT EXISTS users (
-id INTEGER PRIMARY KEY,
-username TEXT NOT NULL,
-discriminator TEXT NOT NULL,
-avatar TEXT,
-bot BOOL,
-system BOOL,
-mfa BOOL,
-locale TEXT,
-verified BOOl,
-email TEXT,
-flags INTEGER,
-premium INTEGER,
-pubflags INTEGER
-)
-)";
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            discriminator TEXT NOT NULL,
+            avatar TEXT,
+            bot BOOL,
+            system BOOL,
+            mfa BOOL,
+            locale TEXT,
+            verified BOOl,
+            email TEXT,
+            flags INTEGER,
+            premium INTEGER,
+            pubflags INTEGER
+        )
+    )";
 
     constexpr const char *create_permissions = R"(
-CREATE TABLE IF NOT EXISTS permissions (
-id INTEGER NOT NULL,
-channel_id INTEGER NOT NULL,
-type INTEGER NOT NULL,
-allow INTEGER NOT NULL,
-deny INTEGER NOT NULL
-)
-)";
+        CREATE TABLE IF NOT EXISTS permissions (
+            id INTEGER NOT NULL,
+            channel_id INTEGER NOT NULL,
+            type INTEGER NOT NULL,
+            allow INTEGER NOT NULL,
+            deny INTEGER NOT NULL
+        )
+    )";
 
     constexpr const char *create_messages = R"(
-CREATE TABLE IF NOT EXISTS messages (
-id INTEGER PRIMARY KEY,
-channel_id INTEGER NOT NULL,
-guild_id INTEGER,
-author_id INTEGER NOT NULL,
-content TEXT NOT NULL,
-timestamp TEXT NOT NULL,
-edited_timestamp TEXT,
-tts BOOL NOT NULL,
-everyone BOOL NOT NULL,
-mentions TEXT NOT NULL, /* json */
-attachments TEXT NOT NULL, /* json */
-embeds TEXT NOT NULL, /* json */
-pinned BOOL,
-webhook_id INTEGER,
-type INTEGER,
-reference TEXT, /* json */
-flags INTEGER,
-stickers TEXT, /* json */
-/* extra */
-deleted BOOL,
-edited BOOL
-)
-)";
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY,
+            channel_id INTEGER NOT NULL,
+            guild_id INTEGER,
+            author_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            edited_timestamp TEXT,
+            tts BOOL NOT NULL,
+            everyone BOOL NOT NULL,
+            mentions TEXT NOT NULL, /* json */
+            attachments TEXT NOT NULL, /* json */
+            embeds TEXT NOT NULL, /* json */
+            pinned BOOL,
+            webhook_id INTEGER,
+            type INTEGER,
+            reference TEXT, /* json */
+            flags INTEGER,
+            stickers TEXT, /* json */
+            reactions TEXT, /* json */
+            /* extra */
+            deleted BOOL,
+            edited BOOL
+        )
+    )";
 
     constexpr const char *create_roles = R"(
-CREATE TABLE IF NOT EXISTS roles (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-color INTEGER NOT NULL,
-hoisted BOOL NOT NULL,
-position INTEGER NOT NULL,
-permissions INTEGER NOT NULL,
-managed BOOL NOT NULL,
-mentionable BOOL NOT NULL
-)
-)";
+        CREATE TABLE IF NOT EXISTS roles (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            color INTEGER NOT NULL,
+            hoisted BOOL NOT NULL,
+            position INTEGER NOT NULL,
+            permissions INTEGER NOT NULL,
+            managed BOOL NOT NULL,
+            mentionable BOOL NOT NULL
+        )
+    )";
 
     constexpr const char *create_emojis = R"(
-CREATE TABLE IF NOT EXISTS emojis (
-id INTEGER PRIMARY KEY, /*though nullable, only custom emojis (with non-null ids) are stored*/
-name TEXT NOT NULL, /*same as id*/
-roles TEXT, /* json */
-creator_id INTEGER,
-colons BOOL,
-managed BOOL,
-animated BOOL,
-available BOOL
-)
-)";
+        CREATE TABLE IF NOT EXISTS emojis (
+            id INTEGER PRIMARY KEY, /*though nullable, only custom emojis (with non-null ids) are stored*/
+            name TEXT NOT NULL, /*same as id*/
+            roles TEXT, /* json */
+            creator_id INTEGER,
+            colons BOOL,
+            managed BOOL,
+            animated BOOL,
+            available BOOL
+        )
+    )";
 
     constexpr const char *create_members = R"(
-CREATE TABLE IF NOT EXISTS members (
-user_id INTEGER PRIMARY KEY,
-guild_id INTEGER NOT NULL,
-nickname TEXT,
-roles TEXT NOT NULL, /* json */
-joined_at TEXT NOT NULL,
-premium_since TEXT,
-deaf BOOL NOT NULL,
-mute BOOL NOT NULL
-)
-)";
+        CREATE TABLE IF NOT EXISTS members (
+            user_id INTEGER PRIMARY KEY,
+            guild_id INTEGER NOT NULL,
+            nickname TEXT,
+            roles TEXT NOT NULL, /* json */
+            joined_at TEXT NOT NULL,
+            premium_since TEXT,
+            deaf BOOL NOT NULL,
+            mute BOOL NOT NULL
+        )
+    )";
 
-    constexpr char *create_guilds = R"(
-CREATE TABLE IF NOT EXISTS guilds (
-id INTEGER PRIMARY KEY,
-name TEXT NOT NULL,
-icon TEXT NOT NULL,
-splash TEXT,
-owner BOOL,
-owner_id INTEGER NOT NULL,
-permissions INTEGER, /* new */
-voice_region TEXT,
-afk_id INTEGER,
-afk_timeout INTEGER NOT NULL,
-verification INTEGER NOT NULL,
-notifications INTEGER NOT NULL,
-roles TEXT NOT NULL, /* json */
-emojis TEXT NOT NULL, /* json */
-features TEXT NOT NULL, /* json */
-mfa INTEGER NOT NULL,
-application INTEGER,
-widget BOOL,
-widget_channel INTEGER,
-system_flags INTEGER NOT NULL,
-rules_channel INTEGER,
-joined_at TEXT,
-large BOOL,
-unavailable BOOL,
-member_count INTEGER,
-channels TEXT NOT NULL, /* json */
-max_presences INTEGER,
-max_members INTEGER,
-vanity TEXT,
-description TEXT,
-banner_hash TEXT,
-premium_tier INTEGER NOT NULL,
-premium_count INTEGER,
-locale TEXT NOT NULL,
-public_updates_id INTEGER,
-max_video_users INTEGER,
-approx_members INTEGER,
-approx_presences INTEGER,
-lazy BOOL
-)
-)";
+    constexpr const char *create_guilds = R"(
+        CREATE TABLE IF NOT EXISTS guilds (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            icon TEXT NOT NULL,
+            splash TEXT,
+            owner BOOL,
+            owner_id INTEGER NOT NULL,
+            permissions INTEGER, /* new */
+            voice_region TEXT,
+            afk_id INTEGER,
+            afk_timeout INTEGER NOT NULL,
+            verification INTEGER NOT NULL,
+            notifications INTEGER NOT NULL,
+            roles TEXT NOT NULL, /* json */
+            emojis TEXT NOT NULL, /* json */
+            features TEXT NOT NULL, /* json */
+            mfa INTEGER NOT NULL,
+            application INTEGER,
+            widget BOOL,
+            widget_channel INTEGER,
+            system_flags INTEGER NOT NULL,
+            rules_channel INTEGER,
+            joined_at TEXT,
+            large BOOL,
+            unavailable BOOL,
+            member_count INTEGER,
+            channels TEXT NOT NULL, /* json */
+            max_presences INTEGER,
+            max_members INTEGER,
+            vanity TEXT,
+            description TEXT,
+            banner_hash TEXT,
+            premium_tier INTEGER NOT NULL,
+            premium_count INTEGER,
+            locale TEXT NOT NULL,
+            public_updates_id INTEGER,
+            max_video_users INTEGER,
+            approx_members INTEGER,
+            approx_presences INTEGER,
+            lazy BOOL
+        )
+    )";
 
-    constexpr char *create_channels = R"(
-CREATE TABLE IF NOT EXISTS channels (
-id INTEGER PRIMARY KEY,
-type INTEGER NOT NULL,
-guild_id INTEGER,
-position INTEGER,
-overwrites TEXT, /* json */
-name TEXT,
-topic TEXT,
-is_nsfw BOOL,
-last_message_id INTEGER,
-bitrate INTEGER,
-user_limit INTEGER,
-rate_limit INTEGER,
-recipients TEXT, /* json */
-icon TEXT,
-owner_id INTEGER,
-application_id INTEGER,
-parent_id INTEGER,
-last_pin_timestamp TEXT
-)
-)";
+    constexpr const char *create_channels = R"(
+        CREATE TABLE IF NOT EXISTS channels (
+            id INTEGER PRIMARY KEY,
+            type INTEGER NOT NULL,
+            guild_id INTEGER,
+            position INTEGER,
+            overwrites TEXT, /* json */
+            name TEXT,
+            topic TEXT,
+            is_nsfw BOOL,
+            last_message_id INTEGER,
+            bitrate INTEGER,
+            user_limit INTEGER,
+            rate_limit INTEGER,
+            recipients TEXT, /* json */
+            icon TEXT,
+            owner_id INTEGER,
+            application_id INTEGER,
+            parent_id INTEGER,
+            last_pin_timestamp TEXT
+        )
+    )";
 
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
@@ -801,84 +809,84 @@ last_pin_timestamp TEXT
 
 bool Store::CreateStatements() {
     constexpr const char *set_user = R"(
-REPLACE INTO users VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO users VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_user = R"(
-SELECT * FROM users WHERE id = ?
-)";
+        SELECT * FROM users WHERE id = ?
+    )";
 
     constexpr const char *set_perm = R"(
-REPLACE INTO permissions VALUES (
-    ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO permissions VALUES (
+            ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_perm = R"(
-SELECT * FROM permissions WHERE id = ? AND channel_id = ?
-)";
+        SELECT * FROM permissions WHERE id = ? AND channel_id = ?
+    )";
 
     constexpr const char *set_msg = R"(
-REPLACE INTO messages VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO messages VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_msg = R"(
-SELECT * FROM messages WHERE id = ?
-)";
+        SELECT * FROM messages WHERE id = ?
+    )";
 
     constexpr const char *set_role = R"(
-REPLACE INTO roles VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO roles VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_role = R"(
-SELECT * FROM roles WHERE id = ?
-)";
+        SELECT * FROM roles WHERE id = ?
+    )";
 
     constexpr const char *set_emoji = R"(
-REPLACE INTO emojis VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO emojis VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_emoji = R"(
-SELECT * FROM emojis WHERE id = ?
-)";
+        SELECT * FROM emojis WHERE id = ?
+    )";
 
     constexpr const char *set_member = R"(
-REPLACE INTO members VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO members VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_member = R"(
-SELECT * FROM members WHERE user_id = ? AND guild_id = ?
-)";
+        SELECT * FROM members WHERE user_id = ? AND guild_id = ?
+    )";
 
     constexpr const char *set_guild = R"(
-REPLACE INTO guilds VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO guilds VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_guild = R"(
-SELECT * FROM guilds WHERE id = ?
-)";
+        SELECT * FROM guilds WHERE id = ?
+    )";
 
     constexpr const char *set_chan = R"(
-REPLACE INTO channels VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-)
-)";
+        REPLACE INTO channels VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )";
 
     constexpr const char *get_chan = R"(
-SELECT * FROM channels WHERE id = ?
-)";
+        SELECT * FROM channels WHERE id = ?
+    )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {

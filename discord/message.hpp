@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include "user.hpp"
 #include "sticker.hpp"
+#include "emoji.hpp"
 #include <string>
 #include <vector>
 
@@ -140,6 +141,15 @@ struct MessageReferenceData {
     friend void to_json(nlohmann::json &j, const MessageReferenceData &m);
 };
 
+struct ReactionData {
+    int Count;
+    bool HasReactedWith;
+    Emoji Emoji;
+
+    friend void from_json(const nlohmann::json &j, ReactionData &m);
+    friend void to_json(nlohmann::json &j, const ReactionData &m);
+};
+
 struct Message {
     Snowflake ID;
     Snowflake ChannelID;
@@ -156,7 +166,7 @@ struct Message {
     // std::optional<std::vector<ChannelMentionData>> MentionChannels;
     std::vector<AttachmentData> Attachments;
     std::vector<EmbedData> Embeds;
-    // std::optional<std::vector<ReactionData>> Reactions;
+    std::optional<std::vector<ReactionData>> Reactions;
     std::optional<std::string> Nonce;
     bool IsPinned;
     std::optional<Snowflake> WebhookID;

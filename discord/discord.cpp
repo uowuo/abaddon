@@ -411,6 +411,34 @@ std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
     return std::nullopt;
 }
 
+void DiscordClient::AddReaction(Snowflake id, Glib::ustring param) {
+    if (!param.is_ascii()) // means unicode param
+        param = Glib::uri_escape_string(param, "", false);
+    else {
+        const auto &tmp = m_store.GetEmoji(param);
+        if (tmp.has_value())
+            param = tmp->Name + ":" + std::to_string(tmp->ID);
+        else
+            return;
+    }
+    Snowflake channel_id = m_store.GetMessage(id)->ChannelID;
+    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id) + "/reactions/" + param + "/@me", "", [](auto) {});
+}
+
+void DiscordClient::RemoveReaction(Snowflake id, Glib::ustring param) {
+    if (!param.is_ascii()) // means unicode param
+        param = Glib::uri_escape_string(param, "", false);
+    else {
+        const auto &tmp = m_store.GetEmoji(param);
+        if (tmp.has_value())
+            param = tmp->Name + ":" + std::to_string(tmp->ID);
+        else
+            return;
+    }
+    Snowflake channel_id = m_store.GetMessage(id)->ChannelID;
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id) + "/reactions/" + param + "/@me", [](auto) {});
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;
@@ -551,6 +579,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::GUILD_ROLE_DELETE: {
                         HandleGatewayGuildRoleDelete(m);
+                    } break;
+                    case GatewayEvent::MESSAGE_REACTION_ADD: {
+                        HandleGatewayMessageReactionAdd(m);
+                    } break;
+                    case GatewayEvent::MESSAGE_REACTION_REMOVE: {
+                        HandleGatewayMessageReactionRemove(m);
                     } break;
                 }
             } break;
@@ -733,6 +767,80 @@ void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
     GuildRoleDeleteObject data = msg.Data;
     // todo: actually delete it
     m_signal_role_delete.emit(data.RoleID);
+}
+
+void DiscordClient::HandleGatewayMessageReactionAdd(const GatewayMessage &msg) {
+    MessageReactionAddObject data = msg.Data;
+    auto to = m_store.GetMessage(data.MessageID);
+    if (!to.has_value()) return;
+    if (!to->Reactions.has_value()) to->Reactions.emplace();
+    // add if present
+    bool stock;
+    auto it = std::find_if(to->Reactions->begin(), to->Reactions->end(), [&](const ReactionData &x) {
+        if (data.Emoji.ID.IsValid() && x.Emoji.ID.IsValid()) {
+            stock = false;
+            return data.Emoji.ID == x.Emoji.ID;
+        } else {
+            stock = true;
+            return data.Emoji.Name == x.Emoji.Name;
+        }
+    });
+
+    if (it != to->Reactions->end()) {
+        it->Count++;
+        if (data.UserID == GetUserData().ID)
+            it->HasReactedWith = true;
+        m_store.SetMessage(data.MessageID, *to);
+        if (stock)
+            m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
+        else
+            m_signal_reaction_add.emit(data.MessageID, std::to_string(data.Emoji.ID));
+        return;
+    }
+
+    // create new
+    auto &rdata = to->Reactions->emplace_back();
+    rdata.Count = 1;
+    rdata.Emoji = data.Emoji;
+    rdata.HasReactedWith = data.UserID == GetUserData().ID;
+    m_store.SetMessage(data.MessageID, *to);
+    if (stock)
+        m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
+    else
+        m_signal_reaction_add.emit(data.MessageID, std::to_string(data.Emoji.ID));
+}
+
+void DiscordClient::HandleGatewayMessageReactionRemove(const GatewayMessage &msg) {
+    MessageReactionRemoveObject data = msg.Data;
+    auto to = m_store.GetMessage(data.MessageID);
+    if (!to.has_value()) return;
+    if (!to->Reactions.has_value()) return;
+    bool stock;
+    auto it = std::find_if(to->Reactions->begin(), to->Reactions->end(), [&](const ReactionData &x) {
+        if (data.Emoji.ID.IsValid() && x.Emoji.ID.IsValid()) {
+            stock = false;
+            return data.Emoji.ID == x.Emoji.ID;
+        } else {
+            stock = true;
+            return data.Emoji.Name == x.Emoji.Name;
+        }
+    });
+    if (it == to->Reactions->end()) return;
+
+    if (it->Count == 1)
+        to->Reactions->erase(it);
+    else {
+        if (data.UserID == GetUserData().ID)
+            it->HasReactedWith = false;
+        it->Count--;
+    }
+
+    m_store.SetMessage(data.MessageID, *to);
+
+    if (stock)
+        m_signal_reaction_remove.emit(data.MessageID, data.Emoji.Name);
+    else
+        m_signal_reaction_remove.emit(data.MessageID, std::to_string(data.Emoji.ID));
 }
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
@@ -928,6 +1036,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_ROLE_UPDATE"] = GatewayEvent::GUILD_ROLE_UPDATE;
     m_event_map["GUILD_ROLE_CREATE"] = GatewayEvent::GUILD_ROLE_CREATE;
     m_event_map["GUILD_ROLE_DELETE"] = GatewayEvent::GUILD_ROLE_DELETE;
+    m_event_map["MESSAGE_REACTION_ADD"] = GatewayEvent::MESSAGE_REACTION_ADD;
+    m_event_map["MESSAGE_REACTION_REMOVE"] = GatewayEvent::MESSAGE_REACTION_REMOVE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -992,4 +1102,12 @@ DiscordClient::type_signal_role_create DiscordClient::signal_role_create() {
 
 DiscordClient::type_signal_role_delete DiscordClient::signal_role_delete() {
     return m_signal_role_delete;
+}
+
+DiscordClient::type_signal_reaction_add DiscordClient::signal_reaction_add() {
+    return m_signal_reaction_add;
+}
+
+DiscordClient::type_signal_reaction_remove DiscordClient::signal_reaction_remove() {
+    return m_signal_reaction_remove;
 }

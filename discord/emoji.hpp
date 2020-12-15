@@ -16,6 +16,7 @@ struct Emoji {
     std::optional<bool> IsAvailable;
 
     friend void from_json(const nlohmann::json &j, Emoji &m);
+    friend void to_json(nlohmann::json &j, const Emoji &m);
 
     std::string GetURL() const;
     static std::string URLFromID(std::string emoji_id);

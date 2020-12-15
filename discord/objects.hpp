@@ -49,6 +49,8 @@ enum class GatewayEvent : int {
     GUILD_ROLE_UPDATE,
     GUILD_ROLE_CREATE,
     GUILD_ROLE_DELETE,
+    MESSAGE_REACTION_ADD,
+    MESSAGE_REACTION_REMOVE,
 };
 
 struct GatewayMessage {
@@ -297,4 +299,25 @@ struct GuildRoleDeleteObject {
     Snowflake RoleID;
 
     friend void from_json(const nlohmann::json &j, GuildRoleDeleteObject &m);
+};
+
+struct MessageReactionAddObject {
+    Snowflake UserID;
+    Snowflake ChannelID;
+    Snowflake MessageID;
+    std::optional<Snowflake> GuildID;
+    std::optional<GuildMember> Member;
+    Emoji Emoji;
+
+    friend void from_json(const nlohmann::json &j, MessageReactionAddObject &m);
+};
+
+struct MessageReactionRemoveObject {
+    Snowflake UserID;
+    Snowflake ChannelID;
+    Snowflake MessageID;
+    std::optional<Snowflake> GuildID;
+    Emoji Emoji;
+
+    friend void from_json(const nlohmann::json &j, MessageReactionRemoveObject &m);
 };

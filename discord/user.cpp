@@ -33,6 +33,13 @@ void from_json(const nlohmann::json &j, User &m) {
     JS_ON("phone", m.Phone);
 }
 
+void to_json(nlohmann::json &j, const User &m) {
+    j["id"] = m.ID;
+    j["username"] = m.Username;
+    j["avatar"] = m.Avatar;
+    // rest of stuff as needed im too lazy and its probably not necessary
+}
+
 void User::update_from_json(const nlohmann::json &j, User &m) {
     JS_RD("username", m.Username);
     JS_RD("discriminator", m.Discriminator);

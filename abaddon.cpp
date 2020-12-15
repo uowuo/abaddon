@@ -35,6 +35,8 @@ Abaddon::Abaddon()
     m_discord.signal_channel_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelUpdate));
     m_discord.signal_channel_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelCreate));
     m_discord.signal_guild_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildUpdate));
+    m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
+    m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
 }
 
 Abaddon::~Abaddon() {
@@ -98,6 +100,8 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_chat_load_history().connect(sigc::mem_fun(*this, &Abaddon::ActionChatLoadHistory));
     m_main_window->GetChatWindow()->signal_action_channel_click().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChatWindow()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
+    m_main_window->GetChatWindow()->signal_action_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionAdd));
+    m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
 
     ActionReloadCSS();
 
@@ -201,6 +205,14 @@ void Abaddon::DiscordOnChannelCreate(Snowflake channel_id) {
 
 void Abaddon::DiscordOnGuildUpdate(Snowflake guild_id) {
     m_main_window->UpdateChannelsUpdateGuild(guild_id);
+}
+
+void Abaddon::DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param) {
+    m_main_window->UpdateChatReactionAdd(message_id, param);
+}
+
+void Abaddon::DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param) {
+    m_main_window->UpdateChatReactionAdd(message_id, param);
 }
 
 const SettingsManager &Abaddon::GetSettings() const {
@@ -421,6 +433,14 @@ void Abaddon::ActionSetStatus() {
     activity.Name = activity_name;
     activity.Type = activity_type;
     m_discord.UpdateStatus(status, false, activity);
+}
+
+void Abaddon::ActionReactionAdd(Snowflake id, const Glib::ustring &param) {
+    m_discord.AddReaction(id, param);
+}
+
+void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
+    m_discord.RemoveReaction(id, param);
 }
 
 void Abaddon::ActionReloadCSS() {

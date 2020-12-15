@@ -128,6 +128,14 @@ Snowflake ChatWindow::GetOldestListedMessage() {
     return m;
 }
 
+void ChatWindow::UpdateReactions(Snowflake id) {
+    auto it = m_id_to_widget.find(id);
+    if (it == m_id_to_widget.end()) return;
+    auto *widget = dynamic_cast<ChatMessageItemContainer *>(it->second);
+    if (widget == nullptr) return;
+    widget->UpdateReactions();
+}
+
 Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
@@ -205,6 +213,12 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         });
         content->signal_action_edit().connect([this, id] {
             m_signal_action_message_edit.emit(m_active_channel, id);
+        });
+        content->signal_action_reaction_add().connect([this, id](const Glib::ustring &param) {
+            m_signal_action_reaction_add.emit(id, param);
+        });
+        content->signal_action_reaction_remove().connect([this, id](const Glib::ustring &param) {
+            m_signal_action_reaction_remove.emit(id, param);
         });
         content->signal_image_load().connect([this, id](std::string url) {
             auto &mgr = Abaddon::Get().GetImageManager();
@@ -338,4 +352,12 @@ ChatWindow::type_signal_action_insert_mention ChatWindow::signal_action_insert_m
 
 ChatWindow::type_signal_action_open_user_menu ChatWindow::signal_action_open_user_menu() {
     return m_signal_action_open_user_menu;
+}
+
+ChatWindow::type_signal_action_reaction_add ChatWindow::signal_action_reaction_add() {
+    return m_signal_action_reaction_add;
+}
+
+ChatWindow::type_signal_action_reaction_remove ChatWindow::signal_action_reaction_remove() {
+    return m_signal_action_reaction_remove;
 }

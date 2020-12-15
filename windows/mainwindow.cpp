@@ -211,6 +211,14 @@ Snowflake MainWindow::GetChatOldestListedMessage() {
     return m_chat.GetOldestListedMessage();
 }
 
+void MainWindow::UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param) {
+    m_chat.UpdateReactions(id);
+}
+
+void MainWindow::UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param) {
+    m_chat.UpdateReactions(id);
+}
+
 ChannelList *MainWindow::GetChannelList() {
     return &m_channel_list;
 }

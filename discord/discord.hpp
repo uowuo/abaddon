@@ -108,6 +108,8 @@ public:
     void UpdateStatus(const std::string &status, bool is_afk, const Activity &obj);
     void CreateDM(Snowflake user_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
+    void AddReaction(Snowflake id, Glib::ustring param);
+    void RemoveReaction(Snowflake id, Glib::ustring param);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
@@ -140,6 +142,8 @@ private:
     void HandleGatewayGuildRoleUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildRoleCreate(const GatewayMessage &msg);
     void HandleGatewayGuildRoleDelete(const GatewayMessage &msg);
+    void HandleGatewayMessageReactionAdd(const GatewayMessage &msg);
+    void HandleGatewayMessageReactionRemove(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
@@ -202,6 +206,8 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_role_update;
     typedef sigc::signal<void, Snowflake> type_signal_role_create;
     typedef sigc::signal<void, Snowflake> type_signal_role_delete;
+    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_add;
+    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_remove;
     typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -219,6 +225,8 @@ public:
     type_signal_role_update signal_role_update();
     type_signal_role_create signal_role_create();
     type_signal_role_delete signal_role_delete();
+    type_signal_reaction_add signal_reaction_add();
+    type_signal_reaction_remove signal_reaction_remove();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -237,6 +245,8 @@ protected:
     type_signal_role_update m_signal_role_update;
     type_signal_role_create m_signal_role_create;
     type_signal_role_delete m_signal_role_delete;
+    type_signal_reaction_add m_signal_reaction_add;
+    type_signal_reaction_remove m_signal_reaction_remove;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

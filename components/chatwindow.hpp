@@ -23,6 +23,7 @@ public:
     void AddNewHistory(const std::vector<Snowflake> &id); // prepend messages
     void InsertChatInput(std::string text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
+    void UpdateReactions(Snowflake id);
 
 protected:
     ChatMessageItemContainer *CreateMessageComponent(Snowflake id); // to be inserted into header's content box
@@ -72,6 +73,8 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_click;
     typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;
     typedef sigc::signal<void, const GdkEvent *, Snowflake, Snowflake> type_signal_action_open_user_menu;
+    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_add;
+    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_remove;
 
     type_signal_action_message_delete signal_action_message_delete();
     type_signal_action_message_edit signal_action_message_edit();
@@ -80,6 +83,8 @@ public:
     type_signal_action_channel_click signal_action_channel_click();
     type_signal_action_insert_mention signal_action_insert_mention();
     type_signal_action_open_user_menu signal_action_open_user_menu();
+    type_signal_action_reaction_add signal_action_reaction_add();
+    type_signal_action_reaction_remove signal_action_reaction_remove();
 
 private:
     type_signal_action_message_delete m_signal_action_message_delete;
@@ -89,4 +94,6 @@ private:
     type_signal_action_channel_click m_signal_action_channel_click;
     type_signal_action_insert_mention m_signal_action_insert_mention;
     type_signal_action_open_user_menu m_signal_action_open_user_menu;
+    type_signal_action_reaction_add m_signal_action_reaction_add;
+    type_signal_action_reaction_remove m_signal_action_reaction_remove;
 };

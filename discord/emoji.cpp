@@ -11,6 +11,23 @@ void from_json(const nlohmann::json &j, Emoji &m) {
     JS_O("available", m.IsAvailable);
 }
 
+void to_json(nlohmann::json &j, const Emoji &m) {
+    if (m.ID.IsValid())
+        j["id"] = m.ID;
+    else
+        j["id"] = nullptr;
+    if (m.Name != "")
+        j["name"] = m.Name;
+    else
+        j["name"] = nullptr;
+    JS_IF("roles", m.Roles);
+    JS_IF("user", m.Creator);
+    JS_IF("require_colons", m.NeedsColons);
+    JS_IF("managed", m.IsManaged);
+    JS_IF("animated", m.IsAnimated);
+    JS_IF("available", m.IsAvailable);
+}
+
 std::string Emoji::GetURL() const {
     return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + ".png";
 }

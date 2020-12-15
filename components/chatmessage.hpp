@@ -14,6 +14,7 @@ public:
     void UpdateAttributes();
     void UpdateContent();
     void UpdateImage(std::string url, Glib::RefPtr<Gdk::Pixbuf> buf);
+    void UpdateReactions();
 
 protected:
     bool EmitImageLoad(std::string url);
@@ -25,6 +26,8 @@ protected:
     Gtk::Widget *CreateImageComponent(const AttachmentData &data);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     Gtk::Widget *CreateStickerComponent(const Sticker &data);
+    Gtk::Widget *CreateReactionsComponent(const Message *data);
+    void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
     void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
 
     void OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
@@ -75,6 +78,7 @@ protected:
 
     Gtk::TextView *m_text_component = nullptr;
     Gtk::Widget *m_embed_component = nullptr;
+    Gtk::Widget *m_reactions_component = nullptr;
 
 public:
     typedef sigc::signal<void, std::string> type_signal_image_load;
@@ -82,10 +86,14 @@ public:
     typedef sigc::signal<void> type_signal_action_delete;
     typedef sigc::signal<void> type_signal_action_edit;
     typedef sigc::signal<void, Snowflake> type_signal_channel_click;
+    typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_add;
+    typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_remove;
 
     type_signal_action_delete signal_action_delete();
     type_signal_action_edit signal_action_edit();
     type_signal_channel_click signal_action_channel_click();
+    type_signal_action_reaction_add signal_action_reaction_add();
+    type_signal_action_reaction_remove signal_action_reaction_remove();
 
     type_signal_image_load signal_image_load();
 
@@ -93,6 +101,8 @@ private:
     type_signal_action_delete m_signal_action_delete;
     type_signal_action_edit m_signal_action_edit;
     type_signal_channel_click m_signal_action_channel_click;
+    type_signal_action_reaction_add m_signal_action_reaction_add;
+    type_signal_action_reaction_remove m_signal_action_reaction_remove;
 
     type_signal_image_load m_signal_image_load;
 };

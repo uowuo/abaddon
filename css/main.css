@@ -105,6 +105,22 @@
     margin: 5px;
 }
 
+.reaction-box {
+    padding: 2px 5px 2px 5px;
+    margin: 0px 0px 0px 0px;
+    background-color: rgba(0.4, 0.4, 0.4, 0.4);
+    border-radius: 5px;
+    border: 1px solid transparent;
+}
+
+.reaction-box.reacted {
+    border: 1px solid white;
+}
+
+.reaction-count {
+    color: #cfd8dc;
+}
+
 paned separator {
     background:#37474f;
 }

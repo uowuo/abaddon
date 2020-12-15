@@ -43,6 +43,8 @@ public:
     void ActionKickMember(Snowflake user_id, Snowflake guild_id);
     void ActionBanMember(Snowflake user_id, Snowflake guild_id);
     void ActionSetStatus();
+    void ActionReactionAdd(Snowflake id, const Glib::ustring &param);
+    void ActionReactionRemove(Snowflake id, const Glib::ustring &param);
 
     void ActionReloadCSS();
 
@@ -65,6 +67,8 @@ public:
     void DiscordOnChannelUpdate(Snowflake channel_id);
     void DiscordOnChannelCreate(Snowflake channel_id);
     void DiscordOnGuildUpdate(Snowflake guild_id);
+    void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
+    void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
 
     const SettingsManager &GetSettings() const;
 

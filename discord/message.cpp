@@ -152,6 +152,18 @@ void to_json(nlohmann::json &j, const MessageReferenceData &m) {
     JS_IF("guild_id", m.GuildID);
 }
 
+void from_json(const nlohmann::json &j, ReactionData &m) {
+    JS_D("count", m.Count);
+    JS_D("me", m.HasReactedWith);
+    JS_D("emoji", m.Emoji);
+}
+
+void to_json(nlohmann::json &j, const ReactionData &m) {
+    j["count"] = m.Count;
+    j["me"] = m.HasReactedWith;
+    j["emoji"] = m.Emoji;
+}
+
 void from_json(const nlohmann::json &j, Message &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);
@@ -170,7 +182,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     // JS_O("mention_channels", m.MentionChannels);
     JS_D("attachments", m.Attachments);
     JS_D("embeds", m.Embeds);
-    // JS_O("reactions", m.Reactions);
+    JS_O("reactions", m.Reactions);
     JS_O("nonce", m.Nonce);
     JS_D("pinned", m.IsPinned);
     JS_O("webhook_id", m.WebhookID);

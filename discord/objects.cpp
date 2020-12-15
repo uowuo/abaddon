@@ -216,3 +216,20 @@ void from_json(const nlohmann::json &j, GuildRoleDeleteObject &m) {
     JS_D("guild_id", m.GuildID);
     JS_D("role_id", m.RoleID);
 }
+
+void from_json(const nlohmann::json &j, MessageReactionAddObject &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("channel_id", m.ChannelID);
+    JS_D("message_id", m.MessageID);
+    JS_O("guild_id", m.GuildID);
+    JS_O("member", m.Member);
+    JS_D("emoji", m.Emoji);
+}
+
+void from_json(const nlohmann::json &j, MessageReactionRemoveObject &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("channel_id", m.ChannelID);
+    JS_D("message_id", m.MessageID);
+    JS_O("guild_id", m.GuildID);
+    JS_D("emoji", m.Emoji);
+}

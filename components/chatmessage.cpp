@@ -76,6 +76,11 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         }
     }
 
+    if (data->Reactions.has_value() && data->Reactions->size() > 0) {
+        container->m_reactions_component = container->CreateReactionsComponent(&*data);
+        container->m_main->add(*container->m_reactions_component);
+    }
+
     container->UpdateAttributes();
 
     return container;
@@ -122,6 +127,18 @@ void ChatMessageItemContainer::UpdateImage(std::string url, Glib::RefPtr<Gdk::Pi
             GetImageDimensions(*inw, *inh, w, h);
             it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
         }
+    }
+}
+
+void ChatMessageItemContainer::UpdateReactions() {
+    if (m_reactions_component != nullptr)
+        delete m_reactions_component;
+
+    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
+    if (data->Reactions.has_value() && data->Reactions->size() > 0) {
+        m_reactions_component = CreateReactionsComponent(&*data);
+        m_reactions_component->show_all();
+        m_main->add(*m_reactions_component);
     }
 }
 
@@ -393,6 +410,89 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const Sticker &dat
 
     AttachGuildMenuHandler(box);
     return box;
+}
+
+Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *data) {
+    auto *flow = Gtk::manage(new Gtk::FlowBox);
+    flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+    flow->set_min_children_per_line(5);
+    flow->set_max_children_per_line(20);
+    flow->set_halign(Gtk::ALIGN_START);
+    flow->set_hexpand(false);
+    flow->set_column_spacing(2);
+    flow->set_selection_mode(Gtk::SELECTION_NONE);
+
+    auto &imgr = Abaddon::Get().GetImageManager();
+    auto &emojis = Abaddon::Get().GetEmojis();
+    const auto &placeholder = imgr.GetPlaceholder(16);
+
+    for (const auto &reaction : *data->Reactions) {
+        auto *ev = Gtk::manage(new Gtk::EventBox);
+        auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+        box->get_style_context()->add_class("reaction-box");
+        ev->add(*box);
+        flow->add(*ev);
+
+        bool is_stock = !reaction.Emoji.ID.IsValid();
+
+        bool has_reacted = reaction.HasReactedWith;
+        if (has_reacted)
+            box->get_style_context()->add_class("reacted");
+
+        ev->signal_button_press_event().connect([this, has_reacted, is_stock, reaction](GdkEventButton *event) -> bool {
+            if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+                Glib::ustring param; // escaped in client
+                if (is_stock)
+                    param = reaction.Emoji.Name;
+                else
+                    param = std::to_string(reaction.Emoji.ID);
+                if (has_reacted)
+                    m_signal_action_reaction_remove.emit(param);
+                else
+                    m_signal_action_reaction_add.emit(param);
+                return true;
+            }
+            return false;
+        });
+
+        ev->signal_realize().connect([ev]() {
+            auto window = ev->get_window();
+            auto display = window->get_display();
+            auto cursor = Gdk::Cursor::create(display, "pointer");
+            window->set_cursor(cursor);
+        });
+
+        // image
+        if (is_stock) { // unicode/stock
+            const auto &pb = emojis.GetPixBuf(reaction.Emoji.Name);
+            auto *img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
+            img->set_can_focus(false);
+            box->add(*img);
+        } else { // custom
+            const auto &pb = imgr.GetFromURLIfCached(reaction.Emoji.GetURL());
+            Gtk::Image *img;
+            if (pb) {
+                img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
+            } else {
+                img = Gtk::manage(new Gtk::Image(placeholder));
+                // can track_obj PLEASE work ???
+                imgr.LoadFromURL(reaction.Emoji.GetURL(), sigc::bind<0>(sigc::mem_fun(*this, &ChatMessageItemContainer::ReactionUpdateImage), img));
+            }
+            img->set_can_focus(false);
+            box->add(*img);
+        }
+
+        auto *lbl = Gtk::manage(new Gtk::Label(std::to_string(reaction.Count)));
+        lbl->set_margin_left(5);
+        lbl->get_style_context()->add_class("reaction-count");
+        box->add(*lbl);
+    }
+
+    return flow;
+}
+
+void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+    img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
 }
 
 void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url) {
@@ -713,6 +813,14 @@ ChatMessageItemContainer::type_signal_action_edit ChatMessageItemContainer::sign
 
 ChatMessageItemContainer::type_signal_channel_click ChatMessageItemContainer::signal_action_channel_click() {
     return m_signal_action_channel_click;
+}
+
+ChatMessageItemContainer::type_signal_action_reaction_add ChatMessageItemContainer::signal_action_reaction_add() {
+    return m_signal_action_reaction_add;
+}
+
+ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemContainer::signal_action_reaction_remove() {
+    return m_signal_action_reaction_remove;
 }
 
 ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {

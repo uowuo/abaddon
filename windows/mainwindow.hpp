@@ -26,6 +26,8 @@ public:
     void UpdateChatPrependHistory(const std::vector<Snowflake> &msgs);
     void InsertChatInput(std::string text);
     Snowflake GetChatOldestListedMessage();
+    void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
+    void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
 
     ChannelList *GetChannelList();
     ChatWindow *GetChatWindow();
