@@ -366,6 +366,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData
 Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const AttachmentData &data) {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *btn = Gtk::manage(new Gtk::Label(data.Filename + " " + HumanReadableBytes(data.Bytes))); // Gtk::LinkButton flat out doesn't work :D
+    ev->set_hexpand(false);
+    ev->set_halign(Gtk::ALIGN_START);
     ev->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
 

@@ -101,6 +101,10 @@
     padding: 2px 5px 2px 5px;
 }
 
+.message-attachment-box label {
+    margin: 5px;
+}
+
 paned separator {
     background:#37474f;
 }
