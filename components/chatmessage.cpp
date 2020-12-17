@@ -622,7 +622,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
 }
 
 void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
-    static bool emojis = Abaddon::Get().GetSettings().GetSettingBool("gui", "emojis", true);
+    static bool emojis = Abaddon::Get().GetSettings().GetShowEmojis();
     if (emojis) {
         HandleStockEmojis(tv);
         HandleCustomEmojis(tv);
@@ -712,8 +712,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
     Glib::ustring text = GetText(buf);
 
     // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
-    auto &settings = Abaddon::Get().GetSettings();
-    static auto link_color = settings.GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
+    static auto link_color = Abaddon::Get().GetSettings().GetLinkColor();
 
     int startpos = 0;
     Glib::MatchInfo match;

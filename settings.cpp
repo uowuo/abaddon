@@ -34,3 +34,30 @@ void SettingsManager::Close() {
     m_ini.SaveFile(m_filename.c_str());
 }
 
+bool SettingsManager::GetUseMemoryDB() const {
+    return GetSettingBool("discord", "memory_db", false);
+}
+
+std::string SettingsManager::GetUserAgent() const {
+    return GetSettingString("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36");
+}
+
+std::string SettingsManager::GetDiscordToken() const {
+    return GetSettingString("discord", "token");
+}
+
+bool SettingsManager::GetShowMemberListDiscriminators() const {
+    return GetSettingBool("gui", "member_list_discriminator", true);
+}
+
+bool SettingsManager::GetShowEmojis() const {
+    return GetSettingBool("gui", "emojis", true);
+}
+
+std::string SettingsManager::GetLinkColor() const {
+    return GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
+}
+
+int SettingsManager::GetCacheHTTPConcurrency() const {
+    return GetSettingInt("http", "concurrent", 10);
+}

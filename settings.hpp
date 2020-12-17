@@ -8,21 +8,32 @@ public:
     SettingsManager(std::string filename);
 
     void Close();
-    std::string GetSettingString(const std::string &section, const std::string &key, std::string fallback = "") const;
-    int GetSettingInt(const std::string &section, const std::string &key, int fallback) const;
-    bool GetSettingBool(const std::string &section, const std::string &key, bool fallback) const;
+    bool GetUseMemoryDB() const;
+    std::string GetUserAgent() const;
+    std::string GetDiscordToken() const;
+    bool GetShowMemberListDiscriminators() const;
+    bool GetShowEmojis() const;
+    std::string GetLinkColor() const;
+    int GetCacheHTTPConcurrency() const;
+
+    bool IsValid() const;
 
     template<typename T>
     void SetSetting(std::string section, std::string key, T value) {
-        if constexpr (std::is_same<T, std::string>::value)
-            m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
-        else
-            m_ini.SetValue(section.c_str(), key.c_str(), std::to_string(value).c_str());
-
+        m_ini.SetValue(section.c_str(), key.c_str(), std::to_string(value).c_str());
         m_ini.SaveFile(m_filename.c_str());
     }
 
-    bool IsValid() const;
+    template<>
+    void SetSetting<std::string>(std::string section, std::string key, std::string value) {
+        m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
+        m_ini.SaveFile(m_filename.c_str());
+    }
+
+private:
+    std::string GetSettingString(const std::string &section, const std::string &key, std::string fallback = "") const;
+    int GetSettingInt(const std::string &section, const std::string &key, int fallback) const;
+    bool GetSettingBool(const std::string &section, const std::string &key, bool fallback) const;
 
 private:
     bool m_ok;

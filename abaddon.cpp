@@ -17,11 +17,11 @@
 Abaddon::Abaddon()
     : m_settings("abaddon.ini")
     , m_emojis("res/emojis.bin")
-    , m_discord(m_settings.GetSettingBool("discord", "memory_db", false)) { // stupid but easy
+    , m_discord(m_settings.GetUseMemoryDB()) { // stupid but easy
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
-    std::string ua = m_settings.GetSettingString("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36");
+    std::string ua = m_settings.GetUserAgent();
     m_discord.SetUserAgent(ua);
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
@@ -130,7 +130,7 @@ int Abaddon::StartGTK() {
 }
 
 void Abaddon::LoadFromSettings() {
-    std::string token = m_settings.GetSettingString("discord", "token");
+    std::string token = m_settings.GetDiscordToken();
     if (token.size()) {
         m_discord_token = token;
         m_discord.UpdateToken(m_discord_token);

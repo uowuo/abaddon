@@ -2,8 +2,6 @@
 #include "filecache.hpp"
 #include "murmurhash3.h"
 
-constexpr static const int MaxConcurrentCacheHTTP = 10;
-
 Cache::Cache() {
     m_tmp_path = std::filesystem::temp_directory_path() / "abaddon-cache";
     std::filesystem::create_directories(m_tmp_path);
@@ -38,7 +36,7 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
 
     // needs to be initialized like this or else ::Get() is called recursively
     if (!m_semaphore)
-        m_semaphore = std::make_unique<Semaphore>(Abaddon::Get().GetSettings().GetSettingInt("http", "concurrent", MaxConcurrentCacheHTTP));
+        m_semaphore = std::make_unique<Semaphore>(Abaddon::Get().GetSettings().GetCacheHTTPConcurrency());
 
     if (m_callbacks.find(url) != m_callbacks.end()) {
         m_callbacks[url].push_back(cb);

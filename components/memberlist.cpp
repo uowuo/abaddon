@@ -17,7 +17,7 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
     if (data != nullptr) {
-        static bool show_discriminator = Abaddon::Get().GetSettings().GetSettingBool("gui", "member_list_discriminator", true);
+        static bool show_discriminator = Abaddon::Get().GetSettings().GetShowMemberListDiscriminators();
         std::string display = data->Username;
         if (show_discriminator)
             display += "#" + data->Discriminator;
