@@ -46,6 +46,7 @@ public:
     void ActionReactionAdd(Snowflake id, const Glib::ustring &param);
     void ActionReactionRemove(Snowflake id, const Glib::ustring &param);
 
+    void ActionReloadSettings();
     void ActionReloadCSS();
 
     ImageManager &GetImageManager();

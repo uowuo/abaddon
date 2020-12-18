@@ -14,6 +14,10 @@ SettingsManager::SettingsManager(std::string filename)
     m_ok = rc == SI_OK;
 }
 
+void SettingsManager::Reload() {
+    m_ok = m_ini.LoadFile(m_filename.c_str()) == SI_OK;
+}
+
 std::string SettingsManager::GetSettingString(const std::string &section, const std::string &key, std::string fallback) const {
     return m_ini.GetValue(section.c_str(), key.c_str(), fallback.c_str());
 }
@@ -64,4 +68,8 @@ int SettingsManager::GetCacheHTTPConcurrency() const {
 
 bool SettingsManager::GetPrefetch() const {
     return GetSettingBool("discord", "prefetch", false);
+}
+
+std::string SettingsManager::GetMainCSS() const {
+    return GetSettingString("gui", "css", "./css/main.css");
 }

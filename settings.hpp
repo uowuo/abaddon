@@ -6,6 +6,7 @@
 class SettingsManager {
 public:
     SettingsManager(std::string filename);
+    void Reload();
 
     void Close();
     bool GetUseMemoryDB() const;
@@ -16,6 +17,7 @@ public:
     std::string GetLinkColor() const;
     int GetCacheHTTPConcurrency() const;
     bool GetPrefetch() const;
+    std::string GetMainCSS() const;
 
     bool IsValid() const;
 

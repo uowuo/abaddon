@@ -66,7 +66,7 @@ int Abaddon::StartGTK() {
     // tmp css stuff
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(*m_main_window, "main.css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, "css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.run();
     });
 
@@ -99,6 +99,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
+    m_main_window->signal_action_reload_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadSettings));
 
     m_main_window->signal_action_show_user_menu().connect(sigc::mem_fun(*this, &Abaddon::ShowUserMenu));
 
@@ -454,13 +455,17 @@ void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
     m_discord.RemoveReaction(id, param);
 }
 
+void Abaddon::ActionReloadSettings() {
+    m_settings.Reload();
+}
+
 void Abaddon::ActionReloadCSS() {
     try {
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
-        m_css_provider->load_from_path("./css/main.css");
+        m_css_provider->load_from_path(m_settings.GetMainCSS());
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     } catch (Glib::Error &e) {
-        Gtk::MessageDialog dlg(*m_main_window, "main.css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, "css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.run();
     }
 }
