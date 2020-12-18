@@ -25,81 +25,25 @@ struct is_optional<::std::optional<T>> : ::std::true_type {};
 
 class Semaphore {
 public:
-    Semaphore(int count = 0)
-        : m_count(count) {}
-
-    inline void notify() {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        m_count++;
-        lock.unlock();
-        m_cv.notify_one();
-    }
-
-    inline void wait() {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        while (m_count == 0)
-            m_cv.wait(lock);
-        m_count--;
-    }
+    Semaphore(int count = 0);
+    void notify();
+    void wait();
 
 private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
     int m_count;
 };
-// gtkmm doesnt seem to work
-#ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <Windows.h>
-    #include <shellapi.h>
-#endif
 
-inline void LaunchBrowser(Glib::ustring url) {
-    GError *err = nullptr;
-    if (!gtk_show_uri_on_window(nullptr, url.c_str(), GDK_CURRENT_TIME, &err))
-        printf("failed to open uri: %s\n", err->message);
-}
-
-inline void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300) {
-    const auto frac = static_cast<float>(inw) / inh;
-
-    outw = inw;
-    outh = inh;
-
-    if (outw > clampw) {
-        outw = clampw;
-        outh = clampw / frac;
-    }
-
-    if (outh > clamph) {
-        outh = clamph;
-        outw = clamph * frac;
-    }
-}
-
-inline std::vector<uint8_t> ReadWholeFile(std::string path) {
-    std::vector<uint8_t> ret;
-    FILE *fp = std::fopen(path.c_str(), "rb");
-    if (fp == nullptr)
-        return ret;
-    std::fseek(fp, 0, SEEK_END);
-    int len = std::ftell(fp);
-    std::rewind(fp);
-    ret.resize(len);
-    std::fread(ret.data(), 1, ret.size(), fp);
-    std::fclose(fp);
-    return ret;
-}
-
-inline std::string HumanReadableBytes(uint64_t bytes) {
-    constexpr static const char *x[] = { "B", "KB", "MB", "GB", "TB" };
-    int order = 0;
-    while (bytes >= 1000 && order < 4) { // 4=len(x)-1
-        order++;
-        bytes /= 1000;
-    }
-    return std::to_string(bytes) + x[order];
-}
+void LaunchBrowser(Glib::ustring url);
+void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300);
+std::string IntToCSSColor(int color);
+void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu);
+std::vector<std::string> StringSplit(const std::string &str, const char *delim);
+std::string GetExtension(std::string url);
+bool IsURLViewableImage(const std::string &url);
+std::vector<uint8_t> ReadWholeFile(std::string path);
+std::string HumanReadableBytes(uint64_t bytes);
 
 template<typename T>
 struct Bitwise {
@@ -160,55 +104,4 @@ inline void AlphabeticalSort(T start, T end, std::function<std::string(const typ
 
         return ac[0] || ac[5];
     });
-}
-
-inline std::string IntToCSSColor(int color) {
-    int r = (color & 0xFF0000) >> 16;
-    int g = (color & 0x00FF00) >> 8;
-    int b = (color & 0x0000FF) >> 0;
-    std::stringstream ss;
-    ss << std::hex << std::setw(2) << std::setfill('0') << r
-       << std::hex << std::setw(2) << std::setfill('0') << g
-       << std::hex << std::setw(2) << std::setfill('0') << b;
-    return ss.str();
-}
-
-inline void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu) {
-    widget->signal_button_press_event().connect([&menu](GdkEventButton *ev) -> bool {
-        if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
-            menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(ev));
-            return true;
-        }
-        return false;
-        // clang-format off
-    }, false);
-    // clang-format on
-}
-
-inline std::vector<std::string> StringSplit(const std::string &str, const char *delim) {
-    std::vector<std::string> parts;
-    char *token = std::strtok(const_cast<char *>(str.c_str()), delim);
-    while (token != nullptr) {
-        parts.push_back(token);
-        token = std::strtok(nullptr, delim);
-    }
-    return parts;
-}
-
-inline std::string GetExtension(std::string url) {
-    url = StringSplit(url, "?")[0];
-    url = StringSplit(url, "/").back();
-    return url.find(".") != std::string::npos ? url.substr(url.find_last_of(".")) : "";
-}
-
-inline bool IsURLViewableImage(const std::string &url) {
-    const auto ext = GetExtension(url);
-    static const char *exts[] = { ".jpeg",
-                                  ".jpg",
-                                  ".png", nullptr };
-    const char *str = ext.c_str();
-    for (int i = 0; exts[i] != nullptr; i++)
-        if (strcmp(str, exts[i]) == 0)
-            return true;
-    return false;
 }
