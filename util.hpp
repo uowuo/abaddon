@@ -184,3 +184,31 @@ inline void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu) {
     }, false);
     // clang-format on
 }
+
+inline std::vector<std::string> StringSplit(const std::string &str, const char *delim) {
+    std::vector<std::string> parts;
+    char *token = std::strtok(const_cast<char *>(str.c_str()), delim);
+    while (token != nullptr) {
+        parts.push_back(token);
+        token = std::strtok(nullptr, delim);
+    }
+    return parts;
+}
+
+inline std::string GetExtension(std::string url) {
+    url = StringSplit(url, "?")[0];
+    url = StringSplit(url, "/").back();
+    return url.find(".") != std::string::npos ? url.substr(url.find_last_of(".")) : "";
+}
+
+inline bool IsURLViewableImage(const std::string &url) {
+    const auto ext = GetExtension(url);
+    static const char *exts[] = { ".jpeg",
+                                  ".jpg",
+                                  ".png", nullptr };
+    const char *str = ext.c_str();
+    for (int i = 0; exts[i] != nullptr; i++)
+        if (strcmp(str, exts[i]) == 0)
+            return true;
+    return false;
+}

@@ -41,6 +41,10 @@ void ImageManager::LoadFromURL(std::string url, callback_type cb) {
     });
 }
 
+void ImageManager::Prefetch(std::string url) {
+    m_cache.GetFileFromURL(url, [](const auto &) {});
+}
+
 void ImageManager::RunCallbacks() {
     m_cb_mutex.lock();
     m_cb_queue.front()();

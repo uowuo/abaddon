@@ -56,8 +56,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     // i dont think attachments can be edited
     // also this can definitely be done much better holy shit
     for (const auto &a : data->Attachments) {
-        const auto last3 = a.ProxyURL.substr(a.ProxyURL.length() - 3);
-        if (last3 == "png" || last3 == "jpg") {
+        if (IsURLViewableImage(a.ProxyURL)) {
             auto *widget = container->CreateImageComponent(a);
             container->m_main->add(*widget);
         } else {

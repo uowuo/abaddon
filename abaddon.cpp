@@ -37,6 +37,17 @@ Abaddon::Abaddon()
     m_discord.signal_guild_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
+    if (m_settings.GetPrefetch())
+        m_discord.signal_message_create().connect([this](Snowflake id) {
+            const auto msg = m_discord.GetMessage(id);
+            const auto author = m_discord.GetUser(msg->Author.ID);
+            if (author.has_value() && author->HasAvatar())
+                m_img_mgr.Prefetch(author->GetAvatarURL());
+            for (const auto &attachment : msg->Attachments) {
+                if (IsURLViewableImage(attachment.ProxyURL))
+                    m_img_mgr.Prefetch(attachment.ProxyURL);
+            }
+        });
 }
 
 Abaddon::~Abaddon() {

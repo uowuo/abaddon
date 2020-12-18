@@ -15,6 +15,7 @@ public:
     bool GetShowEmojis() const;
     std::string GetLinkColor() const;
     int GetCacheHTTPConcurrency() const;
+    bool GetPrefetch() const;
 
     bool IsValid() const;
 

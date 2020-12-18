@@ -14,6 +14,7 @@ public:
 
     Cache &GetCache();
     void LoadFromURL(std::string url, callback_type cb);
+    void Prefetch(std::string url);
     Glib::RefPtr<Gdk::Pixbuf> GetFromURLIfCached(std::string url);
     Glib::RefPtr<Gdk::Pixbuf> GetPlaceholder(int size);
 

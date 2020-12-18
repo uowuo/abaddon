@@ -61,3 +61,7 @@ std::string SettingsManager::GetLinkColor() const {
 int SettingsManager::GetCacheHTTPConcurrency() const {
     return GetSettingInt("http", "concurrent", 10);
 }
+
+bool SettingsManager::GetPrefetch() const {
+    return GetSettingBool("discord", "prefetch", false);
+}
