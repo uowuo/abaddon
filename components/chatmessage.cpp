@@ -768,8 +768,6 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
     }
 
     return false;
-
-    return false;
 }
 
 void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {

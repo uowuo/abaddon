@@ -54,17 +54,10 @@ private:
     #include <shellapi.h>
 #endif
 
-inline void LaunchBrowser(std::string url) {
-#if defined(_WIN32)
-    // wtf i love the win32 api now ???
-    ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
-#elif defined(__APPLE__)
-    std::system(("open " + url).c_str());
-#elif defined(__linux__)
-    std::system(("xdg-open " + url).c_str());
-#else
-    printf("can't open url on this platform\n");
-#endif
+inline void LaunchBrowser(Glib::ustring url) {
+    GError *err = nullptr;
+    if (!gtk_show_uri_on_window(nullptr, url.c_str(), GDK_CURRENT_TIME, &err))
+        printf("failed to open uri: %s\n", err->message);
 }
 
 inline void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300) {

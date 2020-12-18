@@ -39,6 +39,8 @@ for:
 
     after_build:
     - cmd: |
+        copy "c:\tools\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\gspawn-win64-helper.exe"
+        copy "c:\tools\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper-console.exe" "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\gspawn-win64-helper-console.exe"
         xcopy /E /I %APPVEYOR_BUILD_FOLDER%\css "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\css\"
         xcopy /E /I %APPVEYOR_BUILD_FOLDER%\res "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\res\"
         7z a %APPVEYOR_BUILD_FOLDER%\out\abaddon.zip "%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%"
