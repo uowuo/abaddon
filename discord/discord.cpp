@@ -853,7 +853,7 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
 
-    m_websocket.Stop(4000); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
+    m_websocket.Stop(1012); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
