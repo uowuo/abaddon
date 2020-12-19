@@ -22,7 +22,7 @@
 
 
 ### Downloads (from CI):
-- Windows: [here](https://ci.appveyor.com/project/uowuo/abaddon/build/artifacts)
+- Windows: [here](https://ci.appveyor.com/project/ouwou/abaddon/build/artifacts)
 
 #### Dependencies:  
 * [gtkmm](https://www.gtkmm.org/en/)
