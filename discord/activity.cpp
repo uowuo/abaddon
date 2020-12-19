@@ -99,3 +99,10 @@ void to_json(nlohmann::json &j, const Activity &m) {
     JS_IF("instance", m.IsInstance);
     JS_IF("flags", m.Flags);
 }
+
+void to_json(nlohmann::json &j, const Presence &m) {
+    j["activities"] = m.Activities;
+    j["status"] = m.Status;
+    j["afk"] = m.IsAFK;
+    j["since"] = m.Since;
+}

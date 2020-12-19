@@ -383,9 +383,9 @@ void DiscordClient::BanUser(Snowflake user_id, Snowflake guild_id) {
 
 void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const Activity &obj) {
     UpdateStatusMessage msg;
-    msg.Status = status;
-    msg.IsAFK = is_afk;
-    msg.Activities.push_back(obj);
+    msg.Presence.Status = status;
+    msg.Presence.IsAFK = is_afk;
+    msg.Presence.Activities.push_back(obj);
 
     m_websocket.Send(nlohmann::json(msg));
 }
@@ -985,7 +985,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 73363;
+    msg.Properties.ClientBuildNumber = 73785;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;

@@ -90,3 +90,12 @@ struct Activity {
     friend void from_json(const nlohmann::json &j, Activity &m);
     friend void to_json(nlohmann::json &j, const Activity &m);
 };
+
+struct Presence {
+    std::vector<Activity> Activities; // null (but never sent as such)
+    std::string Status;
+    bool IsAFK;
+    int Since = 0;
+
+    friend void to_json(nlohmann::json &j, const Presence &m);
+};

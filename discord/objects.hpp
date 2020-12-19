@@ -145,10 +145,7 @@ struct LazyLoadRequestMessage {
 };
 
 struct UpdateStatusMessage {
-    std::vector<Activity> Activities; // null (but never sent as such)
-    std::string Status;
-    bool IsAFK;
-    int Since = 0;
+    Presence Presence;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
@@ -209,7 +206,7 @@ struct ClientStateProperties {
 struct IdentifyMessage : GatewayMessage {
     std::string Token;
     IdentifyProperties Properties;
-    UpdateStatusMessage Presence;
+    Presence Presence;
     ClientStateProperties ClientState;
     bool DoesSupportCompression = false;
     int Capabilities;
