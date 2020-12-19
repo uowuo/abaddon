@@ -12,7 +12,7 @@
 
 ### Building:
 #### Windows:
-1. `git clone https://github.com/lorpus/abaddon && cd abaddon`
+1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
 2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows`
 3. `mkdir build && cd build`
 4. `cmake -G"Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=c:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DVCPKG_TARGET_TRIPLET=x64-windows ..`
@@ -22,7 +22,7 @@
 
 
 ### Downloads (from CI):
-- Windows: [here](https://ci.appveyor.com/project/lorpus/abaddon/build/artifacts)
+- Windows: [here](https://ci.appveyor.com/project/uowuo/abaddon/build/artifacts)
 
 #### Dependencies:  
 * [gtkmm](https://www.gtkmm.org/en/)
