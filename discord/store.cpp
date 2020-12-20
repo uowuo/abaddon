@@ -339,10 +339,10 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
         ret.Creator = std::optional<User>(User());
         Get(m_get_emote_stmt, 3, ret.Creator->ID);
     }
-    Get(m_get_emote_stmt, 3, ret.NeedsColons);
-    Get(m_get_emote_stmt, 4, ret.IsManaged);
-    Get(m_get_emote_stmt, 5, ret.IsAnimated);
-    Get(m_get_emote_stmt, 6, ret.IsAvailable);
+    Get(m_get_emote_stmt, 4, ret.NeedsColons);
+    Get(m_get_emote_stmt, 5, ret.IsManaged);
+    Get(m_get_emote_stmt, 6, ret.IsAnimated);
+    Get(m_get_emote_stmt, 7, ret.IsAvailable);
 
     Reset(m_get_emote_stmt);
 
