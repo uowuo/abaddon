@@ -358,8 +358,8 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     };
     msg.Channels = c;
     msg.GuildID = *GetChannel(id)->GuildID;
-    msg.ShouldGetActivities = false;
-    msg.ShouldGetTyping = false;
+    msg.ShouldGetActivities = true;
+    msg.ShouldGetTyping = true;
 
     nlohmann::json j = msg;
     m_websocket.Send(j);
