@@ -6,6 +6,7 @@
 #include <set>
 #include "../discord/discord.hpp"
 #include "chatmessage.hpp"
+#include "completer.hpp"
 
 class ChatWindow {
 public:
@@ -64,6 +65,8 @@ protected:
 
     Gtk::TextView *m_input;
     Gtk::ScrolledWindow *m_input_scroll;
+
+    Completer m_completer;
 
 public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;

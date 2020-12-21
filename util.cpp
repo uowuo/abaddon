@@ -64,6 +64,30 @@ std::string HumanReadableBytes(uint64_t bytes) {
     return std::to_string(bytes) + x[order];
 }
 
+void ScrollListBoxToSelected(Gtk::ListBox &list) {
+    auto cb = [&list]() -> bool {
+        const auto selected = list.get_selected_row();
+        if (selected == nullptr) return false;
+        int x, y;
+        selected->translate_coordinates(list, 0, 0, x, y);
+        if (y < 0) return false;
+        const auto adj = list.get_adjustment();
+        if (!adj) return false;
+        int min, nat;
+        selected->get_preferred_height(min, nat);
+        adj->set_value(y - (adj->get_page_size() - nat) / 2.0);
+
+        return false;
+    };
+    Glib::signal_idle().connect(sigc::track_obj(cb, list));
+}
+
+// surely theres a better way to do this
+bool StringContainsCaseless(const Glib::ustring &str, const Glib::ustring &sub) {
+    const auto regex = Glib::Regex::create(Glib::Regex::escape_string(sub), Glib::REGEX_CASELESS);
+    return regex->match(str);
+}
+
 std::string IntToCSSColor(int color) {
     int r = (color & 0xFF0000) >> 16;
     int g = (color & 0x00FF00) >> 8;

@@ -13,6 +13,10 @@ Snowflake User::GetHoistedRole(Snowflake guild_id, bool with_color) const {
     return Abaddon::Get().GetDiscordClient().GetMemberHoistedRole(guild_id, ID, with_color);
 }
 
+std::string User::GetMention() const {
+    return "<@" + std::to_string(ID) + ">";
+}
+
 void from_json(const nlohmann::json &j, User &m) {
     JS_D("id", m.ID);
     JS_D("username", m.Username);

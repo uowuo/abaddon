@@ -52,9 +52,41 @@ ChatWindow::ChatWindow() {
     m_input_scroll->set_max_content_height(200);
     m_input_scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 
+    m_completer.SetBuffer(m_input->get_buffer());
+    m_completer.SetGetChannelID([this]() -> auto {
+        return m_active_channel;
+    });
+
+    m_completer.SetGetRecentAuthors([this]() -> auto {
+        const auto &discord = Abaddon::Get().GetDiscordClient();
+        std::vector<Snowflake> ret;
+
+        std::map<Snowflake, Gtk::Widget *> ordered(m_id_to_widget.begin(), m_id_to_widget.end());
+
+        for (auto it = ordered.crbegin(); it != ordered.crend(); it++) {
+            const auto *widget = dynamic_cast<ChatMessageItemContainer *>(it->second);
+            if (widget == nullptr) continue;
+            const auto msg = discord.GetMessage(widget->ID);
+            if (!msg.has_value()) continue;
+            if (std::find(ret.begin(), ret.end(), msg->Author.ID) == ret.end())
+                ret.push_back(msg->Author.ID);
+        }
+
+        const auto chan = discord.GetChannel(m_active_channel);
+        if (chan->GuildID.has_value()) {
+            const auto others = discord.GetUsersInGuild(*chan->GuildID);
+            for (const auto id : others)
+                if (std::find(ret.begin(), ret.end(), id) == ret.end())
+                    ret.push_back(id);
+        }
+
+        return ret;
+    });
+
     m_input_scroll->add(*m_input);
     m_scroll->add(*m_list);
     m_main->add(*m_scroll);
+    m_main->add(m_completer);
     m_main->add(*m_input_scroll);
 }
 
@@ -141,6 +173,9 @@ Snowflake ChatWindow::GetActiveChannel() const {
 }
 
 bool ChatWindow::on_key_press_event(GdkEventKey *e) {
+    if (m_completer.ProcessKeyPress(e))
+        return true;
+
     if (e->keyval == GDK_KEY_Return) {
         if (e->state & GDK_SHIFT_MASK)
             return false;

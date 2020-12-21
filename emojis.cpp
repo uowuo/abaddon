@@ -13,14 +13,24 @@ bool EmojiResource::Load() {
     int num_entries;
     std::fread(&num_entries, 4, 1, m_fp);
     for (int i = 0; i < num_entries; i++) {
-        static int strsize, len, pos;
-        std::fread(&strsize, 4, 1, m_fp);
-        std::vector<char> str(strsize);
-        std::fread(str.data(), strsize, 1, m_fp);
+        static int pattern_strlen, shortcode_strlen, len, pos;
+        std::fread(&pattern_strlen, 4, 1, m_fp);
+        std::string pattern(pattern_strlen, '\0');
+        std::fread(pattern.data(), pattern_strlen, 1, m_fp);
+
+        const auto pattern_hex = HexToPattern(pattern);
+
+        std::fread(&shortcode_strlen, 4, 1, m_fp);
+        std::string shortcode(shortcode_strlen, '\0');
+        if (shortcode_strlen > 0) {
+            std::fread(shortcode.data(), shortcode_strlen, 1, m_fp);
+            m_shortcode_index[shortcode] = pattern_hex;
+        }
+
         std::fread(&len, 4, 1, m_fp);
         std::fread(&pos, 4, 1, m_fp);
-        m_index[std::string(str.begin(), str.end())] = std::make_pair(pos, len);
-        m_patterns.push_back(HexToPattern(Glib::ustring(str.begin(), str.end())));
+        m_index[pattern] = std::make_pair(pos, len);
+        m_patterns.push_back(pattern_hex);
     }
     std::sort(m_patterns.begin(), m_patterns.end(), [](const Glib::ustring &a, const Glib::ustring &b) {
         return a.size() > b.size();
@@ -112,4 +122,8 @@ void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
 
 const std::vector<Glib::ustring> &EmojiResource::GetPatterns() const {
     return m_patterns;
+}
+
+const std::map<std::string, std::string> &EmojiResource::GetShortCodes() const {
+    return m_shortcode_index;
 }

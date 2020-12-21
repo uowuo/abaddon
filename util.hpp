@@ -105,3 +105,7 @@ inline void AlphabeticalSort(T start, T end, std::function<std::string(const typ
         return ac[0] || ac[5];
     });
 }
+
+void ScrollListBoxToSelected(Gtk::ListBox &list);
+
+bool StringContainsCaseless(const Glib::ustring &str, const Glib::ustring &sub);

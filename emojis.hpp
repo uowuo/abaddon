@@ -15,9 +15,11 @@ public:
     static Glib::ustring PatternToHex(const Glib::ustring &pattern);
     static Glib::ustring HexToPattern(Glib::ustring hex);
     const std::vector<Glib::ustring> &GetPatterns() const;
+    const std::map<std::string, std::string> &GetShortCodes() const;
     void ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size = 24);
 
 private:
+    std::map<std::string, std::string> m_shortcode_index;         // shortcode -> pattern
     std::unordered_map<std::string, std::pair<int, int>> m_index; // pattern -> [pos, len]
     FILE *m_fp = nullptr;
     std::string m_filepath;
