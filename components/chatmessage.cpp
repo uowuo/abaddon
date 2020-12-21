@@ -205,6 +205,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     b->get_bounds(s, e);
     switch (data->Type) {
         case MessageType::DEFAULT:
+        case MessageType::INLINE_REPLY:
             b->insert(s, data->Content);
             HandleUserMentions(tv);
             HandleLinks(tv);
