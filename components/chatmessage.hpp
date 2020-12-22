@@ -56,7 +56,7 @@ protected:
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
 
-    void AttachGuildMenuHandler(Gtk::Widget *widget);
+    void AttachEventHandlers(Gtk::Widget *widget);
     void ShowMenu(GdkEvent *event);
 
     Gtk::Menu m_menu;
@@ -88,12 +88,16 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_click;
     typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_add;
     typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_remove;
+    typedef sigc::signal<void> type_signal_enter;
+    typedef sigc::signal<void> type_signal_leave;
 
     type_signal_action_delete signal_action_delete();
     type_signal_action_edit signal_action_edit();
     type_signal_channel_click signal_action_channel_click();
     type_signal_action_reaction_add signal_action_reaction_add();
     type_signal_action_reaction_remove signal_action_reaction_remove();
+    type_signal_enter signal_enter();
+    type_signal_leave signal_leave();
 
     type_signal_image_load signal_image_load();
 
@@ -103,6 +107,8 @@ private:
     type_signal_channel_click m_signal_action_channel_click;
     type_signal_action_reaction_add m_signal_action_reaction_add;
     type_signal_action_reaction_remove m_signal_action_reaction_remove;
+    type_signal_enter m_signal_enter;
+    type_signal_leave m_signal_leave;
 
     type_signal_image_load m_signal_image_load;
 };
@@ -118,6 +124,7 @@ public:
 
 protected:
     void OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
+    void OnAnimatedAvatarLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf);
 
     void AttachUserMenuHandler(Gtk::Widget &widget);
 
@@ -132,6 +139,9 @@ protected:
     Gtk::Label *m_extra = nullptr;
     Gtk::Image *m_avatar;
     Gtk::EventBox *m_avatar_ev;
+
+    Glib::RefPtr<Gdk::Pixbuf> m_static_avatar;
+    Glib::RefPtr<Gdk::PixbufAnimation> m_anim_avatar;
 
     typedef sigc::signal<void> type_signal_action_insert_mention;
     typedef sigc::signal<void, const GdkEvent *> type_signal_action_open_user_menu;

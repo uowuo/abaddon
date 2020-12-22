@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 constexpr const int EmojiSize = 24; // settings eventually
+constexpr const int AvatarSize = 32;
 
 ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -44,14 +45,14 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(&*data);
-        container->AttachGuildMenuHandler(container->m_text_component);
+        container->AttachEventHandlers(container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
         container->m_embed_component = container->CreateEmbedComponent(&*data);
-        container->AttachGuildMenuHandler(container->m_embed_component);
+        container->AttachEventHandlers(container->m_embed_component);
         container->m_main->add(*container->m_embed_component);
     }
 
@@ -103,7 +104,7 @@ void ChatMessageItemContainer::UpdateContent() {
         if (m_embed_imgurl.size() > 0) {
             m_signal_image_load.emit(m_embed_imgurl);
         }
-        AttachGuildMenuHandler(m_embed_component);
+        AttachEventHandlers(m_embed_component);
         m_main->add(*m_embed_component);
     }
 }
@@ -375,7 +376,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData
     widget->set_halign(Gtk::ALIGN_START);
     widget->set_size_request(w, h);
 
-    AttachGuildMenuHandler(ev);
+    AttachEventHandlers(ev);
     AddClickHandler(ev, data.URL);
     HandleImage(data, widget, data.ProxyURL);
 
@@ -390,7 +391,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     ev->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
 
-    AttachGuildMenuHandler(ev);
+    AttachEventHandlers(ev);
     AddClickHandler(ev, data.URL);
 
     return ev;
@@ -410,7 +411,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const Sticker &dat
         // clang-format on
     }
 
-    AttachGuildMenuHandler(box);
+    AttachEventHandlers(box);
     return box;
 }
 
@@ -859,21 +860,40 @@ ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemCont
     return m_signal_action_reaction_remove;
 }
 
+ChatMessageItemContainer::type_signal_enter ChatMessageItemContainer::signal_enter() {
+    return m_signal_enter;
+}
+
+ChatMessageItemContainer::type_signal_leave ChatMessageItemContainer::signal_leave() {
+    return m_signal_leave;
+}
+
 ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {
     return m_signal_image_load;
 }
 
-void ChatMessageItemContainer::AttachGuildMenuHandler(Gtk::Widget *widget) {
-    // clang-format off
-    widget->signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
+void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget *widget) {
+    const auto on_button_press_event = [this](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
-            ShowMenu(reinterpret_cast<GdkEvent*>(event));
+            ShowMenu(reinterpret_cast<GdkEvent *>(event));
             return true;
         }
 
         return false;
-    }, false);
-    // clang-format on
+    };
+    widget->signal_button_press_event().connect(on_button_press_event, false);
+
+    widget->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    const auto on_notify_crossing = [this](GdkEventCrossing *event) -> bool {
+        if (event->type == GDK_ENTER_NOTIFY)
+            m_signal_enter.emit();
+        else if (event->type == GDK_LEAVE_NOTIFY)
+            m_signal_leave.emit();
+
+        return false;
+    };
+    widget->signal_enter_notify_event().connect(on_notify_crossing);
+    widget->signal_leave_notify_event().connect(on_notify_crossing);
 }
 
 ChatMessageHeader::ChatMessageHeader(const Message *data) {
@@ -890,16 +910,22 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     const auto author = Abaddon::Get().GetDiscordClient().GetUser(UserID);
     auto &img = Abaddon::Get().GetImageManager();
-    Glib::RefPtr<Gdk::Pixbuf> buf;
-    if (author.has_value())
-        buf = img.GetFromURLIfCached(author->GetAvatarURL());
 
-    if (buf)
-        m_avatar = Gtk::manage(new Gtk::Image(buf));
-    else {
-        m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(32)));
-        if (author.has_value())
+    auto static_buf = img.GetFromURLIfCached(author->GetAvatarURL());
+    auto anim_buf = img.GetAnimationFromURLIfCached(author->GetAvatarURL("gif"), AvatarSize, AvatarSize);
+
+    if (anim_buf)
+        m_anim_avatar = anim_buf;
+
+    if (static_buf) {
+        m_static_avatar = static_buf;
+        m_avatar = Gtk::manage(new Gtk::Image(static_buf));
+    } else {
+        m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
+        if (author.has_value()) {
             img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
+            img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::mem_fun(*this, &ChatMessageHeader::OnAnimatedAvatarLoad));
+        }
     }
 
     get_style_context()->add_class("message-container");
@@ -990,7 +1016,12 @@ void ChatMessageHeader::UpdateNameColor() {
 }
 
 void ChatMessageHeader::OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+    m_static_avatar = pixbuf;
     m_avatar->property_pixbuf() = pixbuf;
+}
+
+void ChatMessageHeader::OnAnimatedAvatarLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
+    m_anim_avatar = pixbuf;
 }
 
 void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
@@ -1022,6 +1053,19 @@ ChatMessageHeader::type_signal_action_open_user_menu ChatMessageHeader::signal_a
 }
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
+    if (Abaddon::Get().GetSettings().GetShowAnimations()) {
+        auto *container = dynamic_cast<ChatMessageItemContainer *>(widget);
+        if (container != nullptr) {
+            container->signal_enter().connect([this] {
+                if (m_anim_avatar)
+                    m_avatar->property_pixbuf_animation() = m_anim_avatar;
+            });
+            container->signal_leave().connect([this] {
+                if (m_anim_avatar) // if there is no anim avatar then it would have never switched off
+                    m_avatar->property_pixbuf() = m_static_avatar;
+            });
+        }
+    }
     m_content_box->add(*widget);
     if (prepend)
         m_content_box->reorder_child(*widget, 1);

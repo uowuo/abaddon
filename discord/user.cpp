@@ -5,6 +5,10 @@ bool User::HasAvatar() const {
     return Avatar.size() > 0;
 }
 
+bool User::HasAnimatedAvatar() const {
+    return Avatar.size() > 0 && Avatar[0] == 'a' && Avatar[1] == '_';
+}
+
 std::string User::GetAvatarURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
 }

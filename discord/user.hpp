@@ -29,6 +29,7 @@ struct User {
     static void update_from_json(const nlohmann::json &j, User &m);
 
     bool HasAvatar() const;
+    bool HasAnimatedAvatar() const;
     std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;
     Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
     std::string GetMention() const;
