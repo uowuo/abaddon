@@ -119,13 +119,25 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
 
     m_menu.show_all();
 
+    const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+    auto &img = Abaddon::Get().GetImageManager();
     if (data->HasIcon()) {
-        auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetIconURL("png", "32"));
-        if (buf)
-            m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
-        else {
-            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-            Abaddon::Get().GetImageManager().LoadFromURL(data->GetIconURL("png", "32"), sigc::mem_fun(*this, &ChannelListRowGuild::OnImageLoad));
+        if (data->HasAnimatedIcon() && show_animations) {
+            auto buf = img.GetAnimationFromURLIfCached(data->GetIconURL("gif", "32"), 24, 24);
+            if (buf)
+                m_icon = Gtk::manage(new Gtk::Image(buf));
+            else {
+                m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
+                img.LoadAnimationFromURL(data->GetIconURL("gif", "32"), 24, 24, sigc::mem_fun(*this, &ChannelListRowGuild::OnAnimatedImageLoad));
+            }
+        } else {
+            auto buf = img.GetFromURLIfCached(data->GetIconURL("png", "32"));
+            if (buf)
+                m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
+            else {
+                m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
+                img.LoadFromURL(data->GetIconURL("png", "32"), sigc::mem_fun(*this, &ChannelListRowGuild::OnImageLoad));
+            }
         }
     } else {
         m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
@@ -148,8 +160,12 @@ ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
     show_all_children();
 }
 
-void ChannelListRowGuild::OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf) {
+void ChannelListRowGuild::OnImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &buf) {
     m_icon->property_pixbuf() = buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+}
+
+void ChannelListRowGuild::OnAnimatedImageLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &buf) {
+    m_icon->property_pixbuf_animation() = buf;
 }
 
 ChannelListRowGuild::type_signal_copy_id ChannelListRowGuild::signal_copy_id() {

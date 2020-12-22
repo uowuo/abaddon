@@ -122,6 +122,10 @@ bool Guild::HasIcon() const {
     return Icon != "";
 }
 
+bool Guild::HasAnimatedIcon() const {
+    return HasIcon() && Icon[0] == 'a' && Icon[1] == '_';
+}
+
 std::string Guild::GetIconURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/icons/" + std::to_string(ID) + "/" + Icon + "." + ext + "?size=" + size;
 }

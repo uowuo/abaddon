@@ -73,3 +73,7 @@ bool SettingsManager::GetPrefetch() const {
 std::string SettingsManager::GetMainCSS() const {
     return GetSettingString("gui", "css", "./css/main.css");
 }
+
+bool SettingsManager::GetShowAnimations() const {
+    return GetSettingBool("gui", "animations", true);
+}

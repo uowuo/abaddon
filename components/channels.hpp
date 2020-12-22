@@ -53,7 +53,8 @@ public:
     int GuildIndex;
 
 protected:
-    void OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf);
+    void OnImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &buf);
+    void OnAnimatedImageLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &buf);
 
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;

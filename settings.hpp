@@ -18,6 +18,7 @@ public:
     int GetCacheHTTPConcurrency() const;
     bool GetPrefetch() const;
     std::string GetMainCSS() const;
+    bool GetShowAnimations() const;
 
     bool IsValid() const;
 
