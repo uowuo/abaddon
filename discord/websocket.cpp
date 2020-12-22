@@ -48,6 +48,8 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
         case ix::WebSocketMessageType::Message: {
             m_signal_message.emit(msg->str);
         } break;
+        default:
+            break;
     }
 }
 

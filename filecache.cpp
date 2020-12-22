@@ -1,6 +1,6 @@
 #include "abaddon.hpp"
 #include "filecache.hpp"
-#include "murmurhash3.h"
+#include "MurmurHash3.h"
 
 Cache::Cache() {
     m_tmp_path = std::filesystem::temp_directory_path() / "abaddon-cache";

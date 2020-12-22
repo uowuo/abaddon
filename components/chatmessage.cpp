@@ -174,7 +174,7 @@ bool ChatMessageItemContainer::EmitImageLoad(std::string url) {
 void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string url) {
     // clang-format off
     widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
-        if (event->type == Gdk::BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+        if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
             LaunchBrowser(url);
             return false;
         }
@@ -708,7 +708,7 @@ void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
 // a lot of repetition here so there should probably just be one slot for textview's button-press
 bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
     if (m_text_component == nullptr) return false;
-    if (ev->type != Gdk::BUTTON_PRESS) return false;
+    if (ev->type != GDK_BUTTON_PRESS) return false;
     if (ev->button != GDK_BUTTON_PRIMARY) return false;
 
     auto buf = m_text_component->get_buffer();
@@ -774,7 +774,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
 
 bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
     if (m_text_component == nullptr) return false;
-    if (ev->type != Gdk::BUTTON_PRESS) return false;
+    if (ev->type != GDK_BUTTON_PRESS) return false;
     if (ev->button != GDK_BUTTON_PRIMARY && ev->button != GDK_BUTTON_SECONDARY) return false;
 
     auto buf = m_text_component->get_buffer();

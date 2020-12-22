@@ -65,6 +65,10 @@ if(mingw)
 	link_libraries(ws2_32 wsock2)
 endif()
 
+if(WIN32)
+	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif()
+
 file(GLOB ABADDON_SOURCES
 	"*.h"
 	"*.hpp"
