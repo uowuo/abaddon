@@ -32,6 +32,6 @@ std::string Emoji::GetURL() const {
     return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + ".png";
 }
 
-std::string Emoji::URLFromID(std::string emoji_id) {
-    return "https://cdn.discordapp.com/emojis/" + emoji_id + ".png";
+std::string Emoji::URLFromID(std::string emoji_id, std::string ext) {
+    return "https://cdn.discordapp.com/emojis/" + emoji_id + "." + ext;
 }

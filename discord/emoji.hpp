@@ -19,5 +19,5 @@ struct Emoji {
     friend void to_json(nlohmann::json &j, const Emoji &m);
 
     std::string GetURL() const;
-    static std::string URLFromID(std::string emoji_id);
+    static std::string URLFromID(std::string emoji_id, std::string ext = "png");
 };
