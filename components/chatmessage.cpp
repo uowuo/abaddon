@@ -232,6 +232,19 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
                 }
             }
         } break;
+        case MessageType::RECIPIENT_ADD: {
+            const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            const auto &added = data->Mentions[0];
+            b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> added <span color='#eeeeee'>" + added.Username + "</span></span></i>");
+        } break;
+        case MessageType::RECIPIENT_REMOVE: {
+            const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            const auto &added = data->Mentions[0];
+            if (adder->ID == added.ID)
+                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> left</span></i>");
+            else
+                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> removed <span color='#eeeeee'>" + added.Username + "</span></span></i>");
+        } break;
         default: break;
     }
 }

@@ -189,16 +189,9 @@ void Store::SetMessage(Snowflake id, const Message &message) {
     Bind(m_set_msg_stmt, 7, message.EditedTimestamp);
     Bind(m_set_msg_stmt, 8, message.IsTTS);
     Bind(m_set_msg_stmt, 9, message.DoesMentionEveryone);
-    Bind(m_set_msg_stmt, 10, "[]"s); // mentions, a const char* literal will call the bool overload instead of std::string
-    {
-        std::string tmp;
-        tmp = nlohmann::json(message.Attachments).dump();
-        Bind(m_set_msg_stmt, 11, tmp);
-    }
-    {
-        std::string tmp = nlohmann::json(message.Embeds).dump();
-        Bind(m_set_msg_stmt, 12, tmp);
-    }
+    Bind(m_set_msg_stmt, 10, nlohmann::json(message.Mentions).dump());
+    Bind(m_set_msg_stmt, 11, nlohmann::json(message.Attachments).dump());
+    Bind(m_set_msg_stmt, 12, nlohmann::json(message.Embeds).dump());
     Bind(m_set_msg_stmt, 13, message.IsPinned);
     Bind(m_set_msg_stmt, 14, message.WebhookID);
     Bind(m_set_msg_stmt, 15, static_cast<uint64_t>(message.Type));

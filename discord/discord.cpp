@@ -1030,6 +1030,9 @@ void DiscordClient::StoreMessageData(const Message &msg) {
             if (!cur.has_value())
                 m_store.SetEmoji(r.Emoji.ID, r.Emoji);
         }
+
+    for (const auto &user : msg.Mentions)
+        m_store.SetUser(user.ID, user);
 }
 
 void DiscordClient::LoadEventMap() {

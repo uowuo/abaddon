@@ -19,10 +19,10 @@ struct User {
     std::optional<int> PublicFlags;
 
     // undocumented (opt)
-    bool IsDesktop = false;     //
-    bool IsMobile = false;      //
-    bool IsNSFWAllowed = false; // null
-    std::string Phone;          // null?
+    std::optional<bool> IsDesktop;
+    std::optional<bool> IsMobile;
+    std::optional<bool> IsNSFWAllowed; // null
+    std::optional<std::string> Phone;  // null?
 
     friend void from_json(const nlohmann::json &j, User &m);
     friend void to_json(nlohmann::json &j, const User &m);

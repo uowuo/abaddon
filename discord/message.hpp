@@ -173,7 +173,7 @@ struct Message {
     std::string EditedTimestamp; // null
     bool IsTTS;
     bool DoesMentionEveryone;
-    std::vector<User> Mentions; // currently discarded in store
+    std::vector<User> Mentions; // full user accessible
     // std::vector<Role> MentionRoles;
     // std::optional<std::vector<ChannelMentionData>> MentionChannels;
     std::vector<AttachmentData> Attachments;

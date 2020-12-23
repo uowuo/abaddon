@@ -44,8 +44,24 @@ void from_json(const nlohmann::json &j, User &m) {
 void to_json(nlohmann::json &j, const User &m) {
     j["id"] = m.ID;
     j["username"] = m.Username;
-    j["avatar"] = m.Avatar;
-    // rest of stuff as needed im too lazy and its probably not necessary
+    j["discriminator"] = m.Discriminator;
+    if (m.Avatar == "")
+        j["avatar"] = nullptr;
+    else
+        j["avatar"] = m.Avatar;
+    JS_IF("bot", m.IsBot);
+    JS_IF("system", m.IsSystem);
+    JS_IF("mfa_enabled", m.IsMFAEnabled);
+    JS_IF("locale", m.Locale);
+    JS_IF("verified", m.IsVerified);
+    JS_IF("email", m.Email);
+    JS_IF("flags", m.Flags);
+    JS_IF("premium_type", m.PremiumType);
+    JS_IF("public_flags", m.PublicFlags);
+    JS_IF("desktop", m.IsDesktop);
+    JS_IF("mobile", m.IsMobile);
+    JS_IF("nsfw_allowed", m.IsNSFWAllowed);
+    JS_IF("phone", m.Phone);
 }
 
 void User::update_from_json(const nlohmann::json &j, User &m) {
