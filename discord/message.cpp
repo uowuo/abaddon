@@ -164,6 +164,25 @@ void to_json(nlohmann::json &j, const ReactionData &m) {
     j["emoji"] = m.Emoji;
 }
 
+void from_json(const nlohmann::json &j, MessageApplicationData &m) {
+    JS_D("id", m.ID);
+    JS_O("cover_image", m.CoverImage);
+    JS_D("description", m.Description);
+    JS_N("icon", m.Icon);
+    JS_D("name", m.Name);
+}
+
+void to_json(nlohmann::json &j, const MessageApplicationData &m) {
+    j["id"] = m.ID;
+    JS_IF("cover_image", m.CoverImage);
+    j["description"] = m.Description;
+    if (m.Icon == "")
+        j["icon"] = nullptr;
+    else
+        j["icon"] = m.Icon;
+    j["name"] = m.Name;
+}
+
 void from_json(const nlohmann::json &j, Message &m) {
     JS_D("id", m.ID);
     JS_D("channel_id", m.ChannelID);
@@ -188,7 +207,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_O("webhook_id", m.WebhookID);
     JS_D("type", m.Type);
     // JS_O("activity", m.Activity);
-    // JS_O("application", m.Application);
+    JS_O("application", m.Application);
     JS_O("message_reference", m.MessageReference);
     JS_O("flags", m.Flags);
     JS_O("stickers", m.Stickers);
@@ -212,6 +231,8 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("pinned", IsPinned);
     JS_O("webhook_id", WebhookID);
     JS_O("type", Type);
+    JS_O("application", Application);
+    JS_O("message_reference", MessageReference);
     JS_O("flags", Flags);
     JS_O("stickers", Stickers);
 }

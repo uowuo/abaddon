@@ -221,6 +221,17 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::CHANNEL_PINNED_MESSAGE:
             b->insert_markup(s, "<span color='#999999'><i>[message pinned]</i></span>");
             break;
+        case MessageType::APPLICATION_COMMAND: {
+            if (data->Application.has_value()) {
+                static const auto regex = Glib::Regex::create(R"(</(.*?):(\d+)>)");
+                Glib::MatchInfo match;
+                if (regex->match(data->Content, match)) {
+                    const auto cmd = match.fetch(1);
+                    const auto app = data->Application->Name;
+                    b->insert_markup(s, "<i>used <span color='#697ec4'>" + cmd + "</span> with " + app + "</i>");
+                }
+            }
+        } break;
         default: break;
     }
 }
@@ -945,23 +956,18 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_meta_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
-    if (data->WebhookID.has_value()) {
+    if (author->IsBot || data->WebhookID.has_value()) {
         m_extra = Gtk::manage(new Gtk::Label);
         m_extra->get_style_context()->add_class("message-container-extra");
         m_extra->set_single_line_mode(true);
         m_extra->set_margin_start(12);
         m_extra->set_can_focus(false);
         m_extra->set_use_markup(true);
-        m_extra->set_markup("<b>Webhook</b>");
-    } else if (data->Author.IsBot) {
-        m_extra = Gtk::manage(new Gtk::Label);
-        m_extra->get_style_context()->add_class("message-container-extra");
-        m_extra->set_single_line_mode(true);
-        m_extra->set_margin_start(12);
-        m_extra->set_can_focus(false);
-        m_extra->set_use_markup(true);
-        m_extra->set_markup("<b>BOT</b>");
     }
+    if (author->IsBot)
+        m_extra->set_markup("<b>BOT</b>");
+    else if (data->WebhookID.has_value())
+        m_extra->set_markup("<b>Webhook</b>");
 
     m_timestamp->set_text(data->Timestamp);
     m_timestamp->set_opacity(0.5);

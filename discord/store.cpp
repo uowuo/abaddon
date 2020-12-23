@@ -203,29 +203,33 @@ void Store::SetMessage(Snowflake id, const Message &message) {
     Bind(m_set_msg_stmt, 14, message.WebhookID);
     Bind(m_set_msg_stmt, 15, static_cast<uint64_t>(message.Type));
 
-    if (message.MessageReference.has_value()) {
-        std::string tmp = nlohmann::json(*message.MessageReference).dump();
-        Bind(m_set_msg_stmt, 16, tmp);
-    } else
+    if (message.Application.has_value())
+        Bind(m_set_msg_stmt, 16, nlohmann::json(*message.Application).dump());
+    else
         Bind(m_set_msg_stmt, 16, nullptr);
 
-    if (message.Flags.has_value())
-        Bind(m_set_msg_stmt, 17, static_cast<uint64_t>(*message.Flags));
+    if (message.MessageReference.has_value())
+        Bind(m_set_msg_stmt, 17, nlohmann::json(*message.MessageReference).dump());
     else
         Bind(m_set_msg_stmt, 17, nullptr);
 
-    if (message.Stickers.has_value()) {
-        std::string tmp = nlohmann::json(*message.Stickers).dump();
-        Bind(m_set_msg_stmt, 18, tmp);
-    } else
+    if (message.Flags.has_value())
+        Bind(m_set_msg_stmt, 18, static_cast<uint64_t>(*message.Flags));
+    else
         Bind(m_set_msg_stmt, 18, nullptr);
+
+    if (message.Stickers.has_value())
+        Bind(m_set_msg_stmt, 19, nlohmann::json(*message.Stickers).dump());
+    else
+        Bind(m_set_msg_stmt, 19, nullptr);
+
     if (message.Reactions.has_value()) {
         std::string tmp = nlohmann::json(*message.Reactions).dump();
-        Bind(m_set_msg_stmt, 19, tmp);
+        Bind(m_set_msg_stmt, 20, tmp);
     } else
-        Bind(m_set_msg_stmt, 19, nullptr);
-    Bind(m_set_msg_stmt, 20, message.IsDeleted());
-    Bind(m_set_msg_stmt, 21, message.IsEdited());
+        Bind(m_set_msg_stmt, 20, nullptr);
+    Bind(m_set_msg_stmt, 21, message.IsDeleted());
+    Bind(m_set_msg_stmt, 22, message.IsEdited());
 
     if (!RunInsert(m_set_msg_stmt))
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -470,21 +474,31 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     uint64_t tmpi;
     Get(m_get_msg_stmt, 14, tmpi);
     ret.Type = static_cast<MessageType>(tmpi);
+
     Get(m_get_msg_stmt, 15, tmps);
     if (tmps != "")
-        ret.MessageReference = nlohmann::json::parse(tmps).get<MessageReferenceData>();
-    Get(m_get_msg_stmt, 16, tmpi);
-    ret.Flags = static_cast<MessageFlags>(tmpi);
-    Get(m_get_msg_stmt, 17, tmps);
+        ret.Application = nlohmann::json::parse(tmps).get<MessageApplicationData>();
+
+    Get(m_get_msg_stmt, 16, tmps);
     if (tmps != "")
-        ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<Sticker>>();
+        ret.MessageReference = nlohmann::json::parse(tmps).get<MessageReferenceData>();
+
+    Get(m_get_msg_stmt, 17, tmpi);
+    ret.Flags = static_cast<MessageFlags>(tmpi);
+
     Get(m_get_msg_stmt, 18, tmps);
     if (tmps != "")
+        ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<Sticker>>();
+
+    Get(m_get_msg_stmt, 19, tmps);
+    if (tmps != "")
         ret.Reactions = nlohmann::json::parse(tmps).get<std::vector<ReactionData>>();
+
     bool tmpb = false;
-    Get(m_get_msg_stmt, 19, tmpb);
-    if (tmpb) ret.SetDeleted();
     Get(m_get_msg_stmt, 20, tmpb);
+    if (tmpb) ret.SetDeleted();
+
+    Get(m_get_msg_stmt, 21, tmpb);
     if (tmpb) ret.SetEdited();
 
     Reset(m_get_msg_stmt);
@@ -646,6 +660,7 @@ bool Store::CreateTables() {
             pinned BOOL,
             webhook_id INTEGER,
             type INTEGER,
+            application TEXT, /* json */
             reference TEXT, /* json */
             flags INTEGER,
             stickers TEXT, /* json */
@@ -836,7 +851,7 @@ bool Store::CreateStatements() {
 
     constexpr const char *set_msg = R"(
         REPLACE INTO messages VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 

@@ -24,7 +24,7 @@ enum class MessageType {
     GUILD_DISCOVERY_DISQUALIFIED = 14,           // nope
     GUILD_DISCOVERY_REQUALIFIED = 15,            // nope
     INLINE_REPLY = 19,                           // kinda
-    APPLICATION_COMMAND,                         // nope
+    APPLICATION_COMMAND = 20,                    // yep
 };
 
 enum class MessageFlags {
@@ -151,6 +151,17 @@ struct ReactionData {
     friend void to_json(nlohmann::json &j, const ReactionData &m);
 };
 
+struct MessageApplicationData {
+    Snowflake ID;
+    std::optional<std::string> CoverImage;
+    std::string Description;
+    std::string Icon; // null
+    std::string Name;
+
+    friend void from_json(const nlohmann::json &j, MessageApplicationData &m);
+    friend void to_json(nlohmann::json &j, const MessageApplicationData &m);
+};
+
 struct Message {
     Snowflake ID;
     Snowflake ChannelID;
@@ -173,7 +184,7 @@ struct Message {
     std::optional<Snowflake> WebhookID;
     MessageType Type;
     // std::optional<MessageActivityData> Activity;
-    // std::optional<MessageApplicationData> Application;
+    std::optional<MessageApplicationData> Application;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<MessageFlags> Flags = MessageFlags::NONE;
     std::optional<std::vector<Sticker>> Stickers;
