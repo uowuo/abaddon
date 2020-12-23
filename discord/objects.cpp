@@ -229,3 +229,13 @@ void from_json(const nlohmann::json &j, MessageReactionRemoveObject &m) {
     JS_O("guild_id", m.GuildID);
     JS_D("emoji", m.Emoji);
 }
+
+void from_json(const nlohmann::json &j, ChannelRecipientAdd &m) {
+    JS_D("user", m.User);
+    JS_D("channel_id", m.ChannelID);
+}
+
+void from_json(const nlohmann::json &j, ChannelRecipientRemove &m) {
+    JS_D("user", m.User);
+    JS_D("channel_id", m.ChannelID);
+}

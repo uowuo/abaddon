@@ -144,6 +144,8 @@ private:
     void HandleGatewayGuildRoleDelete(const GatewayMessage &msg);
     void HandleGatewayMessageReactionAdd(const GatewayMessage &msg);
     void HandleGatewayMessageReactionRemove(const GatewayMessage &msg);
+    void HandleGatewayChannelRecipientAdd(const GatewayMessage &msg);
+    void HandleGatewayChannelRecipientRemove(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();

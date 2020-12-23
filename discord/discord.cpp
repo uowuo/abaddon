@@ -584,6 +584,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::MESSAGE_REACTION_REMOVE: {
                         HandleGatewayMessageReactionRemove(m);
                     } break;
+                    case GatewayEvent::CHANNEL_RECIPIENT_ADD: {
+                        HandleGatewayChannelRecipientAdd(m);
+                    } break;
+                    case GatewayEvent::CHANNEL_RECIPIENT_REMOVE: {
+                        HandleGatewayChannelRecipientRemove(m);
+                    } break;
                 }
             } break;
             default:
@@ -845,6 +851,25 @@ void DiscordClient::HandleGatewayMessageReactionRemove(const GatewayMessage &msg
         m_signal_reaction_remove.emit(data.MessageID, std::to_string(data.Emoji.ID));
 }
 
+// todo: update channel list item and member list
+void DiscordClient::HandleGatewayChannelRecipientAdd(const GatewayMessage &msg) {
+    ChannelRecipientAdd data = msg.Data;
+    auto cur = m_store.GetChannel(data.ChannelID);
+    if (!cur.has_value() || !cur->RecipientIDs.has_value()) return;
+    if (std::find(cur->RecipientIDs->begin(), cur->RecipientIDs->end(), data.User.ID) == cur->RecipientIDs->end())
+        cur->RecipientIDs->push_back(data.User.ID);
+    m_store.SetUser(data.User.ID, data.User);
+    m_store.SetChannel(cur->ID, *cur);
+}
+
+void DiscordClient::HandleGatewayChannelRecipientRemove(const GatewayMessage &msg) {
+    ChannelRecipientRemove data = msg.Data;
+    auto cur = m_store.GetChannel(data.ChannelID);
+    if (!cur.has_value() || !cur->RecipientIDs.has_value()) return;
+    cur->RecipientIDs->erase(std::remove(cur->RecipientIDs->begin(), cur->RecipientIDs->end(), data.User.ID));
+    m_store.SetChannel(cur->ID, *cur);
+}
+
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_signal_disconnected.emit(true);
     inflateEnd(&m_zstream);
@@ -1055,6 +1080,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_ROLE_DELETE"] = GatewayEvent::GUILD_ROLE_DELETE;
     m_event_map["MESSAGE_REACTION_ADD"] = GatewayEvent::MESSAGE_REACTION_ADD;
     m_event_map["MESSAGE_REACTION_REMOVE"] = GatewayEvent::MESSAGE_REACTION_REMOVE;
+    m_event_map["CHANNEL_RECIPIENT_ADD"] = GatewayEvent::CHANNEL_RECIPIENT_ADD;
+    m_event_map["CHANNEL_RECIPIENT_REMOVE"] = GatewayEvent::CHANNEL_RECIPIENT_REMOVE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
