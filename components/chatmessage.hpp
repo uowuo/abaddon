@@ -96,8 +96,6 @@ public:
     type_signal_channel_click signal_action_channel_click();
     type_signal_action_reaction_add signal_action_reaction_add();
     type_signal_action_reaction_remove signal_action_reaction_remove();
-    type_signal_enter signal_enter();
-    type_signal_leave signal_leave();
 
     type_signal_image_load signal_image_load();
 
@@ -107,8 +105,6 @@ private:
     type_signal_channel_click m_signal_action_channel_click;
     type_signal_action_reaction_add m_signal_action_reaction_add;
     type_signal_action_reaction_remove m_signal_action_reaction_remove;
-    type_signal_enter m_signal_enter;
-    type_signal_leave m_signal_leave;
 
     type_signal_image_load m_signal_image_load;
 };
@@ -132,6 +128,7 @@ protected:
 
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;
+    Gtk::EventBox *m_content_box_ev;
     Gtk::Box *m_meta_box;
     Gtk::EventBox *m_meta_ev;
     Gtk::Label *m_author;

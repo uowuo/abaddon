@@ -884,14 +884,6 @@ ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemCont
     return m_signal_action_reaction_remove;
 }
 
-ChatMessageItemContainer::type_signal_enter ChatMessageItemContainer::signal_enter() {
-    return m_signal_enter;
-}
-
-ChatMessageItemContainer::type_signal_leave ChatMessageItemContainer::signal_leave() {
-    return m_signal_leave;
-}
-
 ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {
     return m_signal_image_load;
 }
@@ -906,18 +898,6 @@ void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget *widget) {
         return false;
     };
     widget->signal_button_press_event().connect(on_button_press_event, false);
-
-    widget->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
-    const auto on_notify_crossing = [this](GdkEventCrossing *event) -> bool {
-        if (event->type == GDK_ENTER_NOTIFY)
-            m_signal_enter.emit();
-        else if (event->type == GDK_LEAVE_NOTIFY)
-            m_signal_leave.emit();
-
-        return false;
-    };
-    widget->signal_enter_notify_event().connect(on_notify_crossing);
-    widget->signal_leave_notify_event().connect(on_notify_crossing);
 }
 
 ChatMessageHeader::ChatMessageHeader(const Message *data) {
@@ -926,6 +906,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    m_content_box_ev = Gtk::manage(new Gtk::EventBox);
     m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_meta_ev = Gtk::manage(new Gtk::EventBox);
     m_author = Gtk::manage(new Gtk::Label);
@@ -935,22 +916,12 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     const auto author = Abaddon::Get().GetDiscordClient().GetUser(UserID);
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto static_buf = img.GetFromURLIfCached(author->GetAvatarURL());
-    auto anim_buf = img.GetAnimationFromURLIfCached(author->GetAvatarURL("gif"), AvatarSize, AvatarSize);
+    m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
+    if (author->HasAvatar())
+        img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
 
-    if (anim_buf)
-        m_anim_avatar = anim_buf;
-
-    if (static_buf) {
-        m_static_avatar = static_buf;
-        m_avatar = Gtk::manage(new Gtk::Image(static_buf));
-    } else {
-        m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
-        if (author.has_value()) {
-            img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
-            img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::mem_fun(*this, &ChatMessageHeader::OnAnimatedAvatarLoad));
-        }
-    }
+    if (author->HasAnimatedAvatar())
+        img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::mem_fun(*this, &ChatMessageHeader::OnAnimatedAvatarLoad));
 
     get_style_context()->add_class("message-container");
     m_author->get_style_context()->add_class("message-container-author");
@@ -996,6 +967,29 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_content_box->set_can_focus(false);
 
+    const auto on_enter_cb = [this](const GdkEventCrossing *event) -> bool {
+        if (m_anim_avatar)
+            m_avatar->property_pixbuf_animation() = m_anim_avatar;
+        return false;
+    };
+    const auto on_leave_cb = [this](const GdkEventCrossing *event) -> bool {
+        if (m_anim_avatar)
+            m_avatar->property_pixbuf() = m_static_avatar;
+        return false;
+    };
+
+    m_content_box_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    m_meta_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    m_avatar_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    if (Abaddon::Get().GetSettings().GetShowAnimations()) {
+        m_content_box_ev->signal_enter_notify_event().connect(on_enter_cb);
+        m_content_box_ev->signal_leave_notify_event().connect(on_leave_cb);
+        m_meta_ev->signal_enter_notify_event().connect(on_enter_cb);
+        m_meta_ev->signal_leave_notify_event().connect(on_leave_cb);
+        m_avatar_ev->signal_enter_notify_event().connect(on_enter_cb);
+        m_avatar_ev->signal_leave_notify_event().connect(on_leave_cb);
+    }
+
     m_meta_box->add(*m_author);
     if (m_extra != nullptr)
         m_meta_box->add(*m_extra);
@@ -1005,7 +999,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_content_box->add(*m_meta_ev);
     m_avatar_ev->add(*m_avatar);
     m_main_box->add(*m_avatar_ev);
-    m_main_box->add(*m_content_box);
+    m_content_box_ev->add(*m_content_box);
+    m_main_box->add(*m_content_box_ev);
     add(*m_main_box);
 
     set_margin_bottom(8);
@@ -1072,19 +1067,6 @@ ChatMessageHeader::type_signal_action_open_user_menu ChatMessageHeader::signal_a
 }
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
-    if (Abaddon::Get().GetSettings().GetShowAnimations()) {
-        auto *container = dynamic_cast<ChatMessageItemContainer *>(widget);
-        if (container != nullptr) {
-            container->signal_enter().connect([this] {
-                if (m_anim_avatar)
-                    m_avatar->property_pixbuf_animation() = m_anim_avatar;
-            });
-            container->signal_leave().connect([this] {
-                if (m_anim_avatar) // if there is no anim avatar then it would have never switched off
-                    m_avatar->property_pixbuf() = m_static_avatar;
-            });
-        }
-    }
     m_content_box->add(*widget);
     if (prepend)
         m_content_box->reorder_child(*widget, 1);
