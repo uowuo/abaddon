@@ -22,17 +22,19 @@ protected:
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
-    Gtk::Widget *CreateEmbedComponent(const Message *data); // Message.Embeds[0]
-    Gtk::Widget *CreateImageComponent(const AttachmentData &data);
+    Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
+    Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     Gtk::Widget *CreateStickerComponent(const Sticker &data);
     Gtk::Widget *CreateReactionsComponent(const Message *data);
     void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
-    void HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url);
+    void HandleImage(int w, int h, Gtk::Image *img, std::string url);
 
     void OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
 
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+
+    static bool IsEmbedImageOnly(const EmbedData &data);
 
     void HandleUserMentions(Gtk::TextView *tv);
     void HandleStockEmojis(Gtk::TextView *tv);
@@ -54,7 +56,7 @@ protected:
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
     std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;
 
-    std::unordered_map<std::string, std::pair<Gtk::Image *, AttachmentData>> m_img_loadmap;
+    std::unordered_map<std::string, std::pair<Gtk::Image *, std::pair<int, int>>> m_img_loadmap; // url -> [img, [w, h]]
 
     void AttachEventHandlers(Gtk::Widget *widget);
     void ShowMenu(GdkEvent *event);

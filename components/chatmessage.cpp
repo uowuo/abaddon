@@ -5,6 +5,8 @@
 
 constexpr const int EmojiSize = 24; // settings eventually
 constexpr const int AvatarSize = 32;
+constexpr const int EmbedImageWidth = 400;
+constexpr const int EmbedImageHeight = 300;
 
 ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -51,16 +53,23 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
-        container->m_embed_component = container->CreateEmbedComponent(&*data);
-        container->AttachEventHandlers(container->m_embed_component);
-        container->m_main->add(*container->m_embed_component);
+        const auto &embed = data->Embeds[0];
+        if (IsEmbedImageOnly(embed)) {
+            auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
+            container->AttachEventHandlers(widget);
+            container->m_main->add(*widget);
+        } else {
+            container->m_embed_component = container->CreateEmbedComponent(embed);
+            container->AttachEventHandlers(container->m_embed_component);
+            container->m_main->add(*container->m_embed_component);
+        }
     }
 
     // i dont think attachments can be edited
     // also this can definitely be done much better holy shit
     for (const auto &a : data->Attachments) {
-        if (IsURLViewableImage(a.ProxyURL)) {
-            auto *widget = container->CreateImageComponent(a);
+        if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
+            auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
             container->m_main->add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
@@ -100,7 +109,7 @@ void ChatMessageItemContainer::UpdateContent() {
     }
 
     if (data->Embeds.size() == 1) {
-        m_embed_component = CreateEmbedComponent(&*data);
+        m_embed_component = CreateEmbedComponent(data->Embeds[0]);
         if (m_embed_imgurl.size() > 0) {
             m_signal_image_load.emit(m_embed_imgurl);
         }
@@ -122,13 +131,11 @@ void ChatMessageItemContainer::UpdateImage(std::string url, Glib::RefPtr<Gdk::Pi
 
     auto it = m_img_loadmap.find(url);
     if (it != m_img_loadmap.end()) {
-        const auto inw = it->second.second.Width;
-        const auto inh = it->second.second.Height;
-        if (inw.has_value() && inh.has_value()) {
-            int w, h;
-            GetImageDimensions(*inw, *inh, w, h);
-            it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
-        }
+        const auto inw = it->second.second.first;
+        const auto inh = it->second.second.second;
+        int w, h;
+        GetImageDimensions(inw, inh, w, h);
+        it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
     }
 }
 
@@ -249,11 +256,10 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
     }
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data) {
+Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &embed) {
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     ev->set_can_focus(true);
     Gtk::Box *main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
-    const auto &embed = data->Embeds[0];
 
     if (embed.Author.has_value() && embed.Author->Name.has_value()) {
         auto *author_lbl = Gtk::manage(new Gtk::Label);
@@ -280,16 +286,18 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
         main->pack_start(*title_label);
     }
 
-    if (embed.Description.has_value()) {
-        auto *desc_label = Gtk::manage(new Gtk::Label);
-        desc_label->set_text(*embed.Description);
-        desc_label->set_line_wrap(true);
-        desc_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
-        desc_label->set_max_width_chars(50);
-        desc_label->set_halign(Gtk::ALIGN_START);
-        desc_label->set_hexpand(false);
-        desc_label->get_style_context()->add_class("embed-description");
-        main->pack_start(*desc_label);
+    if (!embed.Provider.has_value() || embed.Provider->Name != "YouTube") { // youtube link = no description
+        if (embed.Description.has_value()) {
+            auto *desc_label = Gtk::manage(new Gtk::Label);
+            desc_label->set_text(*embed.Description);
+            desc_label->set_line_wrap(true);
+            desc_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+            desc_label->set_max_width_chars(50);
+            desc_label->set_halign(Gtk::ALIGN_START);
+            desc_label->set_hexpand(false);
+            desc_label->get_style_context()->add_class("embed-description");
+            main->pack_start(*desc_label);
+        }
     }
 
     // todo: handle inline fields
@@ -339,11 +347,12 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
     if (is_img || is_thumb) {
         auto *img = Gtk::manage(new Gtk::Image);
         img->set_halign(Gtk::ALIGN_CENTER);
+        img->set_margin_top(5);
         int w = 0, h = 0;
         if (is_img)
-            GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, 200, 150);
+            GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, EmbedImageWidth, EmbedImageHeight);
         else
-            GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, 200, 150);
+            GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, EmbedImageWidth, EmbedImageHeight);
         img->set_size_request(w, h);
         main->pack_start(*img);
         m_embed_img = img;
@@ -390,9 +399,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const Message *data)
     return ev;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData &data) {
+Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh) {
     int w, h;
-    GetImageDimensions(*data.Width, *data.Height, w, h);
+    GetImageDimensions(inw, inh, w, h);
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new Gtk::Image);
@@ -401,8 +410,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const AttachmentData
     widget->set_size_request(w, h);
 
     AttachEventHandlers(ev);
-    AddClickHandler(ev, data.URL);
-    HandleImage(data, widget, data.ProxyURL);
+    AddClickHandler(ev, url);
+    HandleImage(w, h, widget, proxy_url);
 
     return ev;
 }
@@ -526,8 +535,8 @@ void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::
     img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
 }
 
-void ChatMessageItemContainer::HandleImage(const AttachmentData &data, Gtk::Image *img, std::string url) {
-    m_img_loadmap[url] = std::make_pair(img, data);
+void ChatMessageItemContainer::HandleImage(int w, int h, Gtk::Image *img, std::string url) {
+    m_img_loadmap[url] = { img, { w, h } };
     // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
@@ -543,6 +552,17 @@ Glib::ustring ChatMessageItemContainer::GetText(const Glib::RefPtr<Gtk::TextBuff
     buf->get_bounds(a, b);
     auto slice = buf->get_slice(a, b, true);
     return slice;
+}
+
+bool ChatMessageItemContainer::IsEmbedImageOnly(const EmbedData &data) {
+    if (!data.Thumbnail.has_value()) return false;
+    if (data.Author.has_value()) return false;
+    if (data.Description.has_value()) return false;
+    if (data.Fields.has_value()) return false;
+    if (data.Footer.has_value()) return false;
+    if (data.Image.has_value()) return false;
+    if (data.Timestamp.has_value()) return false;
+    return data.Thumbnail->ProxyURL.has_value() && data.Thumbnail->URL.has_value() && data.Thumbnail->Width.has_value() && data.Thumbnail->Height.has_value();
 }
 
 void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
