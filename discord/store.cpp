@@ -692,14 +692,15 @@ bool Store::CreateTables() {
 
     constexpr const char *create_members = R"(
         CREATE TABLE IF NOT EXISTS members (
-            user_id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
             guild_id INTEGER NOT NULL,
             nickname TEXT,
             roles TEXT NOT NULL, /* json */
             joined_at TEXT NOT NULL,
             premium_since TEXT,
             deaf BOOL NOT NULL,
-            mute BOOL NOT NULL
+            mute BOOL NOT NULL,
+            PRIMARY KEY(user_id, guild_id)
         )
     )";
 
