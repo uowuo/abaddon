@@ -211,6 +211,12 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_O("message_reference", m.MessageReference);
     JS_O("flags", m.Flags);
     JS_O("stickers", m.Stickers);
+    if (j.contains("referenced_message")) {
+        if (!j.at("referenced_message").is_null()) {
+            m.ReferencedMessage = std::make_shared<Message>(j.at("referenced_message").get<Message>());
+        } else
+            m.ReferencedMessage = nullptr;
+    }
 }
 
 void Message::from_json_edited(const nlohmann::json &j) {

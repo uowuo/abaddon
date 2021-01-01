@@ -120,7 +120,7 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
         nlohmann::json::parse(r.text).get_to(msgs);
 
         m_store.BeginTransaction();
-        for (const auto &msg : msgs) {
+        for (auto &msg : msgs) {
             StoreMessageData(msg);
             AddMessageToChannel(msg.ID, id);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
@@ -143,7 +143,7 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
         nlohmann::json::parse(r.text).get_to(msgs);
 
         m_store.BeginTransaction();
-        for (const auto &msg : msgs) {
+        for (auto &msg : msgs) {
             StoreMessageData(msg);
             AddMessageToChannel(msg.ID, channel_id);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
@@ -1045,7 +1045,11 @@ bool DiscordClient::CheckCode(const cpr::Response &r) {
     return true;
 }
 
-void DiscordClient::StoreMessageData(const Message &msg) {
+void DiscordClient::StoreMessageData(Message &msg) {
+    const auto chan = m_store.GetChannel(msg.ChannelID);
+    if (chan.has_value() && chan->GuildID.has_value())
+        msg.GuildID = *chan->GuildID;
+
     m_store.SetMessage(msg.ID, msg);
     m_store.SetUser(msg.Author.ID, msg.Author);
     if (msg.Reactions.has_value())
@@ -1058,6 +1062,10 @@ void DiscordClient::StoreMessageData(const Message &msg) {
 
     for (const auto &user : msg.Mentions)
         m_store.SetUser(user.ID, user);
+
+    if (msg.ReferencedMessage.has_value() && msg.MessageReference.has_value() && msg.MessageReference->ChannelID.has_value())
+        if (msg.ReferencedMessage.value() != nullptr)
+            StoreMessageData(**msg.ReferencedMessage);
 }
 
 void DiscordClient::LoadEventMap() {

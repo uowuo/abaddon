@@ -27,6 +27,7 @@ protected:
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     Gtk::Widget *CreateStickerComponent(const Sticker &data);
     Gtk::Widget *CreateReactionsComponent(const Message *data);
+    Gtk::Widget *CreateReplyComponent(const Message *data);
     void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
     void HandleImage(int w, int h, Gtk::Image *img, std::string url);
 
@@ -36,11 +37,13 @@ protected:
 
     static bool IsEmbedImageOnly(const EmbedData &data);
 
-    void HandleUserMentions(Gtk::TextView *tv);
+    void HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
     void HandleStockEmojis(Gtk::TextView *tv);
     void HandleCustomEmojis(Gtk::TextView *tv);
     void HandleEmojis(Gtk::TextView *tv);
+    void CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf);
 
+    void HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
 

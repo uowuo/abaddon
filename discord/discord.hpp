@@ -156,7 +156,7 @@ private:
 
     bool CheckCode(const cpr::Response &r);
 
-    void StoreMessageData(const Message &msg);
+    void StoreMessageData(Message &msg);
 
     std::string m_token;
 

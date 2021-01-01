@@ -188,6 +188,7 @@ struct Message {
     std::optional<MessageReferenceData> MessageReference;
     std::optional<MessageFlags> Flags = MessageFlags::NONE;
     std::optional<std::vector<Sticker>> Stickers;
+    std::optional<std::shared_ptr<Message>> ReferencedMessage; // has_value && null means deleted
 
     friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE

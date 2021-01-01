@@ -496,6 +496,14 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
 
     Reset(m_get_msg_stmt);
 
+    if (ret.MessageReference.has_value() && ret.MessageReference->MessageID.has_value()) {
+        auto ref = GetMessage(*ret.MessageReference->MessageID);
+        if (ref.has_value())
+            ret.ReferencedMessage = std::make_unique<Message>(std::move(*ref));
+        else
+            ret.ReferencedMessage = nullptr;
+    }
+
     return std::optional<Message>(std::move(ret));
 }
 

@@ -66,13 +66,24 @@
     padding-top: 5px;
 }
 
+.message-text text, .message-reply {
+    color: #cfd8dc;
+}
+
+.message-reply {
+    border-left: 2px solid gray;
+    padding-left: 20px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    opacity: 0.7;
+}
+
 .message-text + .message-text {
     padding-top: 5px;
 }
 
 .message-text text {
     background-color: #263238;
-    color: #cfd8dc;
 }
 
 .message-input, .message-input text {

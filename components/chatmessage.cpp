@@ -51,6 +51,12 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         container->m_main->add(*container->m_text_component);
     }
 
+    if (data->MessageReference.has_value()) {
+        auto *widget = container->CreateReplyComponent(&*data);
+        container->m_main->add(*widget);
+        container->m_main->child_property_position(*widget) = 0; // eek
+    }
+
     // there should only ever be 1 embed (i think?)
     if (data->Embeds.size() == 1) {
         const auto &embed = data->Embeds[0];
@@ -217,7 +223,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::DEFAULT:
         case MessageType::INLINE_REPLY:
             b->insert(s, data->Content);
-            HandleUserMentions(tv);
+            HandleUserMentions(b);
             HandleLinks(tv);
             HandleChannelMentions(tv);
             HandleEmojis(tv);
@@ -531,6 +537,75 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *d
     return flow;
 }
 
+Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message *data) {
+    auto *box = Gtk::manage(new Gtk::Box);
+    auto *lbl = Gtk::manage(new Gtk::Label);
+    lbl->set_single_line_mode(true);
+    lbl->set_line_wrap(false);
+    lbl->set_use_markup(true);
+    lbl->set_ellipsize(Pango::ELLIPSIZE_END);
+    lbl->get_style_context()->add_class("message-text"); // good idea?
+    lbl->get_style_context()->add_class("message-reply");
+    box->add(*lbl);
+
+    if (data->ReferencedMessage.has_value()) {
+        if (data->ReferencedMessage.value().get() == nullptr) {
+            lbl->set_markup("<i>deleted message</i>");
+        } else {
+            const auto &referenced = *data->ReferencedMessage.value().get();
+            Glib::ustring text;
+            if (referenced.Content == "") {
+                if (referenced.Attachments.size() > 0) {
+                    text = "<i>attachment</i>";
+                } else if (referenced.Embeds.size() > 0) {
+                    text = "<i>embed</i>";
+                }
+            } else {
+                auto buf = Gtk::TextBuffer::create();
+                Gtk::TextBuffer::iterator start, end;
+                buf->get_bounds(start, end);
+                buf->set_text(referenced.Content);
+                CleanupEmojis(buf);
+                HandleUserMentions(buf);
+                HandleChannelMentions(buf);
+                text = Glib::Markup::escape_text(buf->get_text());
+            }
+            // getting markup out of a textbuffer seems like something that to me should be really simple
+            // but actually is horribly annoying. replies won't have mention colors because you can't do this
+            // also no emojis because idk how to make a textview act like a label
+            // which of course would not be an issue if i could figure out how to get fonts to work on this god-forsaken framework
+            // oh well
+            // but ill manually get colors for the user who is being replied to
+            const auto &discord = Abaddon::Get().GetDiscordClient();
+            if (referenced.GuildID.has_value()) {
+                const auto role_id = discord.GetMemberHoistedRole(*referenced.GuildID, referenced.Author.ID, true);
+                if (role_id.IsValid()) {
+                    const auto role = discord.GetRole(role_id);
+                    if (role.has_value()) {
+                        const auto author = discord.GetUser(referenced.Author.ID);
+                        // clang-format off
+                        lbl->set_markup(
+                            "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">"
+                            + Glib::Markup::escape_text(author->Username + "#" + author->Discriminator)
+                            + "</span></b>: "
+                            + text
+                        );
+                        // clang-format on
+                        return box;
+                    }
+                }
+            }
+
+            const auto author = discord.GetUser(referenced.Author.ID);
+            lbl->set_markup("<b>" + Glib::Markup::escape_text(author->Username + "#" + author->Discriminator) + "</b>: " + text);
+        }
+    } else {
+        lbl->set_markup("<i>reply unavailable</i>");
+    }
+
+    return box;
+}
+
 void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
 }
@@ -565,12 +640,11 @@ bool ChatMessageItemContainer::IsEmbedImageOnly(const EmbedData &data) {
     return data.Thumbnail->ProxyURL.has_value() && data.Thumbnail->URL.has_value() && data.Thumbnail->Width.has_value() && data.Thumbnail->Height.has_value();
 }
 
-void ChatMessageItemContainer::HandleUserMentions(Gtk::TextView *tv) {
+void ChatMessageItemContainer::HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf) {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
     static auto rgx = Glib::Regex::create(mentions_regex);
 
-    auto buf = tv->get_buffer();
     Glib::ustring text = GetText(buf);
     const auto &discord = Abaddon::Get().GetDiscordClient();
 
@@ -709,12 +783,40 @@ void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
     }
 }
 
-void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
+void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) {
+    static auto rgx = Glib::Regex::create(R"(<a?:([\w\d_]+):(\d+)>)");
+
+    auto &img = Abaddon::Get().GetImageManager();
+
+    auto text = GetText(buf);
+
+    Glib::MatchInfo match;
+    int startpos = 0;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        if (!match.fetch_pos(0, mstart, mend)) break;
+
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        auto start_it = buf->get_iter_at_offset(chars_start);
+        auto end_it = buf->get_iter_at_offset(chars_end);
+
+        startpos = mend;
+        const auto it = buf->erase(start_it, end_it);
+        const int alen = text.size();
+        text = GetText(buf);
+        const int blen = text.size();
+        startpos -= (alen - blen);
+
+        buf->insert(it, ":" + match.fetch(1) + ":");
+
+        text = GetText(buf);
+    }
+}
+
+void ChatMessageItemContainer::HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffer> buf) {
     static auto rgx = Glib::Regex::create(R"(<#(\d+)>)");
 
-    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
-
-    auto buf = tv->get_buffer();
     Glib::ustring text = GetText(buf);
 
     const auto &discord = Abaddon::Get().GetDiscordClient();
@@ -747,6 +849,11 @@ void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
         text = GetText(buf);
         startpos = 0;
     }
+}
+
+void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
+    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
+    HandleChannelMentions(tv->get_buffer());
 }
 
 // a lot of repetition here so there should probably just be one slot for textview's button-press
