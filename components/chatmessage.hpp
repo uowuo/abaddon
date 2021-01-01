@@ -26,10 +26,10 @@ protected:
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     Gtk::Widget *CreateStickerComponent(const Sticker &data);
-    Gtk::Widget *CreateReactionsComponent(const Message *data);
-    Gtk::Widget *CreateReplyComponent(const Message *data);
+    Gtk::Widget *CreateReactionsComponent(const Message &data);
+    Gtk::Widget *CreateReplyComponent(const Message &data);
     void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
-    void HandleImage(int w, int h, Gtk::Image *img, std::string url);
+    void HandleImage(int w, int h, Gtk::Image &img, std::string url);
 
     void OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
 
@@ -38,9 +38,9 @@ protected:
     static bool IsEmbedImageOnly(const EmbedData &data);
 
     void HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
-    void HandleStockEmojis(Gtk::TextView *tv);
-    void HandleCustomEmojis(Gtk::TextView *tv);
-    void HandleEmojis(Gtk::TextView *tv);
+    void HandleStockEmojis(Gtk::TextView &tv);
+    void HandleCustomEmojis(Gtk::TextView &tv);
+    void HandleEmojis(Gtk::TextView &tv);
     void CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf);
 
     void HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
@@ -54,14 +54,14 @@ protected:
     void on_link_menu_copy();
     Glib::ustring m_selected_link;
 
-    void HandleLinks(Gtk::TextView *tv);
+    void HandleLinks(Gtk::TextView &tv);
     bool OnLinkClick(GdkEventButton *ev);
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
     std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;
 
     std::unordered_map<std::string, std::pair<Gtk::Image *, std::pair<int, int>>> m_img_loadmap; // url -> [img, [w, h]]
 
-    void AttachEventHandlers(Gtk::Widget *widget);
+    void AttachEventHandlers(Gtk::Widget &widget);
     void ShowMenu(GdkEvent *event);
 
     Gtk::Menu m_menu;

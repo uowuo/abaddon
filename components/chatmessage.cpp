@@ -47,12 +47,12 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(&*data);
-        container->AttachEventHandlers(container->m_text_component);
+        container->AttachEventHandlers(*container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
     if (data->MessageReference.has_value()) {
-        auto *widget = container->CreateReplyComponent(&*data);
+        auto *widget = container->CreateReplyComponent(*data);
         container->m_main->add(*widget);
         container->m_main->child_property_position(*widget) = 0; // eek
     }
@@ -62,11 +62,11 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         const auto &embed = data->Embeds[0];
         if (IsEmbedImageOnly(embed)) {
             auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
-            container->AttachEventHandlers(widget);
+            container->AttachEventHandlers(*widget);
             container->m_main->add(*widget);
         } else {
             container->m_embed_component = container->CreateEmbedComponent(embed);
-            container->AttachEventHandlers(container->m_embed_component);
+            container->AttachEventHandlers(*container->m_embed_component);
             container->m_main->add(*container->m_embed_component);
         }
     }
@@ -94,7 +94,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     }
 
     if (data->Reactions.has_value() && data->Reactions->size() > 0) {
-        container->m_reactions_component = container->CreateReactionsComponent(&*data);
+        container->m_reactions_component = container->CreateReactionsComponent(*data);
         container->m_main->add(*container->m_reactions_component);
     }
 
@@ -119,7 +119,7 @@ void ChatMessageItemContainer::UpdateContent() {
         if (m_embed_imgurl.size() > 0) {
             m_signal_image_load.emit(m_embed_imgurl);
         }
-        AttachEventHandlers(m_embed_component);
+        AttachEventHandlers(*m_embed_component);
         m_main->add(*m_embed_component);
     }
 }
@@ -151,7 +151,7 @@ void ChatMessageItemContainer::UpdateReactions() {
 
     const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (data->Reactions.has_value() && data->Reactions->size() > 0) {
-        m_reactions_component = CreateReactionsComponent(&*data);
+        m_reactions_component = CreateReactionsComponent(*data);
         m_reactions_component->show_all();
         m_main->add(*m_reactions_component);
     }
@@ -224,9 +224,9 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::INLINE_REPLY:
             b->insert(s, data->Content);
             HandleUserMentions(b);
-            HandleLinks(tv);
+            HandleLinks(*tv);
             HandleChannelMentions(tv);
-            HandleEmojis(tv);
+            HandleEmojis(*tv);
             break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
@@ -415,9 +415,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
     widget->set_halign(Gtk::ALIGN_START);
     widget->set_size_request(w, h);
 
-    AttachEventHandlers(ev);
+    AttachEventHandlers(*ev);
     AddClickHandler(ev, url);
-    HandleImage(w, h, widget, proxy_url);
+    HandleImage(w, h, *widget, proxy_url);
 
     return ev;
 }
@@ -430,7 +430,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     ev->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
 
-    AttachEventHandlers(ev);
+    AttachEventHandlers(*ev);
     AddClickHandler(ev, data.URL);
 
     return ev;
@@ -450,11 +450,11 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const Sticker &dat
         // clang-format on
     }
 
-    AttachEventHandlers(box);
+    AttachEventHandlers(*box);
     return box;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *data) {
+Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &data) {
     auto *flow = Gtk::manage(new Gtk::FlowBox);
     flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     flow->set_min_children_per_line(5);
@@ -468,7 +468,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *d
     auto &emojis = Abaddon::Get().GetEmojis();
     const auto &placeholder = imgr.GetPlaceholder(16);
 
-    for (const auto &reaction : *data->Reactions) {
+    for (const auto &reaction : *data.Reactions) {
         auto *ev = Gtk::manage(new Gtk::EventBox);
         auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
         box->get_style_context()->add_class("reaction-box");
@@ -537,7 +537,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message *d
     return flow;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message *data) {
+Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data) {
     auto *box = Gtk::manage(new Gtk::Box);
     auto *lbl = Gtk::manage(new Gtk::Label);
     lbl->set_single_line_mode(true);
@@ -548,11 +548,11 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message *data)
     lbl->get_style_context()->add_class("message-reply");
     box->add(*lbl);
 
-    if (data->ReferencedMessage.has_value()) {
-        if (data->ReferencedMessage.value().get() == nullptr) {
+    if (data.ReferencedMessage.has_value()) {
+        if (data.ReferencedMessage.value().get() == nullptr) {
             lbl->set_markup("<i>deleted message</i>");
         } else {
-            const auto &referenced = *data->ReferencedMessage.value().get();
+            const auto &referenced = *data.ReferencedMessage.value().get();
             Glib::ustring text;
             if (referenced.Content == "") {
                 if (referenced.Attachments.size() > 0) {
@@ -610,8 +610,8 @@ void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::
     img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
 }
 
-void ChatMessageItemContainer::HandleImage(int w, int h, Gtk::Image *img, std::string url) {
-    m_img_loadmap[url] = { img, { w, h } };
+void ChatMessageItemContainer::HandleImage(int w, int h, Gtk::Image &img, std::string url) {
+    m_img_loadmap[url] = { &img, { w, h } };
     // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
     Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
 }
@@ -688,16 +688,16 @@ void ChatMessageItemContainer::HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> 
     }
 }
 
-void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView *tv) {
-    Abaddon::Get().GetEmojis().ReplaceEmojis(tv->get_buffer(), EmojiSize);
+void ChatMessageItemContainer::HandleStockEmojis(Gtk::TextView &tv) {
+    Abaddon::Get().GetEmojis().ReplaceEmojis(tv.get_buffer(), EmojiSize);
 }
 
-void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
+void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
     static auto rgx = Glib::Regex::create(R"(<a?:([\w\d_]+):(\d+)>)");
 
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto buf = tv->get_buffer();
+    auto buf = tv.get_buffer();
     auto text = GetText(buf);
 
     Glib::MatchInfo match;
@@ -725,12 +725,12 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
                 const auto anchor = buf->create_child_anchor(it);
                 auto img = Gtk::manage(new Gtk::Image(pixbuf));
                 img->show();
-                tv->add_child_at_anchor(*img, anchor);
+                tv.add_child_at_anchor(*img, anchor);
             } else {
                 const auto mark_start = buf->create_mark(start_it, false);
                 end_it.backward_char();
                 const auto mark_end = buf->create_mark(end_it, false);
-                const auto cb = [this, tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
+                const auto cb = [this, &tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
                     auto start_it = mark_start->get_iter();
                     auto end_it = mark_end->get_iter();
                     end_it.forward_char();
@@ -740,7 +740,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
                     const auto anchor = buf->create_child_anchor(it);
                     auto img = Gtk::manage(new Gtk::Image(pixbuf));
                     img->show();
-                    tv->add_child_at_anchor(*img, anchor);
+                    tv.add_child_at_anchor(*img, anchor);
                 };
                 img.LoadAnimationFromURL(Emoji::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize, sigc::track_obj(cb, tv));
             }
@@ -775,7 +775,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView *tv) {
     }
 }
 
-void ChatMessageItemContainer::HandleEmojis(Gtk::TextView *tv) {
+void ChatMessageItemContainer::HandleEmojis(Gtk::TextView &tv) {
     static bool emojis = Abaddon::Get().GetSettings().GetShowEmojis();
     if (emojis) {
         HandleStockEmojis(tv);
@@ -890,12 +890,12 @@ void ChatMessageItemContainer::on_link_menu_copy() {
     Gtk::Clipboard::get()->set_text(m_selected_link);
 }
 
-void ChatMessageItemContainer::HandleLinks(Gtk::TextView *tv) {
+void ChatMessageItemContainer::HandleLinks(Gtk::TextView &tv) {
     const auto rgx = Glib::Regex::create(R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)");
 
-    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
+    tv.signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
 
-    auto buf = tv->get_buffer();
+    auto buf = tv.get_buffer();
     Glib::ustring text = GetText(buf);
 
     // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
@@ -1015,7 +1015,7 @@ ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signa
     return m_signal_image_load;
 }
 
-void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget *widget) {
+void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
     const auto on_button_press_event = [this](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
             ShowMenu(reinterpret_cast<GdkEvent *>(event));
@@ -1024,7 +1024,7 @@ void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget *widget) {
 
         return false;
     };
-    widget->signal_button_press_event().connect(on_button_press_event, false);
+    widget.signal_button_press_event().connect(on_button_press_event, false);
 }
 
 ChatMessageHeader::ChatMessageHeader(const Message *data) {
