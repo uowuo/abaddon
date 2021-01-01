@@ -13,13 +13,13 @@
 ### Building:
 #### Windows:
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
-2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows`
+2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows sqlite3:x64-windows`
 3. `mkdir build && cd build`
 4. `cmake -G"Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=c:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DVCPKG_TARGET_TRIPLET=x64-windows ..`
 5. Build with Visual Studio
 
 #### Mac/Linux:
-
+You can build for Mac and Linux but specific commands are yet to be listed for the time being ([#9](https://github.com/uowuo/abaddon/issues/9))
 
 ### Downloads (from CI):
 - Windows: [here](https://ci.appveyor.com/project/ouwou/abaddon/build/artifacts)
@@ -55,7 +55,17 @@
 .message-container-author - The author label for a message container  
 .message-container-timestamp - The timestamp label for a message container  
 .message-container-extra - Label containing BOT/Webhook  
-.message-text - The TextView of a user message  
+.message-text - The text of a user message  
+.message-attachment-box - Contains attachment info  
+.message-reply - Container for the replied-to message in a reply (these elements will also have .message-text set)  
+.reaction-box - Contains a reaction image and the count  
+.reacted - Additional class for reaction-box when the user has reacted with a particular reaction  
+.reaction-count - Contains the count for reaction  
+  
+.completer - Container for the message completer  
+.completer-entry - Container for a single entry in the completer  
+.completer-entry-label - Contains the label for an entry in the completer  
+.completer-entry-image - Contains the image for an entry in the completer  
   
 .embed - Container for a message embed  
 .embed-author - The author of an embed  
@@ -69,5 +79,28 @@
 .members-row - All rows within the members container  
 .members-row-label - All labels in the members container  
 .members-row-member - Rows containing a member  
-.members-row-role - Rows containing a role
+.members-row-role - Rows containing a role  
+.members-row-avatar - Contains the avatar for a row in the member list  
+  
+### Settings
+Settings are configured (for now) by editing abaddon.ini  
+This listing is organized by section.  
+For example, memory_db would be set by adding `memory_db = true` under the line `[discord]`
 
+#### discord
+* memory_db (true or false, default false) - if true, Discord data will be kept in memory as opposed to on disk
+* token (string) - Discord token used to login, this can be set from the menu
+* prefetch (true or false, default false) - if true, new messages will cause the avatar and image attachments to be automatically downloaded
+
+#### http
+* user_agent (string) - sets the user-agent to use in HTTP requests to the Discord API (not including media/images)
+* concurrent (int, default 10) - how many images can be concurrently retrieved
+
+#### gui
+* member_list_discriminator (true or false, default true) - show user discriminators in the member list
+* emojis (true or false, default true) - resolve unicode and custom emojis to images. this needs to be false to allow GTK to render emojis by itself
+* css (string) - path to the main CSS file
+* animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
+
+#### misc
+* linkcolor (string) - color to use for links in messages
