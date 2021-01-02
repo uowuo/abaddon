@@ -1,4 +1,6 @@
 #include "snowflake.hpp"
+#include <ctime>
+#include <iomanip>
 
 Snowflake::Snowflake()
     : m_num(Invalid) {}
@@ -21,6 +23,16 @@ Snowflake::Snowflake(const Glib::ustring &str) {
 
 bool Snowflake::IsValid() const {
     return m_num != Invalid;
+}
+
+std::string Snowflake::GetLocalTimestamp() const {
+    const time_t secs_since_epoch = (m_num / 4194304000) + 1420070400;
+    const std::tm tm = *localtime(&secs_since_epoch);
+    std::stringstream ss;
+    const static std::locale locale("");
+    ss.imbue(locale);
+    ss << std::put_time(&tm, "%X %x");
+    return ss.str();
 }
 
 void from_json(const nlohmann::json &j, Snowflake &s) {

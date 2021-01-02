@@ -1080,7 +1080,10 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     else if (data->WebhookID.has_value())
         m_extra->set_markup("<b>Webhook</b>");
 
-    m_timestamp->set_text(data->Timestamp);
+    m_timestamp->set_text(data->ID.GetLocalTimestamp());
+    m_timestamp->set_hexpand(true);
+    m_timestamp->set_halign(Gtk::ALIGN_END);
+    m_timestamp->set_ellipsize(Pango::ELLIPSIZE_END);
     m_timestamp->set_opacity(0.5);
     m_timestamp->set_single_line_mode(true);
     m_timestamp->set_margin_start(12);
@@ -1090,6 +1093,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_main_box->set_vexpand(true);
     m_main_box->set_can_focus(true);
 
+    m_meta_box->set_hexpand(true);
     m_meta_box->set_can_focus(false);
 
     m_content_box->set_can_focus(false);
