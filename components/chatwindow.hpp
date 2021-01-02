@@ -1,8 +1,6 @@
 #pragma once
 #include <gtkmm.h>
 #include <string>
-#include <mutex>
-#include <queue>
 #include <set>
 #include "../discord/discord.hpp"
 #include "chatmessage.hpp"
@@ -30,26 +28,8 @@ protected:
     ChatMessageItemContainer *CreateMessageComponent(Snowflake id); // to be inserted into header's content box
     void ProcessNewMessage(Snowflake id, bool prepend);             // creates and adds components
 
-    void SetMessagesInternal();
-    void AddNewMessageInternal();
-    void DeleteMessageInternal();
-    void UpdateMessageInternal();
-    void AddNewHistoryInternal();
-
     int m_num_rows = 0;
     std::unordered_map<Snowflake, Gtk::Widget *> m_id_to_widget;
-
-    Glib::Dispatcher m_set_messsages_dispatch;
-    std::queue<std::set<Snowflake>> m_set_messages_queue;
-    Glib::Dispatcher m_new_message_dispatch;
-    std::queue<Snowflake> m_new_message_queue;
-    Glib::Dispatcher m_delete_message_dispatch;
-    std::queue<Snowflake> m_delete_message_queue;
-    Glib::Dispatcher m_update_message_dispatch;
-    std::queue<Snowflake> m_update_message_queue;
-    Glib::Dispatcher m_history_dispatch;
-    std::queue<std::set<Snowflake>> m_history_queue;
-    mutable std::mutex m_update_mutex;
 
     Snowflake m_active_channel;
 

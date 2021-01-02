@@ -3,12 +3,6 @@
 #include "../abaddon.hpp"
 
 ChatWindow::ChatWindow() {
-    m_set_messsages_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::SetMessagesInternal));
-    m_new_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewMessageInternal));
-    m_delete_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::DeleteMessageInternal));
-    m_update_message_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::UpdateMessageInternal));
-    m_history_dispatch.connect(sigc::mem_fun(*this, &ChatWindow::AddNewHistoryInternal));
-
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_list = Gtk::manage(new Gtk::ListBox);
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
@@ -95,17 +89,24 @@ Gtk::Widget *ChatWindow::GetRoot() const {
 }
 
 void ChatWindow::Clear() {
-    m_update_mutex.lock();
-    m_set_messages_queue.push(std::set<Snowflake>());
-    m_set_messsages_dispatch.emit();
-    m_update_mutex.unlock();
+    SetMessages(std::set<Snowflake>());
 }
 
 void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
-    m_update_mutex.lock();
-    m_set_messages_queue.push(msgs);
-    m_set_messsages_dispatch.emit();
-    m_update_mutex.unlock();
+    // empty the listbox
+    auto children = m_list->get_children();
+    auto it = children.begin();
+    while (it != children.end()) {
+        delete *it;
+        it++;
+    }
+
+    m_num_rows = 0;
+    m_id_to_widget.clear();
+
+    for (const auto &id : msgs) {
+        ProcessNewMessage(id, false);
+    }
 }
 
 void ChatWindow::SetActiveChannel(Snowflake id) {
@@ -113,34 +114,33 @@ void ChatWindow::SetActiveChannel(Snowflake id) {
 }
 
 void ChatWindow::AddNewMessage(Snowflake id) {
-    m_update_mutex.lock();
-    m_new_message_queue.push(id);
-    m_new_message_dispatch.emit();
-    m_update_mutex.unlock();
+    ProcessNewMessage(id, false);
 }
 
 void ChatWindow::DeleteMessage(Snowflake id) {
-    m_update_mutex.lock();
-    m_delete_message_queue.push(id);
-    m_delete_message_dispatch.emit();
-    m_update_mutex.unlock();
+    auto widget = m_id_to_widget.find(id);
+    if (widget == m_id_to_widget.end()) return;
+
+    auto *x = dynamic_cast<ChatMessageItemContainer *>(widget->second);
+    if (x != nullptr)
+        x->UpdateAttributes();
 }
 
 void ChatWindow::UpdateMessage(Snowflake id) {
-    m_update_mutex.lock();
-    m_update_message_queue.push(id);
-    m_update_message_dispatch.emit();
-    m_update_mutex.unlock();
+    auto widget = m_id_to_widget.find(id);
+    if (widget == m_id_to_widget.end()) return;
+
+    auto *x = dynamic_cast<ChatMessageItemContainer *>(widget->second);
+    if (x != nullptr) {
+        x->UpdateContent();
+        x->UpdateAttributes();
+    }
 }
 
 void ChatWindow::AddNewHistory(const std::vector<Snowflake> &id) {
-    std::set<Snowflake> x;
-    for (const auto &s : id)
-        x.insert(s);
-    m_update_mutex.lock();
-    m_history_queue.push(x);
-    m_history_dispatch.emit();
-    m_update_mutex.unlock();
+    std::set<Snowflake> ids(id.begin(), id.end());
+    for (auto it = ids.rbegin(); it != ids.rend(); it++)
+        ProcessNewMessage(*it, true);
 }
 
 void ChatWindow::InsertChatInput(std::string text) {
@@ -279,76 +279,6 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         else
             m_list->add(*header);
     }
-}
-
-void ChatWindow::SetMessagesInternal() {
-    std::scoped_lock<std::mutex> guard(m_update_mutex);
-    const auto *msgs = &m_set_messages_queue.front();
-
-    // empty the listbox
-    auto children = m_list->get_children();
-    auto it = children.begin();
-    while (it != children.end()) {
-        delete *it;
-        it++;
-    }
-
-    m_num_rows = 0;
-    m_id_to_widget.clear();
-
-    for (const auto &id : *msgs) {
-        ProcessNewMessage(id, false);
-    }
-
-    m_set_messages_queue.pop();
-}
-
-void ChatWindow::AddNewMessageInternal() {
-    m_update_mutex.lock();
-    const auto id = m_new_message_queue.front();
-    m_new_message_queue.pop();
-    m_update_mutex.unlock();
-    ProcessNewMessage(id, false);
-}
-
-void ChatWindow::DeleteMessageInternal() {
-    m_update_mutex.lock();
-    const auto id = m_delete_message_queue.front();
-    m_delete_message_queue.pop();
-    m_update_mutex.unlock();
-
-    auto widget = m_id_to_widget.find(id);
-    if (widget == m_id_to_widget.end()) return;
-
-    auto *x = dynamic_cast<ChatMessageItemContainer *>(widget->second);
-    if (x != nullptr)
-        x->UpdateAttributes();
-}
-
-void ChatWindow::UpdateMessageInternal() {
-    m_update_mutex.lock();
-    const auto id = m_update_message_queue.front();
-    m_update_message_queue.pop();
-    m_update_mutex.unlock();
-
-    auto widget = m_id_to_widget.find(id);
-    if (widget == m_id_to_widget.end()) return;
-
-    auto *x = dynamic_cast<ChatMessageItemContainer *>(widget->second);
-    if (x != nullptr) {
-        x->UpdateContent();
-        x->UpdateAttributes();
-    }
-}
-
-void ChatWindow::AddNewHistoryInternal() {
-    m_update_mutex.lock();
-    auto msgs = m_history_queue.front();
-    m_history_queue.pop();
-    m_update_mutex.unlock();
-
-    for (auto it = msgs.rbegin(); it != msgs.rend(); it++)
-        ProcessNewMessage(*it, true);
 }
 
 void ChatWindow::on_scroll_edge_overshot(Gtk::PositionType pos) {
