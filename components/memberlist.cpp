@@ -2,7 +2,7 @@
 #include "../abaddon.hpp"
 #include "../util.hpp"
 
-MemberListUserRow::MemberListUserRow(Snowflake guild_id, const User *data) {
+MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -111,8 +111,8 @@ void MemberList::UpdateMemberListInternal() {
     }
 
     // process all the shit first so its in proper order
-    std::map<int, Role> pos_to_role;
-    std::map<int, std::vector<User>> pos_to_users;
+    std::map<int, RoleData> pos_to_role;
+    std::map<int, std::vector<UserData>> pos_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
 
@@ -139,7 +139,7 @@ void MemberList::UpdateMemberListInternal() {
             user_to_color[id] = col_role->Color;
     }
 
-    auto add_user = [this, &user_to_color](const User *data) {
+    auto add_user = [this, &user_to_color](const UserData *data) {
         auto *row = Gtk::manage(new MemberListUserRow(m_guild_id, data));
         m_id_to_row[data->ID] = row;
 

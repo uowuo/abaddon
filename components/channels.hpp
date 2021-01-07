@@ -35,7 +35,7 @@ protected:
 
 class ChannelListRowDMChannel : public ChannelListRow {
 public:
-    ChannelListRowDMChannel(const Channel *data);
+    ChannelListRowDMChannel(const ChannelData *data);
 
 protected:
     void OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf);
@@ -48,7 +48,7 @@ protected:
 
 class ChannelListRowGuild : public ChannelListRow {
 public:
-    ChannelListRowGuild(const Guild *data);
+    ChannelListRowGuild(const GuildData *data);
 
     int GuildIndex;
 
@@ -79,7 +79,7 @@ public:
 
 class ChannelListRowCategory : public ChannelListRow {
 public:
-    ChannelListRowCategory(const Channel *data);
+    ChannelListRowCategory(const ChannelData *data);
 
     virtual void Collapse();
     virtual void Expand();
@@ -104,7 +104,7 @@ public:
 
 class ChannelListRowChannel : public ChannelListRow {
 public:
-    ChannelListRowChannel(const Channel *data);
+    ChannelListRowChannel(const ChannelData *data);
 
 protected:
     Gtk::EventBox *m_ev;

@@ -12,7 +12,7 @@ enum class StickerFormatType {
     LOTTIE = 3,
 };
 
-struct Sticker {
+struct StickerData {
     Snowflake ID;
     Snowflake PackID;
     std::string Name;
@@ -22,8 +22,8 @@ struct Sticker {
     std::optional<std::string> PreviewAssetHash;
     StickerFormatType FormatType;
 
-    friend void to_json(nlohmann::json &j, const Sticker &m);
-    friend void from_json(const nlohmann::json &j, Sticker &m);
+    friend void to_json(nlohmann::json &j, const StickerData &m);
+    friend void from_json(const nlohmann::json &j, StickerData &m);
 
     std::string GetURL() const;
 };

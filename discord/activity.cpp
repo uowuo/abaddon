@@ -60,7 +60,7 @@ void to_json(nlohmann::json &j, const ActivitySecrets &m) {
     JS_IF("match", m.Match);
 }
 
-void from_json(const nlohmann::json &j, Activity &m) {
+void from_json(const nlohmann::json &j, ActivityData &m) {
     JS_D("name", m.Name);
     JS_D("type", m.Type);
     JS_ON("url", m.URL);
@@ -77,7 +77,7 @@ void from_json(const nlohmann::json &j, Activity &m) {
     JS_O("flags", m.Flags);
 }
 
-void to_json(nlohmann::json &j, const Activity &m) {
+void to_json(nlohmann::json &j, const ActivityData &m) {
     if (m.Type == ActivityType::Custom) {
         j["name"] = "Custom Status";
         j["state"] = m.Name;
@@ -100,7 +100,7 @@ void to_json(nlohmann::json &j, const Activity &m) {
     JS_IF("flags", m.Flags);
 }
 
-void to_json(nlohmann::json &j, const Presence &m) {
+void to_json(nlohmann::json &j, const PresenceData &m) {
     j["activities"] = m.Activities;
     j["status"] = m.Status;
     j["afk"] = m.IsAFK;

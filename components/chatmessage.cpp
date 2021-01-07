@@ -436,7 +436,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     return ev;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const Sticker &data) {
+Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const StickerData &data) {
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *imgw = Gtk::manage(new Gtk::Image);
     box->add(*imgw);
@@ -715,7 +715,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
 
         startpos = mend;
         if (is_animated && show_animations) {
-            auto pixbuf = img.GetAnimationFromURLIfCached(Emoji::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize);
+            auto pixbuf = img.GetAnimationFromURLIfCached(EmojiData::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize);
             if (pixbuf) {
                 const auto it = buf->erase(start_it, end_it);
                 const int alen = text.size();
@@ -742,10 +742,10 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
                     img->show();
                     tv.add_child_at_anchor(*img, anchor);
                 };
-                img.LoadAnimationFromURL(Emoji::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize, sigc::track_obj(cb, tv));
+                img.LoadAnimationFromURL(EmojiData::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize, sigc::track_obj(cb, tv));
             }
         } else {
-            auto pixbuf = img.GetFromURLIfCached(Emoji::URLFromID(match.fetch(2)));
+            auto pixbuf = img.GetFromURLIfCached(EmojiData::URLFromID(match.fetch(2)));
             if (pixbuf) {
                 const auto it = buf->erase(start_it, end_it);
                 const int alen = text.size();
@@ -767,7 +767,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
                     auto it = buf->erase(start_it, end_it);
                     buf->insert_pixbuf(it, pixbuf->scale_simple(EmojiSize, EmojiSize, Gdk::INTERP_BILINEAR));
                 };
-                img.LoadFromURL(Emoji::URLFromID(match.fetch(2)), sigc::track_obj(cb, tv));
+                img.LoadFromURL(EmojiData::URLFromID(match.fetch(2)), sigc::track_obj(cb, tv));
             }
         }
 

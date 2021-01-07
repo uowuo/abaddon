@@ -95,7 +95,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("session_id", m.SessionID);
     JS_O("analytics_token", m.AnalyticsToken);
     JS_O("friend_suggestion_count", m.FriendSuggestionCount);
-    JS_D("user_settings", m.UserSettings);
+    JS_D("user_settings", m.Settings);
     JS_D("private_channels", m.PrivateChannels);
     JS_O("users", m.Users);
 }
@@ -178,9 +178,9 @@ void from_json(const nlohmann::json &j, ClientStatus &m) {
 void from_json(const nlohmann::json &j, PresenceUpdateMessage &m) {
     m.User = j.at("user");
     JS_O("guild_id", m.GuildID);
-    JS_D("status", m.Status);
+    JS_D("status", m.StatusMessage);
     // JS_D("activities", m.Activities);
-    JS_D("client_status", m.ClientStatus);
+    JS_D("client_status", m.Status);
 }
 
 void to_json(nlohmann::json &j, const CreateDMObject &m) {

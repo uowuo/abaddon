@@ -60,7 +60,7 @@ std::unordered_set<Snowflake> DiscordClient::GetGuilds() const {
     return m_store.GetGuilds();
 }
 
-const User &DiscordClient::GetUserData() const {
+const UserData &DiscordClient::GetUserData() const {
     return m_user_data;
 }
 
@@ -159,19 +159,19 @@ std::optional<Message> DiscordClient::GetMessage(Snowflake id) const {
     return m_store.GetMessage(id);
 }
 
-std::optional<Channel> DiscordClient::GetChannel(Snowflake id) const {
+std::optional<ChannelData> DiscordClient::GetChannel(Snowflake id) const {
     return m_store.GetChannel(id);
 }
 
-std::optional<User> DiscordClient::GetUser(Snowflake id) const {
+std::optional<UserData> DiscordClient::GetUser(Snowflake id) const {
     return m_store.GetUser(id);
 }
 
-std::optional<Role> DiscordClient::GetRole(Snowflake id) const {
+std::optional<RoleData> DiscordClient::GetRole(Snowflake id) const {
     return m_store.GetRole(id);
 }
 
-std::optional<Guild> DiscordClient::GetGuild(Snowflake id) const {
+std::optional<GuildData> DiscordClient::GetGuild(Snowflake id) const {
     return m_store.GetGuild(id);
 }
 
@@ -183,7 +183,7 @@ std::optional<PermissionOverwrite> DiscordClient::GetPermissionOverwrite(Snowfla
     return m_store.GetPermissionOverwrite(channel_id, id);
 }
 
-std::optional<Emoji> DiscordClient::GetEmoji(Snowflake id) const {
+std::optional<EmojiData> DiscordClient::GetEmoji(Snowflake id) const {
     return m_store.GetEmoji(id);
 }
 
@@ -191,7 +191,7 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     const auto data = GetMember(guild_id, user_id);
     if (!data.has_value()) return Snowflake::Invalid;
 
-    std::vector<Role> roles;
+    std::vector<RoleData> roles;
     for (const auto &id : data->Roles) {
         const auto role = GetRole(id);
         if (role.has_value()) {
@@ -202,7 +202,7 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
 
     if (roles.size() == 0) return Snowflake::Invalid;
 
-    std::sort(roles.begin(), roles.end(), [this](const Role &a, const Role &b) -> bool {
+    std::sort(roles.begin(), roles.end(), [this](const RoleData &a, const RoleData &b) -> bool {
         return a.Position > b.Position;
     });
 
@@ -381,7 +381,7 @@ void DiscordClient::BanUser(Snowflake user_id, Snowflake guild_id) {
     m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), "{}", [](auto) {});
 }
 
-void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const Activity &obj) {
+void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const ActivityData &obj) {
     UpdateStatusMessage msg;
     msg.Presence.Status = status;
     msg.Presence.IsAFK = is_afk;
@@ -614,7 +614,7 @@ void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
         SendIdentify();
 }
 
-void DiscordClient::ProcessNewGuild(Guild &guild) {
+void DiscordClient::ProcessNewGuild(GuildData &guild) {
     if (guild.IsUnavailable) {
         printf("guild (%lld) unavailable\n", static_cast<uint64_t>(guild.ID));
         return;
@@ -662,7 +662,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 
     m_session_id = data.SessionID;
     m_user_data = data.SelfUser;
-    m_user_settings = data.UserSettings;
+    m_user_settings = data.Settings;
     m_signal_gateway_ready.emit();
 }
 
@@ -710,7 +710,7 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     PresenceUpdateMessage data = msg.Data;
     auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
     if (cur.has_value()) {
-        User::update_from_json(data.User, *cur);
+        UserData::update_from_json(data.User, *cur);
         m_store.SetUser(cur->ID, *cur);
     }
 }
@@ -736,7 +736,7 @@ void DiscordClient::HandleGatewayChannelUpdate(const GatewayMessage &msg) {
 }
 
 void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
-    Channel data = msg.Data;
+    ChannelData data = msg.Data;
     m_store.BeginTransaction();
     m_store.SetChannel(data.ID, data);
     m_guild_to_channels[*data.GuildID].insert(data.ID);
@@ -929,7 +929,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
 }
 
 void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {
-    Guild data = msg.Data;
+    GuildData data = msg.Data;
     ProcessNewGuild(data);
 
     m_signal_guild_create.emit(data.ID);

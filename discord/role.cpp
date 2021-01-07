@@ -1,6 +1,6 @@
 #include "role.hpp"
 
-void from_json(const nlohmann::json &j, Role &m) {
+void from_json(const nlohmann::json &j, RoleData &m) {
     JS_D("id", m.ID);
     JS_D("name", m.Name);
     JS_D("color", m.Color);

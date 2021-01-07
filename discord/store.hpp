@@ -18,37 +18,37 @@ public:
 
     bool IsValid() const;
 
-    void SetUser(Snowflake id, const User &user);
-    void SetChannel(Snowflake id, const Channel &chan);
-    void SetGuild(Snowflake id, const Guild &guild);
-    void SetRole(Snowflake id, const Role &role);
+    void SetUser(Snowflake id, const UserData &user);
+    void SetChannel(Snowflake id, const ChannelData &chan);
+    void SetGuild(Snowflake id, const GuildData &guild);
+    void SetRole(Snowflake id, const RoleData &role);
     void SetMessage(Snowflake id, const Message &message);
     void SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
-    void SetEmoji(Snowflake id, const Emoji &emoji);
+    void SetEmoji(Snowflake id, const EmojiData &emoji);
 
     // slap const on everything even tho its not *really* const
 
-    std::optional<Channel> GetChannel(Snowflake id) const;
-    std::optional<Emoji> GetEmoji(Snowflake id) const;
-    std::optional<Guild> GetGuild(Snowflake id) const;
+    std::optional<ChannelData> GetChannel(Snowflake id) const;
+    std::optional<EmojiData> GetEmoji(Snowflake id) const;
+    std::optional<GuildData> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetGuildMember(Snowflake guild_id, Snowflake user_id) const;
     std::optional<Message> GetMessage(Snowflake id) const;
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
-    std::optional<Role> GetRole(Snowflake id) const;
-    std::optional<User> GetUser(Snowflake id) const;
+    std::optional<RoleData> GetRole(Snowflake id) const;
+    std::optional<UserData> GetUser(Snowflake id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
 
-    using users_type = std::unordered_map<Snowflake, User>;
-    using channels_type = std::unordered_map<Snowflake, Channel>;
-    using guilds_type = std::unordered_map<Snowflake, Guild>;
-    using roles_type = std::unordered_map<Snowflake, Role>;
+    using users_type = std::unordered_map<Snowflake, UserData>;
+    using channels_type = std::unordered_map<Snowflake, ChannelData>;
+    using guilds_type = std::unordered_map<Snowflake, GuildData>;
+    using roles_type = std::unordered_map<Snowflake, RoleData>;
     using messages_type = std::unordered_map<Snowflake, Message>;
     using members_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, GuildMember>>;                       // [guild][user]
     using permission_overwrites_type = std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>>; // [channel][user/role]
-    using emojis_type = std::unordered_map<Snowflake, Emoji>;
+    using emojis_type = std::unordered_map<Snowflake, EmojiData>;
 
     const std::unordered_set<Snowflake> &GetChannels() const;
     const std::unordered_set<Snowflake> &GetGuilds() const;

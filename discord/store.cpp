@@ -51,7 +51,7 @@ bool Store::IsValid() const {
     return m_db_err == SQLITE_OK;
 }
 
-void Store::SetChannel(Snowflake id, const Channel &chan) {
+void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     Bind(m_set_chan_stmt, 1, id);
     Bind(m_set_chan_stmt, 2, static_cast<int>(chan.Type));
     Bind(m_set_chan_stmt, 3, chan.GuildID);
@@ -86,7 +86,7 @@ void Store::SetChannel(Snowflake id, const Channel &chan) {
     m_channels.insert(id);
 }
 
-void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
+void Store::SetEmoji(Snowflake id, const EmojiData &emoji) {
     Bind(m_set_emote_stmt, 1, id);
     Bind(m_set_emote_stmt, 2, emoji.Name);
 
@@ -109,7 +109,7 @@ void Store::SetEmoji(Snowflake id, const Emoji &emoji) {
         fprintf(stderr, "emoji insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetGuild(Snowflake id, const Guild &guild) {
+void Store::SetGuild(Snowflake id, const GuildData &guild) {
     Bind(m_set_guild_stmt, 1, id);
     Bind(m_set_guild_stmt, 2, guild.Name);
     Bind(m_set_guild_stmt, 3, guild.Icon);
@@ -239,7 +239,7 @@ void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const Per
         fprintf(stderr, "permission insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetRole(Snowflake id, const Role &role) {
+void Store::SetRole(Snowflake id, const RoleData &role) {
     Bind(m_set_role_stmt, 1, id);
     Bind(m_set_role_stmt, 2, role.Name);
     Bind(m_set_role_stmt, 3, role.Color);
@@ -253,7 +253,7 @@ void Store::SetRole(Snowflake id, const Role &role) {
         fprintf(stderr, "role insert failed: %s\n", sqlite3_errstr(m_db_err));
 }
 
-void Store::SetUser(Snowflake id, const User &user) {
+void Store::SetUser(Snowflake id, const UserData &user) {
     Bind(m_set_user_stmt, 1, id);
     Bind(m_set_user_stmt, 2, user.Username);
     Bind(m_set_user_stmt, 3, user.Discriminator);
@@ -273,7 +273,7 @@ void Store::SetUser(Snowflake id, const User &user) {
     }
 }
 
-std::optional<Channel> Store::GetChannel(Snowflake id) const {
+std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Bind(m_get_chan_stmt, 1, id);
     if (!FetchOne(m_get_chan_stmt)) {
         if (m_db_err != SQLITE_DONE)
@@ -282,7 +282,7 @@ std::optional<Channel> Store::GetChannel(Snowflake id) const {
         return std::nullopt;
     }
 
-    Channel ret;
+    ChannelData ret;
     ret.ID = id;
     int tmpi;
     Get(m_get_chan_stmt, 1, tmpi);
@@ -313,7 +313,7 @@ std::optional<Channel> Store::GetChannel(Snowflake id) const {
     return ret;
 }
 
-std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
+std::optional<EmojiData> Store::GetEmoji(Snowflake id) const {
     Bind(m_get_emote_stmt, 1, id);
     if (!FetchOne(m_get_emote_stmt)) {
         if (m_db_err != SQLITE_DONE)
@@ -322,7 +322,7 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
         return std::nullopt;
     }
 
-    Emoji ret;
+    EmojiData ret;
     ret.ID = id;
     Get(m_get_emote_stmt, 1, ret.Name);
 
@@ -333,7 +333,7 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
     }
 
     if (!IsNull(m_get_emote_stmt, 3)) {
-        ret.Creator = std::optional<User>(User());
+        ret.Creator = std::optional<UserData>(UserData());
         Get(m_get_emote_stmt, 3, ret.Creator->ID);
     }
     Get(m_get_emote_stmt, 4, ret.NeedsColons);
@@ -346,7 +346,7 @@ std::optional<Emoji> Store::GetEmoji(Snowflake id) const {
     return ret;
 }
 
-std::optional<Guild> Store::GetGuild(Snowflake id) const {
+std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     Bind(m_get_guild_stmt, 1, id);
     if (!FetchOne(m_get_guild_stmt)) {
         if (m_db_err != SQLITE_DONE)
@@ -355,7 +355,7 @@ std::optional<Guild> Store::GetGuild(Snowflake id) const {
         return std::nullopt;
     }
 
-    Guild ret;
+    GuildData ret;
     ret.ID = id;
     Get(m_get_guild_stmt, 1, ret.Name);
     Get(m_get_guild_stmt, 2, ret.Icon);
@@ -481,7 +481,7 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
 
     Get(m_get_msg_stmt, 18, tmps);
     if (tmps != "")
-        ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<Sticker>>();
+        ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<StickerData>>();
 
     Get(m_get_msg_stmt, 19, tmps);
     if (tmps != "")
@@ -532,7 +532,7 @@ std::optional<PermissionOverwrite> Store::GetPermissionOverwrite(Snowflake chann
     return ret;
 }
 
-std::optional<Role> Store::GetRole(Snowflake id) const {
+std::optional<RoleData> Store::GetRole(Snowflake id) const {
     Bind(m_get_role_stmt, 1, id);
     if (!FetchOne(m_get_role_stmt)) {
         if (m_db_err != SQLITE_DONE)
@@ -541,7 +541,7 @@ std::optional<Role> Store::GetRole(Snowflake id) const {
         return std::nullopt;
     }
 
-    Role ret;
+    RoleData ret;
     ret.ID = id;
     Get(m_get_role_stmt, 1, ret.Name);
     Get(m_get_role_stmt, 2, ret.Color);
@@ -558,7 +558,7 @@ std::optional<Role> Store::GetRole(Snowflake id) const {
     return ret;
 }
 
-std::optional<User> Store::GetUser(Snowflake id) const {
+std::optional<UserData> Store::GetUser(Snowflake id) const {
     Bind(m_get_user_stmt, 1, id);
     if (!FetchOne(m_get_user_stmt)) {
         if (m_db_err != SQLITE_DONE)
@@ -567,7 +567,7 @@ std::optional<User> Store::GetUser(Snowflake id) const {
         return std::nullopt;
     }
 
-    User ret;
+    UserData ret;
     Get(m_get_user_stmt, 0, ret.ID);
     Get(m_get_user_stmt, 1, ret.Username);
     Get(m_get_user_stmt, 2, ret.Discriminator);

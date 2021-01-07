@@ -3,7 +3,7 @@
 #include "json.hpp"
 #include <string>
 
-struct User {
+struct UserData {
     Snowflake ID;
     std::string Username;
     std::string Discriminator;
@@ -24,9 +24,9 @@ struct User {
     std::optional<bool> IsNSFWAllowed; // null
     std::optional<std::string> Phone;  // null?
 
-    friend void from_json(const nlohmann::json &j, User &m);
-    friend void to_json(nlohmann::json &j, const User &m);
-    static void update_from_json(const nlohmann::json &j, User &m);
+    friend void from_json(const nlohmann::json &j, UserData &m);
+    friend void to_json(nlohmann::json &j, const UserData &m);
+    static void update_from_json(const nlohmann::json &j, UserData &m);
 
     bool HasAvatar() const;
     bool HasAnimatedAvatar() const;

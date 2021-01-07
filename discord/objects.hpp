@@ -99,7 +99,7 @@ struct GuildMemberListUpdateMessage {
     };
 
     struct MemberItem : Item {
-        User User;                    //
+        UserData User;                //
         std::vector<Snowflake> Roles; //
         // PresenceData Presence; //
         std::string PremiumSince; // opt
@@ -147,23 +147,23 @@ struct LazyLoadRequestMessage {
 };
 
 struct UpdateStatusMessage {
-    Presence Presence;
+    PresenceData Presence;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
 
 struct ReadyEventData {
     int GatewayVersion;
-    User SelfUser;
-    std::vector<Guild> Guilds;
+    UserData SelfUser;
+    std::vector<GuildData> Guilds;
     std::string SessionID;
-    std::vector<Channel> PrivateChannels;
+    std::vector<ChannelData> PrivateChannels;
 
     // undocumented
-    std::optional<std::vector<User>> Users;
+    std::optional<std::vector<UserData>> Users;
     std::optional<std::string> AnalyticsToken;
     std::optional<int> FriendSuggestionCount;
-    UserSettings UserSettings;
+    UserSettings Settings;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt
@@ -208,7 +208,7 @@ struct ClientStateProperties {
 struct IdentifyMessage : GatewayMessage {
     std::string Token;
     IdentifyProperties Properties;
-    Presence Presence;
+    PresenceData Presence;
     ClientStateProperties ClientState;
     bool DoesSupportCompression = false;
     int Capabilities;
@@ -239,7 +239,7 @@ struct MessageEditObject {
 struct GuildMemberUpdateMessage {
     Snowflake GuildID;            //
     std::vector<Snowflake> Roles; //
-    User User;                    //
+    UserData User;                //
     std::string Nick;             // opt, null
     std::string JoinedAt;
     std::string PremiumSince; // opt, null
@@ -258,9 +258,9 @@ struct ClientStatus {
 struct PresenceUpdateMessage {
     nlohmann::json User; // the client updates an existing object from this data
     Snowflake GuildID;   // opt
-    std::string Status;
-    // std::vector<Activity> Activities;
-    ClientStatus ClientStatus;
+    std::string StatusMessage;
+    // std::vector<ActivityData> Activities;
+    ClientStatus Status;
 
     friend void from_json(const nlohmann::json &j, PresenceUpdateMessage &m);
 };
@@ -281,14 +281,14 @@ struct ResumeMessage : GatewayMessage {
 
 struct GuildRoleUpdateObject {
     Snowflake GuildID;
-    Role Role;
+    RoleData Role;
 
     friend void from_json(const nlohmann::json &j, GuildRoleUpdateObject &m);
 };
 
 struct GuildRoleCreateObject {
     Snowflake GuildID;
-    Role Role;
+    RoleData Role;
 
     friend void from_json(const nlohmann::json &j, GuildRoleCreateObject &m);
 };
@@ -306,7 +306,7 @@ struct MessageReactionAddObject {
     Snowflake MessageID;
     std::optional<Snowflake> GuildID;
     std::optional<GuildMember> Member;
-    Emoji Emoji;
+    EmojiData Emoji;
 
     friend void from_json(const nlohmann::json &j, MessageReactionAddObject &m);
 };
@@ -316,20 +316,20 @@ struct MessageReactionRemoveObject {
     Snowflake ChannelID;
     Snowflake MessageID;
     std::optional<Snowflake> GuildID;
-    Emoji Emoji;
+    EmojiData Emoji;
 
     friend void from_json(const nlohmann::json &j, MessageReactionRemoveObject &m);
 };
 
 struct ChannelRecipientAdd {
-    User User;
+    UserData User;
     Snowflake ChannelID;
 
     friend void from_json(const nlohmann::json &j, ChannelRecipientAdd &m);
 };
 
 struct ChannelRecipientRemove {
-    User User;
+    UserData User;
     Snowflake ChannelID;
 
     friend void from_json(const nlohmann::json &j, ChannelRecipientRemove &m);

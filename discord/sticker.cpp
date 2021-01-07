@@ -1,6 +1,6 @@
 #include "sticker.hpp"
 
-void to_json(nlohmann::json &j, const Sticker &m) {
+void to_json(nlohmann::json &j, const StickerData &m) {
     j["id"] = m.ID;
     j["pack_id"] = m.PackID;
     j["name"] = m.Name;
@@ -11,7 +11,7 @@ void to_json(nlohmann::json &j, const Sticker &m) {
     j["format_type"] = m.FormatType;
 }
 
-void from_json(const nlohmann::json &j, Sticker &m) {
+void from_json(const nlohmann::json &j, StickerData &m) {
     JS_D("id", m.ID);
     JS_D("pack_id", m.PackID);
     JS_D("name", m.Name);
@@ -22,7 +22,7 @@ void from_json(const nlohmann::json &j, Sticker &m) {
     JS_D("format_type", m.FormatType);
 }
 
-std::string Sticker::GetURL() const {
+std::string StickerData::GetURL() const {
     if (!AssetHash.has_value()) return "";
     if (FormatType == StickerFormatType::PNG || FormatType == StickerFormatType::APNG)
         return "https://media.discordapp.net/stickers/" + std::to_string(ID) + "/" + *AssetHash + ".png?size=256";

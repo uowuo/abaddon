@@ -1,27 +1,27 @@
 #include "user.hpp"
 #include "../abaddon.hpp"
 
-bool User::HasAvatar() const {
+bool UserData::HasAvatar() const {
     return Avatar.size() > 0;
 }
 
-bool User::HasAnimatedAvatar() const {
+bool UserData::HasAnimatedAvatar() const {
     return Avatar.size() > 0 && Avatar[0] == 'a' && Avatar[1] == '_';
 }
 
-std::string User::GetAvatarURL(std::string ext, std::string size) const {
+std::string UserData::GetAvatarURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
 }
 
-Snowflake User::GetHoistedRole(Snowflake guild_id, bool with_color) const {
+Snowflake UserData::GetHoistedRole(Snowflake guild_id, bool with_color) const {
     return Abaddon::Get().GetDiscordClient().GetMemberHoistedRole(guild_id, ID, with_color);
 }
 
-std::string User::GetMention() const {
+std::string UserData::GetMention() const {
     return "<@" + std::to_string(ID) + ">";
 }
 
-void from_json(const nlohmann::json &j, User &m) {
+void from_json(const nlohmann::json &j, UserData &m) {
     JS_D("id", m.ID);
     JS_D("username", m.Username);
     JS_D("discriminator", m.Discriminator);
@@ -41,7 +41,7 @@ void from_json(const nlohmann::json &j, User &m) {
     JS_ON("phone", m.Phone);
 }
 
-void to_json(nlohmann::json &j, const User &m) {
+void to_json(nlohmann::json &j, const UserData &m) {
     j["id"] = m.ID;
     j["username"] = m.Username;
     j["discriminator"] = m.Discriminator;
@@ -64,7 +64,7 @@ void to_json(nlohmann::json &j, const User &m) {
     JS_IF("phone", m.Phone);
 }
 
-void User::update_from_json(const nlohmann::json &j, User &m) {
+void UserData::update_from_json(const nlohmann::json &j, UserData &m) {
     JS_RD("username", m.Username);
     JS_RD("discriminator", m.Discriminator);
     JS_RD("avatar", m.Avatar);

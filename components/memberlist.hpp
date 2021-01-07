@@ -6,7 +6,7 @@
 
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
-    MemberListUserRow(Snowflake guild_id, const User *data);
+    MemberListUserRow(Snowflake guild_id, const UserData *data);
     void SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
 
     Snowflake ID;

@@ -6,8 +6,8 @@
 #include <vector>
 
 struct GuildMember {
-    std::optional<User> User; // only reliable to access id. only opt in MESSAGE_*
-    std::string Nickname;     // null
+    std::optional<UserData> User; // only reliable to access id. only opt in MESSAGE_*
+    std::string Nickname;         // null
     std::vector<Snowflake> Roles;
     std::string JoinedAt;
     std::optional<std::string> PremiumSince; // null

@@ -16,7 +16,7 @@ enum class ChannelType : int {
     GUILD_STORE = 6,
 };
 
-struct Channel {
+struct ChannelData {
     Snowflake ID;
     ChannelType Type;
     std::optional<Snowflake> GuildID;
@@ -29,7 +29,7 @@ struct Channel {
     std::optional<int> Bitrate;
     std::optional<int> UserLimit;
     std::optional<int> RateLimitPerUser;
-    std::optional<std::vector<User>> Recipients; // only access id
+    std::optional<std::vector<UserData>> Recipients; // only access id
     std::optional<std::vector<Snowflake>> RecipientIDs;
     std::optional<std::string> Icon; // null
     std::optional<Snowflake> OwnerID;
@@ -37,9 +37,9 @@ struct Channel {
     std::optional<Snowflake> ParentID;           // null
     std::optional<std::string> LastPinTimestamp; // null
 
-    friend void from_json(const nlohmann::json &j, Channel &m);
+    friend void from_json(const nlohmann::json &j, ChannelData &m);
     void update_from_json(const nlohmann::json &j);
 
     std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
-    std::vector<User> GetDMRecipients() const;
+    std::vector<UserData> GetDMRecipients() const;
 };

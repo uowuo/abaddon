@@ -1,7 +1,7 @@
 #include "../abaddon.hpp"
 #include "channel.hpp"
 
-void from_json(const nlohmann::json &j, Channel &m) {
+void from_json(const nlohmann::json &j, ChannelData &m) {
     JS_D("id", m.ID);
     JS_D("type", m.Type);
     JS_O("guild_id", m.GuildID);
@@ -23,7 +23,7 @@ void from_json(const nlohmann::json &j, Channel &m) {
     JS_ON("last_pin_timestamp", m.LastPinTimestamp);
 }
 
-void Channel::update_from_json(const nlohmann::json &j) {
+void ChannelData::update_from_json(const nlohmann::json &j) {
     JS_RD("type", Type);
     JS_RD("guild_id", GuildID);
     JS_RV("position", Position, -1);
@@ -43,17 +43,17 @@ void Channel::update_from_json(const nlohmann::json &j) {
     JS_RD("last_pin_timestamp", LastPinTimestamp);
 }
 
-std::optional<PermissionOverwrite> Channel::GetOverwrite(Snowflake id) const {
+std::optional<PermissionOverwrite> ChannelData::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }
 
-std::vector<User> Channel::GetDMRecipients() const {
+std::vector<UserData> ChannelData::GetDMRecipients() const {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     if (Recipients.has_value())
         return *Recipients;
 
     if (RecipientIDs.has_value()) {
-        std::vector<User> ret;
+        std::vector<UserData> ret;
         for (const auto &id : *RecipientIDs) {
             auto user = discord.GetUser(id);
             if (user.has_value())
@@ -63,5 +63,5 @@ std::vector<User> Channel::GetDMRecipients() const {
         return ret;
     }
 
-    return std::vector<User>();
+    return std::vector<UserData>();
 }

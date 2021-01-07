@@ -46,7 +46,7 @@ ChannelListRowDMHeader::ChannelListRowDMHeader() {
     show_all_children();
 }
 
-ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
+ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -56,7 +56,7 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const Channel *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    User top_recipient;
+    UserData top_recipient;
     const auto recipients = data->GetDMRecipients();
     top_recipient = recipients[0];
 
@@ -95,7 +95,7 @@ void ChannelListRowDMChannel::OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf) {
         m_icon->property_pixbuf() = buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
 }
 
-ChannelListRowGuild::ChannelListRowGuild(const Guild *data) {
+ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -176,7 +176,7 @@ ChannelListRowGuild::type_signal_leave ChannelListRowGuild::signal_leave() {
     return m_signal_leave;
 }
 
-ChannelListRowCategory::ChannelListRowCategory(const Channel *data) {
+ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -222,7 +222,7 @@ ChannelListRowCategory::type_signal_copy_id ChannelListRowCategory::signal_copy_
     return m_signal_copy_id;
 }
 
-ChannelListRowChannel::ChannelListRowChannel(const Channel *data) {
+ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -591,8 +591,8 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     const auto guild_data = discord.GetGuild(id);
     if (!guild_data.has_value()) return;
 
-    std::map<int, Channel> orphan_channels;
-    std::unordered_map<Snowflake, std::vector<Channel>> cat_to_channels;
+    std::map<int, ChannelData> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<ChannelData>> cat_to_channels;
     if (guild_data->Channels.has_value())
         for (const auto &dc : *guild_data->Channels) {
             const auto channel = discord.GetChannel(dc.ID);
@@ -626,7 +626,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     }
 
     // categories
-    std::map<int, std::vector<Channel>> sorted_categories;
+    std::map<int, std::vector<ChannelData>> sorted_categories;
     if (guild_data->Channels.has_value())
         for (const auto &dc : *guild_data->Channels) {
             const auto channel = discord.GetChannel(dc.ID);
@@ -636,7 +636,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
         }
 
     for (auto &[pos, catvec] : sorted_categories) {
-        std::sort(catvec.begin(), catvec.end(), [](const Channel &a, const Channel &b) { return a.ID < b.ID; });
+        std::sort(catvec.begin(), catvec.end(), [](const ChannelData &a, const ChannelData &b) { return a.ID < b.ID; });
         for (const auto cat : catvec) {
             auto *cat_row = Gtk::manage(new ChannelListRowCategory(&cat));
             cat_row->IsUserCollapsed = false;
@@ -648,7 +648,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 
             // child channels
             if (cat_to_channels.find(cat.ID) == cat_to_channels.end()) continue;
-            std::map<int, Channel> sorted_channels;
+            std::map<int, ChannelData> sorted_channels;
 
             for (const auto channel : cat_to_channels.at(cat.ID))
                 sorted_channels[*channel.Position] = channel;
@@ -669,12 +669,12 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
 void ChannelList::AddPrivateChannels() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     auto dms_ = discord.GetPrivateChannels();
-    std::vector<Channel> dms;
+    std::vector<ChannelData> dms;
     for (const auto &x : dms_) {
         const auto chan = discord.GetChannel(x);
         dms.push_back(*chan);
     }
-    std::sort(dms.begin(), dms.end(), [&](const Channel &a, const Channel &b) -> bool {
+    std::sort(dms.begin(), dms.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
         return a.LastMessageID > b.LastMessageID;
     });
 

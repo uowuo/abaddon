@@ -1,0 +1,152 @@
+name: Abaddon CI
+
+on: [push, pull_request]
+
+jobs:
+  windows:
+    name: windows-${{ matrix.buildtype }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        buildtype: [Debug, RelWithDebInfo]
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Fetch CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Fetch dependencies
+        uses: lukka/run-vcpkg@main
+        with:
+          vcpkgArguments: gtkmm nlohmann-json cpr zlib sqlite3 glibmm openssl ixwebsocket
+          vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
+          vcpkgTriplet: x64-windows
+
+      - name: Build
+        uses: lukka/run-cmake@main
+        with:
+          useVcpkgToolchainFile: true
+          vcpkgTriplet: x64-windows
+          buildDirectory: ${{ runner.workspace }}/build
+          cmakeBuildType: ${{ matrix.buildtype }}
+
+      - name: Setup artifact files
+        shell: cmd
+        run: |
+          del /f /s /q "${{ runner.workspace }}\build\CMakeFiles"
+          rmdir /s /q "${{ runner.workspace }}\build\CMakeFiles"
+          del /f /s /q "${{ runner.workspace }}\build\.ninja_deps"
+          del /f /s /q "${{ runner.workspace }}\build\.ninja_log"
+          del /f /s /q "${{ runner.workspace }}\build\abaddon.ilk"
+          del /f /s /q "${{ runner.workspace }}\build\CMakeCache.txt"
+          xcopy /E /I "${{ github.workspace }}\css" "${{ runner.workspace }}\build\css"
+          xcopy /E /I "${{ github.workspace }}\res" "${{ runner.workspace }}\build\res"
+          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "${{ runner.workspace }}\build\gspawn-win64-helper.exe"
+          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper-console.exe" "${{ runner.workspace }}\build\gspawn-win64-helper-console.exe"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-windows-${{ matrix.buildtype }}
+          path: ${{ runner.workspace }}/build
+  mac:
+    name: macos-${{ matrix.buildtype }}
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        buildtype: [Debug, RelWithDebInfo]
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Fetch CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Fetch dependencies
+        run: |
+          brew install gtkmm3
+          brew install nlohmann-json
+          brew install cpr
+
+      - name: Build
+        uses: lukka/run-cmake@main
+        with:
+          buildDirectory: ${{ runner.workspace }}/build
+          cmakeBuildType: ${{ matrix.buildtype }}
+
+      - name: Setup artifact files
+        run: |
+          mkdir "${{ runner.workspace }}/artifactdir"
+          cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
+          cp -r "${{ github.workspace }}/css" "${{ runner.workspace }}/artifactdir/css"
+          cp -r "${{ github.workspace }}/res" "${{ runner.workspace }}/artifactdir/res"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-macos-${{ matrix.buildtype }}
+          path: ${{ runner.workspace }}/artifactdir
+
+  linux:
+    name: linux-${{ matrix.buildtype }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Fetch CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Fetch dependencies
+        run: |
+          mkdir deps
+          cd deps
+          git clone https://github.com/whoshuu/cpr
+          cd cpr
+          git checkout 9ff9cef6c794ec3d52d94a62ca791e2f2babca45
+          mkdir build
+          cd build
+          cmake ..
+          make
+          sudo make install
+          cd ../..
+          git clone https://github.com/nlohmann/json
+          cd json
+          git checkout db78ac1d7716f56fc9f1b030b715f872f93964e4
+          mkdir build
+          cd build
+          cmake ..
+          make
+          sudo make install
+          sudo apt-get install libgtkmm-3.0-dev
+          sudo apt-get install libcurl4-gnutls-dev
+
+      - name: Build
+        uses: lukka/run-cmake@main
+        env:
+          CC: gcc-9
+          CXX: g++-9
+        with:
+          cmakeAppendedArgs: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
+          buildDirectory: ${{ runner.workspace }}/build
+          cmakeBuildType: ${{ matrix.buildtype }}
+
+      - name: Setup artifact files
+        run: |
+          mkdir "${{ runner.workspace }}/artifactdir"
+          cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
+          cp -r "${{ github.workspace }}/css" "${{ runner.workspace }}/artifactdir/css"
+          cp -r "${{ github.workspace }}/res" "${{ runner.workspace }}/artifactdir/res"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-linux-${{ matrix.buildtype }}
+          path: ${{ runner.workspace }}/artifactdir

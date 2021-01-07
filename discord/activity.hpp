@@ -71,7 +71,7 @@ struct ActivitySecrets {
     friend void to_json(nlohmann::json &j, const ActivitySecrets &m);
 };
 
-struct Activity {
+struct ActivityData {
     std::string Name;                             //
     ActivityType Type;                            //
     std::optional<std::string> URL;               // null
@@ -87,15 +87,15 @@ struct Activity {
     std::optional<bool> IsInstance;               //
     std::optional<ActivityFlags> Flags;           //
 
-    friend void from_json(const nlohmann::json &j, Activity &m);
-    friend void to_json(nlohmann::json &j, const Activity &m);
+    friend void from_json(const nlohmann::json &j, ActivityData &m);
+    friend void to_json(nlohmann::json &j, const ActivityData &m);
 };
 
-struct Presence {
-    std::vector<Activity> Activities; // null (but never sent as such)
+struct PresenceData {
+    std::vector<ActivityData> Activities; // null (but never sent as such)
     std::string Status;
     bool IsAFK;
     int Since = 0;
 
-    friend void to_json(nlohmann::json &j, const Presence &m);
+    friend void to_json(nlohmann::json &j, const PresenceData &m);
 };

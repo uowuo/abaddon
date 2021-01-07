@@ -5,7 +5,7 @@
 #include <string>
 #include <cstdint>
 
-struct Role {
+struct RoleData {
     Snowflake ID;
     std::string Name;
     int Color;
@@ -16,5 +16,5 @@ struct Role {
     bool IsManaged;
     bool IsMentionable;
 
-    friend void from_json(const nlohmann::json &j, Role &m);
+    friend void from_json(const nlohmann::json &j, RoleData &m);
 };

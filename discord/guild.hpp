@@ -9,7 +9,7 @@
 
 // a bot is apparently only supposed to receive the `id` and `unavailable` as false
 // but user tokens seem to get the full objects (minus users)
-struct Guild {
+struct GuildData {
     Snowflake ID;
     std::string Name;
     std::string Icon;                           // null
@@ -27,8 +27,8 @@ struct Guild {
     int VerificationLevel;
     int DefaultMessageNotifications;
     int ExplicitContentFilter;
-    std::vector<Role> Roles; // only access id
-    std::vector<Emoji> Emojis; // only access id
+    std::vector<RoleData> Roles;   // only access id
+    std::vector<EmojiData> Emojis; // only access id
     std::vector<std::string> Features;
     int MFALevel;
     Snowflake ApplicationID; // null
@@ -43,7 +43,7 @@ struct Guild {
     std::optional<int> MemberCount;      // *
     // std::vector<VoiceStateData> VoiceStates; // opt*
     // std::vector<MemberData> Members; // opt* - incomplete anyways
-    std::optional<std::vector<Channel>> Channels; // *
+    std::optional<std::vector<ChannelData>> Channels; // *
     // std::vector<PresenceUpdateData> Presences; // opt*
     std::optional<int> MaxPresences; // null
     std::optional<int> MaxMembers;
@@ -64,7 +64,7 @@ struct Guild {
 
     // * - documentation says only sent in GUILD_CREATE, but these can be sent anyways in the READY event
 
-    friend void from_json(const nlohmann::json &j, Guild &m);
+    friend void from_json(const nlohmann::json &j, GuildData &m);
     void update_from_json(const nlohmann::json &j);
 
     bool HasIcon() const;

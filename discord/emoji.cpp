@@ -1,6 +1,6 @@
 #include "emoji.hpp"
 
-void from_json(const nlohmann::json &j, Emoji &m) {
+void from_json(const nlohmann::json &j, EmojiData &m) {
     JS_N("id", m.ID);
     JS_N("name", m.Name);
     JS_O("roles", m.Roles);
@@ -11,7 +11,7 @@ void from_json(const nlohmann::json &j, Emoji &m) {
     JS_O("available", m.IsAvailable);
 }
 
-void to_json(nlohmann::json &j, const Emoji &m) {
+void to_json(nlohmann::json &j, const EmojiData &m) {
     if (m.ID.IsValid())
         j["id"] = m.ID;
     else
@@ -28,10 +28,10 @@ void to_json(nlohmann::json &j, const Emoji &m) {
     JS_IF("available", m.IsAvailable);
 }
 
-std::string Emoji::GetURL() const {
+std::string EmojiData::GetURL() const {
     return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + ".png";
 }
 
-std::string Emoji::URLFromID(std::string emoji_id, std::string ext) {
+std::string EmojiData::URLFromID(std::string emoji_id, std::string ext) {
     return "https://cdn.discordapp.com/emojis/" + emoji_id + "." + ext;
 }

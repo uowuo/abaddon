@@ -441,7 +441,7 @@ void Abaddon::ActionSetStatus() {
     const auto status = dlg.GetStatusType();
     const auto activity_type = dlg.GetActivityType();
     const auto activity_name = dlg.GetActivityName();
-    Activity activity;
+    ActivityData activity;
     activity.Name = activity_name;
     activity.Type = activity_type;
     m_discord.UpdateStatus(status, false, activity);

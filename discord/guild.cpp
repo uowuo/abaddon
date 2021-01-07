@@ -1,7 +1,7 @@
 #include "guild.hpp"
 #include "../abaddon.hpp"
 
-void from_json(const nlohmann::json &j, Guild &m) {
+void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("id", m.ID);
     if (j.contains("unavailable")) {
         m.IsUnavailable = true;
@@ -62,7 +62,7 @@ void from_json(const nlohmann::json &j, Guild &m) {
         m.ApproximatePresenceCount = std::stol(*tmp);
 }
 
-void Guild::update_from_json(const nlohmann::json &j) {
+void GuildData::update_from_json(const nlohmann::json &j) {
     if (j.contains("unavailable")) {
         IsUnavailable = true;
         return;
@@ -118,27 +118,27 @@ void Guild::update_from_json(const nlohmann::json &j) {
     JS_RD("approximate_presence_count", ApproximatePresenceCount);
 }
 
-bool Guild::HasIcon() const {
+bool GuildData::HasIcon() const {
     return Icon != "";
 }
 
-bool Guild::HasAnimatedIcon() const {
+bool GuildData::HasAnimatedIcon() const {
     return HasIcon() && Icon[0] == 'a' && Icon[1] == '_';
 }
 
-std::string Guild::GetIconURL(std::string ext, std::string size) const {
+std::string GuildData::GetIconURL(std::string ext, std::string size) const {
     return "https://cdn.discordapp.com/icons/" + std::to_string(ID) + "/" + Icon + "." + ext + "?size=" + size;
 }
 
-std::vector<Snowflake> Guild::GetSortedChannels(Snowflake ignore) const {
+std::vector<Snowflake> GuildData::GetSortedChannels(Snowflake ignore) const {
     std::vector<Snowflake> ret;
 
     const auto &discord = Abaddon::Get().GetDiscordClient();
     auto channels = discord.GetChannelsInGuild(ID);
 
-    std::unordered_map<Snowflake, std::vector<Channel>> category_to_channels;
-    std::map<int, std::vector<Channel>> position_to_categories;
-    std::map<int, std::vector<Channel>> orphan_channels;
+    std::unordered_map<Snowflake, std::vector<ChannelData>> category_to_channels;
+    std::map<int, std::vector<ChannelData>> position_to_categories;
+    std::map<int, std::vector<ChannelData>> orphan_channels;
     for (const auto &channel_id : channels) {
         const auto data = discord.GetChannel(channel_id);
         if (!data.has_value()) continue;
@@ -151,7 +151,7 @@ std::vector<Snowflake> Guild::GetSortedChannels(Snowflake ignore) const {
     }
 
     for (auto &[pos, channels] : orphan_channels) {
-        std::sort(channels.begin(), channels.end(), [&](const Channel &a, const Channel &b) -> bool {
+        std::sort(channels.begin(), channels.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
             return a.ID < b.ID;
         });
         for (const auto &chan : channels)
@@ -159,7 +159,7 @@ std::vector<Snowflake> Guild::GetSortedChannels(Snowflake ignore) const {
     }
 
     for (auto &[pos, categories] : position_to_categories) {
-        std::sort(categories.begin(), categories.end(), [&](const Channel &a, const Channel &b) -> bool {
+        std::sort(categories.begin(), categories.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
             return a.ID < b.ID;
         });
         for (const auto &category : categories) {
@@ -168,7 +168,7 @@ std::vector<Snowflake> Guild::GetSortedChannels(Snowflake ignore) const {
             auto it = category_to_channels.find(category.ID);
             if (it == category_to_channels.end()) continue;
             auto &channels = it->second;
-            std::sort(channels.begin(), channels.end(), [&](const Channel &a, const Channel &b) -> bool {
+            std::sort(channels.begin(), channels.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
                 return a.Position < b.Position;
             });
             for (auto &channel : channels) {

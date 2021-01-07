@@ -28,8 +28,7 @@ public:
         m_ini.SaveFile(m_filename.c_str());
     }
 
-    template<>
-    void SetSetting<std::string>(std::string section, std::string key, std::string value) {
+    void SetSetting(std::string section, std::string key, std::string value) {
         m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
         m_ini.SaveFile(m_filename.c_str());
     }

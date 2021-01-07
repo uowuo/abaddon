@@ -145,7 +145,7 @@ struct MessageReferenceData {
 struct ReactionData {
     int Count;
     bool HasReactedWith;
-    Emoji Emoji;
+    EmojiData Emoji;
 
     friend void from_json(const nlohmann::json &j, ReactionData &m);
     friend void to_json(nlohmann::json &j, const ReactionData &m);
@@ -166,15 +166,15 @@ struct Message {
     Snowflake ID;
     Snowflake ChannelID;
     std::optional<Snowflake> GuildID;
-    User Author;
+    UserData Author;
     // std::optional<GuildMember> Member;
     std::string Content;
     std::string Timestamp;
     std::string EditedTimestamp; // null
     bool IsTTS;
     bool DoesMentionEveryone;
-    std::vector<User> Mentions; // full user accessible
-    // std::vector<Role> MentionRoles;
+    std::vector<UserData> Mentions; // full user accessible
+    // std::vector<RoleData> MentionRoles;
     // std::optional<std::vector<ChannelMentionData>> MentionChannels;
     std::vector<AttachmentData> Attachments;
     std::vector<EmbedData> Embeds;
@@ -183,11 +183,11 @@ struct Message {
     bool IsPinned;
     std::optional<Snowflake> WebhookID;
     MessageType Type;
-    // std::optional<MessageActivityData> Activity;
+    // std::optional<MessageActivityData> ActivityData;
     std::optional<MessageApplicationData> Application;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<MessageFlags> Flags = MessageFlags::NONE;
-    std::optional<std::vector<Sticker>> Stickers;
+    std::optional<std::vector<StickerData>> Stickers;
     std::optional<std::shared_ptr<Message>> ReferencedMessage; // has_value && null means deleted
 
     friend void from_json(const nlohmann::json &j, Message &m);

@@ -69,7 +69,7 @@ public:
     using permission_overwrites_type = Store::permission_overwrites_type;
 
     std::unordered_set<Snowflake> GetGuilds() const;
-    const User &GetUserData() const;
+    const UserData &GetUserData() const;
     const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
     std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
@@ -79,12 +79,12 @@ public:
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
     std::optional<Message> GetMessage(Snowflake id) const;
-    std::optional<Channel> GetChannel(Snowflake id) const;
-    std::optional<Emoji> GetEmoji(Snowflake id) const;
+    std::optional<ChannelData> GetChannel(Snowflake id) const;
+    std::optional<EmojiData> GetEmoji(Snowflake id) const;
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
-    std::optional<User> GetUser(Snowflake id) const;
-    std::optional<Role> GetRole(Snowflake id) const;
-    std::optional<Guild> GetGuild(Snowflake id) const;
+    std::optional<UserData> GetUser(Snowflake id) const;
+    std::optional<RoleData> GetRole(Snowflake id) const;
+    std::optional<GuildData> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
@@ -105,7 +105,7 @@ public:
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
-    void UpdateStatus(const std::string &status, bool is_afk, const Activity &obj);
+    void UpdateStatus(const std::string &status, bool is_afk, const ActivityData &obj);
     void CreateDM(Snowflake user_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
@@ -120,7 +120,7 @@ private:
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
 
-    void ProcessNewGuild(Guild &guild);
+    void ProcessNewGuild(GuildData &guild);
 
     void HandleGatewayMessageRaw(std::string str);
     void HandleGatewayMessage(std::string str);
@@ -168,7 +168,7 @@ private:
 
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
 
-    User m_user_data;
+    UserData m_user_data;
     UserSettings m_user_settings;
 
     Store m_store;

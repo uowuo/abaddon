@@ -1,0 +1,12 @@
+[submodule "vcpkg"]
+	path = ci/vcpkg
+	url = https://github.com/microsoft/vcpkg/
+[submodule "thirdparty/simpleini"]
+	path = thirdparty/simpleini
+	url = https://github.com/brofield/simpleini
+[submodule "thirdparty/IXWebSocket"]
+	path = thirdparty/IXWebSocket
+	url = https://github.com/machinezone/ixwebsocket
+[submodule "ci/vcpkg"]
+	path = ci/vcpkg
+	url = https://github.com/microsoft/vcpkg
