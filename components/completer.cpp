@@ -264,14 +264,48 @@ void Completer::OnTextBufferChanged() {
     }
 }
 
+bool MultiBackwardSearch(const Gtk::TextIter &iter, const Glib::ustring &chars, Gtk::TextSearchFlags flags, Gtk::TextBuffer::iterator &out) {
+    bool any = false;
+    for (const auto c : chars) {
+        Glib::ustring tmp(1, c);
+        Gtk::TextBuffer::iterator tstart, tend;
+        if (!iter.backward_search(tmp, flags, tstart, tend)) continue;
+        // if previous found, compare to see if closer to out iter
+        if (any) {
+            if (tstart > out)
+                out = tstart;
+        } else
+            out = tstart;
+        any = true;
+    }
+    return any;
+}
+
+bool MultiForwardSearch(const Gtk::TextIter &iter, const Glib::ustring &chars, Gtk::TextSearchFlags flags, Gtk::TextBuffer::iterator &out) {
+    bool any = false;
+    for (const auto c : chars) {
+        Glib::ustring tmp(1, c);
+        Gtk::TextBuffer::iterator tstart, tend;
+        if (!iter.forward_search(tmp, flags, tstart, tend)) continue;
+        // if previous found, compare to see if closer to out iter
+        if (any) {
+            if (tstart < out)
+                out = tstart;
+        } else
+            out = tstart;
+        any = true;
+    }
+    return any;
+}
+
 Glib::ustring Completer::GetTerm() {
     const auto iter = m_buf->get_insert()->get_iter();
     Gtk::TextBuffer::iterator dummy;
-    if (!iter.backward_search(" ", Gtk::TEXT_SEARCH_TEXT_ONLY, m_start, dummy))
+    if (!MultiBackwardSearch(iter, " \n", Gtk::TEXT_SEARCH_TEXT_ONLY, m_start))
         m_buf->get_bounds(m_start, dummy);
     else
         m_start.forward_char(); // 1 behind
-    if (!iter.forward_search(" ", Gtk::TEXT_SEARCH_TEXT_ONLY, dummy, m_end))
+    if (!MultiForwardSearch(iter, " \n", Gtk::TEXT_SEARCH_TEXT_ONLY, m_end))
         m_buf->get_bounds(dummy, m_end);
     return m_start.get_text(m_end);
 }
