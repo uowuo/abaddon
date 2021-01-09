@@ -11,7 +11,7 @@ ChatWindow::ChatWindow() {
 
     m_main->get_style_context()->add_class("messages");
     m_list->get_style_context()->add_class("messages");
-    m_input->get_style_context()->add_class("message-input");
+    m_input_scroll->get_style_context()->add_class("message-input");
 
     m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
 
@@ -41,10 +41,13 @@ ChatWindow::ChatWindow() {
 
     m_input->set_hexpand(false);
     m_input->set_halign(Gtk::ALIGN_FILL);
+    m_input->set_valign(Gtk::ALIGN_CENTER);
     m_input->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
 
-    m_input_scroll->set_max_content_height(200);
-    m_input_scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    m_input_scroll->set_propagate_natural_height(true);
+    m_input_scroll->set_min_content_height(20);
+    m_input_scroll->set_max_content_height(250);
+    m_input_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
 
     m_completer.SetBuffer(m_input->get_buffer());
     m_completer.SetGetChannelID([this]() -> auto {

@@ -86,10 +86,13 @@
     background-color: #263238;
 }
 
-.message-input, .message-input text {
-    padding: 10px 20px;
+.message-input, .message-input textview, .message-input textview text {
     background-color: #37474f;
     color: #cfd8dc;
+}
+
+.message-input {
+    padding: 0px 0px 0px 5px;
 }
 
 .members {
