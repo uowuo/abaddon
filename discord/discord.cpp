@@ -751,6 +751,7 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
     auto current = m_store.GetGuild(id);
     if (!current.has_value()) return;
     current->update_from_json(msg.Data);
+    m_store.SetGuild(id, *current);
     m_signal_guild_update.emit(id);
 }
 

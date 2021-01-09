@@ -433,12 +433,11 @@ void ChannelList::UpdateChannel(Snowflake id) {
     auto *new_row = Gtk::manage(new ChannelListRowChannel(&*data));
     new_row->IsUserCollapsed = old_collapsed;
     m_id_to_row[id] = new_row;
-    if (data->ParentID->IsValid()) {
+    if (data->ParentID.has_value()) {
         new_row->Parent = m_id_to_row.at(*data->ParentID);
     } else {
         new_row->Parent = m_guild_id_to_row.at(*data->GuildID);
     }
-
     new_row->Parent->Children.insert(new_row);
     if (new_row->Parent->is_visible() && !new_row->Parent->IsUserCollapsed)
         new_row->show();
@@ -599,7 +598,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
             if (!channel.has_value()) continue;
             if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) continue;
 
-            if (channel->ParentID->IsValid())
+            if (channel->ParentID.has_value())
                 cat_to_channels[*channel->ParentID].push_back(*channel);
             else
                 orphan_channels[*channel->Position] = *channel;

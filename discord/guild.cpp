@@ -141,10 +141,9 @@ std::vector<Snowflake> GuildData::GetSortedChannels(Snowflake ignore) const {
     std::map<int, std::vector<ChannelData>> orphan_channels;
     for (const auto &channel_id : channels) {
         const auto data = discord.GetChannel(channel_id);
-        if (!data.has_value()) continue;
-        if (!data->ParentID->IsValid() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
+        if (!data->ParentID.has_value() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
             orphan_channels[*data->Position].push_back(*data);
-        else if (data->ParentID->IsValid() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
+        else if (data->ParentID.has_value() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
             category_to_channels[*data->ParentID].push_back(*data);
         else if (data->Type == ChannelType::GUILD_CATEGORY)
             position_to_categories[*data->Position].push_back(*data);
