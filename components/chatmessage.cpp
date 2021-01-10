@@ -443,11 +443,10 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const StickerData 
     auto &img = Abaddon::Get().GetImageManager();
 
     if (data.FormatType == StickerFormatType::PNG || data.FormatType == StickerFormatType::APNG) {
-        // clang-format off
-        img.LoadFromURL(data.GetURL(), sigc::track_obj([this, imgw](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+        auto cb = [this, imgw](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
             imgw->property_pixbuf() = pixbuf;
-        }, imgw));
-        // clang-format on
+        };
+        img.LoadFromURL(data.GetURL(), sigc::track_obj(cb, *imgw));
     }
 
     AttachEventHandlers(*box);
@@ -521,7 +520,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
                 img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
             } else {
                 img = Gtk::manage(new Gtk::Image(placeholder));
-                // can track_obj PLEASE work ???
                 imgr.LoadFromURL(reaction.Emoji.GetURL(), sigc::bind<0>(sigc::mem_fun(*this, &ChatMessageItemContainer::ReactionUpdateImage), img));
             }
             img->set_can_focus(false);

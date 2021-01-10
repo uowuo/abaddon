@@ -274,15 +274,14 @@ ChannelList::ChannelList() {
 
     // maybe will regret doing it this way
     auto &discord = Abaddon::Get().GetDiscordClient();
-    discord.signal_message_create().connect(sigc::track_obj([this, &discord](Snowflake message_id) {
+    auto cb = [this, &discord](Snowflake message_id) {
         const auto message = discord.GetMessage(message_id);
         const auto channel = discord.GetChannel(message->ChannelID);
         if (!channel.has_value()) return;
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
             CheckBumpDM(message->ChannelID);
-        // clang-format off
-    }, this));
-    // clang-format on
+    };
+    discord.signal_message_create().connect(sigc::track_obj(cb, *this));
 }
 
 Gtk::Widget *ChannelList::GetRoot() const {
