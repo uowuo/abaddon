@@ -239,3 +239,11 @@ void from_json(const nlohmann::json &j, ChannelRecipientRemove &m) {
     JS_D("user", m.User);
     JS_D("channel_id", m.ChannelID);
 }
+
+void from_json(const nlohmann::json &j, TypingStartObject &m) {
+    JS_D("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+    JS_D("user_id", m.UserID);
+    JS_D("timestamp", m.Timestamp);
+    JS_O("member", m.Member);
+}

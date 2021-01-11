@@ -6,6 +6,7 @@
 #include "chatmessage.hpp"
 #include "completer.hpp"
 
+class TypingIndicator;
 class ChatWindow {
 public:
     ChatWindow();
@@ -47,6 +48,7 @@ protected:
     Gtk::ScrolledWindow *m_input_scroll;
 
     Completer m_completer;
+    TypingIndicator *m_typing_indicator;
 
 public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;

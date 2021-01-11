@@ -53,6 +53,7 @@ enum class GatewayEvent : int {
     MESSAGE_REACTION_REMOVE,
     CHANNEL_RECIPIENT_ADD,
     CHANNEL_RECIPIENT_REMOVE,
+    TYPING_START,
 };
 
 struct GatewayMessage {
@@ -333,4 +334,14 @@ struct ChannelRecipientRemove {
     Snowflake ChannelID;
 
     friend void from_json(const nlohmann::json &j, ChannelRecipientRemove &m);
+};
+
+struct TypingStartObject {
+    Snowflake ChannelID;
+    std::optional<Snowflake> GuildID;
+    Snowflake UserID;
+    uint64_t Timestamp;
+    std::optional<GuildMember> Member;
+
+    friend void from_json(const nlohmann::json &j, TypingStartObject &m);
 };

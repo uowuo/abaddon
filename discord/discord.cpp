@@ -590,6 +590,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::CHANNEL_RECIPIENT_REMOVE: {
                         HandleGatewayChannelRecipientRemove(m);
                     } break;
+                    case GatewayEvent::TYPING_START: {
+                        HandleGatewayTypingStart(m);
+                    } break;
                 }
             } break;
             default:
@@ -871,6 +874,28 @@ void DiscordClient::HandleGatewayChannelRecipientRemove(const GatewayMessage &ms
     m_store.SetChannel(cur->ID, *cur);
 }
 
+void DiscordClient::HandleGatewayTypingStart(const GatewayMessage &msg) {
+    TypingStartObject data = msg.Data;
+    Snowflake guild_id;
+    if (data.GuildID.has_value()) {
+        guild_id = *data.GuildID;
+    } else {
+        auto chan = m_store.GetChannel(data.ChannelID);
+        if (chan.has_value() && chan->GuildID.has_value())
+            guild_id = *chan->GuildID;
+    }
+    if (guild_id.IsValid() && data.Member.has_value()) {
+        auto cur = m_store.GetGuildMember(guild_id, data.UserID);
+        if (!cur.has_value()) {
+            AddUserToGuild(data.UserID, guild_id);
+            m_store.SetGuildMember(guild_id, data.UserID, *data.Member);
+        }
+        if (data.Member->User.has_value())
+            m_store.SetUser(data.UserID, *data.Member->User);
+    }
+    m_signal_typing_start.emit(data.UserID, data.ChannelID);
+}
+
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_signal_disconnected.emit(true);
     inflateEnd(&m_zstream);
@@ -1091,6 +1116,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_REACTION_REMOVE"] = GatewayEvent::MESSAGE_REACTION_REMOVE;
     m_event_map["CHANNEL_RECIPIENT_ADD"] = GatewayEvent::CHANNEL_RECIPIENT_ADD;
     m_event_map["CHANNEL_RECIPIENT_REMOVE"] = GatewayEvent::CHANNEL_RECIPIENT_REMOVE;
+    m_event_map["TYPING_START"] = GatewayEvent::TYPING_START;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1163,4 +1189,8 @@ DiscordClient::type_signal_reaction_add DiscordClient::signal_reaction_add() {
 
 DiscordClient::type_signal_reaction_remove DiscordClient::signal_reaction_remove() {
     return m_signal_reaction_remove;
+}
+
+DiscordClient::type_signal_typing_start DiscordClient::signal_typing_start() {
+    return m_signal_typing_start;
 }

@@ -35,6 +35,7 @@ MainWindow::MainWindow()
 
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
+    m_menu_bar.show_all();
 
     m_menu_discord_connect.signal_activate().connect([this] {
         m_signal_action_connect.emit();
@@ -66,9 +67,11 @@ MainWindow::MainWindow()
 
     m_content_box.set_hexpand(true);
     m_content_box.set_vexpand(true);
+    m_content_box.show();
 
     m_main_box.add(m_menu_bar);
     m_main_box.add(m_content_box);
+    m_main_box.show();
 
     auto *channel_list = m_channel_list.GetRoot();
     auto *member_list = m_members.GetRoot();
@@ -84,17 +87,21 @@ MainWindow::MainWindow()
 
     chat->set_vexpand(true);
     chat->set_hexpand(true);
+    chat->show();
 
     channel_list->set_vexpand(true);
     channel_list->set_size_request(-1, -1);
+    channel_list->show();
 
     member_list->set_vexpand(true);
+    member_list->show();
 
     m_chan_chat_paned.pack1(*channel_list);
     m_chan_chat_paned.pack2(m_chat_members_paned);
     m_chan_chat_paned.child_property_shrink(*channel_list) = false;
     m_chan_chat_paned.child_property_resize(*channel_list) = false;
     m_chan_chat_paned.set_position(200);
+    m_chan_chat_paned.show();
     m_content_box.add(m_chan_chat_paned);
 
     m_chat_members_paned.pack1(*chat);
@@ -104,10 +111,9 @@ MainWindow::MainWindow()
     int w, h;
     get_default_size(w, h); // :s
     m_chat_members_paned.set_position(w - m_chan_chat_paned.get_position() - 150);
+    m_chat_members_paned.show();
 
     add(m_main_box);
-
-    show_all_children();
 }
 
 void MainWindow::UpdateComponents() {

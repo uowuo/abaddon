@@ -1,3 +1,7 @@
+@define-color background_color #263238;
+@define-color secondary_color #2c3e50;
+@define-color text_color #cfd8dc;
+
 .embed {
     background-color: #364759;
     color: #cbcbcb;
@@ -16,7 +20,7 @@
 }
 
 .channel-list {
-    background-color: #2c3e50;
+    background-color: @secondary_color;
 }
 
 .channel-row-label {
@@ -24,7 +28,7 @@
 }
 
 .channel-row-label, .channel-row-label text {
-    color: #cfd8dc;
+    color: @text_color;
     background: rgba(0, 0, 0, 0);
 }
 
@@ -41,7 +45,7 @@
 }
 
 .messages, .message-container {
-    background-color: #263238;
+    background-color: @background_color;
 }
 
 .messages {
@@ -67,7 +71,7 @@
 }
 
 .message-text text, .message-reply {
-    color: #cfd8dc;
+    color: @text_color;
 }
 
 .message-reply {
@@ -83,12 +87,12 @@
 }
 
 .message-text text {
-    background-color: #263238;
+    background-color: @background_color;
 }
 
 .message-input, .message-input textview, .message-input textview text {
-    background-color: #37474f;
-    color: #cfd8dc;
+    background-color: @secondary_color;
+    color: @text_color;
 }
 
 .message-input {
@@ -96,11 +100,11 @@
 }
 
 .members {
-    background-color: #263238;
+    background-color: @background_color;
 }
 
 .members-row-label {
-    color: #cfd8dc;
+    color: @text_color;
     padding: 5px;
 }
 
@@ -132,20 +136,26 @@
 }
 
 .reaction-count {
-    color: #cfd8dc;
+    color: @text_color;
 }
 
 .completer {
-	background-color: #2c3e50;
+	background-color: @secondary_color;
 	padding: 5px;
 }
 
 .completer-entry {
-	color: #cfd8dc;
+	color: @text_color;
 }
 
 .completer-entry-image {
 	margin-right: 6px;
+}
+
+.typing-indicator {
+    margin-top: 10px;
+    margin-bottom: -7px;
+    color: @text_color;
 }
 
 paned separator {
@@ -153,11 +163,11 @@ paned separator {
 }
 
 scrollbar {
-    background: #263238;
+    background: @background_color;
     border-left: 1px solid transparent;
 }
 
 menubar, menu {
-    background: #263238;
+    background: @background_color;
     color: #cccccc;
 }

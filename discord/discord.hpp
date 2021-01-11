@@ -146,6 +146,7 @@ private:
     void HandleGatewayMessageReactionRemove(const GatewayMessage &msg);
     void HandleGatewayChannelRecipientAdd(const GatewayMessage &msg);
     void HandleGatewayChannelRecipientRemove(const GatewayMessage &msg);
+    void HandleGatewayTypingStart(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
@@ -212,6 +213,7 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_role_delete;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_add;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_remove;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_typing_start; // user id, channel id
     typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -231,6 +233,7 @@ public:
     type_signal_role_delete signal_role_delete();
     type_signal_reaction_add signal_reaction_add();
     type_signal_reaction_remove signal_reaction_remove();
+    type_signal_typing_start signal_typing_start();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -251,6 +254,7 @@ protected:
     type_signal_role_delete m_signal_role_delete;
     type_signal_reaction_add m_signal_reaction_add;
     type_signal_reaction_remove m_signal_reaction_remove;
+    type_signal_typing_start m_signal_typing_start;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

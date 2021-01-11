@@ -1,6 +1,7 @@
 #include "chatwindow.hpp"
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
+#include "typingindicator.hpp"
 
 ChatWindow::ChatWindow() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -8,12 +9,14 @@ ChatWindow::ChatWindow() {
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
     m_input = Gtk::manage(new Gtk::TextView);
     m_input_scroll = Gtk::manage(new Gtk::ScrolledWindow);
+    m_typing_indicator = Gtk::manage(new TypingIndicator);
+
+    m_typing_indicator->set_valign(Gtk::ALIGN_END);
+    m_typing_indicator->show();
 
     m_main->get_style_context()->add_class("messages");
     m_list->get_style_context()->add_class("messages");
     m_input_scroll->get_style_context()->add_class("message-input");
-
-    m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
 
     m_main->set_hexpand(true);
     m_main->set_vexpand(true);
@@ -27,6 +30,7 @@ ChatWindow::ChatWindow() {
 
     m_scroll->set_can_focus(false);
     m_scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
+    m_scroll->show();
 
     m_list->signal_size_allocate().connect([this](Gtk::Allocation &) {
         if (m_should_scroll_to_bottom)
@@ -38,16 +42,20 @@ ChatWindow::ChatWindow() {
     m_list->set_vexpand(true);
     m_list->set_focus_hadjustment(m_scroll->get_hadjustment());
     m_list->set_focus_vadjustment(m_scroll->get_vadjustment());
+    m_list->show();
 
     m_input->set_hexpand(false);
     m_input->set_halign(Gtk::ALIGN_FILL);
     m_input->set_valign(Gtk::ALIGN_CENTER);
     m_input->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
+    m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
+    m_input->show();
 
     m_input_scroll->set_propagate_natural_height(true);
     m_input_scroll->set_min_content_height(20);
     m_input_scroll->set_max_content_height(250);
     m_input_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    m_input_scroll->show();
 
     m_completer.SetBuffer(m_input->get_buffer());
     m_completer.SetGetChannelID([this]() -> auto {
@@ -80,11 +88,15 @@ ChatWindow::ChatWindow() {
         return ret;
     });
 
+    m_completer.show();
+
     m_input_scroll->add(*m_input);
     m_scroll->add(*m_list);
     m_main->add(*m_scroll);
     m_main->add(m_completer);
     m_main->add(*m_input_scroll);
+    m_main->add(*m_typing_indicator);
+    m_main->show();
 }
 
 Gtk::Widget *ChatWindow::GetRoot() const {
@@ -114,6 +126,7 @@ void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
 
 void ChatWindow::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
+    m_typing_indicator->SetActiveChannel(id);
 }
 
 void ChatWindow::AddNewMessage(Snowflake id) {
