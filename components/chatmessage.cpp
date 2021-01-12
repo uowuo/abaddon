@@ -713,60 +713,37 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
 
         startpos = mend;
         if (is_animated && show_animations) {
-            auto pixbuf = img.GetAnimationFromURLIfCached(EmojiData::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize);
-            if (pixbuf) {
-                const auto it = buf->erase(start_it, end_it);
-                const int alen = text.size();
-                text = GetText(buf);
-                const int blen = text.size();
-                startpos -= (alen - blen);
+            const auto mark_start = buf->create_mark(start_it, false);
+            end_it.backward_char();
+            const auto mark_end = buf->create_mark(end_it, false);
+            const auto cb = [this, &tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
+                auto start_it = mark_start->get_iter();
+                auto end_it = mark_end->get_iter();
+                end_it.forward_char();
+                buf->delete_mark(mark_start);
+                buf->delete_mark(mark_end);
+                auto it = buf->erase(start_it, end_it);
                 const auto anchor = buf->create_child_anchor(it);
                 auto img = Gtk::manage(new Gtk::Image(pixbuf));
                 img->show();
                 tv.add_child_at_anchor(*img, anchor);
-            } else {
-                const auto mark_start = buf->create_mark(start_it, false);
-                end_it.backward_char();
-                const auto mark_end = buf->create_mark(end_it, false);
-                const auto cb = [this, &tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
-                    auto start_it = mark_start->get_iter();
-                    auto end_it = mark_end->get_iter();
-                    end_it.forward_char();
-                    buf->delete_mark(mark_start);
-                    buf->delete_mark(mark_end);
-                    auto it = buf->erase(start_it, end_it);
-                    const auto anchor = buf->create_child_anchor(it);
-                    auto img = Gtk::manage(new Gtk::Image(pixbuf));
-                    img->show();
-                    tv.add_child_at_anchor(*img, anchor);
-                };
-                img.LoadAnimationFromURL(EmojiData::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize, sigc::track_obj(cb, tv));
-            }
+            };
+            img.LoadAnimationFromURL(EmojiData::URLFromID(match.fetch(2), "gif"), EmojiSize, EmojiSize, sigc::track_obj(cb, tv));
         } else {
-            auto pixbuf = img.GetFromURLIfCached(EmojiData::URLFromID(match.fetch(2)));
-            if (pixbuf) {
-                const auto it = buf->erase(start_it, end_it);
-                const int alen = text.size();
-                text = GetText(buf);
-                const int blen = text.size();
-                startpos -= (alen - blen);
+            // can't erase before pixbuf is ready or else marks that are in the same pos get mixed up
+            const auto mark_start = buf->create_mark(start_it, false);
+            end_it.backward_char();
+            const auto mark_end = buf->create_mark(end_it, false);
+            const auto cb = [this, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+                auto start_it = mark_start->get_iter();
+                auto end_it = mark_end->get_iter();
+                end_it.forward_char();
+                buf->delete_mark(mark_start);
+                buf->delete_mark(mark_end);
+                auto it = buf->erase(start_it, end_it);
                 buf->insert_pixbuf(it, pixbuf->scale_simple(EmojiSize, EmojiSize, Gdk::INTERP_BILINEAR));
-            } else {
-                // can't erase before pixbuf is ready or else marks that are in the same pos get mixed up
-                const auto mark_start = buf->create_mark(start_it, false);
-                end_it.backward_char();
-                const auto mark_end = buf->create_mark(end_it, false);
-                const auto cb = [this, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
-                    auto start_it = mark_start->get_iter();
-                    auto end_it = mark_end->get_iter();
-                    end_it.forward_char();
-                    buf->delete_mark(mark_start);
-                    buf->delete_mark(mark_end);
-                    auto it = buf->erase(start_it, end_it);
-                    buf->insert_pixbuf(it, pixbuf->scale_simple(EmojiSize, EmojiSize, Gdk::INTERP_BILINEAR));
-                };
-                img.LoadFromURL(EmojiData::URLFromID(match.fetch(2)), sigc::track_obj(cb, tv));
-            }
+            };
+            img.LoadFromURL(EmojiData::URLFromID(match.fetch(2)), sigc::track_obj(cb, tv));
         }
 
         text = GetText(buf);

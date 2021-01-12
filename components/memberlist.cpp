@@ -144,23 +144,18 @@ void MemberList::UpdateMemberListInternal() {
         m_id_to_row[data->ID] = row;
 
         if (data->HasAvatar()) {
-            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(data->GetAvatarURL("png", "16"));
-            if (buf) {
-                row->SetAvatarFromPixbuf(buf);
-            } else {
-                Snowflake id = data->ID;
-                Abaddon::Get().GetImageManager().LoadFromURL(data->GetAvatarURL("png", "16"), [this, id](Glib::RefPtr<Gdk::Pixbuf> pbuf) {
-                    Glib::signal_idle().connect([this, id, pbuf]() -> bool {
-                        if (m_id_to_row.find(id) != m_id_to_row.end()) {
-                            auto *foundrow = static_cast<MemberListUserRow *>(m_id_to_row.at(id));
-                            if (foundrow != nullptr)
-                                foundrow->SetAvatarFromPixbuf(pbuf);
-                        }
+            Snowflake id = data->ID;
+            Abaddon::Get().GetImageManager().LoadFromURL(data->GetAvatarURL("png", "16"), [this, id](Glib::RefPtr<Gdk::Pixbuf> pbuf) {
+                Glib::signal_idle().connect([this, id, pbuf]() -> bool {
+                    if (m_id_to_row.find(id) != m_id_to_row.end()) {
+                        auto *foundrow = static_cast<MemberListUserRow *>(m_id_to_row.at(id));
+                        if (foundrow != nullptr)
+                            foundrow->SetAvatarFromPixbuf(pbuf);
+                    }
 
-                        return false;
-                    });
+                    return false;
                 });
-            }
+            });
         }
 
         AttachUserMenuHandler(row, data->ID);
