@@ -18,7 +18,7 @@ void from_json(const nlohmann::json &j, StickerData &m) {
     JS_D("description", m.Description);
     JS_O("tags", m.Tags);
     JS_O("asset", m.AssetHash);
-    JS_N("preview_asset", m.PreviewAssetHash);
+    JS_ON("preview_asset", m.PreviewAssetHash);
     JS_D("format_type", m.FormatType);
 }
 
