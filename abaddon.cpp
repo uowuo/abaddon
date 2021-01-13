@@ -61,7 +61,7 @@ Abaddon &Abaddon::Get() {
 }
 
 int Abaddon::StartGTK() {
-    m_gtk_app = Gtk::Application::create("com.github.lorpus.abaddon");
+    m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
 
     // tmp css stuff
     m_css_provider = Gtk::CssProvider::create();
