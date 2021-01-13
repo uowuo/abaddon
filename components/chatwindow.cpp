@@ -2,13 +2,13 @@
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
 #include "typingindicator.hpp"
+#include "chatinput.hpp"
 
 ChatWindow::ChatWindow() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_list = Gtk::manage(new Gtk::ListBox);
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
-    m_input = Gtk::manage(new Gtk::TextView);
-    m_input_scroll = Gtk::manage(new Gtk::ScrolledWindow);
+    m_input = Gtk::manage(new ChatInput);
     m_typing_indicator = Gtk::manage(new TypingIndicator);
 
     m_typing_indicator->set_valign(Gtk::ALIGN_END);
@@ -16,12 +16,11 @@ ChatWindow::ChatWindow() {
 
     m_main->get_style_context()->add_class("messages");
     m_list->get_style_context()->add_class("messages");
-    m_input_scroll->get_style_context()->add_class("message-input");
 
     m_main->set_hexpand(true);
     m_main->set_vexpand(true);
 
-    m_scroll->signal_edge_reached().connect(sigc::mem_fun(*this, &ChatWindow::on_scroll_edge_overshot));
+    m_scroll->signal_edge_reached().connect(sigc::mem_fun(*this, &ChatWindow::OnScrollEdgeOvershot));
 
     auto v = m_scroll->get_vadjustment();
     v->signal_value_changed().connect([this, v] {
@@ -44,20 +43,14 @@ ChatWindow::ChatWindow() {
     m_list->set_focus_vadjustment(m_scroll->get_vadjustment());
     m_list->show();
 
-    m_input->set_hexpand(false);
-    m_input->set_halign(Gtk::ALIGN_FILL);
-    m_input->set_valign(Gtk::ALIGN_CENTER);
-    m_input->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
-    m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::on_key_press_event), false);
+    m_input->signal_submit().connect([this](const Glib::ustring &text) {
+        if (m_active_channel.IsValid())
+            m_signal_action_chat_submit.emit(text, m_active_channel);
+    });
+    m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::OnKeyPressEvent), false);
     m_input->show();
 
-    m_input_scroll->set_propagate_natural_height(true);
-    m_input_scroll->set_min_content_height(20);
-    m_input_scroll->set_max_content_height(250);
-    m_input_scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
-    m_input_scroll->show();
-
-    m_completer.SetBuffer(m_input->get_buffer());
+    m_completer.SetBuffer(m_input->GetBuffer());
     m_completer.SetGetChannelID([this]() -> auto {
         return m_active_channel;
     });
@@ -90,11 +83,10 @@ ChatWindow::ChatWindow() {
 
     m_completer.show();
 
-    m_input_scroll->add(*m_input);
     m_scroll->add(*m_list);
     m_main->add(*m_scroll);
     m_main->add(m_completer);
-    m_main->add(*m_input_scroll);
+    m_main->add(*m_input);
     m_main->add(*m_typing_indicator);
     m_main->show();
 }
@@ -160,9 +152,7 @@ void ChatWindow::AddNewHistory(const std::vector<Snowflake> &id) {
 }
 
 void ChatWindow::InsertChatInput(std::string text) {
-    // shouldn't need a mutex cuz called from gui action
-    m_input->get_buffer()->insert_at_cursor(text);
-    m_input->grab_focus();
+    m_input->InsertText(text);
 }
 
 Snowflake ChatWindow::GetOldestListedMessage() {
@@ -188,23 +178,12 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-bool ChatWindow::on_key_press_event(GdkEventKey *e) {
+bool ChatWindow::OnKeyPressEvent(GdkEventKey *e) {
     if (m_completer.ProcessKeyPress(e))
         return true;
 
-    if (e->keyval == GDK_KEY_Return) {
-        if (e->state & GDK_SHIFT_MASK)
-            return false;
-
-        auto buf = m_input->get_buffer();
-        auto text = buf->get_text();
-        if (text.size() == 0) return true;
-        buf->set_text("");
-
-        m_signal_action_chat_submit.emit(text, m_active_channel);
-
+    if (m_input->ProcessKeyPress(e))
         return true;
-    }
 
     return false;
 }
@@ -297,7 +276,7 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     }
 }
 
-void ChatWindow::on_scroll_edge_overshot(Gtk::PositionType pos) {
+void ChatWindow::OnScrollEdgeOvershot(Gtk::PositionType pos) {
     if (pos == Gtk::POS_TOP)
         m_signal_action_chat_load_history.emit(m_active_channel);
 }

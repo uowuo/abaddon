@@ -6,6 +6,7 @@
 #include "chatmessage.hpp"
 #include "completer.hpp"
 
+class ChatInput;
 class TypingIndicator;
 class ChatWindow {
 public:
@@ -34,8 +35,8 @@ protected:
 
     Snowflake m_active_channel;
 
-    bool on_key_press_event(GdkEventKey *e);
-    void on_scroll_edge_overshot(Gtk::PositionType pos);
+    bool OnKeyPressEvent(GdkEventKey *e);
+    void OnScrollEdgeOvershot(Gtk::PositionType pos);
 
     void ScrollToBottom();
     bool m_should_scroll_to_bottom = true;
@@ -44,8 +45,7 @@ protected:
     Gtk::ListBox *m_list;
     Gtk::ScrolledWindow *m_scroll;
 
-    Gtk::TextView *m_input;
-    Gtk::ScrolledWindow *m_input_scroll;
+    ChatInput *m_input;
 
     Completer m_completer;
     TypingIndicator *m_typing_indicator;
