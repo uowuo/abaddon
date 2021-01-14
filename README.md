@@ -65,6 +65,7 @@ Make sure you start from the directory where `css` and `res` are
 .channel-row-category - Only rows containing a category  
 .channel-row-guild - Only rows containing a guild  
 .channel-row-label - All labels within the channel container  
+.nsfw - Applied to channel row label's and their container for NSFW channels  
   
 .messages - Container of user messages  
 .message-container - The container which holds a user's messages  

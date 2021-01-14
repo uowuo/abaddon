@@ -245,6 +245,10 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
     m_lbl->get_style_context()->add_class("channel-row-label");
 
     auto buf = m_lbl->get_buffer();
+    if (data->IsNSFW.has_value() && *data->IsNSFW) {
+        get_style_context()->add_class("nsfw");
+        m_lbl->get_style_context()->add_class("nsfw");
+    }
     buf->set_text("#" + *data->Name);
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);

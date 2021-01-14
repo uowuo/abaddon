@@ -32,6 +32,10 @@
     background: rgba(0, 0, 0, 0);
 }
 
+.channel-row-label.nsfw text {
+    color: #ed6666;
+}
+
 .channel-row:focus {
     background-color: #34495e;
 }
