@@ -411,8 +411,8 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
 }
 
 std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake user_id) const {
-    Bind(m_get_member_stmt, 1, guild_id);
-    Bind(m_get_member_stmt, 2, user_id);
+    Bind(m_get_member_stmt, 1, user_id);
+    Bind(m_get_member_stmt, 2, guild_id);
     if (!FetchOne(m_get_member_stmt)) {
         if (m_db_err != SQLITE_DONE)
             fprintf(stderr, "error while fetching member: %s\n", sqlite3_errstr(m_db_err));

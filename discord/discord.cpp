@@ -188,7 +188,7 @@ std::optional<EmojiData> DiscordClient::GetEmoji(Snowflake id) const {
 }
 
 Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color) const {
-    const auto data = GetMember(guild_id, user_id);
+    const auto data = GetMember(user_id, guild_id);
     if (!data.has_value()) return Snowflake::Invalid;
 
     std::vector<RoleData> roles;
