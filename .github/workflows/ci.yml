@@ -43,7 +43,8 @@ jobs:
           del /f /s /q "${{ runner.workspace }}\build\CMakeCache.txt"
           xcopy /E /I "${{ github.workspace }}\css" "${{ runner.workspace }}\build\css"
           xcopy /E /I "${{ github.workspace }}\res" "${{ runner.workspace }}\build\res"
-          xcopy /E /I "${{ github.workspace }}\ci\gtk-for-windows\gtk-nsis-pack\share" "${{ runner.workspace }}\build\share"
+          mkdir "${{ runner.workspace }}\build\share"
+          xcopy /E /I "${{ github.workspace }}\ci\gtk-for-windows\gtk-nsis-pack\share\glib-2.0" "${{ runner.workspace }}\build\share\glib-2.0"
           copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "${{ runner.workspace }}\build\gspawn-win64-helper.exe"
           copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper-console.exe" "${{ runner.workspace }}\build\gspawn-win64-helper-console.exe"
 
