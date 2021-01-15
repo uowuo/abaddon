@@ -43,6 +43,8 @@ file(GLOB ABADDON_SOURCES
 	"components/*.cpp"
 	"windows/*.hpp"
 	"windows/*.cpp"
+	"windows/guildsettings/*.hpp"
+	"windows/guildsettings/*.cpp"
 	"dialogs/*.hpp"
 	"dialogs/*.cpp"
 )

@@ -118,6 +118,13 @@ void GuildData::update_from_json(const nlohmann::json &j) {
     JS_RD("approximate_presence_count", ApproximatePresenceCount);
 }
 
+bool GuildData::HasFeature(const std::string &search_feature) {
+    for (const auto &feature : Features)
+        if (search_feature == feature)
+            return true;
+    return false;
+}
+
 bool GuildData::HasIcon() const {
     return Icon != "";
 }

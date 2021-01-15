@@ -45,6 +45,7 @@ public:
     void ActionSetStatus();
     void ActionReactionAdd(Snowflake id, const Glib::ustring &param);
     void ActionReactionRemove(Snowflake id, const Glib::ustring &param);
+    void ActionGuildSettings(Snowflake id);
 
     void ActionReloadSettings();
     void ActionReloadCSS();
@@ -72,6 +73,8 @@ public:
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
 
     const SettingsManager &GetSettings() const;
+
+    Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
 
 protected:
     Snowflake m_shown_user_menu_id;

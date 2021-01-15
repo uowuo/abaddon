@@ -7,6 +7,7 @@ MainWindow::MainWindow()
     , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL)
     , m_chat_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(1200, 800);
+    get_style_context()->add_class("app-window");
 
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);

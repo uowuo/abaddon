@@ -117,6 +117,12 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     });
     m_menu.append(*m_menu_leave);
 
+    m_menu_settings = Gtk::manage(new Gtk::MenuItem("Guild _Settings", true));
+    m_menu_settings->signal_activate().connect([this]() {
+        m_signal_settings.emit();
+    });
+    m_menu.append(*m_menu_settings);
+
     m_menu.show_all();
 
     const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
@@ -174,6 +180,10 @@ ChannelListRowGuild::type_signal_copy_id ChannelListRowGuild::signal_copy_id() {
 
 ChannelListRowGuild::type_signal_leave ChannelListRowGuild::signal_leave() {
     return m_signal_leave;
+}
+
+ChannelListRowGuild::type_signal_settings ChannelListRowGuild::signal_settings() {
+    return m_signal_settings;
 }
 
 ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
@@ -519,6 +529,7 @@ void ChannelList::UpdateGuild(Snowflake id) {
     m_guild_id_to_row[new_row->ID] = new_row;
     new_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), new_row->ID));
     new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
+    new_row->signal_settings().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuSettings), new_row->ID));
     new_row->Children = children;
     for (auto child : children)
         child->Parent = new_row;
@@ -615,6 +626,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     m_guild_id_to_row[guild_row->ID] = guild_row;
     guild_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), guild_row->ID));
     guild_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), guild_row->ID));
+    guild_row->signal_settings().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuSettings), guild_row->ID));
 
     // add channels with no parent category
     for (const auto &[pos, channel] : orphan_channels) {
@@ -726,6 +738,10 @@ void ChannelList::OnGuildMenuLeave(Snowflake id) {
     m_signal_action_guild_leave.emit(id);
 }
 
+void ChannelList::OnGuildMenuSettings(Snowflake id) {
+    m_signal_action_guild_settings.emit(id);
+}
+
 void ChannelList::CheckBumpDM(Snowflake channel_id) {
     auto it = m_dm_id_to_row.find(channel_id);
     if (it == m_dm_id_to_row.end()) return;
@@ -755,4 +771,8 @@ ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_c
 
 ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_leave() {
     return m_signal_action_guild_leave;
+}
+
+ChannelList::type_signal_action_guild_settings ChannelList::signal_action_guild_settings() {
+    return m_signal_action_guild_settings;
 }

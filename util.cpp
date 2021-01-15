@@ -100,8 +100,17 @@ std::string IntToCSSColor(int color) {
 }
 
 void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu) {
-    widget->signal_button_press_event().connect([&menu](GdkEventButton *ev) -> bool {
+    AddWidgetMenuHandler(widget, menu, []() {});
+}
+
+// so widgets can modify the menu before it is displayed
+// maybe theres a better way to do this idk
+void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, sigc::slot<void()> pre_callback) {
+    sigc::signal<void()> signal;
+    signal.connect(pre_callback);
+    widget->signal_button_press_event().connect([&menu, signal](GdkEventButton *ev) -> bool {
         if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
+            signal.emit();
             menu.popup_at_pointer(reinterpret_cast<const GdkEvent *>(ev));
             return true;
         }

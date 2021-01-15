@@ -437,6 +437,36 @@ void DiscordClient::RemoveReaction(Snowflake id, Glib::ustring param) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id) + "/reactions/" + param + "/@me", [](auto) {});
 }
 
+void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name) {
+    SetGuildName(id, name, [](auto) {});
+}
+
+void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(bool success)> callback) {
+    ModifyGuildObject obj;
+    obj.Name = name;
+    sigc::signal<void, bool> signal;
+    signal.connect(callback);
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const cpr::Response &r) {
+        const auto success = r.status_code == 200;
+        signal.emit(success);
+    });
+}
+
+void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data) {
+    SetGuildIcon(id, data, [](auto) {});
+}
+
+void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(bool success)> callback) {
+    ModifyGuildObject obj;
+    obj.IconData = data;
+    sigc::signal<void, bool> signal;
+    signal.connect(callback);
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const cpr::Response &r) {
+        const auto success = r.status_code == 200;
+        signal.emit(success);
+    });
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;

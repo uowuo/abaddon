@@ -9,6 +9,7 @@
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "abaddon.hpp"
+#include "windows/guildsettingswindow.hpp"
 
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
@@ -105,6 +106,7 @@ int Abaddon::StartGTK() {
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
+    m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
 
     m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
@@ -229,6 +231,10 @@ void Abaddon::DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring 
 
 const SettingsManager &Abaddon::GetSettings() const {
     return m_settings;
+}
+
+Glib::RefPtr<Gtk::CssProvider> Abaddon::GetStyleProvider() {
+    return m_css_provider;
 }
 
 void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id) {
@@ -453,6 +459,11 @@ void Abaddon::ActionReactionAdd(Snowflake id, const Glib::ustring &param) {
 
 void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
     m_discord.RemoveReaction(id, param);
+}
+
+void Abaddon::ActionGuildSettings(Snowflake id) {
+    auto *window = new GuildSettingsWindow(id);
+    window->show();
 }
 
 void Abaddon::ActionReloadSettings() {

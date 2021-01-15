@@ -10,6 +10,7 @@ JoinGuildDialog::JoinGuildDialog(Gtk::Window &parent)
     , m_cancel("Cancel")
     , m_info("Enter code") {
     set_default_size(300, 50);
+    get_style_context()->add_class("app-window");
 
     Glib::signal_idle().connect(sigc::mem_fun(*this, &JoinGuildDialog::on_idle_slot));
 
