@@ -110,6 +110,10 @@ public:
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
     void RemoveReaction(Snowflake id, Glib::ustring param);
+    void SetGuildName(Snowflake id, const Glib::ustring &name);
+    void SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
+    void SetGuildIcon(Snowflake id, const std::string &data);
+    void SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(bool success)> callback);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);

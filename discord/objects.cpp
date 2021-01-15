@@ -247,3 +247,8 @@ void from_json(const nlohmann::json &j, TypingStartObject &m) {
     JS_D("timestamp", m.Timestamp);
     JS_O("member", m.Member);
 }
+
+void to_json(nlohmann::json &j, const ModifyGuildObject &m) {
+    JS_IF("name", m.Name);
+    JS_IF("icon", m.IconData);
+}

@@ -162,16 +162,40 @@
     color: @text_color;
 }
 
-paned separator {
+.app-window label:not(:disabled) {
+    color: @text_color;
+}
+
+.app-window entry {
+    background: @secondary_color;
+    color: @text_color;
+    border: 1px solid #1c2e40;
+}
+
+.app-window button {
+    background: @secondary_color;
+    color: @text_color;
+    border: 1px solid #1c2e40;
+}
+
+.app-window.background {
+    background: @background_color;
+}
+
+.app-window listbox {
+    background: @background_color;
+}
+
+.app-window paned separator {
     background: #37474f;
 }
 
-scrollbar {
+.app-window scrollbar {
     background: @background_color;
     border-left: 1px solid transparent;
 }
 
-menubar, menu {
+.app-window menubar, menu {
     background: @background_color;
     color: #cccccc;
 }

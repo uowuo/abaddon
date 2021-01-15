@@ -345,3 +345,11 @@ struct TypingStartObject {
 
     friend void from_json(const nlohmann::json &j, TypingStartObject &m);
 };
+
+// implement rest as needed
+struct ModifyGuildObject {
+    std::optional<std::string> Name;
+    std::optional<std::string> IconData;
+
+    friend void to_json(nlohmann::json &j, const ModifyGuildObject &m);
+};

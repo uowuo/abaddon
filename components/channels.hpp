@@ -64,17 +64,21 @@ protected:
     Gtk::Menu m_menu;
     Gtk::MenuItem *m_menu_copyid;
     Gtk::MenuItem *m_menu_leave;
+    Gtk::MenuItem *m_menu_settings;
 
 private:
     typedef sigc::signal<void> type_signal_copy_id;
     typedef sigc::signal<void> type_signal_leave;
+    typedef sigc::signal<void> type_signal_settings;
 
     type_signal_copy_id m_signal_copy_id;
     type_signal_leave m_signal_leave;
+    type_signal_settings m_signal_settings;
 
 public:
     type_signal_copy_id signal_copy_id();
     type_signal_leave signal_leave();
+    type_signal_settings signal_settings();
 };
 
 class ChannelListRowCategory : public ChannelListRow {
@@ -156,6 +160,7 @@ protected:
     int m_guild_count;
     void OnMenuCopyID(Snowflake id);
     void OnGuildMenuLeave(Snowflake id);
+    void OnGuildMenuSettings(Snowflake id);
 
     Gtk::Menu m_channel_menu;
     Gtk::MenuItem *m_channel_menu_copyid;
@@ -179,11 +184,14 @@ protected:
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
+    typedef sigc::signal<void, Snowflake> type_signal_action_guild_settings;
 
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_leave signal_action_guild_leave();
+    type_signal_action_guild_settings signal_action_guild_settings();
 
 protected:
     type_signal_action_channel_item_select m_signal_action_channel_item_select;
     type_signal_action_guild_leave m_signal_action_guild_leave;
+    type_signal_action_guild_settings m_signal_action_guild_settings;
 };
