@@ -13,12 +13,9 @@ public:
     // attributes = edited, deleted
     void UpdateAttributes();
     void UpdateContent();
-    void UpdateImage(std::string url, Glib::RefPtr<Gdk::Pixbuf> buf);
     void UpdateReactions();
 
 protected:
-    bool EmitImageLoad(std::string url);
-
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
@@ -29,9 +26,6 @@ protected:
     Gtk::Widget *CreateReactionsComponent(const Message &data);
     Gtk::Widget *CreateReplyComponent(const Message &data);
     void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
-    void HandleImage(int w, int h, Gtk::Image &img, std::string url);
-
-    void OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
 
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
@@ -59,8 +53,6 @@ protected:
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
     std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;
 
-    std::unordered_map<std::string, std::pair<Gtk::Image *, std::pair<int, int>>> m_img_loadmap; // url -> [img, [w, h]]
-
     void AttachEventHandlers(Gtk::Widget &widget);
     void ShowMenu(GdkEvent *event);
 
@@ -78,16 +70,12 @@ protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_main;
     Gtk::Label *m_attrib_label = nullptr;
-    Gtk::Image *m_embed_img = nullptr; // yes this is hacky no i dont care (for now)
-    std::string m_embed_imgurl;
 
     Gtk::TextView *m_text_component = nullptr;
     Gtk::Widget *m_embed_component = nullptr;
     Gtk::Widget *m_reactions_component = nullptr;
 
 public:
-    typedef sigc::signal<void, std::string> type_signal_image_load;
-
     typedef sigc::signal<void> type_signal_action_delete;
     typedef sigc::signal<void> type_signal_action_edit;
     typedef sigc::signal<void, Snowflake> type_signal_channel_click;
@@ -101,17 +89,12 @@ public:
     type_signal_channel_click signal_action_channel_click();
     type_signal_action_reaction_add signal_action_reaction_add();
     type_signal_action_reaction_remove signal_action_reaction_remove();
-
-    type_signal_image_load signal_image_load();
-
 private:
     type_signal_action_delete m_signal_action_delete;
     type_signal_action_edit m_signal_action_edit;
     type_signal_channel_click m_signal_action_channel_click;
     type_signal_action_reaction_add m_signal_action_reaction_add;
     type_signal_action_reaction_remove m_signal_action_reaction_remove;
-
-    type_signal_image_load m_signal_image_load;
 };
 
 class ChatMessageHeader : public Gtk::ListBoxRow {

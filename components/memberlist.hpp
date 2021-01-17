@@ -3,6 +3,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "../discord/discord.hpp"
+#include "lazyimage.hpp"
 
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
@@ -14,7 +15,7 @@ public:
 private:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::Image *m_avatar;
+    LazyImage *m_avatar;
     Gtk::Label *m_label;
 };
 

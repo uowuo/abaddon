@@ -7,7 +7,10 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_label = Gtk::manage(new Gtk::Label);
-    m_avatar = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(16)));
+    m_avatar = Gtk::manage(new LazyImage(16, 16));
+
+    if (data->HasAvatar())
+        m_avatar->SetURL(data->GetAvatarURL("png"));
 
     get_style_context()->add_class("members-row");
     get_style_context()->add_class("members-row-member");
@@ -142,22 +145,6 @@ void MemberList::UpdateMemberListInternal() {
     auto add_user = [this, &user_to_color](const UserData *data) {
         auto *row = Gtk::manage(new MemberListUserRow(m_guild_id, data));
         m_id_to_row[data->ID] = row;
-
-        if (data->HasAvatar()) {
-            Snowflake id = data->ID;
-            Abaddon::Get().GetImageManager().LoadFromURL(data->GetAvatarURL("png", "16"), [this, id](Glib::RefPtr<Gdk::Pixbuf> pbuf) {
-                Glib::signal_idle().connect([this, id, pbuf]() -> bool {
-                    if (m_id_to_row.find(id) != m_id_to_row.end()) {
-                        auto *foundrow = static_cast<MemberListUserRow *>(m_id_to_row.at(id));
-                        if (foundrow != nullptr)
-                            foundrow->SetAvatarFromPixbuf(pbuf);
-                    }
-
-                    return false;
-                });
-            });
-        }
-
         AttachUserMenuHandler(row, data->ID);
         m_listbox->add(*row);
     };

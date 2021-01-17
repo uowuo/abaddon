@@ -1,6 +1,7 @@
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
 #include "../util.hpp"
+#include "lazyimage.hpp"
 #include <unordered_map>
 
 constexpr const int EmojiSize = 24; // settings eventually
@@ -116,32 +117,8 @@ void ChatMessageItemContainer::UpdateContent() {
 
     if (data->Embeds.size() == 1) {
         m_embed_component = CreateEmbedComponent(data->Embeds[0]);
-        if (m_embed_imgurl.size() > 0) {
-            m_signal_image_load.emit(m_embed_imgurl);
-        }
         AttachEventHandlers(*m_embed_component);
         m_main->add(*m_embed_component);
-    }
-}
-
-void ChatMessageItemContainer::UpdateImage(std::string url, Glib::RefPtr<Gdk::Pixbuf> buf) {
-    if (!buf) return;
-
-    if (m_embed_img != nullptr && m_embed_imgurl == url) {
-        int w, h;
-        m_embed_img->get_size_request(w, h);
-        m_embed_img->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
-
-        return;
-    }
-
-    auto it = m_img_loadmap.find(url);
-    if (it != m_img_loadmap.end()) {
-        const auto inw = it->second.second.first;
-        const auto inh = it->second.second.second;
-        int w, h;
-        GetImageDimensions(inw, inh, w, h);
-        it->second.first->property_pixbuf() = buf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
     }
 }
 
@@ -177,11 +154,6 @@ void ChatMessageItemContainer::UpdateAttributes() {
         m_attrib_label->set_markup("<span color='#ff0000'>[deleted]</span>");
     else if (edited)
         m_attrib_label->set_markup("<span color='#999999'>[edited]</span>");
-}
-
-bool ChatMessageItemContainer::EmitImageLoad(std::string url) {
-    m_signal_image_load.emit(url);
-    return false;
 }
 
 void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string url) {
@@ -351,24 +323,23 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
     bool is_img = embed.Image.has_value() && embed.Image->ProxyURL.has_value();
     bool is_thumb = embed.Thumbnail.has_value() && embed.Thumbnail->ProxyURL.has_value();
     if (is_img || is_thumb) {
-        auto *img = Gtk::manage(new Gtk::Image);
-        img->set_halign(Gtk::ALIGN_CENTER);
-        img->set_margin_top(5);
         int w = 0, h = 0;
         if (is_img)
             GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, EmbedImageWidth, EmbedImageHeight);
         else
             GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, EmbedImageWidth, EmbedImageHeight);
+
+        std::string url;
+        if (is_img)
+            url = *embed.Image->ProxyURL;
+        else
+            url = *embed.Thumbnail->ProxyURL;
+
+        auto *img = Gtk::manage(new LazyImage(url, w, h, false));
+        img->set_halign(Gtk::ALIGN_CENTER);
+        img->set_margin_top(5);
         img->set_size_request(w, h);
         main->pack_start(*img);
-        m_embed_img = img;
-        if (is_img)
-            m_embed_imgurl = *embed.Image->ProxyURL;
-        else
-            m_embed_imgurl = *embed.Thumbnail->ProxyURL;
-
-        Abaddon::Get().GetImageManager().LoadFromURL(m_embed_imgurl,
-                                                     sigc::mem_fun(*this, &ChatMessageItemContainer::OnEmbedImageLoad));
     }
 
     if (embed.Footer.has_value()) {
@@ -410,14 +381,13 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
     GetImageDimensions(inw, inh, w, h);
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
-    Gtk::Image *widget = Gtk::manage(new Gtk::Image);
+    Gtk::Image *widget = Gtk::manage(new LazyImage(proxy_url, w, h, false));
     ev->add(*widget);
     widget->set_halign(Gtk::ALIGN_START);
     widget->set_size_request(w, h);
 
     AttachEventHandlers(*ev);
     AddClickHandler(ev, url);
-    HandleImage(w, h, *widget, proxy_url);
 
     return ev;
 }
@@ -606,18 +576,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
 void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
-}
-
-void ChatMessageItemContainer::HandleImage(int w, int h, Gtk::Image &img, std::string url) {
-    m_img_loadmap[url] = { &img, { w, h } };
-    // ask the chatwindow to call UpdateImage because dealing with lifetimes sucks
-    Glib::signal_idle().connect(sigc::bind(sigc::mem_fun(*this, &ChatMessageItemContainer::EmitImageLoad), url));
-}
-
-void ChatMessageItemContainer::OnEmbedImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
-    int w, h;
-    m_embed_img->get_size_request(w, h);
-    m_embed_img->property_pixbuf() = pixbuf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
 }
 
 Glib::ustring ChatMessageItemContainer::GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
@@ -984,10 +942,6 @@ ChatMessageItemContainer::type_signal_action_reaction_add ChatMessageItemContain
 
 ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemContainer::signal_action_reaction_remove() {
     return m_signal_action_reaction_remove;
-}
-
-ChatMessageItemContainer::type_signal_image_load ChatMessageItemContainer::signal_image_load() {
-    return m_signal_image_load;
 }
 
 void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
