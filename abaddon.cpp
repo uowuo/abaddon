@@ -82,6 +82,9 @@ int Abaddon::StartGTK() {
     m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
     m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
     m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
+    m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
+    m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
+    m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
     m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
     m_user_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_ban));
     m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
@@ -91,6 +94,7 @@ int Abaddon::StartGTK() {
     m_user_menu->append(*m_user_menu_ban);
     m_user_menu->append(*m_user_menu_kick);
     m_user_menu->append(*m_user_menu_open_dm);
+    m_user_menu->append(*m_user_menu_roles);
     m_user_menu->append(*m_user_menu_copy_id);
     m_user_menu->show_all();
 
@@ -241,7 +245,30 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     m_shown_user_menu_id = id;
     m_shown_user_menu_guild_id = guild_id;
 
+    const auto guild = m_discord.GetGuild(guild_id);
     const auto me = m_discord.GetUserData().ID;
+    const auto user = m_discord.GetMember(id, guild_id);
+
+    for (const auto child : m_user_menu_roles_submenu->get_children())
+        delete child;
+    if (guild.has_value() && user.has_value()) {
+        m_user_menu_roles->set_visible(true);
+        for (const auto role : user->GetSortedRoles()) {
+            auto *item = Gtk::manage(new Gtk::MenuItem(role.Name));
+            if (role.Color != 0) {
+                Gdk::RGBA color;
+                color.set_red(((role.Color & 0xFF0000) >> 16) / 255.0);
+                color.set_green(((role.Color & 0x00FF00) >> 8) / 255.0);
+                color.set_blue(((role.Color & 0x0000FF) >> 0) / 255.0);
+                color.set_alpha(1.0);
+                item->override_color(color);
+            }
+            item->show();
+            m_user_menu_roles_submenu->append(*item);
+        }
+    } else
+        m_user_menu_roles->set_visible(false);
+
     if (me == id) {
         m_user_menu_ban->set_sensitive(false);
         m_user_menu_kick->set_sensitive(false);

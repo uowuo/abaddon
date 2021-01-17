@@ -87,6 +87,8 @@ protected:
     Gtk::MenuItem *m_user_menu_kick;
     Gtk::MenuItem *m_user_menu_copy_id;
     Gtk::MenuItem *m_user_menu_open_dm;
+    Gtk::MenuItem *m_user_menu_roles;
+    Gtk::Menu *m_user_menu_roles_submenu;
 
     void on_user_menu_insert_mention();
     void on_user_menu_ban();

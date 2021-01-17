@@ -2,6 +2,7 @@
 #include "snowflake.hpp"
 #include "json.hpp"
 #include "user.hpp"
+#include "role.hpp"
 #include <string>
 #include <vector>
 
@@ -13,6 +14,8 @@ struct GuildMember {
     std::optional<std::string> PremiumSince; // null
     bool IsDeafened;
     bool IsMuted;
+
+    std::vector<RoleData> GetSortedRoles() const;
 
     friend void from_json(const nlohmann::json &j, GuildMember &m);
     static GuildMember from_update_json(const nlohmann::json &j);
