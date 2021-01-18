@@ -4,9 +4,6 @@
 LazyImage::LazyImage(int w, int h, bool use_placeholder)
     : m_width(w)
     , m_height(h) {
-    static int sidx = 0;
-    sidx++;
-    m_idx = sidx;
     if (use_placeholder)
         property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(w)->scale_simple(w, h, Gdk::INTERP_BILINEAR);
     signal_draw().connect(sigc::mem_fun(*this, &LazyImage::OnDraw));
@@ -16,9 +13,6 @@ LazyImage::LazyImage(const std::string &url, int w, int h, bool use_placeholder)
     : m_url(url)
     , m_width(w)
     , m_height(h) {
-    static int sidx = 0;
-    sidx++;
-    m_idx = sidx;
     if (use_placeholder)
         property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(w)->scale_simple(w, h, Gdk::INTERP_BILINEAR);
     signal_draw().connect(sigc::mem_fun(*this, &LazyImage::OnDraw));

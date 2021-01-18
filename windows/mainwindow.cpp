@@ -128,13 +128,12 @@ void MainWindow::UpdateComponents() {
     m_menu_discord_set_status.set_sensitive(discord_active);
 
     if (!discord_active) {
-        m_channel_list.Clear();
         m_chat.Clear();
         m_members.Clear();
     } else {
-        UpdateChannelListing();
         m_members.UpdateMemberList();
     }
+    UpdateChannelListing();
 }
 
 void MainWindow::UpdateMembers() {

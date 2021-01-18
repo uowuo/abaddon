@@ -25,7 +25,6 @@ protected:
     Gtk::Widget *CreateStickerComponent(const StickerData &data);
     Gtk::Widget *CreateReactionsComponent(const Message &data);
     Gtk::Widget *CreateReplyComponent(const Message &data);
-    void ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb);
 
     static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
@@ -107,9 +106,6 @@ public:
     void UpdateNameColor();
 
 protected:
-    void OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
-    void OnAnimatedAvatarLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf);
-
     void AttachUserMenuHandler(Gtk::Widget &widget);
 
     bool on_author_button_press(GdkEventButton *ev);

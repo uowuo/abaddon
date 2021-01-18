@@ -8,7 +8,6 @@
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
     MemberListUserRow(Snowflake guild_id, const UserData *data);
-    void SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
 
     Snowflake ID;
 
@@ -29,11 +28,7 @@ public:
     void SetActiveChannel(Snowflake id);
 
 private:
-    void UpdateMemberListInternal();
     void AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id);
-
-    std::mutex m_mutex;
-    Glib::Dispatcher m_update_member_list_dispatcher;
 
     Gtk::ScrolledWindow *m_main;
     Gtk::ListBox *m_listbox;

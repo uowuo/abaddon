@@ -13,7 +13,6 @@ private:
     bool OnDraw(const Cairo::RefPtr<Cairo::Context> &context);
 
     bool m_needs_request = true;
-    int m_idx;
     std::string m_url;
     int m_width;
     int m_height;

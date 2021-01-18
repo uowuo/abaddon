@@ -484,14 +484,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
             img->set_can_focus(false);
             box->add(*img);
         } else { // custom
-            const auto &pb = imgr.GetFromURLIfCached(reaction.Emoji.GetURL());
-            Gtk::Image *img;
-            if (pb) {
-                img = Gtk::manage(new Gtk::Image(pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR)));
-            } else {
-                img = Gtk::manage(new Gtk::Image(placeholder));
-                imgr.LoadFromURL(reaction.Emoji.GetURL(), sigc::bind<0>(sigc::mem_fun(*this, &ChatMessageItemContainer::ReactionUpdateImage), img));
-            }
+            auto img = Gtk::manage(new LazyImage(reaction.Emoji.GetURL(), 16, 16));
             img->set_can_focus(false);
             box->add(*img);
         }
@@ -572,10 +565,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
     }
 
     return box;
-}
-
-void ChatMessageItemContainer::ReactionUpdateImage(Gtk::Image *img, const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-    img->property_pixbuf() = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
 }
 
 Glib::ustring ChatMessageItemContainer::GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
@@ -973,11 +962,20 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     auto &img = Abaddon::Get().GetImageManager();
 
     m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
-    if (author->HasAvatar())
-        img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*this, &ChatMessageHeader::OnAvatarLoad));
+    if (author->HasAvatar()) {
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            m_static_avatar = pb;
+            m_avatar->property_pixbuf() = pb;
+        };
+        img.LoadFromURL(author->GetAvatarURL(), sigc::track_obj(cb, *this));
+    }
 
-    if (author->HasAnimatedAvatar())
-        img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::mem_fun(*this, &ChatMessageHeader::OnAnimatedAvatarLoad));
+    if (author->HasAnimatedAvatar()) {
+        auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            m_anim_avatar = pb;
+        };
+        img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::track_obj(cb, *this));
+    }
 
     get_style_context()->add_class("message-container");
     m_author->get_style_context()->add_class("message-container-author");
@@ -1087,15 +1085,6 @@ void ChatMessageHeader::UpdateNameColor() {
         md = "<span weight='bold' color='#eeeeee'>" + Glib::Markup::escape_text(user->Username) + "</span>";
 
     m_author->set_markup(md);
-}
-
-void ChatMessageHeader::OnAvatarLoad(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
-    m_static_avatar = pixbuf;
-    m_avatar->property_pixbuf() = pixbuf;
-}
-
-void ChatMessageHeader::OnAnimatedAvatarLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
-    m_anim_avatar = pixbuf;
 }
 
 void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {

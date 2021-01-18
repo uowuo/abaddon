@@ -62,13 +62,11 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
 
     if (data->Type == ChannelType::DM) {
         if (top_recipient.HasAvatar()) {
-            auto buf = Abaddon::Get().GetImageManager().GetFromURLIfCached(top_recipient.GetAvatarURL("png", "16"));
-            if (buf)
-                m_icon = Gtk::manage(new Gtk::Image(buf));
-            else {
-                m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-                Abaddon::Get().GetImageManager().LoadFromURL(top_recipient.GetAvatarURL("png", "16"), sigc::mem_fun(*this, &ChannelListRowDMChannel::OnImageLoad));
-            }
+            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+            };
+            Abaddon::Get().GetImageManager().LoadFromURL(top_recipient.GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
         } else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
         }
@@ -88,11 +86,6 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     m_ev->add(*m_box);
     add(*m_ev);
     show_all_children();
-}
-
-void ChannelListRowDMChannel::OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf) {
-    if (m_icon != nullptr)
-        m_icon->property_pixbuf() = buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
 }
 
 ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
@@ -129,21 +122,17 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     auto &img = Abaddon::Get().GetImageManager();
     if (data->HasIcon()) {
         if (data->HasAnimatedIcon() && show_animations) {
-            auto buf = img.GetAnimationFromURLIfCached(data->GetIconURL("gif", "32"), 24, 24);
-            if (buf)
-                m_icon = Gtk::manage(new Gtk::Image(buf));
-            else {
-                m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
-                img.LoadAnimationFromURL(data->GetIconURL("gif", "32"), 24, 24, sigc::mem_fun(*this, &ChannelListRowGuild::OnAnimatedImageLoad));
-            }
+            m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
+            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+                m_icon->property_pixbuf_animation() = pb;
+            };
+            img.LoadAnimationFromURL(data->GetIconURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
         } else {
-            auto buf = img.GetFromURLIfCached(data->GetIconURL("png", "32"));
-            if (buf)
-                m_icon = Gtk::manage(new Gtk::Image(buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR)));
-            else {
-                m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
-                img.LoadFromURL(data->GetIconURL("png", "32"), sigc::mem_fun(*this, &ChannelListRowGuild::OnImageLoad));
-            }
+            m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
+            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+            };
+            img.LoadFromURL(data->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
         }
     } else {
         m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
@@ -164,14 +153,6 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     m_ev->add(*m_box);
     add(*m_ev);
     show_all_children();
-}
-
-void ChannelListRowGuild::OnImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &buf) {
-    m_icon->property_pixbuf() = buf->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-}
-
-void ChannelListRowGuild::OnAnimatedImageLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &buf) {
-    m_icon->property_pixbuf_animation() = buf;
 }
 
 ChannelListRowGuild::type_signal_copy_id ChannelListRowGuild::signal_copy_id() {
@@ -284,8 +265,6 @@ ChannelList::ChannelList() {
     m_main->add(*m_list);
     m_main->show_all();
 
-    m_update_dispatcher.connect(sigc::mem_fun(*this, &ChannelList::UpdateListingInternal));
-
     // maybe will regret doing it this way
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto cb = [this, &discord](Snowflake message_id) {
@@ -300,11 +279,6 @@ ChannelList::ChannelList() {
 
 Gtk::Widget *ChannelList::GetRoot() const {
     return m_main;
-}
-
-void ChannelList::UpdateListing() {
-    //std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_dispatcher.emit();
 }
 
 void ChannelList::UpdateNewGuild(Snowflake id) {
@@ -537,11 +511,6 @@ void ChannelList::UpdateGuild(Snowflake id) {
     m_list->insert(*new_row, index);
 }
 
-void ChannelList::Clear() {
-    //std::scoped_lock<std::mutex> guard(m_update_mutex);
-    m_update_dispatcher.emit();
-}
-
 void ChannelList::SetActiveChannel(Snowflake id) {
     auto it = m_id_to_row.find(id);
     if (it == m_id_to_row.end()) return;
@@ -707,7 +676,7 @@ void ChannelList::AddPrivateChannels() {
     }
 }
 
-void ChannelList::UpdateListingInternal() {
+void ChannelList::UpdateListing() {
     std::unordered_set<Snowflake> guilds = Abaddon::Get().GetDiscordClient().GetGuilds();
 
     auto children = m_list->get_children();

@@ -45,13 +45,7 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     show_all();
 }
 
-void MemberListUserRow::SetAvatarFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf) {
-    m_avatar->property_pixbuf() = pixbuf;
-}
-
 MemberList::MemberList() {
-    m_update_member_list_dispatcher.connect(sigc::mem_fun(*this, &MemberList::UpdateMemberListInternal));
-
     m_main = Gtk::manage(new Gtk::ScrolledWindow);
     m_listbox = Gtk::manage(new Gtk::ListBox);
 
@@ -74,7 +68,6 @@ void MemberList::Clear() {
 }
 
 void MemberList::SetActiveChannel(Snowflake id) {
-    std::scoped_lock<std::mutex> guard(m_mutex);
     m_chan_id = id;
     m_guild_id = Snowflake::Invalid;
     if (m_chan_id.IsValid()) {
@@ -84,11 +77,6 @@ void MemberList::SetActiveChannel(Snowflake id) {
 }
 
 void MemberList::UpdateMemberList() {
-    std::scoped_lock<std::mutex> guard(m_mutex);
-    m_update_member_list_dispatcher.emit();
-}
-
-void MemberList::UpdateMemberListInternal() {
     m_id_to_row.clear();
 
     auto children = m_listbox->get_children();

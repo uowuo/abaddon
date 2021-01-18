@@ -38,8 +38,6 @@ public:
     ChannelListRowDMChannel(const ChannelData *data);
 
 protected:
-    void OnImageLoad(Glib::RefPtr<Gdk::Pixbuf> buf);
-
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::TextView *m_lbl;
@@ -53,9 +51,6 @@ public:
     int GuildIndex;
 
 protected:
-    void OnImageLoad(const Glib::RefPtr<Gdk::Pixbuf> &buf);
-    void OnAnimatedImageLoad(const Glib::RefPtr<Gdk::PixbufAnimation> &buf);
-
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     Gtk::TextView *m_lbl;
@@ -139,7 +134,6 @@ public:
     void UpdateCreateDMChannel(Snowflake id);
     void UpdateCreateChannel(Snowflake id);
     void UpdateGuild(Snowflake id);
-    void Clear();
 
     void SetActiveChannel(Snowflake id);
 
@@ -165,10 +159,6 @@ protected:
     Gtk::Menu m_channel_menu;
     Gtk::MenuItem *m_channel_menu_copyid;
 
-    Glib::Dispatcher m_update_dispatcher;
-    //mutable std::mutex m_update_mutex;
-    //std::queue<std::unordered_set<Snowflake>> m_update_queue;
-
     // i would use one map but in really old guilds there can be a channel w/ same id as the guild so this hacky shit has to do
     std::unordered_map<Snowflake, ChannelListRow *> m_guild_id_to_row;
     std::unordered_map<Snowflake, ChannelListRow *> m_id_to_row;
@@ -176,8 +166,7 @@ protected:
 
     void InsertGuildAt(Snowflake id, int pos);
 
-    void AddPrivateChannels(); // retard moment
-    void UpdateListingInternal();
+    void AddPrivateChannels();
 
     void CheckBumpDM(Snowflake channel_id);
 
