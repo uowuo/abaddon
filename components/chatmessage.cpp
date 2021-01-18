@@ -1071,6 +1071,11 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     show_all();
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto role_update_cb = [this](const auto &) { UpdateNameColor(); };
+    discord.signal_role_update().connect(sigc::track_obj(role_update_cb, *this));
+    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateNameColor(); };
+    discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
     UpdateNameColor();
     AttachUserMenuHandler(*m_meta_ev);
     AttachUserMenuHandler(*m_avatar_ev);

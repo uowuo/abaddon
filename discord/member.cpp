@@ -26,12 +26,10 @@ std::vector<RoleData> GuildMember::GetSortedRoles() const {
     return roles;
 }
 
-GuildMember GuildMember::from_update_json(const nlohmann::json &j) {
-    GuildMember ret;
-    JS_D("roles", ret.Roles);
-    JS_D("user", ret.User);
-    JS_ON("nick", ret.Nickname);
-    JS_D("joined_at", ret.JoinedAt);
-    JS_ON("premium_since", ret.PremiumSince);
-    return ret;
+void GuildMember::update_from_json(const nlohmann::json &j) {
+    JS_RD("roles", Roles);
+    JS_RD("user", User);
+    JS_RD("nick", Nickname);
+    JS_RD("joined_at", JoinedAt);
+    JS_RD("premium_since", PremiumSince);
 }

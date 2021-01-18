@@ -735,8 +735,12 @@ void DiscordClient::HandleGatewayMessageDeleteBulk(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
     GuildMemberUpdateMessage data = msg.Data;
-    auto member = GuildMember::from_update_json(msg.Data); // meh
-    m_store.SetGuildMember(data.GuildID, data.User.ID, member);
+    auto cur = m_store.GetGuildMember(data.GuildID, data.User.ID);
+    if (cur.has_value()) {
+        cur->update_from_json(msg.Data);
+        m_store.SetGuildMember(data.GuildID, data.User.ID, *cur);
+    }
+    m_signal_guild_member_update.emit(data.GuildID, data.User.ID);
 }
 
 void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
@@ -1223,4 +1227,8 @@ DiscordClient::type_signal_reaction_remove DiscordClient::signal_reaction_remove
 
 DiscordClient::type_signal_typing_start DiscordClient::signal_typing_start() {
     return m_signal_typing_start;
+}
+
+DiscordClient::type_signal_guild_member_update DiscordClient::signal_guild_member_update() {
+    return m_signal_guild_member_update;
 }

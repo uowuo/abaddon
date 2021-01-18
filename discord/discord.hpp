@@ -218,6 +218,7 @@ public:
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_add;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_remove;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_typing_start; // user id, channel id
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_member_update; // guild id, user id
     typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -238,6 +239,7 @@ public:
     type_signal_reaction_add signal_reaction_add();
     type_signal_reaction_remove signal_reaction_remove();
     type_signal_typing_start signal_typing_start();
+    type_signal_guild_member_update signal_guild_member_update();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -259,6 +261,7 @@ protected:
     type_signal_reaction_add m_signal_reaction_add;
     type_signal_reaction_remove m_signal_reaction_remove;
     type_signal_typing_start m_signal_typing_start;
+    type_signal_guild_member_update m_signal_guild_member_update;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };
