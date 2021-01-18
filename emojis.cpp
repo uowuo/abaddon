@@ -25,6 +25,7 @@ bool EmojiResource::Load() {
         if (shortcode_strlen > 0) {
             std::fread(shortcode.data(), shortcode_strlen, 1, m_fp);
             m_shortcode_index[shortcode] = pattern_hex;
+            m_pattern_shortcode_index[pattern_hex] = shortcode;
         }
 
         std::fread(&len, 4, 1, m_fp);
@@ -118,6 +119,13 @@ void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
             searchpos -= (alen - blen);
         }
     }
+}
+
+std::string EmojiResource::GetShortCodeForPattern(const Glib::ustring &pattern) {
+    auto it = m_pattern_shortcode_index.find(pattern);
+    if (it != m_pattern_shortcode_index.end())
+        return it->second;
+    return "";
 }
 
 const std::vector<Glib::ustring> &EmojiResource::GetPatterns() const {

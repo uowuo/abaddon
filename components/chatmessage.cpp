@@ -475,6 +475,10 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
 
         // image
         if (is_stock) { // unicode/stock
+            const auto shortcode = emojis.GetShortCodeForPattern(reaction.Emoji.Name);
+            if (shortcode != "")
+                ev->set_tooltip_text(shortcode);
+
             const auto &pb = emojis.GetPixBuf(reaction.Emoji.Name);
             Gtk::Image *img;
             if (pb)
@@ -484,6 +488,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
             img->set_can_focus(false);
             box->add(*img);
         } else { // custom
+            ev->set_tooltip_text(reaction.Emoji.Name);
+
             auto img = Gtk::manage(new LazyImage(reaction.Emoji.GetURL(), 16, 16));
             img->set_can_focus(false);
             box->add(*img);
