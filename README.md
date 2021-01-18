@@ -37,7 +37,8 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 ### Downloads (from CI):
 - Windows: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-windows-RelWithDebInfo.zip)
 - MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned, unpackaged, requires gtkmm3 and [cpr](https://github.com/whoshuu/cpr/) (e.g. from homebrew)
-- Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3 and [cpr](https://github.com/whoshuu/cpr/). built on Ubuntu 18.04 + gcc9
+- Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3 and [cpr](https://github.com/whoshuu/cpr/). built on Ubuntu 18.04 + gcc9  
+
 Make sure you start from the directory where `css` and `res` are
 
 #### Dependencies:  
