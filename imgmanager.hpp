@@ -14,6 +14,7 @@ public:
     using callback_type = sigc::slot<void(Glib::RefPtr<Gdk::Pixbuf>)>;
 
     Cache &GetCache();
+    void ClearCache();
     void LoadFromURL(std::string url, callback_type cb);
     // animations need dimensions before loading since there is no (easy) way to scale a PixbufAnimation
     void LoadAnimationFromURL(std::string url, int w, int h, callback_anim_type cb);

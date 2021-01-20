@@ -9,6 +9,10 @@ Cache &ImageManager::GetCache() {
     return m_cache;
 }
 
+void ImageManager::ClearCache() {
+    m_cache.ClearCache();
+}
+
 Glib::RefPtr<Gdk::Pixbuf> ImageManager::ReadFileToPixbuf(std::string path) {
     const auto &data = ReadWholeFile(path);
     if (data.size() == 0) return Glib::RefPtr<Gdk::Pixbuf>(nullptr);

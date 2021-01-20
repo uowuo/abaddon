@@ -17,6 +17,11 @@ Cache::~Cache() {
         fprintf(stderr, "error removing tmp dir\n");
 }
 
+void Cache::ClearCache() {
+    for (const auto &path : std::filesystem::directory_iterator(m_tmp_path))
+        std::filesystem::remove_all(path);
+}
+
 std::string Cache::GetCachedName(std::string str) {
     uint32_t out;
     MurmurHash3_x86_32(str.c_str(), str.size(), 0, &out);

@@ -17,6 +17,7 @@ public:
     using callback_type = std::function<void(std::string)>;
     void GetFileFromURL(std::string url, callback_type cb);
     std::string GetPathIfCached(std::string url);
+    void ClearCache();
 
 private:
     std::string GetCachedName(std::string str);
