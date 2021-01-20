@@ -18,6 +18,10 @@ Store::Store(bool mem_store) {
         return;
     }
 
+    sqlite3_db_config(m_db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
+    sqlite3_exec(m_db, "VACUUM", nullptr, nullptr, nullptr);
+    sqlite3_db_config(m_db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+
     m_db_err = sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "enabling write-ahead-log failed: %s\n", sqlite3_errstr(m_db_err));
@@ -43,8 +47,10 @@ Store::~Store() {
         return;
     }
 
-    if (m_db_path != ":memory:")
-        std::filesystem::remove(m_db_path);
+    if (m_db_path != ":memory:") {
+        std::error_code ec;
+        std::filesystem::remove(m_db_path, ec);
+    }
 }
 
 bool Store::IsValid() const {
