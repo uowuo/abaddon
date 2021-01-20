@@ -12,10 +12,6 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
     const auto can_modify = discord.HasGuildPermission(self_id, id, Permission::MANAGE_GUILD);
 
     set_name("guild-info-pane");
-    set_margin_top(10);
-    set_margin_bottom(10);
-    set_margin_left(10);
-    set_margin_top(10);
 
     m_guild_name.set_sensitive(can_modify);
     m_guild_name.set_text(guild.Name);

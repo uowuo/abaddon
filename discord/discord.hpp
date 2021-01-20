@@ -86,6 +86,7 @@ public:
     std::optional<RoleData> GetRole(Snowflake id) const;
     std::optional<GuildData> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
+    std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
@@ -114,6 +115,13 @@ public:
     void SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
     void SetGuildIcon(Snowflake id, const std::string &data);
     void SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(bool success)> callback);
+    void UnbanUser(Snowflake guild_id, Snowflake user_id);
+    void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback);
+
+    // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)
+    std::vector<BanData> GetBansInGuild(Snowflake guild_id);
+    void FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback);
+    void FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
@@ -151,6 +159,8 @@ private:
     void HandleGatewayChannelRecipientAdd(const GatewayMessage &msg);
     void HandleGatewayChannelRecipientRemove(const GatewayMessage &msg);
     void HandleGatewayTypingStart(const GatewayMessage &msg);
+    void HandleGatewayGuildBanRemove(const GatewayMessage &msg);
+    void HandleGatewayGuildBanAdd(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
@@ -217,9 +227,11 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_role_delete;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_add;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_remove;
-    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_typing_start; // user id, channel id
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_typing_start;        // user id, channel id
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_member_update; // guild id, user id
-    typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_ban_remove;    // guild id, user id
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_ban_add;       // guild id, user id
+    typedef sigc::signal<void, bool> type_signal_disconnected;                        // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -240,6 +252,8 @@ public:
     type_signal_reaction_remove signal_reaction_remove();
     type_signal_typing_start signal_typing_start();
     type_signal_guild_member_update signal_guild_member_update();
+    type_signal_guild_ban_remove signal_guild_ban_remove();
+    type_signal_guild_ban_add signal_guild_ban_add();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -262,6 +276,8 @@ protected:
     type_signal_reaction_remove m_signal_reaction_remove;
     type_signal_typing_start m_signal_typing_start;
     type_signal_guild_member_update m_signal_guild_member_update;
+    type_signal_guild_ban_remove m_signal_guild_ban_remove;
+    type_signal_guild_ban_add m_signal_guild_ban_add;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

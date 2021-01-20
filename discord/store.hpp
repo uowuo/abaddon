@@ -26,6 +26,7 @@ public:
     void SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data);
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
     void SetEmoji(Snowflake id, const EmojiData &emoji);
+    void SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban);
 
     // slap const on everything even tho its not *really* const
 
@@ -37,9 +38,12 @@ public:
     std::optional<PermissionOverwrite> GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const;
     std::optional<RoleData> GetRole(Snowflake id) const;
     std::optional<UserData> GetUser(Snowflake id) const;
+    std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
+    std::vector<BanData> GetBans(Snowflake guild_id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
+    void ClearBan(Snowflake guild_id, Snowflake user_id);
 
     using users_type = std::unordered_map<Snowflake, UserData>;
     using channels_type = std::unordered_map<Snowflake, ChannelData>;
@@ -104,6 +108,10 @@ private:
     mutable sqlite3_stmt *m_get_guild_stmt;
     mutable sqlite3_stmt *m_set_chan_stmt;
     mutable sqlite3_stmt *m_get_chan_stmt;
+    mutable sqlite3_stmt *m_set_ban_stmt;
+    mutable sqlite3_stmt *m_get_ban_stmt;
+    mutable sqlite3_stmt *m_clear_ban_stmt;
+    mutable sqlite3_stmt *m_get_bans_stmt;
 };
 
 template<typename T>

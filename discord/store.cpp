@@ -51,6 +51,15 @@ bool Store::IsValid() const {
     return m_db_err == SQLITE_OK;
 }
 
+void Store::SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban) {
+    Bind(m_set_ban_stmt, 1, guild_id);
+    Bind(m_set_ban_stmt, 2, user_id);
+    Bind(m_set_ban_stmt, 3, ban.Reason);
+
+    if (!RunInsert(m_set_ban_stmt))
+        fprintf(stderr, "ban insert failed: %s\n", sqlite3_errstr(m_db_err));
+}
+
 void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     Bind(m_set_chan_stmt, 1, id);
     Bind(m_set_chan_stmt, 2, static_cast<int>(chan.Type));
@@ -271,6 +280,41 @@ void Store::SetUser(Snowflake id, const UserData &user) {
     if (!RunInsert(m_set_user_stmt)) {
         fprintf(stderr, "user insert failed: %s\n", sqlite3_errstr(m_db_err));
     }
+}
+
+std::optional<BanData> Store::GetBan(Snowflake guild_id, Snowflake user_id) const {
+    Bind(m_get_ban_stmt, 1, guild_id);
+    Bind(m_get_ban_stmt, 2, user_id);
+    if (!FetchOne(m_get_ban_stmt)) {
+        if (m_db_err != SQLITE_DONE)
+            fprintf(stderr, "error while fetching ban: %s\n", sqlite3_errstr(m_db_err));
+        Reset(m_get_ban_stmt);
+        return std::nullopt;
+    }
+
+    BanData ret;
+    ret.User.ID = user_id;
+    Get(m_get_ban_stmt, 2, ret.Reason);
+
+    Reset(m_get_ban_stmt);
+    return ret;
+}
+
+std::vector<BanData> Store::GetBans(Snowflake guild_id) const {
+    Bind(m_get_bans_stmt, 1, guild_id);
+
+    std::vector<BanData> ret;
+    while (FetchOne(m_get_bans_stmt)) {
+        auto &ban = ret.emplace_back();
+        Get(m_get_bans_stmt, 1, ban.User.ID);
+        Get(m_get_bans_stmt, 2, ban.Reason);
+    }
+
+    Reset(m_get_bans_stmt);
+
+    if (m_db_err != SQLITE_DONE)
+        fprintf(stderr, "error while fetching bans: %s\n", sqlite3_errstr(m_db_err));
+    return ret;
 }
 
 std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
@@ -595,6 +639,16 @@ void Store::ClearChannel(Snowflake id) {
     m_channels.erase(id);
 }
 
+void Store::ClearBan(Snowflake guild_id, Snowflake user_id) {
+    Bind(m_clear_ban_stmt, 1, guild_id);
+    Bind(m_clear_ban_stmt, 2, user_id);
+
+    if ((m_db_err = sqlite3_step(m_clear_ban_stmt)) != SQLITE_DONE)
+        printf("clearing ban failed: %s\n", sqlite3_errstr(m_db_err));
+
+    Reset(m_clear_ban_stmt);
+}
+
 const std::unordered_set<Snowflake> &Store::GetChannels() const {
     return m_channels;
 }
@@ -779,6 +833,15 @@ bool Store::CreateTables() {
         )
     )";
 
+    constexpr const char *create_bans = R"(
+        CREATE TABLE IF NOT EXISTS bans (
+            guild_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            reason TEXT,
+            PRIMARY KEY(user_id, guild_id)
+        )
+    )";
+
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
@@ -824,6 +887,12 @@ bool Store::CreateTables() {
     m_db_err = sqlite3_exec(m_db, create_channels, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create channels table: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_exec(m_db, create_bans, nullptr, nullptr, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to create bans table: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -909,6 +978,24 @@ bool Store::CreateStatements() {
 
     constexpr const char *get_chan = R"(
         SELECT * FROM channels WHERE id = ?
+    )";
+
+    constexpr const char *set_ban = R"(
+        REPLACE INTO bans VALUES (
+            ?, ?, ?
+        )
+    )";
+
+    constexpr const char *get_ban = R"(
+        SELECT * FROM bans WHERE guild_id = ? AND user_id = ?
+    )";
+
+    constexpr const char *clear_ban = R"(
+        DELETE FROM bans WHERE guild_id = ? AND user_id = ?
+    )";
+
+    constexpr const char *get_bans = R"(
+        SELECT * FROM bans WHERE guild_id = ?
     )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -1007,6 +1094,30 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, set_ban, -1, &m_set_ban_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare set ban statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_ban, -1, &m_get_ban_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get ban statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, clear_ban, -1, &m_clear_ban_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare clear ban statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_bans, -1, &m_get_bans_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get bans statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -1027,6 +1138,10 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_guild_stmt);
     sqlite3_finalize(m_set_chan_stmt);
     sqlite3_finalize(m_get_chan_stmt);
+    sqlite3_finalize(m_set_ban_stmt);
+    sqlite3_finalize(m_get_ban_stmt);
+    sqlite3_finalize(m_clear_ban_stmt);
+    sqlite3_finalize(m_get_bans_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {

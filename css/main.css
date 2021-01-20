@@ -175,11 +175,29 @@
 .app-window button {
     background: @secondary_color;
     color: @text_color;
-    border: 1px solid #1c2e40;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.app-window button:checked {
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 3px solid #39a2ed;
+    color: #ffffff;
+}
+
+.app-window button:not(:checked) {
+    border: 3px #0000ff;
 }
 
 .app-window.background {
     background: @background_color;
+}
+
+.app-window treeview {
+    color: @text_color;
+    background: @secondary_color;
 }
 
 .app-window listbox {

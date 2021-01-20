@@ -179,6 +179,10 @@ std::optional<GuildMember> DiscordClient::GetMember(Snowflake user_id, Snowflake
     return m_store.GetGuildMember(guild_id, user_id);
 }
 
+std::optional<BanData> DiscordClient::GetBan(Snowflake guild_id, Snowflake user_id) const {
+    return m_store.GetBan(guild_id, user_id);
+}
+
 std::optional<PermissionOverwrite> DiscordClient::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
     return m_store.GetPermissionOverwrite(channel_id, id);
 }
@@ -467,6 +471,49 @@ void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::sl
     });
 }
 
+void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id) {
+    UnbanUser(guild_id, user_id, [](const auto) {});
+}
+
+void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback) {
+    sigc::signal<void, bool> signal;
+    signal.connect(callback);
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback](const cpr::Response &response) {
+        callback(response.status_code == 204);
+    });
+}
+
+std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
+    return m_store.GetBans(guild_id);
+}
+
+void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback) {
+    sigc::signal<void, BanData> signal;
+    signal.connect(callback);
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback, guild_id](const cpr::Response &response) {
+        if (response.status_code != 200) return;
+        auto ban = nlohmann::json::parse(response.text).get<BanData>();
+        m_store.SetBan(guild_id, ban.User.ID, ban);
+        m_store.SetUser(ban.User.ID, ban.User);
+        callback(ban);
+    });
+}
+
+void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback) {
+    sigc::signal<void, std::vector<BanData>> signal;
+    signal.connect(callback);
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans", [this, callback, guild_id](const cpr::Response &response) {
+        auto bans = nlohmann::json::parse(response.text).get<std::vector<BanData>>();
+        m_store.BeginTransaction();
+        for (const auto &ban : bans) {
+            m_store.SetBan(guild_id, ban.User.ID, ban);
+            m_store.SetUser(ban.User.ID, ban.User);
+        }
+        m_store.EndTransaction();
+        callback(bans);
+    });
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;
@@ -623,6 +670,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::TYPING_START: {
                         HandleGatewayTypingStart(m);
                     } break;
+                    case GatewayEvent::GUILD_BAN_REMOVE: {
+                        HandleGatewayGuildBanRemove(m);
+                    } break;
+                    case GatewayEvent::GUILD_BAN_ADD: {
+                        HandleGatewayGuildBanAdd(m);
+                    } break;
                 }
             } break;
             default:
@@ -724,7 +777,7 @@ void DiscordClient::HandleGatewayMessageDeleteBulk(const GatewayMessage &msg) {
     for (const auto &id : data.IDs) {
         auto cur = m_store.GetMessage(id);
         if (!cur.has_value())
-            return;
+            continue;
 
         cur->SetDeleted();
         m_store.SetMessage(id, *cur);
@@ -928,6 +981,23 @@ void DiscordClient::HandleGatewayTypingStart(const GatewayMessage &msg) {
             m_store.SetUser(data.UserID, *data.Member->User);
     }
     m_signal_typing_start.emit(data.UserID, data.ChannelID);
+}
+
+void DiscordClient::HandleGatewayGuildBanRemove(const GatewayMessage &msg) {
+    GuildBanRemoveObject data = msg.Data;
+    m_store.SetUser(data.User.ID, data.User);
+    m_store.ClearBan(data.GuildID, data.User.ID);
+    m_signal_guild_ban_remove.emit(data.GuildID, data.User.ID);
+}
+
+void DiscordClient::HandleGatewayGuildBanAdd(const GatewayMessage &msg) {
+    GuildBanAddObject data = msg.Data;
+    BanData ban;
+    ban.Reason = "";
+    ban.User = data.User;
+    m_store.SetUser(data.User.ID, data.User);
+    m_store.SetBan(data.GuildID, data.User.ID, ban);
+    m_signal_guild_ban_add.emit(data.GuildID, data.User.ID);
 }
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
@@ -1151,6 +1221,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["CHANNEL_RECIPIENT_ADD"] = GatewayEvent::CHANNEL_RECIPIENT_ADD;
     m_event_map["CHANNEL_RECIPIENT_REMOVE"] = GatewayEvent::CHANNEL_RECIPIENT_REMOVE;
     m_event_map["TYPING_START"] = GatewayEvent::TYPING_START;
+    m_event_map["GUILD_BAN_REMOVE"] = GatewayEvent::GUILD_BAN_REMOVE;
+    m_event_map["GUILD_BAN_ADD"] = GatewayEvent::GUILD_BAN_ADD;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1231,4 +1303,12 @@ DiscordClient::type_signal_typing_start DiscordClient::signal_typing_start() {
 
 DiscordClient::type_signal_guild_member_update DiscordClient::signal_guild_member_update() {
     return m_signal_guild_member_update;
+}
+
+DiscordClient::type_signal_guild_ban_remove DiscordClient::signal_guild_ban_remove() {
+    return m_signal_guild_ban_remove;
+}
+
+DiscordClient::type_signal_guild_ban_add DiscordClient::signal_guild_ban_add() {
+    return m_signal_guild_ban_add;
 }

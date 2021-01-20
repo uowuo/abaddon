@@ -16,6 +16,7 @@
 #include "emoji.hpp"
 #include "activity.hpp"
 #include "sticker.hpp"
+#include "ban.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -54,6 +55,8 @@ enum class GatewayEvent : int {
     CHANNEL_RECIPIENT_ADD,
     CHANNEL_RECIPIENT_REMOVE,
     TYPING_START,
+    GUILD_BAN_REMOVE,
+    GUILD_BAN_ADD,
 };
 
 struct GatewayMessage {
@@ -352,4 +355,18 @@ struct ModifyGuildObject {
     std::optional<std::string> IconData;
 
     friend void to_json(nlohmann::json &j, const ModifyGuildObject &m);
+};
+
+struct GuildBanRemoveObject {
+    Snowflake GuildID;
+    UserData User;
+
+    friend void from_json(const nlohmann::json &j, GuildBanRemoveObject &m);
+};
+
+struct GuildBanAddObject {
+    Snowflake GuildID;
+    UserData User;
+
+    friend void from_json(const nlohmann::json &j, GuildBanAddObject &m);
 };

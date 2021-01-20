@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include "../discord/snowflake.hpp"
 #include "guildsettings/infopane.hpp"
+#include "guildsettings/banspane.hpp"
 
 class GuildSettingsWindow : public Gtk::Window {
 public:
@@ -13,6 +14,7 @@ private:
     Gtk::StackSwitcher m_switcher;
 
     GuildSettingsInfoPane m_pane_info;
+    GuildSettingsBansPane m_pane_bans;
 
     Snowflake GuildID;
 };

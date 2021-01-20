@@ -252,3 +252,13 @@ void to_json(nlohmann::json &j, const ModifyGuildObject &m) {
     JS_IF("name", m.Name);
     JS_IF("icon", m.IconData);
 }
+
+void from_json(const nlohmann::json &j, GuildBanRemoveObject &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("user", m.User);
+}
+
+void from_json(const nlohmann::json &j, GuildBanAddObject &m) {
+    JS_D("guild_id", m.GuildID);
+    JS_D("user", m.User);
+}
