@@ -18,9 +18,19 @@ Store::Store(bool mem_store) {
         return;
     }
 
-    sqlite3_db_config(m_db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
-    sqlite3_exec(m_db, "VACUUM", nullptr, nullptr, nullptr);
-    sqlite3_db_config(m_db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+    // clang-format off
+    m_db_err = sqlite3_exec(m_db, R"(
+        PRAGMA writable_schema = 1;
+        DELETE FROM sqlite_master;
+        PRAGMA writable_schema = 0;
+        VACUUM;
+        PRAGMA integrity_check;
+    )", nullptr, nullptr, nullptr);
+    // clang-format on
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to clear database: %s\n", sqlite3_errstr(m_db_err));
+        return;
+    }
 
     m_db_err = sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
