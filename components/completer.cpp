@@ -178,15 +178,17 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     };
 
     int i = 0;
-    for (const auto tmp : guild->Emojis) {
-        const auto emoji = discord.GetEmoji(tmp.ID);
-        if (!emoji.has_value()) continue;
-        if (emoji->IsAnimated.has_value() && *emoji->IsAnimated) continue;
-        if (term.size() > 0)
-            if (!StringContainsCaseless(emoji->Name, term)) continue;
-        if (i++ > MaxCompleterEntries) break;
+    if (guild->Emojis.has_value()) {
+        for (const auto tmp : *guild->Emojis) {
+            const auto emoji = discord.GetEmoji(tmp.ID);
+            if (!emoji.has_value()) continue;
+            if (emoji->IsAnimated.has_value() && *emoji->IsAnimated) continue;
+            if (term.size() > 0)
+                if (!StringContainsCaseless(emoji->Name, term)) continue;
+            if (i++ > MaxCompleterEntries) break;
 
-        const auto entry = make_entry(emoji->Name, "<:" + emoji->Name + ":" + std::to_string(emoji->ID) + ">", emoji->GetURL());
+            const auto entry = make_entry(emoji->Name, "<:" + emoji->Name + ":" + std::to_string(emoji->ID) + ">", emoji->GetURL());
+        }
     }
 
     // if <15 guild emojis match then load up stock

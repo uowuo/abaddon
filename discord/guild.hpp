@@ -9,6 +9,9 @@
 
 // a bot is apparently only supposed to receive the `id` and `unavailable` as false
 // but user tokens seem to get the full objects (minus users)
+
+// everythings optional cuz of muh partial guild object
+// anything not marked optional in https://discord.com/developers/docs/resources/guild#guild-object is guaranteed to be set when returned from Store::GetGuild
 struct GuildData {
     Snowflake ID;
     std::string Name;
@@ -16,44 +19,44 @@ struct GuildData {
     std::string Splash;                         // null
     std::optional<std::string> DiscoverySplash; // null
     std::optional<bool> IsOwner;
-    Snowflake OwnerID;
+    std::optional<Snowflake> OwnerID;
     std::optional<uint64_t> Permissions;
     std::optional<std::string> PermissionsNew;
     std::optional<std::string> VoiceRegion;
-    Snowflake AFKChannelID; // null
-    int AFKTimeout;
+    std::optional<Snowflake> AFKChannelID; // null
+    std::optional<int> AFKTimeout;
     std::optional<bool> IsEmbedEnabled;      // deprecated
     std::optional<Snowflake> EmbedChannelID; // null, deprecated
-    int VerificationLevel;
-    int DefaultMessageNotifications;
-    int ExplicitContentFilter;
-    std::vector<RoleData> Roles;   // only access id
-    std::vector<EmojiData> Emojis; // only access id
-    std::vector<std::string> Features;
-    int MFALevel;
-    Snowflake ApplicationID; // null
+    std::optional<int> VerificationLevel;
+    std::optional<int> DefaultMessageNotifications;
+    std::optional<int> ExplicitContentFilter;
+    std::optional<std::vector<RoleData>> Roles;   // only access id
+    std::optional<std::vector<EmojiData>> Emojis; // only access id
+    std::optional<std::vector<std::string>> Features;
+    std::optional<int> MFALevel;
+    std::optional<Snowflake> ApplicationID; // null
     std::optional<bool> IsWidgetEnabled;
     std::optional<Snowflake> WidgetChannelID; // null
-    Snowflake SystemChannelID;                // null
-    int SystemChannelFlags;
-    Snowflake RulesChannelID;            // null
-    std::optional<std::string> JoinedAt; // *
-    std::optional<bool> IsLarge;         // *
-    std::optional<bool> IsUnavailable;   // *
-    std::optional<int> MemberCount;      // *
+    std::optional<Snowflake> SystemChannelID; // null
+    std::optional<int> SystemChannelFlags;
+    std::optional<Snowflake> RulesChannelID; // null
+    std::optional<std::string> JoinedAt;     // *
+    std::optional<bool> IsLarge;             // *
+    std::optional<bool> IsUnavailable;       // *
+    std::optional<int> MemberCount;          // *
     // std::vector<VoiceStateData> VoiceStates; // opt*
     // std::vector<MemberData> Members; // opt* - incomplete anyways
     std::optional<std::vector<ChannelData>> Channels; // *
     // std::vector<PresenceUpdateData> Presences; // opt*
     std::optional<int> MaxPresences; // null
     std::optional<int> MaxMembers;
-    std::string VanityURL;   // null
-    std::string Description; // null
-    std::string BannerHash;  // null
-    int PremiumTier;
+    std::optional<std::string> VanityURL;   // null
+    std::optional<std::string> Description; // null
+    std::optional<std::string> BannerHash;  // null
+    std::optional<int> PremiumTier;
     std::optional<int> PremiumSubscriptionCount;
-    std::string PreferredLocale;
-    Snowflake PublicUpdatesChannelID; // null
+    std::optional<std::string> PreferredLocale;
+    std::optional<Snowflake> PublicUpdatesChannelID; // null
     std::optional<int> MaxVideoChannelUsers;
     std::optional<int> ApproximateMemberCount;
     std::optional<int> ApproximatePresenceCount;

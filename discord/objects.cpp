@@ -262,3 +262,23 @@ void from_json(const nlohmann::json &j, GuildBanAddObject &m) {
     JS_D("guild_id", m.GuildID);
     JS_D("user", m.User);
 }
+
+void from_json(const nlohmann::json &j, InviteCreateObject &m) {
+    JS_D("channel_id", m.ChannelID);
+    JS_D("code", m.Code);
+    JS_D("created_at", m.CreatedAt);
+    JS_O("guild_id", m.GuildID);
+    JS_O("inviter", m.Inviter);
+    JS_D("max_age", m.MaxAge);
+    JS_D("max_uses", m.MaxUses);
+    JS_O("target_user", m.TargetUser);
+    JS_O("target_user_type", m.TargetUserType);
+    JS_D("temporary", m.IsTemporary);
+    JS_D("uses", m.Uses);
+}
+
+void from_json(const nlohmann::json &j, InviteDeleteObject &m) {
+    JS_D("channel_id", m.ChannelID);
+    JS_O("guild_id", m.GuildID);
+    JS_D("code", m.Code);
+}

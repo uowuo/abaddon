@@ -56,25 +56,21 @@ void JoinGuildDialog::on_entry_changed() {
 }
 
 void JoinGuildDialog::CheckCode() {
-    // clang-format off
-    Abaddon::Get().GetDiscordClient().FetchInviteData(
-        m_code,
-        [this](Invite invite) {
-                m_ok.set_sensitive(true);
-                if (invite.Members != -1)
-                    m_info.set_text(invite.Guild.Name + " (" + std::to_string(invite.Members) + " members)");
+    auto cb = [this](const std::optional<InviteData> &invite) {
+        if (invite.has_value()) {
+            m_ok.set_sensitive(true);
+            if (invite->Guild.has_value()) {
+                if (invite->MemberCount.has_value())
+                    m_info.set_text(invite->Guild->Name + " (" + std::to_string(*invite->MemberCount) + " members)");
                 else
-                    m_info.set_text(invite.Guild.Name);
-        },
-        [this](bool not_found) {
+                    m_info.set_text(invite->Guild->Name);
+            }
+        } else {
             m_ok.set_sensitive(false);
-            if (not_found)
-                m_info.set_text("Invalid invite");
-            else
-                m_info.set_text("HTTP error (try again)");
+            m_info.set_text("Invalid invite");
         }
-    );
-    // clang-format on
+    };
+    Abaddon::Get().GetDiscordClient().FetchInvite(m_code, sigc::track_obj(cb, *this));
 }
 
 bool JoinGuildDialog::IsCode(std::string str) {

@@ -64,6 +64,41 @@ std::string HumanReadableBytes(uint64_t bytes) {
     return std::to_string(bytes) + x[order];
 }
 
+int GetTimezoneOffset() {
+    std::time_t secs;
+    std::time(&secs);
+    std::tm *tptr = std::localtime(&secs);
+    std::time_t local_secs = std::mktime(tptr);
+    tptr = std::gmtime(&secs);
+    std::time_t gmt_secs = std::mktime(tptr);
+    return local_secs - gmt_secs;
+}
+
+std::string FormatISO8601(const std::string &in, int extra_offset, const std::string &fmt) {
+    int yr, mon, day, hr, min, sec, tzhr, tzmin;
+    float milli;
+    std::sscanf(in.c_str(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
+                &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin);
+    std::tm tm;
+    tm.tm_year = yr - 1900;
+    tm.tm_mon = mon - 1;
+    tm.tm_mday = day;
+    tm.tm_hour = hr;
+    tm.tm_min = min;
+    tm.tm_sec = sec;
+    tm.tm_wday = 0;
+    tm.tm_yday = 0;
+    tm.tm_isdst = -1;
+    int offset = GetTimezoneOffset();
+    tm.tm_sec += offset + extra_offset;
+    mktime(&tm);
+    std::stringstream ss;
+    const static std::locale locale("");
+    ss.imbue(locale);
+    ss << std::put_time(&tm, fmt.c_str());
+    return ss.str();
+}
+
 void ScrollListBoxToSelected(Gtk::ListBox &list) {
     auto cb = [&list]() -> bool {
         const auto selected = list.get_selected_row();

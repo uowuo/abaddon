@@ -148,12 +148,23 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
     Bind(m_set_guild_stmt, 11, guild.VerificationLevel);
     Bind(m_set_guild_stmt, 12, guild.DefaultMessageNotifications);
     std::vector<Snowflake> snowflakes;
-    for (const auto &x : guild.Roles) snowflakes.push_back(x.ID);
-    Bind(m_set_guild_stmt, 13, nlohmann::json(snowflakes).dump());
+    if (guild.Roles.has_value()) {
+        for (const auto &x : *guild.Roles) snowflakes.push_back(x.ID);
+        Bind(m_set_guild_stmt, 13, nlohmann::json(snowflakes).dump());
+    } else {
+        Bind(m_set_guild_stmt, 13, "[]"s);
+    }
     snowflakes.clear();
-    for (const auto &x : guild.Emojis) snowflakes.push_back(x.ID);
-    Bind(m_set_guild_stmt, 14, nlohmann::json(snowflakes).dump());
-    Bind(m_set_guild_stmt, 15, nlohmann::json(guild.Features).dump());
+    if (guild.Emojis.has_value()) {
+        for (const auto &x : *guild.Emojis) snowflakes.push_back(x.ID);
+        Bind(m_set_guild_stmt, 14, nlohmann::json(snowflakes).dump());
+    } else {
+        Bind(m_set_guild_stmt, 14, "[]"s);
+    }
+    if (guild.Features.has_value())
+        Bind(m_set_guild_stmt, 15, nlohmann::json(*guild.Features).dump());
+    else
+        Bind(m_set_guild_stmt, 15, "[]"s);
     Bind(m_set_guild_stmt, 16, guild.MFALevel);
     Bind(m_set_guild_stmt, 17, guild.ApplicationID);
     Bind(m_set_guild_stmt, 18, guild.IsWidgetEnabled);
@@ -430,11 +441,13 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     Get(m_get_guild_stmt, 11, ret.DefaultMessageNotifications);
     std::string tmp;
     Get(m_get_guild_stmt, 12, tmp);
+    ret.Roles.emplace();
     for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Roles.emplace_back().ID = id;
+        ret.Roles->emplace_back().ID = id;
     Get(m_get_guild_stmt, 13, tmp);
+    ret.Emojis.emplace();
     for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Emojis.emplace_back().ID = id;
+        ret.Emojis->emplace_back().ID = id;
     Get(m_get_guild_stmt, 14, tmp);
     ret.Features = nlohmann::json::parse(tmp).get<std::vector<std::string>>();
     Get(m_get_guild_stmt, 15, ret.MFALevel);

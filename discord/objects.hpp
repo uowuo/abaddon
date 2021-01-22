@@ -57,6 +57,8 @@ enum class GatewayEvent : int {
     TYPING_START,
     GUILD_BAN_REMOVE,
     GUILD_BAN_ADD,
+    INVITE_CREATE,
+    INVITE_DELETE,
 };
 
 struct GatewayMessage {
@@ -369,4 +371,28 @@ struct GuildBanAddObject {
     UserData User;
 
     friend void from_json(const nlohmann::json &j, GuildBanAddObject &m);
+};
+
+struct InviteCreateObject {
+    Snowflake ChannelID;
+    std::string Code;
+    std::string CreatedAt;
+    std::optional<Snowflake> GuildID;
+    std::optional<UserData> Inviter;
+    int MaxAge;
+    int MaxUses;
+    UserData TargetUser;
+    std::optional<ETargetUserType> TargetUserType;
+    bool IsTemporary;
+    int Uses;
+
+    friend void from_json(const nlohmann::json &j, InviteCreateObject &m);
+};
+
+struct InviteDeleteObject {
+    Snowflake ChannelID;
+    std::optional<Snowflake> GuildID;
+    std::string Code;
+
+    friend void from_json(const nlohmann::json &j, InviteDeleteObject &m);
 };

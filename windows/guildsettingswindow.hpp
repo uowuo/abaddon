@@ -3,6 +3,7 @@
 #include "../discord/snowflake.hpp"
 #include "guildsettings/infopane.hpp"
 #include "guildsettings/banspane.hpp"
+#include "guildsettings/invitespane.hpp"
 
 class GuildSettingsWindow : public Gtk::Window {
 public:
@@ -15,6 +16,7 @@ private:
 
     GuildSettingsInfoPane m_pane_info;
     GuildSettingsBansPane m_pane_bans;
+    GuildSettingsInvitesPane m_pane_invites;
 
     Snowflake GuildID;
 };

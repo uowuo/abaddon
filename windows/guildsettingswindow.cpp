@@ -5,7 +5,8 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
     , GuildID(id)
     , m_pane_info(id)
-    , m_pane_bans(id) {
+    , m_pane_bans(id)
+    , m_pane_invites(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
 
@@ -36,7 +37,10 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
 
     m_pane_info.show();
     m_pane_bans.show();
+    m_pane_invites.show();
 
+    m_stack.set_transition_duration(100);
+    m_stack.set_transition_type(Gtk::STACK_TRANSITION_TYPE_CROSSFADE);
     m_stack.set_margin_top(10);
     m_stack.set_margin_bottom(10);
     m_stack.set_margin_left(10);
@@ -44,6 +48,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
 
     m_stack.add(m_pane_info, "info", "Info");
     m_stack.add(m_pane_bans, "bans", "Bans");
+    m_stack.add(m_pane_invites, "invites", "Invites");
     m_stack.show();
 
     m_main.add(m_switcher);
