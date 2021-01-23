@@ -101,7 +101,7 @@ std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
 void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback) {
     sigc::signal<void, std::optional<InviteData>> signal;
     signal.connect(callback);
-    m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, callback](cpr::Response r) {
+    m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, callback](http::response_type r) {
         if (!CheckCode(r)) {
             if (r.status_code == 404)
                 callback(std::nullopt);
@@ -114,7 +114,7 @@ void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<
 
 void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
-    m_http.MakeGET(path, [this, id, cb](cpr::Response r) {
+    m_http.MakeGET(path, [this, id, cb](const http::response_type &r) {
         if (!CheckCode(r)) return;
 
         std::vector<Message> msgs;
@@ -137,7 +137,7 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(cons
 
 void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
-    m_http.MakeGET(path, [this, channel_id, cb](cpr::Response r) {
+    m_http.MakeGET(path, [this, channel_id, cb](http::response_type r) {
         if (!CheckCode(r)) return;
 
         std::vector<Message> msgs;
@@ -453,7 +453,7 @@ void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, sigc::
     obj.Name = name;
     sigc::signal<void, bool> signal;
     signal.connect(callback);
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const cpr::Response &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const http::response_type &r) {
         const auto success = r.status_code == 200;
         signal.emit(success);
     });
@@ -468,7 +468,7 @@ void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::sl
     obj.IconData = data;
     sigc::signal<void, bool> signal;
     signal.connect(callback);
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const cpr::Response &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const http::response_type &r) {
         const auto success = r.status_code == 200;
         signal.emit(success);
     });
@@ -481,7 +481,7 @@ void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id) {
 void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback) {
     sigc::signal<void, bool> signal;
     signal.connect(callback);
-    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback](const cpr::Response &response) {
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback](const http::response_type &response) {
         callback(response.status_code == 204);
     });
 }
@@ -493,7 +493,7 @@ void DiscordClient::DeleteInvite(const std::string &code) {
 void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback) {
     sigc::signal<void, bool> signal;
     signal.connect(callback);
-    m_http.MakeDELETE("/invites/" + code, [this, callback](const cpr::Response &response) {
+    m_http.MakeDELETE("/invites/" + code, [this, callback](const http::response_type &response) {
         callback(CheckCode(response));
     });
 }
@@ -505,7 +505,7 @@ std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
 void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback) {
     sigc::signal<void, BanData> signal;
     signal.connect(callback);
-    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback, guild_id](const cpr::Response &response) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto ban = nlohmann::json::parse(response.text).get<BanData>();
         m_store.SetBan(guild_id, ban.User.ID, ban);
@@ -517,7 +517,7 @@ void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::s
 void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback) {
     sigc::signal<void, std::vector<BanData>> signal;
     signal.connect(callback);
-    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans", [this, callback, guild_id](const cpr::Response &response) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans", [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto bans = nlohmann::json::parse(response.text).get<std::vector<BanData>>();
         m_store.BeginTransaction();
@@ -533,7 +533,7 @@ void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vect
 void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback) {
     sigc::signal<void, std::vector<InviteData>> signal;
     signal.connect(callback);
-    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/invites", [this, callback, guild_id](const cpr::Response &response) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/invites", [this, callback, guild_id](const http::response_type &response) {
         // store?
         if (!CheckCode(response)) return;
         auto invites = nlohmann::json::parse(response.text).get<std::vector<InviteData>>();
@@ -1235,6 +1235,15 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
 bool DiscordClient::CheckCode(const cpr::Response &r) {
     if (r.status_code >= 300 || r.error) {
         fprintf(stderr, "api request to %s failed with status code %d\n", r.url.c_str(), r.status_code);
+        return false;
+    }
+
+    return true;
+}
+
+bool DiscordClient::CheckCode(const http::response_type &r) {
+    if (r.status_code >= 300 || r.error) {
+        fprintf(stderr, "api request to %s failed with status code %d: %s\n", r.url.c_str(), r.status_code, r.error_string.c_str());
         return false;
     }
 

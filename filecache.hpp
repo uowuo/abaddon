@@ -1,13 +1,12 @@
 #pragma once
-#include <cpr/cpr.h>
 #include <functional>
 #include <string>
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
+#include <future>
 #include "util.hpp"
-
-// todo throttle requests and keep track of active requests to stop redundant requests
+#include "http.hpp"
 
 class Cache {
 public:
@@ -23,7 +22,7 @@ private:
     std::string GetCachedName(std::string str);
     void CleanupFutures();
     void RespondFromPath(std::filesystem::path path, callback_type cb);
-    void OnResponse(const cpr::Response &r);
+    void OnResponse(const http::response_type &r);
 
     std::unique_ptr<Semaphore> m_semaphore;
 

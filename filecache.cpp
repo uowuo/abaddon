@@ -51,10 +51,10 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
             if (m_canceled) return;
             m_semaphore->wait();
             if (m_canceled) return;
-            const auto &r = cpr::Get(cpr::Url { url });
+            http::request req(http::REQUEST_GET, url);
             m_semaphore->notify();
             if (m_canceled) return;
-            OnResponse(r);
+            OnResponse(req.execute());
         });
         m_futures.push_back(std::move(future));
     }
@@ -79,7 +79,7 @@ void Cache::CleanupFutures() {
     }
 }
 
-void Cache::OnResponse(const cpr::Response &r) {
+void Cache::OnResponse(const http::response_type &r) {
     CleanupFutures(); // see above comment
     if (r.error || r.status_code > 300) return;
 

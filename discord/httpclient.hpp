@@ -8,6 +8,7 @@
 #include <mutex>
 #include <queue>
 #include <glibmm.h>
+#include "../http.hpp"
 
 class HTTPClient {
 public:
@@ -15,13 +16,14 @@ public:
 
     void SetUserAgent(std::string agent);
     void SetAuth(std::string auth);
-    void MakeDELETE(std::string path, std::function<void(cpr::Response r)> cb);
-    void MakeGET(std::string path, std::function<void(cpr::Response r)> cb);
-    void MakePATCH(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
-    void MakePOST(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
-    void MakePUT(std::string path, std::string payload, std::function<void(cpr::Response r)> cb);
+    void MakeDELETE(const std::string &path, std::function<void(http::response_type r)> cb);
+    void MakeGET(const std::string &path, std::function<void(http::response_type r)> cb);
+    void MakePATCH(const std::string &path, const std::string &payload, std::function<void(http::response_type r)> cb);
+    void MakePOST(const std::string &path, const std::string &payload, std::function<void(http::response_type r)> cb);
+    void MakePUT(const std::string &path, const std::string &payload, std::function<void(http::response_type r)> cb);
 
 private:
+    void OnResponseNew(const http::response_type &r, std::function<void(http::response_type r)> cb);
     void OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb);
     void CleanupFutures();
 

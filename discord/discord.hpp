@@ -1,6 +1,6 @@
 #pragma once
 #include "websocket.hpp"
-#include "http.hpp"
+#include "httpclient.hpp"
 #include "objects.hpp"
 #include "store.hpp"
 #include <sigc++/sigc++.h>
@@ -176,6 +176,7 @@ private:
     void HandleSocketClose(uint16_t code);
 
     bool CheckCode(const cpr::Response &r);
+    bool CheckCode(const http::response_type &r);
 
     void StoreMessageData(Message &msg);
 
