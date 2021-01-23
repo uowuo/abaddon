@@ -21,12 +21,14 @@ void HTTPClient::MakeDELETE(const std::string &path, std::function<void(http::re
         http::request req(http::REQUEST_DELETE, m_api_base + path);
         req.set_header("Authorization", m_authorization);
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
+#ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
         req.set_verify_ssl(false);
+#endif
 
         auto res = req.execute();
 
-        OnResponseNew(res, cb);
+        OnResponse(res, cb);
     }));
 }
 
@@ -38,12 +40,14 @@ void HTTPClient::MakePATCH(const std::string &path, const std::string &payload, 
         req.set_header("Content-Type", "application/json");
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
         req.set_body(payload);
+#ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
         req.set_verify_ssl(false);
+#endif
 
         auto res = req.execute();
 
-        OnResponseNew(res, cb);
+        OnResponse(res, cb);
     }));
 }
 
@@ -55,12 +59,14 @@ void HTTPClient::MakePOST(const std::string &path, const std::string &payload, s
         req.set_header("Content-Type", "application/json");
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
         req.set_body(payload);
+#ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
         req.set_verify_ssl(false);
+#endif
 
         auto res = req.execute();
 
-        OnResponseNew(res, cb);
+        OnResponse(res, cb);
     }));
 }
 
@@ -72,12 +78,14 @@ void HTTPClient::MakePUT(const std::string &path, const std::string &payload, st
         req.set_header("Content-Type", "application/json");
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
         req.set_body(payload);
+#ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
         req.set_verify_ssl(false);
+#endif
 
         auto res = req.execute();
 
-        OnResponseNew(res, cb);
+        OnResponse(res, cb);
     }));
 }
 
@@ -88,12 +96,14 @@ void HTTPClient::MakeGET(const std::string &path, std::function<void(http::respo
         req.set_header("Authorization", m_authorization);
         req.set_header("Content-Type", "application/json");
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
+#ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
         req.set_verify_ssl(false);
+#endif
 
         auto res = req.execute();
 
-        OnResponseNew(res, cb);
+        OnResponse(res, cb);
     }));
 }
 
@@ -113,7 +123,7 @@ void HTTPClient::RunCallbacks() {
     m_mutex.unlock();
 }
 
-void HTTPClient::OnResponseNew(const http::response_type &r, std::function<void(http::response_type r)> cb) {
+void HTTPClient::OnResponse(const http::response_type &r, std::function<void(http::response_type r)> cb) {
     CleanupFutures();
     try {
         m_mutex.lock();
@@ -121,18 +131,6 @@ void HTTPClient::OnResponseNew(const http::response_type &r, std::function<void(
         m_dispatcher.emit();
         m_mutex.unlock();
     } catch (const std::exception &e) {
-        fprintf(stderr, "error handling response (%s, code %d): %s\n", r.url.c_str(), r.status_code, e.what());
-    }
-}
-
-void HTTPClient::OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb) {
-    CleanupFutures();
-    try {
-        m_mutex.lock();
-        m_queue.push([this, r, cb] { cb(r); });
-        m_dispatcher.emit();
-        m_mutex.unlock();
-    } catch (std::exception &e) {
         fprintf(stderr, "error handling response (%s, code %d): %s\n", r.url.c_str(), r.status_code, e.what());
     }
 }

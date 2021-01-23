@@ -52,6 +52,7 @@ add_executable(abaddon ${ABADDON_SOURCES})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
+target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 	(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND

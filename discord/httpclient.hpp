@@ -1,5 +1,4 @@
 #pragma once
-#include <cpr/cpr.h>
 #include <functional>
 #include <future>
 #include <string>
@@ -23,8 +22,7 @@ public:
     void MakePUT(const std::string &path, const std::string &payload, std::function<void(http::response_type r)> cb);
 
 private:
-    void OnResponseNew(const http::response_type &r, std::function<void(http::response_type r)> cb);
-    void OnResponse(cpr::Response r, std::function<void(cpr::Response r)> cb);
+    void OnResponse(const http::response_type &r, std::function<void(http::response_type r)> cb);
     void CleanupFutures();
 
     mutable std::mutex m_mutex;

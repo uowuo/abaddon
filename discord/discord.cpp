@@ -1232,15 +1232,6 @@ void DiscordClient::HandleSocketOpen() {
 void DiscordClient::HandleSocketClose(uint16_t code) {
 }
 
-bool DiscordClient::CheckCode(const cpr::Response &r) {
-    if (r.status_code >= 300 || r.error) {
-        fprintf(stderr, "api request to %s failed with status code %d\n", r.url.c_str(), r.status_code);
-        return false;
-    }
-
-    return true;
-}
-
 bool DiscordClient::CheckCode(const http::response_type &r) {
     if (r.status_code >= 300 || r.error) {
         fprintf(stderr, "api request to %s failed with status code %d: %s\n", r.url.c_str(), r.status_code, r.error_string.c_str());
