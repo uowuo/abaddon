@@ -75,14 +75,19 @@ std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
                 folder_order.push_back(id);
         }
     }
+
     std::vector<Snowflake> ret;
     for (const auto &gid : guilds) {
         if (std::find(folder_order.begin(), folder_order.end(), gid) == folder_order.end()) {
             ret.push_back(gid);
         }
     }
+
+    std::sort(ret.rbegin(), ret.rend());
+
     for (const auto &gid : folder_order)
         ret.push_back(gid);
+
     return ret;
 }
 
