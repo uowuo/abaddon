@@ -20,7 +20,7 @@ jobs:
       - name: Fetch dependencies
         uses: lukka/run-vcpkg@main
         with:
-          vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket
+          vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket curl
           vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
           vcpkgTriplet: x64-windows
 
