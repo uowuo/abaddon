@@ -10,7 +10,6 @@ set(USE_OPEN_SSL TRUE)
 
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
-find_package(cpr REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(gtkmm REQUIRED)
@@ -51,9 +50,9 @@ file(GLOB ABADDON_SOURCES
 
 add_executable(abaddon ${ABADDON_SOURCES})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
-target_include_directories(abaddon PUBLIC ${CPR_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
+target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 	(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -87,6 +86,5 @@ endif()
 target_link_libraries(abaddon ${SQLite3_LIBRARIES})
 target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})
-target_link_libraries(abaddon ${CPR_LIBRARY})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})

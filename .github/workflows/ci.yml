@@ -20,7 +20,7 @@ jobs:
       - name: Fetch dependencies
         uses: lukka/run-vcpkg@main
         with:
-          vcpkgArguments: gtkmm nlohmann-json cpr zlib sqlite3 glibmm openssl ixwebsocket
+          vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket curl
           vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
           vcpkgTriplet: x64-windows
 
@@ -71,7 +71,6 @@ jobs:
         run: |
           brew install gtkmm3
           brew install nlohmann-json
-          brew install cpr
 
       - name: Build
         uses: lukka/run-cmake@main
@@ -110,15 +109,6 @@ jobs:
         run: |
           mkdir deps
           cd deps
-          git clone https://github.com/whoshuu/cpr
-          cd cpr
-          git checkout 9ff9cef6c794ec3d52d94a62ca791e2f2babca45
-          mkdir build
-          cd build
-          cmake ..
-          make
-          sudo make install
-          cd ../..
           git clone https://github.com/nlohmann/json
           cd json
           git checkout db78ac1d7716f56fc9f1b030b715f872f93964e4

@@ -13,7 +13,7 @@
 ### Building:
 #### Windows:
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
-2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows cpr:x64-windows zlib:x64-windows simpleini:x64-windows sqlite3:x64-windows openssl:x64-windows`
+2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows zlib:x64-windows simpleini:x64-windows sqlite3:x64-windows openssl:x64-windows curl:x64-windows`
 3. `mkdir build && cd build`
 4. `cmake -G"Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=c:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DVCPKG_TARGET_TRIPLET=x64-windows ..`
 5. Build with Visual Studio  
@@ -22,13 +22,13 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 
 #### Mac:
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
-2. `brew install gtkmm3 nlohmann-json cpr`
+2. `brew install gtkmm3 nlohmann-json`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
 
 #### Linux:
-1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`, [cpr](https://github.com/whoshuu/cpr), and [nlohmann-json](https://github.com/nlohmann/json)
+1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`, and [nlohmann-json](https://github.com/nlohmann/json)
 2. `git clone https://github.com/uowuo/abaddon && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
@@ -36,8 +36,8 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 
 ### Downloads (from CI):
 - Windows: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-windows-RelWithDebInfo.zip)
-- MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned, unpackaged, requires gtkmm3 and [cpr](https://github.com/whoshuu/cpr/) (e.g. from homebrew)
-- Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3 and [cpr](https://github.com/whoshuu/cpr/). built on Ubuntu 18.04 + gcc9  
+- MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned, unpackaged, requires gtkmm3 (e.g. from homebrew)
+- Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3. built on Ubuntu 18.04 + gcc9  
 
 Make sure you start from the directory where `css` and `res` are
 
@@ -45,7 +45,7 @@ Make sure you start from the directory where `css` and `res` are
 * [gtkmm](https://www.gtkmm.org/en/)
 * [JSON for Modern C++](https://github.com/nlohmann/json)
 * [IXWebSocket](https://github.com/machinezone/IXWebSocket)
-* [C++ Requests: Curl for People](https://github.com/whoshuu/cpr/)
+* [libcurl](https://curl.se/)
 * [zlib](https://zlib.net/)
 * [simpleini](https://github.com/brofield/simpleini)
 * [SQLite3](https://www.sqlite.org/index.html)
