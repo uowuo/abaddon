@@ -9,6 +9,7 @@ void from_json(const nlohmann::json &j, GuildMember &m) {
     JS_ON("premium_since", m.PremiumSince);
     JS_D("deaf", m.IsDeafened);
     JS_D("mute", m.IsMuted);
+    JS_O("user_id", m.UserID);
 }
 
 std::vector<RoleData> GuildMember::GetSortedRoles() const {

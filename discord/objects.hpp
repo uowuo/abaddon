@@ -170,6 +170,7 @@ struct ReadyEventData {
     std::optional<std::string> AnalyticsToken;
     std::optional<int> FriendSuggestionCount;
     UserSettings Settings;
+    std::optional<std::vector<std::vector<GuildMember>>> MergedMembers;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt

@@ -780,15 +780,27 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
         ProcessNewGuild(g);
 
     m_store.BeginTransaction();
+
     for (const auto &dm : data.PrivateChannels) {
         m_store.SetChannel(dm.ID, dm);
         if (dm.Recipients.has_value())
             for (const auto &recipient : *dm.Recipients)
                 m_store.SetUser(recipient.ID, recipient);
     }
+
     if (data.Users.has_value())
         for (const auto &user : *data.Users)
             m_store.SetUser(user.ID, user);
+
+    if (data.MergedMembers.has_value()) {
+        for (int i = 0; i < data.MergedMembers->size(); i++) {
+            const auto guild_id = data.Guilds[i].ID;
+            for (const auto &member : data.MergedMembers.value()[i]) {
+                m_store.SetGuildMember(guild_id, *member.UserID, member);
+            }
+        }
+    }
+
     m_store.EndTransaction();
 
     m_session_id = data.SessionID;

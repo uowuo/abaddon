@@ -14,6 +14,7 @@ struct GuildMember {
     std::optional<std::string> PremiumSince; // null
     bool IsDeafened;
     bool IsMuted;
+    std::optional<Snowflake> UserID; // present in merged_members
 
     std::vector<RoleData> GetSortedRoles() const;
 

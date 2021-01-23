@@ -98,6 +98,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("user_settings", m.Settings);
     JS_D("private_channels", m.PrivateChannels);
     JS_O("users", m.Users);
+    JS_ON("merged_members", m.MergedMembers);
 }
 
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
