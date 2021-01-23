@@ -61,6 +61,8 @@ response request::execute() {
         response.error_string = "curl pointer is null";
     }
 
+    detail::check_init();
+
     std::string str;
     curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, m_method);
     curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());
