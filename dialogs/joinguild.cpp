@@ -11,6 +11,7 @@ JoinGuildDialog::JoinGuildDialog(Gtk::Window &parent)
     , m_info("Enter code") {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
+    get_style_context()->add_class("app-popup");
 
     Glib::signal_idle().connect(sigc::mem_fun(*this, &JoinGuildDialog::on_idle_slot));
 

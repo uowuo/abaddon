@@ -8,6 +8,7 @@ TokenDialog::TokenDialog(Gtk::Window &parent)
     , m_cancel("Cancel") {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
+    get_style_context()->add_class("app-popup");
 
     m_ok.signal_clicked().connect([&]() {
         m_token = m_entry.get_text();

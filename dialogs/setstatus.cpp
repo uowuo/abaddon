@@ -9,6 +9,7 @@ SetStatusDialog::SetStatusDialog(Gtk::Window &parent)
     , m_cancel("Cancel") {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
+    get_style_context()->add_class("app-popup");
 
     m_text.set_placeholder_text("Status text");
 
