@@ -477,7 +477,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     } else
         return;
     row->IsUserCollapsed = false;
-    if (guild_row->is_visible())
+    if (!guild_row->IsUserCollapsed)
         row->show();
     row->Parent = guild_row;
     guild_row->Children.insert(row);
