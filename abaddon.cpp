@@ -261,8 +261,9 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     for (const auto child : m_user_menu_roles_submenu->get_children())
         delete child;
     if (guild.has_value() && user.has_value()) {
-        m_user_menu_roles->set_visible(true);
-        for (const auto role : user->GetSortedRoles()) {
+        const auto roles = user->GetSortedRoles();
+        m_user_menu_roles->set_visible(roles.size() > 0);
+        for (const auto role : roles) {
             auto *item = Gtk::manage(new Gtk::MenuItem(role.Name));
             if (role.Color != 0) {
                 Gdk::RGBA color;
@@ -279,17 +280,17 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
         m_user_menu_roles->set_visible(false);
 
     if (me == id) {
-        m_user_menu_ban->set_sensitive(false);
-        m_user_menu_kick->set_sensitive(false);
-        m_user_menu_open_dm->set_sensitive(false);
+        m_user_menu_ban->set_visible(false);
+        m_user_menu_kick->set_visible(false);
+        m_user_menu_open_dm->set_visible(false);
     } else {
         const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
         const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
         const bool can_manage = m_discord.CanManageMember(guild_id, me, id);
 
-        m_user_menu_kick->set_sensitive(has_kick && can_manage);
-        m_user_menu_ban->set_sensitive(has_ban && can_manage);
-        m_user_menu_open_dm->set_sensitive(true);
+        m_user_menu_kick->set_visible(has_kick && can_manage);
+        m_user_menu_ban->set_visible(has_ban && can_manage);
+        m_user_menu_open_dm->set_visible(true);
     }
 
     m_user_menu->popup_at_pointer(event);
