@@ -144,16 +144,16 @@
 }
 
 .completer {
-	background-color: @secondary_color;
-	padding: 5px;
+    background-color: @secondary_color;
+    padding: 5px;
 }
 
 .completer-entry {
-	color: @text_color;
+    color: @text_color;
 }
 
 .completer-entry-image {
-	margin-right: 6px;
+    margin-right: 6px;
 }
 
 .typing-indicator {
@@ -200,8 +200,8 @@
     background: @secondary_color;
 }
 
-.app-window listbox {
-    background: @background_color;
+.app-popup list {
+    background: @secondary_color;
 }
 
 .app-window paned separator {

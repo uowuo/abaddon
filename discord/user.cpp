@@ -21,6 +21,10 @@ std::string UserData::GetMention() const {
     return "<@" + std::to_string(ID) + ">";
 }
 
+std::string UserData::GetEscapedString() const {
+    return Glib::Markup::escape_text(Username) + "#" + Discriminator;
+}
+
 void from_json(const nlohmann::json &j, UserData &m) {
     JS_D("id", m.ID);
     JS_D("username", m.Username);

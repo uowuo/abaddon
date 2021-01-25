@@ -6,7 +6,8 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     , GuildID(id)
     , m_pane_info(id)
     , m_pane_bans(id)
-    , m_pane_invites(id) {
+    , m_pane_invites(id)
+    , m_pane_audit_log(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
 
@@ -24,6 +25,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     set_title(guild.Name);
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
+    get_style_context()->add_class("app-popup");
 
     if (guild.HasIcon()) {
         Abaddon::Get().GetImageManager().LoadFromURL(guild.GetIconURL(), sigc::mem_fun(*this, &GuildSettingsWindow::set_icon));
@@ -38,6 +40,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_pane_info.show();
     m_pane_bans.show();
     m_pane_invites.show();
+    m_pane_audit_log.show();
 
     m_stack.set_transition_duration(100);
     m_stack.set_transition_type(Gtk::STACK_TRANSITION_TYPE_CROSSFADE);
@@ -49,6 +52,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_stack.add(m_pane_info, "info", "Info");
     m_stack.add(m_pane_bans, "bans", "Bans");
     m_stack.add(m_pane_invites, "invites", "Invites");
+    m_stack.add(m_pane_audit_log, "audit-log", "Audit Log");
     m_stack.show();
 
     m_main.add(m_switcher);

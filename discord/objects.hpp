@@ -17,6 +17,7 @@
 #include "activity.hpp"
 #include "sticker.hpp"
 #include "ban.hpp"
+#include "auditlog.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 

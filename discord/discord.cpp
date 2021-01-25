@@ -553,6 +553,22 @@ void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::v
     });
 }
 
+void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback) {
+    sigc::signal<void, AuditLogData> signal;
+    signal.connect(callback);
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/audit-logs", [this, callback](const http::response &response) {
+        if (!CheckCode(response)) return;
+        auto data = nlohmann::json::parse(response.text).get<AuditLogData>();
+
+        m_store.BeginTransaction();
+        for (const auto &user : data.Users)
+            m_store.SetUser(user.ID, user);
+        m_store.EndTransaction();
+
+        callback(data);
+    });
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;

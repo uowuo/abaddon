@@ -127,6 +127,8 @@ public:
     void FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback);
     void FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback);
 
+    void FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback);
+
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
 
