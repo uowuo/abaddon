@@ -408,6 +408,19 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                          Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) +
                          "</b>";
             } break;
+            case AuditLogActionType::MESSAGE_DELETE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                const auto count = *entry.Options->Count;
+                if (channel.has_value()) {
+                    markup = "<b>" + user.GetEscapedString() + "</b> " +
+                             "deleted <b>" + count + "</b> messages in <b>#" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = "<b>" + user.GetEscapedString() + "</b> " +
+                             "deleted <b>" + count + "</b> messages";
+                }
+            } break;
             case AuditLogActionType::MESSAGE_PIN: {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = "<b>" + user.GetEscapedString() + "</b> " +
