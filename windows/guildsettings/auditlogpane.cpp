@@ -266,7 +266,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto role = discord.GetRole(entry.TargetID);
                 markup = "<b>" + user.GetEscapedString() + "</b> " +
                          "updated the role <b>" +
-                         (role.has_value() ? Glib::Markup::escape_text(role->Name) : entry.TargetID) +
+                         (role.has_value() ? Glib::Markup::escape_text(role->Name) : Glib::ustring(entry.TargetID)) +
                          "</b>";
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
