@@ -7,6 +7,14 @@ DiscordClient::DiscordClient(bool mem_store)
     , m_decompress_buf(InflateChunkSize)
     , m_store(mem_store) {
     m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
+    auto dispatch_cb = [this]() {
+        m_generic_mutex.lock();
+        auto func = m_generic_queue.front();
+        m_generic_queue.pop();
+        m_generic_mutex.unlock();
+        func();
+    };
+    m_generic_dispatch.connect(dispatch_cb);
 
     m_websocket.signal_message().connect(sigc::mem_fun(*this, &DiscordClient::HandleGatewayMessageRaw));
     m_websocket.signal_open().connect(sigc::mem_fun(*this, &DiscordClient::HandleSocketOpen));
@@ -41,7 +49,7 @@ void DiscordClient::Stop() {
 
     m_websocket.Stop();
 
-    m_signal_disconnected.emit(false);
+    m_signal_disconnected.emit(false, GatewayCloseCode::UserDisconnect);
 }
 
 bool DiscordClient::IsStarted() const {
@@ -652,6 +660,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
             case GatewayOp::Reconnect: {
                 HandleGatewayReconnect(m);
             } break;
+            case GatewayOp::InvalidSession: {
+                HandleGatewayInvalidSession(m);
+            } break;
             case GatewayOp::Event: {
                 auto iter = m_event_map.find(m.Type);
                 if (iter == m_event_map.end()) {
@@ -1100,7 +1111,8 @@ void DiscordClient::HandleGatewayInviteDelete(const GatewayMessage &msg) {
 }
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
-    m_signal_disconnected.emit(true);
+    printf("received reconnect\n");
+    m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
     inflateEnd(&m_zstream);
     m_compressed_buf.clear();
 
@@ -1114,6 +1126,27 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
 
     m_heartbeat_acked = true;
     m_wants_resume = true;
+    m_websocket.StartConnection(DiscordGateway);
+}
+
+void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
+    printf("invalid session! re-identifying\n");
+
+    m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
+    inflateEnd(&m_zstream);
+    m_compressed_buf.clear();
+
+    std::memset(&m_zstream, 0, sizeof(m_zstream));
+    inflateInit2(&m_zstream, MAX_WBITS + 32);
+
+    m_heartbeat_acked = true;
+    m_wants_resume = false;
+
+    m_heartbeat_waiter.kill();
+    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+
+    m_websocket.Stop(1000);
+
     m_websocket.StartConnection(DiscordGateway);
 }
 
@@ -1263,6 +1296,28 @@ void DiscordClient::HandleSocketOpen() {
 }
 
 void DiscordClient::HandleSocketClose(uint16_t code) {
+    printf("got socket close code: %d\n", code);
+    auto close_code = static_cast<GatewayCloseCode>(code);
+    auto cb = [this, close_code]() {
+        inflateEnd(&m_zstream);
+        m_compressed_buf.clear();
+
+        m_heartbeat_waiter.kill();
+        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_client_connected = false;
+
+        m_store.ClearAll();
+        m_chan_to_message_map.clear();
+        m_guild_to_users.clear();
+
+        m_websocket.Stop();
+
+        m_signal_disconnected.emit(false, close_code);
+    };
+    m_generic_mutex.lock();
+    m_generic_queue.push(cb);
+    m_generic_dispatch.emit();
+    m_generic_mutex.unlock();
 }
 
 bool DiscordClient::CheckCode(const http::response_type &r) {

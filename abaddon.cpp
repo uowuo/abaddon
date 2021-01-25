@@ -38,6 +38,7 @@ Abaddon::Abaddon()
     m_discord.signal_guild_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
+    m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
         m_discord.signal_message_create().connect([this](Snowflake id) {
             const auto msg = m_discord.GetMessage(id);
@@ -231,6 +232,14 @@ void Abaddon::DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &pa
 
 void Abaddon::DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param) {
     m_main_window->UpdateChatReactionAdd(message_id, param);
+}
+
+void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code) {
+    m_main_window->UpdateComponents();
+    if (close_code == GatewayCloseCode::AuthenticationFailed) {
+        Gtk::MessageDialog dlg(*m_main_window, "Discord rejected your token", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.run();
+    }
 }
 
 const SettingsManager &Abaddon::GetSettings() const {

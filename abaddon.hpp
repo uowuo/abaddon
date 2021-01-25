@@ -71,6 +71,7 @@ public:
     void DiscordOnGuildUpdate(Snowflake guild_id);
     void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
+    void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
 
     const SettingsManager &GetSettings() const;
 

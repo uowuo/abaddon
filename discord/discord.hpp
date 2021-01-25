@@ -170,6 +170,7 @@ private:
     void HandleGatewayInviteCreate(const GatewayMessage &msg);
     void HandleGatewayInviteDelete(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
+    void HandleGatewayInvalidSession(const GatewayMessage &msg);
     void HeartbeatThread();
     void SendIdentify();
     void SendResume();
@@ -217,6 +218,10 @@ private:
     std::queue<std::string> m_msg_queue;
     void MessageDispatch();
 
+    mutable std::mutex m_generic_mutex;
+    Glib::Dispatcher m_generic_dispatch;
+    std::queue<std::function<void()>> m_generic_queue;
+
     // signals
 public:
     typedef sigc::signal<void> type_signal_gateway_ready;
@@ -241,7 +246,7 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_ban_add;       // guild id, user id
     typedef sigc::signal<void, InviteData> type_signal_invite_create;
     typedef sigc::signal<void, InviteDeleteObject> type_signal_invite_delete;
-    typedef sigc::signal<void, bool> type_signal_disconnected; // bool true if reconnecting
+    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();
