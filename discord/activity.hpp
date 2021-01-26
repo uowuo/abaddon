@@ -5,6 +5,13 @@
 #include "json.hpp"
 #include "snowflake.hpp"
 
+enum class PresenceStatus : uint8_t {
+    Online,
+    Offline,
+    Idle,
+    DND,
+};
+
 enum class ActivityType : int {
     Game = 0,
     Streaming = 1,
@@ -28,8 +35,8 @@ struct Bitwise<ActivityFlags> {
 };
 
 struct ActivityTimestamps {
-    std::optional<std::string> Start; // opt
-    std::optional<std::string> End;   // opt
+    std::optional<int> Start;
+    std::optional<int> End;
 
     friend void from_json(const nlohmann::json &j, ActivityTimestamps &m);
     friend void to_json(nlohmann::json &j, const ActivityTimestamps &m);
@@ -94,8 +101,9 @@ struct ActivityData {
 struct PresenceData {
     std::vector<ActivityData> Activities; // null (but never sent as such)
     std::string Status;
-    bool IsAFK;
-    int Since = 0;
+    std::optional<bool> IsAFK;
+    std::optional<int> Since;
 
+    friend void from_json(const nlohmann::json &j, PresenceData &m);
     friend void to_json(nlohmann::json &j, const PresenceData &m);
 };

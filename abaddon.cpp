@@ -484,10 +484,14 @@ void Abaddon::ActionSetStatus() {
     const auto status = dlg.GetStatusType();
     const auto activity_type = dlg.GetActivityType();
     const auto activity_name = dlg.GetActivityName();
-    ActivityData activity;
-    activity.Name = activity_name;
-    activity.Type = activity_type;
-    m_discord.UpdateStatus(status, false, activity);
+    if (activity_name == "") {
+        m_discord.UpdateStatus(status, false);
+    } else {
+        ActivityData activity;
+        activity.Name = activity_name;
+        activity.Type = activity_type;
+        m_discord.UpdateStatus(status, false, activity);
+    }
 }
 
 void Abaddon::ActionReactionAdd(Snowflake id, const Glib::ustring &param) {

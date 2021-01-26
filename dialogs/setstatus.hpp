@@ -6,7 +6,7 @@ class SetStatusDialog : public Gtk::Dialog {
 public:
     SetStatusDialog(Gtk::Window &parent);
     ActivityType GetActivityType() const;
-    std::string GetStatusType() const;
+    PresenceStatus GetStatusType() const;
     std::string GetActivityName() const;
 
 protected:

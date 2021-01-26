@@ -105,7 +105,8 @@ public:
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
-    void UpdateStatus(const std::string &status, bool is_afk, const ActivityData &obj);
+    void UpdateStatus(PresenceStatus status, bool is_afk);
+    void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
     void CreateDM(Snowflake user_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
@@ -131,6 +132,8 @@ public:
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
+
+    std::optional<PresenceStatus> GetUserStatus(Snowflake id) const;
 
 private:
     static const constexpr int InflateChunkSize = 0x10000;
@@ -192,6 +195,8 @@ private:
 
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
 
+    std::unordered_map<Snowflake, PresenceStatus> m_user_to_status;
+
     UserData m_user_data;
     UserSettings m_user_settings;
 
@@ -246,6 +251,7 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_ban_add;       // guild id, user id
     typedef sigc::signal<void, InviteData> type_signal_invite_create;
     typedef sigc::signal<void, InviteDeleteObject> type_signal_invite_delete;
+    typedef sigc::signal<void, Snowflake, PresenceStatus> type_signal_presence_update;
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -271,6 +277,7 @@ public:
     type_signal_guild_ban_add signal_guild_ban_add();
     type_signal_invite_create signal_invite_create();
     type_signal_invite_delete signal_invite_delete(); // safe to assume guild id is set
+    type_signal_presence_update signal_presence_update();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -297,6 +304,7 @@ protected:
     type_signal_guild_ban_add m_signal_guild_ban_add;
     type_signal_invite_create m_signal_invite_create;
     type_signal_invite_delete m_signal_invite_delete;
+    type_signal_presence_update m_signal_presence_update;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

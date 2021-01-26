@@ -68,21 +68,21 @@ void to_json(nlohmann::json &j, const UserData &m) {
     JS_IF("phone", m.Phone);
 }
 
-void UserData::update_from_json(const nlohmann::json &j, UserData &m) {
-    JS_RD("username", m.Username);
-    JS_RD("discriminator", m.Discriminator);
-    JS_RD("avatar", m.Avatar);
-    JS_RD("bot", m.IsBot);
-    JS_RD("system", m.IsSystem);
-    JS_RD("mfa_enabled", m.IsMFAEnabled);
-    JS_RD("locale", m.Locale);
-    JS_RD("verified", m.IsVerified);
-    JS_RD("email", m.Email);
-    JS_RD("flags", m.Flags);
-    JS_RD("premium_type", m.PremiumType);
-    JS_RD("public_flags", m.PublicFlags);
-    JS_RD("desktop", m.IsDesktop);
-    JS_RD("mobile", m.IsMobile);
-    JS_RD("nsfw_allowed", m.IsNSFWAllowed);
-    JS_RD("phone", m.Phone);
+void UserData::update_from_json(const nlohmann::json &j) {
+    JS_RD("username", Username);
+    JS_RD("discriminator", Discriminator);
+    JS_RD("avatar", Avatar);
+    JS_RD("bot", IsBot);
+    JS_RD("system", IsSystem);
+    JS_RD("mfa_enabled", IsMFAEnabled);
+    JS_RD("locale", Locale);
+    JS_RD("verified", IsVerified);
+    JS_RD("email", Email);
+    JS_RD("flags", Flags);
+    JS_RD("premium_type", PremiumType);
+    JS_RD("public_flags", PublicFlags);
+    JS_RD("desktop", IsDesktop);
+    JS_RD("mobile", IsMobile);
+    JS_RD("nsfw_allowed", IsNSFWAllowed);
+    JS_RD("phone", Phone);
 }

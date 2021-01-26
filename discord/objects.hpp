@@ -129,15 +129,15 @@ struct GuildMemberListUpdateMessage {
     };
 
     struct MemberItem : Item {
-        UserData User;                //
-        std::vector<Snowflake> Roles; //
-        // PresenceData Presence; //
+        UserData User;
+        std::vector<Snowflake> Roles;
+        std::optional<PresenceData> Presence;
         std::string PremiumSince; // opt
         std::string Nickname;     // opt
-        bool IsMuted;             //
-        std::string JoinedAt;     //
-        std::string HoistedRole;  // null
-        bool IsDefeaned;          //
+        bool IsMuted;
+        std::string JoinedAt;
+        std::string HoistedRole; // null
+        bool IsDefeaned;
 
         GuildMember GetAsMemberData() const;
 
@@ -177,7 +177,10 @@ struct LazyLoadRequestMessage {
 };
 
 struct UpdateStatusMessage {
-    PresenceData Presence;
+    int Since = 0;
+    std::vector<ActivityData> Activities;
+    PresenceStatus Status;
+    bool IsAFK = false;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
@@ -278,20 +281,20 @@ struct GuildMemberUpdateMessage {
     friend void from_json(const nlohmann::json &j, GuildMemberUpdateMessage &m);
 };
 
-struct ClientStatus {
-    std::string Desktop; // opt
-    std::string Mobile;  // opt
-    std::string Web;     // opt
+struct ClientStatusData {
+    std::optional<std::string> Desktop;
+    std::optional<std::string> Mobile;
+    std::optional<std::string> Web;
 
-    friend void from_json(const nlohmann::json &j, ClientStatus &m);
+    friend void from_json(const nlohmann::json &j, ClientStatusData &m);
 };
 
 struct PresenceUpdateMessage {
     nlohmann::json User; // the client updates an existing object from this data
-    Snowflake GuildID;   // opt
+    std::optional<Snowflake> GuildID;
     std::string StatusMessage;
-    // std::vector<ActivityData> Activities;
-    ClientStatus Status;
+    std::vector<ActivityData> Activities;
+    ClientStatusData ClientStatus;
 
     friend void from_json(const nlohmann::json &j, PresenceUpdateMessage &m);
 };

@@ -54,8 +54,17 @@ ActivityType SetStatusDialog::GetActivityType() const {
     return static_cast<ActivityType>(std::stoul(x));
 }
 
-std::string SetStatusDialog::GetStatusType() const {
-    return m_status_combo.get_active_id();
+PresenceStatus SetStatusDialog::GetStatusType() const {
+    const auto &x = m_status_combo.get_active_id();
+    if (x == "online")
+        return PresenceStatus::Online;
+    else if (x == "idle")
+        return PresenceStatus::Idle;
+    else if (x == "dnd")
+        return PresenceStatus::DND;
+    else if (x == "offline")
+        return PresenceStatus::Offline;
+    return PresenceStatus::Online;
 }
 
 std::string SetStatusDialog::GetActivityName() const {

@@ -401,13 +401,26 @@ void DiscordClient::BanUser(Snowflake user_id, Snowflake guild_id) {
     m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), "{}", [](auto) {});
 }
 
-void DiscordClient::UpdateStatus(const std::string &status, bool is_afk, const ActivityData &obj) {
+void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk) {
     UpdateStatusMessage msg;
-    msg.Presence.Status = status;
-    msg.Presence.IsAFK = is_afk;
-    msg.Presence.Activities.push_back(obj);
+    msg.Status = status;
+    msg.IsAFK = is_afk;
 
     m_websocket.Send(nlohmann::json(msg));
+    // fake message cuz we dont receive messages for ourself
+    m_user_to_status[m_user_data.ID] = status;
+    m_signal_presence_update.emit(m_user_data.ID, status);
+}
+
+void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj) {
+    UpdateStatusMessage msg;
+    msg.Status = status;
+    msg.IsAFK = is_afk;
+    msg.Activities.push_back(obj);
+
+    m_websocket.Send(nlohmann::json(msg));
+    m_user_to_status[m_user_data.ID] = status;
+    m_signal_presence_update.emit(m_user_data.ID, status);
 }
 
 void DiscordClient::CreateDM(Snowflake user_id) {
@@ -587,6 +600,14 @@ void DiscordClient::UpdateToken(std::string token) {
 void DiscordClient::SetUserAgent(std::string agent) {
     m_http.SetUserAgent(agent);
     m_websocket.SetUserAgent(agent);
+}
+
+std::optional<PresenceStatus> DiscordClient::GetUserStatus(Snowflake id) const {
+    auto it = m_user_to_status.find(id);
+    if (it != m_user_to_status.end())
+        return it->second;
+
+    return std::nullopt;
 }
 
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
@@ -882,11 +903,27 @@ void DiscordClient::HandleGatewayGuildMemberUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     PresenceUpdateMessage data = msg.Data;
-    auto cur = m_store.GetUser(data.User.at("id").get<Snowflake>());
+    const auto user_id = data.User.at("id").get<Snowflake>();
+
+    auto cur = m_store.GetUser(user_id);
     if (cur.has_value()) {
-        UserData::update_from_json(data.User, *cur);
+        cur->update_from_json(data.User);
         m_store.SetUser(cur->ID, *cur);
     }
+
+    PresenceStatus e;
+    if (data.StatusMessage == "online")
+        e = PresenceStatus::Online;
+    else if (data.StatusMessage == "offline")
+        e = PresenceStatus::Offline;
+    else if (data.StatusMessage == "idle")
+        e = PresenceStatus::Idle;
+    else if (data.StatusMessage == "dnd")
+        e = PresenceStatus::DND;
+
+    m_user_to_status[user_id] = e;
+
+    m_signal_presence_update.emit(user_id, e);
 }
 
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
@@ -1178,6 +1215,17 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
                     m_store.SetUser(member->User.ID, member->User);
                     AddUserToGuild(member->User.ID, data.GuildID);
                     m_store.SetGuildMember(data.GuildID, member->User.ID, member->GetAsMemberData());
+                    if (member->Presence.has_value()) {
+                        const auto &s = member->Presence->Status;
+                        if (s == "online")
+                            m_user_to_status[member->User.ID] = PresenceStatus::Online;
+                        else if (s == "offline")
+                            m_user_to_status[member->User.ID] = PresenceStatus::Offline;
+                        else if (s == "idle")
+                            m_user_to_status[member->User.ID] = PresenceStatus::Idle;
+                        else if (s == "dnd")
+                            m_user_to_status[member->User.ID] = PresenceStatus::DND;
+                    }
                 }
             }
         }
@@ -1475,4 +1523,8 @@ DiscordClient::type_signal_invite_create DiscordClient::signal_invite_create() {
 
 DiscordClient::type_signal_invite_delete DiscordClient::signal_invite_delete() {
     return m_signal_invite_delete;
+}
+
+DiscordClient::type_signal_presence_update DiscordClient::signal_presence_update() {
+    return m_signal_presence_update;
 }

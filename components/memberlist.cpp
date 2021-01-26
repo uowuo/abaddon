@@ -1,6 +1,8 @@
 #include "memberlist.hpp"
 #include "../abaddon.hpp"
 #include "../util.hpp"
+#include "lazyimage.hpp"
+#include "statusindicator.hpp"
 
 MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     ID = data->ID;
@@ -8,6 +10,9 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_label = Gtk::manage(new Gtk::Label);
     m_avatar = Gtk::manage(new LazyImage(16, 16));
+    m_status_indicator = Gtk::manage(new StatusIndicator(ID));
+
+    m_status_indicator->set_margin_start(3);
 
     if (data->HasAvatar())
         m_avatar->SetURL(data->GetAvatarURL("png"));
@@ -37,8 +42,10 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
         m_label->set_use_markup(true);
         m_label->set_markup("<i>[unknown user]</i>");
     }
+
     m_label->set_halign(Gtk::ALIGN_START);
     m_box->add(*m_avatar);
+    m_box->add(*m_status_indicator);
     m_box->add(*m_label);
     m_ev->add(*m_box);
     add(*m_ev);

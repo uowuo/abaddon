@@ -3,8 +3,9 @@
 #include <mutex>
 #include <unordered_map>
 #include "../discord/discord.hpp"
-#include "lazyimage.hpp"
 
+class LazyImage;
+class StatusIndicator;
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
     MemberListUserRow(Snowflake guild_id, const UserData *data);
@@ -15,6 +16,7 @@ private:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     LazyImage *m_avatar;
+    StatusIndicator *m_status_indicator;
     Gtk::Label *m_label;
 };
 

@@ -26,7 +26,7 @@ struct UserData {
 
     friend void from_json(const nlohmann::json &j, UserData &m);
     friend void to_json(nlohmann::json &j, const UserData &m);
-    static void update_from_json(const nlohmann::json &j, UserData &m);
+    void update_from_json(const nlohmann::json &j);
 
     bool HasAvatar() const;
     bool HasAnimatedAvatar() const;

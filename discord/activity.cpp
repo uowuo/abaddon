@@ -100,9 +100,17 @@ void to_json(nlohmann::json &j, const ActivityData &m) {
     JS_IF("flags", m.Flags);
 }
 
+void from_json(const nlohmann::json &j, PresenceData &m) {
+    JS_N("activities", m.Activities);
+    JS_D("status", m.Status);
+}
+
 void to_json(nlohmann::json &j, const PresenceData &m) {
     j["activities"] = m.Activities;
     j["status"] = m.Status;
-    j["afk"] = m.IsAFK;
-    j["since"] = m.Since;
+    JS_IF("afk", m.IsAFK);
+    if (m.Since.has_value())
+        j["since"] = *m.Since;
+    else
+        j["since"] = 0;
 }

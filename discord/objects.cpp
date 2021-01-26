@@ -44,6 +44,7 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem
     JS_N("hoisted_role", m.HoistedRole);
     JS_ON("premium_since", m.PremiumSince);
     JS_ON("nick", m.Nickname);
+    JS_ON("presence", m.Presence);
     m.m_member_data = j;
 }
 
@@ -85,7 +86,24 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
 
 void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
     j["op"] = GatewayOp::UpdateStatus;
-    j["d"] = m.Presence;
+    j["d"] = nlohmann::json::object();
+    j["d"]["since"] = m.Since;
+    j["d"]["activities"] = m.Activities;
+    j["d"]["afk"] = m.IsAFK;
+    switch (m.Status) {
+        case PresenceStatus::Online:
+            j["d"]["status"] = "online";
+            break;
+        case PresenceStatus::Offline:
+            j["d"]["status"] = "offline";
+            break;
+        case PresenceStatus::Idle:
+            j["d"]["status"] = "idle";
+            break;
+        case PresenceStatus::DND:
+            j["d"]["status"] = "dnd";
+            break;
+    }
 }
 
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
@@ -170,7 +188,7 @@ void from_json(const nlohmann::json &j, GuildMemberUpdateMessage &m) {
     JS_D("joined_at", m.JoinedAt);
 }
 
-void from_json(const nlohmann::json &j, ClientStatus &m) {
+void from_json(const nlohmann::json &j, ClientStatusData &m) {
     JS_O("desktop", m.Desktop);
     JS_O("mobile", m.Mobile);
     JS_O("web", m.Web);
@@ -180,8 +198,8 @@ void from_json(const nlohmann::json &j, PresenceUpdateMessage &m) {
     m.User = j.at("user");
     JS_O("guild_id", m.GuildID);
     JS_D("status", m.StatusMessage);
-    // JS_D("activities", m.Activities);
-    JS_D("client_status", m.Status);
+    JS_D("activities", m.Activities);
+    JS_D("client_status", m.ClientStatus);
 }
 
 void to_json(nlohmann::json &j, const CreateDMObject &m) {
