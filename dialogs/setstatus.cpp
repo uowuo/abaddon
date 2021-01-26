@@ -62,7 +62,7 @@ PresenceStatus SetStatusDialog::GetStatusType() const {
         return PresenceStatus::Idle;
     else if (x == "dnd")
         return PresenceStatus::DND;
-    else if (x == "offline")
+    else if (x == "invisible")
         return PresenceStatus::Offline;
     return PresenceStatus::Online;
 }
