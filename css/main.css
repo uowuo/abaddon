@@ -217,3 +217,19 @@
     background: @background_color;
     color: #cccccc;
 }
+
+.status-indicator.dnd {
+    color: #982929;
+}
+
+.status-indicator.online {
+    color: #43B581;
+}
+
+.status-indicator.offline {
+    color: #808080;
+}
+
+.status-indicator.idle {
+    color: #FAA61A;
+}

@@ -11,9 +11,11 @@ StatusIndicator::StatusIndicator(Snowflake user_id)
     : Glib::ObjectBase("statusindicator")
     , Gtk::Widget()
     , m_id(user_id)
-    , m_color(OfflineColor) {
+    , m_status(static_cast<PresenceStatus>(-1)) {
     set_has_window(true);
     set_name("status-indicator");
+
+    get_style_context()->add_class("status-indicator");
 
     Abaddon::Get().GetDiscordClient().signal_guild_member_list_update().connect(sigc::hide(sigc::mem_fun(*this, &StatusIndicator::CheckStatus)));
     auto cb = [this](Snowflake id, PresenceStatus status) {
@@ -29,26 +31,21 @@ StatusIndicator::~StatusIndicator() {
 
 void StatusIndicator::CheckStatus() {
     const auto status = Abaddon::Get().GetDiscordClient().GetUserStatus(m_id);
+    const auto last_status = m_status;
+    get_style_context()->remove_class("online");
+    get_style_context()->remove_class("dnd");
+    get_style_context()->remove_class("idle");
+    get_style_context()->remove_class("offline");
     if (status.has_value()) {
-        switch (*status) {
-            case PresenceStatus::Online:
-                m_color = OnlineColor;
-                break;
-            case PresenceStatus::Offline:
-                m_color = OfflineColor;
-                break;
-            case PresenceStatus::DND:
-                m_color = DNDColor;
-                break;
-            case PresenceStatus::Idle:
-                m_color = IdleColor;
-                break;
-        }
+        get_style_context()->add_class(GetPresenceString(*status));
+        m_status = *status;
     } else {
-        m_color = OfflineColor;
+        m_status = PresenceStatus::Offline;
+        get_style_context()->add_class("offline");
     }
 
-    queue_draw();
+    if (last_status != m_status)
+        queue_draw();
 }
 
 Gtk::SizeRequestMode StatusIndicator::get_request_mode_vfunc() const {
@@ -126,7 +123,9 @@ bool StatusIndicator::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     const auto width = allocation.get_width();
     const auto height = allocation.get_height();
 
-    cr->set_source_rgb(m_color.get_red(), m_color.get_green(), m_color.get_blue());
+    const auto color = get_style_context()->get_color(Gtk::STATE_FLAG_NORMAL);
+
+    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
     cr->arc(width / 2, height / 2, width / 3, 0.0, 2 * (4 * std::atan(1)));
     cr->close_path();
     cr->fill_preserve();

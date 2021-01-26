@@ -12,6 +12,20 @@ enum class PresenceStatus : uint8_t {
     DND,
 };
 
+constexpr inline const char *GetPresenceString(PresenceStatus s) {
+    switch (s) {
+        case PresenceStatus::Online:
+            return "online";
+        case PresenceStatus::Offline:
+            return "offline";
+        case PresenceStatus::Idle:
+            return "idle";
+        case PresenceStatus::DND:
+            return "dnd";
+    }
+    return "";
+}
+
 enum class ActivityType : int {
     Game = 0,
     Streaming = 1,

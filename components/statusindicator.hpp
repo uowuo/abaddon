@@ -1,6 +1,7 @@
 #pragma once
 #include <gtkmm.h>
 #include "../discord/snowflake.hpp"
+#include "../discord/activity.hpp"
 
 class StatusIndicator : public Gtk::Widget {
 public:
@@ -22,9 +23,8 @@ protected:
 
     Glib::RefPtr<Gdk::Window> m_window;
 
-private:
     void CheckStatus();
 
     Snowflake m_id;
-    Gdk::RGBA m_color;
+    PresenceStatus m_status;
 };
