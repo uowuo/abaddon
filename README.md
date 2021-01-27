@@ -100,6 +100,13 @@ Make sure you start from the directory where `css` and `res` are
 .members-row-role - Rows containing a role  
 .members-row-avatar - Contains the avatar for a row in the member list  
   
+.status-indicator - The status indicator  
+.online - Applied to status indicators when the associated user is online  
+.idle - Applied to status indicators when the associated user is away  
+.dnd - Applied to status indicators when the associated user is on do not disturb  
+.offline - Applied to status indicators when the associated user is offline  
+  
+  
 ### Settings
 Settings are configured (for now) by editing abaddon.ini  
 This listing is organized by section.  
