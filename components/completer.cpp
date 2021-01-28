@@ -158,8 +158,6 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto channel_id = m_channel_id_cb();
     const auto channel = discord.GetChannel(channel_id);
-    if (!channel->GuildID.has_value()) return;
-    const auto guild = discord.GetGuild(*channel->GuildID);
 
     const auto make_entry = [&](const Glib::ustring &name, const Glib::ustring &completion, const Glib::ustring &url = "") -> CompleterEntry * {
         const auto entry = CreateEntry(completion);
@@ -178,17 +176,20 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     };
 
     int i = 0;
-    if (guild->Emojis.has_value()) {
-        for (const auto tmp : *guild->Emojis) {
-            const auto emoji = discord.GetEmoji(tmp.ID);
-            if (!emoji.has_value()) continue;
-            if (emoji->IsAnimated.has_value() && *emoji->IsAnimated) continue;
-            if (term.size() > 0)
-                if (!StringContainsCaseless(emoji->Name, term)) continue;
-            if (i++ > MaxCompleterEntries) break;
+    if (channel->GuildID.has_value()) {
+        const auto guild = discord.GetGuild(*channel->GuildID);
 
-            const auto entry = make_entry(emoji->Name, "<:" + emoji->Name + ":" + std::to_string(emoji->ID) + ">", emoji->GetURL());
-        }
+        if (guild->Emojis.has_value())
+            for (const auto tmp : *guild->Emojis) {
+                const auto emoji = discord.GetEmoji(tmp.ID);
+                if (!emoji.has_value()) continue;
+                if (emoji->IsAnimated.has_value() && *emoji->IsAnimated) continue;
+                if (term.size() > 0)
+                    if (!StringContainsCaseless(emoji->Name, term)) continue;
+                if (i++ > MaxCompleterEntries) break;
+
+                const auto entry = make_entry(emoji->Name, "<:" + emoji->Name + ":" + std::to_string(emoji->ID) + ">", emoji->GetURL());
+            }
     }
 
     // if <15 guild emojis match then load up stock
