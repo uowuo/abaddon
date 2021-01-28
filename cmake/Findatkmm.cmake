@@ -38,7 +38,7 @@ find_library(ATKMM_LIBRARY
                            ${ATKMM_LIBRARY_NAME}/include)
 
 set(ATKMM_LIBRARIES    ${ATKMM_LIBRARY};${ATK_LIBRARIES})
-set(ATKMM_INCLUDE_DIRS ${ATKMM_INCLUDE_DIR};${ATKMM_CONFIG_INCLUDE_DIRS};${ATK_INCLUDE_DIRS})
+set(ATKMM_INCLUDE_DIRS ${ATKMM_INCLUDE_DIR};${ATKMM_CONFIG_INCLUDE_DIR};${ATK_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(atkmm
