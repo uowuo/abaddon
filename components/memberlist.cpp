@@ -4,6 +4,8 @@
 #include "lazyimage.hpp"
 #include "statusindicator.hpp"
 
+constexpr static const int MaxMemberListRows = 200;
+
 MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
@@ -137,11 +139,14 @@ void MemberList::UpdateMemberList() {
             user_to_color[id] = col_role->Color;
     }
 
-    auto add_user = [this, &user_to_color](const UserData *data) {
+    int num_rows = 0;
+    auto add_user = [this, &user_to_color, &num_rows](const UserData *data) -> bool {
+        if (num_rows++ > MaxMemberListRows) return false;
         auto *row = Gtk::manage(new MemberListUserRow(m_guild_id, data));
         m_id_to_row[data->ID] = row;
         AttachUserMenuHandler(row, data->ID);
         m_listbox->add(*row);
+        return true;
     };
 
     auto add_role = [this](std::string name) {
@@ -174,7 +179,7 @@ void MemberList::UpdateMemberList() {
         AlphabeticalSort(users.begin(), users.end(), [](const auto &e) { return e.Username; });
 
         for (const auto data : users)
-            add_user(&data);
+            if (!add_user(&data)) return;
     }
 
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
@@ -184,7 +189,7 @@ void MemberList::UpdateMemberList() {
     for (const auto &id : roleless_users) {
         const auto user = discord.GetUser(id);
         if (user.has_value())
-            add_user(&*user);
+            if (!add_user(&*user)) return;
     }
 }
 
