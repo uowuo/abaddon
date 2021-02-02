@@ -26,6 +26,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
+    get_style_context()->add_class("guild-settings-window");
 
     if (guild.HasIcon()) {
         Abaddon::Get().GetImageManager().LoadFromURL(guild.GetIconURL(), sigc::mem_fun(*this, &GuildSettingsWindow::set_icon));
@@ -59,4 +60,9 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_main.add(m_stack);
     m_main.show();
     add(m_main);
+}
+
+void GuildSettingsWindow::on_hide() {
+    Gtk::Window::on_hide();
+    delete this; // :x
 }
