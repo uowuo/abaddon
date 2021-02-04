@@ -421,6 +421,22 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                              "deleted <b>" + count + "</b> messages";
                 }
             } break;
+            case AuditLogActionType::MESSAGE_BULK_DELETE: {
+                const auto channel = discord.GetChannel(entry.TargetID);
+                if (channel.has_value()) {
+                    markup = "<b>" + user.GetEscapedString() + "</b> " +
+                             "deleted <b>" +
+                             *entry.Options->Count +
+                             "</b> messages in <b>#" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = "<b>" + user.GetEscapedString() + "</b> " +
+                             "deleted <b>" +
+                             *entry.Options->Count +
+                             "</b> messages";
+                }
+            } break;
             case AuditLogActionType::MESSAGE_PIN: {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = "<b>" + user.GetEscapedString() + "</b> " +
@@ -449,7 +465,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                    "</b>");
         }
 
-        if (extra_markup.size() == 1)
+        if (extra_markup.size() <= 1)
             expander->set_expanded(true);
 
         auto contents = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
