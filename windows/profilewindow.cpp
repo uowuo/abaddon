@@ -41,6 +41,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
         return false;
     });
 
+    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
     auto &img = Abaddon::Get().GetImageManager();
     m_avatar.property_pixbuf() = img.GetPlaceholder(64);
     if (user.HasAvatar()) {
@@ -49,7 +50,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
         };
         img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(icon_cb, *this));
 
-        if (user.HasAnimatedAvatar()) {
+        if (show_animations && user.HasAnimatedAvatar()) {
             auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
                 m_avatar.property_pixbuf_animation() = pb;
             };
