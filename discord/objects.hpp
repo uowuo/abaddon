@@ -464,7 +464,7 @@ struct UserNoteObject {
 struct UserSetNoteObject {
     std::string Note;
 
-    friend void to_json(nlohmann::json &j, UserSetNoteObject &m);
+    friend void to_json(nlohmann::json &j, const UserSetNoteObject &m);
 };
 
 struct UserNoteUpdateMessage {

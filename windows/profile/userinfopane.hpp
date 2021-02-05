@@ -2,6 +2,18 @@
 #include <gtkmm.h>
 #include "../../discord/objects.hpp"
 
+class ConnectionItem : public Gtk::EventBox {
+public:
+    ConnectionItem(const ConnectionData &connection);
+
+private:
+    Gtk::Overlay m_overlay;
+    Gtk::Box m_box;
+    Gtk::Label m_name;
+    Gtk::Image *m_image = nullptr;
+    Gtk::Image *m_check = nullptr;
+};
+
 class ConnectionsContainer : public Gtk::Grid {
 public:
     ConnectionsContainer();

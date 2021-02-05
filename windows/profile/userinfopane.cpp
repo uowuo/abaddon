@@ -2,6 +2,73 @@
 #include <unordered_set>
 #include "../../abaddon.hpp"
 
+ConnectionItem::ConnectionItem(const ConnectionData &conn)
+    : m_name(conn.Name)
+    , m_box(Gtk::ORIENTATION_HORIZONTAL) {
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+    try {
+        pixbuf = Gdk::Pixbuf::create_from_file("./res/" + conn.Type + ".png", 32, 32);
+    } catch (const Glib::Exception &e) {}
+    std::string url;
+    if (conn.Type == "github")
+        url = "https://github.com/" + conn.Name;
+    else if (conn.Type == "steam")
+        url = "https://steamcommunity.com/profiles/" + conn.ID;
+    else if (conn.Type == "twitch")
+        url = "https://twitch.tv/" + conn.Name;
+    else if (conn.Type == "twitter")
+        url = "https://twitter.com/i/user/" + conn.ID;
+    else if (conn.Type == "spotify")
+        url = "https://open.spotify.com/user/" + conn.ID;
+    else if (conn.Type == "reddit")
+        url = "https://reddit.com/u/" + conn.Name;
+    else if (conn.Type == "youtube")
+        url = "https://www.youtube.com/channel/" + conn.ID;
+    else if (conn.Type == "facebook")
+        url = "https://www.facebook.com/" + conn.ID;
+    if (pixbuf) {
+        m_image = Gtk::manage(new Gtk::Image(pixbuf));
+        m_image->get_style_context()->add_class("profile-connection-image");
+        m_box.add(*m_image);
+    }
+    m_box.set_halign(Gtk::ALIGN_START);
+    m_box.set_size_request(200, -1);
+    m_box.get_style_context()->add_class("profile-connection");
+    m_name.get_style_context()->add_class("profile-connection-label");
+    m_name.set_valign(Gtk::ALIGN_CENTER);
+    m_name.set_single_line_mode(true);
+    m_name.set_ellipsize(Pango::ELLIPSIZE_END);
+    m_box.add(m_name);
+    if (url != "") {
+        auto cb = [this, url](GdkEventButton *event) -> bool {
+            if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+                LaunchBrowser(url);
+                return true;
+            }
+            return false;
+        };
+        signal_button_press_event().connect(sigc::track_obj(cb, *this));
+        AddPointerCursor(*this);
+    }
+    m_overlay.add(m_box);
+    if (conn.IsVerified) {
+        try {
+            static auto pb = Gdk::Pixbuf::create_from_file("./res/checkmark.png", 24, 24);
+            m_check = Gtk::manage(new Gtk::Image(pb));
+            m_check->get_style_context()->add_class("profile-connection-check");
+            m_check->set_margin_end(25);
+            m_check->set_valign(Gtk::ALIGN_CENTER);
+            m_check->set_halign(Gtk::ALIGN_END);
+            m_check->show();
+            m_overlay.add_overlay(*m_check);
+        } catch (const Glib::Exception &e) {}
+    }
+    m_overlay.set_hexpand(false);
+    m_overlay.set_halign(Gtk::ALIGN_START);
+    add(m_overlay);
+    show_all_children();
+}
+
 ConnectionsContainer::ConnectionsContainer() {
     get_style_context()->add_class("profile-connections");
     set_column_homogeneous(true);
@@ -32,57 +99,9 @@ void ConnectionsContainer::SetConnections(const std::vector<ConnectionData> &con
     for (int i = 0; i < connections.size(); i++) {
         const auto &conn = connections[i];
         if (supported_services.find(conn.Type) == supported_services.end()) continue;
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-        try {
-            pixbuf = Gdk::Pixbuf::create_from_file("./res/" + conn.Type + ".png", 32, 32);
-        } catch (const Glib::Exception &e) {}
-        std::string url;
-        if (conn.Type == "github")
-            url = "https://github.com/" + conn.Name;
-        else if (conn.Type == "steam")
-            url = "https://steamcommunity.com/profiles/" + conn.ID;
-        else if (conn.Type == "twitch")
-            url = "https://twitch.tv/" + conn.Name;
-        else if (conn.Type == "twitter")
-            url = "https://twitter.com/i/user/" + conn.ID;
-        else if (conn.Type == "spotify")
-            url = "https://open.spotify.com/user/" + conn.ID;
-        else if (conn.Type == "reddit")
-            url = "https://reddit.com/u/" + conn.Name;
-        else if (conn.Type == "youtube")
-            url = "https://www.youtube.com/channel/" + conn.ID;
-        else if (conn.Type == "facebook")
-            url = "https://www.facebook.com/" + conn.ID;
-        auto *ev = Gtk::manage(new Gtk::EventBox);
-        auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        if (pixbuf) {
-            auto *img = Gtk::manage(new Gtk::Image(pixbuf));
-            img->get_style_context()->add_class("profile-connection-image");
-            box->add(*img);
-        }
-        auto *lbl = Gtk::manage(new Gtk::Label(conn.Name));
-        box->set_halign(Gtk::ALIGN_START);
-        box->set_size_request(200, -1);
-        box->get_style_context()->add_class("profile-connection");
-        lbl->get_style_context()->add_class("profile-connection-label");
-        lbl->set_valign(Gtk::ALIGN_CENTER);
-        lbl->set_single_line_mode(true);
-        lbl->set_ellipsize(Pango::ELLIPSIZE_END);
-        box->add(*lbl);
-        if (url != "") {
-            auto cb = [this, url](GdkEventButton *event) -> bool {
-                if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
-                    LaunchBrowser(url);
-                    return true;
-                }
-                return false;
-            };
-            ev->signal_button_press_event().connect(sigc::track_obj(cb, *ev));
-            AddPointerCursor(*ev);
-        }
-        ev->add(*box);
-        ev->show_all();
-        attach(*ev, i % 2, i / 2, 1, 1);
+        auto widget = Gtk::manage(new ConnectionItem(conn));
+        widget->show();
+        attach(*widget, i % 2, i / 2, 1, 1);
     }
 
     set_halign(Gtk::ALIGN_FILL);

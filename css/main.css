@@ -269,6 +269,11 @@
     padding-top: 5px;
 }
 
+.profile-notes-label {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 .profile-notes-text, .profile-notes-text text {
     background: @secondary_color;
 }
