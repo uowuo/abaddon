@@ -329,7 +329,7 @@ void from_json(const nlohmann::json &j, UserNoteObject &m) {
     JS_ON("user_id", m.UserID);
 }
 
-void to_json(nlohmann::json &j, UserSetNoteObject &m) {
+void to_json(nlohmann::json &j, const UserSetNoteObject &m) {
     j["note"] = m.Note;
 }
 
