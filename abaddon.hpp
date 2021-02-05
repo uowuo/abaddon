@@ -83,6 +83,7 @@ protected:
     void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
 
     Gtk::Menu *m_user_menu;
+    Gtk::MenuItem *m_user_menu_info;
     Gtk::MenuItem *m_user_menu_insert_mention;
     Gtk::MenuItem *m_user_menu_ban;
     Gtk::MenuItem *m_user_menu_kick;

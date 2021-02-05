@@ -182,3 +182,12 @@ bool IsURLViewableImage(const std::string &url) {
             return true;
     return false;
 }
+
+void AddPointerCursor(Gtk::Widget &widget) {
+    widget.signal_realize().connect([&widget]() {
+        auto window = widget.get_window();
+        auto display = window->get_display();
+        auto cursor = Gdk::Cursor::create(display, "pointer");
+        window->set_cursor(cursor);
+    });
+}

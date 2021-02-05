@@ -130,6 +130,11 @@ public:
 
     void FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback);
 
+    void FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback);
+    void FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback);
+    void SetUserNote(Snowflake user_id, std::string note);
+    void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback);
+
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
 
@@ -172,6 +177,7 @@ private:
     void HandleGatewayGuildBanAdd(const GatewayMessage &msg);
     void HandleGatewayInviteCreate(const GatewayMessage &msg);
     void HandleGatewayInviteDelete(const GatewayMessage &msg);
+    void HandleGatewayUserNoteUpdate(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
     void HeartbeatThread();
@@ -252,6 +258,7 @@ public:
     typedef sigc::signal<void, InviteData> type_signal_invite_create;
     typedef sigc::signal<void, InviteDeleteObject> type_signal_invite_delete;
     typedef sigc::signal<void, Snowflake, PresenceStatus> type_signal_presence_update;
+    typedef sigc::signal<void, Snowflake, std::string> type_signal_note_update;
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -278,6 +285,7 @@ public:
     type_signal_invite_create signal_invite_create();
     type_signal_invite_delete signal_invite_delete(); // safe to assume guild id is set
     type_signal_presence_update signal_presence_update();
+    type_signal_note_update signal_note_update();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -305,6 +313,7 @@ protected:
     type_signal_invite_create m_signal_invite_create;
     type_signal_invite_delete m_signal_invite_delete;
     type_signal_presence_update m_signal_presence_update;
+    type_signal_note_update m_signal_note_update;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

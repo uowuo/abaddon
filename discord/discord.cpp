@@ -112,8 +112,6 @@ std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
 }
 
 void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback) {
-    sigc::signal<void, std::optional<InviteData>> signal;
-    signal.connect(callback);
     m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, callback](http::response_type r) {
         if (!CheckCode(r)) {
             if (r.status_code == 404)
@@ -371,18 +369,16 @@ void DiscordClient::EditMessage(Snowflake channel_id, Snowflake id, std::string 
 
 void DiscordClient::SendLazyLoad(Snowflake id) {
     LazyLoadRequestMessage msg;
-    std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> c;
-    c[id] = {
+    msg.Channels.emplace();
+    msg.Channels.value()[id] = {
         std::make_pair(0, 99),
         std::make_pair(100, 199)
     };
-    msg.Channels = c;
     msg.GuildID = *GetChannel(id)->GuildID;
     msg.ShouldGetActivities = true;
     msg.ShouldGetTyping = true;
 
-    nlohmann::json j = msg;
-    m_websocket.Send(j);
+    m_websocket.Send(msg);
 }
 
 void DiscordClient::JoinGuild(std::string code) {
@@ -477,11 +473,9 @@ void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name) {
 void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(bool success)> callback) {
     ModifyGuildObject obj;
     obj.Name = name;
-    sigc::signal<void, bool> signal;
-    signal.connect(callback);
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const http::response_type &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &r) {
         const auto success = r.status_code == 200;
-        signal.emit(success);
+        callback(success);
     });
 }
 
@@ -492,11 +486,9 @@ void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data) {
 void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(bool success)> callback) {
     ModifyGuildObject obj;
     obj.IconData = data;
-    sigc::signal<void, bool> signal;
-    signal.connect(callback);
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, signal](const http::response_type &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &r) {
         const auto success = r.status_code == 200;
-        signal.emit(success);
+        callback(success);
     });
 }
 
@@ -505,8 +497,6 @@ void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id) {
 }
 
 void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback) {
-    sigc::signal<void, bool> signal;
-    signal.connect(callback);
     m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback](const http::response_type &response) {
         callback(response.status_code == 204);
     });
@@ -517,8 +507,6 @@ void DiscordClient::DeleteInvite(const std::string &code) {
 }
 
 void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback) {
-    sigc::signal<void, bool> signal;
-    signal.connect(callback);
     m_http.MakeDELETE("/invites/" + code, [this, callback](const http::response_type &response) {
         callback(CheckCode(response));
     });
@@ -529,8 +517,6 @@ std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
 }
 
 void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback) {
-    sigc::signal<void, BanData> signal;
-    signal.connect(callback);
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto ban = nlohmann::json::parse(response.text).get<BanData>();
@@ -541,8 +527,6 @@ void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::s
 }
 
 void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback) {
-    sigc::signal<void, std::vector<BanData>> signal;
-    signal.connect(callback);
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans", [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto bans = nlohmann::json::parse(response.text).get<std::vector<BanData>>();
@@ -557,8 +541,6 @@ void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vect
 }
 
 void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback) {
-    sigc::signal<void, std::vector<InviteData>> signal;
-    signal.connect(callback);
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/invites", [this, callback, guild_id](const http::response_type &response) {
         // store?
         if (!CheckCode(response)) return;
@@ -575,8 +557,6 @@ void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::v
 }
 
 void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback) {
-    sigc::signal<void, AuditLogData> signal;
-    signal.connect(callback);
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/audit-logs", [this, callback](const http::response &response) {
         if (!CheckCode(response)) return;
         auto data = nlohmann::json::parse(response.text).get<AuditLogData>();
@@ -587,6 +567,35 @@ void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogDa
         m_store.EndTransaction();
 
         callback(data);
+    });
+}
+
+void DiscordClient::FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback) {
+    m_http.MakeGET("/users/" + std::to_string(user_id) + "/profile", [this, callback](const http::response_type &response) {
+        if (!CheckCode(response)) return;
+        callback(nlohmann::json::parse(response.text).get<UserProfileData>());
+    });
+}
+
+void DiscordClient::FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback) {
+    m_http.MakeGET("/users/@me/notes/" + std::to_string(user_id), [this, callback](const http::response_type &response) {
+        if (response.status_code == 404) return;
+        if (!CheckCode(response)) return;
+        const auto note = nlohmann::json::parse(response.text).get<UserNoteObject>().Note;
+        if (note.has_value())
+            callback(*note);
+    });
+}
+
+void DiscordClient::SetUserNote(Snowflake user_id, std::string note) {
+    SetUserNote(user_id, note, [](auto) {});
+}
+
+void DiscordClient::SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback) {
+    UserSetNoteObject obj;
+    obj.Note = note;
+    m_http.MakePUT("/users/@me/notes/" + std::to_string(user_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(response.status_code == 204);
     });
 }
 
@@ -768,6 +777,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::INVITE_DELETE: {
                         HandleGatewayInviteDelete(m);
+                    } break;
+                    case GatewayEvent::USER_NOTE_UPDATE: {
+                        HandleGatewayUserNoteUpdate(m);
                     } break;
                 }
             } break;
@@ -1147,6 +1159,11 @@ void DiscordClient::HandleGatewayInviteDelete(const GatewayMessage &msg) {
     m_signal_invite_delete.emit(data);
 }
 
+void DiscordClient::HandleGatewayUserNoteUpdate(const GatewayMessage &msg) {
+    UserNoteUpdateMessage data = msg.Data;
+    m_signal_note_update.emit(data.ID, data.Note);
+}
+
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     printf("received reconnect\n");
     m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
@@ -1427,6 +1444,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_BAN_ADD"] = GatewayEvent::GUILD_BAN_ADD;
     m_event_map["INVITE_CREATE"] = GatewayEvent::INVITE_CREATE;
     m_event_map["INVITE_DELETE"] = GatewayEvent::INVITE_DELETE;
+    m_event_map["USER_NOTE_UPDATE"] = GatewayEvent::USER_NOTE_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1527,4 +1545,8 @@ DiscordClient::type_signal_invite_delete DiscordClient::signal_invite_delete() {
 
 DiscordClient::type_signal_presence_update DiscordClient::signal_presence_update() {
     return m_signal_presence_update;
+}
+
+DiscordClient::type_signal_note_update DiscordClient::signal_note_update() {
+    return m_signal_note_update;
 }

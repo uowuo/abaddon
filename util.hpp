@@ -46,6 +46,7 @@ bool IsURLViewableImage(const std::string &url);
 std::vector<uint8_t> ReadWholeFile(std::string path);
 std::string HumanReadableBytes(uint64_t bytes);
 std::string FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
+void AddPointerCursor(Gtk::Widget &widget);
 
 template<typename T>
 struct Bitwise {

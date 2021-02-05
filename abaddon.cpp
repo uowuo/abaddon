@@ -10,6 +10,7 @@
 #include "dialogs/setstatus.hpp"
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
+#include "windows/profilewindow.hpp"
 
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
@@ -84,6 +85,7 @@ int Abaddon::StartGTK() {
     m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
     m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
     m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
+    m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
     m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
     m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
     m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
@@ -91,6 +93,11 @@ int Abaddon::StartGTK() {
     m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
     m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
     m_user_menu_open_dm->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_open_dm));
+    m_user_menu_info->signal_activate().connect([this]() {
+        auto *window = new ProfileWindow(m_shown_user_menu_id);
+        window->show();
+    });
+    m_user_menu->append(*m_user_menu_info);
     m_user_menu->append(*m_user_menu_insert_mention);
     m_user_menu->append(*m_user_menu_ban);
     m_user_menu->append(*m_user_menu_kick);
@@ -503,7 +510,7 @@ void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
 }
 
 void Abaddon::ActionGuildSettings(Snowflake id) {
-    auto *window = new GuildSettingsWindow(id);
+    auto window = new GuildSettingsWindow(id);
     window->show();
 }
 

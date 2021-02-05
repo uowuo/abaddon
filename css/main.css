@@ -233,3 +233,57 @@
 .status-indicator.idle {
     color: #FAA61A;
 }
+
+.profile-main-container {
+    padding: 20px;
+}
+
+.profile-username {
+    margin-left: 10px;
+    font-size: 20px;
+}
+
+.profile-badge {
+    margin-right: 10px;
+}
+
+.profile-switcher {
+    padding-top: 5px;
+}
+
+.profile-connections {
+    margin-top: 10px;
+}
+
+.profile-connection {
+    background: @secondary_color;
+    border-radius: 15px;
+    margin-right: 20px;
+}
+
+.profile-connection box {
+    padding: 5px;
+}
+
+.profile-stack {
+    padding-top: 5px;
+}
+
+.profile-notes-text, .profile-notes-text text {
+    background: @secondary_color;
+}
+
+.profile-notes-text text {
+    border-radius: 5px;
+    border: 1px solid #36515e;
+    color: @text_color;
+    padding-bottom: 5px;
+}
+
+.profile-badges {
+    padding-left: 5px;
+}
+
+.app-window textview text {
+    caret-color: #ababab;
+}

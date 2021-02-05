@@ -44,6 +44,8 @@ file(GLOB ABADDON_SOURCES
 	"windows/*.cpp"
 	"windows/guildsettings/*.hpp"
 	"windows/guildsettings/*.cpp"
+	"windows/profile/*.hpp"
+	"windows/profile/*.cpp"
 	"dialogs/*.hpp"
 	"dialogs/*.cpp"
 )

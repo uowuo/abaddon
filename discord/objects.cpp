@@ -74,14 +74,15 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
     j["op"] = GatewayOp::LazyLoadRequest;
     j["d"] = nlohmann::json::object();
     j["d"]["guild_id"] = m.GuildID;
-    j["d"]["channels"] = nlohmann::json::object();
-    for (const auto &[key, chans] : m.Channels) { // apparently a map gets written as a list
-        j["d"]["channels"][std::to_string(key)] = chans;
+    if (m.Channels.has_value()) {
+        j["d"]["channels"] = nlohmann::json::object();
+        for (const auto &[key, chans] : *m.Channels)
+            j["d"]["channels"][std::to_string(key)] = chans;
     }
     j["d"]["typing"] = m.ShouldGetTyping;
     j["d"]["activities"] = m.ShouldGetActivities;
-    if (m.Members.size() > 0)
-        j["d"]["members"] = m.Members;
+    if (m.Members.has_value())
+        j["d"]["members"] = *m.Members;
 }
 
 void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
@@ -300,4 +301,39 @@ void from_json(const nlohmann::json &j, InviteDeleteObject &m) {
     JS_D("channel_id", m.ChannelID);
     JS_O("guild_id", m.GuildID);
     JS_D("code", m.Code);
+}
+
+void from_json(const nlohmann::json &j, ConnectionData &m) {
+    JS_D("id", m.ID);
+    JS_D("type", m.Type);
+    JS_D("name", m.Name);
+    JS_D("verified", m.IsVerified);
+}
+
+void from_json(const nlohmann::json &j, MutualGuildData &m) {
+    JS_D("id", m.ID);
+    JS_ON("nick", m.Nick);
+}
+
+void from_json(const nlohmann::json &j, UserProfileData &m) {
+    JS_D("connected_accounts", m.ConnectedAccounts);
+    JS_D("mutual_guilds", m.MutualGuilds);
+    JS_ON("premium_guild_since", m.PremiumGuildSince);
+    JS_ON("premium_since", m.PremiumSince);
+    JS_D("user", m.User);
+}
+
+void from_json(const nlohmann::json &j, UserNoteObject &m) {
+    JS_ON("note", m.Note);
+    JS_ON("note_user_id", m.NoteUserID);
+    JS_ON("user_id", m.UserID);
+}
+
+void to_json(nlohmann::json &j, UserSetNoteObject &m) {
+    j["note"] = m.Note;
+}
+
+void from_json(const nlohmann::json &j, UserNoteUpdateMessage &m) {
+    JS_D("note", m.Note);
+    JS_D("id", m.ID);
 }

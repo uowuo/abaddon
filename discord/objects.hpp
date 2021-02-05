@@ -61,6 +61,7 @@ enum class GatewayEvent : int {
     GUILD_BAN_ADD,
     INVITE_CREATE,
     INVITE_DELETE,
+    USER_NOTE_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -170,8 +171,8 @@ struct LazyLoadRequestMessage {
     Snowflake GuildID;
     bool ShouldGetTyping = false;
     bool ShouldGetActivities = false;
-    std::vector<std::string> Members;                                         // snowflake?
-    std::unordered_map<Snowflake, std::vector<std::pair<int, int>>> Channels; // channel ID -> range of sidebar
+    std::optional<std::vector<std::string>> Members;                                         // snowflake?
+    std::optional<std::unordered_map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
 
     friend void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m);
 };
@@ -423,4 +424,52 @@ struct InviteDeleteObject {
     std::string Code;
 
     friend void from_json(const nlohmann::json &j, InviteDeleteObject &m);
+};
+
+struct ConnectionData {
+    std::string ID;
+    std::string Type;
+    std::string Name;
+    bool IsVerified;
+
+    friend void from_json(const nlohmann::json &j, ConnectionData &m);
+};
+
+struct MutualGuildData {
+    Snowflake ID;
+    std::optional<std::string> Nick; // null
+
+    friend void from_json(const nlohmann::json &j, MutualGuildData &m);
+};
+
+struct UserProfileData {
+    std::vector<ConnectionData> ConnectedAccounts;
+    std::vector<MutualGuildData> MutualGuilds;
+    std::optional<std::string> PremiumGuildSince; // null
+    std::optional<std::string> PremiumSince;      // null
+    UserData User;
+
+    friend void from_json(const nlohmann::json &j, UserProfileData &m);
+};
+
+struct UserNoteObject {
+    // idk if these can be null or missing but i play it safe
+    std::optional<std::string> Note;
+    std::optional<Snowflake> NoteUserID;
+    std::optional<Snowflake> UserID;
+
+    friend void from_json(const nlohmann::json &j, UserNoteObject &m);
+};
+
+struct UserSetNoteObject {
+    std::string Note;
+
+    friend void to_json(nlohmann::json &j, UserSetNoteObject &m);
+};
+
+struct UserNoteUpdateMessage {
+    std::string Note;
+    Snowflake ID;
+
+    friend void from_json(const nlohmann::json &j, UserNoteUpdateMessage &m);
 };

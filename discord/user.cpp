@@ -86,3 +86,69 @@ void UserData::update_from_json(const nlohmann::json &j) {
     JS_RD("nsfw_allowed", IsNSFWAllowed);
     JS_RD("phone", Phone);
 }
+
+const char *UserData::GetFlagName(uint64_t flag) {
+    switch (flag) {
+        case DiscordEmployee:
+            return "discordstaff";
+        case PartneredServerOwner:
+            return "partneredowner";
+        case HypeSquadEvents:
+            return "hypesquadevents";
+        case BugHunterLevel1:
+            return "discordbughunter";
+        case HouseBravery:
+            return "hypesquadbravery";
+        case HouseBrilliance:
+            return "hypesquadbrilliance";
+        case HouseBalance:
+            return "hypesquadbalance";
+        case EarlySupporter:
+            return "earlysupporter";
+        case TeamUser:
+            return "teamuser";
+        case System:
+            return "system";
+        case BugHunterLevel2:
+            return "discordbughunter2";
+        case VerifiedBot:
+            return "verifiedbot";
+        case EarlyVerifiedBotDeveloper:
+            return "earlyverifiedbotdeveloper";
+        default:
+            return "unknown";
+    }
+}
+
+const char *UserData::GetFlagReadableName(uint64_t flag) {
+    switch (flag) {
+        case DiscordEmployee:
+            return "Discord Staff";
+        case PartneredServerOwner:
+            return "Partnered Server Owner";
+        case HypeSquadEvents:
+            return "HypeSquad Events";
+        case BugHunterLevel1:
+            return "Discord Bug Hunter";
+        case HouseBravery:
+            return "HypeSquad Bravery";
+        case HouseBrilliance:
+            return "HypeSquad Brilliance";
+        case HouseBalance:
+            return "HypeSquad Balance";
+        case EarlySupporter:
+            return "Early Supporter";
+        case TeamUser:
+            return "Team User"; // ???
+        case System:
+            return "System";
+        case BugHunterLevel2:
+            return "Discord Bug Hunter Level 2";
+        case VerifiedBot:
+            return "Verified Bot";
+        case EarlyVerifiedBotDeveloper:
+            return "Early Verified Bot Developer";
+        default:
+            return "";
+    }
+}
