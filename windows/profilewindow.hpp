@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include "../discord/snowflake.hpp"
 #include "profile/userinfopane.hpp"
+#include "profile/mutualguildspane.hpp"
 
 class ProfileWindow : public Gtk::Window {
 public:
@@ -26,4 +27,5 @@ private:
     Gtk::StackSwitcher m_switcher;
 
     ProfileUserInfoPane m_pane_info;
+    UserMutualGuildsPane m_pane_guilds;
 };

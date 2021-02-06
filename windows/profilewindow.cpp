@@ -6,7 +6,8 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     , m_main(Gtk::ORIENTATION_VERTICAL)
     , m_upper(Gtk::ORIENTATION_HORIZONTAL)
     , m_badges(Gtk::ORIENTATION_HORIZONTAL)
-    , m_pane_info(user_id) {
+    , m_pane_info(user_id)
+    , m_pane_guilds(user_id) {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     auto user = *discord.GetUser(ID);
 
@@ -70,6 +71,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     m_switcher.set_hexpand(true);
 
     m_stack.add(m_pane_info, "info", "User Info");
+    m_stack.add(m_pane_guilds, "guilds", "Mutual Servers");
 
     m_badges.set_valign(Gtk::ALIGN_CENTER);
     m_badges_scroll.set_hexpand(true);
@@ -99,6 +101,7 @@ void ProfileWindow::on_hide() {
 
 void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_info.SetConnections(data.ConnectedAccounts);
+    m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
     for (auto child : m_badges.get_children())
         delete child;
