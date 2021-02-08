@@ -337,3 +337,7 @@ void from_json(const nlohmann::json &j, UserNoteUpdateMessage &m) {
     JS_D("note", m.Note);
     JS_D("id", m.ID);
 }
+
+void from_json(const nlohmann::json &j, RelationshipsData &m) {
+    j.get_to(m.Users);
+}

@@ -7,11 +7,13 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     , m_upper(Gtk::ORIENTATION_HORIZONTAL)
     , m_badges(Gtk::ORIENTATION_HORIZONTAL)
     , m_pane_info(user_id)
-    , m_pane_guilds(user_id) {
-    const auto &discord = Abaddon::Get().GetDiscordClient();
+    , m_pane_guilds(user_id)
+    , m_pane_friends(user_id) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
     auto user = *discord.GetUser(ID);
 
-    Abaddon::Get().GetDiscordClient().FetchUserProfile(user_id, sigc::mem_fun(*this, &ProfileWindow::OnFetchProfile));
+    discord.FetchUserProfile(user_id, sigc::mem_fun(*this, &ProfileWindow::OnFetchProfile));
+    discord.FetchUserRelationships(user_id, sigc::mem_fun(*this, &ProfileWindow::OnFetchRelationships));
 
     set_name("user-profile");
     set_default_size(450, 375);
@@ -72,6 +74,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
 
     m_stack.add(m_pane_info, "info", "User Info");
     m_stack.add(m_pane_guilds, "guilds", "Mutual Servers");
+    m_stack.add(m_pane_friends, "friends", "Mutual Friends");
 
     m_badges.set_valign(Gtk::ALIGN_CENTER);
     m_badges_scroll.set_hexpand(true);
@@ -125,4 +128,8 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
         image->show();
         m_badges.add(*image);
     }
+}
+
+void ProfileWindow::OnFetchRelationships(const std::vector<UserData> &data) {
+    m_pane_friends.SetMutualFriends(data);
 }

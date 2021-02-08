@@ -473,3 +473,9 @@ struct UserNoteUpdateMessage {
 
     friend void from_json(const nlohmann::json &j, UserNoteUpdateMessage &m);
 };
+
+struct RelationshipsData {
+    std::vector<UserData> Users;
+
+    friend void from_json(const nlohmann::json &j, RelationshipsData &m);
+};

@@ -599,6 +599,16 @@ void DiscordClient::SetUserNote(Snowflake user_id, std::string note, sigc::slot<
     });
 }
 
+void DiscordClient::FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback) {
+    m_http.MakeGET("/users/" + std::to_string(user_id) + "/relationships", [this, callback](const http::response_type &response) {
+        if (!CheckCode(response)) return;
+        RelationshipsData data = nlohmann::json::parse(response.text);
+        for (const auto &user : data.Users)
+            m_store.SetUser(user.ID, user);
+        callback(data.Users);
+    });
+}
+
 void DiscordClient::UpdateToken(std::string token) {
     if (!IsStarted()) {
         m_token = token;

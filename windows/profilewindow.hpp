@@ -3,6 +3,7 @@
 #include "../discord/snowflake.hpp"
 #include "profile/userinfopane.hpp"
 #include "profile/mutualguildspane.hpp"
+#include "profile/mutualfriendspane.hpp"
 
 class ProfileWindow : public Gtk::Window {
 public:
@@ -14,6 +15,7 @@ public:
 
 private:
     void OnFetchProfile(const UserProfileData &data);
+    void OnFetchRelationships(const std::vector<UserData> &data);
 
     Gtk::Box m_main;
     Gtk::Box m_upper;
@@ -28,4 +30,5 @@ private:
 
     ProfileUserInfoPane m_pane_info;
     UserMutualGuildsPane m_pane_guilds;
+    MutualFriendsPane m_pane_friends;
 };

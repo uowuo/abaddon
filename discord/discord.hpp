@@ -134,6 +134,7 @@ public:
     void FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback);
     void SetUserNote(Snowflake user_id, std::string note);
     void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback);
+    void FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
