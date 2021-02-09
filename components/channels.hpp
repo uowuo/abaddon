@@ -33,6 +33,7 @@ protected:
     Gtk::Label *m_lbl;
 };
 
+class StatusIndicator;
 class ChannelListRowDMChannel : public ChannelListRow {
 public:
     ChannelListRowDMChannel(const ChannelData *data);
@@ -40,6 +41,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
+    StatusIndicator *m_status = nullptr;
     Gtk::TextView *m_lbl;
     Gtk::Image *m_icon = nullptr;
 };

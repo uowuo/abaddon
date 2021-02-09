@@ -120,6 +120,21 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_ON("merged_members", m.MergedMembers);
 }
 
+void from_json(const nlohmann::json &j, MergedPresence &m) {
+    JS_D("user_id", m.UserID);
+    JS_O("last_modified", m.LastModified);
+    m.Presence = j;
+}
+
+void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m) {
+    JS_D("guilds", m.Guilds);
+    JS_D("friends", m.Friends);
+}
+
+void from_json(const nlohmann::json &j, ReadySupplementalData &m) {
+    JS_D("merged_presences", m.MergedPresences);
+}
+
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
     j["os"] = m.OS;
     j["browser"] = m.Browser;

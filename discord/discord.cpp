@@ -791,6 +791,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::USER_NOTE_UPDATE: {
                         HandleGatewayUserNoteUpdate(m);
                     } break;
+                    case GatewayEvent::READY_SUPPLEMENTAL: {
+                        HandleGatewayReadySupplemental(m);
+                    } break;
                 }
             } break;
             default:
@@ -1174,6 +1177,22 @@ void DiscordClient::HandleGatewayUserNoteUpdate(const GatewayMessage &msg) {
     m_signal_note_update.emit(data.ID, data.Note);
 }
 
+void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
+    ReadySupplementalData data = msg.Data;
+    for (const auto &p : data.MergedPresences.Friends) {
+        const auto s = p.Presence.Status;
+        if (s == "online")
+            m_user_to_status[p.UserID] = PresenceStatus::Online;
+        else if (s == "offline")
+            m_user_to_status[p.UserID] = PresenceStatus::Offline;
+        else if (s == "idle")
+            m_user_to_status[p.UserID] = PresenceStatus::Idle;
+        else if (s == "dnd")
+            m_user_to_status[p.UserID] = PresenceStatus::DND;
+        m_signal_presence_update.emit(p.UserID, m_user_to_status.at(p.UserID));
+    }
+}
+
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     printf("received reconnect\n");
     m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
@@ -1455,6 +1474,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["INVITE_CREATE"] = GatewayEvent::INVITE_CREATE;
     m_event_map["INVITE_DELETE"] = GatewayEvent::INVITE_DELETE;
     m_event_map["USER_NOTE_UPDATE"] = GatewayEvent::USER_NOTE_UPDATE;
+    m_event_map["READY_SUPPLEMENTAL"] = GatewayEvent::READY_SUPPLEMENTAL;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

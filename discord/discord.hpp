@@ -179,6 +179,7 @@ private:
     void HandleGatewayInviteCreate(const GatewayMessage &msg);
     void HandleGatewayInviteDelete(const GatewayMessage &msg);
     void HandleGatewayUserNoteUpdate(const GatewayMessage &msg);
+    void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
     void HeartbeatThread();

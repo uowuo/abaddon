@@ -62,6 +62,7 @@ enum class GatewayEvent : int {
     INVITE_CREATE,
     INVITE_DELETE,
     USER_NOTE_UPDATE,
+    READY_SUPPLEMENTAL,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -211,6 +212,27 @@ struct ReadyEventData {
     // std::vector<GuildSettingData> UserGuildSettings; // opt
 
     friend void from_json(const nlohmann::json &j, ReadyEventData &m);
+};
+
+struct MergedPresence {
+    Snowflake UserID;
+    std::optional<uint64_t> LastModified;
+    PresenceData Presence;
+
+    friend void from_json(const nlohmann::json &j, MergedPresence &m);
+};
+
+struct SupplementalMergedPresencesData {
+    std::vector<std::vector<MergedPresence>> Guilds;
+    std::vector<MergedPresence> Friends;
+
+    friend void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m);
+};
+
+struct ReadySupplementalData {
+    SupplementalMergedPresencesData MergedPresences;
+
+    friend void from_json(const nlohmann::json &j, ReadySupplementalData &m);
 };
 
 struct IdentifyProperties {

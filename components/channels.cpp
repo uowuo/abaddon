@@ -5,6 +5,7 @@
 #include "../abaddon.hpp"
 #include "../imgmanager.hpp"
 #include "../util.hpp"
+#include "statusindicator.hpp"
 
 void ChannelListRow::Collapse() {}
 
@@ -61,6 +62,9 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     top_recipient = recipients[0];
 
     if (data->Type == ChannelType::DM) {
+        m_status = Gtk::manage(new StatusIndicator(top_recipient.ID));
+        m_status->set_margin_start(5);
+
         if (top_recipient.HasAvatar()) {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
             auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
@@ -82,6 +86,8 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     m_box->set_halign(Gtk::ALIGN_START);
     if (m_icon != nullptr)
         m_box->pack_start(*m_icon);
+    if (m_status != nullptr)
+        m_box->pack_start(*m_status);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
     add(*m_ev);
