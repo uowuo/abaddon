@@ -162,6 +162,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , UserID(ID) {
     get_style_context()->add_class("profile-info-pane");
+    m_created.get_style_context()->add_class("profile-info-created");
 
     m_note.signal_update_note().connect([this](const Glib::ustring &note) {
         auto cb = [this](bool success) {
@@ -185,9 +186,14 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     };
     discord.FetchUserNote(UserID, sigc::track_obj(fetch_note_cb, *this));
 
+    m_created.set_halign(Gtk::ALIGN_START);
+    m_created.set_margin_top(5);
+    m_created.set_text("Account created: " + ID.GetLocalTimestamp());
+
     m_conns.set_halign(Gtk::ALIGN_START);
     m_conns.set_hexpand(true);
 
+    add(m_created);
     add(m_note);
     add(m_conns);
     show_all_children();

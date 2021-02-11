@@ -47,6 +47,8 @@ public:
     Snowflake UserID;
 
 private:
+    Gtk::Label m_created;
+
     NotesContainer m_note;
     ConnectionsContainer m_conns;
 };
