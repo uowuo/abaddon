@@ -45,10 +45,14 @@ void ImageManager::LoadFromURL(std::string url, callback_type cb) {
     m_cache.GetFileFromURL(url, [this, url, signal](std::string path) {
         try {
             auto buf = ReadFileToPixbuf(path);
-            m_cb_mutex.lock();
-            m_cb_queue.push([signal, buf]() { signal.emit(buf); });
-            m_cb_dispatcher.emit();
-            m_cb_mutex.unlock();
+            if (!buf)
+                printf("%s (%s) is null\n", url.c_str(), path.c_str());
+            else {
+                m_cb_mutex.lock();
+                m_cb_queue.push([signal, buf]() { signal.emit(buf); });
+                m_cb_dispatcher.emit();
+                m_cb_mutex.unlock();
+            }
         } catch (const std::exception &e) {
             fprintf(stderr, "err loading pixbuf from %s: %s\n", path.c_str(), e.what());
         }
@@ -61,10 +65,14 @@ void ImageManager::LoadAnimationFromURL(std::string url, int w, int h, callback_
     m_cache.GetFileFromURL(url, [this, url, signal, w, h](std::string path) {
         try {
             auto buf = ReadFileToPixbufAnimation(path, w, h);
-            m_cb_mutex.lock();
-            m_cb_queue.push([signal, buf]() { signal.emit(buf); });
-            m_cb_dispatcher.emit();
-            m_cb_mutex.unlock();
+            if (!buf)
+                printf("%s (%s) is null\n", url.c_str(), path.c_str());
+            else {
+                m_cb_mutex.lock();
+                m_cb_queue.push([signal, buf]() { signal.emit(buf); });
+                m_cb_dispatcher.emit();
+                m_cb_mutex.unlock();
+            }
         } catch (const std::exception &e) {
             fprintf(stderr, "err loading pixbuf animation from %s: %s\n", path.c_str(), e.what());
         }
