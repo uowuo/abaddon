@@ -5,7 +5,8 @@
 // dont care to figure out why this happens cuz it doesnt seem to break anything
 
 GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
-    : GuildID(id)
+    : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
+    , GuildID(id)
     , m_menu_unban("Unban")
     , m_menu_copy_id("Copy ID")
     , m_model(Gtk::ListStore::create(m_columns)) {
@@ -26,6 +27,12 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     } else {
         for (const auto &ban : discord.GetBansInGuild(id))
             OnGuildBanFetch(ban);
+
+        m_no_perms_note = Gtk::manage(new Gtk::Label("You do not have permission to see bans. However, bans made while you are connected will appear here"));
+        m_no_perms_note->set_single_line_mode(true);
+        m_no_perms_note->set_ellipsize(Pango::ELLIPSIZE_END);
+        m_no_perms_note->set_halign(Gtk::ALIGN_START);
+        add(*m_no_perms_note);
     }
 
     m_menu_unban.signal_activate().connect(sigc::mem_fun(*this, &GuildSettingsBansPane::OnMenuUnban));
@@ -37,7 +44,11 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
 
     m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &GuildSettingsBansPane::OnTreeButtonPress), false);
     m_view.show();
-    add(m_view);
+
+    m_scroll.set_propagate_natural_height(true);
+    m_scroll.add(m_view);
+    add(m_scroll);
+    show_all_children();
 
     m_view.set_model(m_model);
     m_view.append_column("User", m_columns.m_col_user);

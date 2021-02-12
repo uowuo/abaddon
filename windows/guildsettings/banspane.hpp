@@ -3,7 +3,7 @@
 #include "../../discord/snowflake.hpp"
 #include "../../discord/ban.hpp"
 
-class GuildSettingsBansPane : public Gtk::ScrolledWindow {
+class GuildSettingsBansPane : public Gtk::Box {
 public:
     GuildSettingsBansPane(Snowflake id);
 
@@ -16,6 +16,9 @@ private:
     void OnBanRemove(Snowflake guild_id, Snowflake user_id);
     void OnBanAdd(Snowflake guild_id, Snowflake user_id);
 
+    Gtk::Label *m_no_perms_note = nullptr;
+
+    Gtk::ScrolledWindow m_scroll;
     Gtk::TreeView m_view;
 
     Snowflake GuildID;

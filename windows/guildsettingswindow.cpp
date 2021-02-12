@@ -50,10 +50,14 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_stack.set_margin_left(10);
     m_stack.set_margin_right(10);
 
+    const auto self_id = discord.GetUserData().ID;
+
     m_stack.add(m_pane_info, "info", "Info");
     m_stack.add(m_pane_bans, "bans", "Bans");
-    m_stack.add(m_pane_invites, "invites", "Invites");
-    m_stack.add(m_pane_audit_log, "audit-log", "Audit Log");
+    if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
+        m_stack.add(m_pane_invites, "invites", "Invites");
+    if (discord.HasGuildPermission(self_id, GuildID, Permission::VIEW_AUDIT_LOG))
+        m_stack.add(m_pane_audit_log, "audit-log", "Audit Log");
     m_stack.show();
 
     m_main.add(m_switcher);
