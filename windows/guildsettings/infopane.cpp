@@ -30,30 +30,19 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
     m_guild_name.show();
     m_guild_name_label.show();
 
-    auto load_icon_cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
-        m_guild_icon.property_pixbuf() = pixbuf->scale_simple(64, 64, Gdk::INTERP_BILINEAR);
-    };
-
-    auto guild_update_cb = [this, load_icon_cb](Snowflake id) {
+    auto guild_update_cb = [this](Snowflake id) {
         if (id != GuildID) return;
         const auto guild = *Abaddon::Get().GetDiscordClient().GetGuild(id);
-        if (guild.HasIcon())
-            Abaddon::Get().GetImageManager().LoadFromURL(guild.GetIconURL("png", "64"), sigc::track_obj(load_icon_cb, *this));
+        FetchGuildIcon(guild);
     };
     discord.signal_guild_update().connect(sigc::track_obj(guild_update_cb, *this));
+    FetchGuildIcon(guild);
 
-    m_guild_icon.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);
-    if (guild.HasIcon()) {
-        Abaddon::Get().GetImageManager().LoadFromURL(guild.GetIconURL("png", "64"), sigc::track_obj(load_icon_cb, *this));
-    }
+    AddPointerCursor(m_guild_icon_ev);
+
     m_guild_icon.set_margin_bottom(10);
     if (can_modify) {
-        m_guild_icon_ev.signal_realize().connect([this]() {
-            auto window = m_guild_icon_ev.get_window();
-            auto display = window->get_display();
-            auto cursor = Gdk::Cursor::create(display, "pointer");
-            window->set_cursor(cursor);
-        });
+        m_guild_icon_ev.set_tooltip_text("Click to choose a file, right click to paste");
 
         m_guild_icon_ev.signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
             if (event->type == GDK_BUTTON_PRESS)
@@ -64,19 +53,45 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
 
             return false;
         });
+    } else if (guild.HasIcon()) {
+        std::string guild_icon_url;
+        if (guild.HasAnimatedIcon())
+            guild_icon_url = guild.GetIconURL("gif", "512");
+        else
+            guild_icon_url = guild.GetIconURL("png", "512");
+        m_guild_icon_ev.signal_button_press_event().connect([this, guild_icon_url](GdkEventButton *event) -> bool {
+            if (event->type == GDK_BUTTON_PRESS)
+                if (event->button == GDK_BUTTON_PRIMARY)
+                    LaunchBrowser(guild_icon_url);
+
+            return false;
+        });
     }
 
-    m_guild_icon_ev.set_tooltip_text("Click to choose a file, right click to paste");
     m_guild_icon.show();
     m_guild_icon_ev.show();
-    //m_guild_icon_label.show();
 
     m_guild_icon_ev.add(m_guild_icon);
     attach(m_guild_icon_ev, 0, 0, 1, 1);
     attach(m_guild_name_label, 0, 1, 1, 1);
     attach_next_to(m_guild_name, m_guild_name_label, Gtk::POS_RIGHT, 1, 1);
-    //attach(m_guild_icon_label, 0, 1, 1, 1);
-    //attach_next_to(m_guild_icon, m_guild_icon_label, Gtk::POS_RIGHT, 1, 1);
+}
+
+void GuildSettingsInfoPane::FetchGuildIcon(const GuildData &guild) {
+    m_guild_icon.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);
+    if (guild.HasIcon()) {
+        if (Abaddon::Get().GetSettings().GetShowAnimations() && guild.HasAnimatedIcon()) {
+            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
+                m_guild_icon.property_pixbuf_animation() = pixbuf;
+            };
+            Abaddon::Get().GetImageManager().LoadAnimationFromURL(guild.GetIconURL("gif", "64"), 64, 64, sigc::track_obj(cb, *this));
+        }
+
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+            m_guild_icon.property_pixbuf() = pixbuf->scale_simple(64, 64, Gdk::INTERP_BILINEAR);
+        };
+        Abaddon::Get().GetImageManager().LoadFromURL(guild.GetIconURL("png", "64"), sigc::track_obj(cb, *this));
+    }
 }
 
 void GuildSettingsInfoPane::UpdateGuildName() {

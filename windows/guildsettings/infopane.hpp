@@ -1,12 +1,14 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../discord/snowflake.hpp"
+#include "../../discord/guild.hpp"
 
 class GuildSettingsInfoPane : public Gtk::Grid {
 public:
     GuildSettingsInfoPane(Snowflake id);
 
 private:
+    void FetchGuildIcon(const GuildData &guild);
+
     void UpdateGuildName();
     void UpdateGuildIconFromData(const std::vector<uint8_t> &data, const std::string &mime);
     void UpdateGuildIconFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> pixbuf);
