@@ -108,6 +108,7 @@ public:
     void UpdateStatus(PresenceStatus status, bool is_afk);
     void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
     void CreateDM(Snowflake user_id);
+    void CreateDM(Snowflake user_id, sigc::slot<void(bool success, Snowflake channel_id)> callback);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
     void RemoveReaction(Snowflake id, Glib::ustring param);

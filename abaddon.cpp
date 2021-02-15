@@ -324,7 +324,15 @@ void Abaddon::on_user_menu_open_dm() {
     if (existing.has_value())
         ActionChannelOpened(*existing);
     else
-        m_discord.CreateDM(m_shown_user_menu_id);
+        m_discord.CreateDM(m_shown_user_menu_id, [this](bool success, Snowflake channel_id) {
+            if (success) {
+                // give the gateway a little window to send CHANNEL_CREATE
+                auto cb = [this, channel_id] {
+                    ActionChannelOpened(channel_id);
+                };
+                Glib::signal_timeout().connect_once(sigc::track_obj(cb, *this), 200);
+            }
+        });
 }
 
 void Abaddon::ActionConnect() {

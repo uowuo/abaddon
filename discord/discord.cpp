@@ -420,10 +420,20 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const Activ
 }
 
 void DiscordClient::CreateDM(Snowflake user_id) {
-    // actual client uses an array called recipients
+    CreateDM(user_id, [](...) {});
+}
+
+void DiscordClient::CreateDM(Snowflake user_id, sigc::slot<void(bool success, Snowflake channel_id)> callback) {
     CreateDMObject obj;
     obj.Recipients.push_back(user_id);
-    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [](auto) {});
+    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [this, callback](const http::response &response) {
+        if (!CheckCode(response)) {
+            callback(false, Snowflake::Invalid);
+            return;
+        }
+        auto channel = nlohmann::json::parse(response.text).get<ChannelData>();
+        callback(response.status_code == 200, channel.ID);
+    });
 }
 
 std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
