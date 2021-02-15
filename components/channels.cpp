@@ -327,7 +327,10 @@ void ChannelList::UpdateRemoveGuild(Snowflake id) {
 
 void ChannelList::UpdateRemoveChannel(Snowflake id) {
     auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) return;
+    if (it == m_id_to_row.end()) {
+        it = m_dm_id_to_row.find(id);
+        if (it == m_dm_id_to_row.end()) return;
+    }
     auto row = dynamic_cast<ChannelListRow *>(it->second);
     if (row == nullptr) return;
     DeleteRow(row);
