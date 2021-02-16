@@ -327,10 +327,7 @@ void ChannelList::UpdateRemoveGuild(Snowflake id) {
 
 void ChannelList::UpdateRemoveChannel(Snowflake id) {
     auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) {
-        it = m_dm_id_to_row.find(id);
-        if (it == m_dm_id_to_row.end()) return;
-    }
+    if (it == m_id_to_row.end()) return;
     auto row = dynamic_cast<ChannelListRow *>(it->second);
     if (row == nullptr) return;
     DeleteRow(row);
@@ -447,6 +444,7 @@ void ChannelList::UpdateCreateDMChannel(Snowflake id) {
     dm_row->IsUserCollapsed = false;
     m_list->insert(*dm_row, m_dm_header_row->get_index() + 1);
     m_dm_header_row->Children.insert(dm_row);
+    m_id_to_row[id] = dm_row;
     if (!m_dm_header_row->IsUserCollapsed)
         dm_row->show();
 }
@@ -678,7 +676,7 @@ void ChannelList::AddPrivateChannels() {
     for (const auto &dm : dms) {
         auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&dm));
         dm_row->Parent = m_dm_header_row;
-        m_dm_id_to_row[dm.ID] = dm_row;
+        m_id_to_row[dm.ID] = dm_row;
         dm_row->IsUserCollapsed = false;
         m_list->add(*dm_row);
         m_dm_header_row->Children.insert(dm_row);
@@ -721,8 +719,8 @@ void ChannelList::OnGuildMenuSettings(Snowflake id) {
 }
 
 void ChannelList::CheckBumpDM(Snowflake channel_id) {
-    auto it = m_dm_id_to_row.find(channel_id);
-    if (it == m_dm_id_to_row.end()) return;
+    auto it = m_id_to_row.find(channel_id);
+    if (it == m_id_to_row.end()) return;
     auto *row = it->second;
     const auto index = row->get_index();
     if (index == 1) return; // 1 is top of dm list
@@ -733,7 +731,7 @@ void ChannelList::CheckBumpDM(Snowflake channel_id) {
     auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
     dm_row->Parent = m_dm_header_row;
     m_dm_header_row->Children.insert(dm_row);
-    m_dm_id_to_row[channel_id] = dm_row;
+    m_id_to_row[channel_id] = dm_row;
     dm_row->IsUserCollapsed = false;
     m_list->insert(*dm_row, 1);
     m_dm_header_row->Children.insert(dm_row);

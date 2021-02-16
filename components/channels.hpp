@@ -164,7 +164,6 @@ protected:
     // i would use one map but in really old guilds there can be a channel w/ same id as the guild so this hacky shit has to do
     std::unordered_map<Snowflake, ChannelListRow *> m_guild_id_to_row;
     std::unordered_map<Snowflake, ChannelListRow *> m_id_to_row;
-    std::unordered_map<Snowflake, ChannelListRow *> m_dm_id_to_row;
 
     void InsertGuildAt(Snowflake id, int pos);
 
