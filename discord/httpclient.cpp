@@ -75,7 +75,8 @@ void HTTPClient::MakePUT(const std::string &path, const std::string &payload, st
     m_futures.push_back(std::async(std::launch::async, [this, path, cb, payload] {
         http::request req(http::REQUEST_PUT, m_api_base + path);
         req.set_header("Authorization", m_authorization);
-        req.set_header("Content-Type", "application/json");
+        if (payload != "")
+            req.set_header("Content-Type", "application/json");
         req.set_user_agent(m_agent != "" ? m_agent : "Abaddon");
         req.set_body(payload);
 #ifdef USE_LOCAL_PROXY

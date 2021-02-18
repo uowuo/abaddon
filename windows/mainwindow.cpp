@@ -20,11 +20,14 @@ MainWindow::MainWindow()
     m_menu_discord_join_guild.set_sensitive(false);
     m_menu_discord_set_status.set_label("Set Status");
     m_menu_discord_set_status.set_sensitive(false);
+    m_menu_discord_add_recipient.set_label("Add user to DM");
     m_menu_discord_sub.append(m_menu_discord_connect);
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
     m_menu_discord_sub.append(m_menu_discord_join_guild);
     m_menu_discord_sub.append(m_menu_discord_set_status);
+    m_menu_discord_sub.append(m_menu_discord_add_recipient);
+    m_menu_discord_sub.signal_popped_up().connect(sigc::mem_fun(*this, &MainWindow::OnDiscordSubmenuPopup)); // this gets called twice for some reason
     m_menu_discord.set_submenu(m_menu_discord_sub);
 
     m_menu_file.set_label("File");
@@ -70,6 +73,10 @@ MainWindow::MainWindow()
 
     m_menu_file_clear_cache.signal_activate().connect([this] {
         Abaddon::Get().GetImageManager().ClearCache();
+    });
+
+    m_menu_discord_add_recipient.signal_activate().connect([this] {
+        m_signal_action_add_recipient.emit(GetChatActiveChannel());
     });
 
     m_content_box.set_hexpand(true);
@@ -237,6 +244,15 @@ void MainWindow::UpdateChatReactionRemove(Snowflake id, const Glib::ustring &par
     m_chat.UpdateReactions(id);
 }
 
+void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto channel_id = GetChatActiveChannel();
+    auto channel = discord.GetChannel(channel_id);
+    m_menu_discord_add_recipient.set_visible(false);
+    if (channel.has_value() && channel->GetDMRecipients().size() + 1 < 10)
+        m_menu_discord_add_recipient.set_visible(channel->Type == ChannelType::GROUP_DM);
+}
+
 ChannelList *MainWindow::GetChannelList() {
     return &m_channel_list;
 }
@@ -279,4 +295,8 @@ MainWindow::type_signal_action_show_user_menu MainWindow::signal_action_show_use
 
 MainWindow::type_signal_action_reload_settings MainWindow::signal_action_reload_settings() {
     return m_signal_action_reload_settings;
+}
+
+MainWindow::type_signal_action_add_recipient MainWindow::signal_action_add_recipient() {
+    return m_signal_action_add_recipient;
 }

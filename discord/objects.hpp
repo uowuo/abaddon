@@ -18,6 +18,7 @@
 #include "sticker.hpp"
 #include "ban.hpp"
 #include "auditlog.hpp"
+#include "relationship.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -200,6 +201,7 @@ struct ReadyEventData {
     std::optional<int> FriendSuggestionCount;
     UserSettings Settings;
     std::optional<std::vector<std::vector<GuildMember>>> MergedMembers;
+    std::optional<std::vector<RelationshipData>> Relationships;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt
@@ -207,7 +209,6 @@ struct ReadyEventData {
     // std::map<Unknown, Unknown> Notes; // opt
     // std::vector<PresenceData> Presences; // opt
     // std::vector<ReadStateData> ReadStates; // opt
-    // std::vector<RelationshipData> Relationships; // opt
     // Unknown Tutorial; // opt, null
     // std::vector<GuildSettingData> UserGuildSettings; // opt
 

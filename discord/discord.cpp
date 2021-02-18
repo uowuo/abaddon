@@ -522,6 +522,12 @@ void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(bool s
     });
 }
 
+void DiscordClient::AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
+    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), "", [this](const http::response_type &response) {
+        CheckCode(response);
+    });
+}
+
 void DiscordClient::RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), [this](const http::response_type &response) {
         CheckCode(response);
@@ -643,6 +649,14 @@ std::optional<PresenceStatus> DiscordClient::GetUserStatus(Snowflake id) const {
         return it->second;
 
     return std::nullopt;
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
+    std::unordered_set<Snowflake> ret;
+    for (const auto &[id, rtype] : m_user_relationships)
+        if (rtype == type)
+            ret.insert(id);
+    return ret;
 }
 
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {
@@ -889,6 +903,10 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
             }
         }
     }
+
+    if (data.Relationships.has_value())
+        for (const auto &relationship : *data.Relationships)
+            m_user_relationships[relationship.ID] = relationship.Type;
 
     m_store.EndTransaction();
 

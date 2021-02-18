@@ -8,6 +8,7 @@
 #include "dialogs/joinguild.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
+#include "dialogs/friendpicker.hpp"
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
@@ -124,6 +125,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_reload_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadSettings));
+    m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
 
     m_main_window->signal_action_show_user_menu().connect(sigc::mem_fun(*this, &Abaddon::ShowUserMenu));
 
@@ -545,6 +547,15 @@ void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
 void Abaddon::ActionGuildSettings(Snowflake id) {
     auto window = new GuildSettingsWindow(id);
     window->show();
+}
+
+void Abaddon::ActionAddRecipient(Snowflake channel_id) {
+    FriendPickerDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK) {
+        auto user_id = dlg.GetUserID();
+        m_discord.AddGroupDMRecipient(channel_id, user_id);
+    }
 }
 
 void Abaddon::ActionReloadSettings() {

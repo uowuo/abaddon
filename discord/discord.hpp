@@ -120,6 +120,7 @@ public:
     void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback);
     void DeleteInvite(const std::string &code);
     void DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback);
+    void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
 
     // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)
@@ -142,6 +143,8 @@ public:
     void SetUserAgent(std::string agent);
 
     std::optional<PresenceStatus> GetUserStatus(Snowflake id) const;
+
+    std::unordered_set<Snowflake> GetRelationships(RelationshipType type) const;
 
 private:
     static const constexpr int InflateChunkSize = 0x10000;
@@ -206,6 +209,8 @@ private:
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
 
     std::unordered_map<Snowflake, PresenceStatus> m_user_to_status;
+
+    std::unordered_map<Snowflake, RelationshipType> m_user_relationships;
 
     UserData m_user_data;
     UserSettings m_user_settings;
