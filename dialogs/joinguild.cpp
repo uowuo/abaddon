@@ -65,6 +65,8 @@ void JoinGuildDialog::CheckCode() {
                     m_info.set_text(invite->Guild->Name + " (" + std::to_string(*invite->MemberCount) + " members)");
                 else
                     m_info.set_text(invite->Guild->Name);
+            } else {
+                m_info.set_text("Group DM (" + std::to_string(*invite->MemberCount) + " members)");
             }
         } else {
             m_ok.set_sensitive(false);

@@ -1186,7 +1186,6 @@ void DiscordClient::HandleGatewayInviteCreate(const GatewayMessage &msg) {
     invite.Code = std::move(data.Code);
     invite.CreatedAt = std::move(data.CreatedAt);
     invite.Channel = *m_store.GetChannel(data.ChannelID);
-    invite.Guild = *m_store.GetGuild(*invite.Channel->GuildID);
     invite.Inviter = std::move(data.Inviter);
     invite.IsTemporary = std::move(data.IsTemporary);
     invite.MaxAge = std::move(data.MaxAge);
@@ -1194,6 +1193,8 @@ void DiscordClient::HandleGatewayInviteCreate(const GatewayMessage &msg) {
     invite.TargetUser = std::move(data.TargetUser);
     invite.TargetUserType = std::move(data.TargetUserType);
     invite.Uses = std::move(data.Uses);
+    if (data.GuildID.has_value())
+        invite.Guild = m_store.GetGuild(*data.GuildID);
     m_signal_invite_create.emit(invite);
 }
 

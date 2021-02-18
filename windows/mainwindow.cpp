@@ -16,7 +16,7 @@ MainWindow::MainWindow()
     m_menu_discord_disconnect.set_label("Disconnect");
     m_menu_discord_disconnect.set_sensitive(false);
     m_menu_discord_set_token.set_label("Set Token");
-    m_menu_discord_join_guild.set_label("Join Guild");
+    m_menu_discord_join_guild.set_label("Accept Invite");
     m_menu_discord_join_guild.set_sensitive(false);
     m_menu_discord_set_status.set_label("Set Status");
     m_menu_discord_set_status.set_sensitive(false);
