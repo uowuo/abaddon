@@ -44,6 +44,10 @@ protected:
     StatusIndicator *m_status = nullptr;
     Gtk::TextView *m_lbl;
     Gtk::Image *m_icon = nullptr;
+
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_close; // leave if group
+    Gtk::MenuItem *m_menu_copy_id;
 };
 
 class ChannelListRowGuild : public ChannelListRow {

@@ -436,6 +436,12 @@ void DiscordClient::CreateDM(Snowflake user_id, sigc::slot<void(bool success, Sn
     });
 }
 
+void DiscordClient::CloseDM(Snowflake channel_id) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id), [this](const http::response &response) {
+        CheckCode(response);
+    });
+}
+
 std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
     const auto &channels = m_store.GetChannels();
     for (const auto &id : channels) {

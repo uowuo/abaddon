@@ -54,6 +54,26 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     m_lbl = Gtk::manage(new Gtk::TextView);
     MakeReadOnly(m_lbl);
 
+    AddWidgetMenuHandler(m_ev, m_menu);
+    AddWidgetMenuHandler(m_lbl, m_menu);
+
+    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+    m_menu_copy_id->signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string(ID));
+    });
+
+    if (data->Type == ChannelType::GROUP_DM)
+        m_menu_close = Gtk::manage(new Gtk::MenuItem("_Leave DM", true));
+    else
+        m_menu_close = Gtk::manage(new Gtk::MenuItem("_Close DM", true));
+    m_menu_close->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().CloseDM(ID);
+    });
+
+    m_menu.append(*m_menu_copy_id);
+    m_menu.append(*m_menu_close);
+    m_menu.show_all();
+
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
