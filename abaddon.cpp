@@ -86,6 +86,7 @@ int Abaddon::StartGTK() {
     m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
     m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
     m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
+    m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
     m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
     m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
     m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
@@ -93,17 +94,27 @@ int Abaddon::StartGTK() {
     m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
     m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
     m_user_menu_open_dm->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_open_dm));
+    m_user_menu_remove_recipient->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_remove_recipient));
     m_user_menu_info->signal_activate().connect([this]() {
         auto *window = new ProfileWindow(m_shown_user_menu_id);
         window->show();
     });
+
+    m_user_menu_remove_recipient->override_color(Gdk::RGBA("#BE3C3D"));
+
     m_user_menu->append(*m_user_menu_info);
     m_user_menu->append(*m_user_menu_insert_mention);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
     m_user_menu->append(*m_user_menu_ban);
     m_user_menu->append(*m_user_menu_kick);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
     m_user_menu->append(*m_user_menu_open_dm);
     m_user_menu->append(*m_user_menu_roles);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
+    m_user_menu->append(*m_user_menu_remove_recipient);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
     m_user_menu->append(*m_user_menu_copy_id);
+
     m_user_menu->show_all();
 
     m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
@@ -300,6 +311,14 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
         m_user_menu_open_dm->set_visible(true);
     }
 
+    m_user_menu_remove_recipient->hide();
+    if (me != id) {
+        const auto channel_id = m_main_window->GetChatActiveChannel();
+        const auto channel = m_discord.GetChannel(channel_id);
+        if (channel.has_value() && channel->Type == ChannelType::GROUP_DM && id != *channel->OwnerID)
+            m_user_menu_remove_recipient->show();
+    }
+
     m_user_menu->popup_at_pointer(event);
 }
 
@@ -333,6 +352,10 @@ void Abaddon::on_user_menu_open_dm() {
                 Glib::signal_timeout().connect_once(sigc::track_obj(cb, *this), 200);
             }
         });
+}
+
+void Abaddon::on_user_menu_remove_recipient() {
+    m_discord.RemoveGroupDMRecipient(m_main_window->GetChatActiveChannel(), m_shown_user_menu_id);
 }
 
 void Abaddon::ActionConnect() {
@@ -386,8 +409,10 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
         const auto recipients = channel->GetDMRecipients();
         if (recipients.size() > 1)
             display = std::to_string(recipients.size()) + " users";
-        else
+        else if (recipients.size() == 1)
             display = recipients[0].Username;
+        else
+            display = "Empty group";
         m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
     }
     m_main_window->UpdateChatActiveChannel(id);

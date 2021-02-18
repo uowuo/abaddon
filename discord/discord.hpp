@@ -120,6 +120,7 @@ public:
     void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback);
     void DeleteInvite(const std::string &code);
     void DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback);
+    void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
 
     // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)
     std::vector<BanData> GetBansInGuild(Snowflake guild_id);

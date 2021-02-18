@@ -90,6 +90,7 @@ protected:
     Gtk::MenuItem *m_user_menu_copy_id;
     Gtk::MenuItem *m_user_menu_open_dm;
     Gtk::MenuItem *m_user_menu_roles;
+    Gtk::MenuItem *m_user_menu_remove_recipient;
     Gtk::Menu *m_user_menu_roles_submenu;
 
     void on_user_menu_insert_mention();
@@ -97,6 +98,7 @@ protected:
     void on_user_menu_kick();
     void on_user_menu_copy_id();
     void on_user_menu_open_dm();
+    void on_user_menu_remove_recipient();
 
 private:
     SettingsManager m_settings;

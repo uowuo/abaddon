@@ -522,6 +522,12 @@ void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(bool s
     });
 }
 
+void DiscordClient::RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), [this](const http::response_type &response) {
+        CheckCode(response);
+    });
+}
+
 std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
     return m_store.GetBans(guild_id);
 }
