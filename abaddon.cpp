@@ -315,7 +315,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     if (me != id) {
         const auto channel_id = m_main_window->GetChatActiveChannel();
         const auto channel = m_discord.GetChannel(channel_id);
-        if (channel.has_value() && channel->Type == ChannelType::GROUP_DM && id != *channel->OwnerID)
+        if (channel.has_value() && channel->Type == ChannelType::GROUP_DM && me == *channel->OwnerID)
             m_user_menu_remove_recipient->show();
     }
 
