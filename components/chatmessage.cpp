@@ -553,7 +553,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                         // clang-format off
                         lbl->set_markup(
                             "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">"
-                            + Glib::Markup::escape_text(author->Username + "#" + author->Discriminator)
+                            + author->GetEscapedString()
                             + "</span></b>: "
                             + text
                         );
@@ -564,7 +564,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             }
 
             const auto author = discord.GetUser(referenced.Author.ID);
-            lbl->set_markup("<b>" + Glib::Markup::escape_text(author->Username + "#" + author->Discriminator) + "</b>: " + text);
+            lbl->set_markup(author->GetEscapedBoldString<false>());
         }
     } else {
         lbl->set_markup("<i>reply unavailable</i>");
@@ -615,14 +615,14 @@ void ChatMessageItemContainer::HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> 
         Glib::ustring replacement;
 
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
-            replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+            replacement = user->GetEscapedBoldString<true>();
         else {
             const auto role_id = user->GetHoistedRole(*channel->GuildID, true);
             const auto role = discord.GetRole(role_id);
             if (!role.has_value())
-                replacement = "<b>@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</b>";
+                replacement = user->GetEscapedBoldString<true>();
             else
-                replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + Glib::Markup::escape_text(user->Username) + "#" + user->Discriminator + "</span></b>";
+                replacement = "<span color=\"#" + IntToCSSColor(role->Color) + "\">" + user->GetEscapedBoldString<true>() + "</span>";
         }
 
         // regex returns byte positions and theres no straightforward way in the c++ bindings to deal with that :(
@@ -991,7 +991,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_avatar->set_valign(Gtk::ALIGN_START);
     m_avatar->set_margin_right(10);
 
-    m_author->set_markup("<span weight='bold'>" + Glib::Markup::escape_text(data->Author.Username) + "</span>");
+    m_author->set_markup(data->Author.GetEscapedBoldName());
     m_author->set_single_line_mode(true);
     m_author->set_line_wrap(false);
     m_author->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -1091,9 +1091,9 @@ void ChatMessageHeader::UpdateNameColor() {
 
     std::string md;
     if (role.has_value())
-        md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + Glib::Markup::escape_text(user->Username) + "</span>";
+        md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>";
     else
-        md = "<span weight='bold' color='#eeeeee'>" + Glib::Markup::escape_text(user->Username) + "</span>";
+        md = "<span weight='bold' color='#eeeeee'>" + user->GetEscapedName() + "</span>";
 
     m_author->set_markup(md);
 }

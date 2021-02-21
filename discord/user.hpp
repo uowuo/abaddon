@@ -54,5 +54,14 @@ struct UserData {
     std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;
     Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
     std::string GetMention() const;
+    std::string GetEscapedName() const;
+    std::string GetEscapedBoldName() const;
     std::string GetEscapedString() const;
+    template<bool with_at>
+    inline std::string GetEscapedBoldString() const {
+        if constexpr (with_at)
+            return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
+        else
+            return "<b>" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
+    }
 };

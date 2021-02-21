@@ -21,6 +21,14 @@ std::string UserData::GetMention() const {
     return "<@" + std::to_string(ID) + ">";
 }
 
+std::string UserData::GetEscapedName() const {
+    return Glib::Markup::escape_text(Username);
+}
+
+std::string UserData::GetEscapedBoldName() const {
+    return "<b>" + Glib::Markup::escape_text(Username) + "</b>";
+}
+
 std::string UserData::GetEscapedString() const {
     return Glib::Markup::escape_text(Username) + "#" + Discriminator;
 }

@@ -328,7 +328,7 @@ CompleterEntry::CompleterEntry(const Glib::ustring &completion, int index)
 void CompleterEntry::SetTextColor(int color) {
     if (m_text == nullptr) return;
     const auto cur = m_text->get_text();
-    m_text->set_markup("<span color=\"#" + IntToCSSColor(color) + "\">" + Glib::Markup::escape_text(cur) + "</span>");
+    m_text->set_markup("<span color='#" + IntToCSSColor(color) + "'>" + Glib::Markup::escape_text(cur) + "</span>");
 }
 
 void CompleterEntry::SetText(const Glib::ustring &text) {

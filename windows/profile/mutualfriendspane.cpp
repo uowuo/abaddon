@@ -26,9 +26,7 @@ MutualFriendItem::MutualFriendItem(const UserData &user)
         }
     }
 
-    m_name.set_markup("<b>" +
-                      Glib::Markup::escape_text(user.Username) +
-                      "</b>#" + user.Discriminator);
+    m_name.set_markup(user.GetEscapedBoldString<false>());
 
     m_name.set_valign(Gtk::ALIGN_CENTER);
     add(m_avatar);
