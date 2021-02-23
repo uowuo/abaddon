@@ -77,20 +77,21 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    UserData top_recipient;
+    std::optional<UserData> top_recipient; // potentially nullopt in group dm
     const auto recipients = data->GetDMRecipients();
-    top_recipient = recipients[0];
+    if (recipients.size() > 0)
+        top_recipient = recipients[0];
 
     if (data->Type == ChannelType::DM) {
-        m_status = Gtk::manage(new StatusIndicator(top_recipient.ID));
+        m_status = Gtk::manage(new StatusIndicator(top_recipient->ID));
         m_status->set_margin_start(5);
 
-        if (top_recipient.HasAvatar()) {
+        if (top_recipient->HasAvatar()) {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
             auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
                 m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
             };
-            Abaddon::Get().GetImageManager().LoadFromURL(top_recipient.GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
+            Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
         } else {
             m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
         }
@@ -98,7 +99,7 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
 
     auto buf = m_lbl->get_buffer();
     if (data->Type == ChannelType::DM)
-        buf->set_text(top_recipient.Username);
+        buf->set_text(top_recipient->Username);
     else if (data->Type == ChannelType::GROUP_DM)
         buf->set_text(std::to_string(recipients.size()) + " users");
     Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);

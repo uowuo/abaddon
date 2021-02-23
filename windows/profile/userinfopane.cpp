@@ -176,10 +176,11 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     });
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    discord.signal_note_update().connect([this](Snowflake id, std::string note) {
+    auto note_update_cb = [this](Snowflake id, std::string note) {
         if (id == UserID)
             m_note.SetNote(note);
-    });
+    };
+    discord.signal_note_update().connect(sigc::track_obj(note_update_cb, m_note));
 
     auto fetch_note_cb = [this](const std::string &note) {
         m_note.SetNote(note);
