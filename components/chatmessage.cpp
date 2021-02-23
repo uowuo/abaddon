@@ -970,8 +970,8 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
     if (author->HasAvatar()) {
         auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-            m_static_avatar = pb;
-            m_avatar->property_pixbuf() = pb;
+            m_static_avatar = pb->scale_simple(AvatarSize, AvatarSize, Gdk::INTERP_BILINEAR);
+            m_avatar->property_pixbuf() = m_static_avatar;
         };
         img.LoadFromURL(author->GetAvatarURL(), sigc::track_obj(cb, *this));
     }
