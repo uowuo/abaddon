@@ -10,25 +10,31 @@ MutualGuildItem::MutualGuildItem(const MutualGuildData &guild)
 
     m_icon.set_margin_end(10);
 
-    const auto data = *Abaddon::Get().GetDiscordClient().GetGuild(guild.ID);
-    const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
-    auto &img = Abaddon::Get().GetImageManager();
-    m_icon.property_pixbuf() = img.GetPlaceholder(24);
-    if (data.HasIcon()) {
-        if (data.HasAnimatedIcon() && show_animations) {
-            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
-                m_icon.property_pixbuf_animation() = pb;
-            };
-            img.LoadAnimationFromURL(data.GetIconURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
-        } else {
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_icon.property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(data.GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+    // discord will return info (id + nick) for "deleted" guilds from this endpoint. strange !
+    const auto data = Abaddon::Get().GetDiscordClient().GetGuild(guild.ID);
+    if (data.has_value()) {
+        const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+        auto &img = Abaddon::Get().GetImageManager();
+        m_icon.property_pixbuf() = img.GetPlaceholder(24);
+        if (data->HasIcon()) {
+            if (data->HasAnimatedIcon() && show_animations) {
+                auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+                    m_icon.property_pixbuf_animation() = pb;
+                };
+                img.LoadAnimationFromURL(data->GetIconURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
+            } else {
+                auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                    m_icon.property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+                };
+                img.LoadFromURL(data->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+            }
         }
-    }
 
-    m_name.set_markup("<b>" + Glib::Markup::escape_text(data.Name) + "</b>");
+        m_name.set_markup("<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
+    } else {
+        m_icon.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(24);
+        m_name.set_markup("<b>Unknown server</b>");
+    }
 
     if (guild.Nick.has_value()) {
         m_nick = Gtk::manage(new Gtk::Label(*guild.Nick));
