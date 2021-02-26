@@ -4,13 +4,14 @@
 #include "user.hpp"
 #include "sticker.hpp"
 #include "emoji.hpp"
+#include "member.hpp"
 #include <string>
 #include <vector>
 
 enum class MessageType {
     DEFAULT = 0,                                 // yep
-    RECIPIENT_ADD = 1,                           // nope
-    RECIPIENT_REMOVE = 2,                        // nope
+    RECIPIENT_ADD = 1,                           // yep
+    RECIPIENT_REMOVE = 2,                        // yep
     CALL = 3,                                    // nope
     CHANNEL_NAME_CHANGE = 4,                     // nope
     CHANNEL_ICON_CHANGE = 5,                     // nope
@@ -167,7 +168,7 @@ struct Message {
     Snowflake ChannelID;
     std::optional<Snowflake> GuildID;
     UserData Author;
-    // std::optional<GuildMember> Member;
+    std::optional<GuildMember> Member;
     std::string Content;
     std::string Timestamp;
     std::string EditedTimestamp; // null

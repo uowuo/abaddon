@@ -1469,6 +1469,8 @@ void DiscordClient::StoreMessageData(Message &msg) {
     if (chan.has_value() && chan->GuildID.has_value())
         msg.GuildID = *chan->GuildID;
 
+    m_store.BeginTransaction();
+
     m_store.SetMessage(msg.ID, msg);
     m_store.SetUser(msg.Author.ID, msg.Author);
     if (msg.Reactions.has_value())
@@ -1481,6 +1483,11 @@ void DiscordClient::StoreMessageData(Message &msg) {
 
     for (const auto &user : msg.Mentions)
         m_store.SetUser(user.ID, user);
+
+    if (msg.Member.has_value())
+        m_store.SetGuildMember(*msg.GuildID, msg.Author.ID, *msg.Member);
+
+    m_store.EndTransaction();
 
     if (msg.ReferencedMessage.has_value() && msg.MessageReference.has_value() && msg.MessageReference->ChannelID.has_value())
         if (msg.ReferencedMessage.value() != nullptr)

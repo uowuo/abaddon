@@ -188,7 +188,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_D("channel_id", m.ChannelID);
     JS_O("guild_id", m.GuildID);
     JS_D("author", m.Author);
-    // JS_O("member", m.Member);
+    JS_O("member", m.Member);
     JS_D("content", m.Content);
     JS_D("timestamp", m.Timestamp);
     JS_N("edited_timestamp", m.EditedTimestamp);
@@ -224,6 +224,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_D("channel_id", ChannelID);
     JS_O("guild_id", GuildID);
     JS_O("author", Author);
+    JS_O("member", Member);
     JS_O("content", Content);
     JS_O("timestamp", Timestamp);
     JS_ON("edited_timestamp", EditedTimestamp);
