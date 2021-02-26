@@ -582,6 +582,12 @@ EmojiResource &Abaddon::GetEmojis() {
 }
 
 int main(int argc, char **argv) {
+#if defined(_WIN32) && defined(_MSC_VER)
+    TCHAR buf[2] { 0 };
+    GetEnvironmentVariableA("GTK_CSD", buf, sizeof(buf));
+    if (buf[0] != '1')
+        SetEnvironmentVariableA("GTK_CSD", "0");
+#endif
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();
 }
