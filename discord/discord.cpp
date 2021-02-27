@@ -234,11 +234,8 @@ Snowflake DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user
     if (data->Roles.size() == 0) return Snowflake::Invalid;
     if (data->Roles.size() == 1) return data->Roles[0];
 
-    return *std::max(data->Roles.begin(), data->Roles.end(), [this](const auto &a, const auto &b) -> bool {
-        const auto role_a = GetRole(*a);
-        const auto role_b = GetRole(*b);
-        if (!role_a.has_value() || !role_b.has_value()) return false; // for some reason a Snowflake(0) sneaks into here
-        return role_a->Position < role_b->Position;
+    return *std::max_element(data->Roles.begin(), data->Roles.end(), [this](const auto &a, const auto &b) -> bool {
+        return GetRole(a)->Position < GetRole(b)->Position;
     });
 }
 
