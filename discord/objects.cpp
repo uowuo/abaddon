@@ -51,13 +51,19 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem
 void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::OpObject &m) {
     JS_D("op", m.Op);
     if (m.Op == "SYNC") {
+        m.Items.emplace();
         JS_D("range", m.Range);
         for (const auto &ij : j.at("items")) {
             if (ij.contains("group"))
-                m.Items.push_back(std::make_unique<GuildMemberListUpdateMessage::GroupItem>(ij.at("group")));
+                m.Items->push_back(std::make_unique<GuildMemberListUpdateMessage::GroupItem>(ij.at("group")));
             else if (ij.contains("member"))
-                m.Items.push_back(std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member")));
+                m.Items->push_back(std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member")));
         }
+    } else if (m.Op == "UPDATE") {
+        JS_D("index", m.Index);
+        const auto &ij = j.at("item");
+        if (ij.contains("member"))
+            m.OpItem = std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member"));
     }
 }
 

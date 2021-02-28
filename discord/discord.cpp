@@ -1303,7 +1303,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
     for (const auto &op : data.Ops) {
         if (op.Op == "SYNC") {
             has_sync = true;
-            for (const auto &item : op.Items) {
+            for (const auto &item : *op.Items) {
                 if (item->Type == "member") {
                     auto member = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
                     m_store.SetUser(member->User.ID, member->User);
@@ -1321,6 +1321,12 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
                             m_user_to_status[member->User.ID] = PresenceStatus::DND;
                     }
                 }
+            }
+        } else if (op.Op == "UPDATE") {
+            if (op.OpItem.has_value() && op.OpItem.value()->Type == "member") {
+                const auto &m = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(op.OpItem.value().get())->GetAsMemberData();
+                m_store.SetGuildMember(data.GuildID, m.User->ID, m);
+                m_signal_guild_member_update.emit(data.GuildID, m.User->ID); // cheeky
             }
         }
     }

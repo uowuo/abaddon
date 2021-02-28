@@ -152,9 +152,10 @@ struct GuildMemberListUpdateMessage {
 
     struct OpObject {
         std::string Op;
-        int Index;
-        std::vector<std::unique_ptr<Item>> Items; // SYNC
-        std::pair<int, int> Range;                // SYNC
+        std::optional<int> Index;
+        std::optional<std::vector<std::unique_ptr<Item>>> Items; // SYNC
+        std::optional<std::pair<int, int>> Range;                // SYNC
+        std::optional<std::unique_ptr<Item>> OpItem;             // UPDATE
 
         friend void from_json(const nlohmann::json &j, OpObject &m);
     };
