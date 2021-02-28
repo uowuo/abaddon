@@ -503,3 +503,14 @@ struct RelationshipsData {
 
     friend void from_json(const nlohmann::json &j, RelationshipsData &m);
 };
+
+struct ModifyGuildMemberObject {
+    // std::optional<std::string> Nick;
+    // std::optional<bool> IsMuted;
+    // std::optional<bool> IsDeaf;
+    // std::optional<Snowflake> ChannelID;
+
+    std::optional<std::vector<Snowflake>> Roles;
+
+    friend void to_json(nlohmann::json &j, const ModifyGuildMemberObject &m);
+};

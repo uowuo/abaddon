@@ -292,3 +292,26 @@
 .app-window textview text {
     caret-color: #ababab;
 }
+
+.guild-members-pane-info {
+    padding: 10px;
+}
+
+
+check,
+radio {
+    background-clip: padding-box;
+    background: #32506e;
+    border-color: #070707;
+    box-shadow: 0 1px rgba(0, 0, 0, 0);
+    color: #dddddd;
+}
+
+check:checked,
+radio:checked {
+    background-clip: border-box;
+    background: #185fb4;
+    border-color: #092444;
+    box-shadow: 0 1px rgba(0, 0, 0, 0);
+    color: #dddddd;
+}

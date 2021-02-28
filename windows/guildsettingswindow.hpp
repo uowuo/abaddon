@@ -5,6 +5,7 @@
 #include "guildsettings/banspane.hpp"
 #include "guildsettings/invitespane.hpp"
 #include "guildsettings/auditlogpane.hpp"
+#include "guildsettings/memberspane.hpp"
 
 class GuildSettingsWindow : public Gtk::Window {
 public:
@@ -19,6 +20,7 @@ private:
     Gtk::StackSwitcher m_switcher;
 
     GuildSettingsInfoPane m_pane_info;
+    GuildSettingsMembersPane m_pane_members;
     GuildSettingsBansPane m_pane_bans;
     GuildSettingsInvitesPane m_pane_invites;
     GuildSettingsAuditLogPane m_pane_audit_log;

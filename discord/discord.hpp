@@ -124,6 +124,16 @@ public:
     void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
 
+    // real client doesn't seem to use the single role endpoints so neither do we
+    template<typename Iter>
+    auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, sigc::slot<void(bool success)> callback) {
+        ModifyGuildMemberObject obj;
+        obj.Roles = { begin, end };
+        m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/members/" + std::to_string(user_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+            callback(CheckCode(response, 200));
+        });
+    }
+
     // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)
     std::vector<BanData> GetBansInGuild(Snowflake guild_id);
     void FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback);
@@ -196,6 +206,7 @@ private:
     void HandleSocketClose(uint16_t code);
 
     bool CheckCode(const http::response_type &r);
+    bool CheckCode(const http::response_type &r, int expected);
 
     void StoreMessageData(Message &msg);
 

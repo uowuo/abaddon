@@ -75,4 +75,5 @@ struct GuildData {
     bool HasAnimatedIcon() const;
     std::string GetIconURL(std::string ext = "png", std::string size = "32") const;
     std::vector<Snowflake> GetSortedChannels(Snowflake ignore = Snowflake::Invalid) const;
+    std::vector<RoleData> FetchRoles() const; // sorted
 };

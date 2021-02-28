@@ -7,7 +7,8 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     , m_pane_info(id)
     , m_pane_bans(id)
     , m_pane_invites(id)
-    , m_pane_audit_log(id) {
+    , m_pane_audit_log(id)
+    , m_pane_members(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
 
@@ -39,6 +40,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_switcher.show();
 
     m_pane_info.show();
+    m_pane_members.show();
     m_pane_bans.show();
     m_pane_invites.show();
     m_pane_audit_log.show();
@@ -53,6 +55,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     const auto self_id = discord.GetUserData().ID;
 
     m_stack.add(m_pane_info, "info", "Info");
+    m_stack.add(m_pane_members, "members", "Members");
     m_stack.add(m_pane_bans, "bans", "Bans");
     if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
         m_stack.add(m_pane_invites, "invites", "Invites");

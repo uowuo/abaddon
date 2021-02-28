@@ -363,3 +363,7 @@ void from_json(const nlohmann::json &j, UserNoteUpdateMessage &m) {
 void from_json(const nlohmann::json &j, RelationshipsData &m) {
     j.get_to(m.Users);
 }
+
+void to_json(nlohmann::json &j, const ModifyGuildMemberObject &m) {
+    JS_IF("roles", m.Roles);
+}

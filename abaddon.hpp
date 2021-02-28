@@ -78,10 +78,11 @@ public:
 
     Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
 
+    void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
+
 protected:
     Snowflake m_shown_user_menu_id;
     Snowflake m_shown_user_menu_guild_id;
-    void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
 
     Gtk::Menu *m_user_menu;
     Gtk::MenuItem *m_user_menu_info;

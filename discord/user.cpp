@@ -1,6 +1,10 @@
 #include "user.hpp"
 #include "../abaddon.hpp"
 
+bool UserData::IsDeleted() const {
+    return Discriminator == "0000";
+}
+
 bool UserData::HasAvatar() const {
     return Avatar.size() > 0;
 }

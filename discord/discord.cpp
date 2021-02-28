@@ -1477,6 +1477,15 @@ bool DiscordClient::CheckCode(const http::response_type &r) {
     return true;
 }
 
+bool DiscordClient::CheckCode(const http::response_type &r, int expected) {
+    if (!CheckCode(r)) return false;
+    if (r.status_code != expected) {
+        fprintf(stderr, "api request to %s returned %d, expected %d\n", r.url.c_str(), r.status_code, expected);
+        return false;
+    }
+    return true;
+}
+
 void DiscordClient::StoreMessageData(Message &msg) {
     const auto chan = m_store.GetChannel(msg.ChannelID);
     if (chan.has_value() && chan->GuildID.has_value())

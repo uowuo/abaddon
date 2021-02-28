@@ -38,6 +38,7 @@ private:
 void LaunchBrowser(Glib::ustring url);
 void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300);
 std::string IntToCSSColor(int color);
+Gdk::RGBA IntToRGBA(int color);
 void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu);
 void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, sigc::slot<void()> pre_callback);
 std::vector<std::string> StringSplit(const std::string &str, const char *delim);
