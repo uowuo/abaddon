@@ -256,9 +256,9 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
     typedef sigc::signal<void, Snowflake> type_signal_channel_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_update;
-    typedef sigc::signal<void, Snowflake> type_signal_role_update;
-    typedef sigc::signal<void, Snowflake> type_signal_role_create;
-    typedef sigc::signal<void, Snowflake> type_signal_role_delete;
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_update; // guild id, role id
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_create; // guild id, role id
+    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_delete; // guild id, role id
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_add;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_reaction_remove;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_typing_start;        // user id, channel id

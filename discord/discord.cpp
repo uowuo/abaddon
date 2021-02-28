@@ -1031,19 +1031,29 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayGuildRoleUpdate(const GatewayMessage &msg) {
     GuildRoleUpdateObject data = msg.Data;
     m_store.SetRole(data.Role.ID, data.Role);
-    m_signal_role_update.emit(data.Role.ID);
+    m_signal_role_update.emit(data.GuildID, data.Role.ID);
 }
 
 void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
     GuildRoleCreateObject data = msg.Data;
+    auto guild = *m_store.GetGuild(data.GuildID);
+    guild.Roles->push_back(data.Role);
+    m_store.BeginTransaction();
     m_store.SetRole(data.Role.ID, data.Role);
-    m_signal_role_create.emit(data.Role.ID);
+    m_store.SetGuild(guild.ID, guild);
+    m_store.EndTransaction();
+    m_signal_role_create.emit(data.GuildID, data.Role.ID);
 }
 
 void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
     GuildRoleDeleteObject data = msg.Data;
-    // todo: actually delete it
-    m_signal_role_delete.emit(data.RoleID);
+    auto guild = *m_store.GetGuild(data.GuildID);
+    const auto pred = [this, id = data.RoleID](const RoleData &role) -> bool {
+        return role.ID == id;
+    };
+    guild.Roles->erase(std::remove_if(guild.Roles->begin(), guild.Roles->end(), pred), guild.Roles->end());
+    m_store.SetGuild(guild.ID, guild);
+    m_signal_role_delete.emit(data.GuildID, data.RoleID);
 }
 
 void DiscordClient::HandleGatewayMessageReactionAdd(const GatewayMessage &msg) {
