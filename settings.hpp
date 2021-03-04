@@ -19,6 +19,7 @@ public:
     bool GetPrefetch() const;
     std::string GetMainCSS() const;
     bool GetShowAnimations() const;
+    bool GetShowOwnerCrown() const;
 
     bool IsValid() const;
 

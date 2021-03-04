@@ -77,3 +77,7 @@ std::string SettingsManager::GetMainCSS() const {
 bool SettingsManager::GetShowAnimations() const {
     return GetSettingBool("gui", "animations", true);
 }
+
+bool SettingsManager::GetShowOwnerCrown() const {
+    return GetSettingBool("gui", "owner_crown", true);
+}

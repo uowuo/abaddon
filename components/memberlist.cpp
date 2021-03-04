@@ -6,13 +6,23 @@
 
 constexpr static const int MaxMemberListRows = 200;
 
-MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
+MemberListUserRow::MemberListUserRow(const GuildData &guild, const UserData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_label = Gtk::manage(new Gtk::Label);
     m_avatar = Gtk::manage(new LazyImage(16, 16));
     m_status_indicator = Gtk::manage(new StatusIndicator(ID));
+
+    static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
+    if (crown && guild.OwnerID == data->ID) {
+        try {
+            auto pixbuf = Gdk::Pixbuf::create_from_file("./res/crown.png", 12, 12);
+            m_crown = Gtk::manage(new Gtk::Image(pixbuf));
+            m_crown->set_valign(Gtk::ALIGN_CENTER);
+            m_crown->set_margin_end(8);
+        } catch (...) {}
+    }
 
     m_status_indicator->set_margin_start(3);
 
@@ -31,7 +41,7 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
         std::string display = data->Username;
         if (show_discriminator)
             display += "#" + data->Discriminator;
-        auto col_id = data->GetHoistedRole(guild_id, true);
+        auto col_id = data->GetHoistedRole(guild.ID, true);
         if (col_id.IsValid()) {
             auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
             m_label->set_use_markup(true);
@@ -49,6 +59,8 @@ MemberListUserRow::MemberListUserRow(Snowflake guild_id, const UserData *data) {
     m_box->add(*m_avatar);
     m_box->add(*m_status_indicator);
     m_box->add(*m_label);
+    if (m_crown != nullptr)
+        m_box->add(*m_crown);
     m_ev->add(*m_box);
     add(*m_ev);
     show_all();
@@ -118,10 +130,8 @@ void MemberList::UpdateMemberList() {
 
     for (const auto &id : ids) {
         auto user = discord.GetUser(id);
-        if (!user.has_value()) {
-            roleless_users.push_back(id);
+        if (!user.has_value() || user->IsDeleted())
             continue;
-        }
 
         auto pos_role_id = discord.GetMemberHoistedRole(m_guild_id, id);       // role for positioning
         auto col_role_id = discord.GetMemberHoistedRole(m_guild_id, id, true); // role for color
@@ -140,9 +150,10 @@ void MemberList::UpdateMemberList() {
     }
 
     int num_rows = 0;
-    auto add_user = [this, &user_to_color, &num_rows](const UserData *data) -> bool {
+    const auto guild = *discord.GetGuild(m_guild_id);
+    auto add_user = [this, &user_to_color, &num_rows, guild](const UserData *data) -> bool {
         if (num_rows++ > MaxMemberListRows) return false;
-        auto *row = Gtk::manage(new MemberListUserRow(m_guild_id, data));
+        auto *row = Gtk::manage(new MemberListUserRow(guild, data));
         m_id_to_row[data->ID] = row;
         AttachUserMenuHandler(row, data->ID);
         m_listbox->add(*row);

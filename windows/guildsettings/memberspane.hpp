@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <gtkmm.h>
 #include "../../discord/member.hpp"
+#include "../../discord/guild.hpp"
 #include "../../components/lazyimage.hpp"
 
 class GuildSettingsMembersPaneRolesItem : public Gtk::ListBoxRow {
@@ -103,7 +104,7 @@ public:
 
 class GuildSettingsMembersListItem : public Gtk::ListBoxRow {
 public:
-    GuildSettingsMembersListItem(Snowflake guild_id, const GuildMember &member);
+    GuildSettingsMembersListItem(const GuildData &guild, const GuildMember &member);
 
     Glib::ustring DisplayTerm;
 
@@ -117,6 +118,7 @@ private:
     LazyImage m_avatar;
     Gtk::Label m_name;
     Gtk::Box m_main;
+    Gtk::Image *m_crown = nullptr;
 };
 
 class GuildSettingsMembersPane : public Gtk::Box {

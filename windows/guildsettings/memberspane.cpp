@@ -40,11 +40,12 @@ GuildSettingsMembersPaneMembers::GuildSettingsMembersPaneMembers(Snowflake id)
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto members = discord.GetUsersInGuild(id);
+    const auto guild = *discord.GetGuild(GuildID);
     for (const auto member_id : members) {
         auto member = *discord.GetMember(member_id, GuildID);
         member.User = discord.GetUser(member_id);
         if (member.User->IsDeleted()) continue;
-        auto *row = Gtk::manage(new GuildSettingsMembersListItem(GuildID, member));
+        auto *row = Gtk::manage(new GuildSettingsMembersListItem(guild, member));
         row->show();
         m_list.add(*row);
     }
@@ -81,9 +82,9 @@ GuildSettingsMembersPaneMembers::type_signal_member_select GuildSettingsMembersP
     return m_signal_member_select;
 }
 
-GuildSettingsMembersListItem::GuildSettingsMembersListItem(Snowflake guild_id, const GuildMember &member)
+GuildSettingsMembersListItem::GuildSettingsMembersListItem(const GuildData &guild, const GuildMember &member)
     : UserID(member.User->ID)
-    , GuildID(guild_id)
+    , GuildID(guild.ID)
     , m_avatar(32, 32) {
     m_avatar.SetAnimated(true);
 
@@ -113,14 +114,29 @@ GuildSettingsMembersListItem::GuildSettingsMembersListItem(Snowflake guild_id, c
     discord.signal_guild_member_update().connect(sigc::track_obj(member_update_cb, *this));
     UpdateColor();
 
+    static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
+    if (crown && guild.OwnerID == member.User->ID) {
+        try {
+            auto pixbuf = Gdk::Pixbuf::create_from_file("./res/crown.png", 12, 12);
+            m_crown = Gtk::manage(new Gtk::Image(pixbuf));
+            m_crown->set_valign(Gtk::ALIGN_CENTER);
+            m_crown->set_margin_start(10);
+            m_crown->show();
+        } catch (...) {}
+    }
+
     m_avatar.set_margin_end(5);
     m_avatar.set_halign(Gtk::ALIGN_START);
     m_avatar.set_valign(Gtk::ALIGN_CENTER);
     m_name.set_halign(Gtk::ALIGN_START);
     m_name.set_valign(Gtk::ALIGN_CENTER);
 
+    m_main.set_hexpand(true);
+
     m_main.add(m_avatar);
     m_main.add(m_name);
+    if (m_crown != nullptr)
+        m_main.add(*m_crown);
 
     m_ev.add(m_main);
     add(m_ev);
