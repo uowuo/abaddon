@@ -227,15 +227,19 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     return roles[0].ID;
 }
 
-Snowflake DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const {
+std::optional<RoleData> DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const {
     const auto data = GetMember(user_id, guild_id);
-    if (!data.has_value()) return Snowflake::Invalid;
+    if (!data.has_value()) return std::nullopt;
 
-    if (data->Roles.size() == 0) return Snowflake::Invalid;
-    if (data->Roles.size() == 1) return data->Roles[0];
+    if (data->Roles.size() == 0) return std::nullopt;
+    if (data->Roles.size() == 1) return GetRole(data->Roles[0]);
 
-    return *std::max_element(data->Roles.begin(), data->Roles.end(), [this](const auto &a, const auto &b) -> bool {
-        return GetRole(a)->Position < GetRole(b)->Position;
+    std::vector<RoleData> roles;
+    for (const auto id : data->Roles)
+        roles.push_back(*GetRole(id));
+
+    return *std::max_element(roles.begin(), roles.end(), [this](const auto &a, const auto &b) -> bool {
+        return a.Position < b.Position;
     });
 }
 
@@ -334,10 +338,8 @@ Permission DiscordClient::ComputeOverwrites(Permission base, Snowflake member_id
 bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const {
     const auto guild = GetGuild(guild_id);
     if (guild.has_value() && guild->OwnerID == target) return false;
-    const auto actor_highest_id = GetMemberHighestRole(guild_id, actor);
-    const auto target_highest_id = GetMemberHighestRole(guild_id, target);
-    const auto actor_highest = GetRole(actor_highest_id);
-    const auto target_highest = GetRole(target_highest_id);
+    const auto actor_highest = GetMemberHighestRole(guild_id, actor);
+    const auto target_highest = GetMemberHighestRole(guild_id, target);
     if (!actor_highest.has_value()) return false;
     if (!target_highest.has_value()) return true;
     return actor_highest->Position > target_highest->Position;
@@ -534,6 +536,14 @@ void DiscordClient::AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id)
 void DiscordClient::RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), [this](const http::response_type &response) {
         CheckCode(response);
+    });
+}
+
+void DiscordClient::ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(bool success)> callback) {
+    ModifyGuildRoleObject obj;
+    obj.Permissions = permissions;
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
     });
 }
 

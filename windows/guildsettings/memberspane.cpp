@@ -230,9 +230,9 @@ GuildSettingsMembersPaneRoles::GuildSettingsMembersPaneRoles(Snowflake guild_id)
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto self_id = discord.GetUserData().ID;
     const bool can_modify = discord.HasGuildPermission(self_id, guild_id, Permission::MANAGE_ROLES);
-    const auto highest_id = discord.GetMemberHighestRole(GuildID, self_id);
-    if (highest_id.IsValid())
-        m_hoisted_position = discord.GetRole(highest_id)->Position;
+    const auto highest = discord.GetMemberHighestRole(GuildID, self_id);
+    if (highest.has_value())
+        m_hoisted_position = highest->Position;
 
     discord.signal_role_create().connect(sigc::mem_fun(*this, &GuildSettingsMembersPaneRoles::OnRoleCreate));
     discord.signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsMembersPaneRoles::OnRoleUpdate));

@@ -367,3 +367,12 @@ void from_json(const nlohmann::json &j, RelationshipsData &m) {
 void to_json(nlohmann::json &j, const ModifyGuildMemberObject &m) {
     JS_IF("roles", m.Roles);
 }
+
+void to_json(nlohmann::json &j, const ModifyGuildRoleObject &m) {
+    JS_IF("name", m.Name);
+    JS_IF("color", m.Color);
+    JS_IF("hoist", m.IsHoisted);
+    JS_IF("mentionable", m.Mentionable);
+    if (m.Permissions.has_value())
+        j["permissions"] = std::to_string(static_cast<uint64_t>(*m.Permissions));
+}

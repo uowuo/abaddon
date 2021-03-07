@@ -87,7 +87,7 @@ public:
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
     std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
-    Snowflake GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
+    std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::unordered_set<Snowflake> GetChannelsInGuild(Snowflake id) const;
 
@@ -123,6 +123,7 @@ public:
     void DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback);
     void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
+    void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(bool success)> callback);
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>

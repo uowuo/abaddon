@@ -514,3 +514,13 @@ struct ModifyGuildMemberObject {
 
     friend void to_json(nlohmann::json &j, const ModifyGuildMemberObject &m);
 };
+
+struct ModifyGuildRoleObject {
+    std::optional<std::string> Name;
+    std::optional<Permission> Permissions;
+    std::optional<int> Color;
+    std::optional<bool> IsHoisted;
+    std::optional<bool> Mentionable;
+
+    friend void to_json(nlohmann::json &j, const ModifyGuildRoleObject &m);
+};
