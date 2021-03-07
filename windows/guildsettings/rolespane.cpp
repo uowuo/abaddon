@@ -53,6 +53,7 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
     m_list_scroll.set_hexpand(true);
     m_list_scroll.set_vexpand(true);
     m_list_scroll.set_propagate_natural_height(true);
+    m_list_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
 
     m_list.set_selection_mode(Gtk::SELECTION_SINGLE);
     m_list.signal_row_selected().connect([this](Gtk::ListBoxRow *selected_) {
@@ -62,7 +63,6 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_role_create().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleCreate));
-    //discord.signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleUpdate));
     discord.signal_role_delete().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleDelete));
 
     const auto guild = *discord.GetGuild(GuildID);
@@ -116,12 +116,6 @@ void GuildSettingsRolesPaneRoles::OnRoleCreate(Snowflake guild_id, Snowflake rol
     m_list.add(*row);
 }
 
-void GuildSettingsRolesPaneRoles::OnRoleUpdate(Snowflake guild_id, Snowflake role_id) {
-    if (guild_id != GuildID) return;
-    m_list.invalidate_filter();
-    m_list.invalidate_sort();
-}
-
 void GuildSettingsRolesPaneRoles::OnRoleDelete(Snowflake guild_id, Snowflake role_id) {
     if (guild_id != GuildID) return;
     auto it = m_rows.find(role_id);
@@ -153,6 +147,8 @@ GuildSettingsRolesPaneRolesListItem::GuildSettingsRolesPaneRolesListItem(const G
         changed();
     });
 
+    m_name.set_ellipsize(Pango::ELLIPSIZE_END);
+
     m_ev.set_halign(Gtk::ALIGN_START);
     m_ev.add(m_name);
     add(m_ev);
@@ -173,11 +169,28 @@ void GuildSettingsRolesPaneRolesListItem::UpdateItem(const RoleData &role) {
 }
 
 GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
-    : GuildID(guild_id) {
+    : GuildID(guild_id)
+    , m_layout(Gtk::ORIENTATION_VERTICAL) {
     set_propagate_natural_height(true);
     set_propagate_natural_width(true);
 
     Abaddon::Get().GetDiscordClient().signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneInfo::OnRoleUpdate));
+
+    const auto cb = [this](GdkEventKey *e) -> bool {
+        if (e->keyval == GDK_KEY_Return)
+            UpdateRoleName();
+        return false;
+    };
+    m_role_name.signal_key_press_event().connect(cb, false);
+
+    m_role_name.set_tooltip_text("Press enter to submit");
+
+    m_role_name.set_max_length(100);
+
+    m_role_name.set_margin_top(5);
+    m_role_name.set_margin_bottom(5);
+    m_role_name.set_margin_start(5);
+    m_role_name.set_margin_end(5);
 
     int left_ypos = 0;
     int right_ypos = 0;
@@ -244,7 +257,11 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     // clang-format on
 
-    add(m_grid);
+    m_layout.add(m_role_name);
+    m_layout.add(m_grid);
+    add(m_layout);
+    m_role_name.show();
+    m_layout.show();
     m_grid.show();
 }
 
@@ -253,6 +270,8 @@ void GuildSettingsRolesPaneInfo::SetRole(const RoleData &role) {
         it->disconnect();
         it = m_update_connections.erase(it);
     }
+
+    m_role_name.set_text(role.Name);
 
     RoleID = role.ID;
     m_perms = role.Permissions;
@@ -265,6 +284,7 @@ void GuildSettingsRolesPaneInfo::SetRole(const RoleData &role) {
 void GuildSettingsRolesPaneInfo::OnRoleUpdate(Snowflake guild_id, Snowflake role_id) {
     if (guild_id != GuildID || role_id != RoleID) return;
     const auto role = *Abaddon::Get().GetDiscordClient().GetRole(RoleID);
+    m_role_name.set_text(role.Name);
     m_perms = role.Permissions;
     for (const auto [perm, btn] : m_perm_items)
         btn->set_active((role.Permissions & perm) == perm);
@@ -294,6 +314,20 @@ void GuildSettingsRolesPaneInfo::OnPermissionToggle(Permission perm, bool new_se
     m_update_connections.push_back(tmp.connect(std::move(cb)));
     const auto tmp_cb = [this, tmp = std::move(tmp)](bool success) { tmp.emit(success); };
     discord.ModifyRolePermissions(GuildID, RoleID, m_perms, sigc::track_obj(tmp_cb, *this));
+}
+
+void GuildSettingsRolesPaneInfo::UpdateRoleName() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.GetRole(RoleID)->Name == m_role_name.get_text()) return;
+
+    const auto cb = [this, &discord](bool success) {
+        if (!success) {
+            m_role_name.set_text(discord.GetRole(RoleID)->Name);
+            Gtk::MessageDialog dlg("Failed to set role name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            dlg.run();
+        }
+    };
+    discord.ModifyRoleName(GuildID, RoleID, m_role_name.get_text(), cb);
 }
 
 GuildSettingsRolesPanePermItem::GuildSettingsRolesPanePermItem(Permission perm)

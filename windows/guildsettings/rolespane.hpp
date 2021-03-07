@@ -26,7 +26,6 @@ public:
 
 private:
     void OnRoleCreate(Snowflake guild_id, Snowflake role_id);
-    void OnRoleUpdate(Snowflake guild_id, Snowflake role_id);
     void OnRoleDelete(Snowflake guild_id, Snowflake role_id);
 
     Snowflake GuildID;
@@ -68,6 +67,8 @@ private:
     void OnRoleUpdate(Snowflake guild_id, Snowflake role_id);
     void OnPermissionToggle(Permission perm, bool new_set);
 
+    void UpdateRoleName();
+
     Snowflake GuildID;
     Snowflake RoleID;
 
@@ -75,6 +76,8 @@ private:
 
     std::vector<sigc::connection> m_update_connections;
 
+    Gtk::Box m_layout;
+    Gtk::Entry m_role_name;
     Gtk::Grid m_grid;
 
     std::unordered_map<Permission, GuildSettingsRolesPanePermItem *> m_perm_items;

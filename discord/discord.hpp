@@ -124,6 +124,7 @@ public:
     void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(bool success)> callback);
+    void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>

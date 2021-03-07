@@ -547,6 +547,14 @@ void DiscordClient::ModifyRolePermissions(Snowflake guild_id, Snowflake role_id,
     });
 }
 
+void DiscordClient::ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback) {
+    ModifyGuildRoleObject obj;
+    obj.Name = name;
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
+    });
+}
+
 std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
     return m_store.GetBans(guild_id);
 }
