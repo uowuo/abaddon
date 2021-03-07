@@ -139,6 +139,7 @@ Gdk::RGBA IntToRGBA(int color) {
     ret.set_red(((color & 0xFF0000) >> 16) / 255.0);
     ret.set_green(((color & 0x00FF00) >> 8) / 255.0);
     ret.set_blue(((color & 0x0000FF) >> 0) / 255.0);
+    ret.set_alpha(255.0);
     return ret;
 }
 
