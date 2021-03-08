@@ -77,7 +77,9 @@ private:
     std::vector<sigc::connection> m_update_connections;
 
     Gtk::Box m_layout;
+    Gtk::Box m_meta;
     Gtk::Entry m_role_name;
+    Gtk::ColorButton m_color_button;
     Gtk::Grid m_grid;
 
     std::unordered_map<Permission, GuildSettingsRolesPanePermItem *> m_perm_items;

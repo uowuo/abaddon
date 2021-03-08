@@ -125,6 +125,9 @@ public:
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(bool success)> callback);
     void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(bool success)> callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(bool success)> callback);
+
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>

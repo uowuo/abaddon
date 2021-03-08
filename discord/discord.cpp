@@ -555,6 +555,22 @@ void DiscordClient::ModifyRoleName(Snowflake guild_id, Snowflake role_id, const 
     });
 }
 
+void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(bool success)> callback) {
+    ModifyGuildRoleObject obj;
+    obj.Color = color;
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
+    });
+}
+
+void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(bool success)> callback) {
+    uint32_t int_color = 0;
+    int_color |= static_cast<uint32_t>(color.get_blue() * 255.0) << 0;
+    int_color |= static_cast<uint32_t>(color.get_green() * 255.0) << 8;
+    int_color |= static_cast<uint32_t>(color.get_red() * 255.0) << 16;
+    ModifyRoleColor(guild_id, role_id, int_color, callback);
+}
+
 std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
     return m_store.GetBans(guild_id);
 }

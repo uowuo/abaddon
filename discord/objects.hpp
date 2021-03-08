@@ -518,7 +518,7 @@ struct ModifyGuildMemberObject {
 struct ModifyGuildRoleObject {
     std::optional<std::string> Name;
     std::optional<Permission> Permissions;
-    std::optional<int> Color;
+    std::optional<uint32_t> Color;
     std::optional<bool> IsHoisted;
     std::optional<bool> Mentionable;
 

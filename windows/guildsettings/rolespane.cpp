@@ -170,11 +170,13 @@ void GuildSettingsRolesPaneRolesListItem::UpdateItem(const RoleData &role) {
 
 GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
     : GuildID(guild_id)
-    , m_layout(Gtk::ORIENTATION_VERTICAL) {
+    , m_layout(Gtk::ORIENTATION_VERTICAL)
+    , m_meta(Gtk::ORIENTATION_HORIZONTAL) {
     set_propagate_natural_height(true);
     set_propagate_natural_width(true);
 
-    Abaddon::Get().GetDiscordClient().signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneInfo::OnRoleUpdate));
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneInfo::OnRoleUpdate));
 
     const auto cb = [this](GdkEventKey *e) -> bool {
         if (e->keyval == GDK_KEY_Return)
@@ -191,6 +193,23 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
     m_role_name.set_margin_bottom(5);
     m_role_name.set_margin_start(5);
     m_role_name.set_margin_end(5);
+
+    m_color_button.set_margin_top(5);
+    m_color_button.set_margin_bottom(5);
+    m_color_button.set_margin_start(5);
+    m_color_button.set_margin_end(5);
+
+    m_color_button.signal_color_set().connect([this, &discord]() {
+        const auto color = m_color_button.get_rgba();
+        const auto cb = [this, &discord](bool success) {
+            if (!success) {
+                m_color_button.set_rgba(IntToRGBA(discord.GetRole(RoleID)->Color));
+                Gtk::MessageDialog dlg("Failed to set role color", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.run();
+            }
+        };
+        discord.ModifyRoleColor(GuildID, RoleID, color, cb);
+    });
 
     int left_ypos = 0;
     int right_ypos = 0;
@@ -257,9 +276,13 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     // clang-format on
 
-    m_layout.add(m_role_name);
+    m_meta.add(m_role_name);
+    m_meta.add(m_color_button);
+    m_layout.add(m_meta);
     m_layout.add(m_grid);
     add(m_layout);
+    m_meta.show();
+    m_color_button.show();
     m_role_name.show();
     m_layout.show();
     m_grid.show();
@@ -269,6 +292,14 @@ void GuildSettingsRolesPaneInfo::SetRole(const RoleData &role) {
     for (auto it = m_update_connections.begin(); it != m_update_connections.end();) {
         it->disconnect();
         it = m_update_connections.erase(it);
+    }
+
+    if (role.Color != 0) {
+        m_color_button.set_rgba(IntToRGBA(role.Color));
+    } else {
+        static Gdk::RGBA trans;
+        trans.set_alpha(0.0);
+        m_color_button.set_rgba(trans);
     }
 
     m_role_name.set_text(role.Name);
@@ -285,6 +316,15 @@ void GuildSettingsRolesPaneInfo::OnRoleUpdate(Snowflake guild_id, Snowflake role
     if (guild_id != GuildID || role_id != RoleID) return;
     const auto role = *Abaddon::Get().GetDiscordClient().GetRole(RoleID);
     m_role_name.set_text(role.Name);
+
+    if (role.Color != 0) {
+        m_color_button.set_rgba(IntToRGBA(role.Color));
+    } else {
+        static Gdk::RGBA trans;
+        trans.set_alpha(0.0);
+        m_color_button.set_rgba(trans);
+    }
+
     m_perms = role.Permissions;
     for (const auto [perm, btn] : m_perm_items)
         btn->set_active((role.Permissions & perm) == perm);

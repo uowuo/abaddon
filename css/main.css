@@ -315,3 +315,7 @@ radio:checked {
     box-shadow: 0 1px rgba(0, 0, 0, 0);
     color: #dddddd;
 }
+
+colorswatch {
+    box-shadow: 0 1px rgba(0, 0, 0, 0);
+}
