@@ -1,9 +1,9 @@
-@define-color background_color #263238;
-@define-color secondary_color #2c3e50;
-@define-color text_color #cfd8dc;
+@define-color background_color #141414;
+@define-color secondary_color #111111;
+@define-color text_color #fbfbfb;
 
 .embed {
-    background-color: #364759;
+    background-color: rgba(0, 0, 0, 0.2);
     color: #cbcbcb;
     border-radius: 5px;
     padding: 10px;
@@ -42,6 +42,7 @@
 
 .channel-row-category {
     padding-left: 15px;
+    color: #ff5370;
 }
 
 .channel-row-channel {
@@ -95,8 +96,9 @@
 }
 
 .message-input, .message-input textview, .message-input textview text {
-    background-color: @secondary_color;
-    color: @text_color;
+    background-color: #242424;
+    color: #adadad;
+    border-radius: 15px;
 }
 
 .message-input {
@@ -205,7 +207,7 @@
 }
 
 .app-window paned separator {
-    background: #37474f;
+    background: @background_color;
 }
 
 .app-window scrollbar {
@@ -298,24 +300,24 @@
 }
 
 
-check,
-radio {
+.app-window check,
+.app-window radio {
     background-clip: padding-box;
-    background: #32506e;
+    background: @secondary_color;
     border-color: #070707;
     box-shadow: 0 1px rgba(0, 0, 0, 0);
     color: #dddddd;
 }
 
-check:checked,
-radio:checked {
+.app-window check:checked,
+.app-window radio:checked {
     background-clip: border-box;
-    background: #185fb4;
+    background: #0b4285;
     border-color: #092444;
     box-shadow: 0 1px rgba(0, 0, 0, 0);
     color: #dddddd;
 }
 
-colorswatch {
+.app-window colorswatch {
     box-shadow: 0 1px rgba(0, 0, 0, 0);
 }
