@@ -182,6 +182,9 @@ void FileCacheWorkerThread::loop() {
                 auto fp = m_curl_file_handles.find(msg->easy_handle);
                 std::fclose(fp->second);
 
+                m_handles.erase(msg->easy_handle);
+                m_handle_urls.erase(msg->easy_handle);
+
                 curl_multi_remove_handle(m_multi_handle, msg->easy_handle);
                 curl_easy_cleanup(msg->easy_handle);
 
@@ -189,8 +192,6 @@ void FileCacheWorkerThread::loop() {
                 auto cb = m_callbacks.at(url);
                 m_callbacks.erase(url);
                 m_paths.erase(url);
-                m_handles.erase(msg->easy_handle);
-                m_handle_urls.erase(msg->easy_handle);
                 m_curl_file_handles.erase(fp);
                 // chop off the !
                 auto old = path;

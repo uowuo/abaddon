@@ -714,8 +714,6 @@ void ChatMessageItemContainer::HandleEmojis(Gtk::TextView &tv) {
 void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) {
     static auto rgx = Glib::Regex::create(R"(<a?:([\w\d_]+):(\d+)>)");
 
-    auto &img = Abaddon::Get().GetImageManager();
-
     auto text = GetText(buf);
 
     Glib::MatchInfo match;
@@ -723,6 +721,8 @@ void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) 
     while (rgx->match(text, startpos, match)) {
         int mstart, mend;
         if (!match.fetch_pos(0, mstart, mend)) break;
+
+        const auto new_term = ":" + match.fetch(1) + ":";
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
         const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
@@ -736,7 +736,7 @@ void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) 
         const int blen = text.size();
         startpos -= (alen - blen);
 
-        buf->insert(it, ":" + match.fetch(1) + ":");
+        buf->insert(it, new_term);
 
         text = GetText(buf);
     }

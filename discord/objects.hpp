@@ -121,6 +121,8 @@ struct MessageDeleteBulkData {
 
 struct GuildMemberListUpdateMessage {
     struct Item {
+        virtual ~Item() = default;
+
         std::string Type;
     };
 
