@@ -526,3 +526,15 @@ struct ModifyGuildRoleObject {
 
     friend void to_json(nlohmann::json &j, const ModifyGuildRoleObject &m);
 };
+
+struct ModifyGuildRolePositionsObject {
+    struct PositionParam {
+        Snowflake ID;
+        std::optional<int> Position; // no idea why this can be optional
+
+        friend void to_json(nlohmann::json &j, const PositionParam &m);
+    };
+    std::vector<PositionParam> Positions;
+
+    friend void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject &m);
+};

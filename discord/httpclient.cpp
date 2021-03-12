@@ -1,5 +1,4 @@
 #include "httpclient.hpp"
-#include "httpclient.hpp"
 
 //#define USE_LOCAL_PROXY
 HTTPClient::HTTPClient(std::string api_base)

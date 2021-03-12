@@ -376,3 +376,12 @@ void to_json(nlohmann::json &j, const ModifyGuildRoleObject &m) {
     if (m.Permissions.has_value())
         j["permissions"] = std::to_string(static_cast<uint64_t>(*m.Permissions));
 }
+
+void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject::PositionParam &m) {
+    j["id"] = m.ID;
+    JS_IF("position", m.Position);
+}
+
+void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject &m) {
+    j = m.Positions;
+}

@@ -321,3 +321,11 @@
 .app-window colorswatch {
     box-shadow: 0 1px rgba(0, 0, 0, 0);
 }
+
+.drag-hover-top {
+    background: linear-gradient(to bottom, rgba(255, 66, 66, 0.65) 0%, rgba(0, 0, 0, 0) 35%);
+}
+
+.drag-hover-bottom {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 65%, rgba(255, 66, 66, 0.65) 100%);
+}

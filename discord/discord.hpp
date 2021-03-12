@@ -127,7 +127,10 @@ public:
     void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
     void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(bool success)> callback);
     void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(bool success)> callback);
+    void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(bool success)> callback);
 
+    bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
+    bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>

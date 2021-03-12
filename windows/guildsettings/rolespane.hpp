@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include <unordered_map>
 #include "../../discord/guild.hpp"
+#include "../../components/draglistbox.hpp"
 
 class GuildSettingsRolesPaneRolesListItem : public Gtk::ListBoxRow {
 public:
@@ -32,7 +33,7 @@ private:
 
     Gtk::Entry m_search;
     Gtk::ScrolledWindow m_list_scroll;
-    Gtk::ListBox m_list;
+    DragListBox m_list;
 
     typedef sigc::signal<void, Snowflake /* role_id */> type_signal_role_select;
     type_signal_role_select m_signal_role_select;

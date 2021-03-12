@@ -28,22 +28,12 @@ void GuildSettingsRolesPane::OnRoleSelect(Snowflake role_id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto role = *discord.GetRole(role_id);
     m_roles_perms.SetRole(role);
-
-    const auto self_id = discord.GetUserData().ID;
-
-    const auto is_owner = discord.GetGuild(GuildID)->OwnerID == self_id;
-    if (is_owner)
-        m_roles_perms.set_sensitive(true);
-    else {
-        const bool can_modify = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_ROLES);
-        if (!can_modify) {
-            m_roles_perms.set_sensitive(false);
-        } else {
-            const auto highest = discord.GetMemberHighestRole(GuildID, self_id);
-            m_roles_perms.set_sensitive(highest.has_value() && highest->Position > role.Position);
-        }
-    }
+    m_roles_perms.set_sensitive(discord.CanModifyRole(GuildID, role_id));
 }
+
+static std::vector<Gtk::TargetEntry> g_target_entries = {
+    Gtk::TargetEntry("GTK_LIST_ROLES_ROW", Gtk::TARGET_SAME_APP, 0)
+};
 
 GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
@@ -61,19 +51,47 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
             m_signal_role_select.emit(selected->RoleID);
     });
 
+    m_list.set_focus_vadjustment(m_list_scroll.get_vadjustment());
+    m_list.signal_on_drop().connect([this](Gtk::ListBoxRow *row_, int new_index) -> bool {
+        if (auto *row = dynamic_cast<GuildSettingsRolesPaneRolesListItem *>(row_)) {
+            auto &discord = Abaddon::Get().GetDiscordClient();
+            const auto num_rows = m_list.get_children().size();
+            const auto new_pos = num_rows - new_index - 1;
+            if (row->RoleID == GuildID) return true; // moving role @everyone
+            if (new_index == num_rows) return true;  // trying to move row below @everyone
+            // make sure it wont modify a neighbor role u dont have perms to modify
+            if (!discord.CanModifyRole(GuildID, row->RoleID)) return false;
+            const auto cb = [this](bool success) {
+                if (!success) {
+                    Gtk::MessageDialog dlg("Failed to set role position", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                    dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
+                    dlg.run();
+                }
+            };
+            discord.ModifyRolePosition(GuildID, row->RoleID, new_pos, sigc::track_obj(cb, *this));
+            return true;
+        }
+        return false;
+    });
+
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_role_create().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleCreate));
     discord.signal_role_delete().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleDelete));
 
     const auto guild = *discord.GetGuild(GuildID);
     const auto roles = guild.FetchRoles();
+    const bool can_modify = discord.HasGuildPermission(discord.GetUserData().ID, GuildID, Permission::MANAGE_ROLES);
     for (const auto &role : roles) {
         auto *row = Gtk::manage(new GuildSettingsRolesPaneRolesListItem(guild, role));
+        row->drag_source_set(g_target_entries, Gdk::BUTTON1_MASK, Gdk::ACTION_MOVE);
         row->set_margin_start(5);
         row->set_halign(Gtk::ALIGN_FILL);
         row->show();
         m_rows[role.ID] = row;
-        m_list.add(*row);
+        if (can_modify)
+            m_list.add_draggable(row);
+        else
+            m_list.add(*row);
     }
 
     m_list.set_sort_func([this](Gtk::ListBoxRow *rowa_, Gtk::ListBoxRow *rowb_) -> int {
@@ -108,12 +126,16 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
 void GuildSettingsRolesPaneRoles::OnRoleCreate(Snowflake guild_id, Snowflake role_id) {
     if (guild_id != GuildID) return;
     auto &discord = Abaddon::Get().GetDiscordClient();
+    const bool can_modify = discord.HasGuildPermission(discord.GetUserData().ID, guild_id, Permission::MANAGE_ROLES);
     const auto guild = *discord.GetGuild(guild_id);
     const auto role = *discord.GetRole(role_id);
     auto *row = Gtk::manage(new GuildSettingsRolesPaneRolesListItem(guild, role));
     row->show();
     m_rows[role_id] = row;
-    m_list.add(*row);
+    if (can_modify)
+        m_list.add_draggable(row);
+    else
+        m_list.add(*row);
 }
 
 void GuildSettingsRolesPaneRoles::OnRoleDelete(Snowflake guild_id, Snowflake role_id) {
@@ -205,6 +227,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
             if (!success) {
                 m_color_button.set_rgba(IntToRGBA(discord.GetRole(RoleID)->Color));
                 Gtk::MessageDialog dlg("Failed to set role color", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
                 dlg.run();
             }
         };
@@ -364,6 +387,7 @@ void GuildSettingsRolesPaneInfo::UpdateRoleName() {
         if (!success) {
             m_role_name.set_text(discord.GetRole(RoleID)->Name);
             Gtk::MessageDialog dlg("Failed to set role name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
             dlg.run();
         }
     };

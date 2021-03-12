@@ -571,6 +571,58 @@ void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::
     ModifyRoleColor(guild_id, role_id, int_color, callback);
 }
 
+void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(bool success)> callback) {
+    const auto roles = GetGuild(guild_id)->FetchRoles();
+    if (position > roles.size()) return;
+    // gay and makes you send every role in between new and old position
+    size_t index_from = -1, index_to = -1;
+    for (size_t i = 0; i < roles.size(); i++) {
+        const auto &role = roles[i];
+        if (role.ID == role_id)
+            index_from = i;
+        else if (role.Position == position)
+            index_to = i;
+        if (index_from != -1 && index_to != -1) break;
+    }
+
+    if (index_from == -1 || index_to == -1) return;
+
+    int dir;
+    size_t range_from, range_to;
+    if (index_to > index_from) {
+        dir = 1;
+        range_from = index_from + 1;
+        range_to = index_to + 1;
+    } else {
+        dir = -1;
+        range_from = index_to;
+        range_to = index_from;
+    }
+
+    ModifyGuildRolePositionsObject obj;
+
+    obj.Positions.push_back({ roles[index_from].ID, position });
+    for (size_t i = range_from; i < range_to; i++)
+        obj.Positions.push_back({ roles[i].ID, roles[i].Position + dir });
+
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles", nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
+    });
+}
+
+bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
+    const auto guild = *GetGuild(guild_id);
+    if (guild.OwnerID == user_id) return true;
+    const auto role = *GetRole(role_id);
+    const auto has_modify = HasGuildPermission(user_id, guild_id, Permission::MANAGE_CHANNELS);
+    const auto highest = GetMemberHighestRole(guild_id, user_id);
+    return has_modify && highest.has_value() && highest->Position > role.Position;
+}
+
+bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id) const {
+    return CanModifyRole(guild_id, role_id, GetUserData().ID);
+}
+
 std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
     return m_store.GetBans(guild_id);
 }
