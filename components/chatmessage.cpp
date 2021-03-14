@@ -564,7 +564,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             }
 
             const auto author = discord.GetUser(referenced.Author.ID);
-            lbl->set_markup(author->GetEscapedBoldString<false>());
+            lbl->set_markup(author->GetEscapedBoldString<false>() + ": " + text);
         }
     } else {
         lbl->set_markup("<i>reply unavailable</i>");
