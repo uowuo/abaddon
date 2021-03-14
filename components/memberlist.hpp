@@ -2,13 +2,14 @@
 #include <gtkmm.h>
 #include <mutex>
 #include <unordered_map>
+#include <optional>
 #include "../discord/discord.hpp"
 
 class LazyImage;
 class StatusIndicator;
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
-    MemberListUserRow(const GuildData& guild, const UserData *data);
+    MemberListUserRow(const GuildData *guild, const UserData &data);
 
     Snowflake ID;
 

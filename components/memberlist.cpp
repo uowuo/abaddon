@@ -6,8 +6,8 @@
 
 constexpr static const int MaxMemberListRows = 200;
 
-MemberListUserRow::MemberListUserRow(const GuildData &guild, const UserData *data) {
-    ID = data->ID;
+MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &data) {
+    ID = data.ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_label = Gtk::manage(new Gtk::Label);
@@ -15,7 +15,7 @@ MemberListUserRow::MemberListUserRow(const GuildData &guild, const UserData *dat
     m_status_indicator = Gtk::manage(new StatusIndicator(ID));
 
     static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
-    if (crown && guild.OwnerID == data->ID) {
+    if (crown && guild != nullptr && guild->OwnerID == data.ID) {
         try {
             auto pixbuf = Gdk::Pixbuf::create_from_file("./res/crown.png", 12, 12);
             m_crown = Gtk::manage(new Gtk::Image(pixbuf));
@@ -26,8 +26,8 @@ MemberListUserRow::MemberListUserRow(const GuildData &guild, const UserData *dat
 
     m_status_indicator->set_margin_start(3);
 
-    if (data->HasAvatar())
-        m_avatar->SetURL(data->GetAvatarURL("png"));
+    if (data.HasAvatar())
+        m_avatar->SetURL(data.GetAvatarURL("png"));
 
     get_style_context()->add_class("members-row");
     get_style_context()->add_class("members-row-member");
@@ -36,23 +36,21 @@ MemberListUserRow::MemberListUserRow(const GuildData &guild, const UserData *dat
 
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
-    if (data != nullptr) {
-        static bool show_discriminator = Abaddon::Get().GetSettings().GetShowMemberListDiscriminators();
-        std::string display = data->Username;
-        if (show_discriminator)
-            display += "#" + data->Discriminator;
-        auto col_id = data->GetHoistedRole(guild.ID, true);
-        if (col_id.IsValid()) {
+
+    static bool show_discriminator = Abaddon::Get().GetSettings().GetShowMemberListDiscriminators();
+    std::string display = data.Username;
+    if (show_discriminator)
+        display += "#" + data.Discriminator;
+    if (guild != nullptr) {
+        if (const auto col_id = data.GetHoistedRole(guild->ID, true); col_id.IsValid()) {
             auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
             m_label->set_use_markup(true);
             m_label->set_markup("<span color='#" + IntToCSSColor(color) + "'>" + Glib::Markup::escape_text(display) + "</span>");
-
         } else {
             m_label->set_text(display);
         }
     } else {
-        m_label->set_use_markup(true);
-        m_label->set_markup("<i>[unknown user]</i>");
+        m_label->set_text(display);
     }
 
     m_label->set_halign(Gtk::ALIGN_START);
@@ -113,14 +111,20 @@ void MemberList::UpdateMemberList() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto chan = discord.GetChannel(m_chan_id);
     if (!chan.has_value()) return;
-    std::unordered_set<Snowflake> ids;
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
-        for (const auto &user : chan->GetDMRecipients())
-            ids.insert(user.ID);
-        ids.insert(discord.GetUserData().ID);
-    } else {
-        ids = discord.GetUsersInGuild(m_guild_id);
+        int num_rows = 0;
+        for (const auto &user : chan->GetDMRecipients()) {
+            if (num_rows++ > MaxMemberListRows) break;
+            auto *row = Gtk::manage(new MemberListUserRow(nullptr, user));
+            m_id_to_row[user.ID] = row;
+            AttachUserMenuHandler(row, user.ID);
+            m_listbox->add(*row);
+        }
+
+        return;
     }
+
+    auto ids = discord.GetUsersInGuild(m_guild_id);
 
     // process all the shit first so its in proper order
     std::map<int, RoleData> pos_to_role;
@@ -151,11 +155,11 @@ void MemberList::UpdateMemberList() {
 
     int num_rows = 0;
     const auto guild = *discord.GetGuild(m_guild_id);
-    auto add_user = [this, &user_to_color, &num_rows, guild](const UserData *data) -> bool {
+    auto add_user = [this, &user_to_color, &num_rows, guild](const UserData &data) -> bool {
         if (num_rows++ > MaxMemberListRows) return false;
-        auto *row = Gtk::manage(new MemberListUserRow(guild, data));
-        m_id_to_row[data->ID] = row;
-        AttachUserMenuHandler(row, data->ID);
+        auto *row = Gtk::manage(new MemberListUserRow(&guild, data));
+        m_id_to_row[data.ID] = row;
+        AttachUserMenuHandler(row, data.ID);
         m_listbox->add(*row);
         return true;
     };
@@ -189,8 +193,8 @@ void MemberList::UpdateMemberList() {
         auto &users = pos_to_users.at(pos);
         AlphabeticalSort(users.begin(), users.end(), [](const auto &e) { return e.Username; });
 
-        for (const auto data : users)
-            if (!add_user(&data)) return;
+        for (const auto &data : users)
+            if (!add_user(data)) return;
     }
 
     if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
@@ -200,7 +204,7 @@ void MemberList::UpdateMemberList() {
     for (const auto &id : roleless_users) {
         const auto user = discord.GetUser(id);
         if (user.has_value())
-            if (!add_user(&*user)) return;
+            if (!add_user(*user)) return;
     }
 }
 
