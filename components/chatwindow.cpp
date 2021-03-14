@@ -1,7 +1,7 @@
 #include "chatwindow.hpp"
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
-#include "typingindicator.hpp"
+#include "chatinputindicator.hpp"
 #include "chatinput.hpp"
 
 ChatWindow::ChatWindow() {
@@ -9,10 +9,10 @@ ChatWindow::ChatWindow() {
     m_list = Gtk::manage(new Gtk::ListBox);
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
     m_input = Gtk::manage(new ChatInput);
-    m_typing_indicator = Gtk::manage(new TypingIndicator);
+    m_input_indicator = Gtk::manage(new ChatInputIndicator);
 
-    m_typing_indicator->set_valign(Gtk::ALIGN_END);
-    m_typing_indicator->show();
+    m_input_indicator->set_valign(Gtk::ALIGN_END);
+    m_input_indicator->show();
 
     m_main->get_style_context()->add_class("messages");
     m_list->get_style_context()->add_class("messages");
@@ -43,9 +43,10 @@ ChatWindow::ChatWindow() {
     m_list->set_focus_vadjustment(m_scroll->get_vadjustment());
     m_list->show();
 
-    m_input->signal_submit().connect([this](const Glib::ustring &text) {
-        if (m_active_channel.IsValid())
-            m_signal_action_chat_submit.emit(text, m_active_channel);
+    m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
+    m_input->signal_escape().connect([this]() {
+        if (m_is_replying)
+            StopReplying();
     });
     m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::OnKeyPressEvent), false);
     m_input->show();
@@ -87,7 +88,7 @@ ChatWindow::ChatWindow() {
     m_main->add(*m_scroll);
     m_main->add(m_completer);
     m_main->add(*m_input);
-    m_main->add(*m_typing_indicator);
+    m_main->add(*m_input_indicator);
     m_main->show();
 }
 
@@ -118,7 +119,9 @@ void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
 
 void ChatWindow::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
-    m_typing_indicator->SetActiveChannel(id);
+    m_input_indicator->SetActiveChannel(id);
+    if (m_is_replying)
+        StopReplying();
 }
 
 void ChatWindow::AddNewMessage(Snowflake id) {
@@ -176,6 +179,13 @@ void ChatWindow::UpdateReactions(Snowflake id) {
 
 Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
+}
+
+void ChatWindow::OnInputSubmit(const Glib::ustring &text) {
+    if (m_active_channel.IsValid())
+        m_signal_action_chat_submit.emit(text, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
+    if (m_is_replying)
+        StopReplying();
 }
 
 bool ChatWindow::OnKeyPressEvent(GdkEventKey *e) {
@@ -253,6 +263,7 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         content->signal_action_channel_click().connect([this](const Snowflake &id) {
             m_signal_action_channel_click.emit(id);
         });
+        content->signal_action_reply_to().connect(sigc::mem_fun(*this, &ChatWindow::StartReplying));
     }
 
     header->set_margin_left(5);
@@ -264,6 +275,27 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         else
             m_list->add(*header);
     }
+}
+
+void ChatWindow::StartReplying(Snowflake message_id) {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto message = *discord.GetMessage(message_id);
+    const auto author = discord.GetUser(message.Author.ID);
+    m_replying_to = message_id;
+    m_is_replying = true;
+    m_input->grab_focus();
+    m_input->get_style_context()->add_class("replying");
+    if (author.has_value())
+        m_input_indicator->SetCustomMarkup("Replying to " + author->GetEscapedBoldString<false>());
+    else
+        m_input_indicator->SetCustomMarkup("Replying...");
+}
+
+void ChatWindow::StopReplying() {
+    m_is_replying = false;
+    m_replying_to = Snowflake::Invalid;
+    m_input->get_style_context()->remove_class("replying");
+    m_input_indicator->ClearCustom();
 }
 
 void ChatWindow::OnScrollEdgeOvershot(Gtk::PositionType pos) {

@@ -7,7 +7,7 @@
 #include "completer.hpp"
 
 class ChatInput;
-class TypingIndicator;
+class ChatInputIndicator;
 class ChatWindow {
 public:
     ChatWindow();
@@ -30,10 +30,18 @@ protected:
     ChatMessageItemContainer *CreateMessageComponent(Snowflake id); // to be inserted into header's content box
     void ProcessNewMessage(Snowflake id, bool prepend);             // creates and adds components
 
+    bool m_is_replying = false;
+    Snowflake m_replying_to;
+
+    void StartReplying(Snowflake message_id);
+    void StopReplying();
+
     int m_num_rows = 0;
     std::unordered_map<Snowflake, Gtk::Widget *> m_id_to_widget;
 
     Snowflake m_active_channel;
+
+    void OnInputSubmit(const Glib::ustring &text);
 
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
@@ -48,12 +56,12 @@ protected:
     ChatInput *m_input;
 
     Completer m_completer;
-    TypingIndicator *m_typing_indicator;
+    ChatInputIndicator *m_input_indicator;
 
 public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
-    typedef sigc::signal<void, std::string, Snowflake> type_signal_action_chat_submit;
+    typedef sigc::signal<void, std::string, Snowflake, Snowflake> type_signal_action_chat_submit;
     typedef sigc::signal<void, Snowflake> type_signal_action_chat_load_history;
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_click;
     typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;

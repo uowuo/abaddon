@@ -60,11 +60,13 @@ protected:
     Gtk::MenuItem *m_menu_copy_content;
     Gtk::MenuItem *m_menu_delete_message;
     Gtk::MenuItem *m_menu_edit_message;
+    Gtk::MenuItem *m_menu_reply_to;
 
     void on_menu_copy_id();
     void on_menu_delete_message();
     void on_menu_edit_message();
     void on_menu_copy_content();
+    void on_menu_reply_to();
 
     Gtk::EventBox *m_ev;
     Gtk::Box *m_main;
@@ -80,6 +82,7 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_channel_click;
     typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_add;
     typedef sigc::signal<void, Glib::ustring> type_signal_action_reaction_remove;
+    typedef sigc::signal<void, Snowflake> type_signal_action_reply_to;
     typedef sigc::signal<void> type_signal_enter;
     typedef sigc::signal<void> type_signal_leave;
 
@@ -88,12 +91,15 @@ public:
     type_signal_channel_click signal_action_channel_click();
     type_signal_action_reaction_add signal_action_reaction_add();
     type_signal_action_reaction_remove signal_action_reaction_remove();
+    type_signal_action_reply_to signal_action_reply_to();
+
 private:
     type_signal_action_delete m_signal_action_delete;
     type_signal_action_edit m_signal_action_edit;
     type_signal_channel_click m_signal_action_channel_click;
     type_signal_action_reaction_add m_signal_action_reaction_add;
     type_signal_action_reaction_remove m_signal_action_reaction_remove;
+    type_signal_action_reply_to m_signal_action_reply_to;
 };
 
 class ChatMessageHeader : public Gtk::ListBoxRow {

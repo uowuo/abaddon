@@ -285,6 +285,7 @@ struct HeartbeatMessage : GatewayMessage {
 
 struct CreateMessageObject {
     std::string Content;
+    std::optional<MessageReferenceData> MessageReference;
 
     friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
 };

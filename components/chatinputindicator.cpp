@@ -1,11 +1,11 @@
 #include <filesystem>
-#include "typingindicator.hpp"
+#include "chatinputindicator.hpp"
 #include "../abaddon.hpp"
 #include "../util.hpp"
 
 constexpr static const int MaxUsersInIndicator = 4;
 
-TypingIndicator::TypingIndicator()
+ChatInputIndicator::ChatInputIndicator()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL) {
     m_label.set_text("");
     m_label.set_ellipsize(Pango::ELLIPSIZE_END);
@@ -13,8 +13,8 @@ TypingIndicator::TypingIndicator()
     m_img.set_margin_right(5);
     get_style_context()->add_class("typing-indicator");
 
-    Abaddon::Get().GetDiscordClient().signal_typing_start().connect(sigc::mem_fun(*this, &TypingIndicator::OnUserTypingStart));
-    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &TypingIndicator::OnMessageCreate));
+    Abaddon::Get().GetDiscordClient().signal_typing_start().connect(sigc::mem_fun(*this, &ChatInputIndicator::OnUserTypingStart));
+    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &ChatInputIndicator::OnMessageCreate));
 
     add(m_img);
     add(m_label);
@@ -36,7 +36,7 @@ TypingIndicator::TypingIndicator()
     } catch (const std::exception &) {}
 }
 
-void TypingIndicator::AddUser(Snowflake channel_id, const UserData &user, int timeout) {
+void ChatInputIndicator::AddUser(Snowflake channel_id, const UserData &user, int timeout) {
     auto current_connection_it = m_typers[channel_id].find(user.ID);
     if (current_connection_it != m_typers.at(channel_id).end()) {
         current_connection_it->second.disconnect();
@@ -53,12 +53,22 @@ void TypingIndicator::AddUser(Snowflake channel_id, const UserData &user, int ti
     ComputeTypingString();
 }
 
-void TypingIndicator::SetActiveChannel(Snowflake id) {
+void ChatInputIndicator::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
     ComputeTypingString();
 }
 
-void TypingIndicator::OnUserTypingStart(Snowflake user_id, Snowflake channel_id) {
+void ChatInputIndicator::SetCustomMarkup(const Glib::ustring &str) {
+    m_custom_markup = str;
+    ComputeTypingString();
+}
+
+void ChatInputIndicator::ClearCustom() {
+    m_custom_markup = "";
+    ComputeTypingString();
+}
+
+void ChatInputIndicator::OnUserTypingStart(Snowflake user_id, Snowflake channel_id) {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto user = discord.GetUser(user_id);
     if (!user.has_value()) return;
@@ -66,14 +76,14 @@ void TypingIndicator::OnUserTypingStart(Snowflake user_id, Snowflake channel_id)
     AddUser(channel_id, *user, 10);
 }
 
-void TypingIndicator::OnMessageCreate(Snowflake message_id) {
+void ChatInputIndicator::OnMessageCreate(Snowflake message_id) {
     const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(message_id);
     if (!msg.has_value()) return;
     m_typers[msg->ChannelID].erase(msg->Author.ID);
     ComputeTypingString();
 }
 
-void TypingIndicator::SetTypingString(const Glib::ustring &str) {
+void ChatInputIndicator::SetTypingString(const Glib::ustring &str) {
     m_label.set_text(str);
     if (str == "")
         m_img.hide();
@@ -81,7 +91,13 @@ void TypingIndicator::SetTypingString(const Glib::ustring &str) {
         m_img.show();
 }
 
-void TypingIndicator::ComputeTypingString() {
+void ChatInputIndicator::ComputeTypingString() {
+    if (m_custom_markup != "") {
+        m_label.set_markup(m_custom_markup);
+        m_img.hide();
+        return;
+    }
+
     const auto &discord = Abaddon::Get().GetDiscordClient();
     std::vector<UserData> typers;
     for (const auto &[id, conn] : m_typers[m_active_channel]) {

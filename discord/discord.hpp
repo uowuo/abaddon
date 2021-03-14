@@ -97,7 +97,8 @@ public:
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
 
-    void SendChatMessage(std::string content, Snowflake channel);
+    void SendChatMessage(const std::string &content, Snowflake channel);
+    void SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);

@@ -29,6 +29,10 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
     m_menu_copy_content->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_copy_content));
     m_menu.append(*m_menu_copy_content);
 
+    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
+    m_menu_reply_to->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_reply_to));
+    m_menu.append(*m_menu_reply_to);
+
     m_menu.show_all();
 
     m_link_menu_copy = Gtk::manage(new Gtk::MenuItem("Copy Link"));
@@ -919,6 +923,10 @@ void ChatMessageItemContainer::on_menu_copy_content() {
         Gtk::Clipboard::get()->set_text(msg->Content);
 }
 
+void ChatMessageItemContainer::on_menu_reply_to() {
+    m_signal_action_reply_to.emit(ID);
+}
+
 ChatMessageItemContainer::type_signal_action_delete ChatMessageItemContainer::signal_action_delete() {
     return m_signal_action_delete;
 }
@@ -937,6 +945,10 @@ ChatMessageItemContainer::type_signal_action_reaction_add ChatMessageItemContain
 
 ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemContainer::signal_action_reaction_remove() {
     return m_signal_action_reaction_remove;
+}
+
+ChatMessageItemContainer::type_signal_action_reply_to ChatMessageItemContainer::signal_action_reply_to() {
+    return m_signal_action_reply_to;
 }
 
 void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {

@@ -464,10 +464,13 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     });
 }
 
-void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel) {
+void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message) {
     if (msg.substr(0, 7) == "/shrug " || msg == "/shrug")
         msg = msg.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
-    m_discord.SendChatMessage(msg, channel);
+    if (referenced_message.IsValid())
+        m_discord.SendChatMessage(msg, channel, referenced_message);
+    else
+        m_discord.SendChatMessage(msg, channel);
 }
 
 void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {

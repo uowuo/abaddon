@@ -101,6 +101,10 @@
     border-radius: 15px;
 }
 
+.message-input.replying {
+    border: 1px solid #026FB9;
+}
+
 .message-input {
     padding: 0px 0px 0px 5px;
 }

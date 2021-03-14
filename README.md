@@ -94,6 +94,7 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 .message-attachment-box - Contains attachment info  
 .message-reply - Container for the replied-to message in a reply (these elements will also have .message-text set)  
 .message-input - Applied to the chat input container  
+.replying - Extra class for chat input container when a reply is currently being created  
 .reaction-box - Contains a reaction image and the count  
 .reacted - Additional class for reaction-box when the user has reacted with a particular reaction  
 .reaction-count - Contains the count for reaction  
@@ -124,7 +125,7 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 .dnd - Applied to status indicators when the associated user is on do not disturb  
 .offline - Applied to status indicators when the associated user is offline  
   
-.typing-indicator - The typing indicator  
+.typing-indicator - The typing indicator (also used for replies)  
   
 Used in reorderable list implementation:  
 .drag-icon

@@ -31,6 +31,11 @@ Glib::RefPtr<Gtk::TextBuffer> ChatInput::GetBuffer() {
 
 // this isnt connected directly so that the chat window can handle stuff like the completer first
 bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
+    if (event->keyval == GDK_KEY_Escape) {
+        m_signal_escape.emit();
+        return true;
+    }
+
     if (event->keyval == GDK_KEY_Return) {
         if (event->state & GDK_SHIFT_MASK)
             return false;
@@ -48,6 +53,14 @@ bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
     return false;
 }
 
+void ChatInput::on_grab_focus() {
+    m_textview.grab_focus();
+}
+
 ChatInput::type_signal_submit ChatInput::signal_submit() {
     return m_signal_submit;
+}
+
+ChatInput::type_signal_escape ChatInput::signal_escape() {
+    return m_signal_escape;
 }

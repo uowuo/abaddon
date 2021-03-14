@@ -345,12 +345,18 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     return actor_highest->Position > target_highest->Position;
 }
 
-void DiscordClient::SendChatMessage(std::string content, Snowflake channel) {
+void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel) {
     // @([^@#]{1,32})#(\\d{4})
     CreateMessageObject obj;
     obj.Content = content;
-    nlohmann::json j = obj;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", j.dump(), [](auto) {});
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto &) {});
+}
+
+void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message) {
+    CreateMessageObject obj;
+    obj.Content = content;
+    obj.MessageReference.emplace().MessageID = referenced_message;
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto &) {});
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
