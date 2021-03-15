@@ -349,14 +349,14 @@ void DiscordClient::SendChatMessage(const std::string &content, Snowflake channe
     // @([^@#]{1,32})#(\\d{4})
     CreateMessageObject obj;
     obj.Content = content;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto &) {});
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto) {});
 }
 
 void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message) {
     CreateMessageObject obj;
     obj.Content = content;
     obj.MessageReference.emplace().MessageID = referenced_message;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto &) {});
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto) {});
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
