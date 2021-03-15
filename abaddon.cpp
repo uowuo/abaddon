@@ -79,44 +79,7 @@ int Abaddon::StartGTK() {
     m_main_window->UpdateComponents();
 
     // crashes for some stupid reason if i put it somewhere else
-    m_user_menu = Gtk::manage(new Gtk::Menu);
-    m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert Mention"));
-    m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
-    m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
-    m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
-    m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
-    m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
-    m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
-    m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
-    m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
-    m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
-    m_user_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_ban));
-    m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
-    m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
-    m_user_menu_open_dm->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_open_dm));
-    m_user_menu_remove_recipient->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_remove_recipient));
-    m_user_menu_info->signal_activate().connect([this]() {
-        auto *window = new ProfileWindow(m_shown_user_menu_id);
-        window->show();
-    });
-
-    m_user_menu_remove_recipient->override_color(Gdk::RGBA("#BE3C3D"));
-
-    m_user_menu->append(*m_user_menu_info);
-    m_user_menu->append(*m_user_menu_insert_mention);
-    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
-    m_user_menu->append(*m_user_menu_ban);
-    m_user_menu->append(*m_user_menu_kick);
-    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
-    m_user_menu->append(*m_user_menu_open_dm);
-    m_user_menu->append(*m_user_menu_roles);
-    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
-    m_user_menu->append(*m_user_menu_remove_recipient);
-    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
-    m_user_menu->append(*m_user_menu_copy_id);
-
-    m_user_menu->show_all();
+    SetupUserMenu();
 
     m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
@@ -322,6 +285,59 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     }
 
     m_user_menu->popup_at_pointer(event);
+}
+
+void Abaddon::SetupUserMenu() {
+    m_user_menu = Gtk::manage(new Gtk::Menu);
+    m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert Mention"));
+    m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
+    m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
+    m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
+    m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
+    m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
+    m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
+    m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
+    m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
+    m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
+    m_user_menu_ban->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_ban));
+    m_user_menu_kick->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_kick));
+    m_user_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_copy_id));
+    m_user_menu_open_dm->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_open_dm));
+    m_user_menu_remove_recipient->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_remove_recipient));
+    m_user_menu_info->signal_activate().connect([this]() {
+        auto *window = new ProfileWindow(m_shown_user_menu_id);
+        ManageHeapWindow(window);
+        window->show();
+    });
+
+    m_user_menu_remove_recipient->override_color(Gdk::RGBA("#BE3C3D"));
+
+    m_user_menu->append(*m_user_menu_info);
+    m_user_menu->append(*m_user_menu_insert_mention);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
+    m_user_menu->append(*m_user_menu_ban);
+    m_user_menu->append(*m_user_menu_kick);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
+    m_user_menu->append(*m_user_menu_open_dm);
+    m_user_menu->append(*m_user_menu_roles);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
+    m_user_menu->append(*m_user_menu_remove_recipient);
+    m_user_menu->append(*Gtk::manage(new Gtk::SeparatorMenuItem));
+    m_user_menu->append(*m_user_menu_copy_id);
+
+    m_user_menu->show_all();
+}
+
+void Abaddon::ManageHeapWindow(Gtk::Window *window) {
+    window->signal_hide().connect([this, window]() {
+        delete window;
+        // for some reason if ShowUserMenu is called multiple times with events across windows
+        // and one of the windows is closed, then it throws errors when the menu is opened again
+        // i dont think this is my fault so this semi-hacky solution will have to do
+        delete m_user_menu;
+        SetupUserMenu();
+    });
 }
 
 void Abaddon::on_user_menu_insert_mention() {
@@ -549,6 +565,7 @@ void Abaddon::ActionReactionRemove(Snowflake id, const Glib::ustring &param) {
 
 void Abaddon::ActionGuildSettings(Snowflake id) {
     auto window = new GuildSettingsWindow(id);
+    ManageHeapWindow(window);
     window->show();
 }
 

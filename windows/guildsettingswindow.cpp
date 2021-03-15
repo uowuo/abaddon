@@ -71,8 +71,3 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_main.show();
     add(m_main);
 }
-
-void GuildSettingsWindow::on_hide() {
-    Gtk::Window::on_hide();
-    delete this; // :x
-}

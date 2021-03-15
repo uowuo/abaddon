@@ -9,8 +9,6 @@ class ProfileWindow : public Gtk::Window {
 public:
     ProfileWindow(Snowflake user_id);
 
-    void on_hide() override;
-
     Snowflake ID;
 
 private:

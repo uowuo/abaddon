@@ -81,6 +81,10 @@ public:
     void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
 
 protected:
+    void SetupUserMenu();
+
+    void ManageHeapWindow(Gtk::Window *window);
+
     Snowflake m_shown_user_menu_id;
     Snowflake m_shown_user_menu_guild_id;
 

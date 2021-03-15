@@ -97,11 +97,6 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     show_all_children();
 }
 
-void ProfileWindow::on_hide() {
-    Gtk::Window::on_hide();
-    delete this;
-}
-
 void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_info.SetConnections(data.ConnectedAccounts);
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);

@@ -12,9 +12,6 @@ class GuildSettingsWindow : public Gtk::Window {
 public:
     GuildSettingsWindow(Snowflake id);
 
-protected:
-    void on_hide() override;
-
 private:
     Gtk::Box m_main;
     Gtk::Stack m_stack;
