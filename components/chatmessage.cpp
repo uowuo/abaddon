@@ -4,10 +4,11 @@
 #include "lazyimage.hpp"
 #include <unordered_map>
 
-constexpr const int EmojiSize = 24; // settings eventually
-constexpr const int AvatarSize = 32;
-constexpr const int EmbedImageWidth = 400;
-constexpr const int EmbedImageHeight = 300;
+constexpr static int EmojiSize = 24; // settings eventually
+constexpr static int AvatarSize = 32;
+constexpr static int EmbedImageWidth = 400;
+constexpr static int EmbedImageHeight = 300;
+constexpr static int ThumbnailSize = 100;
 
 ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -241,20 +242,41 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
 Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &embed) {
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     ev->set_can_focus(true);
-    Gtk::Box *main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    Gtk::Box *main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+    Gtk::Box *content = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 
-    if (embed.Author.has_value() && embed.Author->Name.has_value()) {
-        auto *author_lbl = Gtk::manage(new Gtk::Label);
-        author_lbl->set_halign(Gtk::ALIGN_START);
-        author_lbl->set_line_wrap(true);
-        author_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
-        author_lbl->set_hexpand(false);
-        author_lbl->set_text(*embed.Author->Name);
-        author_lbl->get_style_context()->add_class("embed-author");
-        main->pack_start(*author_lbl);
+    if (embed.Author.has_value() && (embed.Author->Name.has_value() || embed.Author->ProxyIconURL.has_value())) {
+        auto *author_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+        content->pack_start(*author_box);
+
+        constexpr static int AuthorIconSize = 20;
+        if (embed.Author->ProxyIconURL.has_value()) {
+            auto &img = Abaddon::Get().GetImageManager();
+
+            auto *author_img = Gtk::manage(new LazyImage(*embed.Author->ProxyIconURL, AuthorIconSize, AuthorIconSize));
+            author_img->set_halign(Gtk::ALIGN_START);
+            author_img->set_valign(Gtk::ALIGN_START);
+            author_img->set_margin_start(6);
+            author_img->set_margin_end(6);
+            author_img->get_style_context()->add_class("embed-author-icon");
+            author_box->add(*author_img);
+        }
+
+        if (embed.Author->Name.has_value()) {
+            auto *author_lbl = Gtk::manage(new Gtk::Label);
+            author_lbl->set_halign(Gtk::ALIGN_START);
+            author_lbl->set_valign(Gtk::ALIGN_CENTER);
+            author_lbl->set_line_wrap(true);
+            author_lbl->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+            author_lbl->set_hexpand(false);
+            author_lbl->set_text(*embed.Author->Name);
+            author_lbl->get_style_context()->add_class("embed-author");
+            author_box->add(*author_lbl);
+        }
     }
 
     if (embed.Title.has_value()) {
+        auto *title_ev = Gtk::manage(new Gtk::EventBox);
         auto *title_label = Gtk::manage(new Gtk::Label);
         title_label->set_use_markup(true);
         title_label->set_markup("<b>" + Glib::Markup::escape_text(*embed.Title) + "</b>");
@@ -265,7 +287,23 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         title_label->set_line_wrap(true);
         title_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         title_label->set_max_width_chars(50);
-        main->pack_start(*title_label);
+        title_ev->add(*title_label);
+        content->pack_start(*title_ev);
+
+        if (embed.URL.has_value()) {
+            AddPointerCursor(*title_ev);
+            auto url = *embed.URL;
+            title_ev->signal_button_press_event().connect([this, url = std::move(url)](GdkEventButton *event) -> bool {
+                if (event->button == GDK_BUTTON_PRIMARY) {
+                    LaunchBrowser(url);
+                    return true;
+                }
+                return false;
+            });
+            static auto color = Abaddon::Get().GetSettings().GetLinkColor();
+            title_label->override_color(Gdk::RGBA(color));
+            title_label->set_markup("<b>" + Glib::Markup::escape_text(*embed.Title) + "</b>");
+        }
     }
 
     if (!embed.Provider.has_value() || embed.Provider->Name != "YouTube") { // youtube link = no description
@@ -278,7 +316,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
             desc_label->set_halign(Gtk::ALIGN_START);
             desc_label->set_hexpand(false);
             desc_label->get_style_context()->add_class("embed-description");
-            main->pack_start(*desc_label);
+            content->pack_start(*desc_label);
         }
     }
 
@@ -292,7 +330,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         flow->set_hexpand(false);
         flow->set_column_spacing(10);
         flow->set_selection_mode(Gtk::SELECTION_NONE);
-        main->pack_start(*flow);
+        content->pack_start(*flow);
 
         for (const auto &field : *embed.Fields) {
             auto *field_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -324,26 +362,15 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         }
     }
 
-    bool is_img = embed.Image.has_value() && embed.Image->ProxyURL.has_value();
-    bool is_thumb = embed.Thumbnail.has_value() && embed.Thumbnail->ProxyURL.has_value();
-    if (is_img || is_thumb) {
+    if (embed.Image.has_value() && embed.Image->ProxyURL.has_value()) {
         int w = 0, h = 0;
-        if (is_img)
-            GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, EmbedImageWidth, EmbedImageHeight);
-        else
-            GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, EmbedImageWidth, EmbedImageHeight);
+        GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, EmbedImageWidth, EmbedImageHeight);
 
-        std::string url;
-        if (is_img)
-            url = *embed.Image->ProxyURL;
-        else
-            url = *embed.Thumbnail->ProxyURL;
-
-        auto *img = Gtk::manage(new LazyImage(url, w, h, false));
+        auto *img = Gtk::manage(new LazyImage(*embed.Image->ProxyURL, w, h, false));
         img->set_halign(Gtk::ALIGN_CENTER);
         img->set_margin_top(5);
         img->set_size_request(w, h);
-        main->pack_start(*img);
+        content->pack_start(*img);
     }
 
     if (embed.Footer.has_value()) {
@@ -354,7 +381,17 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         footer_lbl->set_hexpand(false);
         footer_lbl->set_text(embed.Footer->Text);
         footer_lbl->get_style_context()->add_class("embed-footer");
-        main->pack_start(*footer_lbl);
+        content->pack_start(*footer_lbl);
+    }
+
+    if (embed.Thumbnail.has_value() && embed.Thumbnail->ProxyURL.has_value()) {
+        int w, h;
+        GetImageDimensions(*embed.Thumbnail->Width, *embed.Thumbnail->Height, w, h, ThumbnailSize, ThumbnailSize);
+
+        auto *thumbnail = Gtk::manage(new LazyImage(*embed.Thumbnail->ProxyURL, w, h, false));
+        thumbnail->set_size_request(w, h);
+        thumbnail->set_margin_start(8);
+        main->pack_end(*thumbnail);
     }
 
     auto style = main->get_style_context();
@@ -373,6 +410,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
     main->set_hexpand(false);
     main->set_halign(Gtk::ALIGN_START);
     main->set_halign(Gtk::ALIGN_START);
+    main->pack_start(*content);
 
     ev->add(*main);
     ev->show_all();
