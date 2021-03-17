@@ -1,5 +1,6 @@
 #include "profilewindow.hpp"
 #include "../abaddon.hpp"
+#include "../components/inotifyswitched.hpp"
 
 ProfileWindow::ProfileWindow(Snowflake user_id)
     : ID(user_id)
@@ -13,7 +14,6 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     auto user = *discord.GetUser(ID);
 
     discord.FetchUserProfile(user_id, sigc::mem_fun(*this, &ProfileWindow::OnFetchProfile));
-    discord.FetchUserRelationships(user_id, sigc::mem_fun(*this, &ProfileWindow::OnFetchRelationships));
 
     set_name("user-profile");
     set_default_size(450, 375);
@@ -72,6 +72,11 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     m_switcher.set_halign(Gtk::ALIGN_START);
     m_switcher.set_hexpand(true);
 
+    m_stack.property_visible_child().signal_changed().connect([this]() {
+        if (auto *w = dynamic_cast<INotifySwitched *>(m_stack.property_visible_child().get_value()))
+            w->on_switched_to();
+    });
+
     m_stack.add(m_pane_info, "info", "User Info");
     m_stack.add(m_pane_guilds, "guilds", "Mutual Servers");
     m_stack.add(m_pane_friends, "friends", "Mutual Friends");
@@ -126,8 +131,4 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
         image->show();
         m_badges.add(*image);
     }
-}
-
-void ProfileWindow::OnFetchRelationships(const std::vector<UserData> &data) {
-    m_pane_friends.SetMutualFriends(data);
 }

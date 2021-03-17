@@ -9,15 +9,20 @@ GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)
     set_hexpand(true);
     set_vexpand(true);
 
+    m_list.set_selection_mode(Gtk::SELECTION_NONE);
+    m_list.show();
+    add(m_list);
+}
+
+void GuildSettingsAuditLogPane::on_switched_to() {
+    if (m_requested) return;
+    m_requested = true;
+
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto self_id = discord.GetUserData().ID;
 
     if (discord.HasGuildPermission(self_id, GuildID, Permission::VIEW_AUDIT_LOG))
         discord.FetchAuditLog(GuildID, sigc::mem_fun(*this, &GuildSettingsAuditLogPane::OnAuditLogFetch));
-
-    m_list.set_selection_mode(Gtk::SELECTION_NONE);
-    m_list.show();
-    add(m_list);
 }
 
 void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {

@@ -16,10 +16,6 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     m_menu.show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto self_id = discord.GetUserData().ID;
-
-    if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
-        discord.FetchGuildInvites(GuildID, sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnInvitesFetch));
 
     discord.signal_invite_create().connect(sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnInviteCreate));
     discord.signal_invite_delete().connect(sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnInviteDelete));
@@ -27,6 +23,7 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     m_view.show();
     add(m_view);
 
+    m_view.set_enable_search(false);
     m_view.set_model(m_model);
     m_view.append_column("Code", m_columns.m_col_code);
     m_view.append_column("Expires", m_columns.m_col_expires);
@@ -37,6 +34,17 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
 
     for (const auto column : m_view.get_columns())
         column->set_resizable(true);
+}
+
+void GuildSettingsInvitesPane::on_switched_to() {
+    if (m_requested) return;
+    m_requested = true;
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto self_id = discord.GetUserData().ID;
+
+    if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
+        discord.FetchGuildInvites(GuildID, sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnInvitesFetch));
 }
 
 void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {

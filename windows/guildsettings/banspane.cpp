@@ -22,9 +22,7 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     const auto self_id = discord.GetUserData().ID;
     const auto can_ban = discord.HasGuildPermission(self_id, GuildID, Permission::BAN_MEMBERS);
 
-    if (can_ban) {
-        discord.FetchGuildBans(id, sigc::mem_fun(*this, &GuildSettingsBansPane::OnGuildBansFetch));
-    } else {
+    if (!can_ban) {
         for (const auto &ban : discord.GetBansInGuild(id))
             OnGuildBanFetch(ban);
 
@@ -50,9 +48,23 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     add(m_scroll);
     show_all_children();
 
+    m_view.set_enable_search(false);
     m_view.set_model(m_model);
     m_view.append_column("User", m_columns.m_col_user);
     m_view.append_column("Reason", m_columns.m_col_reason);
+}
+
+void GuildSettingsBansPane::on_switched_to() {
+    if (m_requested) return;
+    m_requested = true;
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+
+    const auto self_id = discord.GetUserData().ID;
+    const auto can_ban = discord.HasGuildPermission(self_id, GuildID, Permission::BAN_MEMBERS);
+
+    if (can_ban)
+        discord.FetchGuildBans(GuildID, sigc::mem_fun(*this, &GuildSettingsBansPane::OnGuildBansFetch));
 }
 
 void GuildSettingsBansPane::OnGuildBanFetch(const BanData &ban) {

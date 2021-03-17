@@ -40,7 +40,7 @@ MutualFriendsPane::MutualFriendsPane(Snowflake id)
     show_all_children();
 }
 
-void MutualFriendsPane::SetMutualFriends(const std::vector<UserData> &users) {
+void MutualFriendsPane::OnFetchRelationships(const std::vector<UserData> &users) {
     for (auto child : m_list.get_children())
         delete child;
 
@@ -49,4 +49,11 @@ void MutualFriendsPane::SetMutualFriends(const std::vector<UserData> &users) {
         item->show();
         m_list.add(*item);
     }
+}
+
+void MutualFriendsPane::on_switched_to() {
+    if (m_requested) return;
+    m_requested = true;
+
+    Abaddon::Get().GetDiscordClient().FetchUserRelationships(UserID, sigc::mem_fun(*this, &MutualFriendsPane::OnFetchRelationships));
 }

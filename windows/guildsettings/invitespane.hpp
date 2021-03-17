@@ -1,12 +1,17 @@
 #pragma once
 #include <gtkmm.h>
+#include "../../components/inotifyswitched.hpp"
 #include "../../discord/objects.hpp"
 
-class GuildSettingsInvitesPane : public Gtk::ScrolledWindow {
+class GuildSettingsInvitesPane : public Gtk::ScrolledWindow, public INotifySwitched {
 public:
     GuildSettingsInvitesPane(Snowflake id);
 
 private:
+    void on_switched_to() override;
+
+    bool m_requested = false;
+
     void AppendInvite(const InviteData &invite);
     void OnInviteFetch(const std::optional<InviteData> &invite);
     void OnInvitesFetch(const std::vector<InviteData> &invites);

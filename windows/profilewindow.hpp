@@ -13,7 +13,6 @@ public:
 
 private:
     void OnFetchProfile(const UserProfileData &data);
-    void OnFetchRelationships(const std::vector<UserData> &data);
 
     Gtk::Box m_main;
     Gtk::Box m_upper;
