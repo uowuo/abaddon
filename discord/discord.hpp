@@ -129,6 +129,8 @@ public:
     void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(bool success)> callback);
     void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(bool success)> callback);
     void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(bool success)> callback);
+    void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
+    void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -152,6 +154,8 @@ public:
     void FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback);
 
     void FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback);
+
+    void FetchGuildEmojis(Snowflake guild_id, sigc::slot<void(std::vector<EmojiData>)> callback);
 
     void FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback);
     void FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback);
@@ -204,6 +208,7 @@ private:
     void HandleGatewayInviteCreate(const GatewayMessage &msg);
     void HandleGatewayInviteDelete(const GatewayMessage &msg);
     void HandleGatewayUserNoteUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildEmojisUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -289,7 +294,8 @@ public:
     typedef sigc::signal<void, InviteDeleteObject> type_signal_invite_delete;
     typedef sigc::signal<void, Snowflake, PresenceStatus> type_signal_presence_update;
     typedef sigc::signal<void, Snowflake, std::string> type_signal_note_update;
-    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
+    typedef sigc::signal<void, Snowflake, std::vector<EmojiData>> type_signal_guild_emojis_update; // guild id
+    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                   // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -316,6 +322,7 @@ public:
     type_signal_invite_delete signal_invite_delete(); // safe to assume guild id is set
     type_signal_presence_update signal_presence_update();
     type_signal_note_update signal_note_update();
+    type_signal_guild_emojis_update signal_guild_emojis_update();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -344,6 +351,7 @@ protected:
     type_signal_invite_delete m_signal_invite_delete;
     type_signal_presence_update m_signal_presence_update;
     type_signal_note_update m_signal_note_update;
+    type_signal_guild_emojis_update m_signal_guild_emojis_update;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

@@ -28,10 +28,24 @@ void to_json(nlohmann::json &j, const EmojiData &m) {
     JS_IF("available", m.IsAvailable);
 }
 
-std::string EmojiData::GetURL() const {
-    return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + ".png";
+std::string EmojiData::GetURL(const char *ext, const char *size) const {
+    if (size != nullptr)
+        return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + "." + ext + "?size=" + size;
+    else
+        return "https://cdn.discordapp.com/emojis/" + std::to_string(ID) + "." + ext;
 }
 
-std::string EmojiData::URLFromID(std::string emoji_id, std::string ext) {
-    return "https://cdn.discordapp.com/emojis/" + emoji_id + "." + ext;
+std::string EmojiData::URLFromID(const std::string &emoji_id, const char *ext, const char *size) {
+    if (size != nullptr)
+        return "https://cdn.discordapp.com/emojis/" + emoji_id + "." + ext + "?size=" + size;
+    else
+        return "https://cdn.discordapp.com/emojis/" + emoji_id + "." + ext;
+}
+
+std::string EmojiData::URLFromID(Snowflake emoji_id, const char *ext, const char *size) {
+    return URLFromID(std::to_string(emoji_id), ext, size);
+}
+
+std::string EmojiData::URLFromID(const Glib::ustring &emoji_id, const char *ext, const char *size) {
+    return URLFromID(emoji_id.raw(), ext, size);
 }

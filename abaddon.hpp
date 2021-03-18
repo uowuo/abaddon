@@ -48,6 +48,8 @@ public:
     void ActionGuildSettings(Snowflake id);
     void ActionAddRecipient(Snowflake channel_id);
 
+    bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
+
     void ActionReloadSettings();
     void ActionReloadCSS();
 

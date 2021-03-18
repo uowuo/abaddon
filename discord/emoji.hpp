@@ -18,6 +18,8 @@ struct EmojiData {
     friend void from_json(const nlohmann::json &j, EmojiData &m);
     friend void to_json(nlohmann::json &j, const EmojiData &m);
 
-    std::string GetURL() const;
-    static std::string URLFromID(std::string emoji_id, std::string ext = "png");
+    std::string GetURL(const char *ext = "png", const char *size = nullptr) const;
+    static std::string URLFromID(const std::string &emoji_id, const char *ext = "png", const char *size = nullptr);
+    static std::string URLFromID(Snowflake emoji_id, const char *ext = "png", const char *size = nullptr);
+    static std::string URLFromID(const Glib::ustring &emoji_id, const char *ext = "png", const char *size = nullptr);
 };

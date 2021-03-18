@@ -15,6 +15,7 @@ Current features:
 * Kick, ban, and unban members
 * Modify roles and modify members' roles
 * Manage invites
+* Manage emojis
 * View audit log
 * Emojis<sup>2</sup>
 * Animated avatars, server icons, emojis (can be turned off)

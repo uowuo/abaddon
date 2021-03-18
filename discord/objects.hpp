@@ -64,6 +64,7 @@ enum class GatewayEvent : int {
     INVITE_DELETE,
     USER_NOTE_UPDATE,
     READY_SUPPLEMENTAL,
+    GUILD_EMOJIS_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -538,4 +539,19 @@ struct ModifyGuildRolePositionsObject {
     std::vector<PositionParam> Positions;
 
     friend void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject &m);
+};
+
+struct GuildEmojisUpdateObject {
+    Snowflake GuildID;
+    // std::vector<EmojiData> Emojis;
+    // GuildHashes, undocumented
+
+    friend void from_json(const nlohmann::json &j, GuildEmojisUpdateObject &m);
+};
+
+struct ModifyGuildEmojiObject {
+    std::optional<std::string> Name;
+    // std::optional<std::vector<Snowflake>> Roles;
+
+    friend void to_json(nlohmann::json &j, const ModifyGuildEmojiObject &m);
 };

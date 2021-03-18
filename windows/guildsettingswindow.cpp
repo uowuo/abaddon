@@ -10,7 +10,8 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     , m_pane_invites(id)
     , m_pane_audit_log(id)
     , m_pane_members(id)
-    , m_pane_roles(id) {
+    , m_pane_roles(id)
+    , m_pane_emojis(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
 
@@ -51,6 +52,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_pane_roles.show();
     m_pane_bans.show();
     m_pane_invites.show();
+    m_pane_emojis.show();
     m_pane_audit_log.show();
 
     m_stack.set_transition_duration(100);
@@ -68,6 +70,7 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_stack.add(m_pane_bans, "bans", "Bans");
     if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
         m_stack.add(m_pane_invites, "invites", "Invites");
+    m_stack.add(m_pane_emojis, "emojis", "Emojis");
     if (discord.HasGuildPermission(self_id, GuildID, Permission::VIEW_AUDIT_LOG))
         m_stack.add(m_pane_audit_log, "audit-log", "Audit Log");
     m_stack.show();

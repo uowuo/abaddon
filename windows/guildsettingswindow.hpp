@@ -7,6 +7,7 @@
 #include "guildsettings/auditlogpane.hpp"
 #include "guildsettings/memberspane.hpp"
 #include "guildsettings/rolespane.hpp"
+#include "guildsettings/emojispane.hpp"
 
 class GuildSettingsWindow : public Gtk::Window {
 public:
@@ -22,6 +23,7 @@ private:
     GuildSettingsRolesPane m_pane_roles;
     GuildSettingsBansPane m_pane_bans;
     GuildSettingsInvitesPane m_pane_invites;
+    GuildSettingsEmojisPane m_pane_emojis;
     GuildSettingsAuditLogPane m_pane_audit_log;
 
     Snowflake GuildID;

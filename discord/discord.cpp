@@ -616,6 +616,21 @@ void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, in
     });
 }
 
+void DiscordClient::ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback) {
+    ModifyGuildEmojiObject obj;
+    obj.Name = name;
+
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
+    });
+}
+
+void DiscordClient::DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback) {
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response, 204));
+    });
+}
+
 bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
     const auto guild = *GetGuild(guild_id);
     if (guild.OwnerID == user_id) return true;
@@ -684,6 +699,18 @@ void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogDa
         m_store.EndTransaction();
 
         callback(data);
+    });
+}
+
+void DiscordClient::FetchGuildEmojis(Snowflake guild_id, sigc::slot<void(std::vector<EmojiData>)> callback) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/emojis", [this, callback](const http::response_type &response) {
+        if (!CheckCode(response)) return;
+        auto emojis = nlohmann::json::parse(response.text).get<std::vector<EmojiData>>();
+        m_store.BeginTransaction();
+        for (const auto &emoji : emojis)
+            m_store.SetEmoji(emoji.ID, emoji);
+        m_store.EndTransaction();
+        callback(std::move(emojis));
     });
 }
 
@@ -918,6 +945,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::READY_SUPPLEMENTAL: {
                         HandleGatewayReadySupplemental(m);
+                    } break;
+                    case GatewayEvent::GUILD_EMOJIS_UPDATE: {
+                        HandleGatewayGuildEmojisUpdate(m);
                     } break;
                 }
             } break;
@@ -1317,6 +1347,20 @@ void DiscordClient::HandleGatewayUserNoteUpdate(const GatewayMessage &msg) {
     m_signal_note_update.emit(data.ID, data.Note);
 }
 
+void DiscordClient::HandleGatewayGuildEmojisUpdate(const GatewayMessage &msg) {
+    // like the real client, the emoji data sent in this message is ignored
+    // we just use it as a signal to re-request all emojis
+    GuildEmojisUpdateObject data = msg.Data;
+    const auto cb = [this, id = data.GuildID](const std::vector<EmojiData> &emojis) {
+        m_store.BeginTransaction();
+        for (const auto &emoji : emojis)
+            m_store.SetEmoji(emoji.ID, emoji);
+        m_store.EndTransaction();
+        m_signal_guild_emojis_update.emit(id, emojis);
+    };
+    FetchGuildEmojis(data.GuildID, cb);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -1637,6 +1681,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["INVITE_DELETE"] = GatewayEvent::INVITE_DELETE;
     m_event_map["USER_NOTE_UPDATE"] = GatewayEvent::USER_NOTE_UPDATE;
     m_event_map["READY_SUPPLEMENTAL"] = GatewayEvent::READY_SUPPLEMENTAL;
+    m_event_map["GUILD_EMOJIS_UPDATE"] = GatewayEvent::GUILD_EMOJIS_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1741,4 +1786,8 @@ DiscordClient::type_signal_presence_update DiscordClient::signal_presence_update
 
 DiscordClient::type_signal_note_update DiscordClient::signal_note_update() {
     return m_signal_note_update;
+}
+
+DiscordClient::type_signal_guild_emojis_update DiscordClient::signal_guild_emojis_update() {
+    return m_signal_guild_emojis_update;
 }

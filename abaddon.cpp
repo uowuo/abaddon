@@ -578,6 +578,12 @@ void Abaddon::ActionAddRecipient(Snowflake channel_id) {
     }
 }
 
+bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {
+    ConfirmDialog dlg(window != nullptr ? *window : *m_main_window);
+    dlg.SetConfirmText(prompt);
+    return dlg.run() == Gtk::RESPONSE_OK;
+}
+
 void Abaddon::ActionReloadSettings() {
     m_settings.Reload();
 }

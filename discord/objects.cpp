@@ -386,3 +386,11 @@ void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject::PositionPa
 void to_json(nlohmann::json &j, const ModifyGuildRolePositionsObject &m) {
     j = m.Positions;
 }
+
+void from_json(const nlohmann::json &j, GuildEmojisUpdateObject &m) {
+    JS_D("guild_id", m.GuildID);
+}
+
+void to_json(nlohmann::json &j, const ModifyGuildEmojiObject &m) {
+    JS_IF("name", m.Name);
+}
