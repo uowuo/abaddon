@@ -14,6 +14,9 @@ enum class ChannelType : int {
     GUILD_CATEGORY = 4,
     GUILD_NEWS = 5,
     GUILD_STORE = 6,
+    PUBLIC_THREAD = 11,
+    PRIVATE_THREAD = 12,
+    GUILD_STAGE_VOICE = 13,
 };
 
 struct ChannelData {

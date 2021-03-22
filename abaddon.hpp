@@ -66,7 +66,7 @@ public:
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
     void DiscordOnGuildMemberListUpdate(Snowflake guild_id);
-    void DiscordOnGuildCreate(Snowflake guild_id);
+    void DiscordOnGuildCreate(const GuildData &guild);
     void DiscordOnGuildDelete(Snowflake guild_id);
     void DiscordOnChannelDelete(Snowflake channel_id);
     void DiscordOnChannelUpdate(Snowflake channel_id);
@@ -74,6 +74,7 @@ public:
     void DiscordOnGuildUpdate(Snowflake guild_id);
     void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
+    void DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data);
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
 
     const SettingsManager &GetSettings() const;
@@ -83,6 +84,8 @@ public:
     void ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_id);
 
 protected:
+    void ShowGuildVerificationGateDialog(Snowflake guild_id);
+
     void SetupUserMenu();
 
     void ManageHeapWindow(Gtk::Window *window);

@@ -131,6 +131,7 @@ public:
     void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(bool success)> callback);
     void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
     void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback);
+    std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -162,6 +163,9 @@ public:
     void SetUserNote(Snowflake user_id, std::string note);
     void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback);
     void FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback);
+
+    void GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback);
+    void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(bool success)> callback);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
@@ -209,6 +213,9 @@ private:
     void HandleGatewayInviteDelete(const GatewayMessage &msg);
     void HandleGatewayUserNoteUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildEmojisUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildJoinRequestCreate(const GatewayMessage &msg);
+    void HandleGatewayGuildJoinRequestUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildJoinRequestDelete(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -233,6 +240,7 @@ private:
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
 
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
+    std::unordered_map<Snowflake, GuildApplicationData> m_guild_join_requests;
 
     std::unordered_map<Snowflake, PresenceStatus> m_user_to_status;
 
@@ -275,7 +283,7 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_update;
     typedef sigc::signal<void, Snowflake> type_signal_guild_member_list_update;
-    typedef sigc::signal<void, Snowflake> type_signal_guild_create;
+    typedef sigc::signal<void, GuildData> type_signal_guild_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
@@ -295,7 +303,10 @@ public:
     typedef sigc::signal<void, Snowflake, PresenceStatus> type_signal_presence_update;
     typedef sigc::signal<void, Snowflake, std::string> type_signal_note_update;
     typedef sigc::signal<void, Snowflake, std::vector<EmojiData>> type_signal_guild_emojis_update; // guild id
-    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                   // bool true if reconnecting
+    typedef sigc::signal<void, GuildJoinRequestCreateData> type_signal_guild_join_request_create;
+    typedef sigc::signal<void, GuildJoinRequestUpdateData> type_signal_guild_join_request_update;
+    typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
+    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -303,7 +314,7 @@ public:
     type_signal_message_delete signal_message_delete();
     type_signal_message_update signal_message_update();
     type_signal_guild_member_list_update signal_guild_member_list_update();
-    type_signal_guild_create signal_guild_create();
+    type_signal_guild_create signal_guild_create(); // structs are complete in this signal
     type_signal_guild_delete signal_guild_delete();
     type_signal_channel_delete signal_channel_delete();
     type_signal_channel_update signal_channel_update();
@@ -323,6 +334,9 @@ public:
     type_signal_presence_update signal_presence_update();
     type_signal_note_update signal_note_update();
     type_signal_guild_emojis_update signal_guild_emojis_update();
+    type_signal_guild_join_request_create signal_guild_join_request_create();
+    type_signal_guild_join_request_update signal_guild_join_request_update();
+    type_signal_guild_join_request_delete signal_guild_join_request_delete();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -352,6 +366,9 @@ protected:
     type_signal_presence_update m_signal_presence_update;
     type_signal_note_update m_signal_note_update;
     type_signal_guild_emojis_update m_signal_guild_emojis_update;
+    type_signal_guild_join_request_create m_signal_guild_join_request_create;
+    type_signal_guild_join_request_update m_signal_guild_join_request_update;
+    type_signal_guild_join_request_delete m_signal_guild_join_request_delete;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

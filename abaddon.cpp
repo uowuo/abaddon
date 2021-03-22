@@ -9,6 +9,7 @@
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
+#include "dialogs/verificationgate.hpp"
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
@@ -40,6 +41,7 @@ Abaddon::Abaddon()
     m_discord.signal_guild_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
+    m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
         m_discord.signal_message_create().connect([this](Snowflake id) {
@@ -185,8 +187,8 @@ void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
     m_main_window->UpdateMembers();
 }
 
-void Abaddon::DiscordOnGuildCreate(Snowflake guild_id) {
-    m_main_window->UpdateChannelsNewGuild(guild_id);
+void Abaddon::DiscordOnGuildCreate(const GuildData &guild) {
+    m_main_window->UpdateChannelsNewGuild(guild.ID);
 }
 
 void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
@@ -215,6 +217,13 @@ void Abaddon::DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &pa
 
 void Abaddon::DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param) {
     m_main_window->UpdateChatReactionAdd(message_id, param);
+}
+
+// this will probably cause issues when actual applications are rolled out but that doesn't seem like it will happen for a while
+void Abaddon::DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data) {
+    if (data.Status == GuildApplicationStatus::STARTED) {
+        ShowGuildVerificationGateDialog(data.GuildID);
+    }
 }
 
 void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code) {
@@ -285,6 +294,19 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     }
 
     m_user_menu->popup_at_pointer(event);
+}
+
+void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
+    VerificationGateDialog dlg(*m_main_window, guild_id);
+    if (dlg.run() == Gtk::RESPONSE_OK) {
+        const auto cb = [this](bool success) {
+            if (!success) {
+                Gtk::MessageDialog dlg(*m_main_window, "Failed to accept the verification gate.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.run();
+            }
+        };
+        m_discord.AcceptVerificationGate(guild_id, dlg.GetVerificationGate(), cb);
+    }
 }
 
 void Abaddon::SetupUserMenu() {
@@ -417,9 +439,6 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
     const auto channel = m_discord.GetChannel(id);
-    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM)
-        m_discord.SendLazyLoad(id);
-
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
@@ -444,6 +463,14 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
         });
     } else {
         m_main_window->UpdateChatWindowContents();
+    }
+
+    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) {
+        m_discord.SendLazyLoad(id);
+
+        const auto request = m_discord.GetGuildApplication(*channel->GuildID);
+        if (request.has_value() && request->ApplicationStatus == GuildApplicationStatus::STARTED)
+            ShowGuildVerificationGateDialog(*channel->GuildID);
     }
 }
 

@@ -631,6 +631,12 @@ void DiscordClient::DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::sl
     });
 }
 
+std::optional<GuildApplicationData> DiscordClient::GetGuildApplication(Snowflake guild_id) const {
+    const auto it = m_guild_join_requests.find(guild_id);
+    if (it == m_guild_join_requests.end()) return std::nullopt;
+    return it->second;
+}
+
 bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
     const auto guild = *GetGuild(guild_id);
     if (guild.OwnerID == user_id) return true;
@@ -750,6 +756,23 @@ void DiscordClient::FetchUserRelationships(Snowflake user_id, sigc::slot<void(st
         for (const auto &user : data.Users)
             m_store.SetUser(user.ID, user);
         callback(data.Users);
+    });
+}
+
+void DiscordClient::GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/member-verification", [this, callback](const http::response_type &response) {
+        if (!CheckCode(response)) return;
+        if (response.status_code == 204) callback(std::nullopt);
+        callback(nlohmann::json::parse(response.text).get<VerificationGateInfoObject>());
+    });
+}
+
+void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(bool success)> callback) {
+    if (info.VerificationFields.has_value())
+        for (auto &field : *info.VerificationFields)
+            field.Response = true;
+    m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/requests/@me", nlohmann::json(info).dump(), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
     });
 }
 
@@ -949,6 +972,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_EMOJIS_UPDATE: {
                         HandleGatewayGuildEmojisUpdate(m);
                     } break;
+                    case GatewayEvent::GUILD_JOIN_REQUEST_CREATE: {
+                        HandleGatewayGuildJoinRequestCreate(m);
+                    } break;
+                    case GatewayEvent::GUILD_JOIN_REQUEST_UPDATE: {
+                        HandleGatewayGuildJoinRequestUpdate(m);
+                    } break;
+                    case GatewayEvent::GUILD_JOIN_REQUEST_DELETE: {
+                        HandleGatewayGuildJoinRequestDelete(m);
+                    } break;
                 }
             } break;
             default:
@@ -1032,6 +1064,10 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     if (data.Relationships.has_value())
         for (const auto &relationship : *data.Relationships)
             m_user_relationships[relationship.ID] = relationship.Type;
+
+    if (data.GuildJoinRequests.has_value())
+        for (const auto &request : *data.GuildJoinRequests)
+            m_guild_join_requests[request.GuildID] = request;
 
     m_store.EndTransaction();
 
@@ -1361,6 +1397,24 @@ void DiscordClient::HandleGatewayGuildEmojisUpdate(const GatewayMessage &msg) {
     FetchGuildEmojis(data.GuildID, cb);
 }
 
+void DiscordClient::HandleGatewayGuildJoinRequestCreate(const GatewayMessage &msg) {
+    GuildJoinRequestCreateData data = msg.Data;
+    m_guild_join_requests[data.GuildID] = data.Request;
+    m_signal_guild_join_request_create.emit(data);
+}
+
+void DiscordClient::HandleGatewayGuildJoinRequestUpdate(const GatewayMessage &msg) {
+    GuildJoinRequestUpdateData data = msg.Data;
+    m_guild_join_requests[data.GuildID] = data.Request;
+    m_signal_guild_join_request_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayGuildJoinRequestDelete(const GatewayMessage &msg) {
+    GuildJoinRequestDeleteData data = msg.Data;
+    m_guild_join_requests.erase(data.GuildID);
+    m_signal_guild_join_request_delete.emit(data);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -1478,7 +1532,7 @@ void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {
     GuildData data = msg.Data;
     ProcessNewGuild(data);
 
-    m_signal_guild_create.emit(data.ID);
+    m_signal_guild_create.emit(data);
 }
 
 void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
@@ -1682,6 +1736,9 @@ void DiscordClient::LoadEventMap() {
     m_event_map["USER_NOTE_UPDATE"] = GatewayEvent::USER_NOTE_UPDATE;
     m_event_map["READY_SUPPLEMENTAL"] = GatewayEvent::READY_SUPPLEMENTAL;
     m_event_map["GUILD_EMOJIS_UPDATE"] = GatewayEvent::GUILD_EMOJIS_UPDATE;
+    m_event_map["GUILD_JOIN_REQUEST_CREATE"] = GatewayEvent::GUILD_JOIN_REQUEST_CREATE;
+    m_event_map["GUILD_JOIN_REQUEST_UPDATE"] = GatewayEvent::GUILD_JOIN_REQUEST_UPDATE;
+    m_event_map["GUILD_JOIN_REQUEST_DELETE"] = GatewayEvent::GUILD_JOIN_REQUEST_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1790,4 +1847,16 @@ DiscordClient::type_signal_note_update DiscordClient::signal_note_update() {
 
 DiscordClient::type_signal_guild_emojis_update DiscordClient::signal_guild_emojis_update() {
     return m_signal_guild_emojis_update;
+}
+
+DiscordClient::type_signal_guild_join_request_create DiscordClient::signal_guild_join_request_create() {
+    return m_signal_guild_join_request_create;
+}
+
+DiscordClient::type_signal_guild_join_request_update DiscordClient::signal_guild_join_request_update() {
+    return m_signal_guild_join_request_update;
+}
+
+DiscordClient::type_signal_guild_join_request_delete DiscordClient::signal_guild_join_request_delete() {
+    return m_signal_guild_join_request_delete;
 }

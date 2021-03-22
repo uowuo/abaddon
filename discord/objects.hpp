@@ -65,6 +65,9 @@ enum class GatewayEvent : int {
     USER_NOTE_UPDATE,
     READY_SUPPLEMENTAL,
     GUILD_EMOJIS_UPDATE,
+    GUILD_JOIN_REQUEST_CREATE,
+    GUILD_JOIN_REQUEST_UPDATE,
+    GUILD_JOIN_REQUEST_DELETE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -206,6 +209,7 @@ struct ReadyEventData {
     UserSettings Settings;
     std::optional<std::vector<std::vector<GuildMember>>> MergedMembers;
     std::optional<std::vector<RelationshipData>> Relationships;
+    std::optional<std::vector<GuildApplicationData>> GuildJoinRequests;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt
@@ -554,4 +558,42 @@ struct ModifyGuildEmojiObject {
     // std::optional<std::vector<Snowflake>> Roles;
 
     friend void to_json(nlohmann::json &j, const ModifyGuildEmojiObject &m);
+};
+
+struct GuildJoinRequestCreateData {
+    GuildApplicationStatus Status;
+    GuildApplicationData Request;
+    Snowflake GuildID;
+
+    friend void from_json(const nlohmann::json &j, GuildJoinRequestCreateData &m);
+};
+
+using GuildJoinRequestUpdateData = GuildJoinRequestCreateData;
+
+struct GuildJoinRequestDeleteData {
+    Snowflake UserID;
+    Snowflake GuildID;
+
+    friend void from_json(const nlohmann::json &j, GuildJoinRequestDeleteData &m);
+};
+
+struct VerificationFieldObject {
+    std::string Type;
+    std::string Label;
+    bool Required;
+    std::vector<std::string> Values;
+    std::optional<bool> Response; // present in client to server
+
+    friend void from_json(const nlohmann::json &j, VerificationFieldObject &m);
+    friend void to_json(nlohmann::json &j, const VerificationFieldObject &m);
+};
+
+struct VerificationGateInfoObject {
+    std::optional<std::string> Description;
+    std::optional<std::vector<VerificationFieldObject>> VerificationFields;
+    std::optional<std::string> Version;
+    std::optional<bool> Enabled; // present only in client to server in modify gate
+
+    friend void from_json(const nlohmann::json &j, VerificationGateInfoObject &m);
+    friend void to_json(nlohmann::json &j, const VerificationGateInfoObject &m);
 };

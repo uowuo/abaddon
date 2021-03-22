@@ -125,6 +125,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_O("users", m.Users);
     JS_ON("merged_members", m.MergedMembers);
     JS_O("relationships", m.Relationships);
+    JS_O("guild_join_requests", m.GuildJoinRequests);
 }
 
 void from_json(const nlohmann::json &j, MergedPresence &m) {
@@ -393,4 +394,52 @@ void from_json(const nlohmann::json &j, GuildEmojisUpdateObject &m) {
 
 void to_json(nlohmann::json &j, const ModifyGuildEmojiObject &m) {
     JS_IF("name", m.Name);
+}
+
+void from_json(const nlohmann::json &j, GuildJoinRequestCreateData &m) {
+    auto tmp = j.at("status").get<std::string_view>();
+    if (tmp == "STARTED")
+        m.Status = GuildApplicationStatus::STARTED;
+    else if (tmp == "PENDING")
+        m.Status = GuildApplicationStatus::PENDING;
+    else if (tmp == "REJECTED")
+        m.Status = GuildApplicationStatus::REJECTED;
+    else if (tmp == "APPROVED")
+        m.Status = GuildApplicationStatus::APPROVED;
+    JS_D("request", m.Request);
+    JS_D("guild_id", m.GuildID);
+}
+
+void from_json(const nlohmann::json &j, GuildJoinRequestDeleteData &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("guild_id", m.GuildID);
+}
+
+void from_json(const nlohmann::json &j, VerificationFieldObject &m) {
+    JS_D("field_type", m.Type);
+    JS_D("label", m.Label);
+    JS_D("required", m.Required);
+    JS_D("values", m.Values);
+}
+
+void from_json(const nlohmann::json &j, VerificationGateInfoObject &m) {
+    JS_O("description", m.Description);
+    JS_O("form_fields", m.VerificationFields);
+    JS_O("version", m.Version);
+    JS_O("enabled", m.Enabled);
+}
+
+void to_json(nlohmann::json &j, const VerificationFieldObject &m) {
+    j["field_type"] = m.Type;
+    j["label"] = m.Label;
+    j["required"] = m.Required;
+    j["values"] = m.Values;
+    JS_IF("response", m.Response);
+}
+
+void to_json(nlohmann::json &j, const VerificationGateInfoObject &m) {
+    JS_IF("description", m.Description);
+    JS_IF("form_fields", m.VerificationFields);
+    JS_IF("version", m.Version);
+    JS_IF("enabled", m.Enabled);
 }

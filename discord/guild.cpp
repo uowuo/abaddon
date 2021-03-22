@@ -197,3 +197,20 @@ std::vector<RoleData> GuildData::FetchRoles() const {
     });
     return ret;
 }
+
+void from_json(const nlohmann::json &j, GuildApplicationData &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("guild_id", m.GuildID);
+    auto tmp = j.at("application_status").get<std::string_view>();
+    if (tmp == "STARTED")
+        m.ApplicationStatus = GuildApplicationStatus::STARTED;
+    else if (tmp == "PENDING")
+        m.ApplicationStatus = GuildApplicationStatus::PENDING;
+    else if (tmp == "REJECTED")
+        m.ApplicationStatus = GuildApplicationStatus::REJECTED;
+    else if (tmp == "APPROVED")
+        m.ApplicationStatus = GuildApplicationStatus::APPROVED;
+    JS_N("rejection_reason", m.RejectionReason);
+    JS_N("last_seen", m.LastSeen);
+    JS_N("created_at", m.CreatedAt);
+}

@@ -449,7 +449,7 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
         ret.Emojis->emplace_back().ID = id;
     Get(m_get_guild_stmt, 14, tmp);
-    ret.Features = nlohmann::json::parse(tmp).get<std::vector<std::string>>();
+    ret.Features = nlohmann::json::parse(tmp).get<std::unordered_set<std::string>>();
     Get(m_get_guild_stmt, 15, ret.MFALevel);
     Get(m_get_guild_stmt, 16, ret.ApplicationID);
     Get(m_get_guild_stmt, 17, ret.IsWidgetEnabled);

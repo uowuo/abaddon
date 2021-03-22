@@ -6,6 +6,26 @@
 #include "emoji.hpp"
 #include <vector>
 #include <string>
+#include <unordered_set>
+
+enum class GuildApplicationStatus {
+    STARTED,
+    PENDING,
+    REJECTED,
+    APPROVED,
+    UNKNOWN,
+};
+
+struct GuildApplicationData {
+    Snowflake UserID;
+    Snowflake GuildID;
+    GuildApplicationStatus ApplicationStatus;
+    std::optional<std::string> RejectionReason;
+    std::optional<std::string> LastSeen;
+    std::optional<std::string> CreatedAt;
+
+    friend void from_json(const nlohmann::json &j, GuildApplicationData &m);
+};
 
 // a bot is apparently only supposed to receive the `id` and `unavailable` as false
 // but user tokens seem to get the full objects (minus users)
@@ -32,7 +52,7 @@ struct GuildData {
     std::optional<int> ExplicitContentFilter;
     std::optional<std::vector<RoleData>> Roles;   // only access id
     std::optional<std::vector<EmojiData>> Emojis; // only access id
-    std::optional<std::vector<std::string>> Features;
+    std::optional<std::unordered_set<std::string>> Features;
     std::optional<int> MFALevel;
     std::optional<Snowflake> ApplicationID; // null
     std::optional<bool> IsWidgetEnabled;
