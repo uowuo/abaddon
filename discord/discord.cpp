@@ -1171,8 +1171,9 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
     m_store.BeginTransaction();
     m_store.SetChannel(data.ID, data);
     m_guild_to_channels[*data.GuildID].insert(data.ID);
-    for (const auto &p : *data.PermissionOverwrites)
-        m_store.SetPermissionOverwrite(data.ID, p.ID, p);
+    if (data.PermissionOverwrites.has_value())
+        for (const auto &p : *data.PermissionOverwrites)
+            m_store.SetPermissionOverwrite(data.ID, p.ID, p);
     m_store.EndTransaction();
     m_signal_channel_create.emit(data.ID);
 }
