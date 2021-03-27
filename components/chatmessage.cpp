@@ -1143,7 +1143,7 @@ void ChatMessageHeader::UpdateNameColor() {
     if (role.has_value())
         md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>";
     else
-        md = "<span weight='bold' color='#eeeeee'>" + user->GetEscapedName() + "</span>";
+        md = "<span weight='bold'>" + user->GetEscapedName() + "</span>";
 
     m_author->set_markup(md);
 }
