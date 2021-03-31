@@ -116,10 +116,9 @@ private:
 
     DiscordClient m_discord;
     std::string m_discord_token;
-    // todo make these map snowflake to attribs
+
     std::unordered_set<Snowflake> m_channels_requested;
     std::unordered_set<Snowflake> m_channels_history_loaded;
-    std::unordered_map<Snowflake, Snowflake> m_oldest_listed_message;
     std::unordered_set<Snowflake> m_channels_history_loading;
 
     ImageManager m_img_mgr;

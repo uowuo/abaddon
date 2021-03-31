@@ -110,6 +110,7 @@ void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
     }
 
     m_num_rows = 0;
+    m_num_messages = 0;
     m_id_to_widget.clear();
 
     for (const auto &id : msgs) {
@@ -159,14 +160,7 @@ void ChatWindow::InsertChatInput(std::string text) {
 }
 
 Snowflake ChatWindow::GetOldestListedMessage() {
-    Snowflake m;
-
-    for (const auto &[id, widget] : m_id_to_widget) {
-        if (id < m)
-            m = id;
-    }
-
-    return m;
+    return m_id_to_widget.begin()->first;
 }
 
 void ChatWindow::UpdateReactions(Snowflake id) {
@@ -203,6 +197,7 @@ ChatMessageItemContainer *ChatWindow::CreateMessageComponent(Snowflake id) {
     return container;
 }
 
+constexpr static int MaxMessagesForCull = 50; // this has to be 50 cuz that magic number is used in a couple other places and i dont feel like replacing them
 void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     const auto &client = Abaddon::Get().GetDiscordClient();
     if (!client.IsStarted()) return; // e.g. load channel and then dc
@@ -221,6 +216,24 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
             if (last_row->UserID == data->Author.ID)
                 should_attach = true;
     }
+
+    m_num_messages++;
+
+    if (m_should_scroll_to_bottom && !prepend)
+        while (m_num_messages > MaxMessagesForCull) {
+            auto first_it = m_id_to_widget.begin();
+            ChatMessageHeader *header = dynamic_cast<ChatMessageHeader *>(first_it->second->get_ancestor(Gtk::ListBoxRow::get_type()));
+            if (header != nullptr) {
+                if (header->GetChildContent().size() == 1)
+                    delete header;
+                else
+                    delete first_it->second;
+            } else
+                delete first_it->second;
+            m_id_to_widget.erase(first_it);
+            m_num_rows--;
+            m_num_messages--;
+        }
 
     ChatMessageHeader *header;
     if (should_attach) {

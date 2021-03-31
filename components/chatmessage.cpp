@@ -1148,6 +1148,10 @@ void ChatMessageHeader::UpdateNameColor() {
     m_author->set_markup(md);
 }
 
+std::vector<Gtk::Widget *> ChatMessageHeader::GetChildContent() {
+    return m_content_widgets;
+}
+
 void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
     widget.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
@@ -1177,6 +1181,10 @@ ChatMessageHeader::type_signal_action_open_user_menu ChatMessageHeader::signal_a
 }
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
+    m_content_widgets.push_back(widget);
+    widget->signal_unmap().connect([this, widget]() {
+        m_content_widgets.erase(std::remove(m_content_widgets.begin(), m_content_widgets.end(), widget), m_content_widgets.end());
+    });
     m_content_box->add(*widget);
     if (prepend)
         m_content_box->reorder_child(*widget, 1);

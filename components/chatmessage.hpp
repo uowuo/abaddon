@@ -110,11 +110,14 @@ public:
     ChatMessageHeader(const Message *data);
     void AddContent(Gtk::Widget *widget, bool prepend);
     void UpdateNameColor();
+    std::vector<Gtk::Widget*> GetChildContent();
 
 protected:
     void AttachUserMenuHandler(Gtk::Widget &widget);
 
     bool on_author_button_press(GdkEventButton *ev);
+
+    std::vector<Gtk::Widget*> m_content_widgets;
 
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;

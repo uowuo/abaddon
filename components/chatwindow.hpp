@@ -36,8 +36,9 @@ protected:
     void StartReplying(Snowflake message_id);
     void StopReplying();
 
+    int m_num_messages = 0;
     int m_num_rows = 0;
-    std::unordered_map<Snowflake, Gtk::Widget *> m_id_to_widget;
+    std::map<Snowflake, Gtk::Widget *> m_id_to_widget;
 
     Snowflake m_active_channel;
 
