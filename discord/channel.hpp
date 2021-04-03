@@ -14,6 +14,8 @@ enum class ChannelType : int {
     GUILD_CATEGORY = 4,
     GUILD_NEWS = 5,
     GUILD_STORE = 6,
+    /* 7 and 8 were used for LFG */
+    /* 9 and 10 were used for threads */
     PUBLIC_THREAD = 11,
     PRIVATE_THREAD = 12,
     GUILD_STAGE_VOICE = 13,
