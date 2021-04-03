@@ -75,8 +75,16 @@
     padding-top: 5px;
 }
 
-.message-text text, .message-reply {
+.message-text:not(.failed) text, .message-reply {
     color: @text_color;
+}
+
+.message-text.pending text {
+    color: shade(@text_color, 0.5);
+}
+
+.message-text.failed text {
+    color: #b72d4f;
 }
 
 .message-reply {

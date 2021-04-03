@@ -7,6 +7,8 @@ public:
     Snowflake ID;
     Snowflake ChannelID;
 
+    std::string Nonce;
+
     ChatMessageItemContainer();
     static ChatMessageItemContainer *FromMessage(Snowflake id);
 
@@ -14,6 +16,7 @@ public:
     void UpdateAttributes();
     void UpdateContent();
     void UpdateReactions();
+    void SetFailed();
 
 protected:
     void AddClickHandler(Gtk::Widget *widget, std::string);

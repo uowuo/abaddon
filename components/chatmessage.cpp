@@ -51,6 +51,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     container->ID = data->ID;
     container->ChannelID = data->ChannelID;
 
+    if (data->Nonce.has_value())
+        container->Nonce = *data->Nonce;
+
     if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(&*data);
         container->AttachEventHandlers(*container->m_text_component);
@@ -139,6 +142,11 @@ void ChatMessageItemContainer::UpdateReactions() {
     }
 }
 
+void ChatMessageItemContainer::SetFailed() {
+    m_text_component->get_style_context()->remove_class("pending");
+    m_text_component->get_style_context()->add_class("failed");
+}
+
 void ChatMessageItemContainer::UpdateAttributes() {
     const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (!data.has_value()) return;
@@ -176,6 +184,8 @@ void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string 
 Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data) {
     auto *tv = Gtk::manage(new Gtk::TextView);
 
+    if (data->IsPending)
+        tv->get_style_context()->add_class("pending");
     tv->get_style_context()->add_class("message-text");
     tv->set_can_focus(false);
     tv->set_editable(false);

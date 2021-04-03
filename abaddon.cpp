@@ -42,6 +42,7 @@ Abaddon::Abaddon()
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
     m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
+    m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
         m_discord.signal_message_create().connect([this](Snowflake id) {
@@ -224,6 +225,10 @@ void Abaddon::DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &
     if (data.Status == GuildApplicationStatus::STARTED) {
         ShowGuildVerificationGateDialog(data.GuildID);
     }
+}
+
+void Abaddon::DiscordOnMessageSent(const Message &data) {
+    m_main_window->UpdateChatNewMessage(data.ID);
 }
 
 void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code) {

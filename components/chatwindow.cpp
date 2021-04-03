@@ -5,6 +5,8 @@
 #include "chatinput.hpp"
 
 ChatWindow::ChatWindow() {
+    Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
+
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_list = Gtk::manage(new Gtk::ListBox);
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
@@ -197,12 +199,35 @@ ChatMessageItemContainer *ChatWindow::CreateMessageComponent(Snowflake id) {
     return container;
 }
 
+void ChatWindow::RemoveMessageAndHeader(Gtk::Widget *widget) {
+    ChatMessageHeader *header = dynamic_cast<ChatMessageHeader *>(widget->get_ancestor(Gtk::ListBoxRow::get_type()));
+    if (header != nullptr) {
+        if (header->GetChildContent().size() == 1) {
+            m_num_rows--;
+            delete header;
+        } else
+            delete widget;
+    } else
+        delete widget;
+    m_num_messages--;
+}
+
 constexpr static int MaxMessagesForCull = 50; // this has to be 50 cuz that magic number is used in a couple other places and i dont feel like replacing them
 void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     const auto &client = Abaddon::Get().GetDiscordClient();
     if (!client.IsStarted()) return; // e.g. load channel and then dc
     const auto data = client.GetMessage(id);
     if (!data.has_value()) return;
+
+    if (!data->IsPending && data->Nonce.has_value() && data->Author.ID == client.GetUserData().ID) {
+        for (auto [id, widget] : m_id_to_widget) {
+            if (dynamic_cast<ChatMessageItemContainer *>(widget)->Nonce == *data->Nonce) {
+                RemoveMessageAndHeader(widget);
+                m_id_to_widget.erase(id);
+                break;
+            }
+        }
+    }
 
     ChatMessageHeader *last_row = nullptr;
     bool should_attach = false;
@@ -222,17 +247,8 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
     if (m_should_scroll_to_bottom && !prepend)
         while (m_num_messages > MaxMessagesForCull) {
             auto first_it = m_id_to_widget.begin();
-            ChatMessageHeader *header = dynamic_cast<ChatMessageHeader *>(first_it->second->get_ancestor(Gtk::ListBoxRow::get_type()));
-            if (header != nullptr) {
-                if (header->GetChildContent().size() == 1)
-                    delete header;
-                else
-                    delete first_it->second;
-            } else
-                delete first_it->second;
+            RemoveMessageAndHeader(first_it->second);
             m_id_to_widget.erase(first_it);
-            m_num_rows--;
-            m_num_messages--;
         }
 
     ChatMessageHeader *header;
@@ -261,22 +277,24 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         header->AddContent(content, prepend);
         m_id_to_widget[id] = content;
 
-        content->signal_action_delete().connect([this, id] {
-            m_signal_action_message_delete.emit(m_active_channel, id);
-        });
-        content->signal_action_edit().connect([this, id] {
-            m_signal_action_message_edit.emit(m_active_channel, id);
-        });
-        content->signal_action_reaction_add().connect([this, id](const Glib::ustring &param) {
-            m_signal_action_reaction_add.emit(id, param);
-        });
-        content->signal_action_reaction_remove().connect([this, id](const Glib::ustring &param) {
-            m_signal_action_reaction_remove.emit(id, param);
-        });
-        content->signal_action_channel_click().connect([this](const Snowflake &id) {
-            m_signal_action_channel_click.emit(id);
-        });
-        content->signal_action_reply_to().connect(sigc::mem_fun(*this, &ChatWindow::StartReplying));
+        if (!data->IsPending) {
+            content->signal_action_delete().connect([this, id] {
+                m_signal_action_message_delete.emit(m_active_channel, id);
+            });
+            content->signal_action_edit().connect([this, id] {
+                m_signal_action_message_edit.emit(m_active_channel, id);
+            });
+            content->signal_action_reaction_add().connect([this, id](const Glib::ustring &param) {
+                m_signal_action_reaction_add.emit(id, param);
+            });
+            content->signal_action_reaction_remove().connect([this, id](const Glib::ustring &param) {
+                m_signal_action_reaction_remove.emit(id, param);
+            });
+            content->signal_action_channel_click().connect([this](const Snowflake &id) {
+                m_signal_action_channel_click.emit(id);
+            });
+            content->signal_action_reply_to().connect(sigc::mem_fun(*this, &ChatWindow::StartReplying));
+        }
     }
 
     header->set_margin_left(5);
@@ -319,6 +337,15 @@ void ChatWindow::OnScrollEdgeOvershot(Gtk::PositionType pos) {
 void ChatWindow::ScrollToBottom() {
     auto x = m_scroll->get_vadjustment();
     x->set_value(x->get_upper());
+}
+
+void ChatWindow::OnMessageSendFail(const std::string &nonce) {
+    for (auto [id, widget] : m_id_to_widget) {
+        if (auto *container = dynamic_cast<ChatMessageItemContainer *>(widget); container->Nonce == nonce) {
+            container->SetFailed();
+            break;
+        }
+    }
 }
 
 ChatWindow::type_signal_action_message_delete ChatWindow::signal_action_message_delete() {

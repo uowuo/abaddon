@@ -97,6 +97,8 @@ public:
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
 
+    void ChatMessageCallback(std::string nonce, const http::response_type &response);
+
     void SendChatMessage(const std::string &content, Snowflake channel);
     void SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
@@ -306,6 +308,8 @@ public:
     typedef sigc::signal<void, GuildJoinRequestCreateData> type_signal_guild_join_request_create;
     typedef sigc::signal<void, GuildJoinRequestUpdateData> type_signal_guild_join_request_update;
     typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
+    typedef sigc::signal<void, Message> type_signal_message_sent;
+    typedef sigc::signal<void, std::string> type_signal_message_send_fail;
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
@@ -337,6 +341,8 @@ public:
     type_signal_guild_join_request_create signal_guild_join_request_create();
     type_signal_guild_join_request_update signal_guild_join_request_update();
     type_signal_guild_join_request_delete signal_guild_join_request_delete();
+    type_signal_message_sent signal_message_sent();
+    type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
 
@@ -369,6 +375,8 @@ protected:
     type_signal_guild_join_request_create m_signal_guild_join_request_create;
     type_signal_guild_join_request_update m_signal_guild_join_request_update;
     type_signal_guild_join_request_delete m_signal_guild_join_request_delete;
+    type_signal_message_sent m_signal_message_sent;
+    type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
 };

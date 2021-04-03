@@ -75,6 +75,7 @@ public:
     void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data);
+    void DiscordOnMessageSent(const Message &data);
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
 
     const SettingsManager &GetSettings() const;

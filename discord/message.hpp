@@ -202,6 +202,8 @@ struct Message {
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE
 
     // custom fields to track changes
+    bool IsPending = false; // for user-sent messages yet to be received in a MESSAGE_CREATE
+
     void SetDeleted();
     void SetEdited();
     bool IsDeleted() const;

@@ -92,6 +92,8 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 .message-container-avatar - Avatar for a user in a message  
 .message-container-extra - Label containing BOT/Webhook  
 .message-text - The text of a user message  
+.pending - Extra class of .message-text for messages pending to be sent  
+.failed - Extra class of .message-text for messages that failed to be sent   
 .message-attachment-box - Contains attachment info  
 .message-reply - Container for the replied-to message in a reply (these elements will also have .message-text set)  
 .message-input - Applied to the chat input container  

@@ -345,18 +345,57 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     return actor_highest->Position > target_highest->Position;
 }
 
+void DiscordClient::ChatMessageCallback(std::string nonce, const http::response_type &response) {
+    if (!CheckCode(response)) {
+        m_signal_message_send_fail.emit(nonce);
+    }
+}
+
 void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel) {
     // @([^@#]{1,32})#(\\d{4})
+    const auto nonce = std::to_string(Snowflake::FromNow());
     CreateMessageObject obj;
     obj.Content = content;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto) {});
+    obj.Nonce = nonce;
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
+    // dummy data so the content can be shown while waiting for MESSAGE_CREATE
+    Message tmp;
+    tmp.Content = content;
+    tmp.ID = nonce;
+    tmp.ChannelID = channel;
+    tmp.Author = GetUserData();
+    tmp.IsTTS = false;
+    tmp.DoesMentionEveryone = false;
+    tmp.Type = MessageType::DEFAULT;
+    tmp.IsPinned = false;
+    tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
+    tmp.Nonce = obj.Nonce;
+    tmp.IsPending = true;
+    m_store.SetMessage(tmp.ID, tmp);
+    m_signal_message_sent.emit(tmp);
 }
 
 void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message) {
+    const auto nonce = std::to_string(Snowflake::FromNow());
     CreateMessageObject obj;
     obj.Content = content;
+    obj.Nonce = nonce;
     obj.MessageReference.emplace().MessageID = referenced_message;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), [](auto) {});
+    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
+    Message tmp;
+    tmp.Content = content;
+    tmp.ID = nonce;
+    tmp.ChannelID = channel;
+    tmp.Author = GetUserData();
+    tmp.IsTTS = false;
+    tmp.DoesMentionEveryone = false;
+    tmp.Type = MessageType::DEFAULT;
+    tmp.IsPinned = false;
+    tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
+    tmp.Nonce = obj.Nonce;
+    tmp.IsPending = true;
+    m_store.SetMessage(tmp.ID, tmp);
+    m_signal_message_sent.emit(tmp);
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
@@ -1860,4 +1899,12 @@ DiscordClient::type_signal_guild_join_request_update DiscordClient::signal_guild
 
 DiscordClient::type_signal_guild_join_request_delete DiscordClient::signal_guild_join_request_delete() {
     return m_signal_guild_join_request_delete;
+}
+
+DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {
+    return m_signal_message_sent;
+}
+
+DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_fail() {
+    return m_signal_message_send_fail;
 }

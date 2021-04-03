@@ -1,6 +1,9 @@
 #include "snowflake.hpp"
 #include <ctime>
 #include <iomanip>
+#include <chrono>
+
+constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 
 Snowflake::Snowflake()
     : m_num(Invalid) {}
@@ -20,6 +23,18 @@ Snowflake::Snowflake(const Glib::ustring &str) {
     else
         m_num = Invalid;
 };
+
+Snowflake Snowflake::FromNow() {
+    using namespace std::chrono;
+    // not guaranteed to work but it probably will anyway
+    static uint64_t counter = 0;
+    const auto millis_since_epoch = static_cast<uint64_t>(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
+    const auto epoch = millis_since_epoch - DiscordEpochSeconds * 1000;
+    uint64_t snowflake = epoch << 22;
+    // worker id and process id would be OR'd in here but there's no point
+    snowflake |= counter++ % 4096;
+    return snowflake;
+}
 
 bool Snowflake::IsValid() const {
     return m_num != Invalid;

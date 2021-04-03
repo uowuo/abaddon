@@ -259,6 +259,8 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         Bind(m_set_msg_stmt, 20, nullptr);
     Bind(m_set_msg_stmt, 21, message.IsDeleted());
     Bind(m_set_msg_stmt, 22, message.IsEdited());
+    Bind(m_set_msg_stmt, 23, message.IsPending);
+    Bind(m_set_msg_stmt, 24, message.Nonce); // sorry
 
     if (!RunInsert(m_set_msg_stmt))
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -567,6 +569,9 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     Get(m_get_msg_stmt, 21, tmpb);
     if (tmpb) ret.SetEdited();
 
+    Get(m_get_msg_stmt, 22, ret.IsPending);
+    Get(m_get_msg_stmt, 23, ret.Nonce);
+
     Reset(m_get_msg_stmt);
 
     if (ret.MessageReference.has_value() && ret.MessageReference->MessageID.has_value()) {
@@ -749,9 +754,10 @@ bool Store::CreateTables() {
             flags INTEGER,
             stickers TEXT, /* json */
             reactions TEXT, /* json */
-            /* extra */
-            deleted BOOL,
-            edited BOOL
+            deleted BOOL, /* extra */
+            edited BOOL, /* extra */
+            pending BOOL, /* extra */
+            nonce TEXT
         )
     )";
 
@@ -951,7 +957,7 @@ bool Store::CreateStatements() {
 
     constexpr const char *set_msg = R"(
         REPLACE INTO messages VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 

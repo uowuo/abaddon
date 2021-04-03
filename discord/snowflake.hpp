@@ -9,6 +9,8 @@ struct Snowflake {
     Snowflake(const std::string &str);
     Snowflake(const Glib::ustring &str);
 
+    static Snowflake FromNow(); // not thread safe
+
     bool IsValid() const;
     std::string GetLocalTimestamp() const;
 

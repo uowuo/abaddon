@@ -47,8 +47,12 @@ protected:
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
 
+    void RemoveMessageAndHeader(Gtk::Widget *widget);
+
     void ScrollToBottom();
     bool m_should_scroll_to_bottom = true;
+
+    void OnMessageSendFail(const std::string &nonce);
 
     Gtk::Box *m_main;
     Gtk::ListBox *m_list;
