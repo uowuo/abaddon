@@ -107,6 +107,7 @@ jobs:
 
       - name: Fetch dependencies
         run: |
+          sudo apt-get update
           mkdir deps
           cd deps
           git clone https://github.com/nlohmann/json
