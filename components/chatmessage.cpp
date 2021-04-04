@@ -593,11 +593,15 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
     if (data.Interaction.has_value()) {
         const auto user = *discord.GetUser(data.Interaction->User.ID);
-        lbl->set_markup(
-            get_author_markup(user.ID, data.GuildID.has_value() ? *data.GuildID : Snowflake::Invalid) +
-            " used <span color='#697ec4'>/" +
-            Glib::Markup::escape_text(data.Interaction->Name) +
-            "</span>");
+
+        if (data.GuildID.has_value()) {
+            lbl->set_markup(get_author_markup(user.ID, *data.GuildID) +
+                            " used <span color='#697ec4'>/" +
+                            Glib::Markup::escape_text(data.Interaction->Name) +
+                            "</span>");
+        } else {
+            lbl->set_markup(user.GetEscapedBoldString<false>());
+        }
     } else if (data.ReferencedMessage.has_value()) {
         if (data.ReferencedMessage.value().get() == nullptr) {
             lbl->set_markup("<i>deleted message</i>");

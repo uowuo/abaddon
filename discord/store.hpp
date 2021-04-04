@@ -156,5 +156,5 @@ inline void Store::Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) con
 template<typename T>
 inline typename std::enable_if<std::is_enum<T>::value, void>::type
 Store::Get(sqlite3_stmt *stmt, int index, T &out) const {
-    out = static_cast<typename T>(sqlite3_column_int(stmt, index));
+    out = static_cast<T>(sqlite3_column_int(stmt, index));
 }
