@@ -1,12 +1,13 @@
 #pragma once
+#include <string>
+#include <vector>
 #include "snowflake.hpp"
 #include "json.hpp"
 #include "user.hpp"
 #include "sticker.hpp"
 #include "emoji.hpp"
 #include "member.hpp"
-#include <string>
-#include <vector>
+#include "interactions.hpp"
 
 enum class MessageType {
     DEFAULT = 0,                                       // yep
@@ -197,6 +198,7 @@ struct Message {
     std::optional<MessageFlags> Flags = MessageFlags::NONE;
     std::optional<std::vector<StickerData>> Stickers;
     std::optional<std::shared_ptr<Message>> ReferencedMessage; // has_value && null means deleted
+    std::optional<MessageInteractionData> Interaction;
 
     friend void from_json(const nlohmann::json &j, Message &m);
     void from_json_edited(const nlohmann::json &j); // for MESSAGE_UPDATE

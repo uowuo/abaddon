@@ -60,7 +60,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         container->m_main->add(*container->m_text_component);
     }
 
-    if (data->MessageReference.has_value()) {
+    if (data->MessageReference.has_value() || data->Interaction.has_value()) {
         auto *widget = container->CreateReplyComponent(*data);
         container->m_main->add(*widget);
         container->m_main->child_property_position(*widget) = 0; // eek
@@ -230,6 +230,12 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
                     const auto app = data->Application->Name;
                     b->insert_markup(s, "<i>used <span color='#697ec4'>" + cmd + "</span> with " + app + "</i>");
                 }
+            } else {
+                b->insert(s, data->Content);
+                HandleUserMentions(b);
+                HandleLinks(*tv);
+                HandleChannelMentions(tv);
+                HandleEmojis(*tv);
             }
         } break;
         case MessageType::RECIPIENT_ADD: {
@@ -567,7 +573,32 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
     lbl->get_style_context()->add_class("message-reply");
     box->add(*lbl);
 
-    if (data.ReferencedMessage.has_value()) {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+
+    const auto get_author_markup = [&](Snowflake author_id, Snowflake guild_id = Snowflake::Invalid) -> std::string {
+        if (guild_id.IsValid()) {
+            const auto role_id = discord.GetMemberHoistedRole(guild_id, author_id, true);
+            if (role_id.IsValid()) {
+                const auto role = discord.GetRole(role_id);
+                if (role.has_value()) {
+                    const auto author = discord.GetUser(author_id);
+                    return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetEscapedString() + "</span></b>";
+                }
+            }
+        }
+
+        const auto author = discord.GetUser(author_id);
+        return author->GetEscapedBoldString<false>();
+    };
+
+    if (data.Interaction.has_value()) {
+        const auto user = *discord.GetUser(data.Interaction->User.ID);
+        lbl->set_markup(
+            get_author_markup(user.ID, data.GuildID.has_value() ? *data.GuildID : Snowflake::Invalid) +
+            " used <span color='#697ec4'>/" +
+            Glib::Markup::escape_text(data.Interaction->Name) +
+            "</span>");
+    } else if (data.ReferencedMessage.has_value()) {
         if (data.ReferencedMessage.value().get() == nullptr) {
             lbl->set_markup("<i>deleted message</i>");
         } else {
@@ -595,28 +626,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             // which of course would not be an issue if i could figure out how to get fonts to work on this god-forsaken framework
             // oh well
             // but ill manually get colors for the user who is being replied to
-            const auto &discord = Abaddon::Get().GetDiscordClient();
-            if (referenced.GuildID.has_value()) {
-                const auto role_id = discord.GetMemberHoistedRole(*referenced.GuildID, referenced.Author.ID, true);
-                if (role_id.IsValid()) {
-                    const auto role = discord.GetRole(role_id);
-                    if (role.has_value()) {
-                        const auto author = discord.GetUser(referenced.Author.ID);
-                        // clang-format off
-                        lbl->set_markup(
-                            "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">"
-                            + author->GetEscapedString()
-                            + "</span></b>: "
-                            + text
-                        );
-                        // clang-format on
-                        return box;
-                    }
-                }
-            }
-
-            const auto author = discord.GetUser(referenced.Author.ID);
-            lbl->set_markup(author->GetEscapedBoldString<false>() + ": " + text);
+            lbl->set_markup(get_author_markup(referenced.Author.ID, *referenced.GuildID) + ": " + text);
         }
     } else {
         lbl->set_markup("<i>reply unavailable</i>");

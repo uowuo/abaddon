@@ -63,6 +63,8 @@ public:
     void EndTransaction();
 
 private:
+    void SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction);
+
     std::unordered_set<Snowflake> m_channels;
     std::unordered_set<Snowflake> m_guilds;
 
@@ -72,6 +74,11 @@ private:
 
     template<typename T>
     void Bind(sqlite3_stmt *stmt, int index, const std::optional<T> &opt) const;
+
+    template<typename T>
+    typename std::enable_if<std::is_enum<T>::value, void>::type
+    Bind(sqlite3_stmt *stmt, int index, T val) const;
+
     void Bind(sqlite3_stmt *stmt, int index, int num) const;
     void Bind(sqlite3_stmt *stmt, int index, uint64_t num) const;
     void Bind(sqlite3_stmt *stmt, int index, const std::string &str) const;
@@ -79,8 +86,14 @@ private:
     void Bind(sqlite3_stmt *stmt, int index, std::nullptr_t) const;
     bool RunInsert(sqlite3_stmt *stmt);
     bool FetchOne(sqlite3_stmt *stmt) const;
+
     template<typename T>
     void Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) const;
+
+    template<typename T>
+    typename std::enable_if<std::is_enum<T>::value, void>::type
+    Get(sqlite3_stmt *stmt, int index, T &out) const;
+
     void Get(sqlite3_stmt *stmt, int index, int &out) const;
     void Get(sqlite3_stmt *stmt, int index, uint64_t &out) const;
     void Get(sqlite3_stmt *stmt, int index, std::string &out) const;
@@ -112,6 +125,7 @@ private:
     mutable sqlite3_stmt *m_get_ban_stmt;
     mutable sqlite3_stmt *m_clear_ban_stmt;
     mutable sqlite3_stmt *m_get_bans_stmt;
+    mutable sqlite3_stmt *m_set_msg_interaction_stmt;
 };
 
 template<typename T>
@@ -123,6 +137,12 @@ inline void Store::Bind(sqlite3_stmt *stmt, int index, const std::optional<T> &o
 }
 
 template<typename T>
+inline typename std::enable_if<std::is_enum<T>::value, void>::type
+Store::Bind(sqlite3_stmt *stmt, int index, T val) const {
+    Bind(stmt, index, static_cast<typename std::underlying_type<T>::type>(val));
+}
+
+template<typename T>
 inline void Store::Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) const {
     if (sqlite3_column_type(stmt, index) == SQLITE_NULL)
         out = std::nullopt;
@@ -131,4 +151,10 @@ inline void Store::Get(sqlite3_stmt *stmt, int index, std::optional<T> &out) con
         Get(stmt, index, v);
         out = std::optional<T>(v);
     }
+}
+
+template<typename T>
+inline typename std::enable_if<std::is_enum<T>::value, void>::type
+Store::Get(sqlite3_stmt *stmt, int index, T &out) const {
+    out = static_cast<typename T>(sqlite3_column_int(stmt, index));
 }

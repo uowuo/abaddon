@@ -3,9 +3,10 @@
 #include <string>
 #include <set>
 #include "../discord/discord.hpp"
-#include "chatmessage.hpp"
 #include "completer.hpp"
 
+class ChatMessageHeader;
+class ChatMessageItemContainer;
 class ChatInput;
 class ChatInputIndicator;
 class ChatWindow {

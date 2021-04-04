@@ -264,6 +264,9 @@ void Store::SetMessage(Snowflake id, const Message &message) {
 
     if (!RunInsert(m_set_msg_stmt))
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
+
+    if (message.Interaction.has_value())
+        SetMessageInteractionPair(id, *message.Interaction);
 }
 
 void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
@@ -308,6 +311,18 @@ void Store::SetUser(Snowflake id, const UserData &user) {
 
     if (!RunInsert(m_set_user_stmt)) {
         fprintf(stderr, "user insert failed: %s\n", sqlite3_errstr(m_db_err));
+    }
+}
+
+void Store::SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction) {
+    Bind(m_set_msg_interaction_stmt, 1, message_id);
+    Bind(m_set_msg_interaction_stmt, 2, interaction.ID);
+    Bind(m_set_msg_interaction_stmt, 3, interaction.Type);
+    Bind(m_set_msg_interaction_stmt, 4, interaction.Name);
+    Bind(m_set_msg_interaction_stmt, 5, interaction.User.ID);
+
+    if (!RunInsert(m_set_msg_interaction_stmt)) {
+        fprintf(stderr, "message interaction insert failed: %s\n", sqlite3_errstr(m_db_err));
     }
 }
 
@@ -571,6 +586,16 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
 
     Get(m_get_msg_stmt, 22, ret.IsPending);
     Get(m_get_msg_stmt, 23, ret.Nonce);
+
+    // interaction data from join
+
+    if (!IsNull(m_get_msg_stmt, 24)) {
+        auto &interaction = ret.Interaction.emplace();
+        Get(m_get_msg_stmt, 24, interaction.ID);
+        Get(m_get_msg_stmt, 25, interaction.Name);
+        Get(m_get_msg_stmt, 26, interaction.Type);
+        Get(m_get_msg_stmt, 27, interaction.User.ID);
+    }
 
     Reset(m_get_msg_stmt);
 
@@ -877,6 +902,17 @@ bool Store::CreateTables() {
         )
     )";
 
+    constexpr const char *create_interactions = R"(
+        CREATE TABLE IF NOT EXISTS message_interactions (
+            message_id INTEGER NOT NULL,
+            interaction_id INTEGER NOT NULL,
+            type INTEGER NOT NULL,
+            name STRING NOT NULL,
+            user_id INTEGER NOT NULL,
+            PRIMARY KEY(message_id)
+        )
+    )";
+
     m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
@@ -931,6 +967,12 @@ bool Store::CreateTables() {
         return false;
     }
 
+    m_db_err = sqlite3_exec(m_db, create_interactions, nullptr, nullptr, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to create message interactions table: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -962,7 +1004,16 @@ bool Store::CreateStatements() {
     )";
 
     constexpr const char *get_msg = R"(
-        SELECT * FROM messages WHERE id = ?
+        SELECT messages.*,
+               message_interactions.interaction_id as interaction_id,
+	           message_interactions.name as interaction_name,
+	           message_interactions.type as interaction_type,
+               message_interactions.user_id as interaction_user_id
+        FROM messages
+        LEFT OUTER JOIN
+            message_interactions
+                ON messages.id = message_interactions.message_id
+        WHERE id = ?
     )";
 
     constexpr const char *set_role = R"(
@@ -1031,6 +1082,12 @@ bool Store::CreateStatements() {
 
     constexpr const char *get_bans = R"(
         SELECT * FROM bans WHERE guild_id = ?
+    )";
+
+    constexpr const char *set_interaction = R"(
+        REPLACE INTO message_interactions VALUES (
+            ?, ?, ?, ?, ?
+        )
     )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -1153,6 +1210,12 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, set_interaction, -1, &m_set_msg_interaction_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare set message interaction statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -1177,6 +1240,7 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_ban_stmt);
     sqlite3_finalize(m_clear_ban_stmt);
     sqlite3_finalize(m_get_bans_stmt);
+    sqlite3_finalize(m_set_msg_interaction_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {
