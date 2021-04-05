@@ -3,7 +3,7 @@
 #include "json.hpp"
 #include <string>
 
-enum class PremiumType {
+enum class EPremiumType {
     None = 0,
     NitroClassic = 1,
     Nitro = 2,
@@ -42,7 +42,7 @@ struct UserData {
     std::optional<bool> IsVerified;
     std::optional<std::string> Email; // null
     std::optional<uint64_t> Flags;
-    std::optional<PremiumType> PremiumType; // null
+    std::optional<EPremiumType> PremiumType; // null
     std::optional<uint64_t> PublicFlags;
 
     // undocumented (opt)

@@ -161,7 +161,7 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     };
 
     int i = 0;
-    if (discord.GetSelfPremiumType() == PremiumType::None) {
+    if (discord.GetSelfPremiumType() == EPremiumType::None) {
         if (channel->GuildID.has_value()) {
             const auto guild = discord.GetGuild(*channel->GuildID);
 

@@ -1617,11 +1617,11 @@ std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
     return ret;
 }
 
-PremiumType DiscordClient::GetSelfPremiumType() const {
+EPremiumType DiscordClient::GetSelfPremiumType() const {
     const auto &data = GetUserData();
     if (data.PremiumType.has_value())
         return *data.PremiumType;
-    return PremiumType::None;
+    return EPremiumType::None;
 }
 
 void DiscordClient::HeartbeatThread() {

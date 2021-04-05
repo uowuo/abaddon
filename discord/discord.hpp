@@ -75,7 +75,7 @@ public:
     std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
-    PremiumType GetSelfPremiumType() const;
+    EPremiumType GetSelfPremiumType() const;
 
     void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
     void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
