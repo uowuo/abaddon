@@ -102,7 +102,10 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
         buf->set_text(top_recipient->Username);
     else if (data->Type == ChannelType::GROUP_DM)
         buf->set_text(std::to_string(recipients.size()) + " users");
-    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    if (show_emojis)
+        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
     m_box->set_halign(Gtk::ALIGN_START);
     if (m_icon != nullptr)
@@ -173,7 +176,9 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     Gtk::TextBuffer::iterator start, end;
     buf->get_bounds(start, end);
     buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
-    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    if (show_emojis)
+        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_icon);
     m_box->pack_start(*m_lbl);
@@ -219,7 +224,9 @@ ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
 
     auto buf = m_lbl->get_buffer();
     buf->set_text(*data->Name);
-    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    if (show_emojis)
+        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_arrow);
     m_box->pack_start(*m_lbl);
@@ -268,7 +275,9 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
         m_lbl->get_style_context()->add_class("nsfw");
     }
     buf->set_text("#" + *data->Name);
-    Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    if (show_emojis)
+        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
