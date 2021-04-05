@@ -1,7 +1,10 @@
 #pragma once
 #include <gtkmm.h>
 #include <functional>
+#include "lazyimage.hpp"
 #include "../discord/snowflake.hpp"
+
+constexpr static int CompleterImageSize = 24;
 
 class CompleterEntry : public Gtk::ListBoxRow {
 public:
@@ -9,16 +12,20 @@ public:
     void SetTextColor(int color); // SetText will reset
     void SetText(const Glib::ustring &text);
     void SetImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    void SetImage(const std::string &url);
+    void SetAnimation(const std::string &url);
 
     int GetIndex() const;
     Glib::ustring GetCompletion() const;
 
 private:
+    void CheckImage();
+
     Glib::ustring m_completion;
     int m_index;
     Gtk::Box m_box;
     Gtk::Label *m_text = nullptr;
-    Gtk::Image *m_img = nullptr;
+    LazyImage *m_img = nullptr;
 };
 
 class Completer : public Gtk::Revealer {

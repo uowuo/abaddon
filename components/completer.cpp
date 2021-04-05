@@ -136,18 +136,8 @@ void Completer::CompleteMentions(const Glib::ustring &term) {
             }
         }
 
-        auto &img = Abaddon::Get().GetImageManager();
-        const auto placeholder = img.GetPlaceholder(24);
-        if (author->HasAvatar()) {
-            auto pb = img.GetFromURLIfCached(author->GetAvatarURL());
-            if (pb) {
-                entry->SetImage(pb);
-            } else {
-                entry->SetImage(placeholder);
-                img.LoadFromURL(author->GetAvatarURL(), sigc::mem_fun(*entry, &CompleterEntry::SetImage));
-            }
-        } else
-            entry->SetImage(placeholder);
+        if (author->HasAvatar())
+            entry->SetImage(author->GetAvatarURL());
     }
 }
 
@@ -159,38 +149,58 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     const auto channel_id = m_channel_id_cb();
     const auto channel = discord.GetChannel(channel_id);
 
-    const auto make_entry = [&](const Glib::ustring &name, const Glib::ustring &completion, const Glib::ustring &url = "") -> CompleterEntry * {
+    const auto make_entry = [&](const Glib::ustring &name, const Glib::ustring &completion, const Glib::ustring &url = "", bool animated = false) -> CompleterEntry * {
         const auto entry = CreateEntry(completion);
         entry->SetText(name);
         if (url == "") return entry;
-        auto &img = Abaddon::Get().GetImageManager();
-        const auto placeholder = img.GetPlaceholder(24);
-        const auto pb = img.GetFromURLIfCached(url);
-        if (pb)
-            entry->SetImage(pb);
-        else {
-            entry->SetImage(placeholder);
-            img.LoadFromURL(url, sigc::mem_fun(*entry, &CompleterEntry::SetImage));
-        }
+        if (animated)
+            entry->SetAnimation(url);
+        else
+            entry->SetImage(url);
         return entry;
     };
 
     int i = 0;
-    if (channel->GuildID.has_value()) {
-        const auto guild = discord.GetGuild(*channel->GuildID);
+    if (discord.GetSelfPremiumType() == PremiumType::None) {
+        if (channel->GuildID.has_value()) {
+            const auto guild = discord.GetGuild(*channel->GuildID);
 
-        if (guild->Emojis.has_value())
+            if (guild.has_value() && guild->Emojis.has_value())
+                for (const auto tmp : *guild->Emojis) {
+                    const auto emoji = *discord.GetEmoji(tmp.ID);
+                    if (emoji.IsAnimated.has_value() && *emoji.IsAnimated) continue;
+                    if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
+                    if (emoji.Roles.has_value() && emoji.Roles->size() > 0) continue;
+                    if (term.size() > 0)
+                        if (!StringContainsCaseless(emoji.Name, term)) continue;
+
+                    if (i++ > MaxCompleterEntries) break;
+
+                    make_entry(emoji.Name, "<:" + emoji.Name + ":" + std::to_string(emoji.ID) + ">", emoji.GetURL());
+                }
+        }
+    } else {
+        for (const auto guild_id : discord.GetGuilds()) {
+            const auto guild = discord.GetGuild(guild_id);
+            if (!guild.has_value()) continue;
             for (const auto tmp : *guild->Emojis) {
-                const auto emoji = discord.GetEmoji(tmp.ID);
-                if (!emoji.has_value()) continue;
-                if (emoji->IsAnimated.has_value() && *emoji->IsAnimated) continue;
+                const auto emoji = *discord.GetEmoji(tmp.ID);
+                const bool is_animated = emoji.IsAnimated.has_value() && *emoji.IsAnimated;
+                if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
+                if (emoji.Roles.has_value() && emoji.Roles->size() > 0) continue;
                 if (term.size() > 0)
-                    if (!StringContainsCaseless(emoji->Name, term)) continue;
-                if (i++ > MaxCompleterEntries) break;
+                    if (!StringContainsCaseless(emoji.Name, term)) continue;
 
-                const auto entry = make_entry(emoji->Name, "<:" + emoji->Name + ":" + std::to_string(emoji->ID) + ">", emoji->GetURL());
+                if (i++ > MaxCompleterEntries) goto done;
+
+                if (is_animated)
+                    make_entry(emoji.Name, "<a:" + emoji.Name + ":" + std::to_string(emoji.ID) + ">", emoji.GetURL("gif"), true);
+                else
+                    make_entry(emoji.Name, "<:" + emoji.Name + ":" + std::to_string(emoji.ID) + ">", emoji.GetURL());
             }
+        }
     }
+done:
 
     // if <15 guild emojis match then load up stock
     if (i < 15) {
@@ -202,7 +212,7 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
             const auto &pb = emojis.GetPixBuf(pattern);
             if (!pb) continue;
             const auto entry = make_entry(shortcode, pattern);
-            entry->SetImage(pb);
+            entry->SetImage(pb->scale_simple(CompleterImageSize, CompleterImageSize, Gdk::INTERP_BILINEAR));
         }
     }
 }
@@ -342,13 +352,29 @@ void CompleterEntry::SetText(const Glib::ustring &text) {
 }
 
 void CompleterEntry::SetImage(const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+    CheckImage();
+    m_img->property_pixbuf() = pb;
+}
+
+void CompleterEntry::SetImage(const std::string &url) {
+    CheckImage();
+    m_img->SetAnimated(false);
+    m_img->SetURL(url);
+}
+
+void CompleterEntry::SetAnimation(const std::string &url) {
+    CheckImage();
+    m_img->SetAnimated(true);
+    m_img->SetURL(url);
+}
+
+void CompleterEntry::CheckImage() {
     if (m_img == nullptr) {
-        m_img = Gtk::manage(new Gtk::Image);
+        m_img = Gtk::manage(new LazyImage(CompleterImageSize, CompleterImageSize));
         m_img->get_style_context()->add_class("completer-entry-image");
         m_img->show();
         m_box.pack_start(*m_img);
     }
-    m_img->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
 }
 
 int CompleterEntry::GetIndex() const {
