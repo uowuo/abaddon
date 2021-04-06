@@ -7,32 +7,43 @@ EmojiResource::EmojiResource(std::string filepath)
 bool EmojiResource::Load() {
     m_fp = std::fopen(m_filepath.c_str(), "rb");
     if (m_fp == nullptr) return false;
-    int index_pos;
-    std::fread(&index_pos, 4, 1, m_fp);
-    std::fseek(m_fp, index_pos, SEEK_SET);
-    int num_entries;
-    std::fread(&num_entries, 4, 1, m_fp);
-    for (int i = 0; i < num_entries; i++) {
-        static int pattern_strlen, shortcode_strlen, len, pos;
-        std::fread(&pattern_strlen, 4, 1, m_fp);
-        std::string pattern(pattern_strlen, '\0');
-        std::fread(pattern.data(), pattern_strlen, 1, m_fp);
 
-        const auto pattern_hex = HexToPattern(pattern);
+    int index_offset;
+    std::fread(&index_offset, 4, 1, m_fp);
+    std::fseek(m_fp, index_offset, SEEK_SET);
 
-        std::fread(&shortcode_strlen, 4, 1, m_fp);
-        std::string shortcode(shortcode_strlen, '\0');
-        if (shortcode_strlen > 0) {
-            std::fread(shortcode.data(), shortcode_strlen, 1, m_fp);
-            m_shortcode_index[shortcode] = pattern_hex;
-            m_pattern_shortcode_index[pattern_hex] = shortcode;
+    int emojis_count;
+    std::fread(&emojis_count, 4, 1, m_fp);
+    for (int i = 0; i < emojis_count; i++) {
+        std::vector<std::string> shortcodes;
+
+        int shortcodes_count;
+        std::fread(&shortcodes_count, 4, 1, m_fp);
+        for (int j = 0; j < shortcodes_count; j++) {
+            int shortcode_length;
+            std::fread(&shortcode_length, 4, 1, m_fp);
+            std::string shortcode(shortcode_length, '\0');
+            std::fread(shortcode.data(), shortcode_length, 1, m_fp);
+            shortcodes.push_back(std::move(shortcode));
         }
 
-        std::fread(&len, 4, 1, m_fp);
-        std::fread(&pos, 4, 1, m_fp);
-        m_index[pattern] = std::make_pair(pos, len);
-        m_patterns.push_back(pattern_hex);
+        int surrogates_count;
+        std::fread(&surrogates_count, 4, 1, m_fp);
+        std::string surrogates(surrogates_count, '\0');
+        std::fread(surrogates.data(), surrogates_count, 1, m_fp);
+        m_patterns.push_back(surrogates);
+
+        int data_size, data_offset;
+        std::fread(&data_size, 4, 1, m_fp);
+        std::fread(&data_offset, 4, 1, m_fp);
+        m_index[surrogates] = { data_offset, data_size };
+
+        for (const auto &shortcode : shortcodes)
+            m_shortcode_index[shortcode] = surrogates;
+
+        m_pattern_shortcode_index[surrogates] = std::move(shortcodes);
     }
+
     std::sort(m_patterns.begin(), m_patterns.end(), [](const Glib::ustring &a, const Glib::ustring &b) {
         return a.size() > b.size();
     });
@@ -40,8 +51,7 @@ bool EmojiResource::Load() {
 }
 
 Glib::RefPtr<Gdk::Pixbuf> EmojiResource::GetPixBuf(const Glib::ustring &pattern) {
-    Glib::ustring key = PatternToHex(pattern);
-    const auto it = m_index.find(key);
+    const auto it = m_index.find(pattern);
     if (it == m_index.end()) return Glib::RefPtr<Gdk::Pixbuf>();
     const int pos = it->second.first;
     const int len = it->second.second;
@@ -54,35 +64,6 @@ Glib::RefPtr<Gdk::Pixbuf> EmojiResource::GetPixBuf(const Glib::ustring &pattern)
     return loader->get_pixbuf();
 }
 
-Glib::ustring EmojiResource::PatternToHex(const Glib::ustring &pattern) {
-    Glib::ustring ret;
-    for (int i = 0; i < pattern.size(); i++) {
-        auto c = pattern.at(i);
-        ret += Glib::ustring::format(std::hex, c);
-        ret += "-";
-    }
-    return ret.substr(0, ret.size() - 1);
-}
-
-Glib::ustring EmojiResource::HexToPattern(Glib::ustring hex) {
-    std::vector<Glib::ustring> parts;
-    Glib::ustring::size_type pos = 0;
-    Glib::ustring token;
-    while ((pos = hex.find("-")) != Glib::ustring::npos) {
-        token = hex.substr(0, pos);
-        if (token.length() % 2 == 1)
-            token = "0" + token;
-        parts.push_back(token);
-        hex.erase(0, pos + 1);
-    }
-    parts.push_back(hex);
-    Glib::ustring ret;
-    for (const auto &part : parts) {
-        auto x = static_cast<gunichar>(std::stoul(part.c_str(), nullptr, 16));
-        ret += x;
-    }
-    return ret;
-}
 void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
     auto get_text = [&]() -> auto {
         Gtk::TextBuffer::iterator a, b;
@@ -124,7 +105,7 @@ void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
 std::string EmojiResource::GetShortCodeForPattern(const Glib::ustring &pattern) {
     auto it = m_pattern_shortcode_index.find(pattern);
     if (it != m_pattern_shortcode_index.end())
-        return it->second;
+        return it->second.front();
     return "";
 }
 

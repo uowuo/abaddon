@@ -1,9 +1,10 @@
+#include <unordered_set>
 #include "completer.hpp"
 #include "../abaddon.hpp"
 #include "../util.hpp"
 
 constexpr const int CompleterHeight = 150;
-constexpr const int MaxCompleterEntries = 15;
+constexpr const int MaxCompleterEntries = 30;
 
 Completer::Completer() {
     set_reveal_child(false);
@@ -204,13 +205,16 @@ done:
 
     // if <15 guild emojis match then load up stock
     if (i < 15) {
+        std::unordered_set<std::string> added_patterns;
         auto &emojis = Abaddon::Get().GetEmojis();
         const auto &shortcodes = emojis.GetShortCodes();
         for (const auto &[shortcode, pattern] : shortcodes) {
+            if (added_patterns.find(pattern) != added_patterns.end()) continue;
             if (!StringContainsCaseless(shortcode, term)) continue;
             if (i++ > 15) break;
             const auto &pb = emojis.GetPixBuf(pattern);
             if (!pb) continue;
+            added_patterns.insert(pattern);
             const auto entry = make_entry(shortcode, pattern);
             entry->SetImage(pb->scale_simple(CompleterImageSize, CompleterImageSize, Gdk::INTERP_BILINEAR));
         }
