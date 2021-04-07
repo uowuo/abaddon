@@ -470,8 +470,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                    "</b>");
         }
 
-        if (extra_markup.size() <= 1)
-            expander->set_expanded(true);
+        expander->set_expanded(true);
 
         auto contents = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
         for (const auto &extra : extra_markup) {
