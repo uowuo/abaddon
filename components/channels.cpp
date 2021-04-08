@@ -86,15 +86,11 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
         m_status = Gtk::manage(new StatusIndicator(top_recipient->ID));
         m_status->set_margin_start(5);
 
-        if (top_recipient->HasAvatar()) {
-            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-            };
-            Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
-        } else {
-            m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-        }
+        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+        };
+        Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
     }
 
     auto buf = m_lbl->get_buffer();

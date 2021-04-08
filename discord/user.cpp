@@ -14,7 +14,10 @@ bool UserData::HasAnimatedAvatar() const {
 }
 
 std::string UserData::GetAvatarURL(std::string ext, std::string size) const {
-    return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
+    if (HasAvatar())
+        return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
+    else
+        return "https://cdn.discordapp.com/embed/avatars/" + std::to_string(std::stoul(Discriminator) % 5) + ".png"; // size isn't respected by the cdn
 }
 
 Snowflake UserData::GetHoistedRole(Snowflake guild_id, bool with_color) const {

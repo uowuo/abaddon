@@ -98,12 +98,10 @@ GuildSettingsMembersListItem::GuildSettingsMembersListItem(const GuildData &guil
 
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    if (member.User->HasAvatar()) {
-        if (member.User->HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations())
-            m_avatar.SetURL(member.User->GetAvatarURL("gif", "32"));
-        else
-            m_avatar.SetURL(member.User->GetAvatarURL("png", "32"));
-    }
+    if (member.User->HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations())
+        m_avatar.SetURL(member.User->GetAvatarURL("gif", "32"));
+    else
+        m_avatar.SetURL(member.User->GetAvatarURL("png", "32"));
 
     DisplayTerm = member.User->Username + "#" + member.User->Discriminator;
 

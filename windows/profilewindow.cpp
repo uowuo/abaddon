@@ -47,23 +47,21 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
     auto &img = Abaddon::Get().GetImageManager();
     m_avatar.property_pixbuf() = img.GetPlaceholder(64);
-    if (user.HasAvatar()) {
-        auto icon_cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-            set_icon(pb);
-        };
-        img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(icon_cb, *this));
+    auto icon_cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+        set_icon(pb);
+    };
+    img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(icon_cb, *this));
 
-        if (show_animations && user.HasAnimatedAvatar()) {
-            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
-                m_avatar.property_pixbuf_animation() = pb;
-            };
-            img.LoadAnimationFromURL(user.GetAvatarURL("gif", "64"), 64, 64, sigc::track_obj(cb, *this));
-        } else {
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_avatar.property_pixbuf() = pb->scale_simple(64, 64, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(cb, *this));
-        }
+    if (show_animations && user.HasAnimatedAvatar()) {
+        auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            m_avatar.property_pixbuf_animation() = pb;
+        };
+        img.LoadAnimationFromURL(user.GetAvatarURL("gif", "64"), 64, 64, sigc::track_obj(cb, *this));
+    } else {
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            m_avatar.property_pixbuf() = pb->scale_simple(64, 64, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(cb, *this));
     }
 
     m_username.set_markup(user.GetEscapedString());

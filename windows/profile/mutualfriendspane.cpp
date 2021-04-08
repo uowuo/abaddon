@@ -12,18 +12,16 @@ MutualFriendItem::MutualFriendItem(const UserData &user)
     const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
     auto &img = Abaddon::Get().GetImageManager();
     m_avatar.property_pixbuf() = img.GetPlaceholder(24);
-    if (user.HasAvatar()) {
-        if (user.HasAnimatedAvatar() && show_animations) {
-            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
-                m_avatar.property_pixbuf_animation() = pb;
-            };
-            img.LoadAnimationFromURL(user.GetAvatarURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
-        } else {
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_avatar.property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
-        }
+    if (user.HasAnimatedAvatar() && show_animations) {
+        auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            m_avatar.property_pixbuf_animation() = pb;
+        };
+        img.LoadAnimationFromURL(user.GetAvatarURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
+    } else {
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            m_avatar.property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
     }
 
     m_name.set_markup(user.GetEscapedBoldString<false>());

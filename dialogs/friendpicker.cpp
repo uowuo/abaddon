@@ -67,18 +67,16 @@ FriendPickerDialogItem::FriendPickerDialogItem(Snowflake user_id)
     m_name.set_single_line_mode(true);
 
     m_avatar.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);
-    if (user.HasAvatar()) {
-        if (user.HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations()) {
-            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
-                m_avatar.property_pixbuf_animation() = pb;
-            };
-            Abaddon::Get().GetImageManager().LoadAnimationFromURL(user.GetAvatarURL("gif", "32"), 32, 32, sigc::track_obj(cb, *this));
-        } else {
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_avatar.property_pixbuf() = pb->scale_simple(32, 32, Gdk::INTERP_BILINEAR);
-            };
-            Abaddon::Get().GetImageManager().LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
-        }
+    if (user.HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations()) {
+        auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            m_avatar.property_pixbuf_animation() = pb;
+        };
+        Abaddon::Get().GetImageManager().LoadAnimationFromURL(user.GetAvatarURL("gif", "32"), 32, 32, sigc::track_obj(cb, *this));
+    } else {
+        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            m_avatar.property_pixbuf() = pb->scale_simple(32, 32, Gdk::INTERP_BILINEAR);
+        };
+        Abaddon::Get().GetImageManager().LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
     }
 
     m_avatar.set_margin_end(5);

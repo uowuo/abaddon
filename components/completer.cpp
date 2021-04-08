@@ -137,8 +137,7 @@ void Completer::CompleteMentions(const Glib::ustring &term) {
             }
         }
 
-        if (author->HasAvatar())
-            entry->SetImage(author->GetAvatarURL());
+        entry->SetImage(author->GetAvatarURL());
     }
 }
 
