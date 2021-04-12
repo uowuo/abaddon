@@ -41,7 +41,7 @@ bool Snowflake::IsValid() const {
 }
 
 std::string Snowflake::GetLocalTimestamp() const {
-    const time_t secs_since_epoch = (m_num / 4194304000) + 1420070400;
+    const time_t secs_since_epoch = (m_num / SecondsInterval) + DiscordEpochSeconds;
     const std::tm tm = *localtime(&secs_since_epoch);
     std::stringstream ss;
     const static std::locale locale("");

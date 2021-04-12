@@ -4,6 +4,8 @@
 #include "chatinputindicator.hpp"
 #include "chatinput.hpp"
 
+constexpr static uint64_t SnowflakeSplitDifference = 600;
+
 ChatWindow::ChatWindow() {
     Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
 
@@ -238,7 +240,7 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
             last_row = dynamic_cast<ChatMessageHeader *>(m_list->get_row_at_index(m_num_rows - 1));
 
         if (last_row != nullptr)
-            if (last_row->UserID == data->Author.ID)
+            if (last_row->UserID == data->Author.ID && (prepend || (id - last_row->NewestID < SnowflakeSplitDifference * Snowflake::SecondsInterval)))
                 should_attach = true;
     }
 

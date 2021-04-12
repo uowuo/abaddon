@@ -109,6 +109,7 @@ class ChatMessageHeader : public Gtk::ListBoxRow {
 public:
     Snowflake UserID;
     Snowflake ChannelID;
+    Snowflake NewestID = 0;
 
     ChatMessageHeader(const Message *data);
     void AddContent(Gtk::Widget *widget, bool prepend);

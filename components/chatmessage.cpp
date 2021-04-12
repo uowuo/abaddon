@@ -1210,4 +1210,8 @@ void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
     m_content_box->add(*widget);
     if (prepend)
         m_content_box->reorder_child(*widget, 1);
+    if (auto *x = dynamic_cast<ChatMessageItemContainer *>(widget)) {
+        if (x->ID > NewestID)
+            NewestID = x->ID;
+    }
 }
