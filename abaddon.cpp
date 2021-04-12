@@ -240,6 +240,13 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
     m_main_window->UpdateComponents();
     if (close_code == GatewayCloseCode::AuthenticationFailed) {
         Gtk::MessageDialog dlg(*m_main_window, "Discord rejected your token", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    } else if (close_code != GatewayCloseCode::Normal) {
+        Gtk::MessageDialog dlg(*m_main_window,
+                               "Lost connection with Discord's gateway. Try reconnecting (code " + std::to_string(static_cast<unsigned>(close_code)) + ")",
+                               false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 }

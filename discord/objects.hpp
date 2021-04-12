@@ -71,6 +71,23 @@ enum class GatewayEvent : int {
 };
 
 enum class GatewayCloseCode : uint16_t {
+    // standard
+    Normal = 1000,
+    GoingAway = 1001,
+    ProtocolError = 1002,
+    Unsupported = 1003,
+    NoStatus = 1005,
+    Abnormal = 1006,
+    UnsupportedPayload = 1007,
+    PolicyViolation = 1008,
+    TooLarge = 1009,
+    MandatoryExtension = 1010,
+    ServerError = 1011,
+    ServiceRestart = 1012,
+    TryAgainLater = 1013,
+    BadGateway = 1014,
+    TLSHandshakeFailed = 1015,
+
     // discord
     UnknownError = 4000,
     UnknownOpcode = 4001,
