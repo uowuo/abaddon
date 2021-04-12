@@ -114,7 +114,7 @@ void GuildSettingsEmojisPane::on_switched_to() {
 void GuildSettingsEmojisPane::AddEmojiRow(const EmojiData &emoji) {
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto &row = *m_model->append();
+    auto row = *m_model->append();
 
     row[m_columns.m_col_id] = emoji.ID;
     row[m_columns.m_col_pixbuf] = img.GetPlaceholder(32);

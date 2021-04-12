@@ -49,7 +49,7 @@ void GuildSettingsInvitesPane::on_switched_to() {
 
 void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto &row = *m_model->append();
+    auto row = *m_model->append();
     row[m_columns.m_col_code] = invite.Code;
     if (invite.Inviter.has_value())
         row[m_columns.m_col_inviter] = invite.Inviter->Username + "#" + invite.Inviter->Discriminator;
