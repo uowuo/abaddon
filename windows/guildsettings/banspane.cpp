@@ -96,6 +96,7 @@ void GuildSettingsBansPane::OnMenuUnban() {
         auto cb = [this](bool success) {
             if (!success) {
                 Gtk::MessageDialog dlg("Failed to unban user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
         };

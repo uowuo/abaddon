@@ -103,6 +103,7 @@ void GuildSettingsInfoPane::UpdateGuildName() {
         if (!success) {
             m_guild_name.set_text(Abaddon::Get().GetDiscordClient().GetGuild(GuildID)->Name);
             Gtk::MessageDialog dlg("Failed to set guild name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
     };
@@ -116,6 +117,7 @@ void GuildSettingsInfoPane::UpdateGuildIconFromData(const std::vector<uint8_t> &
     auto cb = [this](bool success) {
         if (!success) {
             Gtk::MessageDialog dlg("Failed to set guild icon", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
     };

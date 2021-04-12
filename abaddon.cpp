@@ -74,12 +74,14 @@ int Abaddon::StartGTK() {
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
         Gtk::MessageDialog dlg(*m_main_window, "css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
     m_main_window->UpdateComponents();
+    m_main_window->set_position(Gtk::WIN_POS_CENTER);
 
     // crashes for some stupid reason if i put it somewhere else
     SetupUserMenu();
@@ -116,16 +118,19 @@ int Abaddon::StartGTK() {
 
     if (!m_settings.IsValid()) {
         Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 
     if (!m_emojis.Load()) {
         Gtk::MessageDialog dlg(*m_main_window, "The emoji file couldn't be loaded!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 
     if (!m_discord.IsStoreValid()) {
         Gtk::MessageDialog dlg(*m_main_window, "The Discord cache could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
         return 1;
     }
@@ -307,6 +312,7 @@ void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
         const auto cb = [this](bool success) {
             if (!success) {
                 Gtk::MessageDialog dlg(*m_main_window, "Failed to accept the verification gate.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
         };
@@ -622,6 +628,7 @@ void Abaddon::ActionReloadCSS() {
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     } catch (Glib::Error &e) {
         Gtk::MessageDialog dlg(*m_main_window, "css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 }

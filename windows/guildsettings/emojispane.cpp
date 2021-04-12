@@ -178,6 +178,7 @@ void GuildSettingsEmojisPane::OnEditName(Snowflake id, const std::string &name) 
     const auto cb = [this](bool success) {
         if (!success) {
             Gtk::MessageDialog dlg("Failed to set emoji name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
+            dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
     };
@@ -200,6 +201,7 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
                 const auto cb = [this](bool success) {
                     if (!success) {
                         Gtk::MessageDialog dlg("Failed to delete emoji", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
+                        dlg.set_position(Gtk::WIN_POS_CENTER);
                         dlg.run();
                     }
                 };

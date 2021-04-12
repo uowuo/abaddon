@@ -54,11 +54,12 @@ void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {
     if (invite.Inviter.has_value())
         row[m_columns.m_col_inviter] = invite.Inviter->Username + "#" + invite.Inviter->Discriminator;
 
-    if (invite.MaxAge.has_value())
+    if (invite.MaxAge.has_value()) {
         if (*invite.MaxAge == 0)
             row[m_columns.m_col_expires] = "Never";
         else
             row[m_columns.m_col_expires] = FormatISO8601(*invite.CreatedAt, *invite.MaxAge);
+    }
 
     row[m_columns.m_col_uses] = *invite.Uses;
     if (*invite.MaxUses == 0)
@@ -99,6 +100,7 @@ void GuildSettingsInvitesPane::OnMenuDelete() {
         auto cb = [this](const bool success) {
             if (!success) {
                 Gtk::MessageDialog dlg("Failed to delete invite", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
         };
