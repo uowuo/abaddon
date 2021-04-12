@@ -45,11 +45,12 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
         m_guild_icon_ev.set_tooltip_text("Click to choose a file, right click to paste");
 
         m_guild_icon_ev.signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
-            if (event->type == GDK_BUTTON_PRESS)
+            if (event->type == GDK_BUTTON_PRESS) {
                 if (event->button == GDK_BUTTON_PRIMARY)
                     UpdateGuildIconPicker();
                 else if (event->button == GDK_BUTTON_SECONDARY)
                     UpdateGuildIconClipboard();
+            }
 
             return false;
         });
