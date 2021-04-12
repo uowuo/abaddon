@@ -48,8 +48,6 @@ void DiscordClient::Stop() {
     m_guild_to_users.clear();
 
     m_websocket.Stop();
-
-    m_signal_disconnected.emit(false, GatewayCloseCode::UserDisconnect);
 }
 
 bool DiscordClient::IsStarted() const {
