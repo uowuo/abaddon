@@ -42,10 +42,11 @@ GuildSettingsMembersPaneMembers::GuildSettingsMembersPaneMembers(Snowflake id)
     auto members = discord.GetUsersInGuild(id);
     const auto guild = *discord.GetGuild(GuildID);
     for (const auto member_id : members) {
-        auto member = *discord.GetMember(member_id, GuildID);
-        member.User = discord.GetUser(member_id);
-        if (member.User->IsDeleted()) continue;
-        auto *row = Gtk::manage(new GuildSettingsMembersListItem(guild, member));
+        auto member = discord.GetMember(member_id, GuildID);
+        if (!member.has_value()) continue; // fixme this should not be necessary
+        member->User = discord.GetUser(member_id);
+        if (member->User->IsDeleted()) continue;
+        auto *row = Gtk::manage(new GuildSettingsMembersListItem(guild, *member));
         row->show();
         m_list.add(*row);
     }
