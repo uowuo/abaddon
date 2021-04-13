@@ -261,6 +261,14 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
     return (base & perm) == perm;
 }
 
+bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
+    const auto channel = m_store.GetChannel(channel_id);
+    if (!channel.has_value()) return false;
+    const auto base = ComputePermissions(user_id, *channel->GuildID);
+    const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
+    return (overwrites & perm) != Permission::NONE;
+}
+
 bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value()) return false;

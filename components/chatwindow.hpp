@@ -9,6 +9,7 @@ class ChatMessageHeader;
 class ChatMessageItemContainer;
 class ChatInput;
 class ChatInputIndicator;
+class RateLimitIndicator;
 class ChatWindow {
 public:
     ChatWindow();
@@ -43,7 +44,7 @@ protected:
 
     Snowflake m_active_channel;
 
-    void OnInputSubmit(const Glib::ustring &text);
+    bool OnInputSubmit(const Glib::ustring &text);
 
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
@@ -63,6 +64,8 @@ protected:
 
     Completer m_completer;
     ChatInputIndicator *m_input_indicator;
+    RateLimitIndicator *m_rate_limit_indicator;
+    Gtk::Box *m_meta;
 
 public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;
