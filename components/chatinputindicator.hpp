@@ -1,7 +1,7 @@
 #pragma once
 #include <gtkmm.h>
 #include <unordered_map>
-#include "../discord/snowflake.hpp"
+#include "../discord/message.hpp"
 #include "../discord/user.hpp"
 
 class ChatInputIndicator : public Gtk::Box {
@@ -14,7 +14,7 @@ public:
 private:
     void AddUser(Snowflake channel_id, const UserData &user, int timeout);
     void OnUserTypingStart(Snowflake user_id, Snowflake channel_id);
-    void OnMessageCreate(Snowflake message_id);
+    void OnMessageCreate(const Message &message);
     void SetTypingString(const Glib::ustring &str);
     void ComputeTypingString();
 

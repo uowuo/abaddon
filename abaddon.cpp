@@ -45,12 +45,10 @@ Abaddon::Abaddon()
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
-        m_discord.signal_message_create().connect([this](Snowflake id) {
-            const auto msg = m_discord.GetMessage(id);
-            const auto author = m_discord.GetUser(msg->Author.ID);
-            if (author.has_value() && author->HasAvatar())
-                m_img_mgr.Prefetch(author->GetAvatarURL());
-            for (const auto &attachment : msg->Attachments) {
+        m_discord.signal_message_create().connect([this](const Message &message) {
+            if (message.Author.HasAvatar())
+                m_img_mgr.Prefetch(message.Author.GetAvatarURL());
+            for (const auto &attachment : message.Attachments) {
                 if (IsURLViewableImage(attachment.ProxyURL))
                     m_img_mgr.Prefetch(attachment.ProxyURL);
             }
@@ -177,8 +175,8 @@ void Abaddon::DiscordOnReady() {
     m_main_window->UpdateComponents();
 }
 
-void Abaddon::DiscordOnMessageCreate(Snowflake id) {
-    m_main_window->UpdateChatNewMessage(id);
+void Abaddon::DiscordOnMessageCreate(const Message &message) {
+    m_main_window->UpdateChatNewMessage(message.ID); // todo ill fix you later :^)
 }
 
 void Abaddon::DiscordOnMessageDelete(Snowflake id, Snowflake channel_id) {

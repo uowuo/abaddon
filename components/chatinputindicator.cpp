@@ -76,10 +76,8 @@ void ChatInputIndicator::OnUserTypingStart(Snowflake user_id, Snowflake channel_
     AddUser(channel_id, *user, 10);
 }
 
-void ChatInputIndicator::OnMessageCreate(Snowflake message_id) {
-    const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(message_id);
-    if (!msg.has_value()) return;
-    m_typers[msg->ChannelID].erase(msg->Author.ID);
+void ChatInputIndicator::OnMessageCreate(const Message &message) {
+    m_typers[message.ChannelID].erase(message.Author.ID);
     ComputeTypingString();
 }
 

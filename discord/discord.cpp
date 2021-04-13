@@ -1119,7 +1119,7 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     StoreMessageData(data);
     AddMessageToChannel(data.ID, data.ChannelID);
     AddUserToGuild(data.Author.ID, *data.GuildID);
-    m_signal_message_create.emit(data.ID);
+    m_signal_message_create.emit(data);
 }
 
 void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {

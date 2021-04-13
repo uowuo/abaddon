@@ -62,7 +62,7 @@ public:
     DiscordClient &GetDiscordClient();
     const DiscordClient &GetDiscordClient() const;
     void DiscordOnReady();
-    void DiscordOnMessageCreate(Snowflake id);
+    void DiscordOnMessageCreate(const Message &message);
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
     void DiscordOnGuildMemberListUpdate(Snowflake guild_id);

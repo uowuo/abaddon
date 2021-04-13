@@ -299,12 +299,11 @@ ChannelList::ChannelList() {
 
     // maybe will regret doing it this way
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto cb = [this, &discord](Snowflake message_id) {
-        const auto message = discord.GetMessage(message_id);
-        const auto channel = discord.GetChannel(message->ChannelID);
+    auto cb = [this, &discord](const Message &message) {
+        const auto channel = discord.GetChannel(message.ChannelID);
         if (!channel.has_value()) return;
         if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
-            CheckBumpDM(message->ChannelID);
+            CheckBumpDM(message.ChannelID);
     };
     discord.signal_message_create().connect(sigc::track_obj(cb, *this));
 }

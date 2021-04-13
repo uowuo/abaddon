@@ -283,7 +283,7 @@ private:
     // signals
 public:
     typedef sigc::signal<void> type_signal_gateway_ready;
-    typedef sigc::signal<void, Snowflake> type_signal_message_create;
+    typedef sigc::signal<void, Message> type_signal_message_create;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_update;
     typedef sigc::signal<void, Snowflake> type_signal_guild_member_list_update;
