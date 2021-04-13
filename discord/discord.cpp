@@ -1471,7 +1471,6 @@ void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     printf("received reconnect\n");
-    m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
     inflateEnd(&m_zstream);
     m_compressed_buf.clear();
 
@@ -1491,7 +1490,6 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
     printf("invalid session! re-identifying\n");
 
-    m_signal_disconnected.emit(true, GatewayCloseCode::Reconnecting);
     inflateEnd(&m_zstream);
     m_compressed_buf.clear();
 
