@@ -239,9 +239,11 @@ void ChatWindow::ProcessNewMessage(Snowflake id, bool prepend) {
         else
             last_row = dynamic_cast<ChatMessageHeader *>(m_list->get_row_at_index(m_num_rows - 1));
 
-        if (last_row != nullptr)
-            if (last_row->UserID == data->Author.ID && (prepend || (id - last_row->NewestID < SnowflakeSplitDifference * Snowflake::SecondsInterval)))
+        if (last_row != nullptr) {
+            const uint64_t diff = std::max(id, last_row->NewestID) - std::min(id, last_row->NewestID);
+            if (last_row->UserID == data->Author.ID && (prepend || (diff < SnowflakeSplitDifference * Snowflake::SecondsInterval)))
                 should_attach = true;
+        }
     }
 
     m_num_messages++;
