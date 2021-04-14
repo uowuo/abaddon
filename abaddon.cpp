@@ -235,6 +235,12 @@ void Abaddon::DiscordOnMessageSent(const Message &data) {
 }
 
 void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code) {
+    if (!is_reconnecting) {
+        m_channels_history_loaded.clear();
+        m_channels_history_loading.clear();
+        m_channels_requested.clear();
+        m_main_window->set_title(APP_TITLE);
+    }
     m_main_window->UpdateComponents();
     if (close_code == GatewayCloseCode::AuthenticationFailed) {
         Gtk::MessageDialog dlg(*m_main_window, "Discord rejected your token", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
@@ -423,11 +429,6 @@ void Abaddon::ActionConnect() {
 void Abaddon::ActionDisconnect() {
     if (m_discord.IsStarted())
         StopDiscord();
-    m_channels_history_loaded.clear();
-    m_channels_history_loading.clear();
-    m_channels_requested.clear();
-    m_main_window->set_title(APP_TITLE);
-    m_main_window->UpdateComponents();
 }
 
 void Abaddon::ActionSetToken() {
