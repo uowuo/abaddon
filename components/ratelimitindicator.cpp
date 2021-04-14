@@ -26,6 +26,7 @@ RateLimitIndicator::RateLimitIndicator()
 
     Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &RateLimitIndicator::OnMessageCreate));
     Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &RateLimitIndicator::OnMessageSendFail));
+    Abaddon::Get().GetDiscordClient().signal_channel_update().connect(sigc::mem_fun(*this, &RateLimitIndicator::OnChannelUpdate));
 }
 
 void RateLimitIndicator::SetActiveChannel(Snowflake id) {
@@ -48,8 +49,8 @@ bool RateLimitIndicator::CanSpeak() const {
         return true;
 
     const auto now = std::chrono::steady_clock::now();
-    const auto sec_diff = std::chrono::duration_cast<std::chrono::seconds>(now - it->second).count();
-    return sec_diff >= GetRateLimit();
+    const auto sec_diff = std::chrono::duration_cast<std::chrono::seconds>(it->second - now).count();
+    return sec_diff <= 0;
 }
 
 int RateLimitIndicator::GetTimeLeft() const {
@@ -59,12 +60,12 @@ int RateLimitIndicator::GetTimeLeft() const {
     if (it == m_times.end()) return 0;
 
     const auto now = std::chrono::steady_clock::now();
-    const auto sec_diff = std::chrono::duration_cast<std::chrono::seconds>(now - it->second).count();
+    const auto sec_diff = std::chrono::duration_cast<std::chrono::seconds>(it->second - now).count();
 
-    if (sec_diff >= GetRateLimit())
+    if (sec_diff <= 0)
         return 0;
     else
-        return GetRateLimit() - sec_diff;
+        return sec_diff;
 }
 
 int RateLimitIndicator::GetRateLimit() const {
@@ -105,8 +106,9 @@ void RateLimitIndicator::OnMessageCreate(const Message &message) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (message.Author.ID != discord.GetUserData().ID) return;
     const bool can_bypass = discord.HasAnyChannelPermission(discord.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES | Permission::MANAGE_CHANNELS);
-    if (GetRateLimit() > 0 && !can_bypass) {
-        m_times[message.ChannelID] = std::chrono::steady_clock::now();
+    const auto rate_limit = GetRateLimit();
+    if (rate_limit > 0 && !can_bypass) {
+        m_times[message.ChannelID] = std::chrono::steady_clock::now() + std::chrono::duration<int>(rate_limit + 1);
         UpdateIndicator();
     }
 }
@@ -115,10 +117,16 @@ void RateLimitIndicator::OnMessageSendFail(const std::string &nonce, float retry
     if (retry_after != 0) { // failed to rate limit
         const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(nonce);
         const auto channel_id = msg->ChannelID;
-        const auto channel = *Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
-        const auto rate_limit = *channel.RateLimitPerUser;
-        const auto sent_time = std::chrono::steady_clock::now() - std::chrono::duration<int>(rate_limit - std::lroundf(retry_after + 0.5f)); // + 0.5 will ceil it
-        m_times[channel_id] = sent_time;
+        m_times[channel_id] = std::chrono::steady_clock::now() + std::chrono::duration<int>(std::lroundf(retry_after + 0.5f) + 1); // + 0.5 will ceil it
         UpdateIndicator();
     }
+}
+
+void RateLimitIndicator::OnChannelUpdate(Snowflake channel_id) {
+    const auto r = Abaddon::Get().GetDiscordClient().GetChannel(channel_id)->RateLimitPerUser;
+    if (r.has_value())
+        m_rate_limit = *r;
+    else
+        m_rate_limit = 0;
+    UpdateIndicator();
 }

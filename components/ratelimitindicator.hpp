@@ -18,6 +18,7 @@ private:
     bool UpdateIndicator();
     void OnMessageCreate(const Message &message);
     void OnMessageSendFail(const std::string &nonce, float rate_limit);
+    void OnChannelUpdate(Snowflake channel_id);
 
     Gtk::Image m_img;
     Gtk::Label m_label;
@@ -26,5 +27,5 @@ private:
 
     int m_rate_limit;
     Snowflake m_active_channel;
-    std::unordered_map<Snowflake, std::chrono::time_point<std::chrono::steady_clock>> m_times;
+    std::unordered_map<Snowflake, std::chrono::time_point<std::chrono::steady_clock>> m_times; // time point of when next message can be sent
 };
