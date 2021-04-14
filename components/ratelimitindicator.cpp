@@ -15,13 +15,14 @@ RateLimitIndicator::RateLimitIndicator()
     add(m_img);
     m_label.show();
 
-    if (!std::filesystem::exists("./res/clock.png")) return;
-    try {
-        const auto pixbuf = Gdk::Pixbuf::create_from_file("./res/clock.png");
-        int w, h;
-        GetImageDimensions(pixbuf->get_width(), pixbuf->get_height(), w, h, 20, 10);
-        m_img.property_pixbuf() = pixbuf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
-    } catch (...) {}
+    if (std::filesystem::exists("./res/clock.png")) {
+        try {
+            const auto pixbuf = Gdk::Pixbuf::create_from_file("./res/clock.png");
+            int w, h;
+            GetImageDimensions(pixbuf->get_width(), pixbuf->get_height(), w, h, 20, 10);
+            m_img.property_pixbuf() = pixbuf->scale_simple(w, h, Gdk::INTERP_BILINEAR);
+        } catch (...) {}
+    }
 
     Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &RateLimitIndicator::OnMessageCreate));
 }
