@@ -54,7 +54,7 @@ protected:
     void ScrollToBottom();
     bool m_should_scroll_to_bottom = true;
 
-    void OnMessageSendFail(const std::string &nonce);
+    void OnMessageSendFail(const std::string &nonce, float retry_after);
 
     Gtk::Box *m_main;
     Gtk::ListBox *m_list;

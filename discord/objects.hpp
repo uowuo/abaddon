@@ -615,3 +615,13 @@ struct VerificationGateInfoObject {
     friend void from_json(const nlohmann::json &j, VerificationGateInfoObject &m);
     friend void to_json(nlohmann::json &j, const VerificationGateInfoObject &m);
 };
+
+// not sure what the structure for this really is
+struct RateLimitedResponse {
+    int Code;
+    bool Global;
+    std::optional<std::string> Message;
+    float RetryAfter;
+
+    friend void from_json(const nlohmann::json &j, RateLimitedResponse &m);
+};

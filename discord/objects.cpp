@@ -444,3 +444,10 @@ void to_json(nlohmann::json &j, const VerificationGateInfoObject &m) {
     JS_IF("version", m.Version);
     JS_IF("enabled", m.Enabled);
 }
+
+void from_json(const nlohmann::json &j, RateLimitedResponse &m) {
+    JS_D("code", m.Code);
+    JS_D("global", m.Global);
+    JS_O("message", m.Message);
+    JS_D("retry_after", m.RetryAfter);
+}

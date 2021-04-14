@@ -365,7 +365,7 @@ void ChatWindow::ScrollToBottom() {
     x->set_value(x->get_upper());
 }
 
-void ChatWindow::OnMessageSendFail(const std::string &nonce) {
+void ChatWindow::OnMessageSendFail(const std::string &nonce, float retry_after) {
     for (auto [id, widget] : m_id_to_widget) {
         if (auto *container = dynamic_cast<ChatMessageItemContainer *>(widget); container->Nonce == nonce) {
             container->SetFailed();

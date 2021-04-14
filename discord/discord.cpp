@@ -353,7 +353,16 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
 
 void DiscordClient::ChatMessageCallback(std::string nonce, const http::response_type &response) {
     if (!CheckCode(response)) {
-        m_signal_message_send_fail.emit(nonce);
+        if (response.status_code == http::TooManyRequests) {
+            try { // not sure if this body is guaranteed
+                RateLimitedResponse r = nlohmann::json::parse(response.text);
+                m_signal_message_send_fail.emit(nonce, r.RetryAfter);
+            } catch (...) {
+                m_signal_message_send_fail.emit(nonce, 0);
+            }
+        } else {
+            m_signal_message_send_fail.emit(nonce, 0);
+        }
     }
 }
 

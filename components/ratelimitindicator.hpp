@@ -17,6 +17,7 @@ private:
     int GetRateLimit() const;
     bool UpdateIndicator();
     void OnMessageCreate(const Message &message);
+    void OnMessageSendFail(const std::string &nonce, float rate_limit);
 
     Gtk::Image m_img;
     Gtk::Label m_label;
