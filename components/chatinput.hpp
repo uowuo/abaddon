@@ -16,7 +16,7 @@ private:
     Gtk::TextView m_textview;
 
 public:
-    typedef sigc::signal<void, Glib::ustring> type_signal_submit;
+    typedef sigc::signal<bool, Glib::ustring> type_signal_submit;
     typedef sigc::signal<void> type_signal_escape;
 
     type_signal_submit signal_submit();

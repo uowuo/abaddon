@@ -94,6 +94,8 @@ public:
     std::unordered_set<Snowflake> GetChannelsInGuild(Snowflake id) const;
 
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
+
+    bool HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
     bool HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
@@ -312,8 +314,8 @@ public:
     typedef sigc::signal<void, GuildJoinRequestUpdateData> type_signal_guild_join_request_update;
     typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
     typedef sigc::signal<void, Message> type_signal_message_sent;
-    typedef sigc::signal<void, std::string> type_signal_message_send_fail;
-    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected; // bool true if reconnecting
+    typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
+    typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                              // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
 
     type_signal_gateway_ready signal_gateway_ready();

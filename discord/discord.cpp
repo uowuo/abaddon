@@ -261,6 +261,14 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
     return (base & perm) == perm;
 }
 
+bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
+    const auto channel = m_store.GetChannel(channel_id);
+    if (!channel.has_value()) return false;
+    const auto base = ComputePermissions(user_id, *channel->GuildID);
+    const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
+    return (overwrites & perm) != Permission::NONE;
+}
+
 bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value()) return false;
@@ -345,7 +353,16 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
 
 void DiscordClient::ChatMessageCallback(std::string nonce, const http::response_type &response) {
     if (!CheckCode(response)) {
-        m_signal_message_send_fail.emit(nonce);
+        if (response.status_code == http::TooManyRequests) {
+            try { // not sure if this body is guaranteed
+                RateLimitedResponse r = nlohmann::json::parse(response.text);
+                m_signal_message_send_fail.emit(nonce, r.RetryAfter);
+            } catch (...) {
+                m_signal_message_send_fail.emit(nonce, 0);
+            }
+        } else {
+            m_signal_message_send_fail.emit(nonce, 0);
+        }
     }
 }
 

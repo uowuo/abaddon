@@ -2,6 +2,7 @@
 #include "chatmessage.hpp"
 #include "../abaddon.hpp"
 #include "chatinputindicator.hpp"
+#include "ratelimitindicator.hpp"
 #include "chatinput.hpp"
 
 constexpr static uint64_t SnowflakeSplitDifference = 600;
@@ -14,7 +15,16 @@ ChatWindow::ChatWindow() {
     m_scroll = Gtk::manage(new Gtk::ScrolledWindow);
     m_input = Gtk::manage(new ChatInput);
     m_input_indicator = Gtk::manage(new ChatInputIndicator);
+    m_rate_limit_indicator = Gtk::manage(new RateLimitIndicator);
+    m_meta = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 
+    m_rate_limit_indicator->set_margin_end(5);
+    m_rate_limit_indicator->set_hexpand(true);
+    m_rate_limit_indicator->set_halign(Gtk::ALIGN_END);
+    m_rate_limit_indicator->set_valign(Gtk::ALIGN_END);
+    m_rate_limit_indicator->show();
+
+    m_input_indicator->set_halign(Gtk::ALIGN_START);
     m_input_indicator->set_valign(Gtk::ALIGN_END);
     m_input_indicator->show();
 
@@ -88,11 +98,17 @@ ChatWindow::ChatWindow() {
 
     m_completer.show();
 
+    m_meta->set_hexpand(true);
+    m_meta->set_halign(Gtk::ALIGN_FILL);
+    m_meta->show();
+
+    m_meta->add(*m_input_indicator);
+    m_meta->add(*m_rate_limit_indicator);
     m_scroll->add(*m_list);
     m_main->add(*m_scroll);
     m_main->add(m_completer);
     m_main->add(*m_input);
-    m_main->add(*m_input_indicator);
+    m_main->add(*m_meta);
     m_main->show();
 }
 
@@ -125,6 +141,7 @@ void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
 void ChatWindow::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
     m_input_indicator->SetActiveChannel(id);
+    m_rate_limit_indicator->SetActiveChannel(id);
     if (m_is_replying)
         StopReplying();
 }
@@ -179,11 +196,16 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-void ChatWindow::OnInputSubmit(const Glib::ustring &text) {
+bool ChatWindow::OnInputSubmit(const Glib::ustring &text) {
+    if (!m_rate_limit_indicator->CanSpeak())
+        return false;
+
     if (m_active_channel.IsValid())
         m_signal_action_chat_submit.emit(text, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
     if (m_is_replying)
         StopReplying();
+
+    return true;
 }
 
 bool ChatWindow::OnKeyPressEvent(GdkEventKey *e) {
@@ -343,7 +365,7 @@ void ChatWindow::ScrollToBottom() {
     x->set_value(x->get_upper());
 }
 
-void ChatWindow::OnMessageSendFail(const std::string &nonce) {
+void ChatWindow::OnMessageSendFail(const std::string &nonce, float retry_after) {
     for (auto [id, widget] : m_id_to_widget) {
         if (auto *container = dynamic_cast<ChatMessageItemContainer *>(widget); container->Nonce == nonce) {
             container->SetFailed();
