@@ -42,13 +42,12 @@ bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
 
         auto buf = GetBuffer();
         auto text = buf->get_text();
-        // sometimes a message thats just newlines can sneak in if you hold down enter
-        if (text.size() > 0 && !std::all_of(text.begin(), text.end(), [](gunichar c) -> bool { return c == gunichar('\n'); })) {
-            const bool accepted = m_signal_submit.emit(text);
-            if (accepted)
-                buf->set_text("");
-            return true;
-        }
+
+        const bool accepted = m_signal_submit.emit(text);
+        if (accepted)
+            buf->set_text("");
+
+        return true;
     }
 
     return false;
