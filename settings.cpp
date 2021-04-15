@@ -81,3 +81,7 @@ bool SettingsManager::GetShowAnimations() const {
 bool SettingsManager::GetShowOwnerCrown() const {
     return GetSettingBool("gui", "owner_crown", true);
 }
+
+bool SettingsManager::GetAltChannelWidget() const {
+    return GetSettingBool("gui", "alt_channel_widget", false);
+}

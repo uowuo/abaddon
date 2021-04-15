@@ -51,8 +51,35 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
+
+    std::optional<UserData> top_recipient; // potentially nullopt in group dm
+    const auto recipients = data->GetDMRecipients();
+    if (recipients.size() > 0)
+        top_recipient = recipients[0];
+
+    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    if (alt) {
+        auto *tmp = Gtk::manage(new Gtk::Label);
+        m_lbl = tmp;
+        if (data->Type == ChannelType::DM)
+            tmp->set_text(top_recipient->Username);
+        else if (data->Type == ChannelType::GROUP_DM)
+            tmp->set_text(std::to_string(recipients.size()) + " users");
+    } else {
+        auto *tmp = Gtk::manage(new Gtk::TextView);
+        m_lbl = tmp;
+        MakeReadOnly(tmp);
+
+        auto buf = tmp->get_buffer();
+        if (data->Type == ChannelType::DM)
+            buf->set_text(top_recipient->Username);
+        else if (data->Type == ChannelType::GROUP_DM)
+            buf->set_text(std::to_string(recipients.size()) + " users");
+
+        static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+        if (show_emojis)
+            Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    }
 
     AddWidgetMenuHandler(m_ev, m_menu);
     AddWidgetMenuHandler(m_lbl, m_menu);
@@ -77,11 +104,6 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     get_style_context()->add_class("channel-row");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    std::optional<UserData> top_recipient; // potentially nullopt in group dm
-    const auto recipients = data->GetDMRecipients();
-    if (recipients.size() > 0)
-        top_recipient = recipients[0];
-
     if (data->Type == ChannelType::DM) {
         m_status = Gtk::manage(new StatusIndicator(top_recipient->ID));
         m_status->set_margin_start(5);
@@ -92,16 +114,6 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
         };
         Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
     }
-
-    auto buf = m_lbl->get_buffer();
-    if (data->Type == ChannelType::DM)
-        buf->set_text(top_recipient->Username);
-    else if (data->Type == ChannelType::GROUP_DM)
-        buf->set_text(std::to_string(recipients.size()) + " users");
-
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
     m_box->set_halign(Gtk::ALIGN_START);
     if (m_icon != nullptr)
@@ -118,8 +130,22 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
+
+    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    if (alt) {
+        m_lbl = Gtk::manage(new Gtk::Label(data->Name));
+    } else {
+        auto *tmp = Gtk::manage(new Gtk::TextView);
+        m_lbl = tmp;
+        MakeReadOnly(tmp);
+        auto buf = tmp->get_buffer();
+        Gtk::TextBuffer::iterator start, end;
+        buf->get_bounds(start, end);
+        buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
+        static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+        if (show_emojis)
+            Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    }
 
     AddWidgetMenuHandler(m_ev, m_menu);
     AddWidgetMenuHandler(m_lbl, m_menu);
@@ -168,13 +194,6 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     get_style_context()->add_class("channel-row-guild");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    auto buf = m_lbl->get_buffer();
-    Gtk::TextBuffer::iterator start, end;
-    buf->get_bounds(start, end);
-    buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_icon);
     m_box->pack_start(*m_lbl);
@@ -199,8 +218,20 @@ ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
+
+    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    if (alt) {
+        m_lbl = Gtk::manage(new Gtk::Label(*data->Name));
+    } else {
+        auto *tmp = Gtk::manage(new Gtk::TextView);
+        m_lbl = tmp;
+        MakeReadOnly(tmp);
+        auto buf = tmp->get_buffer();
+        buf->set_text(*data->Name);
+        static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+        if (show_emojis)
+            Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    }
     m_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
 
     m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
@@ -218,11 +249,6 @@ ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
     get_style_context()->add_class("channel-row-category");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    auto buf = m_lbl->get_buffer();
-    buf->set_text(*data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_arrow);
     m_box->pack_start(*m_lbl);
@@ -247,8 +273,20 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
     ID = data->ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
+
+    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    if (alt) {
+        m_lbl = Gtk::manage(new Gtk::Label("#" + *data->Name));
+    } else {
+        auto *tmp = Gtk::manage(new Gtk::TextView);
+        m_lbl = tmp;
+        MakeReadOnly(tmp);
+        auto buf = tmp->get_buffer();
+        buf->set_text("#" + *data->Name);
+        static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+        if (show_emojis)
+            Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+    }
 
     m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
     m_menu_copyid->signal_activate().connect([this]() {
@@ -265,15 +303,11 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
     get_style_context()->add_class("channel-row-channel");
     m_lbl->get_style_context()->add_class("channel-row-label");
 
-    auto buf = m_lbl->get_buffer();
     if (data->IsNSFW.has_value() && *data->IsNSFW) {
         get_style_context()->add_class("nsfw");
         m_lbl->get_style_context()->add_class("nsfw");
     }
-    buf->set_text("#" + *data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
+
     m_box->set_halign(Gtk::ALIGN_START);
     m_box->pack_start(*m_lbl);
     m_ev->add(*m_box);
