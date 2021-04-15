@@ -16,7 +16,7 @@ void Websocket::SetUserAgent(std::string agent) {
 }
 
 void Websocket::Stop() {
-    m_websocket.stop();
+    Stop(ix::WebSocketCloseConstants::kNormalClosureCode);
 }
 
 void Websocket::Stop(uint16_t code) {

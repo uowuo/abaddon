@@ -268,7 +268,8 @@ private:
     HeartbeatWaiter m_heartbeat_waiter;
     std::atomic<bool> m_heartbeat_acked = true;
 
-    bool m_wants_resume = false;
+    bool m_reconnecting = false; // reconnecting either to resume or reidentify
+    bool m_wants_resume = false; // reconnecting specifically to resume
     std::string m_session_id;
 
     mutable std::mutex m_msg_mutex;

@@ -1030,11 +1030,13 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
 }
 
 void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
+    m_client_connected = true;
     HelloMessageData d = msg.Data;
     m_heartbeat_msec = d.HeartbeatInterval;
     m_heartbeat_waiter.revive();
     m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
     m_signal_connected.emit(); // socket is connected before this but emitting here should b fine
+    m_reconnecting = false;    // maybe should go elsewhere?
     if (m_wants_resume) {
         m_wants_resume = false;
         SendResume();
@@ -1477,13 +1479,15 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
 
+    m_reconnecting = true;
+    m_wants_resume = true;
+    m_heartbeat_acked = true;
+
     m_websocket.Stop(1012); // 1000 (kNormalClosureCode) and 1001 will invalidate the session id
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
 
-    m_heartbeat_acked = true;
-    m_wants_resume = true;
     m_websocket.StartConnection(DiscordGateway);
 }
 
@@ -1498,6 +1502,7 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
 
     m_heartbeat_acked = true;
     m_wants_resume = false;
+    m_reconnecting = true;
 
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
@@ -1680,9 +1685,6 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
     printf("got socket close code: %d\n", code);
     auto close_code = static_cast<GatewayCloseCode>(code);
     auto cb = [this, close_code]() {
-        inflateEnd(&m_zstream);
-        m_compressed_buf.clear();
-
         m_heartbeat_waiter.kill();
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
         m_client_connected = false;
@@ -1691,9 +1693,7 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
         m_chan_to_message_map.clear();
         m_guild_to_users.clear();
 
-        m_websocket.Stop();
-
-        m_signal_disconnected.emit(false, close_code);
+        m_signal_disconnected.emit(m_reconnecting, close_code);
     };
     m_generic_mutex.lock();
     m_generic_queue.push(cb);
