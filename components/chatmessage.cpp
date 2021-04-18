@@ -215,6 +215,9 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             HandleChannelMentions(tv);
             HandleEmojis(*tv);
             break;
+        case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION:
+            b->insert_markup(s, "<span color='#999999'><i>[boosted server]</i></span>");
+            break;
         case MessageType::GUILD_MEMBER_JOIN:
             b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
             break;
