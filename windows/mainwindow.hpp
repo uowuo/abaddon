@@ -66,10 +66,15 @@ protected:
     type_signal_action_add_recipient m_signal_action_add_recipient;
 
 protected:
-    Gtk::Box m_main_box;
-    Gtk::Box m_content_box;
-    Gtk::Paned m_chan_chat_paned;
-    Gtk::Paned m_chat_members_paned;
+    Gtk::Box *m_main_box;
+    // normal
+    Gtk::Box *m_content_box = nullptr;
+    Gtk::Paned *m_chan_chat_paned = nullptr;
+    Gtk::Paned *m_chat_members_paned = nullptr;
+
+    // mobile
+    Gtk::StackSwitcher *m_switcher = nullptr;
+    Gtk::Stack *m_stack = nullptr;
 
     ChannelList m_channel_list;
     ChatWindow m_chat;

@@ -1,11 +1,9 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
 
-MainWindow::MainWindow()
-    : m_main_box(Gtk::ORIENTATION_VERTICAL)
-    , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
-    , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL)
-    , m_chat_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
+MainWindow::MainWindow() {
+    const bool use_mobile = Abaddon::Get().GetSettings().GetUseMobileLayout();
+
     set_default_size(1200, 800);
     get_style_context()->add_class("app-window");
 
@@ -79,25 +77,9 @@ MainWindow::MainWindow()
         m_signal_action_add_recipient.emit(GetChatActiveChannel());
     });
 
-    m_content_box.set_hexpand(true);
-    m_content_box.set_vexpand(true);
-    m_content_box.show();
-
-    m_main_box.add(m_menu_bar);
-    m_main_box.add(m_content_box);
-    m_main_box.show();
-
     auto *channel_list = m_channel_list.GetRoot();
     auto *member_list = m_members.GetRoot();
     auto *chat = m_chat.GetRoot();
-
-    m_members.signal_action_show_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
-        m_signal_action_show_user_menu.emit(event, id, guild_id);
-    });
-
-    m_chat.signal_action_open_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
-        m_signal_action_show_user_menu.emit(event, id, guild_id);
-    });
 
     chat->set_vexpand(true);
     chat->set_hexpand(true);
@@ -110,24 +92,76 @@ MainWindow::MainWindow()
     member_list->set_vexpand(true);
     member_list->show();
 
-    m_chan_chat_paned.pack1(*channel_list);
-    m_chan_chat_paned.pack2(m_chat_members_paned);
-    m_chan_chat_paned.child_property_shrink(*channel_list) = false;
-    m_chan_chat_paned.child_property_resize(*channel_list) = false;
-    m_chan_chat_paned.set_position(200);
-    m_chan_chat_paned.show();
-    m_content_box.add(m_chan_chat_paned);
+    if (use_mobile) {
+        m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 
-    m_chat_members_paned.pack1(*chat);
-    m_chat_members_paned.pack2(*member_list);
-    m_chat_members_paned.child_property_shrink(*member_list) = false;
-    m_chat_members_paned.child_property_resize(*member_list) = false;
-    int w, h;
-    get_default_size(w, h); // :s
-    m_chat_members_paned.set_position(w - m_chan_chat_paned.get_position() - 150);
-    m_chat_members_paned.show();
+        m_stack = Gtk::manage(new Gtk::Stack);
+        m_switcher = Gtk::manage(new Gtk::StackSwitcher);
 
-    add(m_main_box);
+        m_stack->set_transition_type(Gtk::STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
+
+        m_stack->add(*m_channel_list.GetRoot(), "Channels");
+        m_stack->add(*m_chat.GetRoot(), "Chat");
+        m_stack->add(*m_members.GetRoot(), "Members");
+        m_stack->child_property_icon_name(*m_channel_list.GetRoot()) = "format-justify-fill-symbolic";
+        m_stack->child_property_icon_name(*m_chat.GetRoot()) = "user-invisible-symbolic";
+        m_stack->child_property_icon_name(*m_members.GetRoot()) = "avatar-default-symbolic";
+
+        m_switcher->set_hexpand(true);
+        m_switcher->set_halign(Gtk::ALIGN_FILL);
+        m_switcher->set_homogeneous(true);
+
+        m_main_box->add(m_menu_bar);
+        m_main_box->add(*m_stack);
+        m_main_box->add(*m_switcher);
+        m_switcher->set_stack(*m_stack);
+
+        m_stack->show();
+        m_switcher->show_all();
+        m_main_box->show();
+
+        add(*m_main_box);
+    } else {
+        m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+        m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+        m_chan_chat_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
+        m_chat_members_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
+
+        m_content_box->set_hexpand(true);
+        m_content_box->set_vexpand(true);
+        m_content_box->show();
+
+        m_main_box->add(m_menu_bar);
+        m_main_box->add(*m_content_box);
+        m_main_box->show();
+
+        m_chan_chat_paned->pack1(*channel_list);
+        m_chan_chat_paned->pack2(*m_chat_members_paned);
+        m_chan_chat_paned->child_property_shrink(*channel_list) = false;
+        m_chan_chat_paned->child_property_resize(*channel_list) = false;
+        m_chan_chat_paned->set_position(200);
+        m_chan_chat_paned->show();
+        m_content_box->add(*m_chan_chat_paned);
+
+        m_chat_members_paned->pack1(*chat);
+        m_chat_members_paned->pack2(*member_list);
+        m_chat_members_paned->child_property_shrink(*member_list) = false;
+        m_chat_members_paned->child_property_resize(*member_list) = false;
+        int w, h;
+        get_default_size(w, h); // :s
+        m_chat_members_paned->set_position(w - m_chan_chat_paned->get_position() - 150);
+        m_chat_members_paned->show();
+
+        add(*m_main_box);
+    }
+
+    m_members.signal_action_show_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
+        m_signal_action_show_user_menu.emit(event, id, guild_id);
+    });
+
+    m_chat.signal_action_open_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
+        m_signal_action_show_user_menu.emit(event, id, guild_id);
+    });
 }
 
 void MainWindow::UpdateComponents() {
@@ -202,6 +236,10 @@ void MainWindow::UpdateChatActiveChannel(Snowflake id) {
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
     m_channel_list.SetActiveChannel(id);
+
+    if (m_stack != nullptr) {
+        m_stack->set_visible_child("Chat");
+    }
 }
 
 Snowflake MainWindow::GetChatActiveChannel() const {

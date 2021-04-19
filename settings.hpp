@@ -20,7 +20,7 @@ public:
     std::string GetMainCSS() const;
     bool GetShowAnimations() const;
     bool GetShowOwnerCrown() const;
-    bool GetAltChannelWidget() const;
+    bool GetUseMobileLayout() const;
 
     bool IsValid() const;
 

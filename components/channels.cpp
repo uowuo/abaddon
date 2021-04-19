@@ -57,7 +57,7 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     if (recipients.size() > 0)
         top_recipient = recipients[0];
 
-    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    const static bool alt = Abaddon::Get().GetSettings().GetUseMobileLayout();
     if (alt) {
         auto *tmp = Gtk::manage(new Gtk::Label);
         m_lbl = tmp;
@@ -131,7 +131,7 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 
-    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    const static bool alt = Abaddon::Get().GetSettings().GetUseMobileLayout();
     if (alt) {
         m_lbl = Gtk::manage(new Gtk::Label(data->Name));
     } else {
@@ -219,7 +219,7 @@ ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 
-    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    const static bool alt = Abaddon::Get().GetSettings().GetUseMobileLayout();
     if (alt) {
         m_lbl = Gtk::manage(new Gtk::Label(*data->Name));
     } else {
@@ -274,7 +274,7 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
 
-    const static bool alt = Abaddon::Get().GetSettings().GetAltChannelWidget();
+    const static bool alt = Abaddon::Get().GetSettings().GetUseMobileLayout();
     if (alt) {
         m_lbl = Gtk::manage(new Gtk::Label("#" + *data->Name));
     } else {

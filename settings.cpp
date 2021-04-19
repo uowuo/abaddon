@@ -82,6 +82,7 @@ bool SettingsManager::GetShowOwnerCrown() const {
     return GetSettingBool("gui", "owner_crown", true);
 }
 
-bool SettingsManager::GetAltChannelWidget() const {
-    return GetSettingBool("gui", "alt_channel_widget", false);
+bool SettingsManager::GetUseMobileLayout() const {
+    // todo: see if there's some sort of preprocessor directive to default this to true on mobile platforms
+    return GetSettingBool("gui", "mobile", false);
 }
