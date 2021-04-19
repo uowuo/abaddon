@@ -42,7 +42,7 @@ protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
     StatusIndicator *m_status = nullptr;
-    Gtk::TextView *m_lbl;
+    Gtk::Widget *m_lbl;
     Gtk::Image *m_icon = nullptr;
 
     Gtk::Menu m_menu;
@@ -59,7 +59,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
+    Gtk::Widget *m_lbl;
     Gtk::Image *m_icon;
 
     Gtk::Menu m_menu;
@@ -92,7 +92,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
+    Gtk::Widget *m_lbl;
     Gtk::Arrow *m_arrow;
 
     Gtk::Menu m_menu;
@@ -114,7 +114,7 @@ public:
 protected:
     Gtk::EventBox *m_ev;
     Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
+    Gtk::Widget *m_lbl;
 
     Gtk::Menu m_menu;
     Gtk::MenuItem *m_menu_copyid;
