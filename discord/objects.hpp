@@ -265,6 +265,7 @@ struct IdentifyProperties {
     std::string OS;
     std::string Browser;
     std::string Device;
+    std::string SystemLocale;
     std::string BrowserUserAgent;
     std::string BrowserVersion;
     std::string OSVersion;
