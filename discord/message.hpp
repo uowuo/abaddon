@@ -14,11 +14,11 @@ enum class MessageType {
     RECIPIENT_ADD = 1,                                 // yep
     RECIPIENT_REMOVE = 2,                              // yep
     CALL = 3,                                          // nope
-    CHANNEL_NAME_CHANGE = 4,                           // nope
-    CHANNEL_ICON_CHANGE = 5,                           // nope
+    CHANNEL_NAME_CHANGE = 4,                           // yep
+    CHANNEL_ICON_CHANGE = 5,                           // yep
     CHANNEL_PINNED_MESSAGE = 6,                        // yep
     GUILD_MEMBER_JOIN = 7,                             // yep
-    USER_PREMIUM_GUILD_SUBSCRIPTION = 8,               // nope
+    USER_PREMIUM_GUILD_SUBSCRIPTION = 8,               // yep
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,        // nope
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,       // nope
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,       // nope
