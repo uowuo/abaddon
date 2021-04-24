@@ -262,6 +262,14 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " changed the channel icon</span></i>");
         } break;
+        case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1:
+        case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2:
+        case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3: {
+            const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
+            b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " just boosted the server <b>" + Glib::Markup::escape_text(data->Content) + "</b> times! " +
+                                    Glib::Markup::escape_text(guild->Name) + " has achieved <b>Level " + std::to_string(static_cast<int>(data->Type) - 8) + "!</b></span></i>"); // oo cheeky me !!!
+        } break;
         default: break;
     }
 }

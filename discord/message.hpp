@@ -19,9 +19,9 @@ enum class MessageType {
     CHANNEL_PINNED_MESSAGE = 6,                        // yep
     GUILD_MEMBER_JOIN = 7,                             // yep
     USER_PREMIUM_GUILD_SUBSCRIPTION = 8,               // yep
-    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,        // nope
-    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,       // nope
-    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,       // nope
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,        // yep
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,       // yep
+    USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,       // yep
     CHANNEL_FOLLOW_ADD = 12,                           // nope
     GUILD_DISCOVERY_DISQUALIFIED = 14,                 // nope
     GUILD_DISCOVERY_REQUALIFIED = 15,                  // nope
