@@ -254,6 +254,10 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             else
                 b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> removed <span color='#eeeeee'>" + added.Username + "</span></span></i>");
         } break;
+        case MessageType::CHANNEL_NAME_CHANGE: {
+            const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " changed the name to <b>" + Glib::Markup::escape_text(data->Content) + "</b></span></i>");
+        } break;
         default: break;
     }
 }
