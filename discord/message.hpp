@@ -13,7 +13,7 @@ enum class MessageType {
     DEFAULT = 0,                                       // yep
     RECIPIENT_ADD = 1,                                 // yep
     RECIPIENT_REMOVE = 2,                              // yep
-    CALL = 3,                                          // nope
+    CALL = 3,                                          // yep (sorta)
     CHANNEL_NAME_CHANGE = 4,                           // yep
     CHANNEL_ICON_CHANGE = 5,                           // yep
     CHANNEL_PINNED_MESSAGE = 6,                        // yep

@@ -274,6 +274,9 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " has added <b>" + Glib::Markup::escape_text(data->Content) + "</b> to this channel. Its most important updates will show up here.</span></i>");
         } break;
+        case MessageType::CALL: {
+            b->insert_markup(s, "<span color='#999999'><i>[started a call]</i></span>");
+        } break;
         default: break;
     }
 }
