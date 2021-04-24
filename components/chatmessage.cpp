@@ -60,7 +60,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         container->m_main->add(*container->m_text_component);
     }
 
-    if (data->MessageReference.has_value() || data->Interaction.has_value()) {
+    if ((data->MessageReference.has_value() || data->Interaction.has_value()) && data->Type != MessageType::CHANNEL_FOLLOW_ADD) {
         auto *widget = container->CreateReplyComponent(*data);
         container->m_main->add(*widget);
         container->m_main->child_property_position(*widget) = 0; // eek
@@ -269,6 +269,10 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
             b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " just boosted the server <b>" + Glib::Markup::escape_text(data->Content) + "</b> times! " +
                                     Glib::Markup::escape_text(guild->Name) + " has achieved <b>Level " + std::to_string(static_cast<int>(data->Type) - 8) + "!</b></span></i>"); // oo cheeky me !!!
+        } break;
+        case MessageType::CHANNEL_FOLLOW_ADD: {
+            const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " has added <b>" + Glib::Markup::escape_text(data->Content) + "</b> to this channel. Its most important updates will show up here.</span></i>");
         } break;
         default: break;
     }

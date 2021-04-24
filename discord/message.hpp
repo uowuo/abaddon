@@ -22,7 +22,7 @@ enum class MessageType {
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1 = 9,        // yep
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,       // yep
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,       // yep
-    CHANNEL_FOLLOW_ADD = 12,                           // nope
+    CHANNEL_FOLLOW_ADD = 12,                           // yep
     GUILD_DISCOVERY_DISQUALIFIED = 14,                 // nope
     GUILD_DISCOVERY_REQUALIFIED = 15,                  // nope
     GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16, // nope
