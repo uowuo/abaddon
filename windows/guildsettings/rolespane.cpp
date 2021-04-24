@@ -283,7 +283,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::MANAGE_MESSAGES,
         Permission::READ_MESSAGE_HISTORY,
         Permission::SEND_TTS_MESSAGES,
-        Permission::USE_APPLICATION_COMMANDS });
+        Permission::USE_SLASH_COMMANDS });
 
     add_perms("Voice Channels", RIGHT, {
         Permission::CONNECT,

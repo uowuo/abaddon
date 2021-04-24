@@ -7,40 +7,43 @@
 constexpr static uint64_t PERMISSION_MAX_BIT = 31;
 enum class Permission : uint64_t {
     NONE = 0,
-    CREATE_INSTANT_INVITE = (1ULL << 0),
-    KICK_MEMBERS = (1ULL << 1),
-    BAN_MEMBERS = (1ULL << 2),
-    ADMINISTRATOR = (1ULL << 3),
-    MANAGE_CHANNELS = (1ULL << 4),
-    MANAGE_GUILD = (1ULL << 5),
-    ADD_REACTIONS = (1ULL << 6),
-    VIEW_AUDIT_LOG = (1ULL << 7),
-    PRIORITY_SPEAKER = (1ULL << 8),
-    STREAM = (1ULL << 9),
-    VIEW_CHANNEL = (1ULL << 10),
-    SEND_MESSAGES = (1ULL << 11),
-    SEND_TTS_MESSAGES = (1ULL << 12),
-    MANAGE_MESSAGES = (1ULL << 13),
-    EMBED_LINKS = (1ULL << 14),
-    ATTACH_FILES = (1ULL << 15),
-    READ_MESSAGE_HISTORY = (1ULL << 16),
-    MENTION_EVERYONE = (1ULL << 17),
-    USE_EXTERNAL_EMOJIS = (1ULL << 18),
-    VIEW_GUILD_INSIGHTS = (1ULL << 19),
-    CONNECT = (1ULL << 20),
-    SPEAK = (1ULL << 21),
-    MUTE_MEMBERS = (1ULL << 22),
-    DEAFEN_MEMBERS = (1ULL << 23),
-    MOVE_MEMBERS = (1ULL << 24),
-    USE_VAD = (1ULL << 25), // voice activity detection
-    CHANGE_NICKNAME = (1ULL << 26),
-    MANAGE_NICKNAMES = (1ULL << 27),
-    MANAGE_ROLES = (1ULL << 28),
-    MANAGE_WEBHOOKS = (1ULL << 29),
-    MANAGE_EMOJIS = (1ULL << 30),
-    USE_APPLICATION_COMMANDS = (1ULL << 31),
+    CREATE_INSTANT_INVITE = (1ULL << 0), // Allows creation of instant invites
+    KICK_MEMBERS = (1ULL << 1),          // Allows kicking members
+    BAN_MEMBERS = (1ULL << 2),           // Allows banning members
+    ADMINISTRATOR = (1ULL << 3),         // Allows all permissions and bypasses channel permission overwrites
+    MANAGE_CHANNELS = (1ULL << 4),       // Allows management and editing of channels
+    MANAGE_GUILD = (1ULL << 5),          // Allows management and editing of the guild
+    ADD_REACTIONS = (1ULL << 6),         // Allows for the addition of reactions to messages
+    VIEW_AUDIT_LOG = (1ULL << 7),        // Allows for viewing of audit logs
+    PRIORITY_SPEAKER = (1ULL << 8),      // Allows for using priority speaker in a voice channel
+    STREAM = (1ULL << 9),                // Allows the user to go live
+    VIEW_CHANNEL = (1ULL << 10),         // Allows guild members to view a channel, which includes reading messages in text channels
+    SEND_MESSAGES = (1ULL << 11),        // Allows for sending messages in a channel
+    SEND_TTS_MESSAGES = (1ULL << 12),    // Allows for sending of /tts messages
+    MANAGE_MESSAGES = (1ULL << 13),      // Allows for deletion of other users messages
+    EMBED_LINKS = (1ULL << 14),          // Links sent by users with this permission will be auto-embedded
+    ATTACH_FILES = (1ULL << 15),         // Allows for uploading images and files
+    READ_MESSAGE_HISTORY = (1ULL << 16), // Allows for reading of message history
+    MENTION_EVERYONE = (1ULL << 17),     // Allows for using the @everyone tag to notify all users in a channel, and the @here tag to notify all online users in a channel
+    USE_EXTERNAL_EMOJIS = (1ULL << 18),  // Allows the usage of custom emojis from other servers
+    VIEW_GUILD_INSIGHTS = (1ULL << 19),  // Allows for viewing guild insights
+    CONNECT = (1ULL << 20),              // Allows for joining of a voice channel
+    SPEAK = (1ULL << 21),                // Allows for speaking in a voice channel
+    MUTE_MEMBERS = (1ULL << 22),         // Allows for muting members in a voice channel
+    DEAFEN_MEMBERS = (1ULL << 23),       // Allows for deafening of members in a voice channel
+    MOVE_MEMBERS = (1ULL << 24),         // Allows for moving of members between voice channels
+    USE_VAD = (1ULL << 25),              // Allows for using voice-activity-detection in a voice channel
+    CHANGE_NICKNAME = (1ULL << 26),      // Allows for modification of own nickname
+    MANAGE_NICKNAMES = (1ULL << 27),     // Allows for modification of other users nicknames
+    MANAGE_ROLES = (1ULL << 28),         // Allows management and editing of roles
+    MANAGE_WEBHOOKS = (1ULL << 29),      // Allows management and editing of webhooks
+    MANAGE_EMOJIS = (1ULL << 30),        // Allows management and editing of emojis
+    USE_SLASH_COMMANDS = (1ULL << 31),   // Allows members to use slash commands in text channels
+    REQUEST_TO_SPEAK = (1ULL << 32),     // Allows for requesting to speak in stage channels
+    USE_THREADS = (1ULL << 33),          // Allows for creating and participating in threads
+    USE_PRIVATE_THREADS = (1ULL << 34),  // Allows for creating and participating in private threads
 
-    ALL = 0xFFFFFFFF,
+    ALL = 0x7FFFFFFFFULL,
 };
 template<>
 struct Bitwise<Permission> {
@@ -127,14 +130,14 @@ constexpr const char *GetPermissionString(Permission perm) {
             return "Manage Webhooks";
         case Permission::MANAGE_EMOJIS:
             return "Manage Emojis";
-        case Permission::USE_APPLICATION_COMMANDS:
+        case Permission::USE_SLASH_COMMANDS:
             return "Use Slash Commands";
         default:
             return "Unknown Permission";
     }
 }
 
-constexpr const char* GetPermissionDescription(Permission perm) {
+constexpr const char *GetPermissionDescription(Permission perm) {
     switch (perm) {
         case Permission::NONE:
             return "";
@@ -200,7 +203,7 @@ constexpr const char* GetPermissionDescription(Permission perm) {
             return "Allows members to create, edit, or delete webhooks, which can post messages from other apps or sites into this server.";
         case Permission::MANAGE_EMOJIS:
             return "Allows members to add or remove custom emojis in this server.";
-        case Permission::USE_APPLICATION_COMMANDS:
+        case Permission::USE_SLASH_COMMANDS:
             return "Allows members to use slash commands in text channels.";
         default:
             return "";
