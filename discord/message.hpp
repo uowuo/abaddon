@@ -23,10 +23,10 @@ enum class MessageType {
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2 = 10,       // yep
     USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3 = 11,       // yep
     CHANNEL_FOLLOW_ADD = 12,                           // yep
-    GUILD_DISCOVERY_DISQUALIFIED = 14,                 // nope
-    GUILD_DISCOVERY_REQUALIFIED = 15,                  // nope
-    GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16, // nope
-    GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,   // nope
+    GUILD_DISCOVERY_DISQUALIFIED = 14,                 // yep
+    GUILD_DISCOVERY_REQUALIFIED = 15,                  // yep
+    GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16, // yep
+    GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,   // yep
     THREAD_CREATED = 18,                               // nope
     INLINE_REPLY = 19,                                 // yep
     APPLICATION_COMMAND = 20,                          // yep

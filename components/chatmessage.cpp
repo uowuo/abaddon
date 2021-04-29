@@ -277,6 +277,18 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::CALL: {
             b->insert_markup(s, "<span color='#999999'><i>[started a call]</i></span>");
         } break;
+        case MessageType::GUILD_DISCOVERY_DISQUALIFIED: {
+            b->insert_markup(s, "<i><span color='#999999'>This server has been removed from Server Discovery because it no longer passes all the requirements.</span></i>");
+        } break;
+        case MessageType::GUILD_DISCOVERY_REQUALIFIED: {
+            b->insert_markup(s, "<i><span color='#999999'>This server is eligible for Server Discovery again and has been automatically relisted!</span></i>");
+        } break;
+        case MessageType::GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING: {
+            b->insert_markup(s, "<i><span color='#999999'>This server has failed Discovery activity requirements for 1 week. If this server fails for 4 weeks in a row, it will be automatically removed from Discovery.</span></i>");
+        } break;
+        case MessageType::GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING: {
+            b->insert_markup(s, "<i><span color='#999999'>This server has failed Discovery activity requirements for 3 weeks in a row. If this server fails for 1 more week, it will be removed from Discovery.</span></i>");
+        } break;
         default: break;
     }
 }
