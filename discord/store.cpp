@@ -753,7 +753,8 @@ bool Store::CreateTables() {
             channel_id INTEGER NOT NULL,
             type INTEGER NOT NULL,
             allow INTEGER NOT NULL,
-            deny INTEGER NOT NULL
+            deny INTEGER NOT NULL,
+            PRIMARY KEY(id, channel_id)
         )
     )";
 
