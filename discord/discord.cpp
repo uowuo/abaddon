@@ -1218,6 +1218,9 @@ void DiscordClient::HandleGatewayChannelUpdate(const GatewayMessage &msg) {
     if (cur.has_value()) {
         cur->update_from_json(msg.Data);
         m_store.SetChannel(id, *cur);
+        if (cur->PermissionOverwrites.has_value())
+            for (const auto &p : *cur->PermissionOverwrites)
+                m_store.SetPermissionOverwrite(id, p.ID, p);
         m_signal_channel_update.emit(id);
     }
 }

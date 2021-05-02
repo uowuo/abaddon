@@ -160,8 +160,11 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
         return entry;
     };
 
+    const auto self_id = discord.GetUserData().ID;
+    const bool can_use_external = discord.GetSelfPremiumType() != EPremiumType::None && discord.HasChannelPermission(self_id, channel_id, Permission::USE_EXTERNAL_EMOJIS);
+
     int i = 0;
-    if (discord.GetSelfPremiumType() == EPremiumType::None) {
+    if (!can_use_external) {
         if (channel->GuildID.has_value()) {
             const auto guild = discord.GetGuild(*channel->GuildID);
 
