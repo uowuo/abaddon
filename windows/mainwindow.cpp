@@ -1,11 +1,12 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
+#include "../components/friendslist.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
-    , m_chan_chat_paned(Gtk::ORIENTATION_HORIZONTAL)
-    , m_chat_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
+    , m_chan_content_paned(Gtk::ORIENTATION_HORIZONTAL)
+    , m_content_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(1200, 800);
     get_style_context()->add_class("app-window");
 
@@ -110,22 +111,27 @@ MainWindow::MainWindow()
     member_list->set_vexpand(true);
     member_list->show();
 
-    m_chan_chat_paned.pack1(*channel_list);
-    m_chan_chat_paned.pack2(m_chat_members_paned);
-    m_chan_chat_paned.child_property_shrink(*channel_list) = false;
-    m_chan_chat_paned.child_property_resize(*channel_list) = false;
-    m_chan_chat_paned.set_position(200);
-    m_chan_chat_paned.show();
-    m_content_box.add(m_chan_chat_paned);
+    m_content_stack.add(*chat);
+    m_content_stack.set_vexpand(true);
+    m_content_stack.set_hexpand(true);
+    m_content_stack.show();
 
-    m_chat_members_paned.pack1(*chat);
-    m_chat_members_paned.pack2(*member_list);
-    m_chat_members_paned.child_property_shrink(*member_list) = false;
-    m_chat_members_paned.child_property_resize(*member_list) = false;
+    m_chan_content_paned.pack1(*channel_list);
+    m_chan_content_paned.pack2(m_content_members_paned);
+    m_chan_content_paned.child_property_shrink(*channel_list) = false;
+    m_chan_content_paned.child_property_resize(*channel_list) = false;
+    m_chan_content_paned.set_position(200);
+    m_chan_content_paned.show();
+    m_content_box.add(m_chan_content_paned);
+
+    m_content_members_paned.pack1(m_content_stack);
+    m_content_members_paned.pack2(*member_list);
+    m_content_members_paned.child_property_shrink(*member_list) = false;
+    m_content_members_paned.child_property_resize(*member_list) = false;
     int w, h;
     get_default_size(w, h); // :s
-    m_chat_members_paned.set_position(w - m_chan_chat_paned.get_position() - 150);
-    m_chat_members_paned.show();
+    m_content_members_paned.set_position(w - m_chan_content_paned.get_position() - 150);
+    m_content_members_paned.show();
 
     add(m_main_box);
 }
