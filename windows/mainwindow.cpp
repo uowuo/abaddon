@@ -1,6 +1,5 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
-#include "../components/friendslist.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
