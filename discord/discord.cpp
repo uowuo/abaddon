@@ -842,12 +842,12 @@ void DiscordClient::SetUserAgent(std::string agent) {
     m_websocket.SetUserAgent(agent);
 }
 
-std::optional<PresenceStatus> DiscordClient::GetUserStatus(Snowflake id) const {
+PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
     auto it = m_user_to_status.find(id);
     if (it != m_user_to_status.end())
         return it->second;
 
-    return std::nullopt;
+    return PresenceStatus::Offline;
 }
 
 std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {

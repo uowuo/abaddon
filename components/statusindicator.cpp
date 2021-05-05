@@ -36,13 +36,8 @@ void StatusIndicator::CheckStatus() {
     get_style_context()->remove_class("dnd");
     get_style_context()->remove_class("idle");
     get_style_context()->remove_class("offline");
-    if (status.has_value()) {
-        get_style_context()->add_class(GetPresenceString(*status));
-        m_status = *status;
-    } else {
-        m_status = PresenceStatus::Offline;
-        get_style_context()->add_class("offline");
-    }
+    get_style_context()->add_class(GetPresenceString(status));
+    m_status = status;
 
     if (last_status != m_status)
         queue_draw();
