@@ -176,7 +176,7 @@ public:
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
 
-    std::optional<PresenceStatus> GetUserStatus(Snowflake id) const;
+    PresenceStatus GetUserStatus(Snowflake id) const;
 
     std::unordered_set<Snowflake> GetRelationships(RelationshipType type) const;
 
