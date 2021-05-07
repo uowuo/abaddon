@@ -1,6 +1,7 @@
 #pragma once
 #include <gtkmm.h>
 #include "../discord/relationship.hpp"
+#include "../discord/activity.hpp"
 
 class FriendsListAddComponent : public Gtk::Box {
 public:
@@ -45,8 +46,14 @@ public:
     Snowflake ID;
     RelationshipType Type;
     Glib::ustring Name;
+    PresenceStatus Status;
 
 private:
+    void UpdatePresenceLabel();
+    void OnPresenceUpdate(const UserData &user, PresenceStatus status);
+
+    Gtk::Label *m_status_lbl;
+
     Gtk::Menu m_menu;
     Gtk::MenuItem m_remove; // or cancel or ignore
     Gtk::MenuItem m_accept; // incoming

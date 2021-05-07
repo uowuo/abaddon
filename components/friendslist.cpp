@@ -5,8 +5,10 @@
 FriendsList::FriendsList()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , m_filter_mode(FILTER_FRIENDS) {
-    for (const auto &[id, type] : Abaddon::Get().GetDiscordClient().GetRelationships()) {
-        const auto user = Abaddon::Get().GetDiscordClient().GetUser(id);
+    auto &discord = Abaddon::Get().GetDiscordClient();
+
+    for (const auto &[id, type] : discord.GetRelationships()) {
+        const auto user = discord.GetUser(id);
         if (!user.has_value()) continue;
         auto *row = Gtk::manage(new FriendsListFriendRow(type, *user));
         m_list.add(*row);
@@ -81,7 +83,7 @@ bool FriendsList::ListFilterFunc(Gtk::ListBoxRow *row_) {
         case FILTER_FRIENDS:
             return row->Type == RelationshipType::Friend;
         case FILTER_ONLINE:
-            return false; // blah
+            return row->Type == RelationshipType::Friend && row->Status != PresenceStatus::Offline;
         case FILTER_PENDING:
             return row->Type == RelationshipType::PendingIncoming || row->Type == RelationshipType::PendingOutgoing;
         case FILTER_BLOCKED:
@@ -115,13 +117,17 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     : Name(data.Username + "#" + data.Discriminator)
     , Type(type)
     , ID(data.ID)
+    , Status(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID))
     , m_accept("Accept") {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
     auto *namelbl = Gtk::manage(new Gtk::Label(Name, Gtk::ALIGN_START));
-    auto *statuslbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
+    m_status_lbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     auto *lblbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_presence_update().connect(sigc::mem_fun(*this, &FriendsListFriendRow::OnPresenceUpdate));
 
     if (data.HasAnimatedAvatar()) {
         img->SetAnimated(true);
@@ -130,17 +136,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
         img->SetURL(data.GetAvatarURL("png", "32"));
     }
 
-    switch (Type) {
-        case RelationshipType::PendingIncoming:
-            statuslbl->set_text("Incoming Friend Request");
-            break;
-        case RelationshipType::PendingOutgoing:
-            statuslbl->set_text("Outgoing Friend Request");
-            break;
-        default:
-            statuslbl->set_text(GetPresenceDisplayString(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID)));
-            break;
-    }
+    UpdatePresenceLabel();
 
     AddWidgetMenuHandler(ev, m_menu, [this] {
         m_accept.set_visible(Type == RelationshipType::PendingIncoming);
@@ -178,7 +174,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     img->set_margin_end(5);
 
     lblbox->add(*namelbl);
-    lblbox->add(*statuslbl);
+    lblbox->add(*m_status_lbl);
 
     box->add(*img);
     box->add(*lblbox);
@@ -186,6 +182,27 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     ev->add(*box);
     add(*ev);
     show_all_children();
+}
+
+void FriendsListFriendRow::UpdatePresenceLabel() {
+    switch (Type) {
+        case RelationshipType::PendingIncoming:
+            m_status_lbl->set_text("Incoming Friend Request");
+            break;
+        case RelationshipType::PendingOutgoing:
+            m_status_lbl->set_text("Outgoing Friend Request");
+            break;
+        default:
+            m_status_lbl->set_text(GetPresenceDisplayString(Status));
+            break;
+    }
+}
+
+void FriendsListFriendRow::OnPresenceUpdate(const UserData &user, PresenceStatus status) {
+    if (user.ID != ID) return;
+    Status = status;
+    UpdatePresenceLabel();
+    changed();
 }
 
 FriendsListFriendRow::type_signal_remove FriendsListFriendRow::signal_action_remove() {
