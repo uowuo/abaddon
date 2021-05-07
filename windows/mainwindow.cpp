@@ -1,5 +1,6 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
+#include "../components/friendslist.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
@@ -39,8 +40,14 @@ MainWindow::MainWindow()
     m_menu_file_sub.append(m_menu_file_reload_css);
     m_menu_file_sub.append(m_menu_file_clear_cache);
 
+    m_menu_view.set_label("View");
+    m_menu_view.set_submenu(m_menu_view_sub);
+    m_menu_view_friends.set_label("Friends");
+    m_menu_view_sub.append(m_menu_view_friends);
+
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
+    m_menu_bar.append(m_menu_view);
     m_menu_bar.show_all();
 
     m_menu_discord_connect.signal_activate().connect([this] {
@@ -77,6 +84,13 @@ MainWindow::MainWindow()
 
     m_menu_discord_add_recipient.signal_activate().connect([this] {
         m_signal_action_add_recipient.emit(GetChatActiveChannel());
+    });
+
+    m_menu_view_friends.signal_activate().connect([this] {
+        auto *window = new FriendsListWindow;
+        window->set_position(Gtk::WIN_POS_CENTER);
+        window->show();
+        Abaddon::Get().ManageHeapWindow(window);
     });
 
     m_content_box.set_hexpand(true);

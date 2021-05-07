@@ -850,6 +850,10 @@ PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
     return PresenceStatus::Offline;
 }
 
+std::unordered_map<Snowflake, RelationshipType> DiscordClient::GetRelationships() const {
+    return m_user_relationships;
+}
+
 std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
     std::unordered_set<Snowflake> ret;
     for (const auto &[id, rtype] : m_user_relationships)

@@ -26,6 +26,20 @@ constexpr inline const char *GetPresenceString(PresenceStatus s) {
     return "";
 }
 
+constexpr inline const char* GetPresenceDisplayString(PresenceStatus s) {
+    switch (s) {
+        case PresenceStatus::Online:
+            return "Online";
+        case PresenceStatus::Offline:
+            return "Offline";
+        case PresenceStatus::Idle:
+            return "Away";
+        case PresenceStatus::DND:
+            return "Do Not Disturb";
+    }
+    return "";
+}
+
 enum class ActivityType : int {
     Game = 0,
     Streaming = 1,

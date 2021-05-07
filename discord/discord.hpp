@@ -178,6 +178,7 @@ public:
 
     PresenceStatus GetUserStatus(Snowflake id) const;
 
+    std::unordered_map<Snowflake, RelationshipType> GetRelationships() const;
     std::unordered_set<Snowflake> GetRelationships(RelationshipType type) const;
 
 private:

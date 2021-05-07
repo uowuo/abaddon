@@ -93,4 +93,8 @@ protected:
     Gtk::MenuItem m_menu_file_reload_settings;
     Gtk::MenuItem m_menu_file_reload_css;
     Gtk::MenuItem m_menu_file_clear_cache;
+
+    Gtk::MenuItem m_menu_view;
+    Gtk::Menu m_menu_view_sub;
+    Gtk::MenuItem m_menu_view_friends;
 };
