@@ -1,5 +1,6 @@
 #include "friendslist.hpp"
 #include "../abaddon.hpp"
+#include "lazyimage.hpp"
 
 FriendsList::FriendsList()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
@@ -116,11 +117,18 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     , ID(data.ID) {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    auto *img = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(32)));
+    auto *img = Gtk::manage(new LazyImage(32, 32, true));
     auto *namelbl = Gtk::manage(new Gtk::Label(Name, Gtk::ALIGN_START));
     const auto status = Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID);
     auto *statuslbl = Gtk::manage(new Gtk::Label(GetPresenceDisplayString(status), Gtk::ALIGN_START));
     auto *lblbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+
+    if (data.HasAnimatedAvatar()) {
+        img->SetAnimated(true);
+        img->SetURL(data.GetAvatarURL("gif", "32"));
+    } else {
+        img->SetURL(data.GetAvatarURL("png", "32"));
+    }
 
     AddWidgetMenuHandler(ev, m_menu, [this] {
         switch (Type) {
