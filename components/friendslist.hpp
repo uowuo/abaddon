@@ -49,12 +49,16 @@ public:
 private:
     Gtk::Menu m_menu;
     Gtk::MenuItem m_remove; // or cancel or ignore
+    Gtk::MenuItem m_accept; // incoming
 
     using type_signal_remove = sigc::signal<void>;
+    using type_signal_accept = sigc::signal<void>;
     type_signal_remove m_signal_remove;
+    type_signal_accept m_signal_accept;
 
 public:
     type_signal_remove signal_action_remove();
+    type_signal_accept signal_action_accept();
 };
 
 class FriendsListWindow : public Gtk::Window {

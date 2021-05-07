@@ -114,7 +114,8 @@ FriendsListAddComponent::FriendsListAddComponent()
 FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData &data)
     : Name(data.Username + "#" + data.Discriminator)
     , Type(type)
-    , ID(data.ID) {
+    , ID(data.ID)
+    , m_accept("Accept") {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
@@ -142,6 +143,8 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     }
 
     AddWidgetMenuHandler(ev, m_menu, [this] {
+        m_accept.set_visible(Type == RelationshipType::PendingIncoming);
+
         switch (Type) {
             case RelationshipType::Blocked:
             case RelationshipType::Friend:
@@ -161,6 +164,12 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     m_remove.signal_activate().connect([this] {
         m_signal_remove.emit();
     });
+
+    m_accept.signal_activate().connect([this] {
+        m_signal_accept.emit();
+    });
+
+    m_menu.append(m_accept);
     m_menu.append(m_remove);
     m_menu.show_all();
 
