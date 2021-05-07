@@ -464,7 +464,7 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk) {
     m_websocket.Send(nlohmann::json(msg));
     // fake message cuz we dont receive messages for ourself
     m_user_to_status[m_user_data.ID] = status;
-    m_signal_presence_update.emit(m_user_data.ID, status);
+    m_signal_presence_update.emit(GetUserData(), status);
 }
 
 void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj) {
@@ -475,7 +475,7 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const Activ
 
     m_websocket.Send(nlohmann::json(msg));
     m_user_to_status[m_user_data.ID] = status;
-    m_signal_presence_update.emit(m_user_data.ID, status);
+    m_signal_presence_update.emit(GetUserData(), status);
 }
 
 void DiscordClient::CreateDM(Snowflake user_id) {
@@ -1185,7 +1185,8 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
     if (cur.has_value()) {
         cur->update_from_json(data.User);
         m_store.SetUser(cur->ID, *cur);
-    }
+    } else
+        return;
 
     PresenceStatus e;
     if (data.StatusMessage == "online")
@@ -1199,7 +1200,7 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
 
     m_user_to_status[user_id] = e;
 
-    m_signal_presence_update.emit(user_id, e);
+    m_signal_presence_update.emit(*cur, e);
 }
 
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
@@ -1478,6 +1479,8 @@ void DiscordClient::HandleGatewayGuildJoinRequestDelete(const GatewayMessage &ms
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
+        const auto user = GetUser(p.UserID);
+        if (!user.has_value()) return; // should be sent in READY's `users`
         const auto s = p.Presence.Status;
         if (s == "online")
             m_user_to_status[p.UserID] = PresenceStatus::Online;
@@ -1487,7 +1490,7 @@ void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
             m_user_to_status[p.UserID] = PresenceStatus::Idle;
         else if (s == "dnd")
             m_user_to_status[p.UserID] = PresenceStatus::DND;
-        m_signal_presence_update.emit(p.UserID, m_user_to_status.at(p.UserID));
+        m_signal_presence_update.emit(*user, m_user_to_status.at(p.UserID));
     }
 }
 
