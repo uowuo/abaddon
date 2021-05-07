@@ -200,6 +200,9 @@ bool ChatWindow::OnInputSubmit(const Glib::ustring &text) {
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
+    if (text.size() == 0)
+        return false;
+
     if (m_active_channel.IsValid())
         m_signal_action_chat_submit.emit(text, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
     if (m_is_replying)
