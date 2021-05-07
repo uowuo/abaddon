@@ -124,33 +124,40 @@ MainWindow::MainWindow() {
     } else {
         m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
         m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-        m_chan_chat_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
-        m_chat_members_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
+        m_chan_content_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
+        m_content_members_paned = Gtk::manage(new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL));
+        m_content_stack = Gtk::manage(new Gtk::Stack);
+
+        m_main_box->show();
 
         m_content_box->set_hexpand(true);
         m_content_box->set_vexpand(true);
         m_content_box->show();
 
-        m_main_box->add(m_menu_bar);
-        m_main_box->add(*m_content_box);
-        m_main_box->show();
+        m_content_stack->add(*chat);
+        m_content_stack->set_vexpand(true);
+        m_content_stack->set_hexpand(true);
+        m_content_stack->show();
 
-        m_chan_chat_paned->pack1(*channel_list);
-        m_chan_chat_paned->pack2(*m_chat_members_paned);
-        m_chan_chat_paned->child_property_shrink(*channel_list) = false;
-        m_chan_chat_paned->child_property_resize(*channel_list) = false;
-        m_chan_chat_paned->set_position(200);
-        m_chan_chat_paned->show();
-        m_content_box->add(*m_chan_chat_paned);
+        m_chan_content_paned->pack1(*channel_list);
+        m_chan_content_paned->pack2(*m_content_members_paned);
+        m_chan_content_paned->child_property_shrink(*channel_list) = false;
+        m_chan_content_paned->child_property_resize(*channel_list) = false;
+        m_chan_content_paned->set_position(200);
+        m_chan_content_paned->show();
+        m_content_box->add(*m_chan_content_paned);
 
-        m_chat_members_paned->pack1(*chat);
-        m_chat_members_paned->pack2(*member_list);
-        m_chat_members_paned->child_property_shrink(*member_list) = false;
-        m_chat_members_paned->child_property_resize(*member_list) = false;
+        m_content_members_paned->pack1(*m_content_stack);
+        m_content_members_paned->pack2(*member_list);
+        m_content_members_paned->child_property_shrink(*member_list) = false;
+        m_content_members_paned->child_property_resize(*member_list) = false;
         int w, h;
         get_default_size(w, h); // :s
-        m_chat_members_paned->set_position(w - m_chan_chat_paned->get_position() - 150);
-        m_chat_members_paned->show();
+        m_content_members_paned->set_position(w - m_chan_content_paned->get_position() - 150);
+        m_content_members_paned->show();
+
+        m_main_box->add(m_menu_bar);
+        m_main_box->add(*m_content_box);
 
         add(*m_main_box);
     }

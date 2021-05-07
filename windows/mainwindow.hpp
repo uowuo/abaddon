@@ -69,8 +69,9 @@ protected:
     Gtk::Box *m_main_box;
     // normal
     Gtk::Box *m_content_box = nullptr;
-    Gtk::Paned *m_chan_chat_paned = nullptr;
-    Gtk::Paned *m_chat_members_paned = nullptr;
+    Gtk::Paned *m_chan_content_paned = nullptr;
+    Gtk::Paned *m_content_members_paned = nullptr;
+    Gtk::Stack *m_content_stack = nullptr;
 
     // mobile
     Gtk::StackSwitcher *m_switcher = nullptr;
