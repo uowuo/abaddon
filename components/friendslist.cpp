@@ -96,7 +96,7 @@ FriendsListAddComponent::FriendsListAddComponent()
     , m_label("Add a Friend", Gtk::ALIGN_START)
     , m_box(Gtk::ORIENTATION_HORIZONTAL)
     , m_add("Add")
-    , m_status("Failed to whatever lol", Gtk::ALIGN_START) {
+    , m_status("", Gtk::ALIGN_START) {
     m_box.add(m_entry);
     m_box.add(m_add);
     m_box.add(m_status);
@@ -119,8 +119,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
     auto *namelbl = Gtk::manage(new Gtk::Label(Name, Gtk::ALIGN_START));
-    const auto status = Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID);
-    auto *statuslbl = Gtk::manage(new Gtk::Label(GetPresenceDisplayString(status), Gtk::ALIGN_START));
+    auto *statuslbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     auto *lblbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 
     if (data.HasAnimatedAvatar()) {
@@ -128,6 +127,18 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
         img->SetURL(data.GetAvatarURL("gif", "32"));
     } else {
         img->SetURL(data.GetAvatarURL("png", "32"));
+    }
+
+    switch (Type) {
+        case RelationshipType::PendingIncoming:
+            statuslbl->set_text("Incoming Friend Request");
+            break;
+        case RelationshipType::PendingOutgoing:
+            statuslbl->set_text("Outgoing Friend Request");
+            break;
+        default:
+            statuslbl->set_text(GetPresenceDisplayString(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID)));
+            break;
     }
 
     AddWidgetMenuHandler(ev, m_menu, [this] {
