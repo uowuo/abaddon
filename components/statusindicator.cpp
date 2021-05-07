@@ -18,8 +18,8 @@ StatusIndicator::StatusIndicator(Snowflake user_id)
     get_style_context()->add_class("status-indicator");
 
     Abaddon::Get().GetDiscordClient().signal_guild_member_list_update().connect(sigc::hide(sigc::mem_fun(*this, &StatusIndicator::CheckStatus)));
-    auto cb = [this](Snowflake id, PresenceStatus status) {
-        if (id == m_id) CheckStatus();
+    auto cb = [this](const UserData &user, PresenceStatus status) {
+        if (user.ID == m_id) CheckStatus();
     };
     Abaddon::Get().GetDiscordClient().signal_presence_update().connect(sigc::track_obj(cb, *this));
 

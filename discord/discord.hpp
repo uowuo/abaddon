@@ -308,7 +308,7 @@ public:
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_guild_ban_add;       // guild id, user id
     typedef sigc::signal<void, InviteData> type_signal_invite_create;
     typedef sigc::signal<void, InviteDeleteObject> type_signal_invite_delete;
-    typedef sigc::signal<void, Snowflake, PresenceStatus> type_signal_presence_update;
+    typedef sigc::signal<void, UserData, PresenceStatus> type_signal_presence_update;
     typedef sigc::signal<void, Snowflake, std::string> type_signal_note_update;
     typedef sigc::signal<void, Snowflake, std::vector<EmojiData>> type_signal_guild_emojis_update; // guild id
     typedef sigc::signal<void, GuildJoinRequestCreateData> type_signal_guild_join_request_create;
