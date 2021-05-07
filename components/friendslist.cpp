@@ -122,7 +122,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
-    auto *namelbl = Gtk::manage(new Gtk::Label(Name, Gtk::ALIGN_START));
+    auto *namelbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     m_status_lbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     auto *lblbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 
@@ -135,6 +135,8 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     } else {
         img->SetURL(data.GetAvatarURL("png", "32"));
     }
+
+    namelbl->set_markup(data.GetEscapedBoldName());
 
     UpdatePresenceLabel();
 
@@ -207,6 +209,10 @@ void FriendsListFriendRow::OnPresenceUpdate(const UserData &user, PresenceStatus
 
 FriendsListFriendRow::type_signal_remove FriendsListFriendRow::signal_action_remove() {
     return m_signal_remove;
+}
+
+FriendsListFriendRow::type_signal_accept FriendsListFriendRow::signal_action_accept() {
+    return type_signal_accept();
 }
 
 FriendsListWindow::FriendsListWindow() {
