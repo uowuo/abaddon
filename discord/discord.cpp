@@ -691,6 +691,12 @@ std::optional<GuildApplicationData> DiscordClient::GetGuildApplication(Snowflake
     return it->second;
 }
 
+void DiscordClient::RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback) {
+    m_http.MakeDELETE("/users/@me/relationships/" + std::to_string(id), [this, callback](const http::response_type &response) {
+        callback(CheckCode(response));
+    });
+}
+
 bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
     const auto guild = *GetGuild(guild_id);
     if (guild.OwnerID == user_id) return true;
@@ -860,6 +866,12 @@ std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType t
         if (rtype == type)
             ret.insert(id);
     return ret;
+}
+
+std::optional<RelationshipType> DiscordClient::GetRelationship(Snowflake id) const {
+    if (auto it = m_user_relationships.find(id); it != m_user_relationships.end())
+        return it->second;
+    return std::nullopt;
 }
 
 void DiscordClient::HandleGatewayMessageRaw(std::string str) {

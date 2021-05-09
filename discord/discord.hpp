@@ -138,6 +138,7 @@ public:
     void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
     void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback);
     std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
+    void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -180,6 +181,7 @@ public:
 
     std::unordered_map<Snowflake, RelationshipType> GetRelationships() const;
     std::unordered_set<Snowflake> GetRelationships(RelationshipType type) const;
+    std::optional<RelationshipType> GetRelationship(Snowflake id) const;
 
 private:
     static const constexpr int InflateChunkSize = 0x10000;

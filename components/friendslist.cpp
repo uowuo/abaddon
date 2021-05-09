@@ -13,7 +13,7 @@ FriendsList::FriendsList()
     for (const auto &[id, type] : discord.GetRelationships()) {
         const auto user = discord.GetUser(id);
         if (!user.has_value()) continue;
-        auto *row = Gtk::manage(new FriendsListFriendRow(type, *user));
+        auto *row = MakeRow(*user, type);
         m_list.add(*row);
         row->show();
     }
@@ -72,6 +72,12 @@ FriendsList::FriendsList()
     m_list.show();
 }
 
+FriendsListFriendRow *FriendsList::MakeRow(const UserData &user, RelationshipType type) {
+    auto *row = Gtk::manage(new FriendsListFriendRow(type, user));
+    row->signal_action_remove().connect(sigc::bind(sigc::mem_fun(*this, &FriendsList::OnActionRemove), user.ID));
+    return row;
+}
+
 void FriendsList::OnRelationshipAdd(const RelationshipAddData &data) {
     for (auto *row_ : m_list.get_children()) {
         auto *row = dynamic_cast<FriendsListFriendRow *>(row_);
@@ -80,7 +86,7 @@ void FriendsList::OnRelationshipAdd(const RelationshipAddData &data) {
         break;
     }
 
-    auto *row = Gtk::manage(new FriendsListFriendRow(data.Type, data.User));
+    auto *row = MakeRow(data.User, data.Type);
     m_list.add(*row);
     row->show();
 }
@@ -91,6 +97,39 @@ void FriendsList::OnRelationshipRemove(Snowflake id, RelationshipType type) {
         if (row == nullptr || row->ID != id) continue;
         delete row;
         return;
+    }
+}
+
+void FriendsList::OnActionRemove(Snowflake id) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto user = discord.GetUser(id);
+    if (auto *window = dynamic_cast<Gtk::Window *>(get_toplevel())) {
+        Glib::ustring str;
+        switch (*discord.GetRelationship(id)) {
+            case RelationshipType::Blocked:
+                str = "Are you sure you want to unblock " + user->Username + "#" + user->Discriminator + "?";
+                break;
+            case RelationshipType::Friend:
+                str = "Are you sure you want to remove " + user->Username + "#" + user->Discriminator + "?";
+                break;
+            case RelationshipType::PendingIncoming:
+                str = "Are you sure you want to ignore " + user->Username + "#" + user->Discriminator + "?";
+                break;
+            case RelationshipType::PendingOutgoing:
+                str = "Are you sure you want to cancel your request to " + user->Username + "#" + user->Discriminator + "?";
+                break;
+            default:
+                break;
+        }
+        if (Abaddon::Get().ShowConfirm(str, window)) {
+            const auto cb = [this, window](bool success) {
+                if (success) return;
+                Gtk::MessageDialog dlg(*window, "Failed to remove user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                dlg.set_position(Gtk::WIN_POS_CENTER);
+                dlg.run();
+            };
+            discord.RemoveRelationship(id, sigc::track_obj(cb, *this));
+        }
     }
 }
 

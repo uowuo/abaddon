@@ -14,13 +14,18 @@ private:
     Gtk::Box m_box;
 };
 
+class FriendsListFriendRow;
 class FriendsList : public Gtk::Box {
 public:
     FriendsList();
 
 private:
+    FriendsListFriendRow *MakeRow(const UserData &user, RelationshipType type);
+
     void OnRelationshipAdd(const RelationshipAddData &data);
     void OnRelationshipRemove(Snowflake id, RelationshipType type);
+
+    void OnActionRemove(Snowflake id);
 
     enum FilterMode {
         FILTER_FRIENDS,
