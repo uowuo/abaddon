@@ -69,6 +69,7 @@ enum class GatewayEvent : int {
     GUILD_JOIN_REQUEST_UPDATE,
     GUILD_JOIN_REQUEST_DELETE,
     RELATIONSHIP_REMOVE,
+    RELATIONSHIP_ADD,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -633,4 +634,14 @@ struct RelationshipRemoveData {
     RelationshipType Type;
 
     friend void from_json(const nlohmann::json &j, RelationshipRemoveData &m);
+};
+
+struct RelationshipAddData {
+    Snowflake ID;
+    // Nickname; same deal as the other comment somewhere else
+    RelationshipType Type;
+    UserData User;
+    // std::optional<bool> ShouldNotify; // i guess if the client should send a notification. not worth caring about
+
+    friend void from_json(const nlohmann::json &j, RelationshipAddData &m);
 };

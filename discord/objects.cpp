@@ -457,3 +457,9 @@ void from_json(const nlohmann::json &j, RelationshipRemoveData &m) {
     JS_D("id", m.ID);
     JS_D("type", m.Type);
 }
+
+void from_json(const nlohmann::json &j, RelationshipAddData &m) {
+    JS_D("id", m.ID);
+    JS_D("type", m.Type);
+    JS_D("user", m.User);
+}
