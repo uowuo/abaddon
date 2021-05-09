@@ -452,3 +452,8 @@ void from_json(const nlohmann::json &j, RateLimitedResponse &m) {
     JS_O("message", m.Message);
     JS_D("retry_after", m.RetryAfter);
 }
+
+void from_json(const nlohmann::json &j, RelationshipRemoveData &m) {
+    JS_D("id", m.ID);
+    JS_D("type", m.Type);
+}

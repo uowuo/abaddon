@@ -223,6 +223,7 @@ private:
     void HandleGatewayGuildJoinRequestCreate(const GatewayMessage &msg);
     void HandleGatewayGuildJoinRequestUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildJoinRequestDelete(const GatewayMessage &msg);
+    void HandleGatewayRelationshipRemove(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -314,6 +315,7 @@ public:
     typedef sigc::signal<void, GuildJoinRequestCreateData> type_signal_guild_join_request_create;
     typedef sigc::signal<void, GuildJoinRequestUpdateData> type_signal_guild_join_request_update;
     typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
+    typedef sigc::signal<void, Snowflake, RelationshipType> type_signal_relationship_remove;
     typedef sigc::signal<void, Message> type_signal_message_sent;
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                              // bool true if reconnecting
@@ -347,6 +349,7 @@ public:
     type_signal_guild_join_request_create signal_guild_join_request_create();
     type_signal_guild_join_request_update signal_guild_join_request_update();
     type_signal_guild_join_request_delete signal_guild_join_request_delete();
+    type_signal_relationship_remove signal_relationship_remove();
     type_signal_message_sent signal_message_sent();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
@@ -381,6 +384,7 @@ protected:
     type_signal_guild_join_request_create m_signal_guild_join_request_create;
     type_signal_guild_join_request_update m_signal_guild_join_request_update;
     type_signal_guild_join_request_delete m_signal_guild_join_request_delete;
+    type_signal_relationship_remove m_signal_relationship_remove;
     type_signal_message_sent m_signal_message_sent;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;

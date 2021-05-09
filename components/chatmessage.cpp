@@ -143,8 +143,10 @@ void ChatMessageItemContainer::UpdateReactions() {
 }
 
 void ChatMessageItemContainer::SetFailed() {
-    m_text_component->get_style_context()->remove_class("pending");
-    m_text_component->get_style_context()->add_class("failed");
+    if (m_text_component != nullptr) {
+        m_text_component->get_style_context()->remove_class("pending");
+        m_text_component->get_style_context()->add_class("failed");
+    }
 }
 
 void ChatMessageItemContainer::UpdateAttributes() {
