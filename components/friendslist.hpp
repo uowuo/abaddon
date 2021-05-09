@@ -20,6 +20,8 @@ public:
     FriendsList();
 
 private:
+    void OnRelationshipRemove(Snowflake id, RelationshipType type);
+
     enum FilterMode {
         FILTER_FRIENDS,
         FILTER_ONLINE,
