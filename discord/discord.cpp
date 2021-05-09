@@ -1035,6 +1035,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_JOIN_REQUEST_DELETE: {
                         HandleGatewayGuildJoinRequestDelete(m);
                     } break;
+                    case GatewayEvent::RELATIONSHIP_REMOVE: {
+                        HandleGatewayRelationshipRemove(m);
+                    } break;
                 }
             } break;
             default:
@@ -1476,6 +1479,12 @@ void DiscordClient::HandleGatewayGuildJoinRequestDelete(const GatewayMessage &ms
     m_signal_guild_join_request_delete.emit(data);
 }
 
+void DiscordClient::HandleGatewayRelationshipRemove(const GatewayMessage &msg) {
+    RelationshipRemoveData data = msg.Data;
+    m_user_relationships.erase(data.ID);
+    m_signal_relationship_remove.emit(data.ID, data.Type);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -1811,6 +1820,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_JOIN_REQUEST_CREATE"] = GatewayEvent::GUILD_JOIN_REQUEST_CREATE;
     m_event_map["GUILD_JOIN_REQUEST_UPDATE"] = GatewayEvent::GUILD_JOIN_REQUEST_UPDATE;
     m_event_map["GUILD_JOIN_REQUEST_DELETE"] = GatewayEvent::GUILD_JOIN_REQUEST_DELETE;
+    m_event_map["RELATIONSHIP_REMOVE"] = GatewayEvent::RELATIONSHIP_REMOVE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -1931,6 +1941,10 @@ DiscordClient::type_signal_guild_join_request_update DiscordClient::signal_guild
 
 DiscordClient::type_signal_guild_join_request_delete DiscordClient::signal_guild_join_request_delete() {
     return m_signal_guild_join_request_delete;
+}
+
+DiscordClient::type_signal_relationship_remove DiscordClient::signal_relationship_remove() {
+    return m_signal_relationship_remove;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

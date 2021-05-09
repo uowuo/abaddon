@@ -68,6 +68,7 @@ enum class GatewayEvent : int {
     GUILD_JOIN_REQUEST_CREATE,
     GUILD_JOIN_REQUEST_UPDATE,
     GUILD_JOIN_REQUEST_DELETE,
+    RELATIONSHIP_REMOVE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -625,4 +626,11 @@ struct RateLimitedResponse {
     float RetryAfter;
 
     friend void from_json(const nlohmann::json &j, RateLimitedResponse &m);
+};
+
+struct RelationshipRemoveData {
+    Snowflake ID;
+    RelationshipType Type;
+
+    friend void from_json(const nlohmann::json &j, RelationshipRemoveData &m);
 };
