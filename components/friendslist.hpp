@@ -1,7 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../discord/relationship.hpp"
-#include "../discord/activity.hpp"
+#include "../discord/objects.hpp"
 
 class FriendsListAddComponent : public Gtk::Box {
 public:
@@ -20,6 +19,7 @@ public:
     FriendsList();
 
 private:
+    void OnRelationshipAdd(const RelationshipAddData &data);
     void OnRelationshipRemove(Snowflake id, RelationshipType type);
 
     enum FilterMode {

@@ -7,6 +7,7 @@ FriendsList::FriendsList()
     , m_filter_mode(FILTER_FRIENDS) {
     auto &discord = Abaddon::Get().GetDiscordClient();
 
+    discord.signal_relationship_add().connect(sigc::mem_fun(*this, &FriendsList::OnRelationshipAdd));
     discord.signal_relationship_remove().connect(sigc::mem_fun(*this, &FriendsList::OnRelationshipRemove));
 
     for (const auto &[id, type] : discord.GetRelationships()) {
@@ -69,6 +70,19 @@ FriendsList::FriendsList()
     m_scroll.show();
     m_buttons.show();
     m_list.show();
+}
+
+void FriendsList::OnRelationshipAdd(const RelationshipAddData &data) {
+    for (auto *row_ : m_list.get_children()) {
+        auto *row = dynamic_cast<FriendsListFriendRow *>(row_);
+        if (row == nullptr || row->ID != data.ID) continue;
+        delete row;
+        break;
+    }
+
+    auto *row = Gtk::manage(new FriendsListFriendRow(data.Type, data.User));
+    m_list.add(*row);
+    row->show();
 }
 
 void FriendsList::OnRelationshipRemove(Snowflake id, RelationshipType type) {
