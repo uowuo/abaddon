@@ -7,11 +7,16 @@ public:
     FriendsListAddComponent();
 
 private:
+    void Submit();
+    bool OnKeyPress(GdkEventKey *e);
+
     Gtk::Label m_label;
     Gtk::Label m_status;
     Gtk::Entry m_entry;
     Gtk::Button m_add;
     Gtk::Box m_box;
+
+    bool m_requesting = false;
 };
 
 class FriendsListFriendRow;

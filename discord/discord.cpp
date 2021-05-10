@@ -697,6 +697,25 @@ void DiscordClient::RemoveRelationship(Snowflake id, sigc::slot<void(bool succes
     });
 }
 
+void DiscordClient::SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback) {
+    FriendRequestObject obj;
+    obj.Username = username;
+    obj.Discriminator = discriminator;
+    m_http.MakePOST("/users/@me/relationships", nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(true, DiscordError::NONE);
+        } else {
+            auto code = DiscordError::GENERIC;
+            try {
+                // pull me somewhere else?
+                const auto data = nlohmann::json::parse(response.text);
+                data.at("code").get_to(code);
+            } catch (...) {}
+            callback(false, code);
+        }
+    });
+}
+
 bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
     const auto guild = *GetGuild(guild_id);
     if (guild.OwnerID == user_id) return true;

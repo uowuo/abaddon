@@ -463,3 +463,8 @@ void from_json(const nlohmann::json &j, RelationshipAddData &m) {
     JS_D("type", m.Type);
     JS_D("user", m.User);
 }
+
+void to_json(nlohmann::json &j, const FriendRequestObject &m) {
+    j["username"] = m.Username;
+    j["discriminator"] = m.Discriminator;
+}

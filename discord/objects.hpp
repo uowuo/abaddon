@@ -19,6 +19,7 @@
 #include "ban.hpp"
 #include "auditlog.hpp"
 #include "relationship.hpp"
+#include "errors.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -644,4 +645,11 @@ struct RelationshipAddData {
     // std::optional<bool> ShouldNotify; // i guess if the client should send a notification. not worth caring about
 
     friend void from_json(const nlohmann::json &j, RelationshipAddData &m);
+};
+
+struct FriendRequestObject {
+    std::string Username;
+    int Discriminator;
+
+    friend void to_json(nlohmann::json &j, const FriendRequestObject &m);
 };

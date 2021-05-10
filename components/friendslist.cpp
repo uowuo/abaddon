@@ -2,6 +2,8 @@
 #include "../abaddon.hpp"
 #include "lazyimage.hpp"
 
+using namespace std::string_literals;
+
 FriendsList::FriendsList()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , m_filter_mode(FILTER_FRIENDS) {
@@ -167,14 +169,52 @@ FriendsListAddComponent::FriendsListAddComponent()
     m_box.add(m_add);
     m_box.add(m_status);
 
+    m_add.signal_clicked().connect(sigc::mem_fun(*this, &FriendsListAddComponent::Submit));
+
     m_label.set_halign(Gtk::ALIGN_CENTER);
 
     m_entry.set_placeholder_text("Enter a Username#1234");
+    m_entry.signal_key_press_event().connect(sigc::mem_fun(*this, &FriendsListAddComponent::OnKeyPress), false);
 
     add(m_label);
     add(m_box);
 
     show_all_children();
+}
+
+void FriendsListAddComponent::Submit() {
+    if (m_requesting) return;
+
+    auto text = m_entry.get_text();
+    m_label.set_text("Invalid input"); // cheeky !!
+    m_entry.set_text("");
+    const auto hashpos = text.find("#");
+    if (hashpos == Glib::ustring::npos) return;
+    const auto username = text.substr(0, hashpos);
+    const auto discriminator = text.substr(hashpos + 1);
+    if (username.size() == 0 || discriminator.size() != 4) return;
+    if (discriminator.find_first_not_of("0123456789") != Glib::ustring::npos) return;
+
+    m_requesting = true;
+    m_label.set_text("Hang on...");
+
+    const auto cb = [this](bool success, DiscordError code) {
+        m_requesting = false;
+        if (success) {
+            m_label.set_text("Success!");
+        } else {
+            m_label.set_text("Failed: "s + GetDiscordErrorDisplayString(code));
+        }
+    };
+    Abaddon::Get().GetDiscordClient().SendFriendRequest(username, std::stoul(discriminator), sigc::track_obj(cb, *this));
+}
+
+bool FriendsListAddComponent::OnKeyPress(GdkEventKey *e) {
+    if (e->keyval == GDK_KEY_Return) {
+        Submit();
+        return true;
+    }
+    return false;
 }
 
 FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData &data)

@@ -139,6 +139,7 @@ public:
     void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback);
     std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
     void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
+    void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
