@@ -97,4 +97,5 @@ protected:
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_friends;
+    void OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 };

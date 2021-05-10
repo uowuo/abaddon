@@ -44,6 +44,7 @@ MainWindow::MainWindow()
     m_menu_view.set_submenu(m_menu_view_sub);
     m_menu_view_friends.set_label("Friends");
     m_menu_view_sub.append(m_menu_view_friends);
+    m_menu_view_sub.signal_popped_up().connect(sigc::mem_fun(*this, &MainWindow::OnViewSubmenuPopup));
 
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
@@ -270,6 +271,10 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     m_menu_discord_add_recipient.set_visible(false);
     if (channel.has_value() && channel->GetDMRecipients().size() + 1 < 10)
         m_menu_discord_add_recipient.set_visible(channel->Type == ChannelType::GROUP_DM);
+}
+
+void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    m_menu_view_friends.set_sensitive(Abaddon::Get().GetDiscordClient().IsStarted());
 }
 
 ChannelList *MainWindow::GetChannelList() {
