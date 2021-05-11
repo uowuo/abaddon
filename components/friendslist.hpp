@@ -30,6 +30,7 @@ private:
     void OnRelationshipAdd(const RelationshipAddData &data);
     void OnRelationshipRemove(Snowflake id, RelationshipType type);
 
+    void OnActionAccept(Snowflake id);
     void OnActionRemove(Snowflake id);
 
     enum FilterMode {

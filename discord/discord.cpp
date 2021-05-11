@@ -702,17 +702,19 @@ void DiscordClient::SendFriendRequest(const Glib::ustring &username, int discrim
     obj.Username = username;
     obj.Discriminator = discriminator;
     m_http.MakePOST("/users/@me/relationships", nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
-        if (CheckCode(response, 204)) {
+        if (CheckCode(response, 204))
             callback(true, DiscordError::NONE);
-        } else {
-            auto code = DiscordError::GENERIC;
-            try {
-                // pull me somewhere else?
-                const auto data = nlohmann::json::parse(response.text);
-                data.at("code").get_to(code);
-            } catch (...) {}
-            callback(false, code);
-        }
+        else
+            callback(false, GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::PutRelationship(Snowflake id, sigc::slot<void(bool success, DiscordError code)> callback) {
+    m_http.MakePUT("/users/@me/relationships/" + std::to_string(id), "{}", [this, callback](const http::response_type &response) {
+        if (CheckCode(response, 204))
+            callback(true, DiscordError::NONE);
+        else
+            callback(false, GetCodeFromResponse(response));
     });
 }
 
@@ -1100,6 +1102,15 @@ void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
         SendResume();
     } else
         SendIdentify();
+}
+
+DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &response) {
+    try {
+        // pull me somewhere else?
+        const auto data = nlohmann::json::parse(response.text);
+        return data.at("code").get<DiscordError>();
+    } catch (...) {}
+    return DiscordError::GENERIC;
 }
 
 void DiscordClient::ProcessNewGuild(GuildData &guild) {

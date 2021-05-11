@@ -468,3 +468,7 @@ void to_json(nlohmann::json &j, const FriendRequestObject &m) {
     j["username"] = m.Username;
     j["discriminator"] = m.Discriminator;
 }
+
+void to_json(nlohmann::json &j, const PutRelationshipObject &m) {
+    JS_IF("type", m.Type);
+}

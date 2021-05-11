@@ -653,3 +653,9 @@ struct FriendRequestObject {
 
     friend void to_json(nlohmann::json &j, const FriendRequestObject &m);
 };
+
+struct PutRelationshipObject {
+    std::optional<RelationshipType> Type;
+
+    friend void to_json(nlohmann::json &j, const PutRelationshipObject &m);
+};

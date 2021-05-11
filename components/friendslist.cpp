@@ -77,6 +77,7 @@ FriendsList::FriendsList()
 FriendsListFriendRow *FriendsList::MakeRow(const UserData &user, RelationshipType type) {
     auto *row = Gtk::manage(new FriendsListFriendRow(type, user));
     row->signal_action_remove().connect(sigc::bind(sigc::mem_fun(*this, &FriendsList::OnActionRemove), user.ID));
+    row->signal_action_accept().connect(sigc::bind(sigc::mem_fun(*this, &FriendsList::OnActionAccept), user.ID));
     return row;
 }
 
@@ -100,6 +101,17 @@ void FriendsList::OnRelationshipRemove(Snowflake id, RelationshipType type) {
         delete row;
         return;
     }
+}
+
+void FriendsList::OnActionAccept(Snowflake id) {
+    const auto cb = [this](bool success, DiscordError code) {
+        if (!success) {
+            Gtk::MessageDialog dlg(*dynamic_cast<Gtk::Window *>(get_toplevel()), "Failed to accept", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            dlg.set_position(Gtk::WIN_POS_CENTER);
+            dlg.run();
+        }
+    };
+    Abaddon::Get().GetDiscordClient().PutRelationship(id, sigc::track_obj(cb, *this));
 }
 
 void FriendsList::OnActionRemove(Snowflake id) {
@@ -316,7 +328,7 @@ FriendsListFriendRow::type_signal_remove FriendsListFriendRow::signal_action_rem
 }
 
 FriendsListFriendRow::type_signal_accept FriendsListFriendRow::signal_action_accept() {
-    return type_signal_accept();
+    return m_signal_accept;
 }
 
 FriendsListWindow::FriendsListWindow() {

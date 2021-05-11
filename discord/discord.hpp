@@ -140,6 +140,7 @@ public:
     std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
     void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
     void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback);
+    void PutRelationship(Snowflake id, sigc::slot<void(bool success, DiscordError code)> callback); // send fr by id, accept incoming
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -189,6 +190,8 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
+
+    static DiscordError GetCodeFromResponse(const http::response_type &response);
 
     void ProcessNewGuild(GuildData &guild);
 
