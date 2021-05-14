@@ -1,6 +1,5 @@
 #include "guildsettingswindow.hpp"
 #include "../abaddon.hpp"
-#include "../components/inotifyswitched.hpp"
 
 GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
@@ -41,11 +40,6 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     m_switcher.set_hexpand(true);
     m_switcher.set_margin_top(10);
     m_switcher.show();
-
-    m_stack.property_visible_child().signal_changed().connect([this]() {
-        if (auto *w = dynamic_cast<INotifySwitched *>(m_stack.property_visible_child().get_value()))
-            w->on_switched_to();
-    });
 
     m_pane_info.show();
     m_pane_members.show();

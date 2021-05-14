@@ -1,15 +1,13 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../components/inotifyswitched.hpp"
 #include "../../discord/emoji.hpp"
 
-class GuildSettingsEmojisPane : public Gtk::Box
-    , public INotifySwitched {
+class GuildSettingsEmojisPane : public Gtk::Box {
 public:
     GuildSettingsEmojisPane(Snowflake guild_id);
 
 private:
-    void on_switched_to() override;
+    void OnMap();
 
     bool m_requested = false;
 

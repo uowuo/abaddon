@@ -5,6 +5,7 @@ using namespace std::string_literals;
 
 GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)
     : GuildID(id) {
+    signal_map().connect(sigc::mem_fun(*this, &GuildSettingsAuditLogPane::OnMap));
     set_name("guild-audit-log-pane");
     set_hexpand(true);
     set_vexpand(true);
@@ -14,7 +15,7 @@ GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)
     add(m_list);
 }
 
-void GuildSettingsAuditLogPane::on_switched_to() {
+void GuildSettingsAuditLogPane::OnMap() {
     if (m_requested) return;
     m_requested = true;
 
@@ -33,7 +34,11 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         auto label = Gtk::manage(new Gtk::Label);
         label->set_ellipsize(Pango::ELLIPSIZE_END);
 
-        auto user = *discord.GetUser(entry.UserID);
+        Glib::ustring user_markup = "<b>Unknown User</b>";
+        if (entry.UserID.has_value()) {
+            if (auto user = discord.GetUser(*entry.UserID); user.has_value())
+                user_markup = discord.GetUser(*entry.UserID)->GetEscapedBoldString<false>();
+        }
 
         // spaghetti moment
         Glib::ustring markup;
@@ -41,7 +46,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         switch (entry.Type) {
             case AuditLogActionType::GUILD_UPDATE: {
                 markup =
-                    user.GetEscapedBoldString<false>() +
+                    user_markup +
                     " made changes to <b>" +
                     Glib::Markup::escape_text(guild.Name) +
                     "</b>";
@@ -63,7 +68,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::CHANNEL_CREATE: {
                 const auto type = *entry.GetNewFromKey<ChannelType>("type");
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " created a " + (type == ChannelType::GUILD_VOICE ? "voice" : "text") +
                          " channel <b>#" +
                          Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")) +
@@ -83,12 +88,12 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_UPDATE: {
                 const auto target_channel = discord.GetChannel(entry.TargetID);
                 if (target_channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " made changes to <b>#" +
                              Glib::Markup::escape_text(*target_channel->Name) +
                              "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " made changes to <b>&lt;#" +
                              entry.TargetID +
                              "&gt;</b>";
@@ -126,7 +131,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                     }
             } break;
             case AuditLogActionType::CHANNEL_DELETE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " removed <b>#" +
                          Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) +
                          "</b>";
@@ -134,11 +139,11 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_OVERWRITE_CREATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " created channel overrides for <b>#" +
                              Glib::Markup::escape_text(*channel->Name) + "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " created channel overrides for <b>&lt;#" +
                              entry.TargetID + "&gt;</b>";
                 }
@@ -146,11 +151,11 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_OVERWRITE_UPDATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " updated channel overrides for <b>#" +
                              Glib::Markup::escape_text(*channel->Name) + "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " updated channel overrides for <b>&lt;#" +
                              entry.TargetID + "&gt;</b>";
                 }
@@ -158,24 +163,24 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_OVERWRITE_DELETE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " removed channel overrides for <b>#" +
                              Glib::Markup::escape_text(*channel->Name) + "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " removed channel overrides for <b>&lt;#" +
                              entry.TargetID + "&gt;</b>";
                 }
             } break;
             case AuditLogActionType::MEMBER_KICK: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " kicked <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_PRUNE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " pruned <b>" +
                          *entry.Options->MembersRemoved +
                          "</b> members";
@@ -185,21 +190,21 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::MEMBER_BAN_ADD: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " banned <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_BAN_REMOVE: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " removed the ban for <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_UPDATE: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " updated <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
@@ -221,7 +226,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::MEMBER_ROLE_UPDATE: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " updated roles for <b>" +
                          target_user->GetEscapedString() + "</b>";
                 if (entry.Changes.has_value())
@@ -239,7 +244,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::MEMBER_MOVE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " moved <b>" +
                          *entry.Options->Count +
                          " user" +
@@ -249,27 +254,27 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_DISCONNECT: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " disconnected <b>" +
                          *entry.Options->Count +
                          "</b> users from voice";
             } break;
             case AuditLogActionType::BOT_ADD: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " added <b>" +
                          target_user->GetEscapedString() +
                          "</b> to the server";
             } break;
             case AuditLogActionType::ROLE_CREATE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " created the role <b>" +
                          *entry.GetNewFromKey<std::string>("name") +
                          "</b>";
             } break;
             case AuditLogActionType::ROLE_UPDATE: {
                 const auto role = discord.GetRole(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " updated the role <b>" +
                          (role.has_value() ? Glib::Markup::escape_text(role->Name) : Glib::ustring(entry.TargetID)) +
                          "</b>";
@@ -297,14 +302,14 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                     }
             } break;
             case AuditLogActionType::ROLE_DELETE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " deleted the role <b>" +
                          *entry.GetOldFromKey<std::string>("name") +
                          "</b>";
             } break;
             case AuditLogActionType::INVITE_CREATE: {
                 const auto code = *entry.GetNewFromKey<std::string>("code");
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " created an invite <b>" + code + "</b>";
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
@@ -328,13 +333,13 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                     }
             } break;
             case AuditLogActionType::INVITE_DELETE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " deleted an invite <b>" +
                          *entry.GetOldFromKey<std::string>("code") +
                          "</b>";
             } break;
             case AuditLogActionType::WEBHOOK_CREATE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " created the webhook <b>" +
                          Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")) +
                          "</b>";
@@ -356,12 +361,12 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                         webhookptr = &webhook;
                 }
                 if (webhookptr != nullptr) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " updated the webhook <b>" +
                              Glib::Markup::escape_text(webhookptr->Name) +
                              "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " updated a webhook";
                 }
                 if (entry.Changes.has_value())
@@ -385,19 +390,19 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                     }
             } break;
             case AuditLogActionType::WEBHOOK_DELETE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " deleted the webhook <b>" +
                          Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) +
                          "</b>";
             } break;
             case AuditLogActionType::EMOJI_CREATE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " created the emoji <b>" +
                          Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")) +
                          "</b>";
             } break;
             case AuditLogActionType::EMOJI_UPDATE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " updated the emoji <b>" +
                          Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) +
                          "</b>";
@@ -408,7 +413,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                        "</b>");
             } break;
             case AuditLogActionType::EMOJI_DELETE: {
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " deleted the emoji <b>" +
                          Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) +
                          "</b>";
@@ -417,26 +422,26 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
                 const auto count = *entry.Options->Count;
                 if (channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " deleted <b>" + count + "</b> messages in <b>#" +
                              Glib::Markup::escape_text(*channel->Name) +
                              "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " deleted <b>" + count + "</b> messages";
                 }
             } break;
             case AuditLogActionType::MESSAGE_BULK_DELETE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " deleted <b>" +
                              *entry.Options->Count +
                              "</b> messages in <b>#" +
                              Glib::Markup::escape_text(*channel->Name) +
                              "</b>";
                 } else {
-                    markup = user.GetEscapedBoldString<false>() +
+                    markup = user_markup +
                              " deleted <b>" +
                              *entry.Options->Count +
                              "</b> messages";
@@ -444,17 +449,93 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::MESSAGE_PIN: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " pinned a message by <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
             } break;
             case AuditLogActionType::MESSAGE_UNPIN: {
                 const auto target_user = discord.GetUser(entry.TargetID);
-                markup = user.GetEscapedBoldString<false>() +
+                markup = user_markup +
                          " unpinned a message by <b>" +
                          target_user->GetEscapedString() +
                          "</b>";
+            } break;
+            case AuditLogActionType::STAGE_INSTANCE_CREATE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " started the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " started the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
+
+                if (entry.Changes.has_value()) {
+                    for (const auto &change : *entry.Changes) {
+                        if (change.Key == "topic" && change.NewValue.has_value()) {
+                            extra_markup.push_back(
+                                "Set the topic to <b>" +
+                                Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
+                                "</b>");
+                        } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
+                            Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
+                            extra_markup.push_back(
+                                "Set the privacy level to <b>" +
+                                str +
+                                "</b>");
+                        }
+                    }
+                }
+            } break;
+            case AuditLogActionType::STAGE_INSTANCE_UPDATE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " updated the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " updated the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
+
+                if (entry.Changes.has_value()) {
+                    for (const auto &change : *entry.Changes) {
+                        if (change.Key == "topic" && change.NewValue.has_value()) {
+                            extra_markup.push_back(
+                                "Set the topic to <b>" +
+                                Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
+                                "</b>");
+                        } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
+                            Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
+                            extra_markup.push_back(
+                                "Set the privacy level to <b>" +
+                                str +
+                                "</b>");
+                        }
+                    }
+                }
+            } break;
+            case AuditLogActionType::STAGE_INSTANCE_DELETE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " ended the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " ended the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
             } break;
             default:
                 markup = "<i>Unknown action</i>";

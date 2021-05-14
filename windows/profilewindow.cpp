@@ -1,6 +1,5 @@
 #include "profilewindow.hpp"
 #include "../abaddon.hpp"
-#include "../components/inotifyswitched.hpp"
 
 ProfileWindow::ProfileWindow(Snowflake user_id)
     : ID(user_id)
@@ -70,11 +69,6 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     m_switcher.set_stack(m_stack);
     m_switcher.set_halign(Gtk::ALIGN_START);
     m_switcher.set_hexpand(true);
-
-    m_stack.property_visible_child().signal_changed().connect([this]() {
-        if (auto *w = dynamic_cast<INotifySwitched *>(m_stack.property_visible_child().get_value()))
-            w->on_switched_to();
-    });
 
     m_stack.add(m_pane_info, "info", "User Info");
     m_stack.add(m_pane_guilds, "guilds", "Mutual Servers");

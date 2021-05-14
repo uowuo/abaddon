@@ -5,6 +5,7 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     : GuildID(id)
     , m_model(Gtk::ListStore::create(m_columns))
     , m_menu_delete("Delete") {
+    signal_map().connect(sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnMap));
     set_name("guild-invites-pane");
     set_hexpand(true);
     set_vexpand(true);
@@ -36,7 +37,7 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
         column->set_resizable(true);
 }
 
-void GuildSettingsInvitesPane::on_switched_to() {
+void GuildSettingsInvitesPane::OnMap() {
     if (m_requested) return;
     m_requested = true;
 

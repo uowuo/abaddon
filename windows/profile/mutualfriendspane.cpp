@@ -34,6 +34,7 @@ MutualFriendItem::MutualFriendItem(const UserData &user)
 
 MutualFriendsPane::MutualFriendsPane(Snowflake id)
     : UserID(id) {
+    signal_map().connect(sigc::mem_fun(*this, &MutualFriendsPane::OnMap));
     add(m_list);
     show_all_children();
 }
@@ -49,7 +50,7 @@ void MutualFriendsPane::OnFetchRelationships(const std::vector<UserData> &users)
     }
 }
 
-void MutualFriendsPane::on_switched_to() {
+void MutualFriendsPane::OnMap() {
     if (m_requested) return;
     m_requested = true;
 

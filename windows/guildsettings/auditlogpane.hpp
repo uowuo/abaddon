@@ -1,14 +1,13 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../components//inotifyswitched.hpp"
 #include "../../discord/objects.hpp"
 
-class GuildSettingsAuditLogPane : public Gtk::ScrolledWindow, public INotifySwitched {
+class GuildSettingsAuditLogPane : public Gtk::ScrolledWindow {
 public:
     GuildSettingsAuditLogPane(Snowflake id);
 
 private:
-    void on_switched_to() override;
+    void OnMap();
 
     bool m_requested = false;
 

@@ -20,7 +20,7 @@ void from_json(const nlohmann::json &j, AuditLogOptions &m) {
 void from_json(const nlohmann::json &j, AuditLogEntry &m) {
     JS_N("target_id", m.TargetID);
     JS_O("changes", m.Changes);
-    JS_D("user_id", m.UserID);
+    JS_N("user_id", m.UserID);
     JS_D("id", m.ID);
     JS_D("action_type", m.Type);
     JS_O("options", m.Options);

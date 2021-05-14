@@ -1,15 +1,14 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../components/inotifyswitched.hpp"
 #include "../../discord/snowflake.hpp"
 #include "../../discord/ban.hpp"
 
-class GuildSettingsBansPane : public Gtk::Box, public INotifySwitched {
+class GuildSettingsBansPane : public Gtk::Box {
 public:
     GuildSettingsBansPane(Snowflake id);
 
 private:
-    void on_switched_to() override;
+    void OnMap();
 
     bool m_requested = false;
 

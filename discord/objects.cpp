@@ -102,7 +102,7 @@ void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
             j["d"]["status"] = "online";
             break;
         case PresenceStatus::Offline:
-            j["d"]["status"] = "offline";
+            j["d"]["status"] = "invisible";
             break;
         case PresenceStatus::Idle:
             j["d"]["status"] = "idle";
