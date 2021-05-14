@@ -341,3 +341,12 @@
 .drag-hover-bottom {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 65%, rgba(255, 66, 66, 0.65) 100%);
 }
+
+.friends-list list {
+    background: @background_color;
+    padding-left: 10px;
+}
+
+.friends-list-row-bot {
+    color: #ff0000;
+}

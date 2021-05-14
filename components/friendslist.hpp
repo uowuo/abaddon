@@ -33,6 +33,8 @@ private:
     void OnActionAccept(Snowflake id);
     void OnActionRemove(Snowflake id);
 
+    void PopulateRelationships();
+
     enum FilterMode {
         FILTER_FRIENDS,
         FILTER_ONLINE,

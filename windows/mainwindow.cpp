@@ -1,6 +1,5 @@
 #include "mainwindow.hpp"
 #include "../abaddon.hpp"
-#include "../components/friendslist.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
@@ -88,10 +87,7 @@ MainWindow::MainWindow()
     });
 
     m_menu_view_friends.signal_activate().connect([this] {
-        auto *window = new FriendsListWindow;
-        window->set_position(Gtk::WIN_POS_CENTER);
-        window->show();
-        Abaddon::Get().ManageHeapWindow(window);
+        m_content_stack.set_visible_child("friends");
     });
 
     m_content_box.set_hexpand(true);
@@ -125,9 +121,15 @@ MainWindow::MainWindow()
     member_list->set_vexpand(true);
     member_list->show();
 
-    m_content_stack.add(*chat);
+    m_friends.set_vexpand(true);
+    m_friends.set_hexpand(true);
+    m_friends.show();
+
+    m_content_stack.add(*chat, "chat");
+    m_content_stack.add(m_friends, "friends");
     m_content_stack.set_vexpand(true);
     m_content_stack.set_hexpand(true);
+    m_content_stack.set_visible_child("chat");
     m_content_stack.show();
 
     m_chan_content_paned.pack1(*channel_list);
@@ -222,6 +224,7 @@ void MainWindow::UpdateChatActiveChannel(Snowflake id) {
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
     m_channel_list.SetActiveChannel(id);
+    m_content_stack.set_visible_child("chat");
 }
 
 Snowflake MainWindow::GetChatActiveChannel() const {

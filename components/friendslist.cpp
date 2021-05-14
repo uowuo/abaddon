@@ -7,18 +7,15 @@ using namespace std::string_literals;
 FriendsList::FriendsList()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , m_filter_mode(FILTER_FRIENDS) {
+    get_style_context()->add_class("friends-list");
+
     auto &discord = Abaddon::Get().GetDiscordClient();
 
     discord.signal_relationship_add().connect(sigc::mem_fun(*this, &FriendsList::OnRelationshipAdd));
     discord.signal_relationship_remove().connect(sigc::mem_fun(*this, &FriendsList::OnRelationshipRemove));
 
-    for (const auto &[id, type] : discord.GetRelationships()) {
-        const auto user = discord.GetUser(id);
-        if (!user.has_value()) continue;
-        auto *row = MakeRow(*user, type);
-        m_list.add(*row);
-        row->show();
-    }
+    PopulateRelationships();
+    signal_map().connect(sigc::mem_fun(*this, &FriendsList::PopulateRelationships));
 
     constexpr static std::array<const char *, 4> strs = {
         "Friends",
@@ -147,6 +144,20 @@ void FriendsList::OnActionRemove(Snowflake id) {
     }
 }
 
+void FriendsList::PopulateRelationships() {
+    for (auto child : m_list.get_children())
+        delete child;
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    for (const auto &[id, type] : discord.GetRelationships()) {
+        const auto user = discord.GetUser(id);
+        if (!user.has_value()) continue;
+        auto *row = MakeRow(*user, type);
+        m_list.add(*row);
+        row->show();
+    }
+}
+
 int FriendsList::ListSortFunc(Gtk::ListBoxRow *a_, Gtk::ListBoxRow *b_) {
     auto *a = dynamic_cast<FriendsListFriendRow *>(a_);
     auto *b = dynamic_cast<FriendsListFriendRow *>(b_);
@@ -238,6 +249,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
+    auto *namebox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *namelbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     m_status_lbl = Gtk::manage(new Gtk::Label("", Gtk::ALIGN_START));
     auto *lblbox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -291,7 +303,8 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
 
     img->set_margin_end(5);
 
-    lblbox->add(*namelbl);
+    namebox->add(*namelbl);
+    lblbox->add(*namebox);
     lblbox->add(*m_status_lbl);
 
     box->add(*img);
