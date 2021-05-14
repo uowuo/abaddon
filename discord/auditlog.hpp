@@ -66,7 +66,7 @@ struct AuditLogOptions {
 struct AuditLogEntry {
     Snowflake ID;
     std::string TargetID; // null
-    Snowflake UserID;
+    std::optional<Snowflake> UserID;
     AuditLogActionType Type;
     std::optional<std::string> Reason;
     std::optional<std::vector<AuditLogChange>> Changes;
