@@ -460,6 +460,82 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                          target_user->GetEscapedString() +
                          "</b>";
             } break;
+            case AuditLogActionType::STAGE_INSTANCE_CREATE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " started the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " started the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
+
+                if (entry.Changes.has_value()) {
+                    for (const auto &change : *entry.Changes) {
+                        if (change.Key == "topic" && change.NewValue.has_value()) {
+                            extra_markup.push_back(
+                                "Set the topic to <b>" +
+                                Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
+                                "</b>");
+                        } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
+                            Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
+                            extra_markup.push_back(
+                                "Set the privacy level to <b>" +
+                                str +
+                                "</b>");
+                        }
+                    }
+                }
+            } break;
+            case AuditLogActionType::STAGE_INSTANCE_UPDATE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " updated the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " updated the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
+
+                if (entry.Changes.has_value()) {
+                    for (const auto &change : *entry.Changes) {
+                        if (change.Key == "topic" && change.NewValue.has_value()) {
+                            extra_markup.push_back(
+                                "Set the topic to <b>" +
+                                Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
+                                "</b>");
+                        } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
+                            Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
+                            extra_markup.push_back(
+                                "Set the privacy level to <b>" +
+                                str +
+                                "</b>");
+                        }
+                    }
+                }
+            } break;
+            case AuditLogActionType::STAGE_INSTANCE_DELETE: {
+                const auto channel = discord.GetChannel(*entry.Options->ChannelID);
+                if (channel.has_value()) {
+                    markup = user_markup +
+                             " ended the stage for <b>" +
+                             Glib::Markup::escape_text(*channel->Name) +
+                             "</b>";
+                } else {
+                    markup = user_markup +
+                             " ended the stage for <b>" +
+                             std::to_string(*entry.Options->ChannelID) +
+                             "</b>";
+                }
+            } break;
             default:
                 markup = "<i>Unknown action</i>";
                 break;
