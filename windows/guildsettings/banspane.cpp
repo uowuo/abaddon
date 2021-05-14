@@ -10,6 +10,7 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     , m_menu_unban("Unban")
     , m_menu_copy_id("Copy ID")
     , m_model(Gtk::ListStore::create(m_columns)) {
+    signal_map().connect(sigc::mem_fun(*this, &GuildSettingsBansPane::OnMap));
     set_name("guild-bans-pane");
     set_hexpand(true);
     set_vexpand(true);
@@ -54,7 +55,7 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     m_view.append_column("Reason", m_columns.m_col_reason);
 }
 
-void GuildSettingsBansPane::on_switched_to() {
+void GuildSettingsBansPane::OnMap() {
     if (m_requested) return;
     m_requested = true;
 

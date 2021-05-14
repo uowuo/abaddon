@@ -1,6 +1,5 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../components/inotifyswitched.hpp"
 #include "../../discord/objects.hpp"
 
 class MutualFriendItem : public Gtk::Box {
@@ -12,14 +11,14 @@ private:
     Gtk::Label m_name;
 };
 
-class MutualFriendsPane : public Gtk::ScrolledWindow, public INotifySwitched {
+class MutualFriendsPane : public Gtk::ScrolledWindow {
 public:
     MutualFriendsPane(Snowflake id);
 
     Snowflake UserID;
 
 private:
-    void on_switched_to() override;
+    void OnMap();
 
     bool m_requested = false;
 

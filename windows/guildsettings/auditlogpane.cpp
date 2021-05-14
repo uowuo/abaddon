@@ -5,6 +5,7 @@ using namespace std::string_literals;
 
 GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)
     : GuildID(id) {
+    signal_map().connect(sigc::mem_fun(*this, &GuildSettingsAuditLogPane::OnMap));
     set_name("guild-audit-log-pane");
     set_hexpand(true);
     set_vexpand(true);
@@ -14,7 +15,7 @@ GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)
     add(m_list);
 }
 
-void GuildSettingsAuditLogPane::on_switched_to() {
+void GuildSettingsAuditLogPane::OnMap() {
     if (m_requested) return;
     m_requested = true;
 

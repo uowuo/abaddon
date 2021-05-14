@@ -11,6 +11,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     , m_menu_delete("Delete")
     , m_menu_copy_emoji_url("Copy Emoji URL")
     , m_menu_show_emoji("Open in Browser") {
+    signal_map().connect(sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnMap));
     set_name("guild-emojis-pane");
 
     m_view_scroll.set_hexpand(true);
@@ -97,7 +98,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
         column->set_resizable(true);
 }
 
-void GuildSettingsEmojisPane::on_switched_to() {
+void GuildSettingsEmojisPane::OnMap() {
     m_view.grab_focus();
 
     if (m_requested) return;
