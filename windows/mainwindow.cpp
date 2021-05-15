@@ -87,6 +87,8 @@ MainWindow::MainWindow()
     });
 
     m_menu_view_friends.signal_activate().connect([this] {
+        UpdateChatActiveChannel(Snowflake::Invalid);
+        m_members.UpdateMemberList();
         m_content_stack.set_visible_child("friends");
     });
 

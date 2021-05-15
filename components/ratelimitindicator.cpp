@@ -31,9 +31,9 @@ RateLimitIndicator::RateLimitIndicator()
 
 void RateLimitIndicator::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
-    const auto channel = *Abaddon::Get().GetDiscordClient().GetChannel(m_active_channel);
-    if (channel.RateLimitPerUser.has_value())
-        m_rate_limit = *channel.RateLimitPerUser;
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(m_active_channel);
+    if (channel.has_value() && channel->RateLimitPerUser.has_value())
+        m_rate_limit = *channel->RateLimitPerUser;
     else
         m_rate_limit = 0;
 
