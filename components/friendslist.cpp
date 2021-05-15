@@ -257,7 +257,8 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_presence_update().connect(sigc::mem_fun(*this, &FriendsListFriendRow::OnPresenceUpdate));
 
-    if (data.HasAnimatedAvatar()) {
+    static bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+    if (data.HasAnimatedAvatar() && show_animations) {
         img->SetAnimated(true);
         img->SetURL(data.GetAvatarURL("gif", "32"));
     } else {
