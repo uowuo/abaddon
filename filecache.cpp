@@ -125,6 +125,10 @@ void FileCacheWorkerThread::stop() {
 }
 
 void FileCacheWorkerThread::loop() {
+    timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
     while (!m_stop) {
         if (m_handles.size() == 0) {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
@@ -133,7 +137,8 @@ void FileCacheWorkerThread::loop() {
                 m_cv.wait(lock);
         }
 
-        if (m_handles.size() < Abaddon::Get().GetSettings().GetCacheHTTPConcurrency()) {
+        static const auto concurrency = Abaddon::Get().GetSettings().GetCacheHTTPConcurrency();
+        if (m_handles.size() < concurrency) {
             std::optional<QueueEntry> entry;
             m_queue_mutex.lock();
             if (m_queue.size() > 0) {
@@ -171,8 +176,20 @@ void FileCacheWorkerThread::loop() {
             }
         }
 
-        //int fds;
-        //curl_multi_wait(m_multi_handle, nullptr, 0, 10, &fds);
+        fd_set fdread;
+        fd_set fdwrite;
+        fd_set fdexcep;
+        int maxfd = -1;
+        FD_ZERO(&fdread);
+        FD_ZERO(&fdwrite);
+        FD_ZERO(&fdexcep);
+        curl_multi_fdset(m_multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
+        if (maxfd == -1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        } else {
+            select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+        }
+
         curl_multi_perform(m_multi_handle, &m_running_handles);
 
         int num_msgs;
