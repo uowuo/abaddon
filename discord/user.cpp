@@ -130,6 +130,8 @@ const char *UserData::GetFlagName(uint64_t flag) {
             return "verifiedbot";
         case EarlyVerifiedBotDeveloper:
             return "earlyverifiedbotdeveloper";
+        case CertifiedModerator:
+            return "certifiedmoderator";
         default:
             return "unknown";
     }
@@ -163,6 +165,8 @@ const char *UserData::GetFlagReadableName(uint64_t flag) {
             return "Verified Bot";
         case EarlyVerifiedBotDeveloper:
             return "Early Verified Bot Developer";
+        case CertifiedModerator:
+            return "Discord Certified Moderator";
         default:
             return "";
     }

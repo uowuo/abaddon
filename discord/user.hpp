@@ -24,8 +24,10 @@ struct UserData {
         BugHunterLevel2 = 1 << 14,
         VerifiedBot = 1 << 16,
         EarlyVerifiedBotDeveloper = 1 << 17,
+        CertifiedModerator = 1 << 18,
 
-        MaxFlag = EarlyVerifiedBotDeveloper,
+        MaxFlag_PlusOne,
+        MaxFlag = MaxFlag_PlusOne - 1,
     };
 
     static const char *GetFlagName(uint64_t flag);
