@@ -243,46 +243,44 @@ ChannelListRowCategory::type_signal_copy_id ChannelListRowCategory::signal_copy_
     return m_signal_copy_id;
 }
 
+bool ChannelListRowChannel::m_menu_init = false;
+Gtk::Menu *ChannelListRowChannel::m_menu;
 ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
+    if (!m_menu_init) {
+        m_menu = Gtk::manage(new Gtk::Menu);
+        auto *menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
+        menu_copy_id->signal_activate().connect([this] {
+            Gtk::Clipboard::get()->set_text(std::to_string(ID));
+        });
+        m_menu->append(*menu_copy_id);
+        m_menu->show_all();
+        m_menu_init = true;
+    }
+
     ID = data->ID;
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
+    auto *ev = Gtk::manage(new Gtk::EventBox);
+    auto *lbl = Gtk::manage(new Gtk::TextView);
+    MakeReadOnly(lbl);
 
-    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_menu_copyid->signal_activate().connect([this]() {
-        m_signal_copy_id.emit();
-    });
-    m_menu.append(*m_menu_copyid);
-
-    m_menu.show_all();
-
-    AddWidgetMenuHandler(m_ev, m_menu);
-    AddWidgetMenuHandler(m_lbl, m_menu);
+    AddWidgetMenuHandler(ev, *m_menu);
+    AddWidgetMenuHandler(lbl, *m_menu);
 
     get_style_context()->add_class("channel-row");
     get_style_context()->add_class("channel-row-channel");
-    m_lbl->get_style_context()->add_class("channel-row-label");
+    lbl->get_style_context()->add_class("channel-row-label");
 
-    auto buf = m_lbl->get_buffer();
+    auto buf = lbl->get_buffer();
     if (data->IsNSFW.has_value() && *data->IsNSFW) {
         get_style_context()->add_class("nsfw");
-        m_lbl->get_style_context()->add_class("nsfw");
+        lbl->get_style_context()->add_class("nsfw");
     }
     buf->set_text("#" + *data->Name);
     static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
     if (show_emojis)
         Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
-    m_box->set_halign(Gtk::ALIGN_START);
-    m_box->pack_start(*m_lbl);
-    m_ev->add(*m_box);
-    add(*m_ev);
+    ev->add(*lbl);
+    add(*ev);
     show_all_children();
-}
-
-ChannelListRowChannel::type_signal_copy_id ChannelListRowChannel::signal_copy_id() {
-    return m_signal_copy_id;
 }
 
 ChannelList::ChannelList() {
@@ -376,7 +374,7 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
     for (auto child : row->Children) {
         child_rows[child->get_index()] = child->ID;
     }
-    guild_row->Children.erase(row);
+    guild_row->Children.erase(std::remove(guild_row->Children.begin(), guild_row->Children.end(), row), guild_row->Children.end());
     DeleteRow(row);
 
     int pos = guild_row->get_index();
@@ -400,16 +398,15 @@ void ChannelList::UpdateChannelCategory(Snowflake id) {
     m_id_to_row[id] = new_row;
     new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
     new_row->Parent = guild_row;
-    guild_row->Children.insert(new_row);
+    guild_row->Children.push_back(new_row);
     m_list->insert(*new_row, pos);
     int i = 1;
     for (const auto &[idx, child_id] : child_rows) {
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(child_id);
         if (channel.has_value()) {
             auto *new_child = Gtk::manage(new ChannelListRowChannel(&*channel));
-            new_row->Children.insert(new_child);
+            new_row->Children.push_back(new_child);
             new_child->Parent = new_row;
-            new_child->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_child->ID));
             m_id_to_row[child_id] = new_child;
             if (visible && !new_row->IsUserCollapsed)
                 new_child->show();
@@ -456,10 +453,9 @@ void ChannelList::UpdateChannel(Snowflake id) {
     } else {
         new_row->Parent = m_guild_id_to_row.at(*data->GuildID);
     }
-    new_row->Parent->Children.insert(new_row);
+    new_row->Parent->Children.push_back(new_row);
     if (new_row->Parent->is_visible() && !new_row->Parent->IsUserCollapsed)
         new_row->show();
-    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
     m_list->insert(*new_row, pos);
 }
 
@@ -468,7 +464,7 @@ void ChannelList::UpdateCreateDMChannel(Snowflake id) {
     auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
     dm_row->IsUserCollapsed = false;
     m_list->insert(*dm_row, m_dm_header_row->get_index() + 1);
-    m_dm_header_row->Children.insert(dm_row);
+    m_dm_header_row->Children.push_back(dm_row);
     m_id_to_row[id] = dm_row;
     if (!m_dm_header_row->IsUserCollapsed)
         dm_row->show();
@@ -500,7 +496,6 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     ChannelListRow *row;
     if (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS) {
         auto *tmp = Gtk::manage(new ChannelListRowChannel(&*data));
-        tmp->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), tmp->ID));
         row = tmp;
     } else if (data->Type == ChannelType::GUILD_CATEGORY) {
         auto *tmp = Gtk::manage(new ChannelListRowCategory(&*data));
@@ -512,7 +507,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     if (!guild_row->IsUserCollapsed)
         row->show();
     row->Parent = guild_row;
-    guild_row->Children.insert(row);
+    guild_row->Children.push_back(row);
     m_id_to_row[id] = row;
     m_list->insert(*row, pos);
 }
@@ -569,7 +564,7 @@ void ChannelList::DeleteRow(ChannelListRow *row) {
     for (auto child : row->Children)
         DeleteRow(child);
     if (row->Parent != nullptr)
-        row->Parent->Children.erase(row);
+        row->Parent->Children.erase(std::remove(row->Parent->Children.begin(), row->Parent->Children.end(), row), row->Parent->Children.end());
     else
         printf("row has no parent!\n");
     if (dynamic_cast<ChannelListRowGuild *>(row) != nullptr)
@@ -633,9 +628,8 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
     for (const auto &[pos, channel] : orphan_channels) {
         auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
         chan_row->IsUserCollapsed = false;
-        chan_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), chan_row->ID));
         insert_and_adjust(*chan_row);
-        guild_row->Children.insert(chan_row);
+        guild_row->Children.push_back(chan_row);
         chan_row->Parent = guild_row;
         m_id_to_row[chan_row->ID] = chan_row;
     }
@@ -657,7 +651,7 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
             cat_row->IsUserCollapsed = false;
             cat_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), cat_row->ID));
             insert_and_adjust(*cat_row);
-            guild_row->Children.insert(cat_row);
+            guild_row->Children.push_back(cat_row);
             cat_row->Parent = guild_row;
             m_id_to_row[cat_row->ID] = cat_row;
 
@@ -671,9 +665,8 @@ void ChannelList::InsertGuildAt(Snowflake id, int pos) {
             for (const auto &[pos, channel] : sorted_channels) {
                 auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
                 chan_row->IsUserCollapsed = false;
-                chan_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), chan_row->ID));
                 insert_and_adjust(*chan_row);
-                cat_row->Children.insert(chan_row);
+                cat_row->Children.push_back(chan_row);
                 chan_row->Parent = cat_row;
                 m_id_to_row[chan_row->ID] = chan_row;
             }
@@ -704,7 +697,7 @@ void ChannelList::AddPrivateChannels() {
         m_id_to_row[dm.ID] = dm_row;
         dm_row->IsUserCollapsed = false;
         m_list->add(*dm_row);
-        m_dm_header_row->Children.insert(dm_row);
+        m_dm_header_row->Children.push_back(dm_row);
     }
 }
 
@@ -719,6 +712,7 @@ void ChannelList::UpdateListing() {
         it++;
     }
 
+    m_guild_id_to_row.clear();
     m_id_to_row.clear();
 
     m_guild_count = 0;
@@ -750,16 +744,16 @@ void ChannelList::CheckBumpDM(Snowflake channel_id) {
     const auto index = row->get_index();
     if (index == 1) return; // 1 is top of dm list
     const bool selected = row->is_selected();
-    row->Parent->Children.erase(row);
+    row->Parent->Children.erase(std::remove(row->Parent->Children.begin(), row->Parent->Children.end(), row), row->Parent->Children.end());
     delete row;
     const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
     auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
     dm_row->Parent = m_dm_header_row;
-    m_dm_header_row->Children.insert(dm_row);
+    m_dm_header_row->Children.push_back(dm_row);
     m_id_to_row[channel_id] = dm_row;
     dm_row->IsUserCollapsed = false;
     m_list->insert(*dm_row, 1);
-    m_dm_header_row->Children.insert(dm_row);
+    m_dm_header_row->Children.push_back(dm_row);
     if (selected)
         m_list->select_row(*dm_row);
     if (m_dm_header_row->is_visible() && !m_dm_header_row->IsUserCollapsed)

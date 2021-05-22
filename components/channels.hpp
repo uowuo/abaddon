@@ -14,7 +14,7 @@ class ChannelListRow : public Gtk::ListBoxRow {
 public:
     bool IsUserCollapsed;
     Snowflake ID;
-    std::unordered_set<ChannelListRow *> Children;
+    std::vector<ChannelListRow *> Children;
     ChannelListRow *Parent = nullptr;
 
     virtual void Collapse();
@@ -111,21 +111,9 @@ class ChannelListRowChannel : public ChannelListRow {
 public:
     ChannelListRowChannel(const ChannelData *data);
 
-protected:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
-
-    Gtk::Menu m_menu;
-    Gtk::MenuItem *m_menu_copyid;
-
 private:
-    typedef sigc::signal<void> type_signal_copy_id;
-
-    type_signal_copy_id m_signal_copy_id;
-
-public:
-    type_signal_copy_id signal_copy_id();
+    static Gtk::Menu *m_menu;
+    static bool m_menu_init;
 };
 
 class ChannelList {
