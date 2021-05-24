@@ -13,7 +13,8 @@ public:
     std::string GetUserAgent() const;
     std::string GetDiscordToken() const;
     bool GetShowMemberListDiscriminators() const;
-    bool GetShowEmojis() const;
+    bool GetShowStockEmojis() const;
+    bool GetShowCustomEmojis() const;
     std::string GetLinkColor() const;
     int GetCacheHTTPConcurrency() const;
     bool GetPrefetch() const;

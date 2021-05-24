@@ -99,7 +99,7 @@ ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
     else if (data->Type == ChannelType::GROUP_DM)
         buf->set_text(std::to_string(recipients.size()) + " users");
 
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
     if (show_emojis)
         Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
 
@@ -172,7 +172,7 @@ ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
     Gtk::TextBuffer::iterator start, end;
     buf->get_bounds(start, end);
     buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
     if (show_emojis)
         Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
@@ -220,7 +220,7 @@ ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
 
     auto buf = m_lbl->get_buffer();
     buf->set_text(*data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
     if (show_emojis)
         Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     m_box->set_halign(Gtk::ALIGN_START);
@@ -275,7 +275,7 @@ ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
         lbl->get_style_context()->add_class("nsfw");
     }
     buf->set_text("#" + *data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowEmojis();
+    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
     if (show_emojis)
         Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
     ev->add(*lbl);

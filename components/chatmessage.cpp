@@ -810,11 +810,11 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
 }
 
 void ChatMessageItemContainer::HandleEmojis(Gtk::TextView &tv) {
-    static bool emojis = Abaddon::Get().GetSettings().GetShowEmojis();
-    if (emojis) {
-        HandleStockEmojis(tv);
-        HandleCustomEmojis(tv);
-    }
+    static const bool stock_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
+    static const bool custom_emojis = Abaddon::Get().GetSettings().GetShowCustomEmojis();
+
+    if (stock_emojis) HandleStockEmojis(tv);
+    if (custom_emojis) HandleCustomEmojis(tv);
 }
 
 void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) {

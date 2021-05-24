@@ -54,8 +54,12 @@ bool SettingsManager::GetShowMemberListDiscriminators() const {
     return GetSettingBool("gui", "member_list_discriminator", true);
 }
 
-bool SettingsManager::GetShowEmojis() const {
-    return GetSettingBool("gui", "emojis", true);
+bool SettingsManager::GetShowStockEmojis() const {
+    return GetSettingBool("gui", "stock_emojis", true);
+}
+
+bool SettingsManager::GetShowCustomEmojis() const {
+    return GetSettingBool("gui", "custom_emojis", true);
 }
 
 std::string SettingsManager::GetLinkColor() const {

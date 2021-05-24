@@ -184,7 +184,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### gui
 * member_list_discriminator (true or false, default true) - show user discriminators in the member list
-* emojis (true or false, default true) - resolve unicode and custom emojis to images. this needs to be false to allow GTK to render emojis by itself
+* stock_emojis (true or false, default true) - allow abaddon to substitute unicode emojis with images from emojis.bin, must be false to allow GTK to render emojis itself
+* custom_emojis (true or false, default true) - download and use custom Discord emojis
 * css (string) - path to the main CSS file
 * animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
 * owner_crown (true or false, default true) - show a crown next to the owner
