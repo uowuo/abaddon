@@ -291,7 +291,7 @@ bool MultiBackwardSearch(const Gtk::TextIter &iter, const Glib::ustring &chars, 
         if (!iter.backward_search(tmp, flags, tstart, tend)) continue;
         // if previous found, compare to see if closer to out iter
         if (any) {
-            if (tstart > out)
+            if (tstart.get_offset() > out.get_offset())
                 out = tstart;
         } else
             out = tstart;
@@ -308,7 +308,7 @@ bool MultiForwardSearch(const Gtk::TextIter &iter, const Glib::ustring &chars, G
         if (!iter.forward_search(tmp, flags, tstart, tend)) continue;
         // if previous found, compare to see if closer to out iter
         if (any) {
-            if (tstart < out)
+            if (tstart.get_offset() < out.get_offset())
                 out = tstart;
         } else
             out = tstart;
