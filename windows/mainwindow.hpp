@@ -41,7 +41,6 @@ public:
     typedef sigc::signal<void> type_signal_action_reload_css;
     typedef sigc::signal<void> type_signal_action_join_guild;
     typedef sigc::signal<void> type_signal_action_set_status;
-    typedef sigc::signal<void, const GdkEvent *, Snowflake, Snowflake> type_signal_action_show_user_menu;
     typedef sigc::signal<void> type_signal_action_reload_settings;
     typedef sigc::signal<void, Snowflake> type_signal_action_add_recipient; // channel id
 
@@ -51,7 +50,6 @@ public:
     type_signal_action_reload_css signal_action_reload_css();
     type_signal_action_join_guild signal_action_join_guild();
     type_signal_action_set_status signal_action_set_status();
-    type_signal_action_show_user_menu signal_action_show_user_menu();
     type_signal_action_reload_settings signal_action_reload_settings();
     type_signal_action_add_recipient signal_action_add_recipient();
 
@@ -62,7 +60,6 @@ protected:
     type_signal_action_reload_css m_signal_action_reload_css;
     type_signal_action_join_guild m_signal_action_join_guild;
     type_signal_action_set_status m_signal_action_set_status;
-    type_signal_action_show_user_menu m_signal_action_show_user_menu;
     type_signal_action_reload_settings m_signal_action_reload_settings;
     type_signal_action_add_recipient m_signal_action_add_recipient;
 

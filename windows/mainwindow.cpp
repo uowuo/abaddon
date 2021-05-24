@@ -104,14 +104,6 @@ MainWindow::MainWindow()
     auto *member_list = m_members.GetRoot();
     auto *chat = m_chat.GetRoot();
 
-    m_members.signal_action_show_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
-        m_signal_action_show_user_menu.emit(event, id, guild_id);
-    });
-
-    m_chat.signal_action_open_user_menu().connect([this](const GdkEvent *event, Snowflake id, Snowflake guild_id) {
-        m_signal_action_show_user_menu.emit(event, id, guild_id);
-    });
-
     chat->set_vexpand(true);
     chat->set_hexpand(true);
     chat->show();
@@ -316,10 +308,6 @@ MainWindow::type_signal_action_join_guild MainWindow::signal_action_join_guild()
 
 MainWindow::type_signal_action_set_status MainWindow::signal_action_set_status() {
     return m_signal_action_set_status;
-}
-
-MainWindow::type_signal_action_show_user_menu MainWindow::signal_action_show_user_menu() {
-    return m_signal_action_show_user_menu;
 }
 
 MainWindow::type_signal_action_reload_settings MainWindow::signal_action_reload_settings() {

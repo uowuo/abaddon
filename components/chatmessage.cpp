@@ -1217,7 +1217,11 @@ std::vector<Gtk::Widget *> ChatMessageHeader::GetChildContent() {
 void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
     widget.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
-            m_signal_action_open_user_menu.emit(reinterpret_cast<GdkEvent *>(ev));
+            auto info = Abaddon::Get().GetDiscordClient().GetChannel(ChannelID);
+            Snowflake guild_id;
+            if (info.has_value() && info->GuildID.has_value())
+                guild_id = *info->GuildID;
+            Abaddon::Get().ShowUserMenu(reinterpret_cast<GdkEvent *>(ev), UserID, guild_id);
             return true;
         }
 

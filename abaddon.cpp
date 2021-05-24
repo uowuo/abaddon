@@ -93,8 +93,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_reload_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadSettings));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
 
-    m_main_window->signal_action_show_user_menu().connect(sigc::mem_fun(*this, &Abaddon::ShowUserMenu));
-
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));

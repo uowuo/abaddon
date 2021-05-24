@@ -210,14 +210,10 @@ void MemberList::UpdateMemberList() {
 void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
     row->signal_button_press_event().connect([this, row, id](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            m_signal_action_show_user_menu.emit(reinterpret_cast<const GdkEvent *>(e), id, m_guild_id);
+            Abaddon::Get().ShowUserMenu(reinterpret_cast<const GdkEvent *>(e), id, m_guild_id);
             return true;
         }
 
         return false;
     });
-}
-
-MemberList::type_signal_action_show_user_menu MemberList::signal_action_show_user_menu() {
-    return m_signal_action_show_user_menu;
 }

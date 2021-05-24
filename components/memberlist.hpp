@@ -41,12 +41,4 @@ private:
     Snowflake m_chan_id;
 
     std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_id_to_row;
-
-public:
-    typedef sigc::signal<void, const GdkEvent *, Snowflake, Snowflake> type_signal_action_show_user_menu;
-
-    type_signal_action_show_user_menu signal_action_show_user_menu();
-
-private:
-    type_signal_action_show_user_menu m_signal_action_show_user_menu;
 };
