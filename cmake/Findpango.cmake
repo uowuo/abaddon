@@ -1,4 +1,6 @@
 set(PANGO_LIBRARY_NAME pango-1.0)
+set(PANGOCAIRO_LIBRARY_NAME pangocairo-1.0)
+set(PANGOFT2_LIBRARY_NAME pangoft2-1.0)
 
 find_package(HarfBuzz)
 find_package(cairo)
@@ -42,7 +44,27 @@ find_library(PANGO_LIBRARY
              PATH_SUFFIXES ${PANGO_LIBRARY_NAME}
                            ${PANGO_LIBRARY_NAME}/include)
 
-set(PANGO_LIBRARIES    ${PANGO_LIBRARY};${HARFBUZZ_LIBRARIES};${CAIRO_LIBRARIES};${FREETYPE_LIBRARIES})
+find_library(PANGOCAIRO_LIBRARY
+             NAMES ${PANGOCAIRO_LIBRARY_NAME}
+                   pangocairo
+             HINTS ${PANGO_LIBRARY_HINTS}
+                   /usr/lib
+                   /usr/local/lib
+                   /opt/local/lib
+             PATH_SUFFIXES ${PANGO_LIBRARY_NAME}
+                           ${PANGO_LIBRARY_NAME}/include)
+
+find_library(PANGOFT2_LIBRARY
+             NAMES ${PANGOFT2_LIBRARY_NAME}
+                   pangoft2
+             HINTS ${PANGO_LIBRARY_HINTS}
+                   /usr/lib
+                   /usr/local/lib
+                   /opt/local/lib
+             PATH_SUFFIXES ${PANGO_LIBRARY_NAME}
+                           ${PANGO_LIBRARY_NAME}/include)
+
+set(PANGO_LIBRARIES    ${PANGO_LIBRARY};${HARFBUZZ_LIBRARIES};${CAIRO_LIBRARIES};${FREETYPE_LIBRARIES};${PANGOCAIRO_LIBRARY};${PANGOFT2_LIBRARY})
 set(PANGO_INCLUDE_DIRS ${PANGO_INCLUDE_DIR};${PANGO_CONFIG_INCLUDE_DIRS};${HARFBUZZ_INCLUDE_DIR};${CAIRO_INCLUDE_DIRS};${FREETYPE_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)

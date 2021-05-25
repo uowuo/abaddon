@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <algorithm>
+#include "platform.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
@@ -646,6 +647,8 @@ EmojiResource &Abaddon::GetEmojis() {
 }
 
 int main(int argc, char **argv) {
+    if (std::getenv("ABADDON_NO_FC") == nullptr)
+        Platform::SetupFonts();
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };
     GetEnvironmentVariableA("GTK_CSD", buf, sizeof(buf));
