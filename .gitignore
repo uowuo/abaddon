@@ -354,3 +354,5 @@ testdata/
 
 build/
 out/
+
+fonts/fonts.conf
