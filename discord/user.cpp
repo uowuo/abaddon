@@ -58,6 +58,8 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_O("mobile", m.IsMobile);
     JS_ON("nsfw_allowed", m.IsNSFWAllowed);
     JS_ON("phone", m.Phone);
+    JS_ON("bio", m.Bio);
+    JS_ON("banner", m.BannerHash);
 }
 
 void to_json(nlohmann::json &j, const UserData &m) {

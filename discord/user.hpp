@@ -52,6 +52,9 @@ struct UserData {
     std::optional<bool> IsMobile;
     std::optional<bool> IsNSFWAllowed; // null
     std::optional<std::string> Phone;  // null?
+    // for now (unserialized)
+    std::optional<std::string> BannerHash; // null
+    std::optional<std::string> Bio;        // null
 
     friend void from_json(const nlohmann::json &j, UserData &m);
     friend void to_json(nlohmann::json &j, const UserData &m);
