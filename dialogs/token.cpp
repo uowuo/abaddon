@@ -1,5 +1,12 @@
 #include "token.hpp"
 
+std::string trim(const std::string& str) {
+    const auto first = str.find_first_not_of(' ');
+    if (first == std::string::npos) return str;
+    const auto last = str.find_last_not_of(' ');
+    return str.substr(first, last - first + 1);
+}
+
 TokenDialog::TokenDialog(Gtk::Window &parent)
     : Gtk::Dialog("Set Token", parent, true)
     , m_layout(Gtk::ORIENTATION_VERTICAL)
@@ -11,7 +18,7 @@ TokenDialog::TokenDialog(Gtk::Window &parent)
     get_style_context()->add_class("app-popup");
 
     m_ok.signal_clicked().connect([&]() {
-        m_token = m_entry.get_text();
+        m_token = trim(m_entry.get_text());
         response(Gtk::RESPONSE_OK);
     });
 
