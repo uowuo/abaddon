@@ -21,6 +21,8 @@ public:
     std::string GetMainCSS() const;
     bool GetShowAnimations() const;
     bool GetShowOwnerCrown() const;
+    std::string GetGatewayURL() const;
+    std::string GetAPIBaseURL() const;
 
     bool IsValid() const;
 

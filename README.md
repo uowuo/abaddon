@@ -189,6 +189,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * css (string) - path to the main CSS file
 * animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
 * owner_crown (true or false, default true) - show a crown next to the owner
+* gateway (string) - override url for Discord gateway. must be json format and use zlib stream compression
+* api_base (string) - override base url for Discord API
 
 #### misc
 * linkcolor (string) - color to use for links in messages

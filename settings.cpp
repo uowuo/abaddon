@@ -85,3 +85,11 @@ bool SettingsManager::GetShowAnimations() const {
 bool SettingsManager::GetShowOwnerCrown() const {
     return GetSettingBool("gui", "owner_crown", true);
 }
+
+std::string SettingsManager::GetGatewayURL() const {
+    return GetSettingString("discord", "gateway", "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream");
+}
+
+std::string SettingsManager::GetAPIBaseURL() const {
+    return GetSettingString("discord", "api_base", "https://discord.com/api/v9");
+}

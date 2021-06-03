@@ -1,9 +1,12 @@
 #include "httpclient.hpp"
 
 //#define USE_LOCAL_PROXY
-HTTPClient::HTTPClient(std::string api_base)
-    : m_api_base(api_base) {
+HTTPClient::HTTPClient() {
     m_dispatcher.connect(sigc::mem_fun(*this, &HTTPClient::RunCallbacks));
+}
+
+void HTTPClient::SetBase(const std::string &url) {
+    m_api_base = url;
 }
 
 void HTTPClient::SetUserAgent(std::string agent) {
