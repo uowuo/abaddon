@@ -40,10 +40,11 @@ enum class Permission : uint64_t {
     MANAGE_EMOJIS = (1ULL << 30),        // Allows management and editing of emojis
     USE_SLASH_COMMANDS = (1ULL << 31),   // Allows members to use slash commands in text channels
     REQUEST_TO_SPEAK = (1ULL << 32),     // Allows for requesting to speak in stage channels
-    USE_THREADS = (1ULL << 33),          // Allows for creating and participating in threads
-    USE_PRIVATE_THREADS = (1ULL << 34),  // Allows for creating and participating in private threads
+    MANAGE_THREADS = (1ULL << 34),       // Allows for deleting and archiving threads, and viewing all private threads
+    USE_PUBLIC_THREADS = (1ULL << 35),   // Allows for creating and participating in threads
+    USE_PRIVATE_THREADS = (1ULL << 36),  // Allows for creating and participating in private threads
 
-    ALL = 0x7FFFFFFFFULL,
+    ALL = 0x1FFFFFFFFFULL,
 };
 template<>
 struct Bitwise<Permission> {
@@ -107,7 +108,7 @@ constexpr const char *GetPermissionString(Permission perm) {
         case Permission::USE_EXTERNAL_EMOJIS:
             return "Use External Emojis";
         case Permission::VIEW_GUILD_INSIGHTS:
-            return "View Guild Insights";
+            return "View Server Insights";
         case Permission::CONNECT:
             return "Connect to Voice";
         case Permission::SPEAK:
@@ -132,6 +133,12 @@ constexpr const char *GetPermissionString(Permission perm) {
             return "Manage Emojis";
         case Permission::USE_SLASH_COMMANDS:
             return "Use Slash Commands";
+        case Permission::MANAGE_THREADS:
+            return "Manage Threads";
+        case Permission::USE_PUBLIC_THREADS:
+            return "Use Public Threads";
+        case Permission::USE_PRIVATE_THREADS:
+            return "Use Private Threads";
         default:
             return "Unknown Permission";
     }
@@ -180,7 +187,7 @@ constexpr const char *GetPermissionDescription(Permission perm) {
         case Permission::USE_EXTERNAL_EMOJIS:
             return "Allows members to use emoji from other servers, if they're a Discord Nitro member";
         case Permission::VIEW_GUILD_INSIGHTS:
-            return "";
+            return "Allows members to view Server Insights, which shows data on community growth, engagement, and more.";
         case Permission::CONNECT:
             return "Allows members to join voice channels and hear others.";
         case Permission::SPEAK:
@@ -205,6 +212,12 @@ constexpr const char *GetPermissionDescription(Permission perm) {
             return "Allows members to add or remove custom emojis in this server.";
         case Permission::USE_SLASH_COMMANDS:
             return "Allows members to use slash commands in text channels.";
+        case Permission::MANAGE_THREADS:
+            return "Allows members to rename, delete, archive/unarchive, and turn on slow mode for threads.";
+        case Permission::USE_PUBLIC_THREADS:
+            return "Allows members to talk in threads. The \"Send Messages\" permission must be enabled for members to start new threads; if it's disabled, they can only respond to existing threads.";
+        case Permission::USE_PRIVATE_THREADS:
+            return "Allows members to create and chat in private threads. The \"Send Messages\" permission must be enabled for members to start new private threads; if it's disabled, they can only respond to private threads they're added to.";
         default:
             return "";
     }
