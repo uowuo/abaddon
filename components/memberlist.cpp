@@ -26,7 +26,7 @@ MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &dat
 
     m_status_indicator->set_margin_start(3);
 
-    m_avatar->SetURL(data.GetAvatarURL("png"));
+    m_avatar->SetURL(data.GetAvatarURL(guild->ID, "png"));
 
     get_style_context()->add_class("members-row");
     get_style_context()->add_class("members-row-member");
