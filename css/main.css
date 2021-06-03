@@ -57,10 +57,6 @@
     padding: 15px;
 }
 
-.message-container-author, .message-container-extra {
-    margin-top: -10px;
-}
-
 .message-container-extra {
     color: #78909c;
 }
