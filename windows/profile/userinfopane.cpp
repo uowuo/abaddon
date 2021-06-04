@@ -158,6 +158,25 @@ NotesContainer::type_signal_update_note NotesContainer::signal_update_note() {
     return m_signal_update_note;
 }
 
+BioContainer::BioContainer()
+    : Gtk::Box(Gtk::ORIENTATION_VERTICAL) {
+    m_label.set_markup("<b>ABOUT ME</b>");
+    m_label.set_halign(Gtk::ALIGN_START);
+    m_bio.set_halign(Gtk::ALIGN_START);
+    m_bio.set_line_wrap(true);
+    m_bio.set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
+
+    m_label.show();
+    m_bio.show();
+
+    add(m_label);
+    add(m_bio);
+}
+
+void BioContainer::SetBio(const std::string &bio) {
+    m_bio.set_text(bio);
+}
+
 ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , UserID(ID) {
@@ -194,12 +213,23 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     m_conns.set_halign(Gtk::ALIGN_START);
     m_conns.set_hexpand(true);
 
+    m_created.show();
+    m_note.show();
+    m_conns.show();
+
     add(m_created);
+    add(m_bio);
     add(m_note);
     add(m_conns);
-    show_all_children();
 }
 
-void ProfileUserInfoPane::SetConnections(const std::vector<ConnectionData> &connections) {
-    m_conns.SetConnections(connections);
+void ProfileUserInfoPane::SetProfile(const UserProfileData &data) {
+    if (data.User.Bio.has_value() && *data.User.Bio != "") {
+        m_bio.SetBio(*data.User.Bio);
+        m_bio.show();
+    } else {
+        m_bio.hide();
+    }
+
+    m_conns.SetConnections(data.ConnectedAccounts);
 }

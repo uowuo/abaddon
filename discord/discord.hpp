@@ -50,10 +50,6 @@ class DiscordClient {
     friend class Abaddon;
 
 public:
-    static const constexpr char *DiscordGateway = "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream";
-    static const constexpr char *DiscordAPI = "https://discord.com/api/v9";
-
-public:
     DiscordClient(bool mem_store = false);
     void Start();
     void Stop();
@@ -190,6 +186,9 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
+
+    std::string GetAPIURL();
+    std::string GetGatewayURL();
 
     static DiscordError GetCodeFromResponse(const http::response_type &response);
 

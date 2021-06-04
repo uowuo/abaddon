@@ -1,10 +1,10 @@
 #include "discord.hpp"
 #include <cassert>
 #include "../util.hpp"
+#include "../abaddon.hpp"
 
 DiscordClient::DiscordClient(bool mem_store)
-    : m_http(DiscordAPI)
-    , m_decompress_buf(InflateChunkSize)
+    : m_decompress_buf(InflateChunkSize)
     , m_store(mem_store) {
     m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
     auto dispatch_cb = [this]() {
@@ -24,13 +24,15 @@ DiscordClient::DiscordClient(bool mem_store)
 }
 
 void DiscordClient::Start() {
+    m_http.SetBase(GetAPIURL());
+
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
 
     m_last_sequence = -1;
     m_heartbeat_acked = true;
     m_client_connected = true;
-    m_websocket.StartConnection(DiscordGateway);
+    m_websocket.StartConnection(GetGatewayURL());
 }
 
 void DiscordClient::Stop() {
@@ -1104,6 +1106,17 @@ void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
         SendIdentify();
 }
 
+// perhaps this should be set by the main class
+std::string DiscordClient::GetAPIURL() {
+    static const auto url = Abaddon::Get().GetSettings().GetAPIBaseURL();
+    return url;
+}
+
+std::string DiscordClient::GetGatewayURL() {
+    static const auto url = Abaddon::Get().GetSettings().GetGatewayURL();
+    return url;
+}
+
 DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &response) {
     try {
         // pull me somewhere else?
@@ -1576,7 +1589,7 @@ void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
 
-    m_websocket.StartConnection(DiscordGateway);
+    m_websocket.StartConnection(GetGatewayURL());
 }
 
 void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
@@ -1597,7 +1610,7 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
 
     m_websocket.Stop(1000);
 
-    m_websocket.StartConnection(DiscordGateway);
+    m_websocket.StartConnection(GetGatewayURL());
 }
 
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {

@@ -57,14 +57,8 @@
     padding: 15px;
 }
 
-.message-container-author {
-    margin-top: -10px;
-}
-
 .message-container-extra {
     color: #78909c;
-    margin-left: -5px;
-    margin-right: -5px;
 }
 
 .message-container-timestamp {
@@ -142,6 +136,26 @@
     margin: 5px;
 }
 
+.message-component {
+    margin: 5px;
+}
+
+.message-component.primary {
+    background: #5865F2;
+}
+
+.message-component.secondary, .message-component.link {
+    background: #4F545C;
+}
+
+.message-component.success {
+    background: #43B581;
+}
+
+.message-component.danger {
+    background: #F04747;
+}
+
 .reaction-box {
     padding: 2px 5px 2px 5px;
     margin: 0px 0px 0px 0px;
@@ -175,62 +189,6 @@
     margin-top: 10px;
     margin-bottom: -7px;
     color: @text_color;
-}
-
-.app-window label:not(:disabled) {
-    color: @text_color;
-}
-
-.app-window entry {
-    background: @secondary_color;
-    color: @text_color;
-    border: 1px solid #1c2e40;
-}
-
-.app-window button {
-    background: @secondary_color;
-    color: @text_color;
-    text-shadow: none;
-    box-shadow: none;
-}
-
-.app-window button:checked {
-    border-top: 0px;
-    border-left: 0px;
-    border-right: 0px;
-    border-bottom: 3px solid #39a2ed;
-    color: #ffffff;
-}
-
-.app-window button:not(:checked) {
-    border: 3px #0000ff;
-}
-
-.app-window.background {
-    background: @background_color;
-}
-
-.app-window treeview {
-    color: @text_color;
-    background: @secondary_color;
-}
-
-.app-popup list {
-    background: @secondary_color;
-}
-
-.app-window paned separator {
-    background: @background_color;
-}
-
-.app-window scrollbar {
-    background: @background_color;
-    border-left: 1px solid transparent;
-}
-
-.app-window menubar, menu {
-    background: @background_color;
-    color: #cccccc;
 }
 
 .status-indicator.dnd {
@@ -304,35 +262,8 @@
     padding-left: 5px;
 }
 
-.app-window textview text {
-    caret-color: #ababab;
-}
-
 .guild-members-pane-info {
     padding: 10px;
-}
-
-
-.app-window check,
-.app-window radio {
-    background-clip: padding-box;
-    background: @secondary_color;
-    border-color: #070707;
-    box-shadow: 0 1px rgba(0, 0, 0, 0);
-    color: #dddddd;
-}
-
-.app-window check:checked,
-.app-window radio:checked {
-    background-clip: border-box;
-    background: #0b4285;
-    border-color: #092444;
-    box-shadow: 0 1px rgba(0, 0, 0, 0);
-    color: #dddddd;
-}
-
-.app-window colorswatch {
-    box-shadow: 0 1px rgba(0, 0, 0, 0);
 }
 
 .drag-hover-top {

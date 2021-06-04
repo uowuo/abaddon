@@ -39,16 +39,27 @@ public:
     type_signal_update_note signal_update_note();
 };
 
+class BioContainer : public Gtk::Box {
+public:
+    BioContainer();
+    void SetBio(const std::string &bio);
+
+private:
+    Gtk::Label m_label;
+    Gtk::Label m_bio;
+};
+
 class ProfileUserInfoPane : public Gtk::Box {
 public:
     ProfileUserInfoPane(Snowflake ID);
-    void SetConnections(const std::vector<ConnectionData> &connections);
+    void SetProfile(const UserProfileData &data);
 
     Snowflake UserID;
 
 private:
     Gtk::Label m_created;
 
+    BioContainer m_bio;
     NotesContainer m_note;
     ConnectionsContainer m_conns;
 };

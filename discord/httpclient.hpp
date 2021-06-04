@@ -11,7 +11,9 @@
 
 class HTTPClient {
 public:
-    HTTPClient(std::string api_base);
+    HTTPClient();
+
+    void SetBase(const std::string &url);
 
     void SetUserAgent(std::string agent);
     void SetAuth(std::string auth);

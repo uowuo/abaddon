@@ -9,7 +9,7 @@ class LazyImage;
 class StatusIndicator;
 class MemberListUserRow : public Gtk::ListBoxRow {
 public:
-    MemberListUserRow(const GuildData *guild, const UserData &data);
+    MemberListUserRow(const std::optional<GuildData> &guild, const UserData &data);
 
     Snowflake ID;
 

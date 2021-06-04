@@ -13,11 +13,33 @@ bool UserData::HasAnimatedAvatar() const {
     return Avatar.size() > 0 && Avatar[0] == 'a' && Avatar[1] == '_';
 }
 
+std::string UserData::GetAvatarURL(Snowflake guild_id, std::string ext, std::string size) const {
+    const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
+    if (member.has_value() && member->Avatar.has_value())
+        return "https://cdn.discordapp.com/guilds/" +
+               std::to_string(guild_id) + "/users/" + std::to_string(ID) +
+               "/avatars/" + *member->Avatar + "." +
+               ext + "?" + "size=" + size;
+    else
+        return GetAvatarURL(ext, size);
+}
+
+std::string UserData::GetAvatarURL(const std::optional<Snowflake> &guild_id, std::string ext, std::string size) const {
+    if (guild_id.has_value())
+        return GetAvatarURL(*guild_id, ext, size);
+    else
+        return GetAvatarURL(ext, size);
+}
+
 std::string UserData::GetAvatarURL(std::string ext, std::string size) const {
     if (HasAvatar())
         return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
     else
-        return "https://cdn.discordapp.com/embed/avatars/" + std::to_string(std::stoul(Discriminator) % 5) + ".png"; // size isn't respected by the cdn
+        return GetDefaultAvatarURL();
+}
+
+std::string UserData::GetDefaultAvatarURL() const {
+    return "https://cdn.discordapp.com/embed/avatars/" + std::to_string(std::stoul(Discriminator) % 5) + ".png"; // size isn't respected by the cdn
 }
 
 Snowflake UserData::GetHoistedRole(Snowflake guild_id, bool with_color) const {
@@ -58,6 +80,8 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_O("mobile", m.IsMobile);
     JS_ON("nsfw_allowed", m.IsNSFWAllowed);
     JS_ON("phone", m.Phone);
+    JS_ON("bio", m.Bio);
+    JS_ON("banner", m.BannerHash);
 }
 
 void to_json(nlohmann::json &j, const UserData &m) {

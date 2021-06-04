@@ -96,7 +96,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
 }
 
 void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
-    m_pane_info.SetConnections(data.ConnectedAccounts);
+    m_pane_info.SetProfile(data);
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
     for (auto child : m_badges.get_children())
