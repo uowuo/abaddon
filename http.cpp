@@ -64,12 +64,14 @@ response request::execute() {
     detail::check_init();
 
     std::string str;
+    curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, m_method);
     curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());
     curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, detail::curl_write_data_callback);
     curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &str);
     curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, m_error_buf);
+    m_error_buf[0] = '\0';
     if (m_header_list != nullptr)
         curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, m_header_list);
 
@@ -81,7 +83,7 @@ response request::execute() {
         return response;
     }
 
-    int response_code = 0;
+    long response_code = 0;
     curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &response_code);
 
     auto response = detail::make_response(m_url, response_code);
@@ -95,10 +97,10 @@ void request::prepare() {
 }
 
 namespace detail {
-    size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, std::string *outstr) {
-        auto new_length = size * nmemb;
-        outstr->append(reinterpret_cast<char *>(ptr), new_length);
-        return new_length;
+    size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
+        const size_t n = size * nmemb;
+        static_cast<std::string*>(userdata)->append(static_cast<char*>(ptr), n);
+        return n;
     }
 
     response make_response(const std::string &url, int code) {

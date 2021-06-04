@@ -121,7 +121,7 @@ private:
 using response_type = response;
 
 namespace detail {
-    size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, std::string *outstr);
+    size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, void *userdata);
 
     response make_response(const std::string &url, int code);
     void check_init();
