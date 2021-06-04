@@ -55,5 +55,7 @@ bool Platform::SetupFonts() {
     return true;
 }
 #else
-bool Platform::SetupFonts() {}
+bool Platform::SetupFonts() {
+    return true;
+}
 #endif
