@@ -6,7 +6,7 @@
 
 constexpr static const int MaxMemberListRows = 200;
 
-MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &data) {
+MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, const UserData &data) {
     ID = data.ID;
     m_ev = Gtk::manage(new Gtk::EventBox);
     m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
@@ -15,7 +15,7 @@ MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &dat
     m_status_indicator = Gtk::manage(new StatusIndicator(ID));
 
     static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
-    if (crown && guild != nullptr && guild->OwnerID == data.ID) {
+    if (crown && guild.has_value() && guild->OwnerID == data.ID) {
         try {
             auto pixbuf = Gdk::Pixbuf::create_from_file("./res/crown.png", 12, 12);
             m_crown = Gtk::manage(new Gtk::Image(pixbuf));
@@ -26,7 +26,10 @@ MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &dat
 
     m_status_indicator->set_margin_start(3);
 
-    m_avatar->SetURL(data.GetAvatarURL(guild->ID, "png"));
+    if (guild.has_value())
+        m_avatar->SetURL(data.GetAvatarURL(guild->ID, "png"));
+    else
+        m_avatar->SetURL(data.GetAvatarURL("png"));
 
     get_style_context()->add_class("members-row");
     get_style_context()->add_class("members-row-member");
@@ -40,7 +43,7 @@ MemberListUserRow::MemberListUserRow(const GuildData *guild, const UserData &dat
     std::string display = data.Username;
     if (show_discriminator)
         display += "#" + data.Discriminator;
-    if (guild != nullptr) {
+    if (guild.has_value()) {
         if (const auto col_id = data.GetHoistedRole(guild->ID, true); col_id.IsValid()) {
             auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
             m_label->set_use_markup(true);
@@ -114,7 +117,7 @@ void MemberList::UpdateMemberList() {
         int num_rows = 0;
         for (const auto &user : chan->GetDMRecipients()) {
             if (num_rows++ > MaxMemberListRows) break;
-            auto *row = Gtk::manage(new MemberListUserRow(nullptr, user));
+            auto *row = Gtk::manage(new MemberListUserRow(std::nullopt, user));
             m_id_to_row[user.ID] = row;
             AttachUserMenuHandler(row, user.ID);
             m_listbox->add(*row);
@@ -156,7 +159,7 @@ void MemberList::UpdateMemberList() {
     const auto guild = *discord.GetGuild(m_guild_id);
     auto add_user = [this, &user_to_color, &num_rows, guild](const UserData &data) -> bool {
         if (num_rows++ > MaxMemberListRows) return false;
-        auto *row = Gtk::manage(new MemberListUserRow(&guild, data));
+        auto *row = Gtk::manage(new MemberListUserRow(guild, data));
         m_id_to_row[data.ID] = row;
         AttachUserMenuHandler(row, data.ID);
         m_listbox->add(*row);
