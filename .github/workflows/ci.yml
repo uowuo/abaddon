@@ -8,7 +8,7 @@ jobs:
     runs-on: windows-2016
     strategy:
       matrix:
-        buildtype: [Debug, RelWithDebInfo]
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
     steps:
       - uses: actions/checkout@v1
         with:
