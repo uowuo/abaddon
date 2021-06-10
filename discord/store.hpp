@@ -41,6 +41,9 @@ public:
     std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     std::vector<BanData> GetBans(Snowflake guild_id) const;
 
+    std::vector<Message> GetLastMessages(Snowflake id, size_t num) const;
+    std::vector<Snowflake> GetChannelMessageIDs(Snowflake id) const;
+
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
     void ClearBan(Snowflake guild_id, Snowflake user_id);
@@ -63,6 +66,8 @@ public:
     void EndTransaction();
 
 private:
+    Message GetMessageBound(sqlite3_stmt *stmt) const;
+
     void SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction);
 
     std::unordered_set<Snowflake> m_channels;
@@ -126,6 +131,8 @@ private:
     mutable sqlite3_stmt *m_clear_ban_stmt;
     mutable sqlite3_stmt *m_get_bans_stmt;
     mutable sqlite3_stmt *m_set_msg_interaction_stmt;
+    mutable sqlite3_stmt *m_get_last_msgs_stmt;
+    mutable sqlite3_stmt *m_get_msg_ids_stmt;
 };
 
 template<typename T>

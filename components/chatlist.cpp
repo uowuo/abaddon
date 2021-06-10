@@ -44,16 +44,14 @@ void ChatList::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
 }
 
-void ChatList::ProcessNewMessage(Snowflake id, bool prepend) {
+void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (!discord.IsStarted()) return;
-    const auto data = discord.GetMessage(id);
-    if (!data.has_value()) return;
 
     // delete preview message when gateway sends it back
-    if (!data->IsPending && data->Nonce.has_value() && data->Author.ID == discord.GetUserData().ID) {
+    if (!data.IsPending && data.Nonce.has_value() && data.Author.ID == discord.GetUserData().ID) {
         for (auto [id, widget] : m_id_to_widget) {
-            if (dynamic_cast<ChatMessageItemContainer *>(widget)->Nonce == *data->Nonce) {
+            if (dynamic_cast<ChatMessageItemContainer *>(widget)->Nonce == *data.Nonce) {
                 RemoveMessageAndHeader(widget);
                 m_id_to_widget.erase(id);
                 break;
@@ -70,8 +68,8 @@ void ChatList::ProcessNewMessage(Snowflake id, bool prepend) {
             last_row = dynamic_cast<ChatMessageHeader *>(m_list.get_row_at_index(m_num_rows - 1));
 
         if (last_row != nullptr) {
-            const uint64_t diff = std::max(id, last_row->NewestID) - std::min(id, last_row->NewestID);
-            if (last_row->UserID == data->Author.ID && (prepend || (diff < SnowflakeSplitDifference * Snowflake::SecondsInterval)))
+            const uint64_t diff = std::max(data.ID, last_row->NewestID) - std::min(data.ID, last_row->NewestID);
+            if (last_row->UserID == data.Author.ID && (prepend || (diff < SnowflakeSplitDifference * Snowflake::SecondsInterval)))
                 should_attach = true;
         }
     }
@@ -91,11 +89,11 @@ void ChatList::ProcessNewMessage(Snowflake id, bool prepend) {
         header = last_row;
     } else {
         const auto guild_id = *discord.GetChannel(m_active_channel)->GuildID;
-        const auto user_id = data->Author.ID;
+        const auto user_id = data.Author.ID;
         const auto user = discord.GetUser(user_id);
         if (!user.has_value()) return;
 
-        header = Gtk::manage(new ChatMessageHeader(&*data));
+        header = Gtk::manage(new ChatMessageHeader(data));
         header->signal_action_insert_mention().connect([this, user_id]() {
             m_signal_action_insert_mention.emit(user_id);
         });
@@ -107,22 +105,22 @@ void ChatList::ProcessNewMessage(Snowflake id, bool prepend) {
         m_num_rows++;
     }
 
-    auto *content = ChatMessageItemContainer::FromMessage(id);
+    auto *content = ChatMessageItemContainer::FromMessage(data);
     if (content != nullptr) {
         header->AddContent(content, prepend);
-        m_id_to_widget[id] = content;
+        m_id_to_widget[data.ID] = content;
 
-        if (!data->IsPending) {
-            content->signal_action_delete().connect([this, id] {
+        if (!data.IsPending) {
+            content->signal_action_delete().connect([this, id = data.ID] {
                 m_signal_action_message_delete.emit(m_active_channel, id);
             });
-            content->signal_action_edit().connect([this, id] {
+            content->signal_action_edit().connect([this, id = data.ID] {
                 m_signal_action_message_edit.emit(m_active_channel, id);
             });
-            content->signal_action_reaction_add().connect([this, id](const Glib::ustring &param) {
+            content->signal_action_reaction_add().connect([this, id = data.ID](const Glib::ustring &param) {
                 m_signal_action_reaction_add.emit(id, param);
             });
-            content->signal_action_reaction_remove().connect([this, id](const Glib::ustring &param) {
+            content->signal_action_reaction_remove().connect([this, id = data.ID](const Glib::ustring &param) {
                 m_signal_action_reaction_remove.emit(id, param);
             });
             content->signal_action_channel_click().connect([this](const Snowflake &id) {

@@ -43,32 +43,29 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
     m_link_menu.show_all();
 }
 
-ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
-    const auto data = Abaddon::Get().GetDiscordClient().GetMessage(id);
-    if (!data.has_value()) return nullptr;
-
+ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &data) {
     auto *container = Gtk::manage(new ChatMessageItemContainer);
-    container->ID = data->ID;
-    container->ChannelID = data->ChannelID;
+    container->ID = data.ID;
+    container->ChannelID = data.ChannelID;
 
-    if (data->Nonce.has_value())
-        container->Nonce = *data->Nonce;
+    if (data.Nonce.has_value())
+        container->Nonce = *data.Nonce;
 
-    if (data->Content.size() > 0 || data->Type != MessageType::DEFAULT) {
-        container->m_text_component = container->CreateTextComponent(&*data);
+    if (data.Content.size() > 0 || data.Type != MessageType::DEFAULT) {
+        container->m_text_component = container->CreateTextComponent(data);
         container->AttachEventHandlers(*container->m_text_component);
         container->m_main->add(*container->m_text_component);
     }
 
-    if ((data->MessageReference.has_value() || data->Interaction.has_value()) && data->Type != MessageType::CHANNEL_FOLLOW_ADD) {
-        auto *widget = container->CreateReplyComponent(*data);
+    if ((data.MessageReference.has_value() || data.Interaction.has_value()) && data.Type != MessageType::CHANNEL_FOLLOW_ADD) {
+        auto *widget = container->CreateReplyComponent(data);
         container->m_main->add(*widget);
         container->m_main->child_property_position(*widget) = 0; // eek
     }
 
     // there should only ever be 1 embed (i think?)
-    if (data->Embeds.size() == 1) {
-        const auto &embed = data->Embeds[0];
+    if (data.Embeds.size() == 1) {
+        const auto &embed = data.Embeds[0];
         if (IsEmbedImageOnly(embed)) {
             auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
             container->AttachEventHandlers(*widget);
@@ -82,7 +79,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
 
     // i dont think attachments can be edited
     // also this can definitely be done much better holy shit
-    for (const auto &a : data->Attachments) {
+    for (const auto &a : data.Attachments) {
         if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
             container->m_main->add(*widget);
@@ -93,8 +90,8 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
     }
 
     // only 1?
-    if (data->Stickers.has_value()) {
-        const auto &sticker = data->Stickers.value()[0];
+    if (data.Stickers.has_value()) {
+        const auto &sticker = data.Stickers.value()[0];
         // todo: lottie, proper apng
         if (sticker.FormatType == StickerFormatType::PNG || sticker.FormatType == StickerFormatType::APNG) {
             auto *widget = container->CreateStickerComponent(sticker);
@@ -102,8 +99,8 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(Snowflake id) {
         }
     }
 
-    if (data->Reactions.has_value() && data->Reactions->size() > 0) {
-        container->m_reactions_component = container->CreateReactionsComponent(*data);
+    if (data.Reactions.has_value() && data.Reactions->size() > 0) {
+        container->m_reactions_component = container->CreateReactionsComponent(data);
         container->m_main->add(*container->m_reactions_component);
     }
 
@@ -183,10 +180,10 @@ void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string 
     // clang-format on
 }
 
-Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message *data) {
+Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message &data) {
     auto *tv = Gtk::manage(new Gtk::TextView);
 
-    if (data->IsPending)
+    if (data.IsPending)
         tv->get_style_context()->add_class("pending");
     tv->get_style_context()->add_class("message-text");
     tv->set_can_focus(false);
@@ -1065,9 +1062,9 @@ void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
     widget.signal_button_press_event().connect(on_button_press_event, false);
 }
 
-ChatMessageHeader::ChatMessageHeader(const Message *data) {
-    UserID = data->Author.ID;
-    ChannelID = data->ChannelID;
+ChatMessageHeader::ChatMessageHeader(const Message &data) {
+    UserID = data.Author.ID;
+    ChannelID = data.ChannelID;
 
     m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -1086,7 +1083,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
         m_static_avatar = pb->scale_simple(AvatarSize, AvatarSize, Gdk::INTERP_BILINEAR);
         m_avatar->property_pixbuf() = m_static_avatar;
     };
-    img.LoadFromURL(author->GetAvatarURL(data->GuildID), sigc::track_obj(cb, *this));
+    img.LoadFromURL(author->GetAvatarURL(data.GuildID), sigc::track_obj(cb, *this));
 
     if (author->HasAnimatedAvatar()) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -1103,7 +1100,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     m_avatar->set_valign(Gtk::ALIGN_START);
     m_avatar->set_margin_right(10);
 
-    m_author->set_markup(data->Author.GetEscapedBoldName());
+    m_author->set_markup(data.Author.GetEscapedBoldName());
     m_author->set_single_line_mode(true);
     m_author->set_line_wrap(false);
     m_author->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -1112,7 +1109,7 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
 
     m_meta_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
-    if (author->IsBot || data->WebhookID.has_value()) {
+    if (author->IsBot || data.WebhookID.has_value()) {
         m_extra = Gtk::manage(new Gtk::Label);
         m_extra->get_style_context()->add_class("message-container-extra");
         m_extra->set_single_line_mode(true);
@@ -1122,10 +1119,10 @@ ChatMessageHeader::ChatMessageHeader(const Message *data) {
     }
     if (author->IsBot)
         m_extra->set_markup("<b>BOT</b>");
-    else if (data->WebhookID.has_value())
+    else if (data.WebhookID.has_value())
         m_extra->set_markup("<b>Webhook</b>");
 
-    m_timestamp->set_text(data->ID.GetLocalTimestamp());
+    m_timestamp->set_text(data.ID.GetLocalTimestamp());
     m_timestamp->set_hexpand(true);
     m_timestamp->set_halign(Gtk::ALIGN_END);
     m_timestamp->set_ellipsize(Pango::ELLIPSIZE_END);

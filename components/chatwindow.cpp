@@ -99,10 +99,10 @@ Gtk::Widget *ChatWindow::GetRoot() const {
 }
 
 void ChatWindow::Clear() {
-    SetMessages(std::set<Snowflake>());
+    m_chat->Clear();
 }
 
-void ChatWindow::SetMessages(const std::set<Snowflake> &msgs) {
+void ChatWindow::SetMessages(const std::vector<Message> &msgs) {
     m_chat->SetMessages(msgs.begin(), msgs.end());
 }
 
@@ -115,8 +115,8 @@ void ChatWindow::SetActiveChannel(Snowflake id) {
         StopReplying();
 }
 
-void ChatWindow::AddNewMessage(Snowflake id) {
-    m_chat->ProcessNewMessage(id, false);
+void ChatWindow::AddNewMessage(const Message &data) {
+    m_chat->ProcessNewMessage(data, false);
 }
 
 void ChatWindow::DeleteMessage(Snowflake id) {
@@ -127,8 +127,8 @@ void ChatWindow::UpdateMessage(Snowflake id) {
     m_chat->RefetchMessage(id);
 }
 
-void ChatWindow::AddNewHistory(const std::vector<Snowflake> &id) {
-    m_chat->PrependMessages(id.begin(), id.end());
+void ChatWindow::AddNewHistory(const std::vector<Message> &msgs) {
+    m_chat->PrependMessages(msgs.crbegin(), msgs.crend());
 }
 
 void ChatWindow::InsertChatInput(std::string text) {

@@ -10,7 +10,7 @@ public:
     std::string Nonce;
 
     ChatMessageItemContainer();
-    static ChatMessageItemContainer *FromMessage(Snowflake id);
+    static ChatMessageItemContainer *FromMessage(const Message &data);
 
     // attributes = edited, deleted
     void UpdateAttributes();
@@ -20,7 +20,7 @@ public:
 
 protected:
     void AddClickHandler(Gtk::Widget *widget, std::string);
-    Gtk::TextView *CreateTextComponent(const Message *data); // Message.Content
+    Gtk::TextView *CreateTextComponent(const Message &data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
     Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
@@ -111,7 +111,7 @@ public:
     Snowflake ChannelID;
     Snowflake NewestID = 0;
 
-    ChatMessageHeader(const Message *data);
+    ChatMessageHeader(const Message &data);
     void AddContent(Gtk::Widget *widget, bool prepend);
     void UpdateNameColor();
     std::vector<Gtk::Widget*> GetChildContent();

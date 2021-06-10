@@ -13,7 +13,7 @@ public:
     void SetMessages(Iter begin, Iter end);
     template<typename Iter>
     void PrependMessages(Iter begin, Iter end);
-    void ProcessNewMessage(Snowflake id, bool prepend);
+    void ProcessNewMessage(const Message &data, bool prepend);
     void DeleteMessage(Snowflake id);
     void RefetchMessage(Snowflake id);
     Snowflake GetOldestListedMessage();

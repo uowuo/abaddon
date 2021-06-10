@@ -181,7 +181,7 @@ void Abaddon::DiscordOnReady() {
 }
 
 void Abaddon::DiscordOnMessageCreate(const Message &message) {
-    m_main_window->UpdateChatNewMessage(message.ID); // todo ill fix you later :^)
+    m_main_window->UpdateChatNewMessage(message);
 }
 
 void Abaddon::DiscordOnMessageDelete(Snowflake id, Snowflake channel_id) {
@@ -236,7 +236,7 @@ void Abaddon::DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &
 }
 
 void Abaddon::DiscordOnMessageSent(const Message &data) {
-    m_main_window->UpdateChatNewMessage(data.ID);
+    m_main_window->UpdateChatNewMessage(data);
 }
 
 void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code) {
@@ -475,7 +475,7 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     }
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
-        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Snowflake> &msgs) {
+        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Message> &msgs) {
             m_main_window->UpdateChatWindowContents();
             m_channels_requested.insert(id);
         });
@@ -500,20 +500,23 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
         return;
 
     Snowflake before_id = m_main_window->GetChatOldestListedMessage();
-    auto knownset = m_discord.GetMessagesForChannel(id);
+    auto knownset = m_discord.GetMessageIDsForChannel(id);
     std::vector<Snowflake> knownvec(knownset.begin(), knownset.end());
     std::sort(knownvec.begin(), knownvec.end());
     auto latest = std::find_if(knownvec.begin(), knownvec.end(), [&before_id](Snowflake x) -> bool { return x == before_id; });
     int distance = std::distance(knownvec.begin(), latest);
 
     if (distance >= 50) {
-        m_main_window->UpdateChatPrependHistory(std::vector<Snowflake>(knownvec.begin() + distance - 50, knownvec.begin() + distance));
+        std::vector<Message> msgs;
+        for (auto it = knownvec.begin() + distance - 50; it != knownvec.begin() + distance; it++)
+            msgs.push_back(*m_discord.GetMessage(*it));
+        m_main_window->UpdateChatPrependHistory(msgs);
         return;
     }
 
     m_channels_history_loading.insert(id);
 
-    m_discord.FetchMessagesInChannelBefore(id, before_id, [this, id](const std::vector<Snowflake> &msgs) {
+    m_discord.FetchMessagesInChannelBefore(id, before_id, [this, id](const std::vector<Message> &msgs) {
         m_channels_history_loading.erase(id);
 
         if (msgs.size() == 0) {

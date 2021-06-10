@@ -46,7 +46,6 @@ void DiscordClient::Stop() {
     m_client_connected = false;
 
     m_store.ClearAll();
-    m_chan_to_message_map.clear();
     m_guild_to_users.clear();
 
     m_websocket.Stop();
@@ -99,16 +98,12 @@ std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
     return ret;
 }
 
-std::set<Snowflake> DiscordClient::GetMessagesForChannel(Snowflake id) const {
-    auto it = m_chan_to_message_map.find(id);
-    if (it == m_chan_to_message_map.end())
-        return std::set<Snowflake>();
+std::vector<Message> DiscordClient::GetMessagesForChannel(Snowflake id, size_t limit) const {
+    return m_store.GetLastMessages(id, limit);
+}
 
-    std::set<Snowflake> ret;
-    for (const auto &msg_id : it->second)
-        ret.insert(m_store.GetMessage(msg_id)->ID);
-
-    return ret;
+std::vector<Snowflake> DiscordClient::GetMessageIDsForChannel(Snowflake id) const {
+    return m_store.GetChannelMessageIDs(id);
 }
 
 void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback) {
@@ -123,49 +118,44 @@ void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<
     });
 }
 
-void DiscordClient::FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb) {
+void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](const http::response_type &r) {
         if (!CheckCode(r)) return;
 
         std::vector<Message> msgs;
-        std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
 
         m_store.BeginTransaction();
         for (auto &msg : msgs) {
             StoreMessageData(msg);
-            AddMessageToChannel(msg.ID, id);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
-            ids.push_back(msg.ID);
         }
         m_store.EndTransaction();
 
-        cb(ids);
+        cb(msgs);
     });
 }
 
-void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb) {
+void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, sigc::slot<void(const std::vector<Message> &)> cb) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
     m_http.MakeGET(path, [this, channel_id, cb](http::response_type r) {
         if (!CheckCode(r)) return;
 
         std::vector<Message> msgs;
-        std::vector<Snowflake> ids;
 
         nlohmann::json::parse(r.text).get_to(msgs);
 
         m_store.BeginTransaction();
         for (auto &msg : msgs) {
             StoreMessageData(msg);
-            AddMessageToChannel(msg.ID, channel_id);
             AddUserToGuild(msg.Author.ID, *msg.GuildID);
-            ids.push_back(msg.ID);
         }
         m_store.EndTransaction();
 
-        cb(ids);
+        std::sort(msgs.begin(), msgs.end(), [](const Message &a, const Message &b) { return a.ID < b.ID; });
+        cb(msgs);
     });
 }
 
@@ -1119,7 +1109,6 @@ std::string DiscordClient::GetGatewayURL() {
 
 DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &response) {
     try {
-        // pull me somewhere else?
         const auto data = nlohmann::json::parse(response.text);
         return data.at("code").get<DiscordError>();
     } catch (...) {}
@@ -1201,7 +1190,6 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     Message data = msg.Data;
     StoreMessageData(data);
-    AddMessageToChannel(data.ID, data.ChannelID);
     AddUserToGuild(data.Author.ID, *data.GuildID);
     m_signal_message_create.emit(data);
 }
@@ -1699,10 +1687,6 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     m_signal_guild_delete.emit(id);
 }
 
-void DiscordClient::AddMessageToChannel(Snowflake msg_id, Snowflake channel_id) {
-    m_chan_to_message_map[channel_id].insert(msg_id);
-}
-
 void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
     m_guild_to_users[guild_id].insert(user_id);
 }
@@ -1792,7 +1776,6 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
         m_client_connected = false;
 
         m_store.ClearAll();
-        m_chan_to_message_map.clear();
         m_guild_to_users.clear();
 
         m_signal_disconnected.emit(m_reconnecting, close_code);

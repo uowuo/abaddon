@@ -19,12 +19,12 @@ public:
     Snowflake GetActiveChannel() const;
 
     void Clear();
-    void SetMessages(const std::set<Snowflake> &msgs); // clear contents and replace with given set
+    void SetMessages(const std::vector<Message> &msgs); // clear contents and replace with given set
     void SetActiveChannel(Snowflake id);
-    void AddNewMessage(Snowflake id);                     // append new message to bottom
+    void AddNewMessage(const Message &data);              // append new message to bottom
     void DeleteMessage(Snowflake id);                     // add [deleted] indicator
     void UpdateMessage(Snowflake id);                     // add [edited] indicator
-    void AddNewHistory(const std::vector<Snowflake> &id); // prepend messages
+    void AddNewHistory(const std::vector<Message> &msgs); // prepend messages
     void InsertChatInput(std::string text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);

@@ -199,17 +199,8 @@ void MainWindow::UpdateChannelsUpdateGuild(Snowflake id) {
 
 void MainWindow::UpdateChatWindowContents() {
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto allmsgs = discord.GetMessagesForChannel(m_chat.GetActiveChannel());
-    if (allmsgs.size() > 50) {
-        std::vector<Snowflake> msgvec(allmsgs.begin(), allmsgs.end());
-        std::vector<Snowflake> cutvec(msgvec.end() - 50, msgvec.end());
-        std::set<Snowflake> msgs;
-        for (const auto s : cutvec)
-            msgs.insert(s);
-        m_chat.SetMessages(msgs);
-    } else {
-        m_chat.SetMessages(allmsgs);
-    }
+    auto msgs = discord.GetMessagesForChannel(m_chat.GetActiveChannel(), 50);
+    m_chat.SetMessages(msgs);
     m_members.UpdateMemberList();
 }
 
@@ -225,9 +216,9 @@ Snowflake MainWindow::GetChatActiveChannel() const {
     return m_chat.GetActiveChannel();
 }
 
-void MainWindow::UpdateChatNewMessage(Snowflake id) {
-    if (Abaddon::Get().GetDiscordClient().GetMessage(id)->ChannelID == GetChatActiveChannel()) {
-        m_chat.AddNewMessage(id);
+void MainWindow::UpdateChatNewMessage(const Message &data) {
+    if (data.ChannelID == GetChatActiveChannel()) {
+        m_chat.AddNewMessage(data);
     }
 }
 
@@ -241,8 +232,8 @@ void MainWindow::UpdateChatMessageUpdated(Snowflake id, Snowflake channel_id) {
         m_chat.UpdateMessage(id);
 }
 
-void MainWindow::UpdateChatPrependHistory(const std::vector<Snowflake> &msgs) {
-    m_chat.AddNewHistory(msgs);
+void MainWindow::UpdateChatPrependHistory(const std::vector<Message> &msgs) {
+    m_chat.AddNewHistory(msgs); // given vector should be sorted ascending
 }
 
 void MainWindow::InsertChatInput(std::string text) {

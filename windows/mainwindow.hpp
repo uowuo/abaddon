@@ -21,10 +21,10 @@ public:
     void UpdateChatWindowContents();
     void UpdateChatActiveChannel(Snowflake id);
     Snowflake GetChatActiveChannel() const;
-    void UpdateChatNewMessage(Snowflake id);
+    void UpdateChatNewMessage(const Message &data);
     void UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id);
     void UpdateChatMessageUpdated(Snowflake id, Snowflake channel_id);
-    void UpdateChatPrependHistory(const std::vector<Snowflake> &msgs);
+    void UpdateChatPrependHistory(const std::vector<Message> &msgs);
     void InsertChatInput(std::string text);
     Snowflake GetChatOldestListedMessage();
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);

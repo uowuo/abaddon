@@ -68,13 +68,14 @@ public:
     const UserData &GetUserData() const;
     const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
-    std::set<Snowflake> GetMessagesForChannel(Snowflake id) const;
+    std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
+    std::vector<Snowflake> GetMessageIDsForChannel(Snowflake id) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
     EPremiumType GetSelfPremiumType() const;
 
-    void FetchMessagesInChannel(Snowflake id, std::function<void(const std::vector<Snowflake> &)> cb);
-    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, std::function<void(const std::vector<Snowflake> &)> cb);
+    void FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb);
+    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, sigc::slot<void(const std::vector<Message> &)> cb);
     std::optional<Message> GetMessage(Snowflake id) const;
     std::optional<ChannelData> GetChannel(Snowflake id) const;
     std::optional<EmojiData> GetEmoji(Snowflake id) const;
@@ -246,9 +247,6 @@ private:
     void StoreMessageData(Message &msg);
 
     std::string m_token;
-
-    void AddMessageToChannel(Snowflake msg_id, Snowflake channel_id);
-    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_chan_to_message_map;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
