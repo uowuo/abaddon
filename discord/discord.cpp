@@ -710,6 +710,18 @@ void DiscordClient::PutRelationship(Snowflake id, sigc::slot<void(bool success, 
     });
 }
 
+void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
+    m_http.MakeGET("/channels/" + std::to_string(id) + "/pins", [this, callback](const http::response_type &response) {
+        if (!CheckCode(response)) {
+            callback({}, GetCodeFromResponse(response));
+            return;
+        }
+
+        auto data = nlohmann::json::parse(response.text).get<std::vector<Message>>();
+        callback(std::move(data), DiscordError::NONE);
+    });
+}
+
 bool DiscordClient::CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const {
     const auto guild = *GetGuild(guild_id);
     if (guild.OwnerID == user_id) return true;

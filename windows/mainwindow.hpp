@@ -43,6 +43,7 @@ public:
     typedef sigc::signal<void> type_signal_action_set_status;
     typedef sigc::signal<void> type_signal_action_reload_settings;
     typedef sigc::signal<void, Snowflake> type_signal_action_add_recipient; // channel id
+    typedef sigc::signal<void, Snowflake> type_signal_action_view_pins; // channel id
 
     type_signal_action_connect signal_action_connect();
     type_signal_action_disconnect signal_action_disconnect();
@@ -52,6 +53,7 @@ public:
     type_signal_action_set_status signal_action_set_status();
     type_signal_action_reload_settings signal_action_reload_settings();
     type_signal_action_add_recipient signal_action_add_recipient();
+    type_signal_action_view_pins signal_action_view_pins();
 
 protected:
     type_signal_action_connect m_signal_action_connect;
@@ -62,6 +64,7 @@ protected:
     type_signal_action_set_status m_signal_action_set_status;
     type_signal_action_reload_settings m_signal_action_reload_settings;
     type_signal_action_add_recipient m_signal_action_add_recipient;
+    type_signal_action_view_pins m_signal_action_view_pins;
 
 protected:
     Gtk::Box m_main_box;
@@ -96,5 +99,6 @@ protected:
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_friends;
+    Gtk::MenuItem m_menu_view_pins;
     void OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 };

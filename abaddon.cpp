@@ -14,6 +14,7 @@
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
+#include "windows/pinnedwindow.hpp"
 
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
@@ -99,6 +100,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_reload_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadSettings));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
+    m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
@@ -623,6 +625,14 @@ void Abaddon::ActionAddRecipient(Snowflake channel_id) {
         auto user_id = dlg.GetUserID();
         m_discord.AddGroupDMRecipient(channel_id, user_id);
     }
+}
+
+void Abaddon::ActionViewPins(Snowflake channel_id) {
+    const auto data = m_discord.GetChannel(channel_id);
+    if (!data.has_value()) return;
+    auto window = new PinnedWindow(*data);
+    ManageHeapWindow(window);
+    window->show();
 }
 
 bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {

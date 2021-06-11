@@ -170,6 +170,8 @@ public:
     void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback);
     void FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback);
 
+    void FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback);
+
     void GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(bool success)> callback);
 
