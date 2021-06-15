@@ -718,6 +718,9 @@ void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Messag
         }
 
         auto data = nlohmann::json::parse(response.text).get<std::vector<Message>>();
+        std::sort(data.begin(), data.end(), [](const Message &a, const Message &b) { return a.ID < b.ID; });
+        for (auto &msg : data)
+            StoreMessageData(msg);
         callback(std::move(data), DiscordError::NONE);
     });
 }

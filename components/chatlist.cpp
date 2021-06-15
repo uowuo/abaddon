@@ -61,7 +61,7 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
 
     ChatMessageHeader *last_row = nullptr;
     bool should_attach = false;
-    if (m_num_rows > 0) {
+    if (!m_separate_all && m_num_rows > 0) {
         if (prepend)
             last_row = dynamic_cast<ChatMessageHeader *>(m_list.get_row_at_index(0));
         else
@@ -208,6 +208,10 @@ std::vector<Snowflake> ChatList::GetRecentAuthors() {
     }
 
     return ret;
+}
+
+void ChatList::SetSeparateAll(bool separate) {
+    m_separate_all = true;
 }
 
 void ChatList::OnScrollEdgeOvershot(Gtk::PositionType pos) {

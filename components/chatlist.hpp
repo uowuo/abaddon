@@ -20,6 +20,7 @@ public:
     void UpdateMessageReactions(Snowflake id);
     void SetFailedByNonce(const std::string &nonce);
     std::vector<Snowflake> GetRecentAuthors();
+    void SetSeparateAll(bool separate);
 
 private:
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
@@ -34,6 +35,8 @@ private:
 
     bool m_should_scroll_to_bottom = true;
     Gtk::ListBox m_list;
+
+    bool m_separate_all = false;
 
 public:
     // these are all forwarded by the parent

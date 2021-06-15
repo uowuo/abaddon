@@ -17,6 +17,7 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
     add(m_chat);
     m_chat.show();
 
+    m_chat.SetSeparateAll(true);
     m_chat.SetActiveChannel(ChannelID);
 
     FetchPinned();
