@@ -14,28 +14,6 @@ ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     add(*m_main);
 
-    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_menu_copy_id->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_copy_id));
-    m_menu.append(*m_menu_copy_id);
-
-    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
-    m_menu_delete_message->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_delete_message));
-    m_menu.append(*m_menu_delete_message);
-
-    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
-    m_menu_edit_message->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_edit_message));
-    m_menu.append(*m_menu_edit_message);
-
-    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
-    m_menu_copy_content->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_copy_content));
-    m_menu.append(*m_menu_copy_content);
-
-    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
-    m_menu_reply_to->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_menu_reply_to));
-    m_menu.append(*m_menu_reply_to);
-
-    m_menu.show_all();
-
     m_link_menu_copy = Gtk::manage(new Gtk::MenuItem("Copy Link"));
     m_link_menu_copy->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_link_menu_copy));
     m_link_menu.append(*m_link_menu_copy);
@@ -988,52 +966,6 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
     return false;
 }
 
-void ChatMessageItemContainer::ShowMenu(GdkEvent *event) {
-    const auto &client = Abaddon::Get().GetDiscordClient();
-    const auto data = client.GetMessage(ID);
-    if (data->IsDeleted()) {
-        m_menu_delete_message->set_sensitive(false);
-        m_menu_edit_message->set_sensitive(false);
-    } else {
-        const bool can_edit = client.GetUserData().ID == data->Author.ID;
-        const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, ChannelID, Permission::MANAGE_MESSAGES);
-        m_menu_delete_message->set_sensitive(can_delete);
-        m_menu_edit_message->set_sensitive(can_edit);
-    }
-
-    m_menu.popup_at_pointer(event);
-}
-
-void ChatMessageItemContainer::on_menu_copy_id() {
-    Gtk::Clipboard::get()->set_text(std::to_string(ID));
-}
-
-void ChatMessageItemContainer::on_menu_delete_message() {
-    m_signal_action_delete.emit();
-}
-
-void ChatMessageItemContainer::on_menu_edit_message() {
-    m_signal_action_edit.emit();
-}
-
-void ChatMessageItemContainer::on_menu_copy_content() {
-    const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(ID);
-    if (msg.has_value())
-        Gtk::Clipboard::get()->set_text(msg->Content);
-}
-
-void ChatMessageItemContainer::on_menu_reply_to() {
-    m_signal_action_reply_to.emit(ID);
-}
-
-ChatMessageItemContainer::type_signal_action_delete ChatMessageItemContainer::signal_action_delete() {
-    return m_signal_action_delete;
-}
-
-ChatMessageItemContainer::type_signal_action_edit ChatMessageItemContainer::signal_action_edit() {
-    return m_signal_action_edit;
-}
-
 ChatMessageItemContainer::type_signal_channel_click ChatMessageItemContainer::signal_action_channel_click() {
     return m_signal_action_channel_click;
 }
@@ -1046,14 +978,10 @@ ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemCont
     return m_signal_action_reaction_remove;
 }
 
-ChatMessageItemContainer::type_signal_action_reply_to ChatMessageItemContainer::signal_action_reply_to() {
-    return m_signal_action_reply_to;
-}
-
 void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
-    const auto on_button_press_event = [this](GdkEventButton *event) -> bool {
-        if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
-            ShowMenu(reinterpret_cast<GdkEvent *>(event));
+    const auto on_button_press_event = [this](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            event(reinterpret_cast<GdkEvent *>(e)); // illegal ooooooh
             return true;
         }
 

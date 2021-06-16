@@ -27,6 +27,14 @@ private:
     void ScrollToBottom();
     void RemoveMessageAndHeader(Gtk::Widget *widget);
 
+    Gtk::Menu m_menu;
+    Gtk::MenuItem *m_menu_copy_id;
+    Gtk::MenuItem *m_menu_copy_content;
+    Gtk::MenuItem *m_menu_delete_message;
+    Gtk::MenuItem *m_menu_edit_message;
+    Gtk::MenuItem *m_menu_reply_to;
+    Snowflake m_menu_selected_message;
+
     Snowflake m_active_channel;
 
     int m_num_messages = 0;

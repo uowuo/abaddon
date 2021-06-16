@@ -544,6 +544,7 @@ void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
     const auto msg = m_discord.GetMessage(id);
+    if (!msg.has_value()) return;
     EditMessageDialog dlg(*m_main_window);
     dlg.SetContent(msg->Content);
     auto response = dlg.run();

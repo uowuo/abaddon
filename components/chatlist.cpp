@@ -29,6 +29,40 @@ ChatList::ChatList() {
     add(m_list);
 
     m_list.show();
+
+    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_menu_copy_id->signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string(m_menu_selected_message));
+    });
+    m_menu.append(*m_menu_copy_id);
+
+    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
+    m_menu_delete_message->signal_activate().connect([this] {
+        m_signal_action_message_delete.emit(m_active_channel, m_menu_selected_message);
+    });
+    m_menu.append(*m_menu_delete_message);
+
+    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
+    m_menu_edit_message->signal_activate().connect([this] {
+        m_signal_action_message_edit.emit(m_active_channel, m_menu_selected_message);
+    });
+    m_menu.append(*m_menu_edit_message);
+
+    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
+    m_menu_copy_content->signal_activate().connect([this] {
+        const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(m_menu_selected_message);
+        if (msg.has_value())
+            Gtk::Clipboard::get()->set_text(msg->Content);
+    });
+    m_menu.append(*m_menu_copy_content);
+
+    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
+    m_menu_reply_to->signal_activate().connect([this] {
+        m_signal_action_reply_to.emit(m_menu_selected_message);
+    });
+    m_menu.append(*m_menu_reply_to);
+
+    m_menu.show_all();
 }
 
 void ChatList::Clear() {
@@ -110,13 +144,29 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
         header->AddContent(content, prepend);
         m_id_to_widget[data.ID] = content;
 
+        const auto cb = [this, id = data.ID](GdkEventButton *ev) -> bool {
+            if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
+                m_menu_selected_message = id;
+
+                const auto &client = Abaddon::Get().GetDiscordClient();
+                const auto data = client.GetMessage(id);
+                if (data->IsDeleted()) {
+                    m_menu_delete_message->set_sensitive(false);
+                    m_menu_edit_message->set_sensitive(false);
+                } else {
+                    const bool can_edit = client.GetUserData().ID == data->Author.ID;
+                    const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES);
+                    m_menu_delete_message->set_sensitive(can_delete);
+                    m_menu_edit_message->set_sensitive(can_edit);
+                }
+
+                m_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+            }
+            return false;
+        };
+        content->signal_button_press_event().connect(cb);
+
         if (!data.IsPending) {
-            content->signal_action_delete().connect([this, id = data.ID] {
-                m_signal_action_message_delete.emit(m_active_channel, id);
-            });
-            content->signal_action_edit().connect([this, id = data.ID] {
-                m_signal_action_message_edit.emit(m_active_channel, id);
-            });
             content->signal_action_reaction_add().connect([this, id = data.ID](const Glib::ustring &param) {
                 m_signal_action_reaction_add.emit(id, param);
             });
@@ -125,9 +175,6 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
             });
             content->signal_action_channel_click().connect([this](const Snowflake &id) {
                 m_signal_action_channel_click.emit(id);
-            });
-            content->signal_action_reply_to().connect([this](const Snowflake &id) {
-                m_signal_action_reply_to.emit(id);
             });
         }
     }
