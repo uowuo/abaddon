@@ -138,6 +138,7 @@ public:
     void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
     void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback);
     void PutRelationship(Snowflake id, sigc::slot<void(bool success, DiscordError code)> callback); // send fr by id, accept incoming
+    void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;

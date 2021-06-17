@@ -19,6 +19,7 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
 
     m_chat.SetSeparateAll(true);
     m_chat.SetActiveChannel(ChannelID);
+    m_chat.SetUsePinnedMenu();
 
     FetchPinned();
 }

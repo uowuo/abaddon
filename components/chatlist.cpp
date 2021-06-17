@@ -34,18 +34,21 @@ ChatList::ChatList() {
     m_menu_copy_id->signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string(m_menu_selected_message));
     });
+    m_menu_copy_id->show();
     m_menu.append(*m_menu_copy_id);
 
     m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
     m_menu_delete_message->signal_activate().connect([this] {
-        m_signal_action_message_delete.emit(m_active_channel, m_menu_selected_message);
+        Abaddon::Get().GetDiscordClient().DeleteMessage(m_active_channel, m_menu_selected_message);
     });
+    m_menu_delete_message->show();
     m_menu.append(*m_menu_delete_message);
 
     m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
     m_menu_edit_message->signal_activate().connect([this] {
         m_signal_action_message_edit.emit(m_active_channel, m_menu_selected_message);
     });
+    m_menu_edit_message->show();
     m_menu.append(*m_menu_edit_message);
 
     m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
@@ -54,15 +57,23 @@ ChatList::ChatList() {
         if (msg.has_value())
             Gtk::Clipboard::get()->set_text(msg->Content);
     });
+    m_menu_copy_content->show();
     m_menu.append(*m_menu_copy_content);
 
     m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
     m_menu_reply_to->signal_activate().connect([this] {
         m_signal_action_reply_to.emit(m_menu_selected_message);
     });
+    m_menu_reply_to->show();
     m_menu.append(*m_menu_reply_to);
 
-    m_menu.show_all();
+    m_menu_unpin = Gtk::manage(new Gtk::MenuItem("Unpin"));
+    m_menu_unpin->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().Unpin(m_active_channel, m_menu_selected_message, [](...) {});
+    });
+    m_menu.append(*m_menu_unpin);
+
+    m_menu.show();
 }
 
 void ChatList::Clear() {
@@ -147,6 +158,10 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
         const auto cb = [this, id = data.ID](GdkEventButton *ev) -> bool {
             if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
                 m_menu_selected_message = id;
+
+                m_menu_edit_message->set_visible(!m_use_pinned_menu);
+                m_menu_reply_to->set_visible(!m_use_pinned_menu);
+                m_menu_unpin->set_visible(m_use_pinned_menu);
 
                 const auto &client = Abaddon::Get().GetDiscordClient();
                 const auto data = client.GetMessage(id);
@@ -261,6 +276,10 @@ void ChatList::SetSeparateAll(bool separate) {
     m_separate_all = true;
 }
 
+void ChatList::SetUsePinnedMenu() {
+    m_use_pinned_menu = true;
+}
+
 void ChatList::OnScrollEdgeOvershot(Gtk::PositionType pos) {
     if (pos == Gtk::POS_TOP)
         m_signal_action_chat_load_history.emit(m_active_channel);
@@ -284,10 +303,6 @@ void ChatList::RemoveMessageAndHeader(Gtk::Widget *widget) {
         delete widget;
     }
     m_num_messages--;
-}
-
-ChatList::type_signal_action_message_delete ChatList::signal_action_message_delete() {
-    return m_signal_action_message_delete;
 }
 
 ChatList::type_signal_action_message_edit ChatList::signal_action_message_edit() {

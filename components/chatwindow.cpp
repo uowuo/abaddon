@@ -63,9 +63,6 @@ ChatWindow::ChatWindow() {
         // lowkey gross
         m_signal_action_insert_mention.emit(id);
     });
-    m_chat->signal_action_message_delete().connect([this](Snowflake channel_id, Snowflake message_id) {
-        m_signal_action_message_delete.emit(channel_id, message_id);
-    });
     m_chat->signal_action_message_edit().connect([this](Snowflake channel_id, Snowflake message_id) {
         m_signal_action_message_edit.emit(channel_id, message_id);
     });
@@ -200,10 +197,6 @@ void ChatWindow::OnScrollEdgeOvershot(Gtk::PositionType pos) {
 
 void ChatWindow::OnMessageSendFail(const std::string &nonce, float retry_after) {
     m_chat->SetFailedByNonce(nonce);
-}
-
-ChatWindow::type_signal_action_message_delete ChatWindow::signal_action_message_delete() {
-    return m_signal_action_message_delete;
 }
 
 ChatWindow::type_signal_action_message_edit ChatWindow::signal_action_message_edit() {

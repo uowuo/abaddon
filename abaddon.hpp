@@ -36,7 +36,6 @@ public:
     void ActionChannelOpened(Snowflake id);
     void ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message);
     void ActionChatLoadHistory(Snowflake id);
-    void ActionChatDeleteMessage(Snowflake channel_id, Snowflake id);
     void ActionChatEditMessage(Snowflake channel_id, Snowflake id);
     void ActionInsertMention(Snowflake id);
     void ActionLeaveGuild(Snowflake id);

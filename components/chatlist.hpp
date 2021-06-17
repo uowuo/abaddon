@@ -21,11 +21,14 @@ public:
     void SetFailedByNonce(const std::string &nonce);
     std::vector<Snowflake> GetRecentAuthors();
     void SetSeparateAll(bool separate);
+    void SetUsePinnedMenu(); // i think i need a better way to do menus
 
 private:
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
     void ScrollToBottom();
     void RemoveMessageAndHeader(Gtk::Widget *widget);
+
+    bool m_use_pinned_menu = false;
 
     Gtk::Menu m_menu;
     Gtk::MenuItem *m_menu_copy_id;
@@ -33,6 +36,7 @@ private:
     Gtk::MenuItem *m_menu_delete_message;
     Gtk::MenuItem *m_menu_edit_message;
     Gtk::MenuItem *m_menu_reply_to;
+    Gtk::MenuItem *m_menu_unpin;
     Snowflake m_menu_selected_message;
 
     Snowflake m_active_channel;
@@ -48,7 +52,6 @@ private:
 
 public:
     // these are all forwarded by the parent
-    using type_signal_action_message_delete = sigc::signal<void, Snowflake, Snowflake>;
     using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
     using type_signal_action_chat_submit = sigc::signal<void, std::string, Snowflake, Snowflake>;
     using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
@@ -59,7 +62,6 @@ public:
     using type_signal_action_reaction_remove = sigc::signal<void, Snowflake, Glib::ustring>;
     using type_signal_action_reply_to = sigc::signal<void, Snowflake>;
 
-    type_signal_action_message_delete signal_action_message_delete();
     type_signal_action_message_edit signal_action_message_edit();
     type_signal_action_chat_submit signal_action_chat_submit();
     type_signal_action_chat_load_history signal_action_chat_load_history();
@@ -71,7 +73,6 @@ public:
     type_signal_action_reply_to signal_action_reply_to();
 
 private:
-    type_signal_action_message_delete m_signal_action_message_delete;
     type_signal_action_message_edit m_signal_action_message_edit;
     type_signal_action_chat_submit m_signal_action_chat_submit;
     type_signal_action_chat_load_history m_signal_action_chat_load_history;

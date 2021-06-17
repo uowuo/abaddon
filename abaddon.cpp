@@ -106,7 +106,6 @@ int Abaddon::StartGTK() {
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
 
-    m_main_window->GetChatWindow()->signal_action_message_delete().connect(sigc::mem_fun(*this, &Abaddon::ActionChatDeleteMessage));
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
     m_main_window->GetChatWindow()->signal_action_chat_submit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatInputSubmit));
     m_main_window->GetChatWindow()->signal_action_chat_load_history().connect(sigc::mem_fun(*this, &Abaddon::ActionChatLoadHistory));
@@ -536,10 +535,6 @@ void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflak
         m_discord.SendChatMessage(msg, channel, referenced_message);
     else
         m_discord.SendChatMessage(msg, channel);
-}
-
-void Abaddon::ActionChatDeleteMessage(Snowflake channel_id, Snowflake id) {
-    m_discord.DeleteMessage(channel_id, id);
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {

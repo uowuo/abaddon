@@ -59,7 +59,6 @@ protected:
     Gtk::Box *m_meta;
 
 public:
-    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
     typedef sigc::signal<void, std::string, Snowflake, Snowflake> type_signal_action_chat_submit;
     typedef sigc::signal<void, Snowflake> type_signal_action_chat_load_history;
@@ -68,7 +67,6 @@ public:
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_add;
     typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_remove;
 
-    type_signal_action_message_delete signal_action_message_delete();
     type_signal_action_message_edit signal_action_message_edit();
     type_signal_action_chat_submit signal_action_chat_submit();
     type_signal_action_chat_load_history signal_action_chat_load_history();
@@ -78,7 +76,6 @@ public:
     type_signal_action_reaction_remove signal_action_reaction_remove();
 
 private:
-    type_signal_action_message_delete m_signal_action_message_delete;
     type_signal_action_message_edit m_signal_action_message_edit;
     type_signal_action_chat_submit m_signal_action_chat_submit;
     type_signal_action_chat_load_history m_signal_action_chat_load_history;
