@@ -292,6 +292,8 @@ private:
     Glib::Dispatcher m_generic_dispatch;
     std::queue<std::function<void()>> m_generic_queue;
 
+    std::set<Snowflake> m_channels_pinned_requested;
+
     // signals
 public:
     typedef sigc::signal<void> type_signal_gateway_ready;

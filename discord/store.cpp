@@ -463,6 +463,25 @@ std::vector<Snowflake> Store::GetChannelMessageIDs(Snowflake id) const {
     return ret;
 }
 
+std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
+    std::vector<Message> ret;
+
+    Bind(m_get_pins_stmt, 1, channel_id);
+    while (FetchOne(m_get_pins_stmt)) {
+        Snowflake x;
+        Get(m_get_pins_stmt, 0, x);
+        auto msg = GetMessage(x);
+        if (msg.has_value())
+            ret.push_back(*msg);
+    }
+
+    Reset(m_get_pins_stmt);
+
+    if (m_db_err != SQLITE_DONE)
+        fprintf(stderr, "error while fetching pins: %s\n", sqlite3_errstr(m_db_err));
+    return ret;
+}
+
 std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Bind(m_get_chan_stmt, 1, id);
     if (!FetchOne(m_get_chan_stmt)) {
@@ -1138,6 +1157,10 @@ bool Store::CreateStatements() {
         SELECT id FROM messages WHERE channel_id = ? ORDER BY id ASC
     )";
 
+    const char *get_pins = R"(
+        SELECT id FROM messages WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
+    )";
+
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to prepare set user statement: %s\n", sqlite3_errstr(m_db_err));
@@ -1276,6 +1299,12 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, get_pins, -1, &m_get_pins_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare getp ins statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -1303,6 +1332,7 @@ void Store::Cleanup() {
     sqlite3_finalize(m_set_msg_interaction_stmt);
     sqlite3_finalize(m_get_last_msgs_stmt);
     sqlite3_finalize(m_get_msg_ids_stmt);
+    sqlite3_finalize(m_get_pins_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {

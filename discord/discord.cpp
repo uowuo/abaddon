@@ -720,6 +720,13 @@ void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot
 }
 
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
+    // return from db if we know the pins have already been requested
+    if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
+        callback(m_store.GetPinnedMessages(id), DiscordError::NONE);
+        return;
+    }
+    m_channels_pinned_requested.insert(id);
+
     m_http.MakeGET("/channels/" + std::to_string(id) + "/pins", [this, callback](const http::response_type &response) {
         if (!CheckCode(response)) {
             callback({}, GetCodeFromResponse(response));

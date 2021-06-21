@@ -43,6 +43,7 @@ public:
 
     std::vector<Message> GetLastMessages(Snowflake id, size_t num) const;
     std::vector<Snowflake> GetChannelMessageIDs(Snowflake id) const;
+    std::vector<Message> GetPinnedMessages(Snowflake channel_id) const;
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);
@@ -133,6 +134,7 @@ private:
     mutable sqlite3_stmt *m_set_msg_interaction_stmt;
     mutable sqlite3_stmt *m_get_last_msgs_stmt;
     mutable sqlite3_stmt *m_get_msg_ids_stmt;
+    mutable sqlite3_stmt *m_get_pins_stmt;
 };
 
 template<typename T>
