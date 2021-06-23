@@ -38,6 +38,7 @@ private:
     Gtk::MenuItem *m_menu_edit_message;
     Gtk::MenuItem *m_menu_reply_to;
     Gtk::MenuItem *m_menu_unpin;
+    Gtk::MenuItem *m_menu_pin;
     Snowflake m_menu_selected_message;
 
     Snowflake m_active_channel;

@@ -73,6 +73,12 @@ ChatList::ChatList() {
     });
     m_menu.append(*m_menu_unpin);
 
+    m_menu_pin = Gtk::manage(new Gtk::MenuItem("Pin"));
+    m_menu_pin->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().Pin(m_active_channel, m_menu_selected_message, [](...) {});
+    });
+    m_menu.append(*m_menu_pin);
+
     m_menu.show();
 }
 
@@ -159,12 +165,15 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
             if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
                 m_menu_selected_message = id;
 
-                m_menu_edit_message->set_visible(!m_use_pinned_menu);
-                m_menu_reply_to->set_visible(!m_use_pinned_menu);
-                m_menu_unpin->set_visible(m_use_pinned_menu);
-
                 const auto &client = Abaddon::Get().GetDiscordClient();
                 const auto data = client.GetMessage(id);
+                if (!data.has_value()) return false;
+
+                m_menu_edit_message->set_visible(!m_use_pinned_menu);
+                m_menu_reply_to->set_visible(!m_use_pinned_menu);
+                m_menu_unpin->set_visible(data->IsPinned);
+                m_menu_pin->set_visible(!data->IsPinned);
+
                 if (data->IsDeleted()) {
                     m_menu_delete_message->set_sensitive(false);
                     m_menu_edit_message->set_sensitive(false);

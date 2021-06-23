@@ -138,6 +138,7 @@ public:
     void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
     void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback);
     void PutRelationship(Snowflake id, sigc::slot<void(bool success, DiscordError code)> callback); // send fr by id, accept incoming
+    void Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
     void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
@@ -327,7 +328,7 @@ public:
     typedef sigc::signal<void, Snowflake, RelationshipType> type_signal_relationship_remove;
     typedef sigc::signal<void, RelationshipAddData> type_signal_relationship_add;
     typedef sigc::signal<void, Message> type_signal_message_unpinned; // not a real event
-    typedef sigc::signal<void, Message> type_signal_message_pinned; // not a real event either
+    typedef sigc::signal<void, Message> type_signal_message_pinned;   // not a real event either
     typedef sigc::signal<void, Message> type_signal_message_sent;
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting

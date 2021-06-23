@@ -710,6 +710,15 @@ void DiscordClient::PutRelationship(Snowflake id, sigc::slot<void(bool success, 
     });
 }
 
+void DiscordClient::Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), "", [this, callback](const http::response_type &response) {
+        if (CheckCode(response, 204))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), [this, callback](const http::response_type &response) {
         if (CheckCode(response, 204))
