@@ -280,6 +280,12 @@ void ChatList::SetUsePinnedMenu() {
     m_use_pinned_menu = true;
 }
 
+void ChatList::ActuallyRemoveMessage(Snowflake id) {
+    auto it = m_id_to_widget.find(id);
+    if (it != m_id_to_widget.end())
+        RemoveMessageAndHeader(it->second);
+}
+
 void ChatList::OnScrollEdgeOvershot(Gtk::PositionType pos) {
     if (pos == Gtk::POS_TOP)
         m_signal_action_chat_load_history.emit(m_active_channel);

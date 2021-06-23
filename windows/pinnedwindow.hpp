@@ -13,6 +13,8 @@ public:
     Snowflake ChannelID;
 
 private:
+    void OnMessagePinned(const Message &msg);
+    void OnMessageUnpinned(const Message &msg);
     void FetchPinned();
     void OnFetchedPinned(const std::vector<Message> &msgs, DiscordError code);
 

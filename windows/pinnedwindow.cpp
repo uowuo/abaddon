@@ -21,7 +21,17 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
     m_chat.SetActiveChannel(ChannelID);
     m_chat.SetUsePinnedMenu();
 
+    Abaddon::Get().GetDiscordClient().signal_message_pinned().connect(sigc::mem_fun(*this, &PinnedWindow::OnMessagePinned));
+    Abaddon::Get().GetDiscordClient().signal_message_unpinned().connect(sigc::mem_fun(*this, &PinnedWindow::OnMessageUnpinned));
     FetchPinned();
+}
+
+void PinnedWindow::OnMessagePinned(const Message &msg) {
+    FetchPinned();
+}
+
+void PinnedWindow::OnMessageUnpinned(const Message &msg) {
+    m_chat.ActuallyRemoveMessage(msg.ID);
 }
 
 void PinnedWindow::FetchPinned() {

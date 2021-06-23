@@ -1632,15 +1632,39 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
     m_websocket.StartConnection(GetGatewayURL());
 }
 
+bool IsCompleteMessageObject(const nlohmann::json &j) {
+    const auto required = { "id", "channel_id", "author", "content", "timestamp", "edited_timestamp", "tts", "mention_everyone", "mention_roles", "attachments", "embeds", "pinned", "type" };
+    for (const auto &str : required) {
+        if (!j.contains(str)) return false;
+    }
+    return true;
+}
+
 void DiscordClient::HandleGatewayMessageUpdate(const GatewayMessage &msg) {
     Snowflake id = msg.Data.at("id");
 
     auto current = m_store.GetMessage(id);
-    if (!current.has_value())
-        return;
+    if (!current.has_value()) {
+        // im not sure how the client determines if a MESSAGE_UPDATE is suitable to be stored as a full message but i guess its something like this
+        if (IsCompleteMessageObject(msg.Data)) {
+            current = msg.Data;
+            m_store.SetMessage(id, *current);
+            // this doesnt mean a message is newly pinned when called here
+            // it just means theres an (old) message that the client is now aware of that is also pinned
+            m_signal_message_pinned.emit(*current);
+        } else
+            return;
+    } else {
+        const bool old_pinned = current->IsPinned;
 
-    current->from_json_edited(msg.Data);
-    m_store.SetMessage(id, *current);
+        current->from_json_edited(msg.Data);
+        m_store.SetMessage(id, *current);
+
+        if (old_pinned && !current->IsPinned)
+            m_signal_message_unpinned.emit(*current);
+        else if (!old_pinned && current->IsPinned)
+            m_signal_message_pinned.emit(*current);
+    }
 
     m_signal_message_update.emit(id, current->ChannelID);
 }
@@ -2033,6 +2057,14 @@ DiscordClient::type_signal_relationship_remove DiscordClient::signal_relationshi
 
 DiscordClient::type_signal_relationship_add DiscordClient::signal_relationship_add() {
     return m_signal_relationship_add;
+}
+
+DiscordClient::type_signal_message_unpinned DiscordClient::signal_message_unpinned() {
+    return m_signal_message_unpinned;
+}
+
+DiscordClient::type_signal_message_pinned DiscordClient::signal_message_pinned() {
+    return m_signal_message_pinned;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

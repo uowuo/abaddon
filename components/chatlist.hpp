@@ -22,6 +22,7 @@ public:
     std::vector<Snowflake> GetRecentAuthors();
     void SetSeparateAll(bool separate);
     void SetUsePinnedMenu(); // i think i need a better way to do menus
+    void ActuallyRemoveMessage(Snowflake id); // perhaps not the best method name
 
 private:
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
