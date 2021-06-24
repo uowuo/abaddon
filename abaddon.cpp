@@ -484,11 +484,10 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
         m_main_window->UpdateChatWindowContents();
     }
 
-    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) {
+    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
         m_discord.SendLazyLoad(id);
 
-        const auto request = m_discord.GetGuildApplication(*channel->GuildID);
-        if (request.has_value() && request->ApplicationStatus == GuildApplicationStatus::STARTED)
+        if (m_discord.IsVerificationRequired(*channel->GuildID))
             ShowGuildVerificationGateDialog(*channel->GuildID);
     }
 }

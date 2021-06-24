@@ -8,13 +8,14 @@
 
 struct GuildMember {
     std::optional<UserData> User; // only reliable to access id. only opt in MESSAGE_*
-    std::string Nickname;         // null
+    std::string Nickname;
     std::vector<Snowflake> Roles;
     std::string JoinedAt;
     std::optional<std::string> PremiumSince; // null
     bool IsDeafened;
     bool IsMuted;
     std::optional<Snowflake> UserID; // present in merged_members
+    std::optional<bool> IsPending;   // this uses `pending` not `is_pending`
 
     // undocuemtned moment !!!1
     std::optional<std::string> Avatar;

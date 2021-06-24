@@ -872,6 +872,13 @@ void DiscordClient::FetchUserRelationships(Snowflake user_id, sigc::slot<void(st
     });
 }
 
+bool DiscordClient::IsVerificationRequired(Snowflake guild_id) {
+    const auto member = GetMember(GetUserData().ID, guild_id);
+    if (member.has_value() && member->IsPending.has_value())
+        return *member->IsPending;
+    return false;
+}
+
 void DiscordClient::GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback) {
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/member-verification", [this, callback](const http::response_type &response) {
         if (!CheckCode(response)) return;
@@ -1184,6 +1191,11 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 }
 
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
+    auto fp = std::fopen("ready.json", "w");
+    auto cum = msg.Data.dump(4);
+    std::fwrite(cum.c_str(), 1, cum.size(), fp);
+    std::fclose(fp);
+
     m_ready_received = true;
     ReadyEventData data = msg.Data;
     for (auto &g : data.Guilds)

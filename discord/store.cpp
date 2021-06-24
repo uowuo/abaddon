@@ -211,6 +211,7 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
     Bind(m_set_member_stmt, 7, data.IsDeafened);
     Bind(m_set_member_stmt, 8, data.IsMuted);
     Bind(m_set_member_stmt, 9, data.Avatar);
+    Bind(m_set_member_stmt, 10, data.IsPending);
 
     if (!RunInsert(m_set_member_stmt))
         fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -642,6 +643,7 @@ std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake u
     Get(m_get_member_stmt, 6, ret.IsDeafened);
     Get(m_get_member_stmt, 7, ret.IsMuted);
     Get(m_get_member_stmt, 8, ret.Avatar);
+    Get(m_get_member_stmt, 9, ret.IsPending);
 
     Reset(m_get_member_stmt);
 
@@ -876,6 +878,7 @@ bool Store::CreateTables() {
             deaf BOOL NOT NULL,
             mute BOOL NOT NULL,
             avatar TEXT,
+            pending BOOL,
             PRIMARY KEY(user_id, guild_id)
         )
     )";
@@ -1092,7 +1095,7 @@ bool Store::CreateStatements() {
 
     const char *set_member = R"(
         REPLACE INTO members VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 
