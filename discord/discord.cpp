@@ -1228,11 +1228,6 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 }
 
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
-    auto fp = std::fopen("ready.json", "w");
-    auto cum = msg.Data.dump(4);
-    std::fwrite(cum.c_str(), 1, cum.size(), fp);
-    std::fclose(fp);
-
     m_ready_received = true;
     ReadyEventData data = msg.Data;
     for (auto &g : data.Guilds)
