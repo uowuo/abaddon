@@ -4,6 +4,8 @@ Alternative Discord client made in C++ with GTK
 
 <img src="/.readme/s3.png">
 
+[😎Discord Server](https://discord.gg/wkCU3vuzG5)
+
 Current features:
 * Not Electron
 * Handles most types of chat messages including embeds, images, and replies
