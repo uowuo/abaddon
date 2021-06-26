@@ -326,8 +326,8 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
 void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
     VerificationGateDialog dlg(*m_main_window, guild_id);
     if (dlg.run() == Gtk::RESPONSE_OK) {
-        const auto cb = [this](bool success) {
-            if (!success) {
+        const auto cb = [this](DiscordError code) {
+            if (code != DiscordError::NONE) {
                 Gtk::MessageDialog dlg(*m_main_window, "Failed to accept the verification gate.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
@@ -411,8 +411,8 @@ void Abaddon::on_user_menu_open_dm() {
     if (existing.has_value())
         ActionChannelOpened(*existing);
     else
-        m_discord.CreateDM(m_shown_user_menu_id, [this](bool success, Snowflake channel_id) {
-            if (success) {
+        m_discord.CreateDM(m_shown_user_menu_id, [this](DiscordError code, Snowflake channel_id) {
+            if (code == DiscordError::NONE) {
                 // give the gateway a little window to send CHANNEL_CREATE
                 auto cb = [this, channel_id] {
                     ActionChannelOpened(channel_id);

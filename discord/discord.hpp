@@ -14,12 +14,10 @@
 #include <glibmm.h>
 #include <queue>
 
-// bruh
 #ifdef GetMessage
     #undef GetMessage
 #endif
 
-// https://stackoverflow.com/questions/29775153/stopping-long-sleep-threads/29775639#29775639
 class HeartbeatWaiter {
 public:
     template<class R, class P>
@@ -112,32 +110,32 @@ public:
     void UpdateStatus(PresenceStatus status, bool is_afk);
     void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
     void CreateDM(Snowflake user_id);
-    void CreateDM(Snowflake user_id, sigc::slot<void(bool success, Snowflake channel_id)> callback);
+    void CreateDM(Snowflake user_id, sigc::slot<void(DiscordError code, Snowflake channel_id)> callback);
     void CloseDM(Snowflake channel_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
     void RemoveReaction(Snowflake id, Glib::ustring param);
     void SetGuildName(Snowflake id, const Glib::ustring &name);
-    void SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
+    void SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
     void SetGuildIcon(Snowflake id, const std::string &data);
-    void SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(bool success)> callback);
+    void SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(DiscordError code)> callback);
     void UnbanUser(Snowflake guild_id, Snowflake user_id);
-    void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(bool success)> callback);
+    void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(DiscordError code)> callback);
     void DeleteInvite(const std::string &code);
-    void DeleteInvite(const std::string &code, sigc::slot<void(bool success)> callback);
+    void DeleteInvite(const std::string &code, sigc::slot<void(DiscordError code)> callback);
     void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
-    void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(bool success)> callback);
-    void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
-    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(bool success)> callback);
-    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(bool success)> callback);
-    void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(bool success)> callback);
-    void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(bool success)> callback);
-    void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(bool success)> callback);
+    void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(DiscordError code)> callback);
+    void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(DiscordError code)> callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(DiscordError code)> callback);
+    void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(DiscordError code)> callback);
+    void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
+    void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(DiscordError code)> callback);
     std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
-    void RemoveRelationship(Snowflake id, sigc::slot<void(bool success)> callback);
-    void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(bool success, DiscordError code)> callback);
-    void PutRelationship(Snowflake id, sigc::slot<void(bool success, DiscordError code)> callback); // send fr by id, accept incoming
+    void RemoveRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback);
+    void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(DiscordError code)> callback);
+    void PutRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback); // send fr by id, accept incoming
     void Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
     void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
 
@@ -146,11 +144,14 @@ public:
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>
-    auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, sigc::slot<void(bool success)> callback) {
+    auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, sigc::slot<void(DiscordError code)> callback) {
         ModifyGuildMemberObject obj;
         obj.Roles = { begin, end };
         m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/members/" + std::to_string(user_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
-            callback(CheckCode(response, 200));
+            if (CheckCode(response))
+                callback(DiscordError::NONE);
+            else
+                callback(GetCodeFromResponse(response));
         });
     }
 
@@ -169,14 +170,14 @@ public:
     void FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback);
     void FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback);
     void SetUserNote(Snowflake user_id, std::string note);
-    void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(bool success)> callback);
+    void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(DiscordError code)> callback);
     void FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback);
 
     void FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback);
 
     bool IsVerificationRequired(Snowflake guild_id);
     void GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback);
-    void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(bool success)> callback);
+    void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(DiscordError code)> callback);
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);

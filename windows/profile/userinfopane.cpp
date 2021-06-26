@@ -184,8 +184,8 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     m_created.get_style_context()->add_class("profile-info-created");
 
     m_note.signal_update_note().connect([this](const Glib::ustring &note) {
-        auto cb = [this](bool success) {
-            if (!success) {
+        auto cb = [this](DiscordError code) {
+            if (code != DiscordError::NONE) {
                 Gtk::MessageDialog dlg("Failed to set note", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();

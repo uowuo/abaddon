@@ -319,7 +319,7 @@ void GuildSettingsMembersPaneRoles::OnRoleToggle(Snowflake role_id, bool new_set
     // hack to prevent cb from being called if SetRoles is called before callback completion
     sigc::signal<void, bool> tmp;
     m_update_connection.push_back(tmp.connect(std::move(cb)));
-    const auto tmp_cb = [this, tmp = std::move(tmp)](bool success) { tmp.emit(success); };
+    const auto tmp_cb = [this, tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
     discord.SetMemberRoles(GuildID, UserID, m_set_role_ids.begin(), m_set_role_ids.end(), sigc::track_obj(tmp_cb, *this));
 }
 

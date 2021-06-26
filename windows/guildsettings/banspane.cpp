@@ -94,8 +94,8 @@ void GuildSettingsBansPane::OnMenuUnban() {
     auto selected_row = *m_view.get_selection()->get_selected();
     if (selected_row) {
         Snowflake id = selected_row[m_columns.m_col_id];
-        auto cb = [this](bool success) {
-            if (!success) {
+        auto cb = [this](DiscordError code) {
+            if (code != DiscordError::NONE) {
                 Gtk::MessageDialog dlg("Failed to unban user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();

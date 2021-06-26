@@ -101,8 +101,8 @@ void FriendsList::OnRelationshipRemove(Snowflake id, RelationshipType type) {
 }
 
 void FriendsList::OnActionAccept(Snowflake id) {
-    const auto cb = [this](bool success, DiscordError code) {
-        if (!success) {
+    const auto cb = [this](DiscordError code) {
+        if (code != DiscordError::NONE) {
             Gtk::MessageDialog dlg(*dynamic_cast<Gtk::Window *>(get_toplevel()), "Failed to accept", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
@@ -133,8 +133,8 @@ void FriendsList::OnActionRemove(Snowflake id) {
                 break;
         }
         if (Abaddon::Get().ShowConfirm(str, window)) {
-            const auto cb = [this, window](bool success) {
-                if (success) return;
+            const auto cb = [this, window](DiscordError code) {
+                if (code == DiscordError::NONE) return;
                 Gtk::MessageDialog dlg(*window, "Failed to remove user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
@@ -221,9 +221,9 @@ void FriendsListAddComponent::Submit() {
     m_requesting = true;
     m_label.set_text("Hang on...");
 
-    const auto cb = [this](bool success, DiscordError code) {
+    const auto cb = [this](DiscordError code) {
         m_requesting = false;
-        if (success) {
+        if (code == DiscordError::NONE) {
             m_label.set_text("Success!");
         } else {
             m_label.set_text("Failed: "s + GetDiscordErrorDisplayString(code));

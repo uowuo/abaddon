@@ -176,8 +176,8 @@ void GuildSettingsEmojisPane::OnFetchEmojis(std::vector<EmojiData> emojis) {
 }
 
 void GuildSettingsEmojisPane::OnEditName(Snowflake id, const std::string &name) {
-    const auto cb = [this](bool success) {
-        if (!success) {
+    const auto cb = [this](DiscordError code) {
+        if (code != DiscordError::NONE) {
             Gtk::MessageDialog dlg("Failed to set emoji name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
@@ -199,8 +199,8 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
         if (auto *window = dynamic_cast<Gtk::Window *>(get_toplevel()))
             if (Abaddon::Get().ShowConfirm("Are you sure you want to delete " + name + "?", window)) {
-                const auto cb = [this](bool success) {
-                    if (!success) {
+                const auto cb = [this](DiscordError code) {
+                    if (code != DiscordError::NONE) {
                         Gtk::MessageDialog dlg("Failed to delete emoji", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
                         dlg.set_position(Gtk::WIN_POS_CENTER);
                         dlg.run();

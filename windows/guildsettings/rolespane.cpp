@@ -61,8 +61,8 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
             if (new_index == num_rows) return true;  // trying to move row below @everyone
             // make sure it wont modify a neighbor role u dont have perms to modify
             if (!discord.CanModifyRole(GuildID, row->RoleID)) return false;
-            const auto cb = [this](bool success) {
-                if (!success) {
+            const auto cb = [this](DiscordError code) {
+                if (code != DiscordError::NONE) {
                     Gtk::MessageDialog dlg("Failed to set role position", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                     dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
                     dlg.run();
@@ -223,8 +223,8 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     m_color_button.signal_color_set().connect([this, &discord]() {
         const auto color = m_color_button.get_rgba();
-        const auto cb = [this, &discord](bool success) {
-            if (!success) {
+        const auto cb = [this, &discord](DiscordError code) {
+            if (code != DiscordError::NONE) {
                 m_color_button.set_rgba(IntToRGBA(discord.GetRole(RoleID)->Color));
                 Gtk::MessageDialog dlg("Failed to set role color", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
@@ -379,7 +379,7 @@ void GuildSettingsRolesPaneInfo::OnPermissionToggle(Permission perm, bool new_se
 
     sigc::signal<void, bool> tmp;
     m_update_connections.push_back(tmp.connect(std::move(cb)));
-    const auto tmp_cb = [this, tmp = std::move(tmp)](bool success) { tmp.emit(success); };
+    const auto tmp_cb = [this, tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
     discord.ModifyRolePermissions(GuildID, RoleID, m_perms, sigc::track_obj(tmp_cb, *this));
 }
 
@@ -387,8 +387,8 @@ void GuildSettingsRolesPaneInfo::UpdateRoleName() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (discord.GetRole(RoleID)->Name == m_role_name.get_text()) return;
 
-    const auto cb = [this, &discord](bool success) {
-        if (!success) {
+    const auto cb = [this, &discord](DiscordError code) {
+        if (code != DiscordError::NONE) {
             m_role_name.set_text(discord.GetRole(RoleID)->Name);
             Gtk::MessageDialog dlg("Failed to set role name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
