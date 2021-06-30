@@ -1,5 +1,6 @@
 #include "imgmanager.hpp"
 #include "util.hpp"
+#include "abaddon.hpp"
 
 ImageManager::ImageManager() {
     m_cb_dispatcher.connect(sigc::mem_fun(*this, &ImageManager::RunCallbacks));
@@ -112,7 +113,7 @@ Glib::RefPtr<Gdk::Pixbuf> ImageManager::GetPlaceholder(int size) {
         return m_pixs.at(name);
 
     try {
-        auto buf = Gdk::Pixbuf::create_from_file("res/decamarks.png", size, size);
+        auto buf = Gdk::Pixbuf::create_from_file(Abaddon::Get().GetResPath() + "/decamarks.png", size, size);
         m_pixs[name] = buf;
         return buf;
     } catch (std::exception &e) {

@@ -7,7 +7,7 @@ ConnectionItem::ConnectionItem(const ConnectionData &conn)
     , m_box(Gtk::ORIENTATION_HORIZONTAL) {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
     try {
-        pixbuf = Gdk::Pixbuf::create_from_file("./res/" + conn.Type + ".png", 32, 32);
+        pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/" + conn.Type + ".png"), 32, 32);
     } catch (const Glib::Exception &e) {}
     std::string url;
     if (conn.Type == "github")
@@ -53,7 +53,8 @@ ConnectionItem::ConnectionItem(const ConnectionData &conn)
     m_overlay.add(m_box);
     if (conn.IsVerified) {
         try {
-            static auto pb = Gdk::Pixbuf::create_from_file("./res/checkmark.png", 24, 24);
+            const static auto checkmarks_path = Abaddon::GetResPath("/checkmark.png");
+            static auto pb = Gdk::Pixbuf::create_from_file(checkmarks_path, 24, 24);
             m_check = Gtk::manage(new Gtk::Image(pb));
             m_check->get_style_context()->add_class("profile-connection-check");
             m_check->set_margin_end(25);

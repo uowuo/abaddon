@@ -75,7 +75,7 @@ bool SettingsManager::GetPrefetch() const {
 }
 
 std::string SettingsManager::GetMainCSS() const {
-    return GetSettingString("gui", "css", "./css/main.css");
+    return GetSettingString("gui", "css", "main.css");
 }
 
 bool SettingsManager::GetShowAnimations() const {

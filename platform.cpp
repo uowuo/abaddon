@@ -1,6 +1,14 @@
 #include "platform.hpp"
 #include <string>
 #include <fstream>
+#include <filesystem>
+
+bool IsFolder(std::string_view path) {
+    std::error_code ec;
+    const auto status = std::filesystem::status(path, ec);
+    if (ec) return false;
+    return status.type() == std::filesystem::file_type::directory;
+}
 
 #if defined(_WIN32) && defined(_MSC_VER)
     #include <Windows.h>
@@ -57,5 +65,31 @@ bool Platform::SetupFonts() {
 #else
 bool Platform::SetupFonts() {
     return true;
+}
+#endif
+
+#if defined(_WIN32)
+std::string Platform::FindResourceFolder() {
+    return ".";
+}
+
+#elif defined(__linux__)
+std::string Platform::FindResourceFolder() {
+    static std::string path;
+    static bool found = false;
+    if (found) return path;
+
+    if (IsFolder("/usr/share/abaddon/res") && IsFolder("/usr/share/abaddon/css")) {
+        path = "/usr/share/abaddon";
+    } else {
+        puts("resources are not in /usr/share/abaddon, will try to load from cwd");
+        path = ".";
+    }
+    found = true;
+    return path;
+}
+#else
+std::string Platform::FindResourceFolder() {
+    puts("unknown OS, trying to load resources from cwd");
 }
 #endif

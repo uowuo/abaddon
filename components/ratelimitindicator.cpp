@@ -15,9 +15,10 @@ RateLimitIndicator::RateLimitIndicator()
     add(m_img);
     m_label.show();
 
-    if (std::filesystem::exists("./res/clock.png")) {
+    const static auto clock_path = Abaddon::GetResPath("/clock.png");
+    if (std::filesystem::exists(clock_path)) {
         try {
-            const auto pixbuf = Gdk::Pixbuf::create_from_file("./res/clock.png");
+            const auto pixbuf = Gdk::Pixbuf::create_from_file(clock_path);
             int w, h;
             GetImageDimensions(pixbuf->get_width(), pixbuf->get_height(), w, h, 20, 10);
             m_img.property_pixbuf() = pixbuf->scale_simple(w, h, Gdk::INTERP_BILINEAR);

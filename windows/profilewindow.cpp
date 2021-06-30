@@ -111,9 +111,9 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf;
         try {
             if (name == "verifiedbot")
-                pixbuf = Gdk::Pixbuf::create_from_file("./res/checkmark.png", 24, 24);
+                pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/checkmark.png"), 24, 24);
             else
-                pixbuf = Gdk::Pixbuf::create_from_file("./res/" + name + ".png", 24, 24);
+                pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/" + name + ".png"), 24, 24);
         } catch (const Glib::Exception &e) {
             pixbuf = Abaddon::Get().GetImageManager().GetPlaceholder(24);
         }
