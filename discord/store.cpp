@@ -264,6 +264,12 @@ void Store::SetMessage(Snowflake id, const Message &message) {
     Bind(m_set_msg_stmt, 23, message.IsPending);
     Bind(m_set_msg_stmt, 24, message.Nonce); // sorry
 
+    if (message.StickerItems.has_value()) {
+        std::string tmp = nlohmann::json(*message.StickerItems).dump();
+        Bind(m_set_msg_stmt, 25, tmp);
+    } else
+        Bind(m_set_msg_stmt, 25, nullptr);
+
     if (!RunInsert(m_set_msg_stmt))
         fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
 
@@ -369,14 +375,18 @@ Message Store::GetMessageBound(sqlite3_stmt *stmt) const {
     Get(stmt, 22, ret.IsPending);
     Get(stmt, 23, ret.Nonce);
 
+    Get(stmt, 24, tmps);
+    if (tmps != "")
+        ret.StickerItems = nlohmann::json::parse(tmps).get<std::vector<StickerItem>>();
+
     // interaction data from join
 
-    if (!IsNull(stmt, 24)) {
+    if (!IsNull(stmt, 25)) {
         auto &interaction = ret.Interaction.emplace();
-        Get(stmt, 24, interaction.ID);
-        Get(stmt, 25, interaction.Name);
-        Get(stmt, 26, interaction.Type);
-        Get(stmt, 27, interaction.User.ID);
+        Get(stmt, 25, interaction.ID);
+        Get(stmt, 26, interaction.Name);
+        Get(stmt, 27, interaction.Type);
+        Get(stmt, 28, interaction.User.ID);
     }
 
     Reset(stmt);
@@ -837,7 +847,8 @@ bool Store::CreateTables() {
             deleted BOOL, /* extra */
             edited BOOL, /* extra */
             pending BOOL, /* extra */
-            nonce TEXT
+            nonce TEXT,
+            sticker_items TEXT /* json */
         )
     )";
 
@@ -1056,7 +1067,7 @@ bool Store::CreateStatements() {
 
     const char *set_msg = R"(
         REPLACE INTO messages VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 

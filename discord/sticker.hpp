@@ -27,3 +27,14 @@ struct StickerData {
 
     std::string GetURL() const;
 };
+
+struct StickerItem {
+    StickerFormatType FormatType;
+    Snowflake ID;
+    std::string Name;
+
+    friend void to_json(nlohmann::json &j, const StickerItem &m);
+    friend void from_json(const nlohmann::json &j, StickerItem &m);
+
+    std::string GetURL() const;
+};

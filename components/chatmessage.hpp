@@ -25,7 +25,8 @@ protected:
     Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
-    Gtk::Widget *CreateStickerComponent(const StickerData &data);
+    Gtk::Widget *CreateStickerComponentDeprecated(const StickerData &data);
+    Gtk::Widget *CreateStickersComponent(const std::vector<StickerItem> &data);
     Gtk::Widget *CreateReactionsComponent(const Message &data);
     Gtk::Widget *CreateReplyComponent(const Message &data);
 
@@ -89,14 +90,14 @@ public:
     ChatMessageHeader(const Message &data);
     void AddContent(Gtk::Widget *widget, bool prepend);
     void UpdateNameColor();
-    std::vector<Gtk::Widget*> GetChildContent();
+    std::vector<Gtk::Widget *> GetChildContent();
 
 protected:
     void AttachUserMenuHandler(Gtk::Widget &widget);
 
     bool on_author_button_press(GdkEventButton *ev);
 
-    std::vector<Gtk::Widget*> m_content_widgets;
+    std::vector<Gtk::Widget *> m_content_widgets;
 
     Gtk::Box *m_main_box;
     Gtk::Box *m_content_box;

@@ -30,3 +30,23 @@ std::string StickerData::GetURL() const {
         return "https://media.discordapp.net/stickers/" + std::to_string(ID) + "/" + *AssetHash + ".json";
     return "";
 }
+
+void to_json(nlohmann::json &j, const StickerItem &m) {
+    j["id"] = m.ID;
+    j["name"] = m.Name;
+    j["format_type"] = m.FormatType;
+}
+
+void from_json(const nlohmann::json &j, StickerItem &m) {
+    JS_D("id", m.ID);
+    JS_D("name", m.Name);
+    JS_D("format_type", m.FormatType);
+}
+
+std::string StickerItem::GetURL() const {
+    if (FormatType == StickerFormatType::PNG || FormatType == StickerFormatType::APNG)
+        return "https://media.discordapp.net/stickers/" + std::to_string(ID) + ".png?size=256";
+    else if (FormatType == StickerFormatType::LOTTIE)
+        return "https://media.discordapp.net/stickers/" + std::to_string(ID) + ".json";
+    return "";
+}

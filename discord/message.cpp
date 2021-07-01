@@ -218,6 +218,7 @@ void from_json(const nlohmann::json &j, Message &m) {
             m.ReferencedMessage = nullptr;
     }
     JS_O("interaction", m.Interaction);
+    JS_O("sticker_items", m.StickerItems);
 }
 
 void Message::from_json_edited(const nlohmann::json &j) {
@@ -244,6 +245,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("flags", Flags);
     JS_O("stickers", Stickers);
     JS_O("interaction", Interaction);
+    JS_O("sticker_items", StickerItems);
 }
 
 void Message::SetDeleted() {

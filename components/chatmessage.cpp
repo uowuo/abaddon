@@ -9,6 +9,7 @@ constexpr static int AvatarSize = 32;
 constexpr static int EmbedImageWidth = 400;
 constexpr static int EmbedImageHeight = 300;
 constexpr static int ThumbnailSize = 100;
+constexpr static int StickerComponentSize = 160;
 
 ChatMessageItemContainer::ChatMessageItemContainer() {
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
@@ -68,6 +69,8 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     }
 
     // only 1?
+    /*
+    DEPRECATED
     if (data.Stickers.has_value()) {
         const auto &sticker = data.Stickers.value()[0];
         // todo: lottie, proper apng
@@ -75,6 +78,11 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
             auto *widget = container->CreateStickerComponent(sticker);
             container->m_main->add(*widget);
         }
+    }*/
+
+    if (data.StickerItems.has_value()) {
+        auto *widget = container->CreateStickersComponent(*data.StickerItems);
+        container->m_main->add(*widget);
     }
 
     if (data.Reactions.has_value() && data.Reactions->size() > 0) {
@@ -479,7 +487,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     return ev;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const StickerData &data) {
+Gtk::Widget *ChatMessageItemContainer::CreateStickerComponentDeprecated(const StickerData &data) {
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *imgw = Gtk::manage(new Gtk::Image);
     box->add(*imgw);
@@ -491,6 +499,27 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickerComponent(const StickerData 
         };
         img.LoadFromURL(data.GetURL(), sigc::track_obj(cb, *imgw));
     }
+
+    AttachEventHandlers(*box);
+    return box;
+}
+
+Gtk::Widget *ChatMessageItemContainer::CreateStickersComponent(const std::vector<StickerItem> &data) {
+    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+
+    for (const auto &sticker : data) {
+        // no lottie
+        if (sticker.FormatType != StickerFormatType::PNG && sticker.FormatType != StickerFormatType::APNG) continue;
+        auto *ev = Gtk::manage(new Gtk::EventBox);
+        auto *img = Gtk::manage(new LazyImage(sticker.GetURL(), StickerComponentSize, StickerComponentSize, false));
+        img->set_size_request(StickerComponentSize, StickerComponentSize); // should this go in LazyImage ?
+        img->show();
+        ev->show();
+        ev->add(*img);
+        box->add(*ev);
+    }
+
+    box->show();
 
     AttachEventHandlers(*box);
     return box;
