@@ -91,18 +91,24 @@ std::string Platform::FindConfigFile() {
 
 #elif defined(__linux__)
 std::string Platform::FindResourceFolder() {
-    static std::string path;
+    static std::string found_path;
     static bool found = false;
-    if (found) return path;
+    if (found) return found_path;
 
-    if (IsFolder("/usr/share/abaddon/res") && IsFolder("/usr/share/abaddon/css")) {
-        path = "/usr/share/abaddon";
-    } else {
-        puts("resources are not in /usr/share/abaddon, will try to load from cwd");
-        path = ".";
+    const static std::string home_path = std::getenv("HOME") + "/.config/abaddon"s;
+
+    for (const auto &path : { "."s, home_path, "/usr/share/abaddon"s }) {
+        if (IsFolder(path + "/res") && IsFolder(path + "/css")) {
+            found_path = path;
+            found = true;
+            return found_path;
+        }
     }
+
+    puts("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
     found = true;
-    return path;
+    return found_path;
 }
 
 std::string Platform::FindConfigFile() {
