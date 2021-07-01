@@ -54,7 +54,11 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 - MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned, unpackaged, requires gtkmm3 (e.g. from homebrew)
 - Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3. built on Ubuntu 18.04 + gcc9  
 
-⚠️ Make sure you start from the directory where `css` and `res` are or else stuff will be broken
+⚠️ If you use Windows, make sure to start from the directory containing `css` and `res`
+
+If you don't use Windows, `css` and `res` can be loaded from `/usr/share/abaddon`
+
+`abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is no `abaddon.ini` in the working directory
 
 #### Dependencies:  
 * [gtkmm](https://www.gtkmm.org/en/)
@@ -196,3 +200,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### misc
 * linkcolor (string) - color to use for links in messages
+
+### Environment variables
+
+* ABADDON_NO_FC (Windows only) - don't use custom font config
+* ABADDON_CONFIG - change path of configuration file to use. relative to cwd or can be absolute

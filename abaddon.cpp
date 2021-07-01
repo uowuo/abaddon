@@ -22,7 +22,7 @@
 
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
-    , m_emojis(GetResPath() + "/emojis.bin")
+    , m_emojis(GetResPath("/emojis.bin"))
     , m_discord(m_settings.GetUseMemoryDB()) { // stupid but easy
     LoadFromSettings();
 

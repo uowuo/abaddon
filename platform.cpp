@@ -83,6 +83,9 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
     return "./abaddon.ini";
 }
 
@@ -103,6 +106,10 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
+
     const auto home_path = std::string(std::getenv("HOME")) + "/.config/abaddon/abaddon.ini";
     for (const auto path : { "./abaddon.ini"s, home_path }) {
         if (IsFile(path)) return path;
@@ -117,6 +124,9 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
     puts("unknown OS, trying to load config from cwd");
     return "./abaddon.ini";
 }
