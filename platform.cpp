@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <config.h>
 
 using namespace std::literals::string_literals;
 
@@ -97,7 +98,7 @@ std::string Platform::FindResourceFolder() {
 
     const static std::string home_path = std::getenv("HOME") + "/.config/abaddon"s;
 
-    for (const auto &path : { "."s, home_path, "/usr/share/abaddon"s }) {
+    for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
         if (IsFolder(path + "/res") && IsFolder(path + "/css")) {
             found_path = path;
             found = true;

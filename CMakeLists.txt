@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(abaddon)
 
+set(ABADDON_RESOURCE_DIR "/usr/share/abaddon" CACHE PATH "Fallback directory for resources on Linux")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -35,6 +37,8 @@ if(WIN32)
 	link_libraries(${Fontconfig_LIBRARIES})
 endif()
 
+configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
+
 file(GLOB ABADDON_SOURCES
 	"*.h"
 	"*.hpp"
@@ -54,6 +58,7 @@ file(GLOB ABADDON_SOURCES
 )
 
 add_executable(abaddon ${ABADDON_SOURCES})
+target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
