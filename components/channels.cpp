@@ -54,6 +54,8 @@ Gtk::Widget *ChannelList::GetRoot() const {
 }
 
 void ChannelList::UpdateListing() {
+    m_model->clear();
+
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();
 
@@ -63,71 +65,32 @@ void ChannelList::UpdateListing() {
         const auto guild = discord.GetGuild(guild_id);
         if (!guild.has_value()) continue;
 
-        auto guild_row = *m_model->append();
-        guild_row[m_columns.m_type] = RenderType::Guild;
-        guild_row[m_columns.m_id] = guild_id;
-        guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
-        guild_row[m_columns.m_icon] = img.GetPlaceholder(24);
-        guild_row[m_columns.m_sort] = ++sortnum;
-
-        if (guild->HasIcon()) {
-            const auto cb = [this, guild_row](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                guild_row[m_columns.m_icon] = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
-        }
-
-        if (!guild->Channels.has_value()) continue;
-
-        // separate out the channels
-        std::vector<ChannelData> orphan_channels;
-        std::map<Snowflake, std::vector<ChannelData>> categories;
-
-        for (const auto &channel_ : *guild->Channels) {
-            const auto channel = discord.GetChannel(channel_.ID);
-            if (!channel.has_value()) continue;
-            if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS) {
-                if (channel->ParentID.has_value())
-                    categories[*channel->ParentID].push_back(*channel);
-                else
-                    orphan_channels.push_back(*channel);
-            } else if (channel->Type == ChannelType::GUILD_CATEGORY) {
-                categories[channel->ID];
-            }
-        }
-
-        for (const auto &channel : orphan_channels) {
-            auto channel_row = *m_model->append(guild_row.children());
-            channel_row[m_columns.m_type] = RenderType::TextChannel;
-            channel_row[m_columns.m_id] = channel.ID;
-            channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
-            channel_row[m_columns.m_sort] = *channel.Position - 100; // subtract 100 to make sure they stay behind categories
-        }
-
-        for (const auto &[category_id, channels] : categories) {
-            const auto category = discord.GetChannel(category_id);
-            if (!category.has_value()) continue;
-            auto cat_row = *m_model->append(guild_row.children());
-            cat_row[m_columns.m_type] = RenderType::Category;
-            cat_row[m_columns.m_id] = category_id;
-            cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
-            cat_row[m_columns.m_sort] = *category->Position;
-
-            for (const auto &channel : channels) {
-                auto channel_row = *m_model->append(cat_row.children());
-                channel_row[m_columns.m_type] = RenderType::TextChannel;
-                channel_row[m_columns.m_id] = channel.ID;
-                channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
-                channel_row[m_columns.m_sort] = *channel.Position;
-            }
-        }
+        auto iter = AddGuild(*guild);
+        (*iter)[m_columns.m_sort] = sortnum++;
     }
 }
 
 void ChannelList::UpdateNewGuild(Snowflake id) {
+    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
+    auto &img = Abaddon::Get().GetImageManager();
+
+    if (!guild.has_value()) return;
+
+    auto iter = AddGuild(*guild);
+
+    // update sort order
+    int sortnum = 0;
+    for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
+        auto iter = GetIteratorForGuildFromID(guild_id);
+        if (iter)
+            (*iter)[m_columns.m_sort] = ++sortnum;
+    }
 }
 
 void ChannelList::UpdateRemoveGuild(Snowflake id) {
+    auto iter = GetIteratorForGuildFromID(id);
+    if (!iter) return;
+    m_model->erase(iter);
 }
 
 void ChannelList::UpdateRemoveChannel(Snowflake id) {
@@ -146,6 +109,79 @@ void ChannelList::UpdateGuild(Snowflake id) {
 }
 
 void ChannelList::SetActiveChannel(Snowflake id) {
+}
+
+Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &img = Abaddon::Get().GetImageManager();
+
+    auto guild_row = *m_model->append();
+    guild_row[m_columns.m_type] = RenderType::Guild;
+    guild_row[m_columns.m_id] = guild.ID;
+    guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
+    guild_row[m_columns.m_icon] = img.GetPlaceholder(24);
+
+    if (guild.HasIcon()) {
+        const auto cb = [this, guild_row](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            guild_row[m_columns.m_icon] = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(guild.GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+    }
+
+    if (!guild.Channels.has_value()) return guild_row;
+
+    // separate out the channels
+    std::vector<ChannelData> orphan_channels;
+    std::map<Snowflake, std::vector<ChannelData>> categories;
+
+    for (const auto &channel_ : *guild.Channels) {
+        const auto channel = discord.GetChannel(channel_.ID);
+        if (!channel.has_value()) continue;
+        if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS) {
+            if (channel->ParentID.has_value())
+                categories[*channel->ParentID].push_back(*channel);
+            else
+                orphan_channels.push_back(*channel);
+        } else if (channel->Type == ChannelType::GUILD_CATEGORY) {
+            categories[channel->ID];
+        }
+    }
+
+    for (const auto &channel : orphan_channels) {
+        auto channel_row = *m_model->append(guild_row.children());
+        channel_row[m_columns.m_type] = RenderType::TextChannel;
+        channel_row[m_columns.m_id] = channel.ID;
+        channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+        channel_row[m_columns.m_sort] = *channel.Position - 100; // subtract 100 to make sure they stay behind categories
+    }
+
+    for (const auto &[category_id, channels] : categories) {
+        const auto category = discord.GetChannel(category_id);
+        if (!category.has_value()) continue;
+        auto cat_row = *m_model->append(guild_row.children());
+        cat_row[m_columns.m_type] = RenderType::Category;
+        cat_row[m_columns.m_id] = category_id;
+        cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
+        cat_row[m_columns.m_sort] = *category->Position;
+
+        for (const auto &channel : channels) {
+            auto channel_row = *m_model->append(cat_row.children());
+            channel_row[m_columns.m_type] = RenderType::TextChannel;
+            channel_row[m_columns.m_id] = channel.ID;
+            channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+            channel_row[m_columns.m_sort] = *channel.Position;
+        }
+    }
+
+    return guild_row;
+}
+
+Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
+    for (const auto child : m_model->children()) {
+        if (child[m_columns.m_id] == id)
+            return child;
+    }
+    return {};
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {

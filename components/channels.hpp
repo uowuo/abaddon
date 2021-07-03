@@ -119,6 +119,9 @@ protected:
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
 
+    Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
+    Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
+
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
