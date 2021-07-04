@@ -100,6 +100,15 @@ void ChannelList::UpdateRemoveChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateChannel(Snowflake id) {
+    auto iter = GetIteratorForChannelFromID(id);
+    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (!iter || !channel.has_value()) return;
+    (*iter)[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
+    const bool is_orphan = static_cast<int>((*iter)[m_columns.m_sort]) < 0;
+    if (is_orphan)
+        (*iter)[m_columns.m_sort] = *channel->Position - 100;
+    else
+        (*iter)[m_columns.m_sort] = *channel->Position;
 }
 
 void ChannelList::UpdateCreateDMChannel(Snowflake id) {
