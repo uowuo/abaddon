@@ -121,6 +121,7 @@ protected:
 
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

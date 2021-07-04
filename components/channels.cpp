@@ -94,6 +94,9 @@ void ChannelList::UpdateRemoveGuild(Snowflake id) {
 }
 
 void ChannelList::UpdateRemoveChannel(Snowflake id) {
+    auto iter = GetIteratorForChannelFromID(id);
+    if (!iter) return;
+    m_model->erase(iter);
 }
 
 void ChannelList::UpdateChannel(Snowflake id) {
@@ -181,6 +184,23 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
         if (child[m_columns.m_id] == id)
             return child;
     }
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) {
+    std::queue<Gtk::TreeModel::iterator> queue;
+    for (const auto child : m_model->children())
+        for (const auto child2 : child.children())
+            queue.push(child2);
+
+    while (!queue.empty()) {
+        auto item = queue.front();
+        if ((*item)[m_columns.m_id] == id) return item;
+        for (const auto child : item->children())
+            queue.push(child);
+        queue.pop();
+    }
+
     return {};
 }
 
