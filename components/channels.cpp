@@ -103,12 +103,30 @@ void ChannelList::UpdateChannel(Snowflake id) {
     auto iter = GetIteratorForChannelFromID(id);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!iter || !channel.has_value()) return;
-    (*iter)[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
-    const bool is_orphan = static_cast<int>((*iter)[m_columns.m_sort]) < 0;
+    if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
+    if (!IsTextChannel(channel->Type)) return;
+
+    // delete and recreate
+    m_model->erase(iter);
+
+    Gtk::TreeStore::iterator parent;
+    bool is_orphan;
+    if (channel->ParentID.has_value()) {
+        is_orphan = false;
+        parent = GetIteratorForChannelFromID(*channel->ParentID);
+    } else {
+        is_orphan = true;
+        parent = GetIteratorForGuildFromID(*channel->GuildID);
+    }
+    if (!parent) return;
+    auto channel_row = *m_model->append(parent->children());
+    channel_row[m_columns.m_type] = RenderType::TextChannel;
+    channel_row[m_columns.m_id] = channel->ID;
+    channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
     if (is_orphan)
-        (*iter)[m_columns.m_sort] = *channel->Position - 100;
+        channel_row[m_columns.m_sort] = *channel->Position - 100;
     else
-        (*iter)[m_columns.m_sort] = *channel->Position;
+        channel_row[m_columns.m_sort] = *channel->Position;
 }
 
 void ChannelList::UpdateCreateDMChannel(Snowflake id) {
@@ -224,6 +242,14 @@ Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelD
     return cat_row;
 }
 
+void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
+    auto iter = GetIteratorForChannelFromID(channel.ID);
+    if (!iter) return;
+
+    (*iter)[m_columns.m_sort] = *channel.Position;
+    (*iter)[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+}
+
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     for (const auto child : m_model->children()) {
         if (child[m_columns.m_id] == id)
@@ -247,6 +273,10 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) 
     }
 
     return {};
+}
+
+bool ChannelList::IsTextChannel(ChannelType type) {
+    return type == ChannelType::GUILD_TEXT || type == ChannelType::GUILD_NEWS;
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {

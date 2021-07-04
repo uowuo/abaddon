@@ -122,8 +122,12 @@ protected:
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
 
+    void UpdateChannelCategory(const ChannelData &channel);
+
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
+
+    bool IsTextChannel(ChannelType type);
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
