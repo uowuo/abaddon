@@ -115,6 +115,29 @@ void ChannelList::UpdateCreateDMChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateCreateChannel(Snowflake id) {
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (!channel.has_value()) return;
+    if (channel->Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(*channel);
+    if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) return;
+
+    Gtk::TreeRow channel_row;
+    bool orphan;
+    if (channel->ParentID.has_value()) {
+        orphan = false;
+        auto iter = GetIteratorForChannelFromID(*channel->ParentID);
+        channel_row = *m_model->append(iter->children());
+    } else {
+        orphan = true;
+        auto iter = GetIteratorForGuildFromID(*channel->GuildID);
+        channel_row = *m_model->append(iter->children());
+    }
+    channel_row[m_columns.m_type] = RenderType::TextChannel;
+    channel_row[m_columns.m_id] = channel->ID;
+    channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
+    if (orphan)
+        channel_row[m_columns.m_sort] = *channel->Position - 100;
+    else
+        channel_row[m_columns.m_sort] = *channel->Position;
 }
 
 void ChannelList::UpdateGuild(Snowflake id) {
@@ -186,6 +209,19 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     }
 
     return guild_row;
+}
+
+Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelData &channel) {
+    const auto iter = GetIteratorForGuildFromID(*channel.GuildID);
+    if (!iter) return {};
+
+    auto cat_row = *m_model->append(iter->children());
+    cat_row[m_columns.m_type] = RenderType::Category;
+    cat_row[m_columns.m_id] = channel.ID;
+    cat_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+    cat_row[m_columns.m_sort] = *channel.Position;
+
+    return cat_row;
 }
 
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {

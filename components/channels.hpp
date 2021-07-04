@@ -120,6 +120,8 @@ protected:
     Glib::RefPtr<Gtk::TreeStore> m_model;
 
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
+    Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
+
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
 
