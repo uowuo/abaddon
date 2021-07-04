@@ -159,6 +159,22 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateGuild(Snowflake id) {
+    auto iter = GetIteratorForGuildFromID(id);
+    auto &img = Abaddon::Get().GetImageManager();
+    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
+    if (!iter || !guild.has_value()) return;
+
+    (*iter)[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
+    (*iter)[m_columns.m_icon] = img.GetPlaceholder(24);
+    if (guild->HasIcon()) {
+        const auto cb = [this, id](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            // iter might be invalid
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+    }
 }
 
 void ChannelList::SetActiveChannel(Snowflake id) {
