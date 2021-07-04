@@ -8,7 +8,8 @@
 #include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
-static const constexpr int ChannelEmojiSize = 16;
+constexpr static int GuildIconSize = 24;
+constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
 enum class RenderType {
     Guild,
@@ -124,6 +125,7 @@ protected:
 
     void UpdateChannelCategory(const ChannelData &channel);
 
+    // separation necessary because a channel and guild can share the same id
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
 

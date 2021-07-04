@@ -124,7 +124,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     channel_row[m_columns.m_id] = channel->ID;
     channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
     if (is_orphan)
-        channel_row[m_columns.m_sort] = *channel->Position - 100;
+        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
     else
         channel_row[m_columns.m_sort] = *channel->Position;
 }
@@ -153,7 +153,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     channel_row[m_columns.m_id] = channel->ID;
     channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
     if (orphan)
-        channel_row[m_columns.m_sort] = *channel->Position - 100;
+        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
     else
         channel_row[m_columns.m_sort] = *channel->Position;
 }
@@ -165,13 +165,13 @@ void ChannelList::UpdateGuild(Snowflake id) {
     if (!iter || !guild.has_value()) return;
 
     (*iter)[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
-    (*iter)[m_columns.m_icon] = img.GetPlaceholder(24);
+    (*iter)[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
     if (guild->HasIcon()) {
         const auto cb = [this, id](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
             // iter might be invalid
             auto iter = GetIteratorForGuildFromID(id);
             if (iter)
-                (*iter)[m_columns.m_icon] = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+                (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
         };
         img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
     }
@@ -188,11 +188,13 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     guild_row[m_columns.m_type] = RenderType::Guild;
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
-    guild_row[m_columns.m_icon] = img.GetPlaceholder(24);
+    guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
 
     if (guild.HasIcon()) {
-        const auto cb = [this, guild_row](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-            guild_row[m_columns.m_icon] = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
+        const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
         };
         img.LoadFromURL(guild.GetIconURL("png", "32"), sigc::track_obj(cb, *this));
     }
@@ -221,7 +223,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         channel_row[m_columns.m_type] = RenderType::TextChannel;
         channel_row[m_columns.m_id] = channel.ID;
         channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
-        channel_row[m_columns.m_sort] = *channel.Position - 100; // subtract 100 to make sure they stay behind categories
+        channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
     }
 
     for (const auto &[category_id, channels] : categories) {
