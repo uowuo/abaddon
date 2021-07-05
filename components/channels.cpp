@@ -8,8 +8,9 @@
 #include "statusindicator.hpp"
 
 ChannelList::ChannelList()
-    : m_model(Gtk::TreeStore::create(m_columns))
-    , m_main(Gtk::manage(new Gtk::ScrolledWindow)) {
+    : Glib::ObjectBase(typeid(ChannelList))
+    , Gtk::ScrolledWindow()
+    , m_model(Gtk::TreeStore::create(m_columns)) {
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
         auto row = *m_model->get_iter(path);
         if (row[m_columns.m_expanded]) {
@@ -38,8 +39,7 @@ ChannelList::ChannelList()
 
     m_view.show();
 
-    m_main->add(m_view);
-    m_main->show_all();
+    add(m_view);
 
     auto *column = Gtk::manage(new Gtk::TreeView::Column("display"));
     auto *renderer = Gtk::manage(new CellRendererChannels);
@@ -49,10 +49,6 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     m_view.append_column(*column);
-}
-
-Gtk::Widget *ChannelList::GetRoot() const {
-    return m_main;
 }
 
 void ChannelList::UpdateListing() {

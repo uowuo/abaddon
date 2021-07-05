@@ -81,10 +81,9 @@ private:
     Glib::Property<bool> m_property_expanded;                    // category
 };
 
-class ChannelList {
+class ChannelList : public Gtk::ScrolledWindow {
 public:
     ChannelList();
-    Gtk::Widget *GetRoot() const;
     void UpdateListing();
     void UpdateNewGuild(Snowflake id);
     void UpdateRemoveGuild(Snowflake id);
@@ -97,7 +96,6 @@ public:
     void SetActiveChannel(Snowflake id);
 
 protected:
-    Gtk::ScrolledWindow *m_main;
     Gtk::TreeView m_view;
 
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {

@@ -100,7 +100,6 @@ MainWindow::MainWindow()
     m_main_box.add(m_content_box);
     m_main_box.show();
 
-    auto *channel_list = m_channel_list.GetRoot();
     auto *member_list = m_members.GetRoot();
     auto *chat = m_chat.GetRoot();
 
@@ -108,9 +107,9 @@ MainWindow::MainWindow()
     chat->set_hexpand(true);
     chat->show();
 
-    channel_list->set_vexpand(true);
-    channel_list->set_size_request(-1, -1);
-    channel_list->show();
+    m_channel_list.set_vexpand(true);
+    m_channel_list.set_size_request(-1, -1);
+    m_channel_list.show();
 
     member_list->set_vexpand(true);
     member_list->show();
@@ -126,10 +125,10 @@ MainWindow::MainWindow()
     m_content_stack.set_visible_child("chat");
     m_content_stack.show();
 
-    m_chan_content_paned.pack1(*channel_list);
+    m_chan_content_paned.pack1(m_channel_list);
     m_chan_content_paned.pack2(m_content_members_paned);
-    m_chan_content_paned.child_property_shrink(*channel_list) = false;
-    m_chan_content_paned.child_property_resize(*channel_list) = false;
+    m_chan_content_paned.child_property_shrink(m_channel_list) = false;
+    m_chan_content_paned.child_property_resize(m_channel_list) = false;
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
     m_content_box.add(m_chan_content_paned);
