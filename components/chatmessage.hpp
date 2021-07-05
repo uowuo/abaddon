@@ -58,8 +58,8 @@ protected:
 
     void AttachEventHandlers(Gtk::Widget &widget);
 
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_main;
+    Gtk::EventBox *_ev;
+    Gtk::Box m_main;
     Gtk::Label *m_attrib_label = nullptr;
 
     Gtk::TextView *m_text_component = nullptr;
@@ -99,16 +99,16 @@ protected:
 
     std::vector<Gtk::Widget *> m_content_widgets;
 
-    Gtk::Box *m_main_box;
-    Gtk::Box *m_content_box;
-    Gtk::EventBox *m_content_box_ev;
-    Gtk::Box *m_meta_box;
-    Gtk::EventBox *m_meta_ev;
-    Gtk::Label *m_author;
-    Gtk::Label *m_timestamp;
+    Gtk::Box m_main_box;
+    Gtk::Box m_content_box;
+    Gtk::EventBox m_content_box_ev;
+    Gtk::Box m_meta_box;
+    Gtk::EventBox m_meta_ev;
+    Gtk::Label m_author;
+    Gtk::Label m_timestamp;
     Gtk::Label *m_extra = nullptr;
-    Gtk::Image *m_avatar;
-    Gtk::EventBox *m_avatar_ev;
+    Gtk::Image m_avatar;
+    Gtk::EventBox m_avatar_ev;
 
     Glib::RefPtr<Gdk::Pixbuf> m_static_avatar;
     Glib::RefPtr<Gdk::PixbufAnimation> m_anim_avatar;
