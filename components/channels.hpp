@@ -131,6 +131,7 @@ protected:
 
     bool IsTextChannel(ChannelType type);
 
+    void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
     void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
 
 public:

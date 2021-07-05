@@ -24,8 +24,9 @@ ChannelList::ChannelList()
             m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
         }
     };
-    m_view.signal_row_activated().connect(cb);
-    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded));
+    m_view.signal_row_activated().connect(cb, false);
+    m_view.signal_row_collapsed().connect(sigc::mem_fun(*this, &ChannelList::OnRowCollapsed), false);
+    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded), false);
     m_view.set_activate_on_single_click(true);
 
     m_view.set_hexpand(true);
@@ -299,6 +300,11 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) 
 
 bool ChannelList::IsTextChannel(ChannelType type) {
     return type == ChannelType::GUILD_TEXT || type == ChannelType::GUILD_NEWS;
+}
+
+// this should be unncessary but something is behaving strange so its just in case
+void ChannelList::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+    (*iter)[m_columns.m_expanded] = false;
 }
 
 void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
