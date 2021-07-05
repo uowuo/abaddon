@@ -50,7 +50,6 @@ public:
 
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 
-    void ActionReloadSettings();
     void ActionReloadCSS();
 
     ImageManager &GetImageManager();

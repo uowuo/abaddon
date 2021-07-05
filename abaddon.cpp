@@ -98,7 +98,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
-    m_main_window->signal_action_reload_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadSettings));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
 
@@ -634,10 +633,6 @@ bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {
     ConfirmDialog dlg(window != nullptr ? *window : *m_main_window);
     dlg.SetConfirmText(prompt);
     return dlg.run() == Gtk::RESPONSE_OK;
-}
-
-void Abaddon::ActionReloadSettings() {
-    m_settings.Reload();
 }
 
 void Abaddon::ActionReloadCSS() {
