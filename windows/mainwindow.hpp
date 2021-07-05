@@ -41,9 +41,8 @@ public:
     typedef sigc::signal<void> type_signal_action_reload_css;
     typedef sigc::signal<void> type_signal_action_join_guild;
     typedef sigc::signal<void> type_signal_action_set_status;
-    typedef sigc::signal<void> type_signal_action_reload_settings;
     typedef sigc::signal<void, Snowflake> type_signal_action_add_recipient; // channel id
-    typedef sigc::signal<void, Snowflake> type_signal_action_view_pins; // channel id
+    typedef sigc::signal<void, Snowflake> type_signal_action_view_pins;     // channel id
 
     type_signal_action_connect signal_action_connect();
     type_signal_action_disconnect signal_action_disconnect();
@@ -51,7 +50,6 @@ public:
     type_signal_action_reload_css signal_action_reload_css();
     type_signal_action_join_guild signal_action_join_guild();
     type_signal_action_set_status signal_action_set_status();
-    type_signal_action_reload_settings signal_action_reload_settings();
     type_signal_action_add_recipient signal_action_add_recipient();
     type_signal_action_view_pins signal_action_view_pins();
 
@@ -62,7 +60,6 @@ protected:
     type_signal_action_reload_css m_signal_action_reload_css;
     type_signal_action_join_guild m_signal_action_join_guild;
     type_signal_action_set_status m_signal_action_set_status;
-    type_signal_action_reload_settings m_signal_action_reload_settings;
     type_signal_action_add_recipient m_signal_action_add_recipient;
     type_signal_action_view_pins m_signal_action_view_pins;
 
@@ -92,7 +89,6 @@ protected:
 
     Gtk::MenuItem m_menu_file;
     Gtk::Menu m_menu_file_sub;
-    Gtk::MenuItem m_menu_file_reload_settings;
     Gtk::MenuItem m_menu_file_reload_css;
     Gtk::MenuItem m_menu_file_clear_cache;
 

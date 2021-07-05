@@ -32,10 +32,8 @@ MainWindow::MainWindow()
 
     m_menu_file.set_label("File");
     m_menu_file.set_submenu(m_menu_file_sub);
-    m_menu_file_reload_settings.set_label("Reload Settings");
     m_menu_file_reload_css.set_label("Reload CSS");
     m_menu_file_clear_cache.set_label("Clear file cache");
-    m_menu_file_sub.append(m_menu_file_reload_settings);
     m_menu_file_sub.append(m_menu_file_reload_css);
     m_menu_file_sub.append(m_menu_file_clear_cache);
 
@@ -74,10 +72,6 @@ MainWindow::MainWindow()
 
     m_menu_discord_set_status.signal_activate().connect([this] {
         m_signal_action_set_status.emit();
-    });
-
-    m_menu_file_reload_settings.signal_activate().connect([this] {
-        m_signal_action_reload_settings.emit();
     });
 
     m_menu_file_clear_cache.signal_activate().connect([this] {
@@ -310,10 +304,6 @@ MainWindow::type_signal_action_join_guild MainWindow::signal_action_join_guild()
 
 MainWindow::type_signal_action_set_status MainWindow::signal_action_set_status() {
     return m_signal_action_set_status;
-}
-
-MainWindow::type_signal_action_reload_settings MainWindow::signal_action_reload_settings() {
-    return m_signal_action_reload_settings;
 }
 
 MainWindow::type_signal_action_add_recipient MainWindow::signal_action_add_recipient() {

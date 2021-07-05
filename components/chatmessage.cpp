@@ -11,9 +11,9 @@ constexpr static int EmbedImageHeight = 300;
 constexpr static int ThumbnailSize = 100;
 constexpr static int StickerComponentSize = 160;
 
-ChatMessageItemContainer::ChatMessageItemContainer() {
-    m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
-    add(*m_main);
+ChatMessageItemContainer::ChatMessageItemContainer()
+    : m_main(Gtk::ORIENTATION_VERTICAL) {
+    add(m_main);
 
     m_link_menu_copy = Gtk::manage(new Gtk::MenuItem("Copy Link"));
     m_link_menu_copy->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_link_menu_copy));
@@ -33,13 +33,13 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     if (data.Content.size() > 0 || data.Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(data);
         container->AttachEventHandlers(*container->m_text_component);
-        container->m_main->add(*container->m_text_component);
+        container->m_main.add(*container->m_text_component);
     }
 
     if ((data.MessageReference.has_value() || data.Interaction.has_value()) && data.Type != MessageType::CHANNEL_FOLLOW_ADD) {
         auto *widget = container->CreateReplyComponent(data);
-        container->m_main->add(*widget);
-        container->m_main->child_property_position(*widget) = 0; // eek
+        container->m_main.add(*widget);
+        container->m_main.child_property_position(*widget) = 0; // eek
     }
 
     // there should only ever be 1 embed (i think?)
@@ -48,11 +48,11 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
         if (IsEmbedImageOnly(embed)) {
             auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
             container->AttachEventHandlers(*widget);
-            container->m_main->add(*widget);
+            container->m_main.add(*widget);
         } else {
             container->m_embed_component = container->CreateEmbedComponent(embed);
             container->AttachEventHandlers(*container->m_embed_component);
-            container->m_main->add(*container->m_embed_component);
+            container->m_main.add(*container->m_embed_component);
         }
     }
 
@@ -61,10 +61,10 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     for (const auto &a : data.Attachments) {
         if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
-            container->m_main->add(*widget);
+            container->m_main.add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
-            container->m_main->add(*widget);
+            container->m_main.add(*widget);
         }
     }
 
@@ -82,12 +82,12 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
 
     if (data.StickerItems.has_value()) {
         auto *widget = container->CreateStickersComponent(*data.StickerItems);
-        container->m_main->add(*widget);
+        container->m_main.add(*widget);
     }
 
     if (data.Reactions.has_value() && data.Reactions->size() > 0) {
         container->m_reactions_component = container->CreateReactionsComponent(data);
-        container->m_main->add(*container->m_reactions_component);
+        container->m_main.add(*container->m_reactions_component);
     }
 
     container->UpdateAttributes();
@@ -109,7 +109,7 @@ void ChatMessageItemContainer::UpdateContent() {
     if (data->Embeds.size() == 1) {
         m_embed_component = CreateEmbedComponent(data->Embeds[0]);
         AttachEventHandlers(*m_embed_component);
-        m_main->add(*m_embed_component);
+        m_main.add(*m_embed_component);
     }
 }
 
@@ -121,7 +121,7 @@ void ChatMessageItemContainer::UpdateReactions() {
     if (data->Reactions.has_value() && data->Reactions->size() > 0) {
         m_reactions_component = CreateReactionsComponent(*data);
         m_reactions_component->show_all();
-        m_main->add(*m_reactions_component);
+        m_main.add(*m_reactions_component);
     }
 }
 
@@ -145,7 +145,7 @@ void ChatMessageItemContainer::UpdateAttributes() {
         m_attrib_label = Gtk::manage(new Gtk::Label);
         m_attrib_label->set_halign(Gtk::ALIGN_START);
         m_attrib_label->show();
-        m_main->add(*m_attrib_label); // todo: maybe insert markup into existing text widget's buffer if the circumstances are right (or pack horizontally)
+        m_main.add(*m_attrib_label); // todo: maybe insert markup into existing text widget's buffer if the circumstances are right (or pack horizontally)
     }
 
     if (deleted)
@@ -1019,26 +1019,20 @@ void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
     widget.signal_button_press_event().connect(on_button_press_event, false);
 }
 
-ChatMessageHeader::ChatMessageHeader(const Message &data) {
+ChatMessageHeader::ChatMessageHeader(const Message &data)
+    : m_main_box(Gtk::ORIENTATION_HORIZONTAL)
+    , m_content_box(Gtk::ORIENTATION_VERTICAL)
+    , m_meta_box(Gtk::ORIENTATION_HORIZONTAL)
+    , m_avatar(Abaddon::Get().GetImageManager().GetPlaceholder(AvatarSize)) {
     UserID = data.Author.ID;
     ChannelID = data.ChannelID;
-
-    m_main_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
-    m_content_box_ev = Gtk::manage(new Gtk::EventBox);
-    m_meta_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_meta_ev = Gtk::manage(new Gtk::EventBox);
-    m_author = Gtk::manage(new Gtk::Label);
-    m_timestamp = Gtk::manage(new Gtk::Label);
-    m_avatar_ev = Gtk::manage(new Gtk::EventBox);
 
     const auto author = Abaddon::Get().GetDiscordClient().GetUser(UserID);
     auto &img = Abaddon::Get().GetImageManager();
 
-    m_avatar = Gtk::manage(new Gtk::Image(img.GetPlaceholder(AvatarSize)));
     auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
         m_static_avatar = pb->scale_simple(AvatarSize, AvatarSize, Gdk::INTERP_BILINEAR);
-        m_avatar->property_pixbuf() = m_static_avatar;
+        m_avatar.property_pixbuf() = m_static_avatar;
     };
     img.LoadFromURL(author->GetAvatarURL(data.GuildID), sigc::track_obj(cb, *this));
 
@@ -1050,21 +1044,21 @@ ChatMessageHeader::ChatMessageHeader(const Message &data) {
     }
 
     get_style_context()->add_class("message-container");
-    m_author->get_style_context()->add_class("message-container-author");
-    m_timestamp->get_style_context()->add_class("message-container-timestamp");
-    m_avatar->get_style_context()->add_class("message-container-avatar");
+    m_author.get_style_context()->add_class("message-container-author");
+    m_timestamp.get_style_context()->add_class("message-container-timestamp");
+    m_avatar.get_style_context()->add_class("message-container-avatar");
 
-    m_avatar->set_valign(Gtk::ALIGN_START);
-    m_avatar->set_margin_right(10);
+    m_avatar.set_valign(Gtk::ALIGN_START);
+    m_avatar.set_margin_right(10);
 
-    m_author->set_markup(data.Author.GetEscapedBoldName());
-    m_author->set_single_line_mode(true);
-    m_author->set_line_wrap(false);
-    m_author->set_ellipsize(Pango::ELLIPSIZE_END);
-    m_author->set_xalign(0.f);
-    m_author->set_can_focus(false);
+    m_author.set_markup(data.Author.GetEscapedBoldName());
+    m_author.set_single_line_mode(true);
+    m_author.set_line_wrap(false);
+    m_author.set_ellipsize(Pango::ELLIPSIZE_END);
+    m_author.set_xalign(0.f);
+    m_author.set_can_focus(false);
 
-    m_meta_ev->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
+    m_meta_ev.signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
 
     if (author->IsBot || data.WebhookID.has_value()) {
         m_extra = Gtk::manage(new Gtk::Label);
@@ -1079,59 +1073,59 @@ ChatMessageHeader::ChatMessageHeader(const Message &data) {
     else if (data.WebhookID.has_value())
         m_extra->set_markup("<b>Webhook</b>");
 
-    m_timestamp->set_text(data.ID.GetLocalTimestamp());
-    m_timestamp->set_hexpand(true);
-    m_timestamp->set_halign(Gtk::ALIGN_END);
-    m_timestamp->set_ellipsize(Pango::ELLIPSIZE_END);
-    m_timestamp->set_opacity(0.5);
-    m_timestamp->set_single_line_mode(true);
-    m_timestamp->set_margin_start(12);
-    m_timestamp->set_can_focus(false);
+    m_timestamp.set_text(data.ID.GetLocalTimestamp());
+    m_timestamp.set_hexpand(true);
+    m_timestamp.set_halign(Gtk::ALIGN_END);
+    m_timestamp.set_ellipsize(Pango::ELLIPSIZE_END);
+    m_timestamp.set_opacity(0.5);
+    m_timestamp.set_single_line_mode(true);
+    m_timestamp.set_margin_start(12);
+    m_timestamp.set_can_focus(false);
 
-    m_main_box->set_hexpand(true);
-    m_main_box->set_vexpand(true);
-    m_main_box->set_can_focus(true);
+    m_main_box.set_hexpand(true);
+    m_main_box.set_vexpand(true);
+    m_main_box.set_can_focus(true);
 
-    m_meta_box->set_hexpand(true);
-    m_meta_box->set_can_focus(false);
+    m_meta_box.set_hexpand(true);
+    m_meta_box.set_can_focus(false);
 
-    m_content_box->set_can_focus(false);
+    m_content_box.set_can_focus(false);
 
     const auto on_enter_cb = [this](const GdkEventCrossing *event) -> bool {
         if (m_anim_avatar)
-            m_avatar->property_pixbuf_animation() = m_anim_avatar;
+            m_avatar.property_pixbuf_animation() = m_anim_avatar;
         return false;
     };
     const auto on_leave_cb = [this](const GdkEventCrossing *event) -> bool {
         if (m_anim_avatar)
-            m_avatar->property_pixbuf() = m_static_avatar;
+            m_avatar.property_pixbuf() = m_static_avatar;
         return false;
     };
 
-    m_content_box_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
-    m_meta_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
-    m_avatar_ev->add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    m_content_box_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    m_meta_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    m_avatar_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
     if (Abaddon::Get().GetSettings().GetShowAnimations()) {
-        m_content_box_ev->signal_enter_notify_event().connect(on_enter_cb);
-        m_content_box_ev->signal_leave_notify_event().connect(on_leave_cb);
-        m_meta_ev->signal_enter_notify_event().connect(on_enter_cb);
-        m_meta_ev->signal_leave_notify_event().connect(on_leave_cb);
-        m_avatar_ev->signal_enter_notify_event().connect(on_enter_cb);
-        m_avatar_ev->signal_leave_notify_event().connect(on_leave_cb);
+        m_content_box_ev.signal_enter_notify_event().connect(on_enter_cb);
+        m_content_box_ev.signal_leave_notify_event().connect(on_leave_cb);
+        m_meta_ev.signal_enter_notify_event().connect(on_enter_cb);
+        m_meta_ev.signal_leave_notify_event().connect(on_leave_cb);
+        m_avatar_ev.signal_enter_notify_event().connect(on_enter_cb);
+        m_avatar_ev.signal_leave_notify_event().connect(on_leave_cb);
     }
 
-    m_meta_box->add(*m_author);
+    m_meta_box.add(m_author);
     if (m_extra != nullptr)
-        m_meta_box->add(*m_extra);
+        m_meta_box.add(*m_extra);
 
-    m_meta_box->add(*m_timestamp);
-    m_meta_ev->add(*m_meta_box);
-    m_content_box->add(*m_meta_ev);
-    m_avatar_ev->add(*m_avatar);
-    m_main_box->add(*m_avatar_ev);
-    m_content_box_ev->add(*m_content_box);
-    m_main_box->add(*m_content_box_ev);
-    add(*m_main_box);
+    m_meta_box.add(m_timestamp);
+    m_meta_ev.add(m_meta_box);
+    m_content_box.add(m_meta_ev);
+    m_avatar_ev.add(m_avatar);
+    m_main_box.add(m_avatar_ev);
+    m_content_box_ev.add(m_content_box);
+    m_main_box.add(m_content_box_ev);
+    add(m_main_box);
 
     set_margin_bottom(8);
 
@@ -1143,8 +1137,8 @@ ChatMessageHeader::ChatMessageHeader(const Message &data) {
     auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateNameColor(); };
     discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
     UpdateNameColor();
-    AttachUserMenuHandler(*m_meta_ev);
-    AttachUserMenuHandler(*m_avatar_ev);
+    AttachUserMenuHandler(m_meta_ev);
+    AttachUserMenuHandler(m_avatar_ev);
 }
 
 void ChatMessageHeader::UpdateNameColor() {
@@ -1161,7 +1155,7 @@ void ChatMessageHeader::UpdateNameColor() {
     else
         md = "<span weight='bold'>" + user->GetEscapedName() + "</span>";
 
-    m_author->set_markup(md);
+    m_author.set_markup(md);
 }
 
 std::vector<Gtk::Widget *> ChatMessageHeader::GetChildContent() {
@@ -1202,12 +1196,13 @@ ChatMessageHeader::type_signal_action_open_user_menu ChatMessageHeader::signal_a
 
 void ChatMessageHeader::AddContent(Gtk::Widget *widget, bool prepend) {
     m_content_widgets.push_back(widget);
-    widget->signal_unmap().connect([this, widget]() {
+    const auto cb = [this, widget]() {
         m_content_widgets.erase(std::remove(m_content_widgets.begin(), m_content_widgets.end(), widget), m_content_widgets.end());
-    });
-    m_content_box->add(*widget);
+    };
+    widget->signal_unmap().connect(sigc::track_obj(cb, *this, *widget), false);
+    m_content_box.add(*widget);
     if (prepend)
-        m_content_box->reorder_child(*widget, 1);
+        m_content_box.reorder_child(*widget, 1);
     if (auto *x = dynamic_cast<ChatMessageItemContainer *>(widget)) {
         if (x->ID > NewestID)
             NewestID = x->ID;
