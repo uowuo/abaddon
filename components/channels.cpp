@@ -507,21 +507,23 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
     int available_xpad = background_area.get_width();
     int available_ypad = background_area.get_height();
 
+    // todo: figure out how Gtk::Arrow is rendered because i like it better :^)
+    constexpr static int len = 5;
     int x1, y1, x2, y2, x3, y3;
     if (property_expanded()) {
         x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + 5;
-        x2 = background_area.get_x() + 12;
-        y2 = background_area.get_y() + background_area.get_height() - 5;
-        x3 = background_area.get_x() + 17;
-        y3 = background_area.get_y() + 5;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + 7 + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
     } else {
         x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + 4;
-        x2 = background_area.get_x() + 15;
-        y2 = (2 * background_area.get_y() + background_area.get_height()) / 2;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
         x3 = background_area.get_x() + 7;
-        y3 = background_area.get_y() + background_area.get_height() - 4;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
     }
     cr->move_to(x1, y1);
     cr->line_to(x2, y2);
