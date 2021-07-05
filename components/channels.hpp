@@ -131,6 +131,8 @@ protected:
 
     bool IsTextChannel(ChannelType type);
 
+    void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
+
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;

@@ -25,6 +25,7 @@ ChannelList::ChannelList()
         }
     };
     m_view.signal_row_activated().connect(cb);
+    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded));
     m_view.set_activate_on_single_click(true);
 
     m_view.set_hexpand(true);
@@ -234,6 +235,8 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         cat_row[m_columns.m_id] = category_id;
         cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
         cat_row[m_columns.m_sort] = *category->Position;
+        cat_row[m_columns.m_expanded] = true;
+        // m_view.expand_row wont work because it might not have channels
 
         for (const auto &channel : channels) {
             auto channel_row = *m_model->append(cat_row.children());
@@ -256,6 +259,7 @@ Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelD
     cat_row[m_columns.m_id] = channel.ID;
     cat_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
     cat_row[m_columns.m_sort] = *channel.Position;
+    cat_row[m_columns.m_expanded] = true;
 
     return cat_row;
 }
@@ -295,6 +299,14 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) 
 
 bool ChannelList::IsTextChannel(ChannelType type) {
     return type == ChannelType::GUILD_TEXT || type == ChannelType::GUILD_NEWS;
+}
+
+void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+    // restore previous expansion
+    for (auto it = iter->children().begin(); it != iter->children().end(); it++) {
+        if ((*it)[m_columns.m_expanded])
+            m_view.expand_row(m_model->get_path(it), false);
+    }
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
