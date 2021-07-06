@@ -38,6 +38,9 @@ has to be separate to allow main.css to override certain things
 
 .app-window treeview {
     color: @text_color;
+}
+
+.app-window treeview:not(:selected) {
     background: @secondary_color;
 }
 

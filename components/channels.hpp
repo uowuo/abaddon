@@ -131,6 +131,9 @@ protected:
 
     void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
     void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
+    bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
+
+    Gtk::TreeModel::Path m_last_selected;
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

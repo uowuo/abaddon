@@ -29,6 +29,8 @@ ChannelList::ChannelList()
     m_view.signal_row_collapsed().connect(sigc::mem_fun(*this, &ChannelList::OnRowCollapsed), false);
     m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded), false);
     m_view.set_activate_on_single_click(true);
+    m_view.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
+    m_view.get_selection()->set_select_function(sigc::mem_fun(*this, &ChannelList::SelectionFunc));
 
     m_view.set_hexpand(true);
     m_view.set_vexpand(true);
@@ -309,6 +311,20 @@ void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk:
         if ((*it)[m_columns.m_expanded])
             m_view.expand_row(m_model->get_path(it), false);
     }
+
+    // try and restore selection if previous collapsed
+    if (auto selection = m_view.get_selection(); selection && !selection->get_selected()) {
+        selection->select(m_last_selected);
+    }
+}
+
+bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
+    if (auto selection = m_view.get_selection())
+        if (auto row = selection->get_selected())
+            m_last_selected = m_model->get_path(row);
+
+    auto iter = m_model->get_iter(path);
+    return (*iter)[m_columns.m_type] == RenderType::TextChannel;
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
