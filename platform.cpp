@@ -96,7 +96,7 @@ std::string Platform::FindResourceFolder() {
     static bool found = false;
     if (found) return found_path;
 
-    const static std::string home_path = std::getenv("HOME") + "/.config/abaddon"s;
+    const static std::string home_path = std::getenv("HOME") + "/.local/share/abaddon"s;
 
     for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
         if (IsFolder(path + "/res") && IsFolder(path + "/css")) {
