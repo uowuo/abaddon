@@ -44,6 +44,7 @@ void DiscordClient::Stop() {
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
     m_client_connected = false;
+    m_reconnecting = false;
 
     m_store.ClearAll();
     m_guild_to_users.clear();
@@ -1682,7 +1683,7 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
 
     m_websocket.Stop(1000);
 
-    m_websocket.StartConnection(GetGatewayURL());
+    Glib::signal_timeout().connect_once([this] { m_websocket.StartConnection(GetGatewayURL()); }, 1000);
 }
 
 bool IsCompleteMessageObject(const nlohmann::json &j) {
@@ -1885,6 +1886,11 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
 
         m_store.ClearAll();
         m_guild_to_users.clear();
+
+        if (!m_reconnecting && close_code != GatewayCloseCode::Normal) {
+            Glib::signal_timeout().connect_once([this] { HandleGatewayReconnect(GatewayMessage()); }, 1000);
+            m_reconnecting = true;
+        }
 
         m_signal_disconnected.emit(m_reconnecting, close_code);
     };
