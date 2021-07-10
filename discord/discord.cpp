@@ -234,19 +234,19 @@ std::optional<RoleData> DiscordClient::GetMemberHighestRole(Snowflake guild_id, 
     });
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
+std::set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
     auto it = m_guild_to_users.find(id);
     if (it != m_guild_to_users.end())
         return it->second;
 
-    return std::unordered_set<Snowflake>();
+    return {};
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
+std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     auto it = m_guild_to_channels.find(id);
     if (it != m_guild_to_channels.end())
         return it->second;
-    return std::unordered_set<Snowflake>();
+    return {};
 }
 
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
@@ -954,12 +954,12 @@ PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
     return PresenceStatus::Offline;
 }
 
-std::unordered_map<Snowflake, RelationshipType> DiscordClient::GetRelationships() const {
+std::map<Snowflake, RelationshipType> DiscordClient::GetRelationships() const {
     return m_user_relationships;
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
-    std::unordered_set<Snowflake> ret;
+std::set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
+    std::set<Snowflake> ret;
     for (const auto &[id, rtype] : m_user_relationships)
         if (rtype == type)
             ret.insert(id);
