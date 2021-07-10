@@ -1891,7 +1891,7 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
         m_store.ClearAll();
         m_guild_to_users.clear();
 
-        if (m_client_started && !m_reconnecting && close_code != GatewayCloseCode::Normal) {
+        if (m_client_started && !m_reconnecting && close_code == GatewayCloseCode::Abnormal) {
             Glib::signal_timeout().connect_once([this] { if (m_client_started) HandleGatewayReconnect(GatewayMessage()); }, 1000);
             m_reconnecting = true;
         }
