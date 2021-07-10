@@ -271,6 +271,7 @@ private:
     Websocket m_websocket;
     std::atomic<bool> m_client_connected = false;
     std::atomic<bool> m_ready_received = false;
+    bool m_client_started = false;
 
     std::map<std::string, GatewayEvent> m_event_map;
     void LoadEventMap();

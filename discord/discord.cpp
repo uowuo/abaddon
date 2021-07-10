@@ -32,10 +32,13 @@ void DiscordClient::Start() {
     m_last_sequence = -1;
     m_heartbeat_acked = true;
     m_client_connected = true;
+    m_client_started = true;
     m_websocket.StartConnection(GetGatewayURL());
 }
 
 void DiscordClient::Stop() {
+    m_client_started = false;
+
     if (!m_client_connected) return;
 
     inflateEnd(&m_zstream);
@@ -53,7 +56,7 @@ void DiscordClient::Stop() {
 }
 
 bool DiscordClient::IsStarted() const {
-    return m_client_connected;
+    return m_client_started;
 }
 
 bool DiscordClient::IsStoreValid() const {
@@ -1683,7 +1686,8 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
 
     m_websocket.Stop(1000);
 
-    Glib::signal_timeout().connect_once([this] { m_websocket.StartConnection(GetGatewayURL()); }, 1000);
+    if (m_client_started)
+        Glib::signal_timeout().connect_once([this] { if (m_client_started) m_websocket.StartConnection(GetGatewayURL()); }, 1000);
 }
 
 bool IsCompleteMessageObject(const nlohmann::json &j) {
@@ -1887,8 +1891,8 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
         m_store.ClearAll();
         m_guild_to_users.clear();
 
-        if (!m_reconnecting && close_code != GatewayCloseCode::Normal) {
-            Glib::signal_timeout().connect_once([this] { HandleGatewayReconnect(GatewayMessage()); }, 1000);
+        if (m_client_started && !m_reconnecting && close_code != GatewayCloseCode::Normal) {
+            Glib::signal_timeout().connect_once([this] { if (m_client_started) HandleGatewayReconnect(GatewayMessage()); }, 1000);
             m_reconnecting = true;
         }
 
