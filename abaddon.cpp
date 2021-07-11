@@ -432,8 +432,7 @@ void Abaddon::ActionConnect() {
 }
 
 void Abaddon::ActionDisconnect() {
-    if (m_discord.IsStarted())
-        StopDiscord();
+    StopDiscord();
 }
 
 void Abaddon::ActionSetToken() {

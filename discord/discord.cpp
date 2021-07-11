@@ -24,6 +24,8 @@ DiscordClient::DiscordClient(bool mem_store)
 }
 
 void DiscordClient::Start() {
+    if (m_client_started) return;
+
     m_http.SetBase(GetAPIURL());
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
@@ -37,22 +39,22 @@ void DiscordClient::Start() {
 }
 
 void DiscordClient::Stop() {
+    if (m_client_started) {
+        inflateEnd(&m_zstream);
+        m_compressed_buf.clear();
+
+        m_heartbeat_waiter.kill();
+        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_client_connected = false;
+        m_reconnecting = false;
+
+        m_store.ClearAll();
+        m_guild_to_users.clear();
+
+        m_websocket.Stop();
+    }
+
     m_client_started = false;
-
-    if (!m_client_connected) return;
-
-    inflateEnd(&m_zstream);
-    m_compressed_buf.clear();
-
-    m_heartbeat_waiter.kill();
-    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
-    m_client_connected = false;
-    m_reconnecting = false;
-
-    m_store.ClearAll();
-    m_guild_to_users.clear();
-
-    m_websocket.Stop();
 }
 
 bool DiscordClient::IsStarted() const {
