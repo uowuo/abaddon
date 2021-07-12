@@ -24,6 +24,8 @@ DiscordClient::DiscordClient(bool mem_store)
 }
 
 void DiscordClient::Start() {
+    if (m_client_started) return;
+
     m_http.SetBase(GetAPIURL());
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
@@ -32,27 +34,31 @@ void DiscordClient::Start() {
     m_last_sequence = -1;
     m_heartbeat_acked = true;
     m_client_connected = true;
+    m_client_started = true;
     m_websocket.StartConnection(GetGatewayURL());
 }
 
 void DiscordClient::Stop() {
-    if (!m_client_connected) return;
+    if (m_client_started) {
+        inflateEnd(&m_zstream);
+        m_compressed_buf.clear();
 
-    inflateEnd(&m_zstream);
-    m_compressed_buf.clear();
+        m_heartbeat_waiter.kill();
+        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_client_connected = false;
+        m_reconnecting = false;
 
-    m_heartbeat_waiter.kill();
-    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
-    m_client_connected = false;
+        m_store.ClearAll();
+        m_guild_to_users.clear();
 
-    m_store.ClearAll();
-    m_guild_to_users.clear();
+        m_websocket.Stop();
+    }
 
-    m_websocket.Stop();
+    m_client_started = false;
 }
 
 bool DiscordClient::IsStarted() const {
-    return m_client_connected;
+    return m_client_started;
 }
 
 bool DiscordClient::IsStoreValid() const {
@@ -233,19 +239,19 @@ std::optional<RoleData> DiscordClient::GetMemberHighestRole(Snowflake guild_id, 
     });
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
+std::set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
     auto it = m_guild_to_users.find(id);
     if (it != m_guild_to_users.end())
         return it->second;
 
-    return std::unordered_set<Snowflake>();
+    return {};
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
+std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     auto it = m_guild_to_channels.find(id);
     if (it != m_guild_to_channels.end())
         return it->second;
-    return std::unordered_set<Snowflake>();
+    return {};
 }
 
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
@@ -953,12 +959,12 @@ PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
     return PresenceStatus::Offline;
 }
 
-std::unordered_map<Snowflake, RelationshipType> DiscordClient::GetRelationships() const {
+std::map<Snowflake, RelationshipType> DiscordClient::GetRelationships() const {
     return m_user_relationships;
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
-    std::unordered_set<Snowflake> ret;
+std::set<Snowflake> DiscordClient::GetRelationships(RelationshipType type) const {
+    std::set<Snowflake> ret;
     for (const auto &[id, rtype] : m_user_relationships)
         if (rtype == type)
             ret.insert(id);
@@ -1682,7 +1688,8 @@ void DiscordClient::HandleGatewayInvalidSession(const GatewayMessage &msg) {
 
     m_websocket.Stop(1000);
 
-    m_websocket.StartConnection(GetGatewayURL());
+    if (m_client_started)
+        Glib::signal_timeout().connect_once([this] { if (m_client_started) m_websocket.StartConnection(GetGatewayURL()); }, 1000);
 }
 
 bool IsCompleteMessageObject(const nlohmann::json &j) {
@@ -1885,6 +1892,11 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
 
         m_store.ClearAll();
         m_guild_to_users.clear();
+
+        if (m_client_started && !m_reconnecting && close_code == GatewayCloseCode::Abnormal) {
+            Glib::signal_timeout().connect_once([this] { if (m_client_started) HandleGatewayReconnect(GatewayMessage()); }, 1000);
+            m_reconnecting = true;
+        }
 
         m_signal_disconnected.emit(m_reconnecting, close_code);
     };

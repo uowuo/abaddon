@@ -148,13 +148,6 @@ MainWindow::MainWindow()
 void MainWindow::UpdateComponents() {
     bool discord_active = Abaddon::Get().IsDiscordActive();
 
-    std::string token = Abaddon::Get().GetDiscordToken();
-    m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
-    m_menu_discord_disconnect.set_sensitive(discord_active);
-    m_menu_discord_join_guild.set_sensitive(discord_active);
-    m_menu_discord_set_token.set_sensitive(!discord_active);
-    m_menu_discord_set_status.set_sensitive(discord_active);
-
     if (!discord_active) {
         m_chat.Clear();
         m_members.Clear();
@@ -258,6 +251,15 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     m_menu_discord_add_recipient.set_visible(false);
     if (channel.has_value() && channel->GetDMRecipients().size() + 1 < 10)
         m_menu_discord_add_recipient.set_visible(channel->Type == ChannelType::GROUP_DM);
+
+    const bool discord_active = Abaddon::Get().GetDiscordClient().IsStarted();
+
+    std::string token = Abaddon::Get().GetDiscordToken();
+    m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
+    m_menu_discord_disconnect.set_sensitive(discord_active);
+    m_menu_discord_join_guild.set_sensitive(discord_active);
+    m_menu_discord_set_token.set_sensitive(!discord_active);
+    m_menu_discord_set_status.set_sensitive(discord_active);
 }
 
 void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {

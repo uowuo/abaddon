@@ -6,9 +6,8 @@
 #include <sigc++/sigc++.h>
 #include <nlohmann/json.hpp>
 #include <thread>
-#include <unordered_map>
+#include <map>
 #include <set>
-#include <unordered_set>
 #include <mutex>
 #include <zlib.h>
 #include <glibmm.h>
@@ -85,8 +84,8 @@ public:
     std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
-    std::unordered_set<Snowflake> GetUsersInGuild(Snowflake id) const;
-    std::unordered_set<Snowflake> GetChannelsInGuild(Snowflake id) const;
+    std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
+    std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
 
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
 
@@ -184,8 +183,8 @@ public:
 
     PresenceStatus GetUserStatus(Snowflake id) const;
 
-    std::unordered_map<Snowflake, RelationshipType> GetRelationships() const;
-    std::unordered_set<Snowflake> GetRelationships(RelationshipType type) const;
+    std::map<Snowflake, RelationshipType> GetRelationships() const;
+    std::set<Snowflake> GetRelationships(RelationshipType type) const;
     std::optional<RelationshipType> GetRelationship(Snowflake id) const;
 
 private:
@@ -255,14 +254,14 @@ private:
     std::string m_token;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
-    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_users;
+    std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;
 
-    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_guild_to_channels;
-    std::unordered_map<Snowflake, GuildApplicationData> m_guild_join_requests;
+    std::map<Snowflake, std::set<Snowflake>> m_guild_to_channels;
+    std::map<Snowflake, GuildApplicationData> m_guild_join_requests;
 
-    std::unordered_map<Snowflake, PresenceStatus> m_user_to_status;
+    std::map<Snowflake, PresenceStatus> m_user_to_status;
 
-    std::unordered_map<Snowflake, RelationshipType> m_user_relationships;
+    std::map<Snowflake, RelationshipType> m_user_relationships;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -272,8 +271,9 @@ private:
     Websocket m_websocket;
     std::atomic<bool> m_client_connected = false;
     std::atomic<bool> m_ready_received = false;
+    bool m_client_started = false;
 
-    std::unordered_map<std::string, GatewayEvent> m_event_map;
+    std::map<std::string, GatewayEvent> m_event_map;
     void LoadEventMap();
 
     std::thread m_heartbeat_thread;

@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   windows:
     name: windows-${{ matrix.buildtype }}
-    runs-on: windows-2016
+    runs-on: windows-latest
     strategy:
       matrix:
         buildtype: [Debug, RelWithDebInfo, MinSizeRel]
