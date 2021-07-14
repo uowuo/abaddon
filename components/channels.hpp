@@ -9,12 +9,16 @@
 #include "../discord/discord.hpp"
 
 constexpr static int GuildIconSize = 24;
+constexpr static int DMIconSize = 20;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
 enum class RenderType {
     Guild,
     Category,
     TextChannel,
+
+    DMHeader,
+    DM,
 };
 
 class CellRendererChannels : public Gtk::CellRenderer {
@@ -71,6 +75,28 @@ protected:
                               const Gdk::Rectangle &cell_area,
                               Gtk::CellRendererState flags);
 
+    // dm header
+    void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_dmheader(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_dmheader(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Context> &cr,
+                               Gtk::Widget &widget,
+                               const Gdk::Rectangle &background_area,
+                               const Gdk::Rectangle &cell_area,
+                               Gtk::CellRendererState flags);
+
+    // dm
+    void get_preferred_width_vfunc_dm(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_dm(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_dm(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_dm(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &cr,
+                         Gtk::Widget &widget,
+                         const Gdk::Rectangle &background_area,
+                         const Gdk::Rectangle &cell_area,
+                         Gtk::CellRendererState flags);
+
 private:
     Gtk::CellRendererText m_renderer_text;
 
@@ -106,7 +132,7 @@ protected:
         Gtk::TreeModelColumn<uint64_t> m_id;
         Gtk::TreeModelColumn<Glib::ustring> m_name;
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_icon;
-        Gtk::TreeModelColumn<int> m_sort;
+        Gtk::TreeModelColumn<int64_t> m_sort;
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
         // because otherwise it doesnt count as an "expander" (property_is_expander)
         // so this solution will have to do which i hate but the alternative is adding invisible children
@@ -134,6 +160,12 @@ protected:
     bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
 
     Gtk::TreeModel::Path m_last_selected;
+    Gtk::TreeModel::Path m_dm_header;
+
+    void AddPrivateChannels();
+    void UpdateCreateDMChannel(const ChannelData &channel);
+
+    void OnMessageCreate(const Message &msg);
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

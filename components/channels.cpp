@@ -21,7 +21,7 @@ ChannelList::ChannelList()
             row[m_columns.m_expanded] = true;
         }
 
-        if (row[m_columns.m_type] == RenderType::TextChannel) {
+        if (row[m_columns.m_type] == RenderType::TextChannel || row[m_columns.m_type] == RenderType::DM) {
             m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
         }
     };
@@ -51,6 +51,8 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     m_view.append_column(*column);
+
+    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
 }
 
 void ChannelList::UpdateListing() {
@@ -68,6 +70,8 @@ void ChannelList::UpdateListing() {
         auto iter = AddGuild(*guild);
         (*iter)[m_columns.m_sort] = sortnum++;
     }
+
+    AddPrivateChannels();
 }
 
 void ChannelList::UpdateNewGuild(Snowflake id) {
@@ -136,6 +140,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(*channel);
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(*channel);
     if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) return;
 
     Gtk::TreeRow channel_row;
@@ -323,8 +328,89 @@ bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const
         if (auto row = selection->get_selected())
             m_last_selected = m_model->get_path(row);
 
-    auto iter = m_model->get_iter(path);
-    return (*iter)[m_columns.m_type] == RenderType::TextChannel;
+    auto type = (*m_model->get_iter(path))[m_columns.m_type];
+    return type == RenderType::TextChannel || type == RenderType::DM;
+}
+
+void ChannelList::AddPrivateChannels() {
+    auto header_row = *m_model->append();
+    header_row[m_columns.m_type] = RenderType::DMHeader;
+    header_row[m_columns.m_sort] = -1;
+    header_row[m_columns.m_name] = "<b>Direct Messages</b>";
+    m_dm_header = m_model->get_path(header_row);
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &img = Abaddon::Get().GetImageManager();
+
+    const auto dm_ids = discord.GetPrivateChannels();
+    for (const auto dm_id : dm_ids) {
+        const auto dm = discord.GetChannel(dm_id);
+        if (!dm.has_value()) continue;
+
+        std::optional<UserData> top_recipient;
+        const auto recipients = dm->GetDMRecipients();
+        if (recipients.size() > 0)
+            top_recipient = recipients[0];
+
+        auto iter = m_model->append(header_row->children());
+        auto row = *iter;
+        row[m_columns.m_type] = RenderType::DM;
+        row[m_columns.m_id] = dm_id;
+        row[m_columns.m_sort] = -(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id);
+        row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
+
+        if (dm->Type == ChannelType::DM && top_recipient.has_value())
+            row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
+        else if (dm->Type == ChannelType::GROUP_DM)
+            row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
+
+        if (top_recipient.has_value()) {
+            const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                if (iter)
+                    (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+            };
+            img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+        }
+    }
+}
+
+void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
+    auto header_row = m_model->get_iter(m_dm_header);
+    auto &img = Abaddon::Get().GetImageManager();
+
+    std::optional<UserData> top_recipient;
+    const auto recipients = dm.GetDMRecipients();
+    if (recipients.size() > 0)
+        top_recipient = recipients[0];
+
+    auto iter = m_model->append(header_row->children());
+    auto row = *iter;
+    row[m_columns.m_type] = RenderType::DM;
+    row[m_columns.m_id] = dm.ID;
+    row[m_columns.m_sort] = -(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID);
+    row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
+
+    if (dm.Type == ChannelType::DM && top_recipient.has_value())
+        row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
+    else if (dm.Type == ChannelType::GROUP_DM)
+        row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
+
+    if (top_recipient.has_value()) {
+        const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+    }
+}
+
+void ChannelList::OnMessageCreate(const Message &msg) {
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
+    if (!channel.has_value()) return;
+    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) return;
+    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
+    if (iter)
+        (*iter)[m_columns.m_sort] = -msg.ID;
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
@@ -390,6 +476,10 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_category(widget, minimum_width, natural_width);
         case RenderType::TextChannel:
             return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
+        case RenderType::DMHeader:
+            return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
+        case RenderType::DM:
+            return get_preferred_width_vfunc_dm(widget, minimum_width, natural_width);
     }
 }
 
@@ -401,6 +491,10 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_category(widget, height, minimum_width, natural_width);
         case RenderType::TextChannel:
             return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
+        case RenderType::DMHeader:
+            return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
+        case RenderType::DM:
+            return get_preferred_width_for_height_vfunc_dm(widget, height, minimum_width, natural_width);
     }
 }
 
@@ -412,6 +506,10 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_category(widget, minimum_height, natural_height);
         case RenderType::TextChannel:
             return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
+        case RenderType::DMHeader:
+            return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
+        case RenderType::DM:
+            return get_preferred_height_vfunc_dm(widget, minimum_height, natural_height);
     }
 }
 
@@ -423,6 +521,10 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_category(widget, width, minimum_height, natural_height);
         case RenderType::TextChannel:
             return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
+        case RenderType::DMHeader:
+            return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
+        case RenderType::DM:
+            return get_preferred_height_for_width_vfunc_dm(widget, width, minimum_height, natural_height);
     }
 }
 
@@ -434,6 +536,10 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_category(cr, widget, background_area, cell_area, flags);
         case RenderType::TextChannel:
             return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
+        case RenderType::DMHeader:
+            return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
+        case RenderType::DM:
+            return render_vfunc_dm(cr, widget, background_area, cell_area, flags);
     }
 }
 
@@ -484,15 +590,15 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     auto pixbuf = m_property_pixbuf.get_value();
 
-    const int icon_x = background_area.get_x();
-    const int icon_y = background_area.get_y();
-    const int icon_w = pixbuf->get_width();
-    const int icon_h = pixbuf->get_height();
+    const double icon_w = pixbuf->get_width();
+    const double icon_h = pixbuf->get_height();
+    const double icon_x = background_area.get_x();
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
-    const int text_x = icon_x + icon_w + 5;
-    const int text_y = background_area.get_y() + background_area.get_height() / 2 - text_natural.height / 2;
-    const int text_w = text_natural.width;
-    const int text_h = text_natural.height;
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
@@ -592,4 +698,96 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+}
+
+// dm header
+
+void CellRendererChannels::get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_dmheader(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_dmheader(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    // gdk::rectangle more like gdk::stupid
+    Gdk::Rectangle text_cell_area(
+        cell_area.get_x() + 9, cell_area.get_y(), // maybe theres a better way to align this ?
+        cell_area.get_width(), cell_area.get_height());
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+}
+
+// dm (basically the same thing as guild)
+
+void CellRendererChannels::get_preferred_width_vfunc_dm(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    int pixbuf_width = 0;
+    if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_width = pixbuf->get_width();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_width(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_width = std::max(text_min, pixbuf_width) + xpad * 2;
+    natural_width = std::max(text_nat, pixbuf_width) + xpad * 2;
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_dm(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    get_preferred_width_vfunc_guild(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_dm(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    int pixbuf_height = 0;
+    if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_height = pixbuf->get_height();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_height(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_height = std::max(text_min, pixbuf_height) + ypad * 2;
+    natural_height = std::max(text_nat, pixbuf_height) + ypad * 2;
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_dm(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    get_preferred_height_vfunc_guild(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    Gtk::Requisition minimum, natural;
+    get_preferred_size(widget, minimum, natural);
+
+    auto pixbuf = m_property_pixbuf.get_value();
+
+    const double icon_w = pixbuf->get_width();
+    const double icon_h = pixbuf->get_height();
+    const double icon_x = background_area.get_x() + 2;
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
+    cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+    cr->fill();
 }
