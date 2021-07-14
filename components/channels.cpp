@@ -39,6 +39,12 @@ ChannelList::ChannelList()
     m_view.set_model(m_model);
     m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
 
+    m_model->signal_row_inserted().connect([this](const Gtk::TreeModel::Path &path, const Gtk::TreeModel::iterator &iter) {
+        if (m_updating_listing) return;
+        if (auto parent = iter->parent(); parent && (*parent)[m_columns.m_expanded])
+            m_view.expand_row(m_model->get_path(parent), false);
+    });
+
     m_view.show();
 
     add(m_view);
@@ -56,6 +62,8 @@ ChannelList::ChannelList()
 }
 
 void ChannelList::UpdateListing() {
+    m_updating_listing = true;
+
     m_model->clear();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
@@ -70,6 +78,8 @@ void ChannelList::UpdateListing() {
         auto iter = AddGuild(*guild);
         (*iter)[m_columns.m_sort] = sortnum++;
     }
+
+    m_updating_listing = false;
 
     AddPrivateChannels();
 }
