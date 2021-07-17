@@ -167,6 +167,8 @@ protected:
 
     void OnMessageCreate(const Message &msg);
 
+    bool m_updating_listing = false;
+
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
