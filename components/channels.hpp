@@ -158,6 +158,7 @@ protected:
     void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
     void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
     bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
+    bool OnButtonPressEvent(GdkEventButton *ev);
 
     Gtk::TreeModel::Path m_last_selected;
     Gtk::TreeModel::Path m_dm_header;
@@ -166,6 +167,22 @@ protected:
     void UpdateCreateDMChannel(const ChannelData &channel);
 
     void OnMessageCreate(const Message &msg);
+    Gtk::TreeModel::Path m_path_for_menu;
+
+    Gtk::Menu m_menu_guild;
+    Gtk::MenuItem m_menu_guild_copy_id;
+    Gtk::MenuItem m_menu_guild_settings;
+    Gtk::MenuItem m_menu_guild_leave;
+
+    Gtk::Menu m_menu_category;
+    Gtk::MenuItem m_menu_category_copy_id;
+
+    Gtk::Menu m_menu_channel;
+    Gtk::MenuItem m_menu_channel_copy_id;
+
+    Gtk::Menu m_menu_dm;
+    Gtk::MenuItem m_menu_dm_copy_id;
+    Gtk::MenuItem m_menu_dm_close;
 
     bool m_updating_listing = false;
 

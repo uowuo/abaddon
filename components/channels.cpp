@@ -8,9 +8,18 @@
 #include "statusindicator.hpp"
 
 ChannelList::ChannelList()
-    : Glib::ObjectBase(typeid(ChannelList))
+    : Glib::ObjectBase("channellist")
     , Gtk::ScrolledWindow()
-    , m_model(Gtk::TreeStore::create(m_columns)) {
+    , m_model(Gtk::TreeStore::create(m_columns))
+    , m_menu_guild_copy_id("_Copy ID", true)
+    , m_menu_guild_settings("View _Settings", true)
+    , m_menu_guild_leave("_Leave", true)
+    , m_menu_category_copy_id("_Copy ID", true)
+    , m_menu_channel_copy_id("_Copy ID", true)
+    , m_menu_dm_close("") // changes depending on if group or not
+    , m_menu_dm_copy_id("_Copy ID", true) {
+    get_style_context()->add_class("channel-list");
+
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
         auto row = *m_model->get_iter(path);
         if (row[m_columns.m_expanded]) {
@@ -31,6 +40,7 @@ ChannelList::ChannelList()
     m_view.set_activate_on_single_click(true);
     m_view.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
     m_view.get_selection()->set_select_function(sigc::mem_fun(*this, &ChannelList::SelectionFunc));
+    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &ChannelList::OnButtonPressEvent), false);
 
     m_view.set_hexpand(true);
     m_view.set_vexpand(true);
@@ -57,6 +67,50 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     m_view.append_column(*column);
+
+    m_menu_guild_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild_settings.signal_activate().connect([this] {
+        m_signal_action_guild_settings.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild_leave.signal_activate().connect([this] {
+        m_signal_action_guild_leave.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild.append(m_menu_guild_copy_id);
+    m_menu_guild.append(m_menu_guild_settings);
+    m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.show_all();
+
+    m_menu_category_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_category.append(m_menu_category_copy_id);
+    m_menu_category.show_all();
+
+    m_menu_channel_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_channel.append(m_menu_channel_copy_id);
+    m_menu_channel.show_all();
+
+    m_menu_dm_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_dm_close.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const auto channel = discord.GetChannel(id);
+        if (!channel.has_value()) return;
+
+        if (channel->Type == ChannelType::DM)
+            discord.CloseDM(id);
+        else if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this group DM?"))
+            Abaddon::Get().GetDiscordClient().CloseDM(id);
+    });
+    m_menu_dm.append(m_menu_dm_copy_id);
+    m_menu_dm.append(m_menu_dm_close);
+    m_menu_dm.show_all();
 
     Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
 }
@@ -423,6 +477,38 @@ void ChannelList::OnMessageCreate(const Message &msg) {
         (*iter)[m_columns.m_sort] = -msg.ID;
 }
 
+bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
+    if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
+        if (m_view.get_path_at_pos(ev->x, ev->y, m_path_for_menu)) {
+            auto row = (*m_model->get_iter(m_path_for_menu));
+            switch (static_cast<RenderType>(row[m_columns.m_type])) {
+                case RenderType::Guild:
+                    m_menu_guild.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::Category:
+                    m_menu_category.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::TextChannel:
+                    m_menu_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::DM: {
+                    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
+                    if (channel.has_value()) {
+                        m_menu_dm_close.set_label(channel->Type == ChannelType::DM ? "Close" : "Leave");
+                        m_menu_dm_close.show();
+                    } else
+                        m_menu_dm_close.hide();
+                    m_menu_dm.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                } break;
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
     return m_signal_action_channel_item_select;
 }
@@ -662,7 +748,7 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
     cr->move_to(x1, y1);
     cr->line_to(x2, y2);
     cr->line_to(x3, y3);
-    cr->set_source_rgb(34.0 / 255.0, 112.0 / 255.0, 1.0);
+    cr->set_source_rgb(1.0, 0.3255, 0.4392);
     cr->stroke();
 
     Gtk::Requisition text_minimum, text_natural;
