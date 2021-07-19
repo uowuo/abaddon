@@ -748,7 +748,8 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
     cr->move_to(x1, y1);
     cr->line_to(x2, y2);
     cr->line_to(x3, y3);
-    cr->set_source_rgb(1.0, 0.3255, 0.4392);
+    static const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetChannelsExpanderColor());
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
     cr->stroke();
 
     Gtk::Requisition text_minimum, text_natural;

@@ -66,6 +66,10 @@ std::string SettingsManager::GetLinkColor() const {
     return GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
 }
 
+std::string SettingsManager::GetChannelsExpanderColor() const {
+    return GetSettingString("misc", "expandercolor", "rgba(255, 83, 112, 255)");
+}
+
 int SettingsManager::GetCacheHTTPConcurrency() const {
     return GetSettingInt("http", "concurrent", 20);
 }
