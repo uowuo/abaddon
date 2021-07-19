@@ -220,7 +220,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     }
     channel_row[m_columns.m_type] = RenderType::TextChannel;
     channel_row[m_columns.m_id] = channel->ID;
-    channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
     if (orphan)
         channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
     else
@@ -291,7 +291,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         auto channel_row = *m_model->append(guild_row.children());
         channel_row[m_columns.m_type] = RenderType::TextChannel;
         channel_row[m_columns.m_id] = channel.ID;
-        channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+        channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
     }
 
@@ -310,7 +310,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             auto channel_row = *m_model->append(cat_row.children());
             channel_row[m_columns.m_type] = RenderType::TextChannel;
             channel_row[m_columns.m_id] = channel.ID;
-            channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+            channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
             channel_row[m_columns.m_sort] = *channel.Position;
         }
     }
@@ -787,7 +787,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     Gtk::Requisition minimum_size, natural_size;
     m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
 
-    const int text_x = background_area.get_x() + 5;
+    const int text_x = background_area.get_x() + 21;
     const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
     const int text_w = natural_size.width;
     const int text_h = natural_size.height;
