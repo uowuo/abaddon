@@ -12,7 +12,7 @@ constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
-enum class RenderType {
+enum class RenderType : uint8_t {
     Guild,
     Category,
     TextChannel,
@@ -30,6 +30,7 @@ public:
     Glib::PropertyProxy<Glib::ustring> property_name();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_icon();
     Glib::PropertyProxy<bool> property_expanded();
+    Glib::PropertyProxy<bool> property_nsfw();
 
 protected:
     void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
@@ -100,11 +101,11 @@ protected:
 private:
     Gtk::CellRendererText m_renderer_text;
 
-    Glib::Property<RenderType> m_property_type;
-
-    Glib::Property<Glib::ustring> m_property_name;               // guild
-    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf; // guild
+    Glib::Property<RenderType> m_property_type;                  // all
+    Glib::Property<Glib::ustring> m_property_name;               // all
+    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf; // guild, dm
     Glib::Property<bool> m_property_expanded;                    // category
+    Glib::Property<bool> m_property_nsfw;                        // channel
 };
 
 class ChannelList : public Gtk::ScrolledWindow {
@@ -115,7 +116,6 @@ public:
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
-    void UpdateCreateDMChannel(Snowflake id);
     void UpdateCreateChannel(Snowflake id);
     void UpdateGuild(Snowflake id);
 
@@ -133,6 +133,7 @@ protected:
         Gtk::TreeModelColumn<Glib::ustring> m_name;
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_icon;
         Gtk::TreeModelColumn<int64_t> m_sort;
+        Gtk::TreeModelColumn<bool> m_nsfw;
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
         // because otherwise it doesnt count as an "expander" (property_is_expander)
         // so this solution will have to do which i hate but the alternative is adding invisible children

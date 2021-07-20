@@ -29,9 +29,11 @@ public:
     // #3 it's a massive pain in the ass to try and bump the version to a functioning version
     //    because they switch build systems to nmake/meson (took months to get merged in vcpkg)
     // #4 c++ build systems sucks
-    // perhaps i'll bump to gtk4 when it's more stable
+    // three options are: use gtk4 with updated vcpkg, try and port it myself, or use msys2 instead of vcpkg
+    // im leaning towards msys
     std::string GetLinkColor() const;
     std::string GetChannelsExpanderColor() const;
+    std::string GetNSFWChannelColor() const;
 
     bool IsValid() const;
 

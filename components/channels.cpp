@@ -66,6 +66,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_icon(), m_columns.m_icon);
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
+    column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
     m_view.append_column(*column);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
@@ -191,13 +192,11 @@ void ChannelList::UpdateChannel(Snowflake id) {
     channel_row[m_columns.m_type] = RenderType::TextChannel;
     channel_row[m_columns.m_id] = channel->ID;
     channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_nsfw] = channel->NSFW();
     if (is_orphan)
         channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
     else
         channel_row[m_columns.m_sort] = *channel->Position;
-}
-
-void ChannelList::UpdateCreateDMChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateCreateChannel(Snowflake id) {
@@ -221,6 +220,7 @@ void ChannelList::UpdateCreateChannel(Snowflake id) {
     channel_row[m_columns.m_type] = RenderType::TextChannel;
     channel_row[m_columns.m_id] = channel->ID;
     channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_nsfw] = channel->NSFW();
     if (orphan)
         channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
     else
@@ -293,6 +293,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         channel_row[m_columns.m_id] = channel.ID;
         channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
+        channel_row[m_columns.m_nsfw] = channel.NSFW();
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -312,6 +313,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             channel_row[m_columns.m_id] = channel.ID;
             channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
             channel_row[m_columns.m_sort] = *channel.Position;
+            channel_row[m_columns.m_nsfw] = channel.NSFW();
         }
     }
 
@@ -527,6 +529,7 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_name);
     add(m_icon);
     add(m_sort);
+    add(m_nsfw);
     add(m_expanded);
 }
 
@@ -536,7 +539,8 @@ CellRendererChannels::CellRendererChannels()
     , m_property_type(*this, "render-type")
     , m_property_name(*this, "name")
     , m_property_pixbuf(*this, "pixbuf")
-    , m_property_expanded(*this, "expanded") {
+    , m_property_expanded(*this, "expanded")
+    , m_property_nsfw(*this, "nsfw") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -562,6 +566,10 @@ Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererChannels::property_ic
 
 Glib::PropertyProxy<bool> CellRendererChannels::property_expanded() {
     return m_property_expanded.get_proxy();
+}
+
+Glib::PropertyProxy<bool> CellRendererChannels::property_nsfw() {
+    return m_property_nsfw.get_proxy();
 }
 
 void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -794,7 +802,13 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    const static auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetNSFWChannelColor());
+    if (m_property_nsfw.get_value())
+        m_renderer_text.property_foreground_rgba() = nsfw_color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
+    // so unset it
+    m_renderer_text.property_foreground_set() = false;
 }
 
 // dm header
