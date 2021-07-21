@@ -872,8 +872,10 @@ void ChatMessageItemContainer::HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffe
         }
 
         auto tag = buf->create_tag();
-        m_channel_tagmap[tag] = channel_id;
-        tag->property_weight() = Pango::WEIGHT_BOLD;
+        if (chan->Type == ChannelType::GUILD_TEXT) {
+            m_channel_tagmap[tag] = channel_id;
+            tag->property_weight() = Pango::WEIGHT_BOLD;
+        }
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
         const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
