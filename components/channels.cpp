@@ -247,6 +247,11 @@ void ChannelList::UpdateGuild(Snowflake id) {
 }
 
 void ChannelList::SetActiveChannel(Snowflake id) {
+    const auto channel_iter = GetIteratorForChannelFromID(id);
+    if (channel_iter) {
+        m_view.expand_to_path(m_model->get_path(channel_iter));
+        m_view.get_selection()->select(channel_iter);
+    }
 }
 
 Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
@@ -387,6 +392,8 @@ void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk:
     if (auto selection = m_view.get_selection(); selection && !selection->get_selected()) {
         selection->select(m_last_selected);
     }
+
+    (*iter)[m_columns.m_expanded] = true;
 }
 
 bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
