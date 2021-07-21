@@ -45,6 +45,8 @@ ChannelList::ChannelList()
     m_view.set_hexpand(true);
     m_view.set_vexpand(true);
 
+    m_view.set_show_expanders(false);
+    m_view.set_enable_search(false);
     m_view.set_headers_visible(false);
     m_view.set_model(m_model);
     m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
