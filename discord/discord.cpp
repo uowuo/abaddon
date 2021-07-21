@@ -205,22 +205,17 @@ Snowflake DiscordClient::GetMemberHoistedRole(Snowflake guild_id, Snowflake user
     const auto data = GetMember(user_id, guild_id);
     if (!data.has_value()) return Snowflake::Invalid;
 
-    std::vector<RoleData> roles;
+    std::optional<RoleData> top_role;
     for (const auto &id : data->Roles) {
         const auto role = GetRole(id);
         if (role.has_value()) {
-            if (role->IsHoisted || (with_color && role->Color != 0))
-                roles.push_back(*role);
+            if ((with_color && role->Color != 0x000000) || (!with_color && role->IsHoisted))
+                if (!top_role.has_value() || top_role->Position < role->Position)
+                    top_role = role;
         }
     }
 
-    if (roles.size() == 0) return Snowflake::Invalid;
-
-    std::sort(roles.begin(), roles.end(), [this](const RoleData &a, const RoleData &b) -> bool {
-        return a.Position > b.Position;
-    });
-
-    return roles[0].ID;
+    return top_role.has_value() ? top_role->ID : Snowflake::Invalid;
 }
 
 std::optional<RoleData> DiscordClient::GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const {

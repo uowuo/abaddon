@@ -5,6 +5,8 @@
 
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 
+const Snowflake Snowflake::Invalid = -1ULL;
+
 Snowflake::Snowflake()
     : m_num(Invalid) {}
 

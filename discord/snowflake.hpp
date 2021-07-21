@@ -26,7 +26,7 @@ struct Snowflake {
         return m_num;
     }
 
-    const static uint64_t Invalid = -1ULL; // makes sense to me
+    const static Snowflake Invalid;            // makes sense to me
     const static uint64_t SecondsInterval = 4194304000ULL; // the "difference" between two snowflakes one second apart
 
     friend void from_json(const nlohmann::json &j, Snowflake &s);
