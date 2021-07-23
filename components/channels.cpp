@@ -8,7 +8,7 @@
 #include "statusindicator.hpp"
 
 ChannelList::ChannelList()
-    : Glib::ObjectBase("channellist")
+    : Glib::ObjectBase(typeid(ChannelList))
     , Gtk::ScrolledWindow()
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_menu_guild_copy_id("_Copy ID", true)
@@ -66,6 +66,7 @@ ChannelList::ChannelList()
     column->pack_start(*renderer);
     column->add_attribute(renderer->property_type(), m_columns.m_type);
     column->add_attribute(renderer->property_icon(), m_columns.m_icon);
+    column->add_attribute(renderer->property_icon_animation(), m_columns.m_icon_anim);
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
@@ -235,14 +236,21 @@ void ChannelList::UpdateGuild(Snowflake id) {
     const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
     if (!iter || !guild.has_value()) return;
 
+    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+
     (*iter)[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
     (*iter)[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
-    if (guild->HasIcon()) {
+    if (show_animations && guild->HasAnimatedIcon()) {
+        const auto cb = [this, id](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon_anim] = pb;
+        };
+        img.LoadAnimationFromURL(guild->GetIconURL("gif", "32"), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
+    } else if (guild->HasIcon()) {
         const auto cb = [this, id](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
             // iter might be invalid
             auto iter = GetIteratorForGuildFromID(id);
-            if (iter)
-                (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
+            if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
         };
         img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
     }
@@ -266,11 +274,18 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
     guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
 
-    if (guild.HasIcon()) {
+    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+
+    if (show_animations && guild.HasAnimatedIcon()) {
+        const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon_anim] = pb;
+        };
+        img.LoadAnimationFromURL(guild.GetIconURL("gif", "32"), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
+    } else if (guild.HasIcon()) {
         const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
             auto iter = GetIteratorForGuildFromID(id);
-            if (iter)
-                (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
+            if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
         };
         img.LoadFromURL(guild.GetIconURL("png", "32"), sigc::track_obj(cb, *this));
     }
@@ -537,6 +552,7 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_id);
     add(m_name);
     add(m_icon);
+    add(m_icon_anim);
     add(m_sort);
     add(m_nsfw);
     add(m_expanded);
@@ -548,6 +564,7 @@ CellRendererChannels::CellRendererChannels()
     , m_property_type(*this, "render-type")
     , m_property_name(*this, "name")
     , m_property_pixbuf(*this, "pixbuf")
+    , m_property_pixbuf_animation(*this, "pixbuf-animation")
     , m_property_expanded(*this, "expanded")
     , m_property_nsfw(*this, "nsfw") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
@@ -571,6 +588,10 @@ Glib::PropertyProxy<Glib::ustring> CellRendererChannels::property_name() {
 
 Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererChannels::property_icon() {
     return m_property_pixbuf.get_proxy();
+}
+
+Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> CellRendererChannels::property_icon_animation() {
+    return m_property_pixbuf_animation.get_proxy();
 }
 
 Glib::PropertyProxy<bool> CellRendererChannels::property_expanded() {
@@ -660,7 +681,10 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
 
 void CellRendererChannels::get_preferred_width_vfunc_guild(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
     int pixbuf_width = 0;
-    if (auto pixbuf = m_property_pixbuf.get_value())
+
+    if (auto pixbuf = m_property_pixbuf_animation.get_value())
+        pixbuf_width = pixbuf->get_width();
+    else if (auto pixbuf = m_property_pixbuf.get_value())
         pixbuf_width = pixbuf->get_width();
 
     int text_min, text_nat;
@@ -678,7 +702,9 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc_guild(Gtk::Widge
 
 void CellRendererChannels::get_preferred_height_vfunc_guild(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
     int pixbuf_height = 0;
-    if (auto pixbuf = m_property_pixbuf.get_value())
+    if (auto pixbuf = m_property_pixbuf_animation.get_value())
+        pixbuf_height = pixbuf->get_height();
+    else if (auto pixbuf = m_property_pixbuf.get_value())
         pixbuf_height = pixbuf->get_height();
 
     int text_min, text_nat;
@@ -701,10 +727,17 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     Gtk::Requisition minimum, natural;
     get_preferred_size(widget, minimum, natural);
 
-    auto pixbuf = m_property_pixbuf.get_value();
+    int pixbuf_w, pixbuf_h = 0;
+    if (auto pixbuf = m_property_pixbuf_animation.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    } else if (auto pixbuf = m_property_pixbuf.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    }
 
-    const double icon_w = pixbuf->get_width();
-    const double icon_h = pixbuf->get_height();
+    const double icon_w = pixbuf_w;
+    const double icon_h = pixbuf_h;
     const double icon_x = background_area.get_x();
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
@@ -717,9 +750,35 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
-    Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
-    cr->rectangle(icon_x, icon_y, icon_w, icon_h);
-    cr->fill();
+    const static bool hover_only = Abaddon::Get().GetSettings().GetAnimatedGuildHoverOnly();
+    const bool is_hovered = flags & Gtk::CELL_RENDERER_PRELIT;
+    auto anim = m_property_pixbuf_animation.get_value();
+
+    // kinda gross
+    if (anim) {
+        auto map_iter = m_pixbuf_anim_iters.find(anim);
+        if (map_iter == m_pixbuf_anim_iters.end())
+            m_pixbuf_anim_iters[anim] = anim->get_iter(nullptr);
+        auto pb_iter = m_pixbuf_anim_iters.at(anim);
+
+        const auto cb = [this, &widget, anim, icon_x, icon_y, icon_w, icon_h] {
+            if (m_pixbuf_anim_iters.at(anim)->advance())
+                widget.queue_draw_area(icon_x, icon_y, icon_w, icon_h);
+        };
+
+        if ((hover_only && is_hovered) || !hover_only)
+            Glib::signal_timeout().connect_once(sigc::track_obj(cb, widget), pb_iter->get_delay_time());
+        if (hover_only && !is_hovered)
+            m_pixbuf_anim_iters[anim] = anim->get_iter(nullptr);
+
+        Gdk::Cairo::set_source_pixbuf(cr, pb_iter->get_pixbuf(), icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    } else if (auto pixbuf = m_property_pixbuf.get_value()) {
+        Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    }
 }
 
 // category

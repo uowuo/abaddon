@@ -101,3 +101,7 @@ std::string SettingsManager::GetGatewayURL() const {
 std::string SettingsManager::GetAPIBaseURL() const {
     return GetSettingString("discord", "api_base", "https://discord.com/api/v9");
 }
+
+bool SettingsManager::GetAnimatedGuildHoverOnly() const {
+    return GetSettingBool("gui", "animated_guild_hover_only", true);
+}

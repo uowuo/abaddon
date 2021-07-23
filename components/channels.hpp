@@ -29,6 +29,7 @@ public:
     Glib::PropertyProxy<RenderType> property_type();
     Glib::PropertyProxy<Glib::ustring> property_name();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_icon();
+    Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> property_icon_animation();
     Glib::PropertyProxy<bool> property_expanded();
     Glib::PropertyProxy<bool> property_nsfw();
 
@@ -101,11 +102,17 @@ protected:
 private:
     Gtk::CellRendererText m_renderer_text;
 
-    Glib::Property<RenderType> m_property_type;                  // all
-    Glib::Property<Glib::ustring> m_property_name;               // all
-    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf; // guild, dm
-    Glib::Property<bool> m_property_expanded;                    // category
-    Glib::Property<bool> m_property_nsfw;                        // channel
+    Glib::Property<RenderType> m_property_type;                                     // all
+    Glib::Property<Glib::ustring> m_property_name;                                  // all
+    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf;                    // guild, dm
+    Glib::Property<Glib::RefPtr<Gdk::PixbufAnimation>> m_property_pixbuf_animation; // guild
+    Glib::Property<bool> m_property_expanded;                                       // category
+    Glib::Property<bool> m_property_nsfw;                                           // channel
+
+    // same pitfalls as in https://github.com/uowuo/abaddon/blob/60404783bd4ce9be26233fe66fc3a74475d9eaa3/components/cellrendererpixbufanimation.hpp#L32-L39
+    // this will manifest though since guild icons can change
+    // an animation or two wont be the end of the world though
+    std::map<Glib::RefPtr<Gdk::PixbufAnimation>, Glib::RefPtr<Gdk::PixbufAnimationIter>> m_pixbuf_anim_iters;
 };
 
 class ChannelList : public Gtk::ScrolledWindow {
@@ -132,6 +139,7 @@ protected:
         Gtk::TreeModelColumn<uint64_t> m_id;
         Gtk::TreeModelColumn<Glib::ustring> m_name;
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_icon;
+        Gtk::TreeModelColumn<Glib::RefPtr<Gdk::PixbufAnimation>> m_icon_anim;
         Gtk::TreeModelColumn<int64_t> m_sort;
         Gtk::TreeModelColumn<bool> m_nsfw;
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children

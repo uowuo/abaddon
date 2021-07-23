@@ -190,9 +190,12 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * custom_emojis (true or false, default true) - download and use custom Discord emojis
 * css (string) - path to the main CSS file
 * animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
+* animated_guild_hover_only (true or false, default true) - only animate guild icons when the guild is being hovered over
 * owner_crown (true or false, default true) - show a crown next to the owner
 * gateway (string) - override url for Discord gateway. must be json format and use zlib stream compression
 * api_base (string) - override base url for Discord API
 
-#### misc
+#### style
 * linkcolor (string) - color to use for links in messages
+* expandercolor (string) - color to use for the expander in the channel list
+* nsfwchannelcolor (string) - color to use for NSFW channels in the channel list
