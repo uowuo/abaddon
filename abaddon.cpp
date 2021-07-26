@@ -21,8 +21,8 @@
 #endif
 
 Abaddon::Abaddon()
-    : m_settings("abaddon.ini")
-    , m_emojis("res/emojis.bin")
+    : m_settings(Platform::FindConfigFile())
+    , m_emojis(GetResPath("/emojis.bin"))
     , m_discord(m_settings.GetUseMemoryDB()) { // stupid but easy
     LoadFromSettings();
 
@@ -425,6 +425,24 @@ void Abaddon::on_user_menu_remove_recipient() {
     m_discord.RemoveGroupDMRecipient(m_main_window->GetChatActiveChannel(), m_shown_user_menu_id);
 }
 
+std::string Abaddon::GetCSSPath() {
+    const static auto path = Platform::FindResourceFolder() + "/css";
+    return path;
+}
+
+std::string Abaddon::GetResPath() {
+    const static auto path = Platform::FindResourceFolder() + "/res";
+    return path;
+}
+
+std::string Abaddon::GetCSSPath(const std::string &path) {
+    return GetCSSPath() + path;
+}
+
+std::string Abaddon::GetResPath(const std::string &path) {
+    return GetResPath() + path;
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();
@@ -637,11 +655,11 @@ bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {
 void Abaddon::ActionReloadCSS() {
     try {
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
-        m_css_provider->load_from_path(m_settings.GetMainCSS());
+        m_css_provider->load_from_path(GetCSSPath("/" + m_settings.GetMainCSS()));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_low_provider);
-        m_css_low_provider->load_from_path("./css/application-low-priority.css");
+        m_css_low_provider->load_from_path(GetCSSPath("/application-low-priority.css"));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_low_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION - 1);
     } catch (Glib::Error &e) {
         Gtk::MessageDialog dlg(*m_main_window, "css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);

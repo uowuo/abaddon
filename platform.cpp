@@ -1,6 +1,24 @@
 #include "platform.hpp"
 #include <string>
 #include <fstream>
+#include <filesystem>
+#include <config.h>
+
+using namespace std::literals::string_literals;
+
+bool IsFolder(std::string_view path) {
+    std::error_code ec;
+    const auto status = std::filesystem::status(path, ec);
+    if (ec) return false;
+    return status.type() == std::filesystem::file_type::directory;
+}
+
+bool IsFile(std::string_view path) {
+    std::error_code ec;
+    const auto status = std::filesystem::status(path, ec);
+    if (ec) return false;
+    return status.type() == std::filesystem::file_type::regular;
+}
 
 #if defined(_WIN32) && defined(_MSC_VER)
     #include <Windows.h>
@@ -57,5 +75,66 @@ bool Platform::SetupFonts() {
 #else
 bool Platform::SetupFonts() {
     return true;
+}
+#endif
+
+#if defined(_WIN32)
+std::string Platform::FindResourceFolder() {
+    return ".";
+}
+
+std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
+    return "./abaddon.ini";
+}
+
+#elif defined(__linux__)
+std::string Platform::FindResourceFolder() {
+    static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    const static std::string home_path = std::getenv("HOME") + "/.local/share/abaddon"s;
+
+    for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
+        if (IsFolder(path + "/res") && IsFolder(path + "/css")) {
+            found_path = path;
+            found = true;
+            return found_path;
+        }
+    }
+
+    puts("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
+    found = true;
+    return found_path;
+}
+
+std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
+
+    const auto home_path = std::string(std::getenv("HOME")) + "/.config/abaddon/abaddon.ini";
+    for (const auto path : { "./abaddon.ini"s, home_path }) {
+        if (IsFile(path)) return path;
+    }
+    puts("can't find configuration file!");
+    return "./abaddon.ini";
+}
+#else
+std::string Platform::FindResourceFolder() {
+    puts("unknown OS, trying to load resources from cwd");
+    return ".";
+}
+
+std::string Platform::FindConfigFile() {
+    const auto x = std::getenv("ABADDON_CONFIG");
+    if (x != nullptr)
+        return x;
+    puts("unknown OS, trying to load config from cwd");
+    return "./abaddon.ini";
 }
 #endif

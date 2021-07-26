@@ -85,6 +85,11 @@ public:
 
     void ManageHeapWindow(Gtk::Window *window);
 
+    static std::string GetCSSPath();
+    static std::string GetResPath();
+    static std::string GetCSSPath(const std::string &path);
+    static std::string GetResPath(const std::string &path);
+
 protected:
     void ShowGuildVerificationGateDialog(Snowflake guild_id);
 

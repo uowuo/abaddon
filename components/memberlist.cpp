@@ -17,7 +17,8 @@ MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, cons
     static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
     if (crown && guild.has_value() && guild->OwnerID == data.ID) {
         try {
-            auto pixbuf = Gdk::Pixbuf::create_from_file("./res/crown.png", 12, 12);
+            const static auto crown_path = Abaddon::GetResPath("/crown.png");
+            auto pixbuf = Gdk::Pixbuf::create_from_file(crown_path, 12, 12);
             m_crown = Gtk::manage(new Gtk::Image(pixbuf));
             m_crown->set_valign(Gtk::ALIGN_CENTER);
             m_crown->set_margin_end(8);

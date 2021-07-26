@@ -21,8 +21,9 @@ ChatInputIndicator::ChatInputIndicator()
     m_label.show();
 
     // try loading gif
-    if (!std::filesystem::exists("./res/typing_indicator.gif")) return;
-    auto gif_data = ReadWholeFile("./res/typing_indicator.gif");
+    const static auto path = Abaddon::GetResPath("/typing_indicator.gif");
+    if (!std::filesystem::exists(path)) return;
+    auto gif_data = ReadWholeFile(path);
     auto loader = Gdk::PixbufLoader::create();
     loader->signal_size_prepared().connect([&](int inw, int inh) {
         int w, h;
