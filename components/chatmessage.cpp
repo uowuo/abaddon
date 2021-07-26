@@ -38,8 +38,10 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
 
     if ((data.MessageReference.has_value() || data.Interaction.has_value()) && data.Type != MessageType::CHANNEL_FOLLOW_ADD) {
         auto *widget = container->CreateReplyComponent(data);
-        container->m_main.add(*widget);
-        container->m_main.child_property_position(*widget) = 0; // eek
+        if (widget != nullptr) {
+            container->m_main.add(*widget);
+            container->m_main.child_property_position(*widget) = 0; // eek
+        }
     }
 
     // there should only ever be 1 embed (i think?)
@@ -273,6 +275,10 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         } break;
         case MessageType::GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING: {
             b->insert_markup(s, "<i><span color='#999999'>This server has failed Discovery activity requirements for 3 weeks in a row. If this server fails for 1 more week, it will be removed from Discovery.</span></i>");
+        } break;
+        case MessageType::THREAD_CREATED: {
+            const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " started a thread: </span><b>" + Glib::Markup::escape_text(data->Content) + "</b></i>");
         } break;
         default: break;
     }
@@ -607,6 +613,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
 }
 
 Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data) {
+    if (data.Type == MessageType::THREAD_CREATED) return nullptr;
+
     auto *box = Gtk::manage(new Gtk::Box);
     auto *lbl = Gtk::manage(new Gtk::Label);
     lbl->set_single_line_mode(true);
