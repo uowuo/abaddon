@@ -165,30 +165,6 @@ void MainWindow::UpdateChannelListing() {
     m_channel_list.UpdateListing();
 }
 
-void MainWindow::UpdateChannelsNewGuild(Snowflake id) {
-    m_channel_list.UpdateNewGuild(id);
-}
-
-void MainWindow::UpdateChannelsRemoveGuild(Snowflake id) {
-    m_channel_list.UpdateRemoveGuild(id);
-}
-
-void MainWindow::UpdateChannelsRemoveChannel(Snowflake id) {
-    m_channel_list.UpdateRemoveChannel(id);
-}
-
-void MainWindow::UpdateChannelsUpdateChannel(Snowflake id) {
-    m_channel_list.UpdateChannel(id);
-}
-
-void MainWindow::UpdateChannelsCreateChannel(Snowflake id) {
-    m_channel_list.UpdateCreateChannel(id);
-}
-
-void MainWindow::UpdateChannelsUpdateGuild(Snowflake id) {
-    m_channel_list.UpdateGuild(id);
-}
-
 void MainWindow::UpdateChatWindowContents() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto msgs = discord.GetMessagesForChannel(m_chat.GetActiveChannel(), 50);

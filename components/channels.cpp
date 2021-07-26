@@ -116,7 +116,14 @@ ChannelList::ChannelList()
     m_menu_dm.append(m_menu_dm_close);
     m_menu_dm.show_all();
 
-    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
+    discord.signal_guild_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateNewGuild));
+    discord.signal_guild_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveGuild));
+    discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveChannel));
+    discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
+    discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
+    discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
 }
 
 void ChannelList::UpdateListing() {
@@ -142,13 +149,10 @@ void ChannelList::UpdateListing() {
     AddPrivateChannels();
 }
 
-void ChannelList::UpdateNewGuild(Snowflake id) {
-    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
+void ChannelList::UpdateNewGuild(const GuildData &guild) {
     auto &img = Abaddon::Get().GetImageManager();
 
-    if (!guild.has_value()) return;
-
-    auto iter = AddGuild(*guild);
+    auto iter = AddGuild(guild);
 
     // update sort order
     int sortnum = 0;

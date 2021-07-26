@@ -65,12 +65,6 @@ public:
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
     void DiscordOnGuildMemberListUpdate(Snowflake guild_id);
-    void DiscordOnGuildCreate(const GuildData &guild);
-    void DiscordOnGuildDelete(Snowflake guild_id);
-    void DiscordOnChannelDelete(Snowflake channel_id);
-    void DiscordOnChannelUpdate(Snowflake channel_id);
-    void DiscordOnChannelCreate(Snowflake channel_id);
-    void DiscordOnGuildUpdate(Snowflake guild_id);
     void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data);

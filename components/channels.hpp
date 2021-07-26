@@ -118,17 +118,18 @@ private:
 class ChannelList : public Gtk::ScrolledWindow {
 public:
     ChannelList();
+
     void UpdateListing();
-    void UpdateNewGuild(Snowflake id);
+    void SetActiveChannel(Snowflake id);
+
+protected:
+    void UpdateNewGuild(const GuildData &guild);
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
     void UpdateCreateChannel(Snowflake id);
     void UpdateGuild(Snowflake id);
 
-    void SetActiveChannel(Snowflake id);
-
-protected:
     Gtk::TreeView m_view;
 
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {
