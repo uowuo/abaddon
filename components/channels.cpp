@@ -194,7 +194,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     auto channel_row = *m_model->append(parent->children());
     channel_row[m_columns.m_type] = RenderType::TextChannel;
     channel_row[m_columns.m_id] = channel->ID;
-    channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
     channel_row[m_columns.m_nsfw] = channel->NSFW();
     if (is_orphan)
         channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
