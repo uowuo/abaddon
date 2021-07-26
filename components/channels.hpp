@@ -8,160 +8,193 @@
 #include <sigc++/sigc++.h>
 #include "../discord/discord.hpp"
 
-static const constexpr int ChannelEmojiSize = 16;
+constexpr static int GuildIconSize = 24;
+constexpr static int DMIconSize = 20;
+constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
-class ChannelListRow : public Gtk::ListBoxRow {
-public:
-    bool IsUserCollapsed;
-    Snowflake ID;
-    std::vector<ChannelListRow *> Children;
-    ChannelListRow *Parent = nullptr;
+enum class RenderType : uint8_t {
+    Guild,
+    Category,
+    TextChannel,
 
-    virtual void Collapse();
-    virtual void Expand();
-
-    static void MakeReadOnly(Gtk::TextView *tv);
+    DMHeader,
+    DM,
 };
 
-class ChannelListRowDMHeader : public ChannelListRow {
+class CellRendererChannels : public Gtk::CellRenderer {
 public:
-    ChannelListRowDMHeader();
+    CellRendererChannels();
+    virtual ~CellRendererChannels();
+
+    Glib::PropertyProxy<RenderType> property_type();
+    Glib::PropertyProxy<Glib::ustring> property_name();
+    Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_icon();
+    Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> property_icon_animation();
+    Glib::PropertyProxy<bool> property_expanded();
+    Glib::PropertyProxy<bool> property_nsfw();
 
 protected:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    Gtk::Label *m_lbl;
-};
+    void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
+    void get_preferred_width_for_height_vfunc(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const override;
+    void get_preferred_height_vfunc(Gtk::Widget &widget, int &minimum_height, int &natural_height) const override;
+    void get_preferred_height_for_width_vfunc(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const override;
+    void render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
+                      Gtk::Widget &widget,
+                      const Gdk::Rectangle &background_area,
+                      const Gdk::Rectangle &cell_area,
+                      Gtk::CellRendererState flags) override;
 
-class StatusIndicator;
-class ChannelListRowDMChannel : public ChannelListRow {
-public:
-    ChannelListRowDMChannel(const ChannelData *data);
+    // guild functions
+    void get_preferred_width_vfunc_guild(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_guild(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_guild(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_guild(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_guild(const Cairo::RefPtr<Cairo::Context> &cr,
+                            Gtk::Widget &widget,
+                            const Gdk::Rectangle &background_area,
+                            const Gdk::Rectangle &cell_area,
+                            Gtk::CellRendererState flags);
 
-protected:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    StatusIndicator *m_status = nullptr;
-    Gtk::TextView *m_lbl;
-    Gtk::Image *m_icon = nullptr;
+    // category
+    void get_preferred_width_vfunc_category(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_category(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_category(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_category(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr,
+                               Gtk::Widget &widget,
+                               const Gdk::Rectangle &background_area,
+                               const Gdk::Rectangle &cell_area,
+                               Gtk::CellRendererState flags);
 
-    Gtk::Menu m_menu;
-    Gtk::MenuItem *m_menu_close; // leave if group
-    Gtk::MenuItem *m_menu_copy_id;
-};
+    // text channel
+    void get_preferred_width_vfunc_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_channel(const Cairo::RefPtr<Cairo::Context> &cr,
+                              Gtk::Widget &widget,
+                              const Gdk::Rectangle &background_area,
+                              const Gdk::Rectangle &cell_area,
+                              Gtk::CellRendererState flags);
 
-class ChannelListRowGuild : public ChannelListRow {
-public:
-    ChannelListRowGuild(const GuildData *data);
+    // dm header
+    void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_dmheader(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_dmheader(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Context> &cr,
+                               Gtk::Widget &widget,
+                               const Gdk::Rectangle &background_area,
+                               const Gdk::Rectangle &cell_area,
+                               Gtk::CellRendererState flags);
 
-    int GuildIndex;
-
-protected:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
-    Gtk::Image *m_icon;
-
-    Gtk::Menu m_menu;
-    Gtk::MenuItem *m_menu_copyid;
-    Gtk::MenuItem *m_menu_leave;
-    Gtk::MenuItem *m_menu_settings;
+    // dm
+    void get_preferred_width_vfunc_dm(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_dm(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_dm(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_dm(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &cr,
+                         Gtk::Widget &widget,
+                         const Gdk::Rectangle &background_area,
+                         const Gdk::Rectangle &cell_area,
+                         Gtk::CellRendererState flags);
 
 private:
-    typedef sigc::signal<void> type_signal_copy_id;
-    typedef sigc::signal<void> type_signal_leave;
-    typedef sigc::signal<void> type_signal_settings;
+    Gtk::CellRendererText m_renderer_text;
 
-    type_signal_copy_id m_signal_copy_id;
-    type_signal_leave m_signal_leave;
-    type_signal_settings m_signal_settings;
+    Glib::Property<RenderType> m_property_type;                                     // all
+    Glib::Property<Glib::ustring> m_property_name;                                  // all
+    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf;                    // guild, dm
+    Glib::Property<Glib::RefPtr<Gdk::PixbufAnimation>> m_property_pixbuf_animation; // guild
+    Glib::Property<bool> m_property_expanded;                                       // category
+    Glib::Property<bool> m_property_nsfw;                                           // channel
 
-public:
-    type_signal_copy_id signal_copy_id();
-    type_signal_leave signal_leave();
-    type_signal_settings signal_settings();
+    // same pitfalls as in https://github.com/uowuo/abaddon/blob/60404783bd4ce9be26233fe66fc3a74475d9eaa3/components/cellrendererpixbufanimation.hpp#L32-L39
+    // this will manifest though since guild icons can change
+    // an animation or two wont be the end of the world though
+    std::map<Glib::RefPtr<Gdk::PixbufAnimation>, Glib::RefPtr<Gdk::PixbufAnimationIter>> m_pixbuf_anim_iters;
 };
 
-class ChannelListRowCategory : public ChannelListRow {
-public:
-    ChannelListRowCategory(const ChannelData *data);
-
-    virtual void Collapse();
-    virtual void Expand();
-
-protected:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    Gtk::TextView *m_lbl;
-    Gtk::Arrow *m_arrow;
-
-    Gtk::Menu m_menu;
-    Gtk::MenuItem *m_menu_copyid;
-
-private:
-    typedef sigc::signal<void> type_signal_copy_id;
-
-    type_signal_copy_id m_signal_copy_id;
-
-public:
-    type_signal_copy_id signal_copy_id();
-};
-
-class ChannelListRowChannel : public ChannelListRow {
-public:
-    ChannelListRowChannel(const ChannelData *data);
-
-private:
-    static Gtk::Menu *m_menu;
-    static bool m_menu_init;
-};
-
-class ChannelList {
+class ChannelList : public Gtk::ScrolledWindow {
 public:
     ChannelList();
-    Gtk::Widget *GetRoot() const;
-    void UpdateListing();
-    void UpdateNewGuild(Snowflake id);
-    void UpdateRemoveGuild(Snowflake id);
-    void UpdateRemoveChannel(Snowflake id);
-    void UpdateChannel(Snowflake id);
-    void UpdateCreateDMChannel(Snowflake id);
-    void UpdateCreateChannel(Snowflake id);
-    void UpdateGuild(Snowflake id);
 
+    void UpdateListing();
     void SetActiveChannel(Snowflake id);
 
 protected:
-    Gtk::ListBox *m_list;
-    Gtk::ScrolledWindow *m_main;
+    void UpdateNewGuild(const GuildData &guild);
+    void UpdateRemoveGuild(Snowflake id);
+    void UpdateRemoveChannel(Snowflake id);
+    void UpdateChannel(Snowflake id);
+    void UpdateCreateChannel(Snowflake id);
+    void UpdateGuild(Snowflake id);
 
-    ChannelListRowDMHeader *m_dm_header_row = nullptr;
+    Gtk::TreeView m_view;
 
-    void CollapseRow(ChannelListRow *row);
-    void ExpandRow(ChannelListRow *row);
-    void DeleteRow(ChannelListRow *row);
+    class ModelColumns : public Gtk::TreeModel::ColumnRecord {
+    public:
+        ModelColumns();
 
-    void UpdateChannelCategory(Snowflake id);
+        Gtk::TreeModelColumn<RenderType> m_type;
+        Gtk::TreeModelColumn<uint64_t> m_id;
+        Gtk::TreeModelColumn<Glib::ustring> m_name;
+        Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_icon;
+        Gtk::TreeModelColumn<Glib::RefPtr<Gdk::PixbufAnimation>> m_icon_anim;
+        Gtk::TreeModelColumn<int64_t> m_sort;
+        Gtk::TreeModelColumn<bool> m_nsfw;
+        // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
+        // because otherwise it doesnt count as an "expander" (property_is_expander)
+        // so this solution will have to do which i hate but the alternative is adding invisible children
+        // to all categories without children and having a filter model but that sounds worse
+        // of course its a lot better than the absolute travesty i had before
+        Gtk::TreeModelColumn<bool> m_expanded;
+    };
 
-    void on_row_activated(Gtk::ListBoxRow *row);
+    ModelColumns m_columns;
+    Glib::RefPtr<Gtk::TreeStore> m_model;
 
-    int m_guild_count;
-    void OnMenuCopyID(Snowflake id);
-    void OnGuildMenuLeave(Snowflake id);
-    void OnGuildMenuSettings(Snowflake id);
+    Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
+    Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
 
-    Gtk::Menu m_channel_menu;
-    Gtk::MenuItem *m_channel_menu_copyid;
+    void UpdateChannelCategory(const ChannelData &channel);
 
-    // i would use one map but in really old guilds there can be a channel w/ same id as the guild so this hacky shit has to do
-    std::unordered_map<Snowflake, ChannelListRow *> m_guild_id_to_row;
-    std::unordered_map<Snowflake, ChannelListRow *> m_id_to_row;
+    // separation necessary because a channel and guild can share the same id
+    Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
 
-    void InsertGuildAt(Snowflake id, int pos);
+    bool IsTextChannel(ChannelType type);
+
+    void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
+    void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
+    bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
+    bool OnButtonPressEvent(GdkEventButton *ev);
+
+    Gtk::TreeModel::Path m_last_selected;
+    Gtk::TreeModel::Path m_dm_header;
 
     void AddPrivateChannels();
+    void UpdateCreateDMChannel(const ChannelData &channel);
 
-    void CheckBumpDM(Snowflake channel_id);
+    void OnMessageCreate(const Message &msg);
+    Gtk::TreeModel::Path m_path_for_menu;
+
+    Gtk::Menu m_menu_guild;
+    Gtk::MenuItem m_menu_guild_copy_id;
+    Gtk::MenuItem m_menu_guild_settings;
+    Gtk::MenuItem m_menu_guild_leave;
+
+    Gtk::Menu m_menu_category;
+    Gtk::MenuItem m_menu_category_copy_id;
+
+    Gtk::Menu m_menu_channel;
+    Gtk::MenuItem m_menu_channel_copy_id;
+
+    Gtk::Menu m_menu_dm;
+    Gtk::MenuItem m_menu_dm_copy_id;
+    Gtk::MenuItem m_menu_dm_close;
+
+    bool m_updating_listing = false;
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

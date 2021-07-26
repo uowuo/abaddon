@@ -63,7 +63,15 @@ bool SettingsManager::GetShowCustomEmojis() const {
 }
 
 std::string SettingsManager::GetLinkColor() const {
-    return GetSettingString("misc", "linkcolor", "rgba(40, 200, 180, 255)");
+    return GetSettingString("style", "linkcolor", "rgba(40, 200, 180, 255)");
+}
+
+std::string SettingsManager::GetChannelsExpanderColor() const {
+    return GetSettingString("style", "expandercolor", "rgba(255, 83, 112, 255)");
+}
+
+std::string SettingsManager::GetNSFWChannelColor() const {
+    return GetSettingString("style", "nsfwchannelcolor", "#ed6666");
 }
 
 int SettingsManager::GetCacheHTTPConcurrency() const {
@@ -92,4 +100,8 @@ std::string SettingsManager::GetGatewayURL() const {
 
 std::string SettingsManager::GetAPIBaseURL() const {
     return GetSettingString("discord", "api_base", "https://discord.com/api/v9");
+}
+
+bool SettingsManager::GetAnimatedGuildHoverOnly() const {
+    return GetSettingBool("gui", "animated_guild_hover_only", true);
 }

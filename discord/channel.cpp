@@ -43,6 +43,10 @@ void ChannelData::update_from_json(const nlohmann::json &j) {
     JS_RD("last_pin_timestamp", LastPinTimestamp);
 }
 
+bool ChannelData::NSFW() const {
+    return IsNSFW.has_value() && *IsNSFW;
+}
+
 std::optional<PermissionOverwrite> ChannelData::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

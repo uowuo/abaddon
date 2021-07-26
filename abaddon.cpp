@@ -35,12 +35,6 @@ Abaddon::Abaddon()
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
     m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
-    m_discord.signal_guild_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildCreate));
-    m_discord.signal_guild_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildDelete));
-    m_discord.signal_channel_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelDelete));
-    m_discord.signal_channel_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelUpdate));
-    m_discord.signal_channel_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnChannelCreate));
-    m_discord.signal_guild_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
     m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
@@ -194,30 +188,6 @@ void Abaddon::DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id) {
 
 void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
     m_main_window->UpdateMembers();
-}
-
-void Abaddon::DiscordOnGuildCreate(const GuildData &guild) {
-    m_main_window->UpdateChannelsNewGuild(guild.ID);
-}
-
-void Abaddon::DiscordOnGuildDelete(Snowflake guild_id) {
-    m_main_window->UpdateChannelsRemoveGuild(guild_id);
-}
-
-void Abaddon::DiscordOnChannelDelete(Snowflake channel_id) {
-    m_main_window->UpdateChannelsRemoveChannel(channel_id);
-}
-
-void Abaddon::DiscordOnChannelUpdate(Snowflake channel_id) {
-    m_main_window->UpdateChannelsUpdateChannel(channel_id);
-}
-
-void Abaddon::DiscordOnChannelCreate(Snowflake channel_id) {
-    m_main_window->UpdateChannelsCreateChannel(channel_id);
-}
-
-void Abaddon::DiscordOnGuildUpdate(Snowflake guild_id) {
-    m_main_window->UpdateChannelsUpdateGuild(guild_id);
 }
 
 void Abaddon::DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param) {

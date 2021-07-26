@@ -7,757 +7,536 @@
 #include "../util.hpp"
 #include "statusindicator.hpp"
 
-void ChannelListRow::Collapse() {}
+ChannelList::ChannelList()
+    : Glib::ObjectBase(typeid(ChannelList))
+    , Gtk::ScrolledWindow()
+    , m_model(Gtk::TreeStore::create(m_columns))
+    , m_menu_guild_copy_id("_Copy ID", true)
+    , m_menu_guild_settings("View _Settings", true)
+    , m_menu_guild_leave("_Leave", true)
+    , m_menu_category_copy_id("_Copy ID", true)
+    , m_menu_channel_copy_id("_Copy ID", true)
+    , m_menu_dm_close("") // changes depending on if group or not
+    , m_menu_dm_copy_id("_Copy ID", true) {
+    get_style_context()->add_class("channel-list");
 
-void ChannelListRow::Expand() {}
-
-void ChannelListRow::MakeReadOnly(Gtk::TextView *tv) {
-    tv->set_can_focus(false);
-    tv->set_editable(false);
-    tv->signal_realize().connect([tv]() {
-        auto window = tv->get_window(Gtk::TEXT_WINDOW_TEXT);
-        auto display = window->get_display();
-        auto cursor = Gdk::Cursor::create(display, "default"); // textview uses "text" which looks out of place
-        window->set_cursor(cursor);
-    });
-    // stupid hack to prevent selection
-    auto buf = tv->get_buffer();
-    buf->property_has_selection().signal_changed().connect([tv, buf]() {
-        Gtk::TextBuffer::iterator a, b;
-        buf->get_bounds(a, b);
-        buf->select_range(a, a);
-    });
-}
-
-ChannelListRowDMHeader::ChannelListRowDMHeader() {
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::Label);
-
-    get_style_context()->add_class("channel-row");
-    m_lbl->get_style_context()->add_class("channel-row-label");
-
-    m_lbl->set_use_markup(true);
-    m_lbl->set_markup("<b>Direct Messages</b>");
-    m_box->set_halign(Gtk::ALIGN_START);
-    m_box->pack_start(*m_lbl);
-
-    m_ev->add(*m_box);
-    add(*m_ev);
-    show_all_children();
-}
-
-ChannelListRowDMChannel::ChannelListRowDMChannel(const ChannelData *data) {
-    ID = data->ID;
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
-
-    AddWidgetMenuHandler(m_ev, m_menu);
-    AddWidgetMenuHandler(m_lbl, m_menu);
-
-    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_menu_copy_id->signal_activate().connect([this] {
-        Gtk::Clipboard::get()->set_text(std::to_string(ID));
-    });
-
-    if (data->Type == ChannelType::GROUP_DM)
-        m_menu_close = Gtk::manage(new Gtk::MenuItem("_Leave DM", true));
-    else
-        m_menu_close = Gtk::manage(new Gtk::MenuItem("_Close DM", true));
-    m_menu_close->signal_activate().connect([this] {
-        Abaddon::Get().GetDiscordClient().CloseDM(ID);
-    });
-
-    m_menu.append(*m_menu_copy_id);
-    m_menu.append(*m_menu_close);
-    m_menu.show_all();
-
-    get_style_context()->add_class("channel-row");
-    m_lbl->get_style_context()->add_class("channel-row-label");
-
-    std::optional<UserData> top_recipient; // potentially nullopt in group dm
-    const auto recipients = data->GetDMRecipients();
-    if (recipients.size() > 0)
-        top_recipient = recipients[0];
-
-    if (data->Type == ChannelType::DM) {
-        m_status = Gtk::manage(new StatusIndicator(top_recipient->ID));
-        m_status->set_margin_start(5);
-
-        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-        auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-            m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-        };
-        Abaddon::Get().GetImageManager().LoadFromURL(top_recipient->GetAvatarURL("png", "16"), sigc::track_obj(cb, *this));
-    }
-
-    auto buf = m_lbl->get_buffer();
-    if (data->Type == ChannelType::DM)
-        buf->set_text(top_recipient->Username);
-    else if (data->Type == ChannelType::GROUP_DM)
-        buf->set_text(std::to_string(recipients.size()) + " users");
-
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
-
-    m_box->set_halign(Gtk::ALIGN_START);
-    if (m_icon != nullptr)
-        m_box->pack_start(*m_icon);
-    if (m_status != nullptr)
-        m_box->pack_start(*m_status);
-    m_box->pack_start(*m_lbl);
-    m_ev->add(*m_box);
-    add(*m_ev);
-    show_all_children();
-}
-
-ChannelListRowGuild::ChannelListRowGuild(const GuildData *data) {
-    ID = data->ID;
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
-
-    AddWidgetMenuHandler(m_ev, m_menu);
-    AddWidgetMenuHandler(m_lbl, m_menu);
-
-    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_menu_copyid->signal_activate().connect([this]() {
-        m_signal_copy_id.emit();
-    });
-    m_menu.append(*m_menu_copyid);
-
-    m_menu_leave = Gtk::manage(new Gtk::MenuItem("_Leave Guild", true));
-    m_menu_leave->signal_activate().connect([this]() {
-        m_signal_leave.emit();
-    });
-    m_menu.append(*m_menu_leave);
-
-    m_menu_settings = Gtk::manage(new Gtk::MenuItem("Guild _Settings", true));
-    m_menu_settings->signal_activate().connect([this]() {
-        m_signal_settings.emit();
-    });
-    m_menu.append(*m_menu_settings);
-
-    m_menu.show_all();
-
-    const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
-    auto &img = Abaddon::Get().GetImageManager();
-    if (data->HasIcon()) {
-        if (data->HasAnimatedIcon() && show_animations) {
-            m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
-            auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
-                m_icon->property_pixbuf_animation() = pb;
-            };
-            img.LoadAnimationFromURL(data->GetIconURL("gif", "32"), 24, 24, sigc::track_obj(cb, *this));
+    const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
+        auto row = *m_model->get_iter(path);
+        if (row[m_columns.m_expanded]) {
+            m_view.collapse_row(path);
+            row[m_columns.m_expanded] = false;
         } else {
-            m_icon = Gtk::manage(new Gtk::Image(img.GetPlaceholder(24)));
-            auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                m_icon->property_pixbuf() = pb->scale_simple(24, 24, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(data->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+            m_view.expand_row(path, false);
+            row[m_columns.m_expanded] = true;
         }
-    } else {
-        m_icon = Gtk::manage(new Gtk::Image(Abaddon::Get().GetImageManager().GetPlaceholder(24)));
-    }
 
-    get_style_context()->add_class("channel-row");
-    get_style_context()->add_class("channel-row-guild");
-    m_lbl->get_style_context()->add_class("channel-row-label");
+        if (row[m_columns.m_type] == RenderType::TextChannel || row[m_columns.m_type] == RenderType::DM) {
+            m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
+        }
+    };
+    m_view.signal_row_activated().connect(cb, false);
+    m_view.signal_row_collapsed().connect(sigc::mem_fun(*this, &ChannelList::OnRowCollapsed), false);
+    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded), false);
+    m_view.set_activate_on_single_click(true);
+    m_view.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
+    m_view.get_selection()->set_select_function(sigc::mem_fun(*this, &ChannelList::SelectionFunc));
+    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &ChannelList::OnButtonPressEvent), false);
 
-    auto buf = m_lbl->get_buffer();
-    Gtk::TextBuffer::iterator start, end;
-    buf->get_bounds(start, end);
-    buf->insert_markup(start, "<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
-    m_box->set_halign(Gtk::ALIGN_START);
-    m_box->pack_start(*m_icon);
-    m_box->pack_start(*m_lbl);
-    m_ev->add(*m_box);
-    add(*m_ev);
-    show_all_children();
-}
+    m_view.set_hexpand(true);
+    m_view.set_vexpand(true);
 
-ChannelListRowGuild::type_signal_copy_id ChannelListRowGuild::signal_copy_id() {
-    return m_signal_copy_id;
-}
+    m_view.set_show_expanders(false);
+    m_view.set_enable_search(false);
+    m_view.set_headers_visible(false);
+    m_view.set_model(m_model);
+    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
 
-ChannelListRowGuild::type_signal_leave ChannelListRowGuild::signal_leave() {
-    return m_signal_leave;
-}
-
-ChannelListRowGuild::type_signal_settings ChannelListRowGuild::signal_settings() {
-    return m_signal_settings;
-}
-
-ChannelListRowCategory::ChannelListRowCategory(const ChannelData *data) {
-    ID = data->ID;
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(m_lbl);
-    m_arrow = Gtk::manage(new Gtk::Arrow(Gtk::ARROW_DOWN, Gtk::SHADOW_NONE));
-
-    m_menu_copyid = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-    m_menu_copyid->signal_activate().connect([this]() {
-        m_signal_copy_id.emit();
+    m_model->signal_row_inserted().connect([this](const Gtk::TreeModel::Path &path, const Gtk::TreeModel::iterator &iter) {
+        if (m_updating_listing) return;
+        if (auto parent = iter->parent(); parent && (*parent)[m_columns.m_expanded])
+            m_view.expand_row(m_model->get_path(parent), false);
     });
-    m_menu.append(*m_menu_copyid);
 
-    m_menu.show_all();
+    m_view.show();
 
-    AddWidgetMenuHandler(m_ev, m_menu);
-    AddWidgetMenuHandler(m_lbl, m_menu);
+    add(m_view);
 
-    get_style_context()->add_class("channel-row");
-    get_style_context()->add_class("channel-row-category");
-    m_lbl->get_style_context()->add_class("channel-row-label");
+    auto *column = Gtk::manage(new Gtk::TreeView::Column("display"));
+    auto *renderer = Gtk::manage(new CellRendererChannels);
+    column->pack_start(*renderer);
+    column->add_attribute(renderer->property_type(), m_columns.m_type);
+    column->add_attribute(renderer->property_icon(), m_columns.m_icon);
+    column->add_attribute(renderer->property_icon_animation(), m_columns.m_icon_anim);
+    column->add_attribute(renderer->property_name(), m_columns.m_name);
+    column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
+    column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
+    m_view.append_column(*column);
 
-    auto buf = m_lbl->get_buffer();
-    buf->set_text(*data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
-    m_box->set_halign(Gtk::ALIGN_START);
-    m_box->pack_start(*m_arrow);
-    m_box->pack_start(*m_lbl);
-    m_ev->add(*m_box);
-    add(*m_ev);
-    show_all_children();
-}
+    m_menu_guild_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild_settings.signal_activate().connect([this] {
+        m_signal_action_guild_settings.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild_leave.signal_activate().connect([this] {
+        m_signal_action_guild_leave.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_guild.append(m_menu_guild_copy_id);
+    m_menu_guild.append(m_menu_guild_settings);
+    m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.show_all();
 
-void ChannelListRowCategory::Collapse() {
-    m_arrow->set(Gtk::ARROW_RIGHT, Gtk::SHADOW_NONE);
-}
+    m_menu_category_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_category.append(m_menu_category_copy_id);
+    m_menu_category.show_all();
 
-void ChannelListRowCategory::Expand() {
-    m_arrow->set(IsUserCollapsed ? Gtk::ARROW_RIGHT : Gtk::ARROW_DOWN, Gtk::SHADOW_NONE);
-}
+    m_menu_channel_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_channel.append(m_menu_channel_copy_id);
+    m_menu_channel.show_all();
 
-ChannelListRowCategory::type_signal_copy_id ChannelListRowCategory::signal_copy_id() {
-    return m_signal_copy_id;
-}
-
-bool ChannelListRowChannel::m_menu_init = false;
-Gtk::Menu *ChannelListRowChannel::m_menu;
-ChannelListRowChannel::ChannelListRowChannel(const ChannelData *data) {
-    if (!m_menu_init) {
-        m_menu = Gtk::manage(new Gtk::Menu);
-        auto *menu_copy_id = Gtk::manage(new Gtk::MenuItem("_Copy ID", true));
-        menu_copy_id->signal_activate().connect([this] {
-            Gtk::Clipboard::get()->set_text(std::to_string(ID));
-        });
-        m_menu->append(*menu_copy_id);
-        m_menu->show_all();
-        m_menu_init = true;
-    }
-
-    ID = data->ID;
-    auto *ev = Gtk::manage(new Gtk::EventBox);
-    auto *lbl = Gtk::manage(new Gtk::TextView);
-    MakeReadOnly(lbl);
-
-    AddWidgetMenuHandler(ev, *m_menu);
-    AddWidgetMenuHandler(lbl, *m_menu);
-
-    get_style_context()->add_class("channel-row");
-    get_style_context()->add_class("channel-row-channel");
-    lbl->get_style_context()->add_class("channel-row-label");
-
-    auto buf = lbl->get_buffer();
-    if (data->IsNSFW.has_value() && *data->IsNSFW) {
-        get_style_context()->add_class("nsfw");
-        lbl->get_style_context()->add_class("nsfw");
-    }
-    buf->set_text("#" + *data->Name);
-    static bool show_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
-    if (show_emojis)
-        Abaddon::Get().GetEmojis().ReplaceEmojis(buf, ChannelEmojiSize);
-    ev->add(*lbl);
-    add(*ev);
-    show_all_children();
-}
-
-ChannelList::ChannelList() {
-    m_main = Gtk::manage(new Gtk::ScrolledWindow);
-    m_list = Gtk::manage(new Gtk::ListBox);
-
-    m_list->get_style_context()->add_class("channel-list");
-
-    m_list->set_activate_on_single_click(true);
-    m_list->signal_row_activated().connect(sigc::mem_fun(*this, &ChannelList::on_row_activated));
-
-    m_main->add(*m_list);
-    m_main->show_all();
-
-    // maybe will regret doing it this way
-    auto &discord = Abaddon::Get().GetDiscordClient();
-    auto cb = [this, &discord](const Message &message) {
-        const auto channel = discord.GetChannel(message.ChannelID);
+    m_menu_dm_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_dm_close.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const auto channel = discord.GetChannel(id);
         if (!channel.has_value()) return;
-        if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)
-            CheckBumpDM(message.ChannelID);
-    };
-    discord.signal_message_create().connect(sigc::track_obj(cb, *this));
-}
 
-Gtk::Widget *ChannelList::GetRoot() const {
-    return m_main;
-}
-
-void ChannelList::UpdateNewGuild(Snowflake id) {
-    auto sort = Abaddon::Get().GetDiscordClient().GetUserSortedGuilds();
-    if (sort.size() == 1) {
-        UpdateListing();
-        return;
-    }
-
-    const auto insert_at = [this, id](int listpos) {
-        InsertGuildAt(id, listpos);
-    };
-
-    auto it = std::find(sort.begin(), sort.end(), id);
-    if (it == sort.end()) return;
-    // if the new guild pos is at the end use -1
-    if (it + 1 == sort.end()) {
-        insert_at(-1);
-        return;
-    }
-    // find the position of the guild below it into the listbox
-    auto below_id = *(it + 1);
-    auto below_it = m_id_to_row.find(below_id);
-    if (below_it == m_id_to_row.end()) {
-        UpdateListing();
-        return;
-    }
-    auto below_pos = below_it->second->get_index();
-    // stick it just above
-    insert_at(below_pos - 1);
-}
-
-void ChannelList::UpdateRemoveGuild(Snowflake id) {
-    auto it = m_guild_id_to_row.find(id);
-    if (it == m_guild_id_to_row.end()) return;
-    auto row = dynamic_cast<ChannelListRow *>(it->second);
-    if (row == nullptr) return;
-    DeleteRow(row);
-}
-
-void ChannelList::UpdateRemoveChannel(Snowflake id) {
-    auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) return;
-    auto row = dynamic_cast<ChannelListRow *>(it->second);
-    if (row == nullptr) return;
-    DeleteRow(row);
-}
-
-// this is total shit
-void ChannelList::UpdateChannelCategory(Snowflake id) {
-    const auto data = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
-    auto git = m_guild_id_to_row.find(*data->GuildID);
-    if (git == m_guild_id_to_row.end()) return;
-    auto *guild_row = git->second;
-    if (!data.has_value() || !guild.has_value()) return;
-    auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) return;
-    auto row = dynamic_cast<ChannelListRowCategory *>(it->second);
-    if (row == nullptr) return;
-    const bool old_collapsed = row->IsUserCollapsed;
-    const bool visible = row->is_visible();
-    std::map<int, Snowflake> child_rows;
-    for (auto child : row->Children) {
-        child_rows[child->get_index()] = child->ID;
-    }
-    guild_row->Children.erase(std::remove(guild_row->Children.begin(), guild_row->Children.end(), row), guild_row->Children.end());
-    DeleteRow(row);
-
-    int pos = guild_row->get_index();
-    const auto sorted = guild->GetSortedChannels(id);
-    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
-    if (sorted_it == sorted.end()) return;
-    if (std::next(sorted_it) == sorted.end()) {
-        const auto x = m_id_to_row.find(*std::prev(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index() + 1;
-    } else {
-        const auto x = m_id_to_row.find(*std::next(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index();
-    }
-
-    auto *new_row = Gtk::manage(new ChannelListRowCategory(&*data));
-    new_row->IsUserCollapsed = old_collapsed;
-    if (visible)
-        new_row->show();
-    m_id_to_row[id] = new_row;
-    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
-    new_row->Parent = guild_row;
-    guild_row->Children.push_back(new_row);
-    m_list->insert(*new_row, pos);
-    int i = 1;
-    for (const auto &[idx, child_id] : child_rows) {
-        const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(child_id);
-        if (channel.has_value()) {
-            auto *new_child = Gtk::manage(new ChannelListRowChannel(&*channel));
-            new_row->Children.push_back(new_child);
-            new_child->Parent = new_row;
-            m_id_to_row[child_id] = new_child;
-            if (visible && !new_row->IsUserCollapsed)
-                new_child->show();
-            m_list->insert(*new_child, pos + i++);
-        }
-    }
-}
-
-// so is this
-void ChannelList::UpdateChannel(Snowflake id) {
-    const auto data = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
-    const auto *guild_row = m_guild_id_to_row.at(*data->GuildID);
-    if (data->Type == ChannelType::GUILD_CATEGORY) {
-        UpdateChannelCategory(id);
-        return;
-    }
-
-    auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) return; // stuff like voice doesnt have a row yet
-    auto row = dynamic_cast<ChannelListRowChannel *>(it->second);
-    const bool old_collapsed = row->IsUserCollapsed;
-    const bool old_visible = row->is_visible();
-    DeleteRow(row);
-
-    int pos = guild_row->get_index() + 1; // fallback
-    const auto sorted = guild->GetSortedChannels();
-    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
-    if (sorted_it + 1 == sorted.end()) {
-        const auto x = m_id_to_row.find(*std::prev(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index() + 1;
-    } else {
-        const auto x = m_id_to_row.find(*std::next(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index();
-    }
-
-    auto *new_row = Gtk::manage(new ChannelListRowChannel(&*data));
-    new_row->IsUserCollapsed = old_collapsed;
-    m_id_to_row[id] = new_row;
-    if (data->ParentID.has_value()) {
-        new_row->Parent = m_id_to_row.at(*data->ParentID);
-    } else {
-        new_row->Parent = m_guild_id_to_row.at(*data->GuildID);
-    }
-    new_row->Parent->Children.push_back(new_row);
-    if (new_row->Parent->is_visible() && !new_row->Parent->IsUserCollapsed)
-        new_row->show();
-    m_list->insert(*new_row, pos);
-}
-
-void ChannelList::UpdateCreateDMChannel(Snowflake id) {
-    const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
-    dm_row->IsUserCollapsed = false;
-    m_list->insert(*dm_row, m_dm_header_row->get_index() + 1);
-    m_dm_header_row->Children.push_back(dm_row);
-    m_id_to_row[id] = dm_row;
-    if (!m_dm_header_row->IsUserCollapsed)
-        dm_row->show();
-}
-
-void ChannelList::UpdateCreateChannel(Snowflake id) {
-    const auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto data = discord.GetChannel(id);
-    if (data->Type == ChannelType::DM || data->Type == ChannelType::GROUP_DM) {
-        UpdateCreateDMChannel(id);
-        return;
-    }
-    const auto guild = discord.GetGuild(*data->GuildID);
-    auto *guild_row = m_guild_id_to_row.at(*data->GuildID);
-
-    int pos = guild_row->get_index() + 1;
-    const auto sorted = guild->GetSortedChannels();
-    const auto sorted_it = std::find(sorted.begin(), sorted.end(), id);
-    if (sorted_it + 1 == sorted.end()) {
-        const auto x = m_id_to_row.find(*std::prev(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index() + 1;
-    } else {
-        const auto x = m_id_to_row.find(*std::next(sorted_it));
-        if (x != m_id_to_row.end())
-            pos = x->second->get_index();
-    }
-
-    ChannelListRow *row;
-    if (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS) {
-        auto *tmp = Gtk::manage(new ChannelListRowChannel(&*data));
-        row = tmp;
-    } else if (data->Type == ChannelType::GUILD_CATEGORY) {
-        auto *tmp = Gtk::manage(new ChannelListRowCategory(&*data));
-        tmp->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), tmp->ID));
-        row = tmp;
-    } else
-        return;
-    row->IsUserCollapsed = false;
-    if (!guild_row->IsUserCollapsed)
-        row->show();
-    row->Parent = guild_row;
-    guild_row->Children.push_back(row);
-    m_id_to_row[id] = row;
-    m_list->insert(*row, pos);
-}
-
-void ChannelList::UpdateGuild(Snowflake id) {
-    // the only thing changed is the row containing the guild item so just recreate it
-    const auto data = Abaddon::Get().GetDiscordClient().GetGuild(id);
-    if (!data.has_value()) return;
-    auto it = m_guild_id_to_row.find(id);
-    if (it == m_guild_id_to_row.end()) return;
-    auto *row = dynamic_cast<ChannelListRowGuild *>(it->second);
-    const auto children = row->Children;
-    const auto index = row->get_index();
-    const bool old_collapsed = row->IsUserCollapsed;
-    const bool old_gindex = row->GuildIndex;
-    delete row;
-    auto *new_row = Gtk::manage(new ChannelListRowGuild(&*data));
-    new_row->IsUserCollapsed = old_collapsed;
-    new_row->GuildIndex = old_gindex;
-    m_guild_id_to_row[new_row->ID] = new_row;
-    new_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), new_row->ID));
-    new_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), new_row->ID));
-    new_row->signal_settings().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuSettings), new_row->ID));
-    new_row->Children = children;
-    for (auto child : children)
-        child->Parent = new_row;
-    new_row->show_all();
-    m_list->insert(*new_row, index);
-}
-
-void ChannelList::SetActiveChannel(Snowflake id) {
-    auto it = m_id_to_row.find(id);
-    if (it == m_id_to_row.end()) return;
-    m_list->select_row(*it->second);
-}
-
-void ChannelList::CollapseRow(ChannelListRow *row) {
-    row->Collapse();
-    for (auto child : row->Children) {
-        child->hide();
-        CollapseRow(child);
-    }
-}
-
-void ChannelList::ExpandRow(ChannelListRow *row) {
-    row->Expand();
-    row->show();
-    if (!row->IsUserCollapsed)
-        for (auto child : row->Children)
-            ExpandRow(child);
-}
-
-void ChannelList::DeleteRow(ChannelListRow *row) {
-    for (auto child : row->Children)
-        DeleteRow(child);
-    if (row->Parent != nullptr)
-        row->Parent->Children.erase(std::remove(row->Parent->Children.begin(), row->Parent->Children.end(), row), row->Parent->Children.end());
-    else
-        printf("row has no parent!\n");
-    if (dynamic_cast<ChannelListRowGuild *>(row) != nullptr)
-        m_guild_id_to_row.erase(row->ID);
-    else
-        m_id_to_row.erase(row->ID);
-    delete row;
-}
-
-void ChannelList::on_row_activated(Gtk::ListBoxRow *tmprow) {
-    auto row = dynamic_cast<ChannelListRow *>(tmprow);
-    if (row == nullptr) return;
-    bool new_collapsed = !row->IsUserCollapsed;
-    row->IsUserCollapsed = new_collapsed;
-
-    // kinda ugly
-    if (dynamic_cast<ChannelListRowChannel *>(row) != nullptr || dynamic_cast<ChannelListRowDMChannel *>(row) != nullptr)
-        m_signal_action_channel_item_select.emit(row->ID);
-
-    if (new_collapsed)
-        CollapseRow(row);
-    else
-        ExpandRow(row);
-}
-
-void ChannelList::InsertGuildAt(Snowflake id, int pos) {
-    const auto insert_and_adjust = [&](Gtk::Widget &widget) {
-        m_list->insert(widget, pos);
-        if (pos != -1) pos++;
-    };
-
-    const auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto guild_data = discord.GetGuild(id);
-    if (!guild_data.has_value()) return;
-
-    std::map<int, ChannelData> orphan_channels;
-    std::unordered_map<Snowflake, std::vector<ChannelData>> cat_to_channels;
-    if (guild_data->Channels.has_value())
-        for (const auto &dc : *guild_data->Channels) {
-            const auto channel = discord.GetChannel(dc.ID);
-            if (!channel.has_value()) continue;
-            if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) continue;
-
-            if (channel->ParentID.has_value())
-                cat_to_channels[*channel->ParentID].push_back(*channel);
-            else
-                orphan_channels[*channel->Position] = *channel;
-        }
-
-    auto *guild_row = Gtk::manage(new ChannelListRowGuild(&*guild_data));
-    guild_row->show_all();
-    guild_row->IsUserCollapsed = true;
-    guild_row->GuildIndex = m_guild_count++;
-    insert_and_adjust(*guild_row);
-    m_guild_id_to_row[guild_row->ID] = guild_row;
-    guild_row->signal_leave().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuLeave), guild_row->ID));
-    guild_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), guild_row->ID));
-    guild_row->signal_settings().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnGuildMenuSettings), guild_row->ID));
-
-    // add channels with no parent category
-    for (const auto &[pos, channel] : orphan_channels) {
-        auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
-        chan_row->IsUserCollapsed = false;
-        insert_and_adjust(*chan_row);
-        guild_row->Children.push_back(chan_row);
-        chan_row->Parent = guild_row;
-        m_id_to_row[chan_row->ID] = chan_row;
-    }
-
-    // categories
-    std::map<int, std::vector<ChannelData>> sorted_categories;
-    if (guild_data->Channels.has_value())
-        for (const auto &dc : *guild_data->Channels) {
-            const auto channel = discord.GetChannel(dc.ID);
-            if (!channel.has_value()) continue;
-            if (channel->Type == ChannelType::GUILD_CATEGORY)
-                sorted_categories[*channel->Position].push_back(*channel);
-        }
-
-    for (auto &[pos, catvec] : sorted_categories) {
-        std::sort(catvec.begin(), catvec.end(), [](const ChannelData &a, const ChannelData &b) { return a.ID < b.ID; });
-        for (const auto cat : catvec) {
-            auto *cat_row = Gtk::manage(new ChannelListRowCategory(&cat));
-            cat_row->IsUserCollapsed = false;
-            cat_row->signal_copy_id().connect(sigc::bind(sigc::mem_fun(*this, &ChannelList::OnMenuCopyID), cat_row->ID));
-            insert_and_adjust(*cat_row);
-            guild_row->Children.push_back(cat_row);
-            cat_row->Parent = guild_row;
-            m_id_to_row[cat_row->ID] = cat_row;
-
-            // child channels
-            if (cat_to_channels.find(cat.ID) == cat_to_channels.end()) continue;
-            std::map<int, ChannelData> sorted_channels;
-
-            for (const auto channel : cat_to_channels.at(cat.ID))
-                sorted_channels[*channel.Position] = channel;
-
-            for (const auto &[pos, channel] : sorted_channels) {
-                auto *chan_row = Gtk::manage(new ChannelListRowChannel(&channel));
-                chan_row->IsUserCollapsed = false;
-                insert_and_adjust(*chan_row);
-                cat_row->Children.push_back(chan_row);
-                chan_row->Parent = cat_row;
-                m_id_to_row[chan_row->ID] = chan_row;
-            }
-        }
-    }
-}
-
-void ChannelList::AddPrivateChannels() {
-    const auto &discord = Abaddon::Get().GetDiscordClient();
-    auto dms_ = discord.GetPrivateChannels();
-    std::vector<ChannelData> dms;
-    for (const auto &x : dms_) {
-        const auto chan = discord.GetChannel(x);
-        dms.push_back(*chan);
-    }
-    std::sort(dms.begin(), dms.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
-        return a.LastMessageID > b.LastMessageID;
+        if (channel->Type == ChannelType::DM)
+            discord.CloseDM(id);
+        else if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this group DM?"))
+            Abaddon::Get().GetDiscordClient().CloseDM(id);
     });
+    m_menu_dm.append(m_menu_dm_copy_id);
+    m_menu_dm.append(m_menu_dm_close);
+    m_menu_dm.show_all();
 
-    m_dm_header_row = Gtk::manage(new ChannelListRowDMHeader);
-    m_dm_header_row->show_all();
-    m_dm_header_row->IsUserCollapsed = true;
-    m_list->add(*m_dm_header_row);
-
-    for (const auto &dm : dms) {
-        auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&dm));
-        dm_row->Parent = m_dm_header_row;
-        m_id_to_row[dm.ID] = dm_row;
-        dm_row->IsUserCollapsed = false;
-        m_list->add(*dm_row);
-        m_dm_header_row->Children.push_back(dm_row);
-    }
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
+    discord.signal_guild_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateNewGuild));
+    discord.signal_guild_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveGuild));
+    discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveChannel));
+    discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
+    discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
+    discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
 }
 
 void ChannelList::UpdateListing() {
-    std::unordered_set<Snowflake> guilds = Abaddon::Get().GetDiscordClient().GetGuilds();
+    m_updating_listing = true;
 
-    auto children = m_list->get_children();
-    auto it = children.begin();
+    m_model->clear();
 
-    while (it != children.end()) {
-        delete *it;
-        it++;
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &img = Abaddon::Get().GetImageManager();
+
+    const auto guild_ids = discord.GetUserSortedGuilds();
+    int sortnum = 0;
+    for (const auto &guild_id : guild_ids) {
+        const auto guild = discord.GetGuild(guild_id);
+        if (!guild.has_value()) continue;
+
+        auto iter = AddGuild(*guild);
+        (*iter)[m_columns.m_sort] = sortnum++;
     }
 
-    m_guild_id_to_row.clear();
-    m_id_to_row.clear();
-
-    m_guild_count = 0;
+    m_updating_listing = false;
 
     AddPrivateChannels();
+}
 
-    auto sorted_guilds = Abaddon::Get().GetDiscordClient().GetUserSortedGuilds();
-    for (auto gid : sorted_guilds) {
-        InsertGuildAt(gid, -1);
+void ChannelList::UpdateNewGuild(const GuildData &guild) {
+    auto &img = Abaddon::Get().GetImageManager();
+
+    auto iter = AddGuild(guild);
+
+    // update sort order
+    int sortnum = 0;
+    for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
+        auto iter = GetIteratorForGuildFromID(guild_id);
+        if (iter)
+            (*iter)[m_columns.m_sort] = ++sortnum;
     }
 }
 
-void ChannelList::OnMenuCopyID(Snowflake id) {
-    Gtk::Clipboard::get()->set_text(std::to_string(id));
+void ChannelList::UpdateRemoveGuild(Snowflake id) {
+    auto iter = GetIteratorForGuildFromID(id);
+    if (!iter) return;
+    m_model->erase(iter);
 }
 
-void ChannelList::OnGuildMenuLeave(Snowflake id) {
-    m_signal_action_guild_leave.emit(id);
+void ChannelList::UpdateRemoveChannel(Snowflake id) {
+    auto iter = GetIteratorForChannelFromID(id);
+    if (!iter) return;
+    m_model->erase(iter);
 }
 
-void ChannelList::OnGuildMenuSettings(Snowflake id) {
-    m_signal_action_guild_settings.emit(id);
+void ChannelList::UpdateChannel(Snowflake id) {
+    auto iter = GetIteratorForChannelFromID(id);
+    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (!iter || !channel.has_value()) return;
+    if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
+    if (!IsTextChannel(channel->Type)) return;
+
+    // delete and recreate
+    m_model->erase(iter);
+
+    Gtk::TreeStore::iterator parent;
+    bool is_orphan;
+    if (channel->ParentID.has_value()) {
+        is_orphan = false;
+        parent = GetIteratorForChannelFromID(*channel->ParentID);
+    } else {
+        is_orphan = true;
+        parent = GetIteratorForGuildFromID(*channel->GuildID);
+    }
+    if (!parent) return;
+    auto channel_row = *m_model->append(parent->children());
+    channel_row[m_columns.m_type] = RenderType::TextChannel;
+    channel_row[m_columns.m_id] = channel->ID;
+    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_nsfw] = channel->NSFW();
+    if (is_orphan)
+        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
+    else
+        channel_row[m_columns.m_sort] = *channel->Position;
 }
 
-void ChannelList::CheckBumpDM(Snowflake channel_id) {
-    auto it = m_id_to_row.find(channel_id);
-    if (it == m_id_to_row.end()) return;
-    auto *row = it->second;
-    const auto index = row->get_index();
-    if (index == 1) return; // 1 is top of dm list
-    const bool selected = row->is_selected();
-    row->Parent->Children.erase(std::remove(row->Parent->Children.begin(), row->Parent->Children.end(), row), row->Parent->Children.end());
-    delete row;
-    const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
-    auto *dm_row = Gtk::manage(new ChannelListRowDMChannel(&*chan));
-    dm_row->Parent = m_dm_header_row;
-    m_dm_header_row->Children.push_back(dm_row);
-    m_id_to_row[channel_id] = dm_row;
-    dm_row->IsUserCollapsed = false;
-    m_list->insert(*dm_row, 1);
-    m_dm_header_row->Children.push_back(dm_row);
-    if (selected)
-        m_list->select_row(*dm_row);
-    if (m_dm_header_row->is_visible() && !m_dm_header_row->IsUserCollapsed)
-        dm_row->show();
+void ChannelList::UpdateCreateChannel(Snowflake id) {
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (!channel.has_value()) return;
+    if (channel->Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(*channel);
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(*channel);
+    if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) return;
+
+    Gtk::TreeRow channel_row;
+    bool orphan;
+    if (channel->ParentID.has_value()) {
+        orphan = false;
+        auto iter = GetIteratorForChannelFromID(*channel->ParentID);
+        channel_row = *m_model->append(iter->children());
+    } else {
+        orphan = true;
+        auto iter = GetIteratorForGuildFromID(*channel->GuildID);
+        channel_row = *m_model->append(iter->children());
+    }
+    channel_row[m_columns.m_type] = RenderType::TextChannel;
+    channel_row[m_columns.m_id] = channel->ID;
+    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
+    channel_row[m_columns.m_nsfw] = channel->NSFW();
+    if (orphan)
+        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
+    else
+        channel_row[m_columns.m_sort] = *channel->Position;
+}
+
+void ChannelList::UpdateGuild(Snowflake id) {
+    auto iter = GetIteratorForGuildFromID(id);
+    auto &img = Abaddon::Get().GetImageManager();
+    const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
+    if (!iter || !guild.has_value()) return;
+
+    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+
+    (*iter)[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
+    (*iter)[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
+    if (show_animations && guild->HasAnimatedIcon()) {
+        const auto cb = [this, id](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon_anim] = pb;
+        };
+        img.LoadAnimationFromURL(guild->GetIconURL("gif", "32"), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
+    } else if (guild->HasIcon()) {
+        const auto cb = [this, id](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            // iter might be invalid
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+    }
+}
+
+void ChannelList::SetActiveChannel(Snowflake id) {
+    const auto channel_iter = GetIteratorForChannelFromID(id);
+    if (channel_iter) {
+        m_view.expand_to_path(m_model->get_path(channel_iter));
+        m_view.get_selection()->select(channel_iter);
+    }
+}
+
+Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &img = Abaddon::Get().GetImageManager();
+
+    auto guild_row = *m_model->append();
+    guild_row[m_columns.m_type] = RenderType::Guild;
+    guild_row[m_columns.m_id] = guild.ID;
+    guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
+    guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
+
+    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
+
+    if (show_animations && guild.HasAnimatedIcon()) {
+        const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon_anim] = pb;
+        };
+        img.LoadAnimationFromURL(guild.GetIconURL("gif", "32"), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
+    } else if (guild.HasIcon()) {
+        const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            auto iter = GetIteratorForGuildFromID(id);
+            if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(guild.GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+    }
+
+    if (!guild.Channels.has_value()) return guild_row;
+
+    // separate out the channels
+    std::vector<ChannelData> orphan_channels;
+    std::map<Snowflake, std::vector<ChannelData>> categories;
+
+    for (const auto &channel_ : *guild.Channels) {
+        const auto channel = discord.GetChannel(channel_.ID);
+        if (!channel.has_value()) continue;
+        if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS) {
+            if (channel->ParentID.has_value())
+                categories[*channel->ParentID].push_back(*channel);
+            else
+                orphan_channels.push_back(*channel);
+        } else if (channel->Type == ChannelType::GUILD_CATEGORY) {
+            categories[channel->ID];
+        }
+    }
+
+    for (const auto &channel : orphan_channels) {
+        auto channel_row = *m_model->append(guild_row.children());
+        channel_row[m_columns.m_type] = RenderType::TextChannel;
+        channel_row[m_columns.m_id] = channel.ID;
+        channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+        channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
+        channel_row[m_columns.m_nsfw] = channel.NSFW();
+    }
+
+    for (const auto &[category_id, channels] : categories) {
+        const auto category = discord.GetChannel(category_id);
+        if (!category.has_value()) continue;
+        auto cat_row = *m_model->append(guild_row.children());
+        cat_row[m_columns.m_type] = RenderType::Category;
+        cat_row[m_columns.m_id] = category_id;
+        cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
+        cat_row[m_columns.m_sort] = *category->Position;
+        cat_row[m_columns.m_expanded] = true;
+        // m_view.expand_row wont work because it might not have channels
+
+        for (const auto &channel : channels) {
+            auto channel_row = *m_model->append(cat_row.children());
+            channel_row[m_columns.m_type] = RenderType::TextChannel;
+            channel_row[m_columns.m_id] = channel.ID;
+            channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+            channel_row[m_columns.m_sort] = *channel.Position;
+            channel_row[m_columns.m_nsfw] = channel.NSFW();
+        }
+    }
+
+    return guild_row;
+}
+
+Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelData &channel) {
+    const auto iter = GetIteratorForGuildFromID(*channel.GuildID);
+    if (!iter) return {};
+
+    auto cat_row = *m_model->append(iter->children());
+    cat_row[m_columns.m_type] = RenderType::Category;
+    cat_row[m_columns.m_id] = channel.ID;
+    cat_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+    cat_row[m_columns.m_sort] = *channel.Position;
+    cat_row[m_columns.m_expanded] = true;
+
+    return cat_row;
+}
+
+void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
+    auto iter = GetIteratorForChannelFromID(channel.ID);
+    if (!iter) return;
+
+    (*iter)[m_columns.m_sort] = *channel.Position;
+    (*iter)[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+}
+
+Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
+    for (const auto child : m_model->children()) {
+        if (child[m_columns.m_id] == id)
+            return child;
+    }
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) {
+    std::queue<Gtk::TreeModel::iterator> queue;
+    for (const auto child : m_model->children())
+        for (const auto child2 : child.children())
+            queue.push(child2);
+
+    while (!queue.empty()) {
+        auto item = queue.front();
+        if ((*item)[m_columns.m_id] == id) return item;
+        for (const auto child : item->children())
+            queue.push(child);
+        queue.pop();
+    }
+
+    return {};
+}
+
+bool ChannelList::IsTextChannel(ChannelType type) {
+    return type == ChannelType::GUILD_TEXT || type == ChannelType::GUILD_NEWS;
+}
+
+// this should be unncessary but something is behaving strange so its just in case
+void ChannelList::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+    (*iter)[m_columns.m_expanded] = false;
+}
+
+void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+    // restore previous expansion
+    for (auto it = iter->children().begin(); it != iter->children().end(); it++) {
+        if ((*it)[m_columns.m_expanded])
+            m_view.expand_row(m_model->get_path(it), false);
+    }
+
+    // try and restore selection if previous collapsed
+    if (auto selection = m_view.get_selection(); selection && !selection->get_selected()) {
+        selection->select(m_last_selected);
+    }
+
+    (*iter)[m_columns.m_expanded] = true;
+}
+
+bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
+    if (auto selection = m_view.get_selection())
+        if (auto row = selection->get_selected())
+            m_last_selected = m_model->get_path(row);
+
+    auto type = (*m_model->get_iter(path))[m_columns.m_type];
+    return type == RenderType::TextChannel || type == RenderType::DM;
+}
+
+void ChannelList::AddPrivateChannels() {
+    auto header_row = *m_model->append();
+    header_row[m_columns.m_type] = RenderType::DMHeader;
+    header_row[m_columns.m_sort] = -1;
+    header_row[m_columns.m_name] = "<b>Direct Messages</b>";
+    m_dm_header = m_model->get_path(header_row);
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &img = Abaddon::Get().GetImageManager();
+
+    const auto dm_ids = discord.GetPrivateChannels();
+    for (const auto dm_id : dm_ids) {
+        const auto dm = discord.GetChannel(dm_id);
+        if (!dm.has_value()) continue;
+
+        std::optional<UserData> top_recipient;
+        const auto recipients = dm->GetDMRecipients();
+        if (recipients.size() > 0)
+            top_recipient = recipients[0];
+
+        auto iter = m_model->append(header_row->children());
+        auto row = *iter;
+        row[m_columns.m_type] = RenderType::DM;
+        row[m_columns.m_id] = dm_id;
+        row[m_columns.m_sort] = -(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id);
+        row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
+
+        if (dm->Type == ChannelType::DM && top_recipient.has_value())
+            row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
+        else if (dm->Type == ChannelType::GROUP_DM)
+            row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
+
+        if (top_recipient.has_value()) {
+            const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                if (iter)
+                    (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+            };
+            img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+        }
+    }
+}
+
+void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
+    auto header_row = m_model->get_iter(m_dm_header);
+    auto &img = Abaddon::Get().GetImageManager();
+
+    std::optional<UserData> top_recipient;
+    const auto recipients = dm.GetDMRecipients();
+    if (recipients.size() > 0)
+        top_recipient = recipients[0];
+
+    auto iter = m_model->append(header_row->children());
+    auto row = *iter;
+    row[m_columns.m_type] = RenderType::DM;
+    row[m_columns.m_id] = dm.ID;
+    row[m_columns.m_sort] = -(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID);
+    row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
+
+    if (dm.Type == ChannelType::DM && top_recipient.has_value())
+        row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
+    else if (dm.Type == ChannelType::GROUP_DM)
+        row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
+
+    if (top_recipient.has_value()) {
+        const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+    }
+}
+
+void ChannelList::OnMessageCreate(const Message &msg) {
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
+    if (!channel.has_value()) return;
+    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) return;
+    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
+    if (iter)
+        (*iter)[m_columns.m_sort] = -msg.ID;
+}
+
+bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
+    if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
+        if (m_view.get_path_at_pos(ev->x, ev->y, m_path_for_menu)) {
+            auto row = (*m_model->get_iter(m_path_for_menu));
+            switch (static_cast<RenderType>(row[m_columns.m_type])) {
+                case RenderType::Guild:
+                    m_menu_guild.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::Category:
+                    m_menu_category.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::TextChannel:
+                    m_menu_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case RenderType::DM: {
+                    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
+                    if (channel.has_value()) {
+                        m_menu_dm_close.set_label(channel->Type == ChannelType::DM ? "Close" : "Leave");
+                        m_menu_dm_close.show();
+                    } else
+                        m_menu_dm_close.hide();
+                    m_menu_dm.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                } break;
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
@@ -770,4 +549,428 @@ ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_lea
 
 ChannelList::type_signal_action_guild_settings ChannelList::signal_action_guild_settings() {
     return m_signal_action_guild_settings;
+}
+
+ChannelList::ModelColumns::ModelColumns() {
+    add(m_type);
+    add(m_id);
+    add(m_name);
+    add(m_icon);
+    add(m_icon_anim);
+    add(m_sort);
+    add(m_nsfw);
+    add(m_expanded);
+}
+
+CellRendererChannels::CellRendererChannels()
+    : Glib::ObjectBase(typeid(CellRendererChannels))
+    , Gtk::CellRenderer()
+    , m_property_type(*this, "render-type")
+    , m_property_name(*this, "name")
+    , m_property_pixbuf(*this, "pixbuf")
+    , m_property_pixbuf_animation(*this, "pixbuf-animation")
+    , m_property_expanded(*this, "expanded")
+    , m_property_nsfw(*this, "nsfw") {
+    property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
+    property_xpad() = 2;
+    property_ypad() = 2;
+    m_property_name.get_proxy().signal_changed().connect([this] {
+        m_renderer_text.property_markup() = m_property_name;
+    });
+}
+
+CellRendererChannels::~CellRendererChannels() {
+}
+
+Glib::PropertyProxy<RenderType> CellRendererChannels::property_type() {
+    return m_property_type.get_proxy();
+}
+
+Glib::PropertyProxy<Glib::ustring> CellRendererChannels::property_name() {
+    return m_property_name.get_proxy();
+}
+
+Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererChannels::property_icon() {
+    return m_property_pixbuf.get_proxy();
+}
+
+Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> CellRendererChannels::property_icon_animation() {
+    return m_property_pixbuf_animation.get_proxy();
+}
+
+Glib::PropertyProxy<bool> CellRendererChannels::property_expanded() {
+    return m_property_expanded.get_proxy();
+}
+
+Glib::PropertyProxy<bool> CellRendererChannels::property_nsfw() {
+    return m_property_nsfw.get_proxy();
+}
+
+void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    switch (m_property_type.get_value()) {
+        case RenderType::Guild:
+            return get_preferred_width_vfunc_guild(widget, minimum_width, natural_width);
+        case RenderType::Category:
+            return get_preferred_width_vfunc_category(widget, minimum_width, natural_width);
+        case RenderType::TextChannel:
+            return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
+        case RenderType::DMHeader:
+            return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
+        case RenderType::DM:
+            return get_preferred_width_vfunc_dm(widget, minimum_width, natural_width);
+    }
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    switch (m_property_type.get_value()) {
+        case RenderType::Guild:
+            return get_preferred_width_for_height_vfunc_guild(widget, height, minimum_width, natural_width);
+        case RenderType::Category:
+            return get_preferred_width_for_height_vfunc_category(widget, height, minimum_width, natural_width);
+        case RenderType::TextChannel:
+            return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
+        case RenderType::DMHeader:
+            return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
+        case RenderType::DM:
+            return get_preferred_width_for_height_vfunc_dm(widget, height, minimum_width, natural_width);
+    }
+}
+
+void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    switch (m_property_type.get_value()) {
+        case RenderType::Guild:
+            return get_preferred_height_vfunc_guild(widget, minimum_height, natural_height);
+        case RenderType::Category:
+            return get_preferred_height_vfunc_category(widget, minimum_height, natural_height);
+        case RenderType::TextChannel:
+            return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
+        case RenderType::DMHeader:
+            return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
+        case RenderType::DM:
+            return get_preferred_height_vfunc_dm(widget, minimum_height, natural_height);
+    }
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    switch (m_property_type.get_value()) {
+        case RenderType::Guild:
+            return get_preferred_height_for_width_vfunc_guild(widget, width, minimum_height, natural_height);
+        case RenderType::Category:
+            return get_preferred_height_for_width_vfunc_category(widget, width, minimum_height, natural_height);
+        case RenderType::TextChannel:
+            return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
+        case RenderType::DMHeader:
+            return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
+        case RenderType::DM:
+            return get_preferred_height_for_width_vfunc_dm(widget, width, minimum_height, natural_height);
+    }
+}
+
+void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    switch (m_property_type.get_value()) {
+        case RenderType::Guild:
+            return render_vfunc_guild(cr, widget, background_area, cell_area, flags);
+        case RenderType::Category:
+            return render_vfunc_category(cr, widget, background_area, cell_area, flags);
+        case RenderType::TextChannel:
+            return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
+        case RenderType::DMHeader:
+            return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
+        case RenderType::DM:
+            return render_vfunc_dm(cr, widget, background_area, cell_area, flags);
+    }
+}
+
+// guild functions
+
+void CellRendererChannels::get_preferred_width_vfunc_guild(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    int pixbuf_width = 0;
+
+    if (auto pixbuf = m_property_pixbuf_animation.get_value())
+        pixbuf_width = pixbuf->get_width();
+    else if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_width = pixbuf->get_width();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_width(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_width = std::max(text_min, pixbuf_width) + xpad * 2;
+    natural_width = std::max(text_nat, pixbuf_width) + xpad * 2;
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_guild(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    get_preferred_width_vfunc_guild(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_guild(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    int pixbuf_height = 0;
+    if (auto pixbuf = m_property_pixbuf_animation.get_value())
+        pixbuf_height = pixbuf->get_height();
+    else if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_height = pixbuf->get_height();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_height(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_height = std::max(text_min, pixbuf_height) + ypad * 2;
+    natural_height = std::max(text_nat, pixbuf_height) + ypad * 2;
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_guild(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    get_preferred_height_vfunc_guild(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    Gtk::Requisition minimum, natural;
+    get_preferred_size(widget, minimum, natural);
+
+    int pixbuf_w, pixbuf_h = 0;
+    if (auto pixbuf = m_property_pixbuf_animation.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    } else if (auto pixbuf = m_property_pixbuf.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    }
+
+    const double icon_w = pixbuf_w;
+    const double icon_h = pixbuf_h;
+    const double icon_x = background_area.get_x();
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    const static bool hover_only = Abaddon::Get().GetSettings().GetAnimatedGuildHoverOnly();
+    const bool is_hovered = flags & Gtk::CELL_RENDERER_PRELIT;
+    auto anim = m_property_pixbuf_animation.get_value();
+
+    // kinda gross
+    if (anim) {
+        auto map_iter = m_pixbuf_anim_iters.find(anim);
+        if (map_iter == m_pixbuf_anim_iters.end())
+            m_pixbuf_anim_iters[anim] = anim->get_iter(nullptr);
+        auto pb_iter = m_pixbuf_anim_iters.at(anim);
+
+        const auto cb = [this, &widget, anim, icon_x, icon_y, icon_w, icon_h] {
+            if (m_pixbuf_anim_iters.at(anim)->advance())
+                widget.queue_draw_area(icon_x, icon_y, icon_w, icon_h);
+        };
+
+        if ((hover_only && is_hovered) || !hover_only)
+            Glib::signal_timeout().connect_once(sigc::track_obj(cb, widget), pb_iter->get_delay_time());
+        if (hover_only && !is_hovered)
+            m_pixbuf_anim_iters[anim] = anim->get_iter(nullptr);
+
+        Gdk::Cairo::set_source_pixbuf(cr, pb_iter->get_pixbuf(), icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    } else if (auto pixbuf = m_property_pixbuf.get_value()) {
+        Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    }
+}
+
+// category
+
+void CellRendererChannels::get_preferred_width_vfunc_category(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_category(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_category(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_category(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    int available_xpad = background_area.get_width();
+    int available_ypad = background_area.get_height();
+
+    // todo: figure out how Gtk::Arrow is rendered because i like it better :^)
+    constexpr static int len = 5;
+    int x1, y1, x2, y2, x3, y3;
+    if (property_expanded()) {
+        x1 = background_area.get_x() + 7;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + 7 + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + 7;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + 7;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    static const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetChannelsExpanderColor());
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
+
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    const int text_x = background_area.get_x() + 22;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - text_natural.height / 2;
+    const int text_w = text_natural.width;
+    const int text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+}
+
+// text channel
+
+void CellRendererChannels::get_preferred_width_vfunc_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition minimum_size, natural_size;
+    m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
+
+    const int text_x = background_area.get_x() + 21;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
+    const int text_w = natural_size.width;
+    const int text_h = natural_size.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    const static auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetNSFWChannelColor());
+    if (m_property_nsfw.get_value())
+        m_renderer_text.property_foreground_rgba() = nsfw_color;
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
+    // so unset it
+    m_renderer_text.property_foreground_set() = false;
+}
+
+// dm header
+
+void CellRendererChannels::get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_dmheader(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_dmheader(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    // gdk::rectangle more like gdk::stupid
+    Gdk::Rectangle text_cell_area(
+        cell_area.get_x() + 9, cell_area.get_y(), // maybe theres a better way to align this ?
+        cell_area.get_width(), cell_area.get_height());
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+}
+
+// dm (basically the same thing as guild)
+
+void CellRendererChannels::get_preferred_width_vfunc_dm(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    int pixbuf_width = 0;
+    if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_width = pixbuf->get_width();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_width(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_width = std::max(text_min, pixbuf_width) + xpad * 2;
+    natural_width = std::max(text_nat, pixbuf_width) + xpad * 2;
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_dm(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    get_preferred_width_vfunc_guild(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_dm(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    int pixbuf_height = 0;
+    if (auto pixbuf = m_property_pixbuf.get_value())
+        pixbuf_height = pixbuf->get_height();
+
+    int text_min, text_nat;
+    m_renderer_text.get_preferred_height(widget, text_min, text_nat);
+
+    int xpad, ypad;
+    get_padding(xpad, ypad);
+    minimum_height = std::max(text_min, pixbuf_height) + ypad * 2;
+    natural_height = std::max(text_nat, pixbuf_height) + ypad * 2;
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_dm(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    get_preferred_height_vfunc_guild(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    Gtk::Requisition minimum, natural;
+    get_preferred_size(widget, minimum, natural);
+
+    auto pixbuf = m_property_pixbuf.get_value();
+
+    const double icon_w = pixbuf->get_width();
+    const double icon_h = pixbuf->get_height();
+    const double icon_x = background_area.get_x() + 2;
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
+    cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+    cr->fill();
 }
