@@ -236,6 +236,7 @@ private:
     void HandleGatewayGuildJoinRequestDelete(const GatewayMessage &msg);
     void HandleGatewayRelationshipRemove(const GatewayMessage &msg);
     void HandleGatewayRelationshipAdd(const GatewayMessage &msg);
+    void HandleGatewayThreadCreate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -308,7 +309,7 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_guild_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
-    typedef sigc::signal<void, Snowflake> type_signal_channel_create;
+    typedef sigc::signal<void, ChannelData> type_signal_channel_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_update;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_update; // guild id, role id
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_create; // guild id, role id
@@ -329,6 +330,7 @@ public:
     typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
     typedef sigc::signal<void, Snowflake, RelationshipType> type_signal_relationship_remove;
     typedef sigc::signal<void, RelationshipAddData> type_signal_relationship_add;
+    typedef sigc::signal<void, ChannelData> type_signal_thread_create;
     typedef sigc::signal<void, Message> type_signal_message_unpinned; // not a real event
     typedef sigc::signal<void, Message> type_signal_message_pinned;   // not a real event either
     typedef sigc::signal<void, Message> type_signal_message_sent;
@@ -368,6 +370,7 @@ public:
     type_signal_relationship_add signal_relationship_add();
     type_signal_message_unpinned signal_message_unpinned();
     type_signal_message_pinned signal_message_pinned();
+    type_signal_thread_create signal_thread_create();
     type_signal_message_sent signal_message_sent();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
@@ -406,6 +409,7 @@ protected:
     type_signal_relationship_add m_signal_relationship_add;
     type_signal_message_unpinned m_signal_message_unpinned;
     type_signal_message_pinned m_signal_message_pinned;
+    type_signal_thread_create m_signal_thread_create;
     type_signal_message_sent m_signal_message_sent;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;

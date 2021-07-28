@@ -71,6 +71,12 @@ enum class GatewayEvent : int {
     GUILD_JOIN_REQUEST_DELETE,
     RELATIONSHIP_REMOVE,
     RELATIONSHIP_ADD,
+    THREAD_CREATE,
+    THREAD_UPDATE,
+    THREAD_DELETE,
+    THREAD_LIST_SYNC,
+    THREAD_MEMBER_UPDATE,
+    THREAD_MEMBERS_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -658,4 +664,10 @@ struct PutRelationshipObject {
     std::optional<RelationshipType> Type;
 
     friend void to_json(nlohmann::json &j, const PutRelationshipObject &m);
+};
+
+struct ThreadCreateData {
+    ChannelData Channel;
+
+    friend void from_json(const nlohmann::json &j, ThreadCreateData &m);
 };

@@ -139,7 +139,8 @@ protected:
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
-    void UpdateCreateChannel(Snowflake id);
+    void UpdateCreateChannel(const ChannelData &channel);
+    void UpdateCreateThread(const ChannelData &channel);
     void UpdateGuild(Snowflake id);
 
     Gtk::TreeView m_view;
@@ -168,6 +169,7 @@ protected:
 
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
+    Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
 
     void UpdateChannelCategory(const ChannelData &channel);
 

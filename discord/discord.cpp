@@ -1155,6 +1155,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::RELATIONSHIP_ADD: {
                         HandleGatewayRelationshipAdd(m);
                     } break;
+                    case GatewayEvent::THREAD_CREATE: {
+                        HandleGatewayThreadCreate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1381,7 +1384,7 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
         for (const auto &p : *data.PermissionOverwrites)
             m_store.SetPermissionOverwrite(data.ID, p.ID, p);
     m_store.EndTransaction();
-    m_signal_channel_create.emit(data.ID);
+    m_signal_channel_create.emit(data);
 }
 
 void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
@@ -1633,6 +1636,14 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
     m_store.SetUser(data.ID, data.User);
     m_user_relationships[data.ID] = data.Type;
     m_signal_relationship_add.emit(std::move(data));
+}
+
+void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
+    ThreadCreateData data = msg.Data;
+
+    m_store.SetChannel(data.Channel.ID, data.Channel);
+
+    m_signal_thread_create.emit(data.Channel);
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -1997,6 +2008,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_JOIN_REQUEST_DELETE"] = GatewayEvent::GUILD_JOIN_REQUEST_DELETE;
     m_event_map["RELATIONSHIP_REMOVE"] = GatewayEvent::RELATIONSHIP_REMOVE;
     m_event_map["RELATIONSHIP_ADD"] = GatewayEvent::RELATIONSHIP_ADD;
+    m_event_map["THREAD_CREATE"] = GatewayEvent::THREAD_CREATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2133,6 +2145,10 @@ DiscordClient::type_signal_message_unpinned DiscordClient::signal_message_unpinn
 
 DiscordClient::type_signal_message_pinned DiscordClient::signal_message_pinned() {
     return m_signal_message_pinned;
+}
+
+DiscordClient::type_signal_thread_create DiscordClient::signal_thread_create() {
+    return m_signal_thread_create;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

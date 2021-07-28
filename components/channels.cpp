@@ -128,6 +128,7 @@ ChannelList::ChannelList()
     discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveChannel));
     discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
     discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
+    discord.signal_thread_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateThread));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
 }
 
@@ -211,32 +212,31 @@ void ChannelList::UpdateChannel(Snowflake id) {
         channel_row[m_columns.m_sort] = *channel->Position;
 }
 
-void ChannelList::UpdateCreateChannel(Snowflake id) {
-    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
-    if (!channel.has_value()) return;
-    if (channel->Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(*channel);
-    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(*channel);
-    if (channel->Type != ChannelType::GUILD_TEXT && channel->Type != ChannelType::GUILD_NEWS) return;
+void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
+    ;
+    if (channel.Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(channel);
+    if (channel.Type == ChannelType::DM || channel.Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(channel);
+    if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS) return;
 
     Gtk::TreeRow channel_row;
     bool orphan;
-    if (channel->ParentID.has_value()) {
+    if (channel.ParentID.has_value()) {
         orphan = false;
-        auto iter = GetIteratorForChannelFromID(*channel->ParentID);
+        auto iter = GetIteratorForChannelFromID(*channel.ParentID);
         channel_row = *m_model->append(iter->children());
     } else {
         orphan = true;
-        auto iter = GetIteratorForGuildFromID(*channel->GuildID);
+        auto iter = GetIteratorForGuildFromID(*channel.GuildID);
         channel_row = *m_model->append(iter->children());
     }
     channel_row[m_columns.m_type] = RenderType::TextChannel;
-    channel_row[m_columns.m_id] = channel->ID;
-    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
-    channel_row[m_columns.m_nsfw] = channel->NSFW();
+    channel_row[m_columns.m_id] = channel.ID;
+    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+    channel_row[m_columns.m_nsfw] = channel.NSFW();
     if (orphan)
-        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
+        channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
     else
-        channel_row[m_columns.m_sort] = *channel->Position;
+        channel_row[m_columns.m_sort] = *channel.Position;
 }
 
 void ChannelList::UpdateGuild(Snowflake id) {
@@ -263,6 +263,12 @@ void ChannelList::UpdateGuild(Snowflake id) {
         };
         img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
     }
+}
+
+void ChannelList::UpdateCreateThread(const ChannelData &channel) {
+    auto parent_row = GetIteratorForChannelFromID(*channel.ParentID);
+    if (parent_row)
+        CreateThreadRow(parent_row->children(), channel);
 }
 
 void ChannelList::SetActiveChannel(Snowflake id) {
@@ -330,14 +336,8 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         const auto it = threads.find(channel.ID);
         if (it == threads.end()) return;
 
-        for (const auto &thread : it->second) {
-            auto thread_row = *m_model->append(row.children());
-            thread_row[m_columns.m_type] = RenderType::Thread;
-            thread_row[m_columns.m_id] = thread.ID;
-            thread_row[m_columns.m_name] = "- " + Glib::Markup::escape_text(*thread.Name);
-            thread_row[m_columns.m_sort] = thread.ID;
-            thread_row[m_columns.m_nsfw] = false;
-        }
+        for (const auto &thread : it->second)
+            CreateThreadRow(row.children(), thread);
     };
 
     for (const auto &channel : orphan_channels) {
@@ -387,6 +387,18 @@ Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelD
     cat_row[m_columns.m_expanded] = true;
 
     return cat_row;
+}
+
+Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel) {
+    auto thread_iter = m_model->append(children);
+    auto thread_row = *thread_iter;
+    thread_row[m_columns.m_type] = RenderType::Thread;
+    thread_row[m_columns.m_id] = channel.ID;
+    thread_row[m_columns.m_name] = "- " + Glib::Markup::escape_text(*channel.Name);
+    thread_row[m_columns.m_sort] = channel.ID;
+    thread_row[m_columns.m_nsfw] = false;
+
+    return thread_iter;
 }
 
 void ChannelList::UpdateChannelCategory(const ChannelData &channel) {

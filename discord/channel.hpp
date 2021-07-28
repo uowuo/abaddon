@@ -38,13 +38,24 @@ constexpr const char *GetStagePrivacyDisplayString(StagePrivacy e) {
     }
 }
 
-struct ThreadMetadata {
+// should be moved somewhere?
+
+struct ThreadMetadataData {
     bool IsArchived;
     int AutoArchiveDuration;
     std::string ArchiveTimestamp;
     std::optional<bool> IsLocked;
 
-    friend void from_json(const nlohmann::json &j, ThreadMetadata &m);
+    friend void from_json(const nlohmann::json &j, ThreadMetadataData &m);
+};
+
+struct ThreadMemberObject {
+    std::optional<Snowflake> ThreadID;
+    std::optional<Snowflake> UserID;
+    std::string JoinTimestamp;
+    int Flags;
+
+    friend void from_json(const nlohmann::json &j, ThreadMemberObject &m);
 };
 
 struct ChannelData {
@@ -67,7 +78,8 @@ struct ChannelData {
     std::optional<Snowflake> ApplicationID;
     std::optional<Snowflake> ParentID;           // null
     std::optional<std::string> LastPinTimestamp; // null
-    std::optional<ThreadMetadata> ThreadMetadata;
+    std::optional<ThreadMetadataData> ThreadMetadata;
+    std::optional<ThreadMemberObject> ThreadMember;
 
     friend void from_json(const nlohmann::json &j, ChannelData &m);
     void update_from_json(const nlohmann::json &j);

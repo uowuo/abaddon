@@ -472,3 +472,7 @@ void to_json(nlohmann::json &j, const FriendRequestObject &m) {
 void to_json(nlohmann::json &j, const PutRelationshipObject &m) {
     JS_IF("type", m.Type);
 }
+
+void from_json(const nlohmann::json &j, ThreadCreateData &m) {
+    j.get_to(m.Channel);
+}
