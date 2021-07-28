@@ -15,9 +15,10 @@ enum class ChannelType : int {
     GUILD_NEWS = 5,
     GUILD_STORE = 6,
     /* 7 and 8 were used for LFG */
-    /* 9 and 10 were used for threads */
-    PUBLIC_THREAD = 11,
-    PRIVATE_THREAD = 12,
+    /* 9 was used for threads */
+    GUILD_NEWS_THREAD = 10,
+    GUILD_PUBLIC_THREAD = 11,
+    GUILD_PRIVATE_THREAD = 12,
     GUILD_STAGE_VOICE = 13,
 };
 
@@ -36,6 +37,15 @@ constexpr const char *GetStagePrivacyDisplayString(StagePrivacy e) {
             return "Unknown";
     }
 }
+
+struct ThreadMetadata {
+    bool IsArchived;
+    int AutoArchiveDuration;
+    std::string ArchiveTimestamp;
+    std::optional<bool> IsLocked;
+
+    friend void from_json(const nlohmann::json &j, ThreadMetadata &m);
+};
 
 struct ChannelData {
     Snowflake ID;
@@ -57,6 +67,7 @@ struct ChannelData {
     std::optional<Snowflake> ApplicationID;
     std::optional<Snowflake> ParentID;           // null
     std::optional<std::string> LastPinTimestamp; // null
+    std::optional<ThreadMetadata> ThreadMetadata;
 
     friend void from_json(const nlohmann::json &j, ChannelData &m);
     void update_from_json(const nlohmann::json &j);

@@ -1209,7 +1209,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
     m_store.BeginTransaction();
 
     m_store.SetGuild(guild.ID, guild);
-    if (guild.Channels.has_value())
+    if (guild.Channels.has_value()) {
         for (auto &c : *guild.Channels) {
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
@@ -1218,6 +1218,14 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
                 m_store.SetPermissionOverwrite(c.ID, p.ID, p);
             }
         }
+    }
+
+    if (guild.Threads.has_value()) {
+        for (auto& c : *guild.Threads) {
+            c.GuildID = guild.ID;
+            m_store.SetChannel(c.ID, c);
+        }
+    }
 
     for (auto &r : *guild.Roles)
         m_store.SetRole(r.ID, r);

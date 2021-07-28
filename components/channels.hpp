@@ -16,6 +16,7 @@ enum class RenderType : uint8_t {
     Guild,
     Category,
     TextChannel,
+    Thread,
 
     DMHeader,
     DM,
@@ -76,6 +77,17 @@ protected:
                               const Gdk::Rectangle &background_area,
                               const Gdk::Rectangle &cell_area,
                               Gtk::CellRendererState flags);
+
+    // thread
+    void get_preferred_width_vfunc_thread(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_thread(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_thread(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_thread(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_thread(const Cairo::RefPtr<Cairo::Context> &cr,
+                             Gtk::Widget &widget,
+                             const Gdk::Rectangle &background_area,
+                             const Gdk::Rectangle &cell_area,
+                             Gtk::CellRendererState flags);
 
     // dm header
     void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;

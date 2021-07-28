@@ -194,6 +194,12 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
     Bind(m_set_guild_stmt, 37, guild.ApproximateMemberCount);
     Bind(m_set_guild_stmt, 38, guild.ApproximatePresenceCount);
     Bind(m_set_guild_stmt, 39, guild.IsLazy);
+    if (guild.Threads.has_value()) {
+        snowflakes.clear();
+        for (const auto &x : *guild.Threads) snowflakes.push_back(x.ID);
+        Bind(m_set_guild_stmt, 40, nlohmann::json(snowflakes).dump());
+    } else
+        Bind(m_set_guild_stmt, 40, "[]"s);
 
     if (!RunInsert(m_set_guild_stmt))
         fprintf(stderr, "guild insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -626,6 +632,10 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     Get(m_get_guild_stmt, 36, ret.ApproximateMemberCount);
     Get(m_get_guild_stmt, 37, ret.ApproximatePresenceCount);
     Get(m_get_guild_stmt, 38, ret.IsLazy);
+    Get(m_get_guild_stmt, 39, tmp);
+    ret.Threads.emplace();
+    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
+        ret.Threads->emplace_back().ID = id;
 
     Reset(m_get_guild_stmt);
 
@@ -934,7 +944,8 @@ bool Store::CreateTables() {
             max_video_users INTEGER,
             approx_members INTEGER,
             approx_presences INTEGER,
-            lazy BOOL
+            lazy BOOL,
+            threads TEXT NOT NULL /* json */
         )
     )";
 
@@ -1116,7 +1127,7 @@ bool Store::CreateStatements() {
 
     const char *set_guild = R"(
         REPLACE INTO guilds VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 

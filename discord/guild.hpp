@@ -80,6 +80,7 @@ struct GuildData {
     std::optional<int> MaxVideoChannelUsers;
     std::optional<int> ApproximateMemberCount;
     std::optional<int> ApproximatePresenceCount;
+    std::optional<std::vector<ChannelData>> Threads; // only with permissions to view, id only
 
     // undocumented
     // std::map<std::string, Unknown> GuildHashes;

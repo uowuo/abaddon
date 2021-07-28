@@ -43,6 +43,7 @@ void from_json(const nlohmann::json &j, GuildData &m) {
     // JS_O("voice_states", m.VoiceStates);
     // JS_O("members", m.Members);
     JS_O("channels", m.Channels);
+    JS_O("threads", m.Threads);
     // JS_O("presences", m.Presences);
     JS_ON("max_presences", m.MaxPresences);
     JS_O("max_members", m.MaxMembers);

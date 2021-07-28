@@ -1,6 +1,13 @@
 #include "../abaddon.hpp"
 #include "channel.hpp"
 
+void from_json(const nlohmann::json &j, ThreadMetadata &m) {
+    JS_D("archived", m.IsArchived);
+    JS_D("auto_archive_duration", m.AutoArchiveDuration);
+    JS_D("archive_timestamp", m.ArchiveTimestamp);
+    JS_O("locked", m.IsLocked);
+}
+
 void from_json(const nlohmann::json &j, ChannelData &m) {
     JS_D("id", m.ID);
     JS_D("type", m.Type);
@@ -21,6 +28,7 @@ void from_json(const nlohmann::json &j, ChannelData &m) {
     JS_O("application_id", m.ApplicationID);
     JS_ON("parent_id", m.ParentID);
     JS_ON("last_pin_timestamp", m.LastPinTimestamp);
+    JS_O("thread_metadata", m.ThreadMetadata);
 }
 
 void ChannelData::update_from_json(const nlohmann::json &j) {

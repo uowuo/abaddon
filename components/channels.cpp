@@ -22,15 +22,20 @@ ChannelList::ChannelList()
 
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
         auto row = *m_model->get_iter(path);
-        if (row[m_columns.m_expanded]) {
-            m_view.collapse_row(path);
-            row[m_columns.m_expanded] = false;
-        } else {
-            m_view.expand_row(path, false);
-            row[m_columns.m_expanded] = true;
+        const auto type = row[m_columns.m_type];
+        // text channels should not be allowed to be collapsed
+        // maybe they should be but it seems a little difficult to handle expansion to permit this
+        if (type != RenderType::TextChannel) {
+            if (row[m_columns.m_expanded]) {
+                m_view.collapse_row(path);
+                row[m_columns.m_expanded] = false;
+            } else {
+                m_view.expand_row(path, false);
+                row[m_columns.m_expanded] = true;
+            }
         }
 
-        if (row[m_columns.m_type] == RenderType::TextChannel || row[m_columns.m_type] == RenderType::DM) {
+        if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
             m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
         }
     };
@@ -313,6 +318,28 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         }
     }
 
+    std::map<Snowflake, std::vector<ChannelData>> threads;
+    for (const auto &tmp : *guild.Threads) {
+        const auto thread = discord.GetChannel(tmp.ID);
+        if (thread.has_value())
+            threads[*thread->ParentID].push_back(*thread);
+    }
+    const auto add_threads = [&](const ChannelData &channel, Gtk::TreeRow row) {
+        row[m_columns.m_expanded] = true;
+
+        const auto it = threads.find(channel.ID);
+        if (it == threads.end()) return;
+
+        for (const auto &thread : it->second) {
+            auto thread_row = *m_model->append(row.children());
+            thread_row[m_columns.m_type] = RenderType::Thread;
+            thread_row[m_columns.m_id] = thread.ID;
+            thread_row[m_columns.m_name] = "- " + Glib::Markup::escape_text(*thread.Name);
+            thread_row[m_columns.m_sort] = thread.ID;
+            thread_row[m_columns.m_nsfw] = false;
+        }
+    };
+
     for (const auto &channel : orphan_channels) {
         auto channel_row = *m_model->append(guild_row.children());
         channel_row[m_columns.m_type] = RenderType::TextChannel;
@@ -320,6 +347,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
+        add_threads(channel, channel_row);
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -340,6 +368,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
+            add_threads(channel, channel_row);
         }
     }
 
@@ -423,7 +452,7 @@ bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const
             m_last_selected = m_model->get_path(row);
 
     auto type = (*m_model->get_iter(path))[m_columns.m_type];
-    return type == RenderType::TextChannel || type == RenderType::DM;
+    return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread;
 }
 
 void ChannelList::AddPrivateChannels() {
@@ -614,6 +643,8 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_category(widget, minimum_width, natural_width);
         case RenderType::TextChannel:
             return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
+        case RenderType::Thread:
+            return get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
         case RenderType::DMHeader:
             return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
         case RenderType::DM:
@@ -629,6 +660,8 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_category(widget, height, minimum_width, natural_width);
         case RenderType::TextChannel:
             return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
+        case RenderType::Thread:
+            return get_preferred_width_for_height_vfunc_thread(widget, height, minimum_width, natural_width);
         case RenderType::DMHeader:
             return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
         case RenderType::DM:
@@ -644,6 +677,8 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_category(widget, minimum_height, natural_height);
         case RenderType::TextChannel:
             return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
+        case RenderType::Thread:
+            return get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
         case RenderType::DMHeader:
             return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
         case RenderType::DM:
@@ -659,6 +694,8 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_category(widget, width, minimum_height, natural_height);
         case RenderType::TextChannel:
             return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
+        case RenderType::Thread:
+            return get_preferred_height_for_width_vfunc_thread(widget, width, minimum_height, natural_height);
         case RenderType::DMHeader:
             return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
         case RenderType::DM:
@@ -674,6 +711,8 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_category(cr, widget, background_area, cell_area, flags);
         case RenderType::TextChannel:
             return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
+        case RenderType::Thread:
+            return render_vfunc_thread(cr, widget, background_area, cell_area, flags);
         case RenderType::DMHeader:
             return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
         case RenderType::DM:
@@ -881,6 +920,37 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
     // so unset it
     m_renderer_text.property_foreground_set() = false;
+}
+
+// thread
+
+void CellRendererChannels::get_preferred_width_vfunc_thread(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_thread(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_thread(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_thread(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition minimum_size, natural_size;
+    m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
+
+    const int text_x = background_area.get_x() + 26;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
+    const int text_w = natural_size.width;
+    const int text_h = natural_size.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 }
 
 // dm header
