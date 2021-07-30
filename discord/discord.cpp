@@ -429,6 +429,7 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     msg.GuildID = *GetChannel(id)->GuildID;
     msg.ShouldGetActivities = true;
     msg.ShouldGetTyping = true;
+    msg.ShouldGetThreads = true;
 
     m_websocket.Send(msg);
 }
@@ -1158,6 +1159,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_CREATE: {
                         HandleGatewayThreadCreate(m);
                     } break;
+                    case GatewayEvent::THREAD_DELETE: {
+                        HandleGatewayThreadDelete(m);
+                    } break;
                 }
             } break;
             default:
@@ -1224,7 +1228,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
     }
 
     if (guild.Threads.has_value()) {
-        for (auto& c : *guild.Threads) {
+        for (auto &c : *guild.Threads) {
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
         }
@@ -1640,10 +1644,14 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
     ThreadCreateData data = msg.Data;
-
     m_store.SetChannel(data.Channel.ID, data.Channel);
-
     m_signal_thread_create.emit(data.Channel);
+}
+
+void DiscordClient::HandleGatewayThreadDelete(const GatewayMessage &msg) {
+    ThreadDeleteData data = msg.Data;
+    // m_store.ClearChannel?
+    m_signal_thread_delete.emit(data);
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -2009,6 +2017,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["RELATIONSHIP_REMOVE"] = GatewayEvent::RELATIONSHIP_REMOVE;
     m_event_map["RELATIONSHIP_ADD"] = GatewayEvent::RELATIONSHIP_ADD;
     m_event_map["THREAD_CREATE"] = GatewayEvent::THREAD_CREATE;
+    m_event_map["THREAD_DELETE"] = GatewayEvent::THREAD_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2149,6 +2158,10 @@ DiscordClient::type_signal_message_pinned DiscordClient::signal_message_pinned()
 
 DiscordClient::type_signal_thread_create DiscordClient::signal_thread_create() {
     return m_signal_thread_create;
+}
+
+DiscordClient::type_signal_thread_delete DiscordClient::signal_thread_delete() {
+    return m_signal_thread_delete;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

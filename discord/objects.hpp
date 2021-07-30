@@ -206,6 +206,7 @@ struct LazyLoadRequestMessage {
     Snowflake GuildID;
     bool ShouldGetTyping = false;
     bool ShouldGetActivities = false;
+    bool ShouldGetThreads = false;
     std::optional<std::vector<std::string>> Members;                                         // snowflake?
     std::optional<std::unordered_map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
 
@@ -670,4 +671,13 @@ struct ThreadCreateData {
     ChannelData Channel;
 
     friend void from_json(const nlohmann::json &j, ThreadCreateData &m);
+};
+
+struct ThreadDeleteData {
+    Snowflake ID;
+    Snowflake GuildID;
+    Snowflake ParentID;
+    ChannelType Type;
+
+    friend void from_json(const nlohmann::json &j, ThreadDeleteData &m);
 };

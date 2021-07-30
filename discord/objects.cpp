@@ -87,6 +87,7 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
     }
     j["d"]["typing"] = m.ShouldGetTyping;
     j["d"]["activities"] = m.ShouldGetActivities;
+    j["d"]["threads"] = m.ShouldGetThreads;
     if (m.Members.has_value())
         j["d"]["members"] = *m.Members;
 }
@@ -475,4 +476,11 @@ void to_json(nlohmann::json &j, const PutRelationshipObject &m) {
 
 void from_json(const nlohmann::json &j, ThreadCreateData &m) {
     j.get_to(m.Channel);
+}
+
+void from_json(const nlohmann::json &j, ThreadDeleteData &m) {
+    JS_D("id", m.ID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("parent_id", m.ParentID);
+    JS_D("type", m.Type);
 }

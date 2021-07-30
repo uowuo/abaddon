@@ -141,6 +141,7 @@ protected:
     void UpdateChannel(Snowflake id);
     void UpdateCreateChannel(const ChannelData &channel);
     void UpdateCreateThread(const ChannelData &channel);
+    void UpdateDeleteThread(const ThreadDeleteData &data);
     void UpdateGuild(Snowflake id);
 
     Gtk::TreeView m_view;

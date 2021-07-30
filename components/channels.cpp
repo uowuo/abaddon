@@ -129,6 +129,7 @@ ChannelList::ChannelList()
     discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
     discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
     discord.signal_thread_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateThread));
+    discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateDeleteThread));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
 }
 
@@ -269,6 +270,12 @@ void ChannelList::UpdateCreateThread(const ChannelData &channel) {
     auto parent_row = GetIteratorForChannelFromID(*channel.ParentID);
     if (parent_row)
         CreateThreadRow(parent_row->children(), channel);
+}
+
+void ChannelList::UpdateDeleteThread(const ThreadDeleteData &data) {
+    auto iter = GetIteratorForChannelFromID(data.ID);
+    if (iter)
+        m_model->erase(iter);
 }
 
 void ChannelList::SetActiveChannel(Snowflake id) {
