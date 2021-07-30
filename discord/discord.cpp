@@ -1841,10 +1841,10 @@ void DiscordClient::HeartbeatThread() {
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
     msg.Token = m_token;
-    msg.Capabilities = 61; // no idea what 61 means
+    msg.Capabilities = 125; // no idea what this is
     msg.Properties.OS = "Windows";
-    msg.Properties.Browser = "";
-    msg.Properties.Device = "Chrome";
+    msg.Properties.Browser = "Chrome";
+    msg.Properties.Device = "";
     msg.Properties.SystemLocale = "en-US";
     msg.Properties.BrowserUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36";
     msg.Properties.BrowserVersion = "67.0.3396.87";
@@ -1854,7 +1854,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 82826;
+    msg.Properties.ClientBuildNumber = 91734;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;
