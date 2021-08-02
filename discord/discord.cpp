@@ -764,7 +764,7 @@ void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot
 // i dont know if the location parameter is necessary at all but discord's thread implementation is extremely strange
 // so its here just in case
 void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [this, callback](const http::response_type& response) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [this, callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -1175,6 +1175,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::THREAD_LIST_SYNC: {
                         HandleGatewayThreadListSync(m);
+                    } break;
+                    case GatewayEvent::THREAD_MEMBERS_UPDATE: {
+                        HandleGatewayThreadMembersUpdate(m);
                     } break;
                 }
             } break;
@@ -1680,6 +1683,11 @@ void DiscordClient::HandleGatewayThreadListSync(const GatewayMessage &msg) {
     m_signal_thread_list_sync.emit(data);
 }
 
+void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) {
+    ThreadMembersUpdateData data = msg.Data;
+    m_signal_thread_members_update.emit(data);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2045,6 +2053,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_CREATE"] = GatewayEvent::THREAD_CREATE;
     m_event_map["THREAD_DELETE"] = GatewayEvent::THREAD_DELETE;
     m_event_map["THREAD_LIST_SYNC"] = GatewayEvent::THREAD_LIST_SYNC;
+    m_event_map["THREAD_MEMBERS_UPDATE"] = GatewayEvent::THREAD_MEMBERS_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2193,6 +2202,10 @@ DiscordClient::type_signal_thread_delete DiscordClient::signal_thread_delete() {
 
 DiscordClient::type_signal_thread_list_sync DiscordClient::signal_thread_list_sync() {
     return m_signal_thread_list_sync;
+}
+
+DiscordClient::type_signal_thread_members_update DiscordClient::signal_thread_members_update() {
+    return m_signal_thread_members_update;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

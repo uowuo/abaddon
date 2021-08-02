@@ -690,3 +690,13 @@ struct ThreadListSyncData {
 
     friend void from_json(const nlohmann::json &j, ThreadListSyncData &m);
 };
+
+struct ThreadMembersUpdateData {
+    Snowflake ID;
+    Snowflake GuildID;
+    int MemberCount;
+    std::optional<std::vector<ThreadMemberObject>> AddedMembers;
+    std::optional<std::vector<Snowflake>> RemovedMemberIDs;
+
+    friend void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m);
+};

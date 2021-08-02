@@ -240,6 +240,7 @@ private:
     void HandleGatewayThreadCreate(const GatewayMessage &msg);
     void HandleGatewayThreadDelete(const GatewayMessage &msg);
     void HandleGatewayThreadListSync(const GatewayMessage &msg);
+    void HandleGatewayThreadMembersUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -336,6 +337,7 @@ public:
     typedef sigc::signal<void, ChannelData> type_signal_thread_create;
     typedef sigc::signal<void, ThreadDeleteData> type_signal_thread_delete;
     typedef sigc::signal<void, ThreadListSyncData> type_signal_thread_list_sync;
+    typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
     typedef sigc::signal<void, Message> type_signal_message_unpinned; // not a real event
     typedef sigc::signal<void, Message> type_signal_message_pinned;   // not a real event either
     typedef sigc::signal<void, Message> type_signal_message_sent;
@@ -378,6 +380,7 @@ public:
     type_signal_thread_create signal_thread_create();
     type_signal_thread_delete signal_thread_delete();
     type_signal_thread_list_sync signal_thread_list_sync();
+    type_signal_thread_members_update signal_thread_members_update();
     type_signal_message_sent signal_message_sent();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
@@ -419,6 +422,7 @@ protected:
     type_signal_thread_create m_signal_thread_create;
     type_signal_thread_delete m_signal_thread_delete;
     type_signal_thread_list_sync m_signal_thread_list_sync;
+    type_signal_thread_members_update m_signal_thread_members_update;
     type_signal_message_sent m_signal_message_sent;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;

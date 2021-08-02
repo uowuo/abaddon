@@ -489,3 +489,11 @@ void from_json(const nlohmann::json &j, ThreadListSyncData &m) {
     JS_D("threads", m.Threads);
     JS_D("guild_id", m.GuildID);
 }
+
+void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m) {
+    JS_D("id", m.ID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("member_count", m.MemberCount);
+    JS_O("added_members", m.AddedMembers);
+    JS_O("removed_member_ids", m.RemovedMemberIDs);
+}
