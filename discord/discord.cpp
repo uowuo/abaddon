@@ -761,6 +761,17 @@ void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot
     });
 }
 
+// i dont know if the location parameter is necessary at all but discord's thread implementation is extremely strange
+// so its here just in case
+void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [this, callback](const http::response_type& response) {
+        if (CheckCode(response, 204))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {

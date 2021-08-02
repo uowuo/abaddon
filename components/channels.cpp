@@ -17,7 +17,9 @@ ChannelList::ChannelList()
     , m_menu_category_copy_id("_Copy ID", true)
     , m_menu_channel_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
-    , m_menu_dm_copy_id("_Copy ID", true) {
+    , m_menu_dm_copy_id("_Copy ID", true)
+    , m_menu_thread_copy_id("_Copy ID", true)
+    , m_menu_thread_leave("_Leave", true) {
     get_style_context()->add_class("channel-list");
 
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
@@ -120,6 +122,17 @@ ChannelList::ChannelList()
     m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.append(m_menu_dm_close);
     m_menu_dm.show_all();
+
+    m_menu_thread_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
+    m_menu_thread_leave.signal_activate().connect([this] {
+        if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this thread?"))
+            Abaddon::Get().GetDiscordClient().LeaveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), "Context%20Menu", [](...) {});
+    });
+    m_menu_thread.append(m_menu_thread_copy_id);
+    m_menu_thread.append(m_menu_thread_leave);
+    m_menu_thread.show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
@@ -577,6 +590,10 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
                     } else
                         m_menu_dm_close.hide();
                     m_menu_dm.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                } break;
+                case RenderType::Thread: {
+                    m_menu_thread.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
                 } break;
                 default:
                     break;
