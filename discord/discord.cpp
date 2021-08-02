@@ -1173,6 +1173,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_DELETE: {
                         HandleGatewayThreadDelete(m);
                     } break;
+                    case GatewayEvent::THREAD_LIST_SYNC: {
+                        HandleGatewayThreadListSync(m);
+                    } break;
                 }
             } break;
             default:
@@ -1653,6 +1656,8 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
     m_signal_relationship_add.emit(std::move(data));
 }
 
+// remarkably this doesnt actually mean a thread was created
+// it can also mean you gained access to a thread. yay ...
 void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
     ThreadCreateData data = msg.Data;
     m_store.SetChannel(data.Channel.ID, data.Channel);
@@ -1663,6 +1668,16 @@ void DiscordClient::HandleGatewayThreadDelete(const GatewayMessage &msg) {
     ThreadDeleteData data = msg.Data;
     // m_store.ClearChannel?
     m_signal_thread_delete.emit(data);
+}
+
+// this message is received when you load a channel as part of the lazy load request
+// so the ui will only update thread when you load a channel in some guild
+// which is rather annoying but oh well
+void DiscordClient::HandleGatewayThreadListSync(const GatewayMessage &msg) {
+    ThreadListSyncData data = msg.Data;
+    for (const auto &thread : data.Threads)
+        m_store.SetChannel(thread.ID, thread);
+    m_signal_thread_list_sync.emit(data);
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -2029,6 +2044,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["RELATIONSHIP_ADD"] = GatewayEvent::RELATIONSHIP_ADD;
     m_event_map["THREAD_CREATE"] = GatewayEvent::THREAD_CREATE;
     m_event_map["THREAD_DELETE"] = GatewayEvent::THREAD_DELETE;
+    m_event_map["THREAD_LIST_SYNC"] = GatewayEvent::THREAD_LIST_SYNC;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2173,6 +2189,10 @@ DiscordClient::type_signal_thread_create DiscordClient::signal_thread_create() {
 
 DiscordClient::type_signal_thread_delete DiscordClient::signal_thread_delete() {
     return m_signal_thread_delete;
+}
+
+DiscordClient::type_signal_thread_list_sync DiscordClient::signal_thread_list_sync() {
+    return m_signal_thread_list_sync;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

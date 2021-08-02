@@ -484,3 +484,8 @@ void from_json(const nlohmann::json &j, ThreadDeleteData &m) {
     JS_D("parent_id", m.ParentID);
     JS_D("type", m.Type);
 }
+
+void from_json(const nlohmann::json &j, ThreadListSyncData &m) {
+    JS_D("threads", m.Threads);
+    JS_D("guild_id", m.GuildID);
+}

@@ -681,3 +681,12 @@ struct ThreadDeleteData {
 
     friend void from_json(const nlohmann::json &j, ThreadDeleteData &m);
 };
+
+// pretty different from docs
+struct ThreadListSyncData {
+    std::vector<ChannelData> Threads;
+    Snowflake GuildID;
+    // std::optional<std::vector<???>> MostRecentMessages;
+
+    friend void from_json(const nlohmann::json &j, ThreadListSyncData &m);
+};
