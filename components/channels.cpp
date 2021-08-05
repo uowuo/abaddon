@@ -308,7 +308,8 @@ void ChannelList::SetActiveChannel(Snowflake id) {
     if (channel_iter) {
         m_view.expand_to_path(m_model->get_path(channel_iter));
         m_view.get_selection()->select(channel_iter);
-    }
+    } else
+        m_view.get_selection()->unselect_all();
 }
 
 Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {

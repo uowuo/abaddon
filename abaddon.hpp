@@ -47,6 +47,7 @@ public:
     void ActionGuildSettings(Snowflake id);
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
+    void ActionViewThreads(Snowflake channel_id);
 
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 

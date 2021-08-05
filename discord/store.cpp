@@ -499,6 +499,25 @@ std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
     return ret;
 }
 
+std::vector<ChannelData> Store::GetThreads(Snowflake channel_id) const {
+    std::vector<ChannelData> ret;
+
+    Bind(m_get_threads_stmt, 1, channel_id);
+    while (FetchOne(m_get_threads_stmt)) {
+        Snowflake x;
+        Get(m_get_threads_stmt, 0, x);
+        auto chan = GetChannel(x);
+        if (chan.has_value())
+            ret.push_back(*chan);
+    }
+
+    Reset(m_get_threads_stmt);
+
+    if (m_db_err != SQLITE_DONE)
+        fprintf(stderr, "error while fetching threads: %s\n", sqlite3_errstr(m_db_err));
+    return ret;
+}
+
 std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Bind(m_get_chan_stmt, 1, id);
     if (!FetchOne(m_get_chan_stmt)) {
@@ -1186,6 +1205,10 @@ bool Store::CreateStatements() {
         SELECT id FROM messages WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
     )";
 
+    const char *get_threads = R"(
+        SELECT id FROM channels WHERE parent_id = ? AND type = 11
+    )";
+
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to prepare set user statement: %s\n", sqlite3_errstr(m_db_err));
@@ -1326,7 +1349,13 @@ bool Store::CreateStatements() {
 
     m_db_err = sqlite3_prepare_v2(m_db, get_pins, -1, &m_get_pins_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare getp ins statement: %s\n", sqlite3_errstr(m_db_err));
+        fprintf(stderr, "failed to prepare get pins statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_threads, -1, &m_get_threads_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get threads statement: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -1358,6 +1387,7 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_last_msgs_stmt);
     sqlite3_finalize(m_get_msg_ids_stmt);
     sqlite3_finalize(m_get_pins_stmt);
+    sqlite3_finalize(m_get_threads_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {

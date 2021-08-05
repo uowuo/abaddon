@@ -249,6 +249,10 @@ std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     return {};
 }
 
+std::vector<ChannelData> DiscordClient::GetPublicThreads(Snowflake channel_id) const {
+    return m_store.GetThreads(channel_id);
+}
+
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
     const auto base = ComputePermissions(user_id, guild_id);
     return (base & perm) == perm;
