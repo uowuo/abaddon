@@ -253,6 +253,10 @@ std::vector<ChannelData> DiscordClient::GetPublicThreads(Snowflake channel_id) c
     return m_store.GetThreads(channel_id);
 }
 
+bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
+    return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
+}
+
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
     const auto base = ComputePermissions(user_id, guild_id);
     return (base & perm) == perm;
@@ -1250,6 +1254,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 
     if (guild.Threads.has_value()) {
         for (auto &c : *guild.Threads) {
+            m_joined_threads.push_back(c.ID);
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
         }
@@ -1668,6 +1673,7 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
     ThreadCreateData data = msg.Data;
     m_store.SetChannel(data.Channel.ID, data.Channel);
+    m_joined_threads.push_back(data.Channel.ID);
     m_signal_thread_create.emit(data.Channel);
 }
 

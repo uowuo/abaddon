@@ -292,6 +292,7 @@ void ChannelList::OnThreadMembersUpdate(const ThreadMembersUpdateData &data) {
 }
 
 void ChannelList::UpdateCreateThread(const ChannelData &channel) {
+    if (GetIteratorForChannelFromID(channel.ID)) return; // dont do anything if already exists
     auto parent_row = GetIteratorForChannelFromID(*channel.ParentID);
     if (parent_row)
         CreateThreadRow(parent_row->children(), channel);
@@ -303,13 +304,31 @@ void ChannelList::UpdateDeleteThread(Snowflake id) {
         m_model->erase(iter);
 }
 
+// create a temporary channel row for non-joined threads
+// and delete them when the active channel switches off of them if still not joined
 void ChannelList::SetActiveChannel(Snowflake id) {
+    if (m_temporary_thread_row) {
+        const auto thread_id = static_cast<Snowflake>((*m_temporary_thread_row)[m_columns.m_id]);
+        const auto thread = Abaddon::Get().GetDiscordClient().GetChannel(thread_id);
+        if (thread.has_value() && !thread->IsJoinedThread())
+            m_model->erase(m_temporary_thread_row);
+        m_temporary_thread_row = {};
+    }
+
     const auto channel_iter = GetIteratorForChannelFromID(id);
     if (channel_iter) {
         m_view.expand_to_path(m_model->get_path(channel_iter));
         m_view.get_selection()->select(channel_iter);
-    } else
+    } else {
         m_view.get_selection()->unselect_all();
+        // SetActiveChannel should probably just take the channel object
+        const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+        if (!channel.has_value() || !channel->IsThread()) return;
+        auto parent_iter = GetIteratorForChannelFromID(*channel->ParentID);
+        if (!parent_iter) return;
+        m_temporary_thread_row = CreateThreadRow(parent_iter->children(), *channel);
+        m_view.get_selection()->select(m_temporary_thread_row);
+    }
 }
 
 Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {

@@ -88,6 +88,7 @@ public:
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
     std::vector<ChannelData> GetPublicThreads(Snowflake channel_id) const;
 
+    bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
 
     bool HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
@@ -261,13 +262,11 @@ private:
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;
-
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_channels;
     std::map<Snowflake, GuildApplicationData> m_guild_join_requests;
-
     std::map<Snowflake, PresenceStatus> m_user_to_status;
-
     std::map<Snowflake, RelationshipType> m_user_relationships;
+    std::vector<Snowflake> m_joined_threads;
 
     UserData m_user_data;
     UserSettings m_user_settings;

@@ -63,6 +63,16 @@ bool ChannelData::NSFW() const {
     return IsNSFW.has_value() && *IsNSFW;
 }
 
+bool ChannelData::IsThread() const noexcept {
+    return Type == ChannelType::GUILD_PUBLIC_THREAD ||
+           Type == ChannelType::GUILD_PRIVATE_THREAD ||
+           Type == ChannelType::GUILD_NEWS_THREAD;
+}
+
+bool ChannelData::IsJoinedThread() const {
+    return Abaddon::Get().GetDiscordClient().IsThreadJoined(ID);
+}
+
 std::optional<PermissionOverwrite> ChannelData::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

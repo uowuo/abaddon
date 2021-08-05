@@ -197,6 +197,9 @@ protected:
     void OnMessageCreate(const Message &msg);
     Gtk::TreeModel::Path m_path_for_menu;
 
+    // cant be recovered through selection
+    Gtk::TreeModel::iterator m_temporary_thread_row;
+
     Gtk::Menu m_menu_guild;
     Gtk::MenuItem m_menu_guild_copy_id;
     Gtk::MenuItem m_menu_guild_settings;
