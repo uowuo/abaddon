@@ -140,12 +140,12 @@ protected:
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
     void UpdateCreateChannel(const ChannelData &channel);
-    void UpdateCreateThread(const ChannelData &channel);
-    void UpdateDeleteThread(Snowflake id);
     void UpdateGuild(Snowflake id);
+    void DeleteThreadRow(Snowflake id);
 
+    void OnThreadJoined(Snowflake id);
+    void OnThreadRemoved(Snowflake id);
     void OnThreadDelete(const ThreadDeleteData &data);
-    void OnThreadMembersUpdate(const ThreadMembersUpdateData &data);
 
     Gtk::TreeView m_view;
 

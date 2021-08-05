@@ -1254,7 +1254,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 
     if (guild.Threads.has_value()) {
         for (auto &c : *guild.Threads) {
-            m_joined_threads.push_back(c.ID);
+            m_joined_threads.insert(c.ID);
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
         }
@@ -1670,10 +1670,10 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
 
 // remarkably this doesnt actually mean a thread was created
 // it can also mean you gained access to a thread. yay ...
+// except sometimes it doesnt??? i dont know whats going on
 void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
     ThreadCreateData data = msg.Data;
     m_store.SetChannel(data.Channel.ID, data.Channel);
-    m_joined_threads.push_back(data.Channel.ID);
     m_signal_thread_create.emit(data.Channel);
 }
 
@@ -1695,6 +1695,17 @@ void DiscordClient::HandleGatewayThreadListSync(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) {
     ThreadMembersUpdateData data = msg.Data;
+    if (data.AddedMembers.has_value() &&
+        std::find_if(data.AddedMembers->begin(), data.AddedMembers->end(), [this](const auto &x) {
+            return *x.UserID == m_user_data.ID; // safe to assume UserID is present here
+        }) != data.AddedMembers->end()) {
+        m_joined_threads.insert(data.ID);
+        m_signal_added_to_thread.emit(data.ID);
+    } else if (data.RemovedMemberIDs.has_value() &&
+               std::find(data.RemovedMemberIDs->begin(), data.RemovedMemberIDs->end(), m_user_data.ID) != data.RemovedMemberIDs->end()) {
+        m_joined_threads.erase(data.ID);
+        m_signal_removed_from_thread.emit(data.ID);
+    }
     m_signal_thread_members_update.emit(data);
 }
 
@@ -2216,6 +2227,14 @@ DiscordClient::type_signal_thread_list_sync DiscordClient::signal_thread_list_sy
 
 DiscordClient::type_signal_thread_members_update DiscordClient::signal_thread_members_update() {
     return m_signal_thread_members_update;
+}
+
+DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {
+    return m_signal_added_to_thread;
+}
+
+DiscordClient::type_signal_removed_from_thread DiscordClient::signal_removed_from_thread() {
+    return m_signal_removed_from_thread;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

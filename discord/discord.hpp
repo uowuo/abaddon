@@ -266,7 +266,7 @@ private:
     std::map<Snowflake, GuildApplicationData> m_guild_join_requests;
     std::map<Snowflake, PresenceStatus> m_user_to_status;
     std::map<Snowflake, RelationshipType> m_user_relationships;
-    std::vector<Snowflake> m_joined_threads;
+    std::set<Snowflake> m_joined_threads;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -338,9 +338,14 @@ public:
     typedef sigc::signal<void, ThreadDeleteData> type_signal_thread_delete;
     typedef sigc::signal<void, ThreadListSyncData> type_signal_thread_list_sync;
     typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
-    typedef sigc::signal<void, Message> type_signal_message_unpinned; // not a real event
-    typedef sigc::signal<void, Message> type_signal_message_pinned;   // not a real event either
+
+    // not discord dispatch events
+    typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
+    typedef sigc::signal<void, Snowflake> type_signal_removed_from_thread;
+    typedef sigc::signal<void, Message> type_signal_message_unpinned;
+    typedef sigc::signal<void, Message> type_signal_message_pinned;
     typedef sigc::signal<void, Message> type_signal_message_sent;
+
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
@@ -381,6 +386,8 @@ public:
     type_signal_thread_delete signal_thread_delete();
     type_signal_thread_list_sync signal_thread_list_sync();
     type_signal_thread_members_update signal_thread_members_update();
+    type_signal_added_to_thread signal_added_to_thread();
+    type_signal_removed_from_thread signal_removed_from_thread();
     type_signal_message_sent signal_message_sent();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
@@ -423,6 +430,8 @@ protected:
     type_signal_thread_delete m_signal_thread_delete;
     type_signal_thread_list_sync m_signal_thread_list_sync;
     type_signal_thread_members_update m_signal_thread_members_update;
+    type_signal_removed_from_thread m_signal_removed_from_thread;
+    type_signal_added_to_thread m_signal_added_to_thread;
     type_signal_message_sent m_signal_message_sent;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;

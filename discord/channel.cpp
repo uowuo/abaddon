@@ -10,7 +10,7 @@ void from_json(const nlohmann::json &j, ThreadMetadataData &m) {
 
 void from_json(const nlohmann::json &j, ThreadMemberObject &m) {
     JS_O("id", m.ThreadID);
-    JS_O("user_id", m.ThreadID);
+    JS_O("user_id", m.UserID);
     JS_D("join_timestamp", m.JoinTimestamp);
     JS_D("flags", m.Flags);
 }

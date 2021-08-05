@@ -141,9 +141,9 @@ ChannelList::ChannelList()
     discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveChannel));
     discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
     discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
-    discord.signal_thread_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateThread));
     discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelList::OnThreadDelete));
-    discord.signal_thread_members_update().connect(sigc::mem_fun(*this, &ChannelList::OnThreadMembersUpdate));
+    discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
+    discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
 }
 
@@ -280,25 +280,25 @@ void ChannelList::UpdateGuild(Snowflake id) {
     }
 }
 
+void ChannelList::OnThreadJoined(Snowflake id) {
+    if (GetIteratorForChannelFromID(id)) return;
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (!channel.has_value()) return;
+    const auto parent = GetIteratorForChannelFromID(*channel->ParentID);
+    if (parent)
+        CreateThreadRow(parent->children(), *channel);
+}
+
+void ChannelList::OnThreadRemoved(Snowflake id) {
+    if (GetIteratorForChannelFromID(id))
+        DeleteThreadRow(id);
+}
+
 void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
-    UpdateDeleteThread(data.ID);
+    DeleteThreadRow(data.ID);
 }
 
-void ChannelList::OnThreadMembersUpdate(const ThreadMembersUpdateData &data) {
-    auto &r = data.RemovedMemberIDs;
-    if (r.has_value() && std::find(r->begin(), r->end(), Abaddon::Get().GetDiscordClient().GetUserData().ID) != r->end()) {
-        UpdateDeleteThread(data.ID);
-    }
-}
-
-void ChannelList::UpdateCreateThread(const ChannelData &channel) {
-    if (GetIteratorForChannelFromID(channel.ID)) return; // dont do anything if already exists
-    auto parent_row = GetIteratorForChannelFromID(*channel.ParentID);
-    if (parent_row)
-        CreateThreadRow(parent_row->children(), channel);
-}
-
-void ChannelList::UpdateDeleteThread(Snowflake id) {
+void ChannelList::DeleteThreadRow(Snowflake id) {
     auto iter = GetIteratorForChannelFromID(id);
     if (iter)
         m_model->erase(iter);
