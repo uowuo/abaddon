@@ -537,6 +537,70 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                              "</b>";
                 }
             } break;
+            case AuditLogActionType::THREAD_CREATE: {
+                const auto channel = discord.GetChannel(entry.TargetID);
+                markup = user_markup +
+                         " created a thread <b>" +
+                         (channel.has_value()
+                              ? Glib::Markup::escape_text(*channel->Name)
+                              : Glib::ustring(*entry.GetNewFromKey<std::string>("name"))) +
+                         "</b>";
+                if (entry.Changes.has_value()) {
+                    for (const auto &change : *entry.Changes) {
+                        if (change.Key == "name")
+                            extra_markup.push_back("Set the name to <b>" + Glib::Markup::escape_text(change.NewValue->get<std::string>()) + "</b>");
+                        else if (change.Key == "archived")
+                            extra_markup.push_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
+                        else if (change.Key == "auto_archive_duration")
+                            extra_markup.push_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
+                        else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
+                            const int secs = change.NewValue->get<int>();
+                            if (secs == 0)
+                                extra_markup.push_back("Disabled slowmode");
+                            else
+                                extra_markup.push_back("Set slowmode to <b>" +
+                                                       std::to_string(secs) + " seconds</b>");
+                        } else if (change.Key == "locked")
+                            extra_markup.push_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
+                    }
+                }
+            } break;
+            case AuditLogActionType::THREAD_UPDATE: {
+                const auto channel = discord.GetChannel(entry.TargetID);
+                markup = user_markup +
+                         " made changes to the thread <b>" +
+                         (channel.has_value()
+                              ? Glib::Markup::escape_text(*channel->Name)
+                              : Glib::ustring(entry.TargetID)) +
+                         "</b>";
+                for (const auto &change : *entry.Changes) {
+                    if (change.Key == "name")
+                        extra_markup.push_back(
+                            "Changed the name from <b>" +
+                            Glib::Markup::escape_text(change.OldValue->get<std::string>()) +
+                            "</b> to <b>" +
+                            Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
+                            "</b>");
+                    else if (change.Key == "auto_archive_duration")
+                        extra_markup.push_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
+                    else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
+                        const int secs = change.NewValue->get<int>();
+                        if (secs == 0)
+                            extra_markup.push_back("Disabled slowmode");
+                        else
+                            extra_markup.push_back("Set slowmode to <b>" +
+                                                   std::to_string(secs) +
+                                                   " seconds</b>");
+                    } else if (change.Key == "locked")
+                        extra_markup.push_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
+                    else if (change.Key == "archived")
+                        extra_markup.push_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
+                }
+            } break;
+            case AuditLogActionType::THREAD_DELETE: {
+                markup = user_markup +
+                         " deleted the thread <b>" + Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")) + "</b>";
+            } break;
             default:
                 markup = "<i>Unknown action</i>";
                 break;
