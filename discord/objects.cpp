@@ -497,3 +497,9 @@ void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m) {
     JS_O("added_members", m.AddedMembers);
     JS_O("removed_member_ids", m.RemovedMemberIDs);
 }
+
+void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m) {
+    JS_D("threads", m.Threads);
+    JS_D("members", m.Members);
+    JS_D("has_more", m.HasMore);
+}

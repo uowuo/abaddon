@@ -86,7 +86,8 @@ public:
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
-    std::vector<ChannelData> GetPublicThreads(Snowflake channel_id) const;
+    std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
+    void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
 
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;

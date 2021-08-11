@@ -700,3 +700,11 @@ struct ThreadMembersUpdateData {
 
     friend void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m);
 };
+
+struct ArchivedThreadsResponseData {
+    std::vector<ChannelData> Threads;
+    std::vector<ThreadMemberObject> Members;
+    bool HasMore;
+
+    friend void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m);
+};

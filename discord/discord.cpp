@@ -249,8 +249,22 @@ std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     return {};
 }
 
-std::vector<ChannelData> DiscordClient::GetPublicThreads(Snowflake channel_id) const {
-    return m_store.GetThreads(channel_id);
+// there is an endpoint for this but it should be synced before this is called anyways
+std::vector<ChannelData> DiscordClient::GetActiveThreads(Snowflake channel_id) const {
+    return m_store.GetActiveThreads(channel_id);
+}
+
+void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback) {
+    m_http.MakeGET("/channels/" + std::to_string(channel_id) + "/threads/archived/public", [this, callback](const http::response_type &r) {
+        if (CheckCode(r)) {
+            const auto data = nlohmann::json::parse(r.text).get<ArchivedThreadsResponseData>();
+            for (const auto &thread : data.Threads)
+                m_store.SetChannel(thread.ID, thread);
+            callback(DiscordError::NONE, data);
+        } else {
+            callback(GetCodeFromResponse(r), {});
+        }
+    });
 }
 
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {

@@ -44,7 +44,7 @@ public:
     std::vector<Message> GetLastMessages(Snowflake id, size_t num) const;
     std::vector<Snowflake> GetChannelMessageIDs(Snowflake id) const;
     std::vector<Message> GetPinnedMessages(Snowflake channel_id) const;
-    std::vector<ChannelData> GetThreads(Snowflake channel_id) const; // public
+    std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const; // public
 
     void ClearGuild(Snowflake id);
     void ClearChannel(Snowflake id);

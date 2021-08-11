@@ -105,6 +105,16 @@ void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     Bind(m_set_chan_stmt, 17, chan.ParentID);
     Bind(m_set_chan_stmt, 18, chan.LastPinTimestamp);
 
+    if (chan.ThreadMetadata.has_value()) {
+        Bind(m_set_chan_stmt, 19, chan.ThreadMetadata->IsArchived);
+        Bind(m_set_chan_stmt, 20, chan.ThreadMetadata->AutoArchiveDuration);
+        Bind(m_set_chan_stmt, 21, chan.ThreadMetadata->ArchiveTimestamp);
+    } else {
+        Bind(m_set_chan_stmt, 19, nullptr);
+        Bind(m_set_chan_stmt, 20, nullptr);
+        Bind(m_set_chan_stmt, 21, nullptr);
+    }
+
     if (!RunInsert(m_set_chan_stmt))
         fprintf(stderr, "channel insert failed: %s\n", sqlite3_errstr(m_db_err));
 
@@ -499,7 +509,7 @@ std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
     return ret;
 }
 
-std::vector<ChannelData> Store::GetThreads(Snowflake channel_id) const {
+std::vector<ChannelData> Store::GetActiveThreads(Snowflake channel_id) const {
     std::vector<ChannelData> ret;
 
     Bind(m_get_threads_stmt, 1, channel_id);
@@ -552,6 +562,12 @@ std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Get(m_get_chan_stmt, 15, ret.ApplicationID);
     Get(m_get_chan_stmt, 16, ret.ParentID);
     Get(m_get_chan_stmt, 17, ret.LastPinTimestamp);
+    if (!IsNull(m_get_chan_stmt, 18)) {
+        ret.ThreadMetadata.emplace();
+        Get(m_get_chan_stmt, 18, ret.ThreadMetadata->IsArchived);
+        Get(m_get_chan_stmt, 19, ret.ThreadMetadata->AutoArchiveDuration);
+        Get(m_get_chan_stmt, 20, ret.ThreadMetadata->ArchiveTimestamp);
+    }
 
     Reset(m_get_chan_stmt);
 
@@ -987,7 +1003,10 @@ bool Store::CreateTables() {
             owner_id INTEGER,
             application_id INTEGER,
             parent_id INTEGER,
-            last_pin_timestamp TEXT
+            last_pin_timestamp TEXT,
+            archived BOOL, /* threads */
+            auto_archive INTEGER, /* threads */
+            archived_ts TEXT /* threads */
         )
     )";
 
@@ -1156,7 +1175,7 @@ bool Store::CreateStatements() {
 
     const char *set_chan = R"(
         REPLACE INTO channels VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 
@@ -1206,7 +1225,7 @@ bool Store::CreateStatements() {
     )";
 
     const char *get_threads = R"(
-        SELECT id FROM channels WHERE parent_id = ? AND type = 11
+        SELECT id FROM channels WHERE parent_id = ? AND (type = 10 OR type = 11 OR type = 12) AND archived = FALSE
     )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
