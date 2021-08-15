@@ -142,6 +142,7 @@ ChannelList::ChannelList()
     discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
     discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
     discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelList::OnThreadDelete));
+    discord.signal_thread_list_sync().connect(sigc::mem_fun(*this, &ChannelList::OnThreadListSync));
     discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
     discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
@@ -296,6 +297,31 @@ void ChannelList::OnThreadRemoved(Snowflake id) {
 
 void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
     DeleteThreadRow(data.ID);
+}
+
+void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
+    // get the threads in the guild
+    std::vector<Snowflake> threads;
+    auto guild_iter = GetIteratorForGuildFromID(data.GuildID);
+    std::queue<Gtk::TreeModel::iterator> queue;
+    queue.push(guild_iter);
+
+    while (!queue.empty()) {
+        auto item = queue.front();
+        queue.pop();
+        if ((*item)[m_columns.m_type] == RenderType::Thread)
+            threads.push_back(static_cast<Snowflake>((*item)[m_columns.m_id]));
+        for (auto child : item->children())
+            queue.push(child);
+    }
+
+    // delete all threads not present in the synced data
+    for (auto thread_id : threads) {
+        if (std::find_if(data.Threads.begin(), data.Threads.end(), [thread_id](const auto& x) { return x.ID == thread_id; }) == data.Threads.end()) {
+            auto iter = GetIteratorForChannelFromID(thread_id);
+            m_model->erase(iter);
+        }
+    }
 }
 
 void ChannelList::DeleteThreadRow(Snowflake id) {
