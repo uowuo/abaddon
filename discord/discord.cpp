@@ -127,7 +127,23 @@ void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<
 void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](const http::response_type &r) {
-        if (!CheckCode(r)) return;
+        if (!CheckCode(r)) {
+            // fake a thread delete event if the requested channel is a thread and we get a 404
+
+            if (r.status_code == http::NotFound) {
+                const auto channel = m_store.GetChannel(id);
+                if (channel.has_value() && channel->IsThread()) {
+                    ThreadDeleteData data;
+                    data.GuildID = *channel->GuildID;
+                    data.ID = id;
+                    data.ParentID = *channel->ParentID;
+                    data.Type = channel->Type;
+                    m_signal_thread_delete.emit(data);
+                }
+            }
+
+            return;
+        }
 
         std::vector<Message> msgs;
 
