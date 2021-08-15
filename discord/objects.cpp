@@ -503,3 +503,7 @@ void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m) {
     JS_D("members", m.Members);
     JS_D("has_more", m.HasMore);
 }
+
+void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m) {
+    m.Member = j;
+}

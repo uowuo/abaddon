@@ -1201,6 +1201,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_MEMBERS_UPDATE: {
                         HandleGatewayThreadMembersUpdate(m);
                     } break;
+                    case GatewayEvent::THREAD_MEMBER_UPDATE: {
+                        HandleGatewayThreadMemberUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1693,7 +1696,7 @@ void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayThreadDelete(const GatewayMessage &msg) {
     ThreadDeleteData data = msg.Data;
-    // m_store.ClearChannel?
+    m_store.ClearChannel(data.ID);
     m_signal_thread_delete.emit(data);
 }
 
@@ -1721,6 +1724,13 @@ void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) 
         m_signal_removed_from_thread.emit(data.ID);
     }
     m_signal_thread_members_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayThreadMemberUpdate(const GatewayMessage &msg) {
+    ThreadMemberUpdateData data = msg.Data;
+    m_joined_threads.insert(*data.Member.ThreadID);
+    if (*data.Member.UserID == GetUserData().ID)
+        m_signal_added_to_thread.emit(*data.Member.ThreadID);
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -2089,6 +2099,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_DELETE"] = GatewayEvent::THREAD_DELETE;
     m_event_map["THREAD_LIST_SYNC"] = GatewayEvent::THREAD_LIST_SYNC;
     m_event_map["THREAD_MEMBERS_UPDATE"] = GatewayEvent::THREAD_MEMBERS_UPDATE;
+    m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

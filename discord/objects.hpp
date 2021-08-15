@@ -708,3 +708,9 @@ struct ArchivedThreadsResponseData {
 
     friend void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m);
 };
+
+struct ThreadMemberUpdateData {
+    ThreadMemberObject Member;
+
+    friend void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m);
+};

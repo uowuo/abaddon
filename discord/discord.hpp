@@ -244,6 +244,7 @@ private:
     void HandleGatewayThreadDelete(const GatewayMessage &msg);
     void HandleGatewayThreadListSync(const GatewayMessage &msg);
     void HandleGatewayThreadMembersUpdate(const GatewayMessage &msg);
+    void HandleGatewayThreadMemberUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
