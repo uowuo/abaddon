@@ -301,6 +301,10 @@ void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
 
 // todo probably make the row stick around if its selected until the selection changes
 void ChannelList::OnThreadUpdate(const ThreadUpdateData &data) {
+    auto iter = GetIteratorForChannelFromID(data.Thread.ID);
+    if (iter)
+        (*iter)[m_columns.m_name] = "- " + Glib::Markup::escape_text(*data.Thread.Name);
+
     if (data.Thread.ThreadMetadata->IsArchived)
         DeleteThreadRow(data.Thread.ID);
 }
