@@ -245,6 +245,7 @@ private:
     void HandleGatewayThreadListSync(const GatewayMessage &msg);
     void HandleGatewayThreadMembersUpdate(const GatewayMessage &msg);
     void HandleGatewayThreadMemberUpdate(const GatewayMessage &msg);
+    void HandleGatewayThreadUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -340,6 +341,7 @@ public:
     typedef sigc::signal<void, ThreadDeleteData> type_signal_thread_delete;
     typedef sigc::signal<void, ThreadListSyncData> type_signal_thread_list_sync;
     typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
+    typedef sigc::signal<void, ThreadUpdateData> type_signal_thread_update;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -388,6 +390,7 @@ public:
     type_signal_thread_delete signal_thread_delete();
     type_signal_thread_list_sync signal_thread_list_sync();
     type_signal_thread_members_update signal_thread_members_update();
+    type_signal_thread_update signal_thread_update();
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
     type_signal_message_sent signal_message_sent();
@@ -432,6 +435,7 @@ protected:
     type_signal_thread_delete m_signal_thread_delete;
     type_signal_thread_list_sync m_signal_thread_list_sync;
     type_signal_thread_members_update m_signal_thread_members_update;
+    type_signal_thread_update m_signal_thread_update;
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;
     type_signal_message_sent m_signal_message_sent;

@@ -507,3 +507,7 @@ void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m) {
 void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m) {
     m.Member = j;
 }
+
+void from_json(const nlohmann::json &j, ThreadUpdateData &m) {
+    m.Thread = j;
+}

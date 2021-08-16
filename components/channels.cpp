@@ -142,6 +142,7 @@ ChannelList::ChannelList()
     discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
     discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
     discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelList::OnThreadDelete));
+    discord.signal_thread_update().connect(sigc::mem_fun(*this, &ChannelList::OnThreadUpdate));
     discord.signal_thread_list_sync().connect(sigc::mem_fun(*this, &ChannelList::OnThreadListSync));
     discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
     discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
@@ -291,12 +292,17 @@ void ChannelList::OnThreadJoined(Snowflake id) {
 }
 
 void ChannelList::OnThreadRemoved(Snowflake id) {
-    if (GetIteratorForChannelFromID(id))
-        DeleteThreadRow(id);
+    DeleteThreadRow(id);
 }
 
 void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
     DeleteThreadRow(data.ID);
+}
+
+// todo probably make the row stick around if its selected until the selection changes
+void ChannelList::OnThreadUpdate(const ThreadUpdateData &data) {
+    if (data.Thread.ThreadMetadata->IsArchived)
+        DeleteThreadRow(data.Thread.ID);
 }
 
 void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
@@ -317,7 +323,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
 
     // delete all threads not present in the synced data
     for (auto thread_id : threads) {
-        if (std::find_if(data.Threads.begin(), data.Threads.end(), [thread_id](const auto& x) { return x.ID == thread_id; }) == data.Threads.end()) {
+        if (std::find_if(data.Threads.begin(), data.Threads.end(), [thread_id](const auto &x) { return x.ID == thread_id; }) == data.Threads.end()) {
             auto iter = GetIteratorForChannelFromID(thread_id);
             m_model->erase(iter);
         }
@@ -336,7 +342,7 @@ void ChannelList::SetActiveChannel(Snowflake id) {
     if (m_temporary_thread_row) {
         const auto thread_id = static_cast<Snowflake>((*m_temporary_thread_row)[m_columns.m_id]);
         const auto thread = Abaddon::Get().GetDiscordClient().GetChannel(thread_id);
-        if (thread.has_value() && !thread->IsJoinedThread())
+        if (thread.has_value() && (!thread->IsJoinedThread() || thread->ThreadMetadata->IsArchived))
             m_model->erase(m_temporary_thread_row);
         m_temporary_thread_row = {};
     }

@@ -1220,6 +1220,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_MEMBER_UPDATE: {
                         HandleGatewayThreadMemberUpdate(m);
                     } break;
+                    case GatewayEvent::THREAD_UPDATE: {
+                        HandleGatewayThreadUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1749,6 +1752,12 @@ void DiscordClient::HandleGatewayThreadMemberUpdate(const GatewayMessage &msg) {
         m_signal_added_to_thread.emit(*data.Member.ThreadID);
 }
 
+void DiscordClient::HandleGatewayThreadUpdate(const GatewayMessage &msg) {
+    ThreadUpdateData data = msg.Data;
+    m_store.SetChannel(data.Thread.ID, data.Thread);
+    m_signal_thread_update.emit(data);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2116,6 +2125,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_LIST_SYNC"] = GatewayEvent::THREAD_LIST_SYNC;
     m_event_map["THREAD_MEMBERS_UPDATE"] = GatewayEvent::THREAD_MEMBERS_UPDATE;
     m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
+    m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2268,6 +2278,10 @@ DiscordClient::type_signal_thread_list_sync DiscordClient::signal_thread_list_sy
 
 DiscordClient::type_signal_thread_members_update DiscordClient::signal_thread_members_update() {
     return m_signal_thread_members_update;
+}
+
+DiscordClient::type_signal_thread_update DiscordClient::signal_thread_update() {
+    return m_signal_thread_update;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

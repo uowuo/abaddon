@@ -146,6 +146,7 @@ protected:
     void OnThreadJoined(Snowflake id);
     void OnThreadRemoved(Snowflake id);
     void OnThreadDelete(const ThreadDeleteData &data);
+    void OnThreadUpdate(const ThreadUpdateData &data);
     void OnThreadListSync(const ThreadListSyncData &data);
 
     Gtk::TreeView m_view;

@@ -714,3 +714,9 @@ struct ThreadMemberUpdateData {
 
     friend void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m);
 };
+
+struct ThreadUpdateData {
+    ChannelData Thread;
+
+    friend void from_json(const nlohmann::json &j, ThreadUpdateData &m);
+};
