@@ -278,7 +278,17 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         } break;
         case MessageType::THREAD_CREATED: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
-            b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " started a thread: </span><b>" + Glib::Markup::escape_text(data->Content) + "</b></i>");
+            if (data->MessageReference.has_value() && data->MessageReference->ChannelID.has_value()) {
+                auto iter = b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " started a thread: </span></i>");
+                auto tag = b->create_tag();
+                tag->property_weight() = Pango::WEIGHT_BOLD;
+                m_channel_tagmap[tag] = *data->MessageReference->ChannelID;
+                b->insert_with_tag(iter, data->Content, tag);
+
+                tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
+            } else {
+                b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " started a thread: </span><b>" + Glib::Markup::escape_text(data->Content) + "</b></i>");
+            }
         } break;
         default: break;
     }
