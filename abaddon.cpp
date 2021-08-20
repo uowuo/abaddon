@@ -36,7 +36,7 @@ Abaddon::Abaddon()
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
     m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
-    m_discord.signal_thread_member_list_update().connect([this](...) { m_main_window->UpdateMembers(); });
+    m_discord.signal_thread_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadMemberListUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
     m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
@@ -190,6 +190,10 @@ void Abaddon::DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id) {
 }
 
 void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
+    m_main_window->UpdateMembers();
+}
+
+void Abaddon::DiscordOnThreadMemberListUpdate(const ThreadMemberListUpdateData &data) {
     m_main_window->UpdateMembers();
 }
 
