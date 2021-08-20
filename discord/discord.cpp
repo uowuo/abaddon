@@ -265,6 +265,12 @@ std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     return {};
 }
 
+std::vector<Snowflake> DiscordClient::GetUsersInThread(Snowflake id) const {
+    if (auto it = m_thread_members.find(id); it != m_thread_members.end())
+        return it->second;
+    return {};
+}
+
 // there is an endpoint for this but it should be synced before this is called anyways
 std::vector<ChannelData> DiscordClient::GetActiveThreads(Snowflake channel_id) const {
     return m_store.GetActiveThreads(channel_id);
@@ -468,6 +474,14 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     msg.ShouldGetActivities = true;
     msg.ShouldGetTyping = true;
     msg.ShouldGetThreads = true;
+
+    m_websocket.Send(msg);
+}
+
+void DiscordClient::SendThreadLazyLoad(Snowflake id) {
+    LazyLoadRequestMessage msg;
+    msg.GuildID = *GetChannel(id)->GuildID;
+    msg.ThreadIDs.emplace().push_back(id);
 
     m_websocket.Send(msg);
 }
@@ -1223,6 +1237,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_UPDATE: {
                         HandleGatewayThreadUpdate(m);
                     } break;
+                    case GatewayEvent::THREAD_MEMBER_LIST_UPDATE: {
+                        HandleGatewayThreadMemberListUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1758,6 +1775,19 @@ void DiscordClient::HandleGatewayThreadUpdate(const GatewayMessage &msg) {
     m_signal_thread_update.emit(data);
 }
 
+void DiscordClient::HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg) {
+    ThreadMemberListUpdateData data = msg.Data;
+    m_store.BeginTransaction();
+    for (const auto &entry : data.Members) {
+        m_thread_members[data.ThreadID].push_back(entry.UserID);
+        if (entry.Member.User.has_value())
+            m_store.SetUser(entry.Member.User->ID, *entry.Member.User);
+        m_store.SetGuildMember(data.GuildID, entry.Member.User->ID, entry.Member);
+    }
+    m_store.EndTransaction();
+    m_signal_thread_member_list_update.emit(data);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2126,6 +2156,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_MEMBERS_UPDATE"] = GatewayEvent::THREAD_MEMBERS_UPDATE;
     m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
     m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
+    m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2282,6 +2313,10 @@ DiscordClient::type_signal_thread_members_update DiscordClient::signal_thread_me
 
 DiscordClient::type_signal_thread_update DiscordClient::signal_thread_update() {
     return m_signal_thread_update;
+}
+
+DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_thread_member_list_update() {
+    return m_signal_thread_member_list_update;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

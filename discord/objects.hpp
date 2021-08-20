@@ -77,6 +77,7 @@ enum class GatewayEvent : int {
     THREAD_LIST_SYNC,
     THREAD_MEMBER_UPDATE,
     THREAD_MEMBERS_UPDATE,
+    THREAD_MEMBER_LIST_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -204,11 +205,12 @@ struct GuildMemberListUpdateMessage {
 
 struct LazyLoadRequestMessage {
     Snowflake GuildID;
-    bool ShouldGetTyping = false;
-    bool ShouldGetActivities = false;
-    bool ShouldGetThreads = false;
-    std::optional<std::vector<std::string>> Members;                                         // snowflake?
-    std::optional<std::unordered_map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
+    std::optional<bool> ShouldGetTyping;
+    std::optional<bool> ShouldGetActivities;
+    std::optional<bool> ShouldGetThreads;
+    std::optional<std::vector<std::string>> Members;                               // snowflake?
+    std::optional<std::map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
+    std::optional<std::vector<Snowflake>> ThreadIDs;
 
     friend void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m);
 };
@@ -719,4 +721,20 @@ struct ThreadUpdateData {
     ChannelData Thread;
 
     friend void from_json(const nlohmann::json &j, ThreadUpdateData &m);
+};
+
+struct ThreadMemberListUpdateData {
+    struct UserEntry {
+        Snowflake UserID;
+        // PresenceData Presence;
+        GuildMember Member;
+
+        friend void from_json(const nlohmann::json &j, UserEntry &m);
+    };
+
+    Snowflake ThreadID;
+    Snowflake GuildID;
+    std::vector<UserEntry> Members;
+
+    friend void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m);
 };

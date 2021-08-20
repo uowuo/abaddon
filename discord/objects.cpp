@@ -85,11 +85,16 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
         for (const auto &[key, chans] : *m.Channels)
             j["d"]["channels"][std::to_string(key)] = chans;
     }
-    j["d"]["typing"] = m.ShouldGetTyping;
-    j["d"]["activities"] = m.ShouldGetActivities;
-    j["d"]["threads"] = m.ShouldGetThreads;
+    if (m.ShouldGetTyping)
+        j["d"]["typing"] = *m.ShouldGetTyping;
+    if (m.ShouldGetActivities)
+        j["d"]["activities"] = *m.ShouldGetActivities;
+    if (m.ShouldGetThreads)
+        j["d"]["threads"] = *m.ShouldGetThreads;
     if (m.Members.has_value())
         j["d"]["members"] = *m.Members;
+    if (m.ThreadIDs.has_value())
+        j["d"]["thread_member_lists"] = *m.ThreadIDs;
 }
 
 void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
@@ -510,4 +515,15 @@ void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m) {
 
 void from_json(const nlohmann::json &j, ThreadUpdateData &m) {
     m.Thread = j;
+}
+
+void from_json(const nlohmann::json &j, ThreadMemberListUpdateData::UserEntry &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("member", m.Member);
+}
+
+void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m) {
+    JS_D("thread_id", m.ThreadID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("members", m.Members);
 }
