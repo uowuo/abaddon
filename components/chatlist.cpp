@@ -168,18 +168,22 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
                 const auto &client = Abaddon::Get().GetDiscordClient();
                 const auto data = client.GetMessage(id);
                 if (!data.has_value()) return false;
+                const auto channel = client.GetChannel(m_active_channel);
+
+                bool is_dm = channel.has_value() && (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
+                const bool has_manage = client.HasChannelPermission(client.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES);
 
                 m_menu_edit_message->set_visible(!m_use_pinned_menu);
                 m_menu_reply_to->set_visible(!m_use_pinned_menu);
-                m_menu_unpin->set_visible(data->IsPinned);
-                m_menu_pin->set_visible(!data->IsPinned);
+                m_menu_unpin->set_visible((is_dm || has_manage) && data->IsPinned);
+                m_menu_pin->set_visible((is_dm || has_manage) && !data->IsPinned);
 
                 if (data->IsDeleted()) {
                     m_menu_delete_message->set_sensitive(false);
                     m_menu_edit_message->set_sensitive(false);
                 } else {
                     const bool can_edit = client.GetUserData().ID == data->Author.ID;
-                    const bool can_delete = can_edit || client.HasChannelPermission(client.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES);
+                    const bool can_delete = can_edit || has_manage;
                     m_menu_delete_message->set_sensitive(can_delete);
                     m_menu_edit_message->set_sensitive(can_edit);
                 }

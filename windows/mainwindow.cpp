@@ -244,16 +244,15 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     m_menu_discord_set_status.set_sensitive(discord_active);
 }
 
-void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle* flipped_rect, const Gdk::Rectangle* final_rect, bool flipped_x, bool flipped_y) {
     m_menu_view_friends.set_sensitive(Abaddon::Get().GetDiscordClient().IsStarted());
     auto channel_id = GetChatActiveChannel();
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
     m_menu_view_pins.set_sensitive(false);
     m_menu_view_threads.set_sensitive(false);
     if (channel.has_value()) {
-        const bool b = channel->Type == ChannelType::GUILD_TEXT;
-        m_menu_view_pins.set_sensitive(b);
-        m_menu_view_threads.set_sensitive(b);
+        m_menu_view_threads.set_sensitive(channel->Type == ChannelType::GUILD_TEXT);
+        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
     }
 }
 
