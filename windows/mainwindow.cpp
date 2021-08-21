@@ -244,7 +244,7 @@ void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gd
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
     m_menu_view_pins.set_sensitive(false);
     if (channel.has_value())
-        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT);
+        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
 }
 
 ChannelList *MainWindow::GetChannelList() {

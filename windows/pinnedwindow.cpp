@@ -8,7 +8,10 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
 
     set_name("pinned-messages");
     set_default_size(450, 375);
-    set_title("#" + *data.Name + " - Pinned Messages");
+    if (data.Name.has_value())
+        set_title("#" + *data.Name + " - Pinned Messages");
+    else
+        set_title("Pinned Messages");
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
