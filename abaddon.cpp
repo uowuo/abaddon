@@ -626,8 +626,12 @@ void Abaddon::ActionViewPins(Snowflake channel_id) {
 }
 
 void Abaddon::ActionViewThreads(Snowflake channel_id) {
-    const auto data = m_discord.GetChannel(channel_id);
+    auto data = m_discord.GetChannel(channel_id);
     if (!data.has_value()) return;
+    if (data->IsThread()) {
+        data = m_discord.GetChannel(*data->ParentID);
+        if (!data.has_value()) return;
+    }
     auto window = new ThreadsWindow(*data);
     ManageHeapWindow(window);
     window->show();
