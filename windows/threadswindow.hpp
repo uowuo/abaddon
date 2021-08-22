@@ -4,7 +4,9 @@
 
 class ActiveThreadsList : public Gtk::ScrolledWindow {
 public:
-    ActiveThreadsList(const ChannelData &channel);
+    ActiveThreadsList(const ChannelData &channel, const Gtk::ListBox::SlotFilter &filter);
+
+    void InvalidateFilter();
 
 private:
     Gtk::ListBox m_list;
@@ -18,7 +20,9 @@ public:
 
 class ArchivedThreadsList : public Gtk::ScrolledWindow {
 public:
-    ArchivedThreadsList(const ChannelData &channel);
+    ArchivedThreadsList(const ChannelData &channel, const Gtk::ListBox::SlotFilter &filter);
+
+    void InvalidateFilter();
 
 private:
     Gtk::ListBox m_list;
@@ -38,10 +42,24 @@ public:
     ThreadsWindow(const ChannelData &channel);
 
 private:
+    // this filtering is rather cringe but idk what a better alternative would be
+    bool ListFilterFunc(Gtk::ListBoxRow *row_);
+
+    enum FilterMode {
+        FILTER_PUBLIC = 0,
+        FILTER_PRIVATE = 1,
+    };
+    bool m_filter_mode = FILTER_PUBLIC;
+
     Snowflake m_channel_id;
 
     Gtk::StackSwitcher m_switcher;
     Gtk::Stack m_stack;
+
+    Gtk::RadioButtonGroup m_group;
+    Gtk::ButtonBox m_filter_buttons;
+    Gtk::RadioButton m_filter_public;
+    Gtk::RadioButton m_filter_private;
 
     Gtk::Box m_box;
 
@@ -54,6 +72,7 @@ public:
     ThreadListRow(const ChannelData &channel);
 
     Snowflake ID;
+    ChannelType Type;
 
 private:
     Gtk::Label m_label;
