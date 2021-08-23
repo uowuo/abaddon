@@ -190,6 +190,8 @@ protected:
     bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
     bool OnButtonPressEvent(GdkEventButton *ev);
 
+    void MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::iterator &new_parent);
+
     Gtk::TreeModel::Path m_last_selected;
     Gtk::TreeModel::Path m_dm_header;
 

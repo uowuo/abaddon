@@ -205,28 +205,17 @@ void ChannelList::UpdateChannel(Snowflake id) {
     if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
     if (!IsTextChannel(channel->Type)) return;
 
-    // delete and recreate
-    m_model->erase(iter);
+    // refresh stuff that might have changed
+    const bool is_orphan_TMP = !channel->ParentID.has_value();
+    (*iter)[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
+    (*iter)[m_columns.m_nsfw] = channel->NSFW();
+    (*iter)[m_columns.m_sort] = *channel->Position + (is_orphan_TMP ? OrphanChannelSortOffset : 0);
 
-    Gtk::TreeStore::iterator parent;
-    bool is_orphan;
-    if (channel->ParentID.has_value()) {
-        is_orphan = false;
-        parent = GetIteratorForChannelFromID(*channel->ParentID);
-    } else {
-        is_orphan = true;
-        parent = GetIteratorForGuildFromID(*channel->GuildID);
-    }
-    if (!parent) return;
-    auto channel_row = *m_model->append(parent->children());
-    channel_row[m_columns.m_type] = RenderType::TextChannel;
-    channel_row[m_columns.m_id] = channel->ID;
-    channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel->Name);
-    channel_row[m_columns.m_nsfw] = channel->NSFW();
-    if (is_orphan)
-        channel_row[m_columns.m_sort] = *channel->Position + OrphanChannelSortOffset;
-    else
-        channel_row[m_columns.m_sort] = *channel->Position;
+    // check if the parent has changed
+    const auto new_parent = GetIteratorForChannelFromID(*channel->ParentID);
+    const bool parent_has_changed = iter->parent() != new_parent;
+    if (parent_has_changed)
+        MoveRow(iter, new_parent);
 }
 
 void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
@@ -670,6 +659,30 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
         return true;
     }
     return false;
+}
+
+void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::iterator &new_parent) {
+    // duplicate the row data under the new parent and then delete the old row
+    auto row = *m_model->append(new_parent->children());
+    // would be nice to be able to get all columns out at runtime so i dont need this
+#define M(name) \
+    row[m_columns.name] = static_cast<decltype(m_columns.name)::ElementType>((*iter)[m_columns.name]);
+    M(m_type);
+    M(m_id);
+    M(m_name);
+    M(m_icon);
+    M(m_icon_anim);
+    M(m_sort);
+    M(m_nsfw);
+    M(m_expanded);
+#undef M
+
+    // recursively move children
+    for (const auto &child : iter->children())
+        MoveRow(child, row);
+
+    // delete original
+    m_model->erase(iter);
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
