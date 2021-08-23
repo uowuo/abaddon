@@ -124,7 +124,10 @@ void RateLimitIndicator::OnMessageSendFail(const std::string &nonce, float retry
 }
 
 void RateLimitIndicator::OnChannelUpdate(Snowflake channel_id) {
-    const auto r = Abaddon::Get().GetDiscordClient().GetChannel(channel_id)->RateLimitPerUser;
+    if (channel_id != m_active_channel) return;
+    const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(m_active_channel);
+    if (!chan.has_value()) return;
+    const auto r = chan->RateLimitPerUser;
     if (r.has_value())
         m_rate_limit = *r;
     else
