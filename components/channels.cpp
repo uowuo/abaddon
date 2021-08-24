@@ -212,9 +212,13 @@ void ChannelList::UpdateChannel(Snowflake id) {
     (*iter)[m_columns.m_sort] = *channel->Position + (is_orphan_TMP ? OrphanChannelSortOffset : 0);
 
     // check if the parent has changed
-    const auto new_parent = GetIteratorForChannelFromID(*channel->ParentID);
-    const bool parent_has_changed = iter->parent() != new_parent;
-    if (parent_has_changed)
+    Gtk::TreeModel::iterator new_parent;
+    if (channel->ParentID.has_value())
+        new_parent = GetIteratorForChannelFromID(*channel->ParentID);
+    else
+        new_parent = GetIteratorForGuildFromID(*channel->GuildID);
+
+    if (new_parent && iter->parent() != new_parent)
         MoveRow(iter, new_parent);
 }
 
@@ -678,8 +682,11 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
 #undef M
 
     // recursively move children
-    for (const auto &child : iter->children())
-        MoveRow(child, row);
+    // weird construct to work around iterator invalidation (at least i think thats what the problem was)
+    const auto tmp = iter->children();
+    const auto children = std::vector<Gtk::TreeRow>(tmp.begin(), tmp.end());
+    for (size_t i = 0; i < children.size(); i++)
+        MoveRow(children[i], row);
 
     // delete original
     m_model->erase(iter);
