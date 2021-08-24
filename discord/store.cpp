@@ -1168,7 +1168,7 @@ bool Store::CreateStatements() {
     )";
 
     const char *get_msg_ids = R"(
-        SELECT id FROM messages WHERE channel_id = ? ORDER BY id ASC
+        SELECT id FROM messages WHERE channel_id = ? AND pending = 0 ORDER BY id ASC
     )";
 
     const char *get_pins = R"(
