@@ -454,6 +454,7 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
     const auto channel = m_discord.GetChannel(id);
+    if (!channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
