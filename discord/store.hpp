@@ -137,6 +137,7 @@ private:
     mutable sqlite3_stmt *m_get_msg_ids_stmt;
     mutable sqlite3_stmt *m_get_pins_stmt;
     mutable sqlite3_stmt *m_get_threads_stmt;
+    mutable sqlite3_stmt *m_clear_chan_stmt;
 };
 
 template<typename T>

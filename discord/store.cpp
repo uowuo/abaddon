@@ -805,6 +805,12 @@ void Store::ClearGuild(Snowflake id) {
 
 void Store::ClearChannel(Snowflake id) {
     m_channels.erase(id);
+    Bind(m_clear_chan_stmt, 1, id);
+
+    if ((m_db_err = sqlite3_step(m_clear_chan_stmt)) != SQLITE_DONE)
+        printf("clearing channel failed: %s\n", sqlite3_errstr(m_db_err));
+
+    Reset(m_clear_chan_stmt);
 }
 
 void Store::ClearBan(Snowflake guild_id, Snowflake user_id) {
@@ -1228,6 +1234,10 @@ bool Store::CreateStatements() {
         SELECT id FROM channels WHERE parent_id = ? AND (type = 10 OR type = 11 OR type = 12) AND archived = FALSE
     )";
 
+    const char *clear_chan = R"(
+        DELETE FROM channels WHERE id = ?
+    )";
+
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {
         fprintf(stderr, "failed to prepare set user statement: %s\n", sqlite3_errstr(m_db_err));
@@ -1378,6 +1388,12 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_db_err = sqlite3_prepare_v2(m_db, clear_chan, -1, &m_clear_chan_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare clear channel statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
     return true;
 }
 
@@ -1407,6 +1423,7 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_msg_ids_stmt);
     sqlite3_finalize(m_get_pins_stmt);
     sqlite3_finalize(m_get_threads_stmt);
+    sqlite3_finalize(m_clear_chan_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {
