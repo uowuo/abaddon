@@ -708,10 +708,12 @@ void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     m_menu_thread_archive.set_visible(false);
     m_menu_thread_unarchive.set_visible(false);
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
     auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
-    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>((*iter)[m_columns.m_id]));
+    auto channel = discord.GetChannel(static_cast<Snowflake>((*iter)[m_columns.m_id]));
     if (!channel.has_value() || !channel->ThreadMetadata.has_value()) return;
+    if (!discord.HasGuildPermission(discord.GetUserData().ID, *channel->GuildID, Permission::MANAGE_THREADS)) return;
 
     m_menu_thread_archive.set_visible(!channel->ThreadMetadata->IsArchived);
     m_menu_thread_unarchive.set_visible(channel->ThreadMetadata->IsArchived);
