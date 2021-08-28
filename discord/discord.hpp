@@ -143,6 +143,8 @@ public:
     void Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
     void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
     void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
+    void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;

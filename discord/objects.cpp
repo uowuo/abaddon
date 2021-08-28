@@ -527,3 +527,8 @@ void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m) {
     JS_D("guild_id", m.GuildID);
     JS_D("members", m.Members);
 }
+
+void to_json(nlohmann::json &j, const ModifyChannelObject &m) {
+    JS_IF("archived", m.Archived);
+    JS_IF("locked", m.Locked);
+}

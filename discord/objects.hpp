@@ -738,3 +738,10 @@ struct ThreadMemberListUpdateData {
 
     friend void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m);
 };
+
+struct ModifyChannelObject {
+    std::optional<bool> Archived;
+    std::optional<bool> Locked;
+
+    friend void to_json(nlohmann::json &j, const ModifyChannelObject &m);
+};

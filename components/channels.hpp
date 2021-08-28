@@ -222,6 +222,10 @@ protected:
     Gtk::Menu m_menu_thread;
     Gtk::MenuItem m_menu_thread_copy_id;
     Gtk::MenuItem m_menu_thread_leave;
+    Gtk::MenuItem m_menu_thread_archive;
+    Gtk::MenuItem m_menu_thread_unarchive;
+
+    void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 
     bool m_updating_listing = false;
 

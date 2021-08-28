@@ -19,7 +19,9 @@ ChannelList::ChannelList()
     , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_thread_copy_id("_Copy ID", true)
-    , m_menu_thread_leave("_Leave", true) {
+    , m_menu_thread_leave("_Leave", true)
+    , m_menu_thread_archive("_Archive", true)
+    , m_menu_thread_unarchive("_Unarchive", true) {
     get_style_context()->add_class("channel-list");
 
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
@@ -130,9 +132,19 @@ ChannelList::ChannelList()
         if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this thread?"))
             Abaddon::Get().GetDiscordClient().LeaveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), "Context%20Menu", [](...) {});
     });
+    m_menu_thread_archive.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().ArchiveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
+    m_menu_thread_unarchive.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().UnArchiveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
     m_menu_thread.append(m_menu_thread_copy_id);
     m_menu_thread.append(m_menu_thread_leave);
+    m_menu_thread.append(m_menu_thread_archive);
+    m_menu_thread.append(m_menu_thread_unarchive);
     m_menu_thread.show_all();
+
+    m_menu_thread.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnThreadSubmenuPopup));
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
@@ -690,6 +702,19 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
 
     // delete original
     m_model->erase(iter);
+}
+
+void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    m_menu_thread_archive.set_visible(false);
+    m_menu_thread_unarchive.set_visible(false);
+
+    auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>((*iter)[m_columns.m_id]));
+    if (!channel.has_value() || !channel->ThreadMetadata.has_value()) return;
+
+    m_menu_thread_archive.set_visible(!channel->ThreadMetadata->IsArchived);
+    m_menu_thread_unarchive.set_visible(channel->ThreadMetadata->IsArchived);
 }
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {

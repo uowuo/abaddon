@@ -824,6 +824,30 @@ void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &locatio
     });
 }
 
+void DiscordClient::ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    ModifyChannelObject obj;
+    obj.Archived = true;
+    obj.Locked = true;
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    ModifyChannelObject obj;
+    obj.Archived = false;
+    obj.Locked = false;
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
