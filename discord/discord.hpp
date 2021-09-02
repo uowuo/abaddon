@@ -310,6 +310,7 @@ private:
     std::queue<std::function<void()>> m_generic_queue;
 
     std::set<Snowflake> m_channels_pinned_requested;
+    std::set<Snowflake> m_channels_lazy_loaded;
 
     // signals
 public:

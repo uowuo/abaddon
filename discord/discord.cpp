@@ -476,9 +476,16 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     msg.ShouldGetThreads = true;
 
     m_websocket.Send(msg);
+
+    m_channels_lazy_loaded.insert(id);
 }
 
 void DiscordClient::SendThreadLazyLoad(Snowflake id) {
+    auto thread = GetChannel(id);
+    if (thread.has_value())
+        if (m_channels_lazy_loaded.find(*thread->ParentID) == m_channels_lazy_loaded.end())
+            SendLazyLoad(*thread->ParentID);
+
     LazyLoadRequestMessage msg;
     msg.GuildID = *GetChannel(id)->GuildID;
     msg.ThreadIDs.emplace().push_back(id);
