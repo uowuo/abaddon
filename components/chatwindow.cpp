@@ -31,6 +31,11 @@ ChatWindow::ChatWindow() {
     m_main->set_hexpand(true);
     m_main->set_vexpand(true);
 
+    m_topic.get_style_context()->add_class("channel-topic");
+    m_topic.add(m_topic_text);
+    m_topic_text.set_halign(Gtk::ALIGN_START);
+    m_topic_text.show();
+
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
         if (m_is_replying)
@@ -84,6 +89,7 @@ ChatWindow::ChatWindow() {
     m_meta->add(*m_input_indicator);
     m_meta->add(*m_rate_limit_indicator);
     //m_scroll->add(*m_list);
+    m_main->add(m_topic);
     m_main->add(*m_chat);
     m_main->add(m_completer);
     m_main->add(*m_input);
@@ -138,6 +144,11 @@ Snowflake ChatWindow::GetOldestListedMessage() {
 
 void ChatWindow::UpdateReactions(Snowflake id) {
     m_chat->UpdateMessageReactions(id);
+}
+
+void ChatWindow::SetTopic(const std::string &text) {
+    m_topic_text.set_text(text);
+    m_topic.set_visible(text.length() > 0);
 }
 
 Snowflake ChatWindow::GetActiveChannel() const {

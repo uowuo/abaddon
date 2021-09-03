@@ -72,6 +72,7 @@ public:
     void DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data);
     void DiscordOnMessageSent(const Message &data);
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
+    void DiscordOnThreadUpdate(const ThreadUpdateData &data);
 
     const SettingsManager &GetSettings() const;
 

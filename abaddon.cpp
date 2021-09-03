@@ -40,6 +40,7 @@ Abaddon::Abaddon()
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
     m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
+    m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
@@ -234,6 +235,15 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
+    }
+}
+
+void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
+    if (data.Thread.ID == m_main_window->GetChatActiveChannel()) {
+        if (data.Thread.ThreadMetadata->IsArchived)
+            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+        else
+            m_main_window->GetChatWindow()->SetTopic("");
     }
 }
 
@@ -453,6 +463,8 @@ void Abaddon::ActionJoinGuildDialog() {
 void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
+    m_main_window->GetChatWindow()->SetTopic("");
+
     const auto channel = m_discord.GetChannel(id);
     if (!channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
@@ -480,6 +492,8 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
 
     if (channel->IsThread()) {
         m_discord.SendThreadLazyLoad(id);
+        if (channel->ThreadMetadata->IsArchived)
+            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
     } else if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
         m_discord.SendLazyLoad(id);
 

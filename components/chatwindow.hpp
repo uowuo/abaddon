@@ -28,6 +28,7 @@ public:
     void InsertChatInput(std::string text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
+    void SetTopic(const std::string &text);
 
 protected:
     bool m_is_replying = false;
@@ -48,6 +49,9 @@ protected:
     Gtk::Box *m_main;
     //Gtk::ListBox *m_list;
     //Gtk::ScrolledWindow *m_scroll;
+
+    Gtk::EventBox m_topic; // todo probably make everything else go on the stack
+    Gtk::Label m_topic_text;
 
     ChatList *m_chat;
 
