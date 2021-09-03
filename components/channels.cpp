@@ -337,6 +337,14 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
             m_model->erase(iter);
         }
     }
+
+    // delete all archived threads
+    for (auto thread : data.Threads) {
+        if (thread.ThreadMetadata->IsArchived) {
+            if (auto iter = GetIteratorForChannelFromID(thread.ID))
+                m_model->erase(iter);
+        }
+    }
 }
 
 void ChannelList::DeleteThreadRow(Snowflake id) {
