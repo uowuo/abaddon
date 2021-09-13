@@ -16,6 +16,7 @@ enum class RenderType : uint8_t {
     Guild,
     Category,
     TextChannel,
+    Thread,
 
     DMHeader,
     DM,
@@ -77,6 +78,17 @@ protected:
                               const Gdk::Rectangle &cell_area,
                               Gtk::CellRendererState flags);
 
+    // thread
+    void get_preferred_width_vfunc_thread(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_thread(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_thread(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_thread(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_thread(const Cairo::RefPtr<Cairo::Context> &cr,
+                             Gtk::Widget &widget,
+                             const Gdk::Rectangle &background_area,
+                             const Gdk::Rectangle &cell_area,
+                             Gtk::CellRendererState flags);
+
     // dm header
     void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
     void get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
@@ -127,8 +139,15 @@ protected:
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
     void UpdateChannel(Snowflake id);
-    void UpdateCreateChannel(Snowflake id);
+    void UpdateCreateChannel(const ChannelData &channel);
     void UpdateGuild(Snowflake id);
+    void DeleteThreadRow(Snowflake id);
+
+    void OnThreadJoined(Snowflake id);
+    void OnThreadRemoved(Snowflake id);
+    void OnThreadDelete(const ThreadDeleteData &data);
+    void OnThreadUpdate(const ThreadUpdateData &data);
+    void OnThreadListSync(const ThreadListSyncData &data);
 
     Gtk::TreeView m_view;
 
@@ -156,6 +175,7 @@ protected:
 
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
+    Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
 
     void UpdateChannelCategory(const ChannelData &channel);
 
@@ -170,6 +190,8 @@ protected:
     bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
     bool OnButtonPressEvent(GdkEventButton *ev);
 
+    void MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::iterator &new_parent);
+
     Gtk::TreeModel::Path m_last_selected;
     Gtk::TreeModel::Path m_dm_header;
 
@@ -178,6 +200,9 @@ protected:
 
     void OnMessageCreate(const Message &msg);
     Gtk::TreeModel::Path m_path_for_menu;
+
+    // cant be recovered through selection
+    Gtk::TreeModel::iterator m_temporary_thread_row;
 
     Gtk::Menu m_menu_guild;
     Gtk::MenuItem m_menu_guild_copy_id;
@@ -193,6 +218,14 @@ protected:
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
+
+    Gtk::Menu m_menu_thread;
+    Gtk::MenuItem m_menu_thread_copy_id;
+    Gtk::MenuItem m_menu_thread_leave;
+    Gtk::MenuItem m_menu_thread_archive;
+    Gtk::MenuItem m_menu_thread_unarchive;
+
+    void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 
     bool m_updating_listing = false;
 

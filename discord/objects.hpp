@@ -71,6 +71,13 @@ enum class GatewayEvent : int {
     GUILD_JOIN_REQUEST_DELETE,
     RELATIONSHIP_REMOVE,
     RELATIONSHIP_ADD,
+    THREAD_CREATE,
+    THREAD_UPDATE,
+    THREAD_DELETE,
+    THREAD_LIST_SYNC,
+    THREAD_MEMBER_UPDATE,
+    THREAD_MEMBERS_UPDATE,
+    THREAD_MEMBER_LIST_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -198,10 +205,12 @@ struct GuildMemberListUpdateMessage {
 
 struct LazyLoadRequestMessage {
     Snowflake GuildID;
-    bool ShouldGetTyping = false;
-    bool ShouldGetActivities = false;
-    std::optional<std::vector<std::string>> Members;                                         // snowflake?
-    std::optional<std::unordered_map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
+    std::optional<bool> ShouldGetTyping;
+    std::optional<bool> ShouldGetActivities;
+    std::optional<bool> ShouldGetThreads;
+    std::optional<std::vector<std::string>> Members;                               // snowflake?
+    std::optional<std::map<Snowflake, std::vector<std::pair<int, int>>>> Channels; // channel ID -> range of sidebar
+    std::optional<std::vector<Snowflake>> ThreadIDs;
 
     friend void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m);
 };
@@ -658,4 +667,81 @@ struct PutRelationshipObject {
     std::optional<RelationshipType> Type;
 
     friend void to_json(nlohmann::json &j, const PutRelationshipObject &m);
+};
+
+struct ThreadCreateData {
+    ChannelData Channel;
+
+    friend void from_json(const nlohmann::json &j, ThreadCreateData &m);
+};
+
+struct ThreadDeleteData {
+    Snowflake ID;
+    Snowflake GuildID;
+    Snowflake ParentID;
+    ChannelType Type;
+
+    friend void from_json(const nlohmann::json &j, ThreadDeleteData &m);
+};
+
+// pretty different from docs
+struct ThreadListSyncData {
+    std::vector<ChannelData> Threads;
+    Snowflake GuildID;
+    // std::optional<std::vector<???>> MostRecentMessages;
+
+    friend void from_json(const nlohmann::json &j, ThreadListSyncData &m);
+};
+
+struct ThreadMembersUpdateData {
+    Snowflake ID;
+    Snowflake GuildID;
+    int MemberCount;
+    std::optional<std::vector<ThreadMemberObject>> AddedMembers;
+    std::optional<std::vector<Snowflake>> RemovedMemberIDs;
+
+    friend void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m);
+};
+
+struct ArchivedThreadsResponseData {
+    std::vector<ChannelData> Threads;
+    std::vector<ThreadMemberObject> Members;
+    bool HasMore;
+
+    friend void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m);
+};
+
+struct ThreadMemberUpdateData {
+    ThreadMemberObject Member;
+
+    friend void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m);
+};
+
+struct ThreadUpdateData {
+    ChannelData Thread;
+
+    friend void from_json(const nlohmann::json &j, ThreadUpdateData &m);
+};
+
+struct ThreadMemberListUpdateData {
+    struct UserEntry {
+        Snowflake UserID;
+        // PresenceData Presence;
+        GuildMember Member;
+
+        friend void from_json(const nlohmann::json &j, UserEntry &m);
+    };
+
+    Snowflake ThreadID;
+    Snowflake GuildID;
+    std::vector<UserEntry> Members;
+
+    friend void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m);
+};
+
+struct ModifyChannelObject {
+    std::optional<bool> Archived;
+    std::optional<bool> Locked;
+
+    friend void to_json(nlohmann::json &j, const ModifyChannelObject &m);
 };

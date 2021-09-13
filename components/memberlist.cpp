@@ -127,7 +127,12 @@ void MemberList::UpdateMemberList() {
         return;
     }
 
-    auto ids = discord.GetUsersInGuild(m_guild_id);
+    std::set<Snowflake> ids;
+    if (chan->IsThread()) {
+        const auto x = discord.GetUsersInThread(m_chan_id);
+        ids = { x.begin(), x.end() };
+    } else
+        ids = discord.GetUsersInGuild(m_guild_id);
 
     // process all the shit first so its in proper order
     std::map<int, RoleData> pos_to_role;

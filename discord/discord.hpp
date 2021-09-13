@@ -86,7 +86,11 @@ public:
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
+    std::vector<Snowflake> GetUsersInThread(Snowflake id) const;
+    std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
+    void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
 
+    bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
 
     bool HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
@@ -102,6 +106,7 @@ public:
     void DeleteMessage(Snowflake channel_id, Snowflake id);
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
+    void SendThreadLazyLoad(Snowflake id);
     void JoinGuild(std::string code);
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
@@ -137,6 +142,9 @@ public:
     void PutRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback); // send fr by id, accept incoming
     void Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
     void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
+    void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
+    void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -236,6 +244,13 @@ private:
     void HandleGatewayGuildJoinRequestDelete(const GatewayMessage &msg);
     void HandleGatewayRelationshipRemove(const GatewayMessage &msg);
     void HandleGatewayRelationshipAdd(const GatewayMessage &msg);
+    void HandleGatewayThreadCreate(const GatewayMessage &msg);
+    void HandleGatewayThreadDelete(const GatewayMessage &msg);
+    void HandleGatewayThreadListSync(const GatewayMessage &msg);
+    void HandleGatewayThreadMembersUpdate(const GatewayMessage &msg);
+    void HandleGatewayThreadMemberUpdate(const GatewayMessage &msg);
+    void HandleGatewayThreadUpdate(const GatewayMessage &msg);
+    void HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -255,13 +270,12 @@ private:
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;
-
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_channels;
     std::map<Snowflake, GuildApplicationData> m_guild_join_requests;
-
     std::map<Snowflake, PresenceStatus> m_user_to_status;
-
     std::map<Snowflake, RelationshipType> m_user_relationships;
+    std::set<Snowflake> m_joined_threads;
+    std::map<Snowflake, std::vector<Snowflake>> m_thread_members;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -296,6 +310,7 @@ private:
     std::queue<std::function<void()>> m_generic_queue;
 
     std::set<Snowflake> m_channels_pinned_requested;
+    std::set<Snowflake> m_channels_lazy_loaded;
 
     // signals
 public:
@@ -308,7 +323,7 @@ public:
     typedef sigc::signal<void, Snowflake> type_signal_guild_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_delete;
     typedef sigc::signal<void, Snowflake> type_signal_channel_update;
-    typedef sigc::signal<void, Snowflake> type_signal_channel_create;
+    typedef sigc::signal<void, ChannelData> type_signal_channel_create;
     typedef sigc::signal<void, Snowflake> type_signal_guild_update;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_update; // guild id, role id
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_role_create; // guild id, role id
@@ -329,9 +344,20 @@ public:
     typedef sigc::signal<void, GuildJoinRequestDeleteData> type_signal_guild_join_request_delete;
     typedef sigc::signal<void, Snowflake, RelationshipType> type_signal_relationship_remove;
     typedef sigc::signal<void, RelationshipAddData> type_signal_relationship_add;
-    typedef sigc::signal<void, Message> type_signal_message_unpinned; // not a real event
-    typedef sigc::signal<void, Message> type_signal_message_pinned;   // not a real event either
+    typedef sigc::signal<void, ChannelData> type_signal_thread_create;
+    typedef sigc::signal<void, ThreadDeleteData> type_signal_thread_delete;
+    typedef sigc::signal<void, ThreadListSyncData> type_signal_thread_list_sync;
+    typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
+    typedef sigc::signal<void, ThreadUpdateData> type_signal_thread_update;
+    typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
+
+    // not discord dispatch events
+    typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
+    typedef sigc::signal<void, Snowflake> type_signal_removed_from_thread;
+    typedef sigc::signal<void, Message> type_signal_message_unpinned;
+    typedef sigc::signal<void, Message> type_signal_message_pinned;
     typedef sigc::signal<void, Message> type_signal_message_sent;
+
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
@@ -368,6 +394,15 @@ public:
     type_signal_relationship_add signal_relationship_add();
     type_signal_message_unpinned signal_message_unpinned();
     type_signal_message_pinned signal_message_pinned();
+    type_signal_thread_create signal_thread_create();
+    type_signal_thread_delete signal_thread_delete();
+    type_signal_thread_list_sync signal_thread_list_sync();
+    type_signal_thread_members_update signal_thread_members_update();
+    type_signal_thread_update signal_thread_update();
+    type_signal_thread_member_list_update signal_thread_member_list_update();
+
+    type_signal_added_to_thread signal_added_to_thread();
+    type_signal_removed_from_thread signal_removed_from_thread();
     type_signal_message_sent signal_message_sent();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
@@ -406,6 +441,15 @@ protected:
     type_signal_relationship_add m_signal_relationship_add;
     type_signal_message_unpinned m_signal_message_unpinned;
     type_signal_message_pinned m_signal_message_pinned;
+    type_signal_thread_create m_signal_thread_create;
+    type_signal_thread_delete m_signal_thread_delete;
+    type_signal_thread_list_sync m_signal_thread_list_sync;
+    type_signal_thread_members_update m_signal_thread_members_update;
+    type_signal_thread_update m_signal_thread_update;
+    type_signal_thread_member_list_update m_signal_thread_member_list_update;
+
+    type_signal_removed_from_thread m_signal_removed_from_thread;
+    type_signal_added_to_thread m_signal_added_to_thread;
     type_signal_message_sent m_signal_message_sent;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;

@@ -15,6 +15,7 @@
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
+#include "windows/threadswindow.hpp"
 
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
@@ -35,9 +36,11 @@ Abaddon::Abaddon()
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
     m_discord.signal_guild_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildMemberListUpdate));
+    m_discord.signal_thread_member_list_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadMemberListUpdate));
     m_discord.signal_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionAdd));
     m_discord.signal_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReactionRemove));
     m_discord.signal_guild_join_request_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnGuildJoinRequestCreate));
+    m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
     if (m_settings.GetPrefetch())
@@ -94,6 +97,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
+    m_main_window->signal_action_view_threads().connect(sigc::mem_fun(*this, &Abaddon::ActionViewThreads));
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
@@ -190,6 +194,10 @@ void Abaddon::DiscordOnGuildMemberListUpdate(Snowflake guild_id) {
     m_main_window->UpdateMembers();
 }
 
+void Abaddon::DiscordOnThreadMemberListUpdate(const ThreadMemberListUpdateData &data) {
+    m_main_window->UpdateMembers();
+}
+
 void Abaddon::DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param) {
     m_main_window->UpdateChatReactionAdd(message_id, param);
 }
@@ -227,6 +235,15 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
+    }
+}
+
+void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
+    if (data.Thread.ID == m_main_window->GetChatActiveChannel()) {
+        if (data.Thread.ThreadMetadata->IsArchived)
+            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+        else
+            m_main_window->GetChatWindow()->SetTopic("");
     }
 }
 
@@ -446,7 +463,10 @@ void Abaddon::ActionJoinGuildDialog() {
 void Abaddon::ActionChannelOpened(Snowflake id) {
     if (id == m_main_window->GetChatActiveChannel()) return;
 
+    m_main_window->GetChatWindow()->SetTopic("");
+
     const auto channel = m_discord.GetChannel(id);
+    if (!channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
@@ -470,7 +490,11 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
         m_main_window->UpdateChatWindowContents();
     }
 
-    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
+    if (channel->IsThread()) {
+        m_discord.SendThreadLazyLoad(id);
+        if (channel->ThreadMetadata->IsArchived)
+            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+    } else if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
         m_discord.SendLazyLoad(id);
 
         if (m_discord.IsVerificationRequired(*channel->GuildID))
@@ -612,6 +636,18 @@ void Abaddon::ActionViewPins(Snowflake channel_id) {
     const auto data = m_discord.GetChannel(channel_id);
     if (!data.has_value()) return;
     auto window = new PinnedWindow(*data);
+    ManageHeapWindow(window);
+    window->show();
+}
+
+void Abaddon::ActionViewThreads(Snowflake channel_id) {
+    auto data = m_discord.GetChannel(channel_id);
+    if (!data.has_value()) return;
+    if (data->IsThread()) {
+        data = m_discord.GetChannel(*data->ParentID);
+        if (!data.has_value()) return;
+    }
+    auto window = new ThreadsWindow(*data);
     ManageHeapWindow(window);
     window->show();
 }

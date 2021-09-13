@@ -105,6 +105,16 @@ void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     Bind(m_set_chan_stmt, 17, chan.ParentID);
     Bind(m_set_chan_stmt, 18, chan.LastPinTimestamp);
 
+    if (chan.ThreadMetadata.has_value()) {
+        Bind(m_set_chan_stmt, 19, chan.ThreadMetadata->IsArchived);
+        Bind(m_set_chan_stmt, 20, chan.ThreadMetadata->AutoArchiveDuration);
+        Bind(m_set_chan_stmt, 21, chan.ThreadMetadata->ArchiveTimestamp);
+    } else {
+        Bind(m_set_chan_stmt, 19, nullptr);
+        Bind(m_set_chan_stmt, 20, nullptr);
+        Bind(m_set_chan_stmt, 21, nullptr);
+    }
+
     if (!RunInsert(m_set_chan_stmt))
         fprintf(stderr, "channel insert failed: %s\n", sqlite3_errstr(m_db_err));
 
@@ -194,6 +204,12 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
     Bind(m_set_guild_stmt, 37, guild.ApproximateMemberCount);
     Bind(m_set_guild_stmt, 38, guild.ApproximatePresenceCount);
     Bind(m_set_guild_stmt, 39, guild.IsLazy);
+    if (guild.Threads.has_value()) {
+        snowflakes.clear();
+        for (const auto &x : *guild.Threads) snowflakes.push_back(x.ID);
+        Bind(m_set_guild_stmt, 40, nlohmann::json(snowflakes).dump());
+    } else
+        Bind(m_set_guild_stmt, 40, "[]"s);
 
     if (!RunInsert(m_set_guild_stmt))
         fprintf(stderr, "guild insert failed: %s\n", sqlite3_errstr(m_db_err));
@@ -493,6 +509,25 @@ std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
     return ret;
 }
 
+std::vector<ChannelData> Store::GetActiveThreads(Snowflake channel_id) const {
+    std::vector<ChannelData> ret;
+
+    Bind(m_get_threads_stmt, 1, channel_id);
+    while (FetchOne(m_get_threads_stmt)) {
+        Snowflake x;
+        Get(m_get_threads_stmt, 0, x);
+        auto chan = GetChannel(x);
+        if (chan.has_value())
+            ret.push_back(*chan);
+    }
+
+    Reset(m_get_threads_stmt);
+
+    if (m_db_err != SQLITE_DONE)
+        fprintf(stderr, "error while fetching threads: %s\n", sqlite3_errstr(m_db_err));
+    return ret;
+}
+
 std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Bind(m_get_chan_stmt, 1, id);
     if (!FetchOne(m_get_chan_stmt)) {
@@ -527,6 +562,12 @@ std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     Get(m_get_chan_stmt, 15, ret.ApplicationID);
     Get(m_get_chan_stmt, 16, ret.ParentID);
     Get(m_get_chan_stmt, 17, ret.LastPinTimestamp);
+    if (!IsNull(m_get_chan_stmt, 18)) {
+        ret.ThreadMetadata.emplace();
+        Get(m_get_chan_stmt, 18, ret.ThreadMetadata->IsArchived);
+        Get(m_get_chan_stmt, 19, ret.ThreadMetadata->AutoArchiveDuration);
+        Get(m_get_chan_stmt, 20, ret.ThreadMetadata->ArchiveTimestamp);
+    }
 
     Reset(m_get_chan_stmt);
 
@@ -626,6 +667,10 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     Get(m_get_guild_stmt, 36, ret.ApproximateMemberCount);
     Get(m_get_guild_stmt, 37, ret.ApproximatePresenceCount);
     Get(m_get_guild_stmt, 38, ret.IsLazy);
+    Get(m_get_guild_stmt, 39, tmp);
+    ret.Threads.emplace();
+    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
+        ret.Threads->emplace_back().ID = id;
 
     Reset(m_get_guild_stmt);
 
@@ -760,6 +805,12 @@ void Store::ClearGuild(Snowflake id) {
 
 void Store::ClearChannel(Snowflake id) {
     m_channels.erase(id);
+    Bind(m_clear_chan_stmt, 1, id);
+
+    if ((m_db_err = sqlite3_step(m_clear_chan_stmt)) != SQLITE_DONE)
+        printf("clearing channel failed: %s\n", sqlite3_errstr(m_db_err));
+
+    Reset(m_clear_chan_stmt);
 }
 
 void Store::ClearBan(Snowflake guild_id, Snowflake user_id) {
@@ -934,7 +985,8 @@ bool Store::CreateTables() {
             max_video_users INTEGER,
             approx_members INTEGER,
             approx_presences INTEGER,
-            lazy BOOL
+            lazy BOOL,
+            threads TEXT NOT NULL /* json */
         )
     )";
 
@@ -957,7 +1009,10 @@ bool Store::CreateTables() {
             owner_id INTEGER,
             application_id INTEGER,
             parent_id INTEGER,
-            last_pin_timestamp TEXT
+            last_pin_timestamp TEXT,
+            archived BOOL, /* threads */
+            auto_archive INTEGER, /* threads */
+            archived_ts TEXT /* threads */
         )
     )";
 
@@ -1116,7 +1171,7 @@ bool Store::CreateStatements() {
 
     const char *set_guild = R"(
         REPLACE INTO guilds VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 
@@ -1126,7 +1181,7 @@ bool Store::CreateStatements() {
 
     const char *set_chan = R"(
         REPLACE INTO channels VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )";
 
@@ -1173,6 +1228,14 @@ bool Store::CreateStatements() {
 
     const char *get_pins = R"(
         SELECT id FROM messages WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
+    )";
+
+    const char *get_threads = R"(
+        SELECT id FROM channels WHERE parent_id = ? AND (type = 10 OR type = 11 OR type = 12) AND archived = FALSE
+    )";
+
+    const char *clear_chan = R"(
+        DELETE FROM channels WHERE id = ?
     )";
 
     m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
@@ -1315,7 +1378,19 @@ bool Store::CreateStatements() {
 
     m_db_err = sqlite3_prepare_v2(m_db, get_pins, -1, &m_get_pins_stmt, nullptr);
     if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare getp ins statement: %s\n", sqlite3_errstr(m_db_err));
+        fprintf(stderr, "failed to prepare get pins statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, get_threads, -1, &m_get_threads_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare get threads statement: %s\n", sqlite3_errstr(m_db_err));
+        return false;
+    }
+
+    m_db_err = sqlite3_prepare_v2(m_db, clear_chan, -1, &m_clear_chan_stmt, nullptr);
+    if (m_db_err != SQLITE_OK) {
+        fprintf(stderr, "failed to prepare clear channel statement: %s\n", sqlite3_errstr(m_db_err));
         return false;
     }
 
@@ -1347,6 +1422,8 @@ void Store::Cleanup() {
     sqlite3_finalize(m_get_last_msgs_stmt);
     sqlite3_finalize(m_get_msg_ids_stmt);
     sqlite3_finalize(m_get_pins_stmt);
+    sqlite3_finalize(m_get_threads_stmt);
+    sqlite3_finalize(m_clear_chan_stmt);
 }
 
 void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {

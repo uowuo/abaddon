@@ -43,6 +43,12 @@ enum class AuditLogActionType {
     STAGE_INSTANCE_CREATE = 83,
     STAGE_INSTANCE_UPDATE = 84,
     STAGE_INSTANCE_DELETE = 85,
+    STICKER_CREATE = 90,
+    STICKER_UPDATE = 91,
+    STICKER_DELETE = 92,
+    THREAD_CREATE = 110,
+    THREAD_UPDATE = 111,
+    THREAD_DELETE = 112,
 };
 
 struct AuditLogChange {

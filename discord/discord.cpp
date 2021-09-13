@@ -127,7 +127,23 @@ void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<
 void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](const http::response_type &r) {
-        if (!CheckCode(r)) return;
+        if (!CheckCode(r)) {
+            // fake a thread delete event if the requested channel is a thread and we get a 404
+
+            if (r.status_code == http::NotFound) {
+                const auto channel = m_store.GetChannel(id);
+                if (channel.has_value() && channel->IsThread()) {
+                    ThreadDeleteData data;
+                    data.GuildID = *channel->GuildID;
+                    data.ID = id;
+                    data.ParentID = *channel->ParentID;
+                    data.Type = channel->Type;
+                    m_signal_thread_delete.emit(data);
+                }
+            }
+
+            return;
+        }
 
         std::vector<Message> msgs;
 
@@ -247,6 +263,34 @@ std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     if (it != m_guild_to_channels.end())
         return it->second;
     return {};
+}
+
+std::vector<Snowflake> DiscordClient::GetUsersInThread(Snowflake id) const {
+    if (auto it = m_thread_members.find(id); it != m_thread_members.end())
+        return it->second;
+    return {};
+}
+
+// there is an endpoint for this but it should be synced before this is called anyways
+std::vector<ChannelData> DiscordClient::GetActiveThreads(Snowflake channel_id) const {
+    return m_store.GetActiveThreads(channel_id);
+}
+
+void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback) {
+    m_http.MakeGET("/channels/" + std::to_string(channel_id) + "/threads/archived/public", [this, callback](const http::response_type &r) {
+        if (CheckCode(r)) {
+            const auto data = nlohmann::json::parse(r.text).get<ArchivedThreadsResponseData>();
+            for (const auto &thread : data.Threads)
+                m_store.SetChannel(thread.ID, thread);
+            callback(DiscordError::NONE, data);
+        } else {
+            callback(GetCodeFromResponse(r), {});
+        }
+    });
+}
+
+bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
+    return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
 
 bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const {
@@ -429,6 +473,22 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
     msg.GuildID = *GetChannel(id)->GuildID;
     msg.ShouldGetActivities = true;
     msg.ShouldGetTyping = true;
+    msg.ShouldGetThreads = true;
+
+    m_websocket.Send(msg);
+
+    m_channels_lazy_loaded.insert(id);
+}
+
+void DiscordClient::SendThreadLazyLoad(Snowflake id) {
+    auto thread = GetChannel(id);
+    if (thread.has_value())
+        if (m_channels_lazy_loaded.find(*thread->ParentID) == m_channels_lazy_loaded.end())
+            SendLazyLoad(*thread->ParentID);
+
+    LazyLoadRequestMessage msg;
+    msg.GuildID = *GetChannel(id)->GuildID;
+    msg.ThreadIDs.emplace().push_back(id);
 
     m_websocket.Send(msg);
 }
@@ -754,6 +814,41 @@ void DiscordClient::Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<v
 void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), [this, callback](const http::response_type &response) {
         if (CheckCode(response, 204))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+// i dont know if the location parameter is necessary at all but discord's thread implementation is extremely strange
+// so its here just in case
+void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [this, callback](const http::response_type &response) {
+        if (CheckCode(response, 204))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    ModifyChannelObject obj;
+    obj.Archived = true;
+    obj.Locked = true;
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    ModifyChannelObject obj;
+    obj.Archived = false;
+    obj.Locked = false;
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
             callback(DiscordError::NONE);
         else
             callback(GetCodeFromResponse(response));
@@ -1155,6 +1250,27 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::RELATIONSHIP_ADD: {
                         HandleGatewayRelationshipAdd(m);
                     } break;
+                    case GatewayEvent::THREAD_CREATE: {
+                        HandleGatewayThreadCreate(m);
+                    } break;
+                    case GatewayEvent::THREAD_DELETE: {
+                        HandleGatewayThreadDelete(m);
+                    } break;
+                    case GatewayEvent::THREAD_LIST_SYNC: {
+                        HandleGatewayThreadListSync(m);
+                    } break;
+                    case GatewayEvent::THREAD_MEMBERS_UPDATE: {
+                        HandleGatewayThreadMembersUpdate(m);
+                    } break;
+                    case GatewayEvent::THREAD_MEMBER_UPDATE: {
+                        HandleGatewayThreadMemberUpdate(m);
+                    } break;
+                    case GatewayEvent::THREAD_UPDATE: {
+                        HandleGatewayThreadUpdate(m);
+                    } break;
+                    case GatewayEvent::THREAD_MEMBER_LIST_UPDATE: {
+                        HandleGatewayThreadMemberListUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1209,7 +1325,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
     m_store.BeginTransaction();
 
     m_store.SetGuild(guild.ID, guild);
-    if (guild.Channels.has_value())
+    if (guild.Channels.has_value()) {
         for (auto &c : *guild.Channels) {
             c.GuildID = guild.ID;
             m_store.SetChannel(c.ID, c);
@@ -1218,6 +1334,15 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
                 m_store.SetPermissionOverwrite(c.ID, p.ID, p);
             }
         }
+    }
+
+    if (guild.Threads.has_value()) {
+        for (auto &c : *guild.Threads) {
+            m_joined_threads.insert(c.ID);
+            c.GuildID = guild.ID;
+            m_store.SetChannel(c.ID, c);
+        }
+    }
 
     for (auto &r : *guild.Roles)
         m_store.SetRole(r.ID, r);
@@ -1373,7 +1498,7 @@ void DiscordClient::HandleGatewayChannelCreate(const GatewayMessage &msg) {
         for (const auto &p : *data.PermissionOverwrites)
             m_store.SetPermissionOverwrite(data.ID, p.ID, p);
     m_store.EndTransaction();
-    m_signal_channel_create.emit(data.ID);
+    m_signal_channel_create.emit(data);
 }
 
 void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
@@ -1625,6 +1750,73 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
     m_store.SetUser(data.ID, data.User);
     m_user_relationships[data.ID] = data.Type;
     m_signal_relationship_add.emit(std::move(data));
+}
+
+// remarkably this doesnt actually mean a thread was created
+// it can also mean you gained access to a thread. yay ...
+// except sometimes it doesnt??? i dont know whats going on
+void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
+    ThreadCreateData data = msg.Data;
+    m_store.SetChannel(data.Channel.ID, data.Channel);
+    m_signal_thread_create.emit(data.Channel);
+}
+
+void DiscordClient::HandleGatewayThreadDelete(const GatewayMessage &msg) {
+    ThreadDeleteData data = msg.Data;
+    m_store.ClearChannel(data.ID);
+    m_signal_thread_delete.emit(data);
+}
+
+// this message is received when you load a channel as part of the lazy load request
+// so the ui will only update thread when you load a channel in some guild
+// which is rather annoying but oh well
+void DiscordClient::HandleGatewayThreadListSync(const GatewayMessage &msg) {
+    ThreadListSyncData data = msg.Data;
+    for (const auto &thread : data.Threads)
+        m_store.SetChannel(thread.ID, thread);
+    m_signal_thread_list_sync.emit(data);
+}
+
+void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) {
+    ThreadMembersUpdateData data = msg.Data;
+    if (data.AddedMembers.has_value() &&
+        std::find_if(data.AddedMembers->begin(), data.AddedMembers->end(), [this](const auto &x) {
+            return *x.UserID == m_user_data.ID; // safe to assume UserID is present here
+        }) != data.AddedMembers->end()) {
+        m_joined_threads.insert(data.ID);
+        m_signal_added_to_thread.emit(data.ID);
+    } else if (data.RemovedMemberIDs.has_value() &&
+               std::find(data.RemovedMemberIDs->begin(), data.RemovedMemberIDs->end(), m_user_data.ID) != data.RemovedMemberIDs->end()) {
+        m_joined_threads.erase(data.ID);
+        m_signal_removed_from_thread.emit(data.ID);
+    }
+    m_signal_thread_members_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayThreadMemberUpdate(const GatewayMessage &msg) {
+    ThreadMemberUpdateData data = msg.Data;
+    m_joined_threads.insert(*data.Member.ThreadID);
+    if (*data.Member.UserID == GetUserData().ID)
+        m_signal_added_to_thread.emit(*data.Member.ThreadID);
+}
+
+void DiscordClient::HandleGatewayThreadUpdate(const GatewayMessage &msg) {
+    ThreadUpdateData data = msg.Data;
+    m_store.SetChannel(data.Thread.ID, data.Thread);
+    m_signal_thread_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg) {
+    ThreadMemberListUpdateData data = msg.Data;
+    m_store.BeginTransaction();
+    for (const auto &entry : data.Members) {
+        m_thread_members[data.ThreadID].push_back(entry.UserID);
+        if (entry.Member.User.has_value())
+            m_store.SetUser(entry.Member.User->ID, *entry.Member.User);
+        m_store.SetGuildMember(data.GuildID, entry.Member.User->ID, entry.Member);
+    }
+    m_store.EndTransaction();
+    m_signal_thread_member_list_update.emit(data);
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -1989,6 +2181,13 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_JOIN_REQUEST_DELETE"] = GatewayEvent::GUILD_JOIN_REQUEST_DELETE;
     m_event_map["RELATIONSHIP_REMOVE"] = GatewayEvent::RELATIONSHIP_REMOVE;
     m_event_map["RELATIONSHIP_ADD"] = GatewayEvent::RELATIONSHIP_ADD;
+    m_event_map["THREAD_CREATE"] = GatewayEvent::THREAD_CREATE;
+    m_event_map["THREAD_DELETE"] = GatewayEvent::THREAD_DELETE;
+    m_event_map["THREAD_LIST_SYNC"] = GatewayEvent::THREAD_LIST_SYNC;
+    m_event_map["THREAD_MEMBERS_UPDATE"] = GatewayEvent::THREAD_MEMBERS_UPDATE;
+    m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
+    m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
+    m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2125,6 +2324,38 @@ DiscordClient::type_signal_message_unpinned DiscordClient::signal_message_unpinn
 
 DiscordClient::type_signal_message_pinned DiscordClient::signal_message_pinned() {
     return m_signal_message_pinned;
+}
+
+DiscordClient::type_signal_thread_create DiscordClient::signal_thread_create() {
+    return m_signal_thread_create;
+}
+
+DiscordClient::type_signal_thread_delete DiscordClient::signal_thread_delete() {
+    return m_signal_thread_delete;
+}
+
+DiscordClient::type_signal_thread_list_sync DiscordClient::signal_thread_list_sync() {
+    return m_signal_thread_list_sync;
+}
+
+DiscordClient::type_signal_thread_members_update DiscordClient::signal_thread_members_update() {
+    return m_signal_thread_members_update;
+}
+
+DiscordClient::type_signal_thread_update DiscordClient::signal_thread_update() {
+    return m_signal_thread_update;
+}
+
+DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_thread_member_list_update() {
+    return m_signal_thread_member_list_update;
+}
+
+DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {
+    return m_signal_added_to_thread;
+}
+
+DiscordClient::type_signal_removed_from_thread DiscordClient::signal_removed_from_thread() {
+    return m_signal_removed_from_thread;
 }
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {

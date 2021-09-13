@@ -41,8 +41,10 @@ MainWindow::MainWindow()
     m_menu_view.set_submenu(m_menu_view_sub);
     m_menu_view_friends.set_label("Friends");
     m_menu_view_pins.set_label("Pins");
+    m_menu_view_threads.set_label("Threads");
     m_menu_view_sub.append(m_menu_view_friends);
     m_menu_view_sub.append(m_menu_view_pins);
+    m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.signal_popped_up().connect(sigc::mem_fun(*this, &MainWindow::OnViewSubmenuPopup));
 
     m_menu_bar.append(m_menu_file);
@@ -90,6 +92,10 @@ MainWindow::MainWindow()
 
     m_menu_view_pins.signal_activate().connect([this] {
         m_signal_action_view_pins.emit(GetChatActiveChannel());
+    });
+
+    m_menu_view_threads.signal_activate().connect([this] {
+        m_signal_action_view_threads.emit(GetChatActiveChannel());
     });
 
     m_content_box.set_hexpand(true);
@@ -243,8 +249,11 @@ void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gd
     auto channel_id = GetChatActiveChannel();
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
     m_menu_view_pins.set_sensitive(false);
-    if (channel.has_value())
-        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
+    m_menu_view_threads.set_sensitive(false);
+    if (channel.has_value()) {
+        m_menu_view_threads.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->IsThread());
+        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM || channel->IsThread());
+    }
 }
 
 ChannelList *MainWindow::GetChannelList() {
@@ -289,4 +298,8 @@ MainWindow::type_signal_action_add_recipient MainWindow::signal_action_add_recip
 
 MainWindow::type_signal_action_view_pins MainWindow::signal_action_view_pins() {
     return m_signal_action_view_pins;
+}
+
+MainWindow::type_signal_action_view_threads MainWindow::signal_action_view_threads() {
+    return m_signal_action_view_threads;
 }

@@ -27,7 +27,7 @@ enum class MessageType {
     GUILD_DISCOVERY_REQUALIFIED = 15,                  // yep
     GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16, // yep
     GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,   // yep
-    THREAD_CREATED = 18,                               // nope
+    THREAD_CREATED = 18,                               // yep
     INLINE_REPLY = 19,                                 // yep
     APPLICATION_COMMAND = 20,                          // yep
     THREAD_STARTER_MESSAGE = 21,                       // nope

@@ -85,10 +85,16 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
         for (const auto &[key, chans] : *m.Channels)
             j["d"]["channels"][std::to_string(key)] = chans;
     }
-    j["d"]["typing"] = m.ShouldGetTyping;
-    j["d"]["activities"] = m.ShouldGetActivities;
+    if (m.ShouldGetTyping)
+        j["d"]["typing"] = *m.ShouldGetTyping;
+    if (m.ShouldGetActivities)
+        j["d"]["activities"] = *m.ShouldGetActivities;
+    if (m.ShouldGetThreads)
+        j["d"]["threads"] = *m.ShouldGetThreads;
     if (m.Members.has_value())
         j["d"]["members"] = *m.Members;
+    if (m.ThreadIDs.has_value())
+        j["d"]["thread_member_lists"] = *m.ThreadIDs;
 }
 
 void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
@@ -471,4 +477,58 @@ void to_json(nlohmann::json &j, const FriendRequestObject &m) {
 
 void to_json(nlohmann::json &j, const PutRelationshipObject &m) {
     JS_IF("type", m.Type);
+}
+
+void from_json(const nlohmann::json &j, ThreadCreateData &m) {
+    j.get_to(m.Channel);
+}
+
+void from_json(const nlohmann::json &j, ThreadDeleteData &m) {
+    JS_D("id", m.ID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("parent_id", m.ParentID);
+    JS_D("type", m.Type);
+}
+
+void from_json(const nlohmann::json &j, ThreadListSyncData &m) {
+    JS_D("threads", m.Threads);
+    JS_D("guild_id", m.GuildID);
+}
+
+void from_json(const nlohmann::json &j, ThreadMembersUpdateData &m) {
+    JS_D("id", m.ID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("member_count", m.MemberCount);
+    JS_O("added_members", m.AddedMembers);
+    JS_O("removed_member_ids", m.RemovedMemberIDs);
+}
+
+void from_json(const nlohmann::json &j, ArchivedThreadsResponseData &m) {
+    JS_D("threads", m.Threads);
+    JS_D("members", m.Members);
+    JS_D("has_more", m.HasMore);
+}
+
+void from_json(const nlohmann::json &j, ThreadMemberUpdateData &m) {
+    m.Member = j;
+}
+
+void from_json(const nlohmann::json &j, ThreadUpdateData &m) {
+    m.Thread = j;
+}
+
+void from_json(const nlohmann::json &j, ThreadMemberListUpdateData::UserEntry &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("member", m.Member);
+}
+
+void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m) {
+    JS_D("thread_id", m.ThreadID);
+    JS_D("guild_id", m.GuildID);
+    JS_D("members", m.Members);
+}
+
+void to_json(nlohmann::json &j, const ModifyChannelObject &m) {
+    JS_IF("archived", m.Archived);
+    JS_IF("locked", m.Locked);
 }

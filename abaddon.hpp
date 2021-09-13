@@ -47,6 +47,7 @@ public:
     void ActionGuildSettings(Snowflake id);
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
+    void ActionViewThreads(Snowflake channel_id);
 
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 
@@ -65,11 +66,13 @@ public:
     void DiscordOnMessageDelete(Snowflake id, Snowflake channel_id);
     void DiscordOnMessageUpdate(Snowflake id, Snowflake channel_id);
     void DiscordOnGuildMemberListUpdate(Snowflake guild_id);
+    void DiscordOnThreadMemberListUpdate(const ThreadMemberListUpdateData &data);
     void DiscordOnReactionAdd(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnReactionRemove(Snowflake message_id, const Glib::ustring &param);
     void DiscordOnGuildJoinRequestCreate(const GuildJoinRequestCreateData &data);
     void DiscordOnMessageSent(const Message &data);
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
+    void DiscordOnThreadUpdate(const ThreadUpdateData &data);
 
     const SettingsManager &GetSettings() const;
 
