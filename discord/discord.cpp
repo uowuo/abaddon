@@ -434,7 +434,7 @@ void DiscordClient::SendLazyLoad(Snowflake id) {
 }
 
 void DiscordClient::JoinGuild(std::string code) {
-    m_http.MakePOST("/invites/" + code, "", [](auto) {});
+    m_http.MakePOST("/invites/" + code, "{}", [](auto) {});
 }
 
 void DiscordClient::LeaveGuild(Snowflake id) {
