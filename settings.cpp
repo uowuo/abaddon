@@ -55,7 +55,11 @@ bool SettingsManager::GetShowMemberListDiscriminators() const {
 }
 
 bool SettingsManager::GetShowStockEmojis() const {
+#ifdef _WIN32
+    return GetSettingBool("gui", "stock_emojis", false);
+#else
     return GetSettingBool("gui", "stock_emojis", true);
+#endif
 }
 
 bool SettingsManager::GetShowCustomEmojis() const {
