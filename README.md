@@ -10,7 +10,7 @@ Current features:
 * Not Electron
 * Handles most types of chat messages including embeds, images, and replies
 * Completely styleable/customizable with CSS (if you have a system GTK theme it won't really use it though)
-* Identifies to gateway as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
+* Identifies to Discord as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
 * Set status
 * Start new DMs and group DMs
 * View user profiles (notes, mutual servers, mutual friends)
@@ -20,10 +20,14 @@ Current features:
 * Manage emojis
 * View audit log
 * Emojis<sup>2</sup>
+* Thread support<sup>3</sup>
 * Animated avatars, server icons, emojis (can be turned off)
   
-1 - Other third-party clients send the IDENTIFY message that bots use which makes Discord more likely to think you are selfbotting or spamming. However, Discord still loves to ban people's accounts for no good reason, even users of the official clients. If you want to be really careful avoid joining servers really fast or cold DMing people.  
-2 - Getting emojis to function properly on GTK is still something I've yet to figure out ([#5](../../issues/5)). Unicode emojis are manually searched for and replaced in several places as opposed to allowing GTK to figure it out since GTK's way of doing it doesn't work very well.  
+1 - Abaddon tries its best to make Discord think it's a legitimate web client. Some of the things done to do this include: using a browser user agent, sending the same IDENTIFY message that the official web client does, using API v9 endpoints in all cases, and not using endpoints the web client does not normally use. There are still a few smaller inconsistencies, however. For example the web client sends lots of telemetry via the `/science` endpoint (uBlock origin stops this) as well as in the headers of all requests. **In any case,** you should use an official client for joining servers, sending new DMs, or managing your friends list if you are afraid of being caught in Discord's spam filters (unlikely).
+
+2 - Unicode emojis are subtituted manually as opposed to rendered by GTK on non-Windows platforms. This can be changed with the `stock_emojis` setting as shown at the bottom of this README. A CBDT-based font using Twemoji is provided to allow GTK to render emojis natively on Windows.
+
+3 - There are some inconsistencies with thread state that might be encountered in some more uncommon cases, but they are the result of fundamental issues with Discord's thread implementation.
   
 ### Building manually (recommended if not on Windows):
 #### Windows:
@@ -49,14 +53,19 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 4. `cmake ..`
 5. `make`
 
-### Downloads (from CI):
+### Downloads:
+
+Latest release version: https://github.com/uowuo/abaddon/releases/latest
+
+**CI:**
+
 - Windows: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-windows-RelWithDebInfo.zip)
 - MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned, unpackaged, requires gtkmm3 (e.g. from homebrew)
 - Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now), requires gtkmm3. built on Ubuntu 18.04 + gcc9  
 
 ⚠️ If you use Windows, make sure to start from the directory containing `css` and `res`
 
-If you don't use Windows, `css` and `res` can be loaded from `/usr/share/abaddon`
+On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/usr/share/abaddon`
 
 `abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is no `abaddon.ini` in the working directory
 
