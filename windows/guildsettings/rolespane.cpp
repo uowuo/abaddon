@@ -159,15 +159,7 @@ GuildSettingsRolesPaneRolesListItem::GuildSettingsRolesPaneRolesListItem(const G
 
     UpdateItem(role);
 
-    discord.signal_role_update().connect([this, &discord](Snowflake guild_id, Snowflake role_id) {
-        if (guild_id != GuildID || role_id != RoleID) return;
-        const auto role = discord.GetRole(RoleID);
-        if (!role.has_value())
-            printf("nullopt??? %llu\n", (uint64_t)RoleID);
-        Position = role->Position;
-        UpdateItem(*role);
-        changed();
-    });
+    discord.signal_role_update().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRolesListItem::OnRoleUpdate));
 
     m_name.set_ellipsize(Pango::ELLIPSIZE_END);
 
@@ -188,6 +180,15 @@ void GuildSettingsRolesPaneRolesListItem::UpdateItem(const RoleData &role) {
                           "</span>");
     else
         m_name.set_text(role.Name);
+}
+
+void GuildSettingsRolesPaneRolesListItem::OnRoleUpdate(Snowflake guild_id, Snowflake role_id) {
+    if (guild_id != GuildID || role_id != RoleID) return;
+    const auto role = Abaddon::Get().GetDiscordClient().GetRole(RoleID);
+    if (!role.has_value()) return;
+    Position = role->Position;
+    UpdateItem(*role);
+    changed();
 }
 
 GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)

@@ -16,6 +16,7 @@ public:
 
 private:
     void UpdateItem(const RoleData &role);
+    void OnRoleUpdate(Snowflake guild_id, Snowflake role_id);
 
     Gtk::EventBox m_ev;
     Gtk::Label m_name;
