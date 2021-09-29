@@ -2077,9 +2077,6 @@ void DiscordClient::HandleSocketClose(uint16_t code) {
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
         m_client_connected = false;
 
-        m_store.ClearAll();
-        m_guild_to_users.clear();
-
         if (m_client_started && !m_reconnecting && close_code == GatewayCloseCode::Abnormal) {
             Glib::signal_timeout().connect_once([this] { if (m_client_started) HandleGatewayReconnect(GatewayMessage()); }, 1000);
             m_reconnecting = true;
