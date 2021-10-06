@@ -30,6 +30,8 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto guild = *discord.GetGuild(GuildID);
     for (const auto &entry : data.Entries) {
+        if (entry.TargetID == "") continue;
+
         auto expander = Gtk::manage(new Gtk::Expander);
         auto label = Gtk::manage(new Gtk::Label);
         label->set_ellipsize(Pango::ELLIPSIZE_END);
