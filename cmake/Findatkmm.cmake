@@ -42,7 +42,6 @@ set(ATKMM_INCLUDE_DIRS ${ATKMM_INCLUDE_DIR};${ATKMM_CONFIG_INCLUDE_DIR};${ATK_IN
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(atkmm
-                                  FOUND_VAR ATKMM_FOUND
                                   REQUIRED_VARS
                                     ATKMM_LIBRARY
                                     ATKMM_INCLUDE_DIRS

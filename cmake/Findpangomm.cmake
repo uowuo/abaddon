@@ -56,7 +56,6 @@ set(PANGOMM_INCLUDE_DIRS ${PANGOMM_INCLUDE_DIR};${PANGOMM_CONFIG_INCLUDE_DIR};${
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(pangomm
-                                  FOUND_VAR PANGOMM_FOUND
                                   REQUIRED_VARS
                                     PANGOMM_LIBRARY
                                     PANGOMM_INCLUDE_DIRS

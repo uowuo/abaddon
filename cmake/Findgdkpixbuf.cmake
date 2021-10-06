@@ -33,7 +33,6 @@ set(GDKPIXBUF_INCLUDE_DIRS ${GDKPIXBUF_INCLUDE_DIR};${GDKPIXBUF_CONFIG_INCLUDE_D
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(gdkpixbuf
-                                  FOUND_VAR GDKPIXBUF_FOUND
                                   REQUIRED_VARS
                                     GDKPIXBUF_LIBRARY
                                     GDKPIXBUF_INCLUDE_DIR

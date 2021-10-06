@@ -32,7 +32,6 @@ set(SIGC++_INCLUDE_DIRS ${SIGC++_INCLUDE_DIR};${SIGC++_CONFIG_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(sigc++
-                                  FOUND_VAR SIGC++_FOUND
                                   REQUIRED_VARS
                                     SIGC++_INCLUDE_DIR
                                     SIGC++_LIBRARY

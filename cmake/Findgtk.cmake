@@ -47,7 +47,6 @@ set(GTK_INCLUDE_DIRS ${GTK_INCLUDE_DIR};${GDK_CONFIG_INCLUDE_DIR};${GDKPIXBUF_IN
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(gtk
-                                  FOUND_VAR GTK_FOUND
                                   REQUIRED_VARS
                                     GTK_LIBRARY
                                     GTK_INCLUDE_DIR

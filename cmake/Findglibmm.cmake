@@ -60,7 +60,6 @@ set(GLIBMM_INCLUDE_DIRS	${GLIBMM_INCLUDE_DIR};${GLIBMM_CONFIG_INCLUDE_DIR};${GIO
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(glibmm
-                                  FOUND_VAR GLIBMM_FOUND
                                   REQUIRED_VARS
                                     GLIBMM_LIBRARY
                                     GLIBMM_INCLUDE_DIR

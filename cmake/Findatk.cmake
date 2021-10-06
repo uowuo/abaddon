@@ -31,7 +31,6 @@ set(ATK_INCLUDE_DIRS ${ATK_INCLUDE_DIR};${ATK_CONFIG_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(atk
-                                  FOUND_VAR ATK_FOUND
                                   REQUIRED_VARS
                                     ATK_LIBRARY
                                     ATK_INCLUDE_DIR

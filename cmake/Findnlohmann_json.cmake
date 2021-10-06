@@ -22,7 +22,6 @@ set(NLOHMANN_JSON_LIBRARIES    "")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(nlohmann_json
-                                  FOUND_VAR NLOHMANN_JSON_FOUND
                                   REQUIRED_VARS
                                     NLOHMANN_JSON_INCLUDE_DIR
                                   VERSION_VAR NLOHMANN_JSON_VERSION)

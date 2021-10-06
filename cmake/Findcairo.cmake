@@ -31,7 +31,6 @@ set(CAIRO_INCLUDE_DIRS ${CAIRO_INCLUDE_DIR};${CAIRO_CONFIG_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(cairo
-                                  FOUND_VAR CAIRO_FOUND
                                   REQUIRED_VARS
                                     CAIRO_LIBRARY
                                     CAIRO_INCLUDE_DIR

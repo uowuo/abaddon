@@ -10,7 +10,6 @@ set(IXWEBSOCKET_INCLUDE_DIRS ${IXWEBSOCKET_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ixwebsocket
-                                  FOUND_VAR IXWEBSOCKET_FOUND
                                   REQUIRED_VARS
                                     IXWEBSOCKET_LIBRARY
                                     IXWEBSOCKET_INCLUDE_DIR

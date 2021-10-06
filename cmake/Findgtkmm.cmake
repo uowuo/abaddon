@@ -51,7 +51,6 @@ set(GTKMM_INCLUDE_DIRS  ${GTKMM_INCLUDE_DIR};${GTKMM_CONFIG_INCLUDE_DIR};${GDKMM
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(gtkmm
-                                  FOUND_VAR GTKMM_FOUND
                                   REQUIRED_VARS
                                     GTKMM_LIB
                                     GTKMM_INCLUDE_DIRS

@@ -45,7 +45,6 @@ set(CAIROMM_INCLUDE_DIRS ${CAIROMM_INCLUDE_DIR};${CAIROMM_CONFIG_INCLUDE_DIRS};$
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(cairomm
-                                  FOUND_VAR CAIROMM_FOUND
                                   REQUIRED_VARS
                                     CAIROMM_LIBRARY
                                     CAIROMM_INCLUDE_DIR

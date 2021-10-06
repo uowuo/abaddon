@@ -31,7 +31,6 @@ set(HARFBUZZ_INCLUDE_DIRS ${HARFBUZZ_INCLUDE_DIR};${HARFBUZZ_CONFIG_INCLUDE_DIRS
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(HarfBuzz
-                                  FOUND_VAR HARFBUZZ_FOUND
                                   REQUIRED_VARS
                                     HARFBUZZ_LIBRARY
                                     HARFBUZZ_INCLUDE_DIR

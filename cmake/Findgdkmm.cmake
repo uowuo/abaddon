@@ -40,7 +40,6 @@ set(GDKMM_INCLUDE_DIRS ${GDKMM_INCLUDE_DIR};${GDKMM_CONFIG_INCLUDE_DIRS};${GDKMM
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(gdkmm
-                                  FOUND_VAR GDKMM_FOUND
                                   REQUIRED_VARS
                                     GDKMM_LIBRARY
                                     GDKMM_INCLUDE_DIRS

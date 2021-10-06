@@ -69,7 +69,6 @@ set(PANGO_INCLUDE_DIRS ${PANGO_INCLUDE_DIR};${PANGO_CONFIG_INCLUDE_DIRS};${HARFB
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(pango
-                                  FOUND_VAR PANGO_FOUND
                                   REQUIRED_VARS
                                     PANGO_LIBRARY
                                     PANGO_INCLUDE_DIR

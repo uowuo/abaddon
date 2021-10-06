@@ -50,7 +50,6 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(glib
-                                  FOUND_VAR GLIB_FOUND
                                   REQUIRED_VARS
                                     GLIB_LIBRARIES
                                     GLIB_INCLUDE_DIRS
