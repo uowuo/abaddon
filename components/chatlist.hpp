@@ -2,7 +2,7 @@
 #include <gtkmm.h>
 #include <map>
 #include <vector>
-#include "../discord/snowflake.hpp"
+#include "discord/snowflake.hpp"
 
 class ChatList : public Gtk::ScrolledWindow {
 public:
@@ -21,7 +21,7 @@ public:
     void SetFailedByNonce(const std::string &nonce);
     std::vector<Snowflake> GetRecentAuthors();
     void SetSeparateAll(bool separate);
-    void SetUsePinnedMenu(); // i think i need a better way to do menus
+    void SetUsePinnedMenu();                  // i think i need a better way to do menus
     void ActuallyRemoveMessage(Snowflake id); // perhaps not the best method name
 
 private:
@@ -101,6 +101,15 @@ inline void ChatList::SetMessages(Iter begin, Iter end) {
 
 template<typename Iter>
 inline void ChatList::PrependMessages(Iter begin, Iter end) {
+    const auto old_upper = get_vadjustment()->get_upper();
+    const auto old_value = get_vadjustment()->get_value();
     for (Iter it = begin; it != end; it++)
         ProcessNewMessage(*it, true);
+    // force everything to process before getting new values
+    while (Gtk::Main::events_pending())
+        Gtk::Main::iteration();
+    const auto new_upper = get_vadjustment()->get_upper();
+    if (old_value == 0.0 && (new_upper - old_upper) > 0.0)
+        get_vadjustment()->set_value(new_upper - old_upper);
+    // this isn't ideal
 }

@@ -1,7 +1,7 @@
 #include "chatmessage.hpp"
 #include "chatlist.hpp"
-#include "../abaddon.hpp"
-#include "../constants.hpp"
+#include "abaddon.hpp"
+#include "constants.hpp"
 
 ChatList::ChatList() {
     m_list.get_style_context()->add_class("messages");
