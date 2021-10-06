@@ -58,6 +58,7 @@ file(GLOB ABADDON_SOURCES
 )
 
 add_executable(abaddon ${ABADDON_SOURCES})
+target_include_directories(abaddon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
