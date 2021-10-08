@@ -692,7 +692,10 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             // which of course would not be an issue if i could figure out how to get fonts to work on this god-forsaken framework
             // oh well
             // but ill manually get colors for the user who is being replied to
-            lbl->set_markup(get_author_markup(referenced.Author.ID, *referenced.GuildID) + ": " + text);
+            if (referenced.GuildID.has_value())
+                lbl->set_markup(get_author_markup(referenced.Author.ID, *referenced.GuildID) + ": " + text);
+            else
+                lbl->set_markup(get_author_markup(referenced.Author.ID) + ": " + text);
         }
     } else {
         lbl->set_markup("<i>reply unavailable</i>");
@@ -1163,19 +1166,21 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
 
 void ChatMessageHeader::UpdateNameColor() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto guild_id = discord.GetChannel(ChannelID)->GuildID;
-    const auto role_id = discord.GetMemberHoistedRole(*guild_id, UserID, true);
     const auto user = discord.GetUser(UserID);
     if (!user.has_value()) return;
-    const auto role = discord.GetRole(role_id);
+    const auto chan = discord.GetChannel(ChannelID);
+    bool is_guild = chan.has_value() && chan->GuildID.has_value();
+    if (is_guild) {
+        const auto role_id = discord.GetMemberHoistedRole(*chan->GuildID, UserID, true);
+        const auto role = discord.GetRole(role_id);
 
-    std::string md;
-    if (role.has_value())
-        md = "<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>";
-    else
-        md = "<span weight='bold'>" + user->GetEscapedName() + "</span>";
-
-    m_author.set_markup(md);
+        std::string md;
+        if (role.has_value())
+            m_author.set_markup("<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>");
+        else
+            m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
+    } else
+        m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
 }
 
 std::vector<Gtk::Widget *> ChatMessageHeader::GetChildContent() {

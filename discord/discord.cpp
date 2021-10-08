@@ -152,7 +152,8 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const s
         m_store.BeginTransaction();
         for (auto &msg : msgs) {
             StoreMessageData(msg);
-            AddUserToGuild(msg.Author.ID, *msg.GuildID);
+            if (msg.GuildID.has_value())
+                AddUserToGuild(msg.Author.ID, *msg.GuildID);
         }
         m_store.EndTransaction();
 
@@ -300,7 +301,7 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
 
 bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
-    if (!channel.has_value()) return false;
+    if (!channel.has_value() || !channel->GuildID.has_value()) return false;
     const auto base = ComputePermissions(user_id, *channel->GuildID);
     const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
     return (overwrites & perm) != Permission::NONE;
@@ -1400,7 +1401,8 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     Message data = msg.Data;
     StoreMessageData(data);
-    AddUserToGuild(data.Author.ID, *data.GuildID);
+    if (data.GuildID.has_value())
+        AddUserToGuild(data.Author.ID, *data.GuildID);
     m_signal_message_create.emit(data);
 }
 

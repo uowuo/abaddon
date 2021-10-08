@@ -106,6 +106,7 @@ bool RateLimitIndicator::UpdateIndicator() {
 void RateLimitIndicator::OnMessageCreate(const Message &message) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (message.Author.ID != discord.GetUserData().ID) return;
+    if (!message.GuildID.has_value()) return;
     const bool can_bypass = discord.HasAnyChannelPermission(discord.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES | Permission::MANAGE_CHANNELS);
     const auto rate_limit = GetRateLimit();
     if (rate_limit > 0 && !can_bypass) {

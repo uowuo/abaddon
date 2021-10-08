@@ -17,8 +17,13 @@ Cache::Cache() {
 Cache::~Cache() {
     m_worker.stop();
 
-    for (auto &future : m_futures)
-        if (future.valid()) future.get();
+    for (auto &future : m_futures) {
+        if (future.valid()) {
+            try { // dont care about stored exceptions
+                future.get();
+            } catch (...) {}
+        }
+    }
 
     std::error_code err;
     if (!std::filesystem::remove_all(m_tmp_path, err))

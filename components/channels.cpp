@@ -227,7 +227,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     Gtk::TreeModel::iterator new_parent;
     if (channel->ParentID.has_value())
         new_parent = GetIteratorForChannelFromID(*channel->ParentID);
-    else
+    else if (channel->GuildID.has_value())
         new_parent = GetIteratorForGuildFromID(*channel->GuildID);
 
     if (new_parent && iter->parent() != new_parent)

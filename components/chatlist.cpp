@@ -139,7 +139,10 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
     if (should_attach) {
         header = last_row;
     } else {
-        const auto guild_id = *discord.GetChannel(m_active_channel)->GuildID;
+        const auto chan = discord.GetChannel(m_active_channel);
+        Snowflake guild_id;
+        if (chan.has_value() && chan->GuildID.has_value())
+            guild_id = *chan->GuildID;
         const auto user_id = data.Author.ID;
         const auto user = discord.GetUser(user_id);
         if (!user.has_value()) return;
@@ -170,13 +173,14 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
                 if (!data.has_value()) return false;
                 const auto channel = client.GetChannel(m_active_channel);
 
-                bool is_dm = channel.has_value() && (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
-                const bool has_manage = client.HasChannelPermission(client.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES);
+                bool has_manage = channel.has_value() && (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM);
+                if (!has_manage)
+                    has_manage = client.HasChannelPermission(client.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES);
 
                 m_menu_edit_message->set_visible(!m_use_pinned_menu);
                 m_menu_reply_to->set_visible(!m_use_pinned_menu);
-                m_menu_unpin->set_visible((is_dm || has_manage) && data->IsPinned);
-                m_menu_pin->set_visible((is_dm || has_manage) && !data->IsPinned);
+                m_menu_unpin->set_visible(has_manage && data->IsPinned);
+                m_menu_pin->set_visible(has_manage && !data->IsPinned);
 
                 if (data->IsDeleted()) {
                     m_menu_delete_message->set_sensitive(false);

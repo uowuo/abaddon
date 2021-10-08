@@ -94,7 +94,7 @@ void MemberList::SetActiveChannel(Snowflake id) {
     m_guild_id = Snowflake::Invalid;
     if (m_chan_id.IsValid()) {
         const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
-        if (chan.has_value()) m_guild_id = *chan->GuildID;
+        if (chan.has_value() && chan->GuildID.has_value()) m_guild_id = *chan->GuildID;
     }
 }
 
