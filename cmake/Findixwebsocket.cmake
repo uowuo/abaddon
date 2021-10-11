@@ -13,12 +13,6 @@ find_library(IXWebSocket_LIBRARY
              PATH_SUFFIXES ${IXWebSocket_LIBRARY_NAME}
                            ${IXWebSocket_LIBRARY_NAME}/include)
 
-
-find_package(OpenSSL QUIET)
-set(IXWebSocket_INCLUDE_DIRS "${IXWebSocket_INCLUDE_DIR};${OPENSSL_INCLUDE_DIR}")
-set(IXWebSocket_LIBRARIES "${IXWebSocket_LIBRARY};${OPENSSL_LIBRARIES}")
-
-
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(IXWebSocket
@@ -28,3 +22,9 @@ find_package_handle_standard_args(IXWebSocket
 
 
 mark_as_advanced(IXWebSocket_LIBRARY IXWebSocket_INCLUDE_DIR)
+
+if (IXWebSocket_FOUND)
+    find_package(OpenSSL QUIET)
+    set(IXWebSocket_INCLUDE_DIRS "${IXWebSocket_INCLUDE_DIR};${OPENSSL_INCLUDE_DIR}")
+    set(IXWebSocket_LIBRARIES "${IXWebSocket_LIBRARY};${OPENSSL_LIBRARIES}")
+endif()
