@@ -7,23 +7,27 @@ set(ABADDON_RESOURCE_DIR "/usr/share/abaddon" CACHE PATH "Fallback directory for
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-set(USE_TLS TRUE)
-set(USE_OPEN_SSL TRUE)
-
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
 find_package(ZLIB REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(gtkmm REQUIRED)
 
-find_path(IXWEBSOCKET_INCLUDE_DIRS ixwebsocket/IXWebSocket.h)
-find_library(IXWEBSOCKET_LIBRARY ixwebsocket)
-if (NOT IXWEBSOCKET_LIBRARY)
+set(USE_TLS TRUE)
+set(USE_OPEN_SSL TRUE)
+find_package(IXWebSocket QUIET)
+if (NOT IXWebSocket_FOUND)
+	message("ixwebsocket was not found and will be included as a submodule")
 	add_subdirectory(thirdparty/IXWebSocket)
 	include_directories(IXWEBSOCKET_INCLUDE_DIRS)
 endif()
 
-include_directories(thirdparty/simpleini)
+add_compile_definitions(SI_NO_CONVERSION) # only CSimpleIniA is used
+find_package(simpleini QUIET)
+if (NOT simpleini_FOUND)
+	message("simpleini was not found and will be included as a submodule")
+	include_directories(thirdparty/simpleini)
+endif()
 
 if(MINGW OR WIN32)
 	link_libraries(ws2_32)
@@ -71,8 +75,8 @@ if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 	target_link_libraries(abaddon stdc++fs)
 endif()
 
-if (IXWEBSOCKET_LIBRARY)
-	target_link_libraries(abaddon ${IXWEBSOCKET_LIBRARY})
+if (IXWebSocket_LIBRARIES)
+	target_link_libraries(abaddon ${IXWebSocket_LIBRARIES})
 	find_library(MBEDTLS_X509_LIBRARY mbedx509)
 	find_library(MBEDTLS_TLS_LIBRARY mbedtls)
 	find_library(MBEDTLS_CRYPTO_LIBRARY mbedcrypto)
