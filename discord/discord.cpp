@@ -173,7 +173,8 @@ void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake
         m_store.BeginTransaction();
         for (auto &msg : msgs) {
             StoreMessageData(msg);
-            AddUserToGuild(msg.Author.ID, *msg.GuildID);
+            if (msg.GuildID.has_value())
+                AddUserToGuild(msg.Author.ID, *msg.GuildID);
         }
         m_store.EndTransaction();
 
