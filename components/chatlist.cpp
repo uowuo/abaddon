@@ -243,7 +243,10 @@ void ChatList::RefetchMessage(Snowflake id) {
 }
 
 Snowflake ChatList::GetOldestListedMessage() {
-    return m_id_to_widget.begin()->first;
+    if (m_id_to_widget.size() > 0)
+        return m_id_to_widget.begin()->first;
+    else
+        return Snowflake::Invalid;
 }
 
 void ChatList::UpdateMessageReactions(Snowflake id) {
