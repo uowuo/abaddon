@@ -15,17 +15,17 @@ jobs:
           submodules: true
 
       - name: Fetch CMake
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.21.2
 
       - name: Fetch dependencies
-        uses: lukka/run-vcpkg@main
+        uses: lukka/run-vcpkg@v7
         with:
           vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket curl
           vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
           vcpkgTriplet: x64-windows
 
       - name: Build
-        uses: lukka/run-cmake@main
+        uses: lukka/run-cmake@v3
         with:
           useVcpkgToolchainFile: true
           vcpkgTriplet: x64-windows
@@ -66,7 +66,7 @@ jobs:
           submodules: true
 
       - name: Fetch CMake
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.21.2
 
       - name: Fetch dependencies
         run: |
@@ -74,7 +74,7 @@ jobs:
           brew install nlohmann-json
 
       - name: Build
-        uses: lukka/run-cmake@main
+        uses: lukka/run-cmake@v3
         with:
           buildDirectory: ${{ runner.workspace }}/build
           cmakeBuildType: ${{ matrix.buildtype }}
@@ -104,7 +104,7 @@ jobs:
           submodules: true
 
       - name: Fetch CMake
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.21.2
 
       - name: Fetch dependencies
         run: |
@@ -123,7 +123,7 @@ jobs:
           sudo apt-get install libcurl4-gnutls-dev
 
       - name: Build
-        uses: lukka/run-cmake@main
+        uses: lukka/run-cmake@v3
         env:
           CC: gcc-9
           CXX: g++-9
