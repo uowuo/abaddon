@@ -116,8 +116,10 @@ void ChatMessageItemContainer::UpdateContent() {
 }
 
 void ChatMessageItemContainer::UpdateReactions() {
-    if (m_reactions_component != nullptr)
+    if (m_reactions_component != nullptr) {
         delete m_reactions_component;
+        m_reactions_component = nullptr;
+    }
 
     const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
     if (data->Reactions.has_value() && data->Reactions->size() > 0) {
