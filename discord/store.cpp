@@ -4,56 +4,44 @@ using namespace std::literals::string_literals;
 
 // hopefully the casting between signed and unsigned int64 doesnt cause issues
 
-Store::Store(bool mem_store) {
-    if (mem_store) {
-        m_db_path = ":memory:";
-        m_db_err = sqlite3_open(":memory:", &m_db);
-    } else {
-        m_db_path = std::filesystem::temp_directory_path() / "abaddon-store.db";
-        m_db_err = sqlite3_open(m_db_path.string().c_str(), &m_db);
-    }
-
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error opening database: %s\n", sqlite3_errstr(m_db_err));
+Store::Store(bool mem_store)
+    : m_db_path(mem_store ? ":memory:" : std::filesystem::temp_directory_path() / "abaddon-store.db")
+    , m_db(m_db_path.string().c_str()) {
+    if (!m_db.OK()) {
+        fprintf(stderr, "error opening database: %s\n", m_db.ErrStr());
         return;
     }
 
-    // clang-format off
-    m_db_err = sqlite3_exec(m_db, R"(
+    m_db.Execute(R"(
         PRAGMA writable_schema = 1;
         DELETE FROM sqlite_master;
         PRAGMA writable_schema = 0;
         VACUUM;
         PRAGMA integrity_check;
-    )", nullptr, nullptr, nullptr);
-    // clang-format on
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to clear database: %s\n", sqlite3_errstr(m_db_err));
+    )");
+    if (!m_db.OK()) {
+        fprintf(stderr, "failed to clear database: %s\n", m_db.ErrStr());
         return;
     }
 
-    m_db_err = sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "enabling write-ahead-log failed: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute("PRAGMA journal_mode = WAL") != SQLITE_OK) {
+        fprintf(stderr, "enabling write-ahead-log failed: %s\n", m_db.ErrStr());
         return;
     }
 
-    m_db_err = sqlite3_exec(m_db, "PRAGMA synchronous = NORMAL", nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "setting synchronous failed: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute("PRAGMA synchronous = NORMAL") != SQLITE_OK) {
+        fprintf(stderr, "setting synchronous failed: %s\n", m_db.ErrStr());
         return;
     }
 
-    CreateTables();
-    CreateStatements();
+    m_ok &= CreateTables();
+    m_ok &= CreateStatements();
 }
 
 Store::~Store() {
-    Cleanup();
-
-    m_db_err = sqlite3_close(m_db);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error closing database: %s\n", sqlite3_errstr(m_db_err));
+    m_db.Close();
+    if (!m_db.OK()) {
+        fprintf(stderr, "error closing database: %s\n", m_db.ErrStr());
         return;
     }
 
@@ -64,783 +52,1057 @@ Store::~Store() {
 }
 
 bool Store::IsValid() const {
-    return m_db_err == SQLITE_OK;
+    return m_db.OK() && m_ok;
 }
 
 void Store::SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban) {
-    Bind(m_set_ban_stmt, 1, guild_id);
-    Bind(m_set_ban_stmt, 2, user_id);
-    Bind(m_set_ban_stmt, 3, ban.Reason);
+    auto &s = m_stmt_set_ban;
 
-    if (!RunInsert(m_set_ban_stmt))
-        fprintf(stderr, "ban insert failed: %s\n", sqlite3_errstr(m_db_err));
+    s->Bind(1, guild_id);
+    s->Bind(2, user_id);
+    s->Bind(3, ban.Reason);
+
+    if (!s->Insert())
+        fprintf(stderr, "ban insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
+
+    s->Reset();
 }
 
 void Store::SetChannel(Snowflake id, const ChannelData &chan) {
-    Bind(m_set_chan_stmt, 1, id);
-    Bind(m_set_chan_stmt, 2, static_cast<int>(chan.Type));
-    Bind(m_set_chan_stmt, 3, chan.GuildID);
-    Bind(m_set_chan_stmt, 4, chan.Position);
-    Bind(m_set_chan_stmt, 5, nullptr); // unused
-    Bind(m_set_chan_stmt, 6, chan.Name);
-    Bind(m_set_chan_stmt, 7, chan.Topic);
-    Bind(m_set_chan_stmt, 8, chan.IsNSFW);
-    Bind(m_set_chan_stmt, 9, chan.LastMessageID);
-    Bind(m_set_chan_stmt, 10, chan.Bitrate);
-    Bind(m_set_chan_stmt, 11, chan.UserLimit);
-    Bind(m_set_chan_stmt, 12, chan.RateLimitPerUser);
-    if (chan.Recipients.has_value()) {
-        std::vector<Snowflake> ids;
-        for (const auto &u : *chan.Recipients)
-            ids.push_back(u.ID);
-        Bind(m_set_chan_stmt, 13, nlohmann::json(ids).dump());
-    } else if (chan.RecipientIDs.has_value()) {
-        Bind(m_set_chan_stmt, 13, nlohmann::json(*chan.RecipientIDs).dump());
-    } else {
-        Bind(m_set_chan_stmt, 13, nullptr);
-    }
-    Bind(m_set_chan_stmt, 14, chan.Icon);
-    Bind(m_set_chan_stmt, 15, chan.OwnerID);
-    Bind(m_set_chan_stmt, 16, chan.ApplicationID);
-    Bind(m_set_chan_stmt, 17, chan.ParentID);
-    Bind(m_set_chan_stmt, 18, chan.LastPinTimestamp);
+    auto &s = m_stmt_set_chan;
 
+    s->Bind(1, id);
+    s->Bind(2, chan.Type);
+    s->Bind(3, chan.GuildID);
+    s->Bind(4, chan.Position);
+    s->Bind(5, chan.Name);
+    s->Bind(6, chan.Topic);
+    s->Bind(7, chan.IsNSFW);
+    s->Bind(8, chan.LastMessageID);
+    s->Bind(9, chan.Bitrate);
+    s->Bind(10, chan.UserLimit);
+    s->Bind(11, chan.RateLimitPerUser);
+    s->Bind(12, chan.Icon);
+    s->Bind(13, chan.OwnerID);
+    s->Bind(14, chan.ApplicationID);
+    s->Bind(15, chan.ParentID);
+    s->Bind(16, chan.LastPinTimestamp);
     if (chan.ThreadMetadata.has_value()) {
-        Bind(m_set_chan_stmt, 19, chan.ThreadMetadata->IsArchived);
-        Bind(m_set_chan_stmt, 20, chan.ThreadMetadata->AutoArchiveDuration);
-        Bind(m_set_chan_stmt, 21, chan.ThreadMetadata->ArchiveTimestamp);
+        s->Bind(17, chan.ThreadMetadata->IsArchived);
+        s->Bind(18, chan.ThreadMetadata->AutoArchiveDuration);
+        s->Bind(19, chan.ThreadMetadata->ArchiveTimestamp);
     } else {
-        Bind(m_set_chan_stmt, 19, nullptr);
-        Bind(m_set_chan_stmt, 20, nullptr);
-        Bind(m_set_chan_stmt, 21, nullptr);
+        s->Bind(17);
+        s->Bind(18);
+        s->Bind(19);
     }
 
-    if (!RunInsert(m_set_chan_stmt))
-        fprintf(stderr, "channel insert failed: %s\n", sqlite3_errstr(m_db_err));
+    if (!s->Insert())
+        fprintf(stderr, "channel insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
-    m_channels.insert(id);
+    if (chan.Recipients.has_value()) {
+        BeginTransaction();
+        auto &s = m_stmt_set_recipient;
+        for (const auto &r : *chan.Recipients) {
+            s->Bind(1, chan.ID);
+            s->Bind(2, r.ID);
+            if (!s->Insert())
+                fprintf(stderr, "recipient insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(r.ID), m_db.ErrStr());
+            s->Reset();
+        }
+        EndTransaction();
+    } else if (chan.RecipientIDs.has_value()) {
+        BeginTransaction();
+        auto &s = m_stmt_set_recipient;
+        for (const auto &id : *chan.RecipientIDs) {
+            s->Bind(1, chan.ID);
+            s->Bind(2, id);
+            if (!s->Insert())
+                fprintf(stderr, "recipient insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(id), m_db.ErrStr());
+            s->Reset();
+        }
+        EndTransaction();
+    }
+
+    s->Reset();
 }
 
 void Store::SetEmoji(Snowflake id, const EmojiData &emoji) {
-    Bind(m_set_emote_stmt, 1, id);
-    Bind(m_set_emote_stmt, 2, emoji.Name);
+    auto &s = m_stmt_set_emoji;
 
-    if (emoji.Roles.has_value())
-        Bind(m_set_emote_stmt, 3, nlohmann::json(*emoji.Roles).dump());
-    else
-        Bind(m_set_emote_stmt, 3, nullptr);
-
+    s->Bind(1, id);
+    s->Bind(2, emoji.Name);
     if (emoji.Creator.has_value())
-        Bind(m_set_emote_stmt, 4, emoji.Creator->ID);
+        s->Bind(3, emoji.Creator->ID);
     else
-        Bind(m_set_emote_stmt, 4, nullptr);
+        s->Bind(3);
+    s->Bind(4, emoji.NeedsColons);
+    s->Bind(5, emoji.IsManaged);
+    s->Bind(6, emoji.IsAnimated);
+    s->Bind(7, emoji.IsAvailable);
 
-    Bind(m_set_emote_stmt, 5, emoji.NeedsColons);
-    Bind(m_set_emote_stmt, 6, emoji.IsManaged);
-    Bind(m_set_emote_stmt, 7, emoji.IsAnimated);
-    Bind(m_set_emote_stmt, 8, emoji.IsAvailable);
+    if (emoji.Roles.has_value()) {
+        BeginTransaction();
 
-    if (!RunInsert(m_set_emote_stmt))
-        fprintf(stderr, "emoji insert failed: %s\n", sqlite3_errstr(m_db_err));
+        auto &s = m_stmt_set_emoji_role;
+
+        for (const auto &r : *emoji.Roles) {
+            s->Bind(1, id);
+            s->Bind(2, r);
+            if (!s->Insert())
+                fprintf(stderr, "emoji role insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(r), m_db.ErrStr());
+            s->Reset();
+        }
+
+        EndTransaction();
+    }
+
+    if (!s->Insert())
+        fprintf(stderr, "emoji insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+
+    s->Reset();
 }
 
 void Store::SetGuild(Snowflake id, const GuildData &guild) {
-    Bind(m_set_guild_stmt, 1, id);
-    Bind(m_set_guild_stmt, 2, guild.Name);
-    Bind(m_set_guild_stmt, 3, guild.Icon);
-    Bind(m_set_guild_stmt, 4, guild.Splash);
-    Bind(m_set_guild_stmt, 5, guild.IsOwner);
-    Bind(m_set_guild_stmt, 6, guild.OwnerID);
-    Bind(m_set_guild_stmt, 7, guild.PermissionsNew);
-    Bind(m_set_guild_stmt, 8, guild.VoiceRegion);
-    Bind(m_set_guild_stmt, 9, guild.AFKChannelID);
-    Bind(m_set_guild_stmt, 10, guild.AFKTimeout);
-    Bind(m_set_guild_stmt, 11, guild.VerificationLevel);
-    Bind(m_set_guild_stmt, 12, guild.DefaultMessageNotifications);
-    std::vector<Snowflake> snowflakes;
-    if (guild.Roles.has_value()) {
-        for (const auto &x : *guild.Roles) snowflakes.push_back(x.ID);
-        Bind(m_set_guild_stmt, 13, nlohmann::json(snowflakes).dump());
-    } else {
-        Bind(m_set_guild_stmt, 13, "[]"s);
-    }
-    snowflakes.clear();
+    BeginTransaction();
+    auto &s = m_stmt_set_guild;
+
+    s->Bind(1, guild.ID);
+    s->Bind(2, guild.Name);
+    s->Bind(3, guild.Icon);
+    s->Bind(4, guild.Splash);
+    s->Bind(5, guild.IsOwner);
+    s->Bind(6, guild.OwnerID);
+    s->Bind(7, guild.PermissionsNew);
+    s->Bind(8, guild.VoiceRegion);
+    s->Bind(9, guild.AFKChannelID);
+    s->Bind(10, guild.AFKTimeout);
+    s->Bind(11, guild.VerificationLevel);
+    s->Bind(12, guild.DefaultMessageNotifications);
+    s->Bind(13, guild.MFALevel);
+    s->Bind(14, guild.ApplicationID);
+    s->Bind(15, guild.IsWidgetEnabled);
+    s->Bind(16, guild.WidgetChannelID);
+    s->Bind(17, guild.SystemChannelFlags);
+    s->Bind(18, guild.RulesChannelID);
+    s->Bind(19, guild.JoinedAt);
+    s->Bind(20, guild.IsLarge);
+    s->Bind(21, guild.IsUnavailable);
+    s->Bind(22, guild.MemberCount);
+    s->Bind(23, guild.MaxPresences);
+    s->Bind(24, guild.MaxMembers);
+    s->Bind(25, guild.VanityURL);
+    s->Bind(26, guild.Description);
+    s->Bind(27, guild.BannerHash);
+    s->Bind(28, guild.PremiumTier);
+    s->Bind(29, guild.PremiumSubscriptionCount);
+    s->Bind(30, guild.PreferredLocale);
+    s->Bind(31, guild.PublicUpdatesChannelID);
+    s->Bind(32, guild.MaxVideoChannelUsers);
+    s->Bind(33, guild.ApproximateMemberCount);
+    s->Bind(34, guild.ApproximatePresenceCount);
+    s->Bind(35, guild.IsLazy);
+
+    if (!s->Insert())
+        fprintf(stderr, "guild insert failed for %llu: %s\n", static_cast<uint64_t>(guild.ID), m_db.ErrStr());
+
+    s->Reset();
+
     if (guild.Emojis.has_value()) {
-        for (const auto &x : *guild.Emojis) snowflakes.push_back(x.ID);
-        Bind(m_set_guild_stmt, 14, nlohmann::json(snowflakes).dump());
-    } else {
-        Bind(m_set_guild_stmt, 14, "[]"s);
+        auto &s = m_stmt_set_guild_emoji;
+        for (const auto &emoji : *guild.Emojis) {
+            s->Bind(1, guild.ID);
+            s->Bind(2, emoji.ID);
+            if (!s->Insert())
+                fprintf(stderr, "guild emoji insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(emoji.ID), m_db.ErrStr());
+            s->Reset();
+        }
     }
-    if (guild.Features.has_value())
-        Bind(m_set_guild_stmt, 15, nlohmann::json(*guild.Features).dump());
-    else
-        Bind(m_set_guild_stmt, 15, "[]"s);
-    Bind(m_set_guild_stmt, 16, guild.MFALevel);
-    Bind(m_set_guild_stmt, 17, guild.ApplicationID);
-    Bind(m_set_guild_stmt, 18, guild.IsWidgetEnabled);
-    Bind(m_set_guild_stmt, 19, guild.WidgetChannelID);
-    Bind(m_set_guild_stmt, 20, guild.SystemChannelFlags);
-    Bind(m_set_guild_stmt, 21, guild.RulesChannelID);
-    Bind(m_set_guild_stmt, 22, guild.JoinedAt);
-    Bind(m_set_guild_stmt, 23, guild.IsLarge);
-    Bind(m_set_guild_stmt, 24, guild.IsUnavailable);
-    Bind(m_set_guild_stmt, 25, guild.MemberCount);
-    if (guild.Channels.has_value()) {
-        snowflakes.clear();
-        for (const auto &x : *guild.Channels) snowflakes.push_back(x.ID);
-        Bind(m_set_guild_stmt, 26, nlohmann::json(snowflakes).dump());
-    } else
-        Bind(m_set_guild_stmt, 26, "[]"s);
-    Bind(m_set_guild_stmt, 27, guild.MaxPresences);
-    Bind(m_set_guild_stmt, 28, guild.MaxMembers);
-    Bind(m_set_guild_stmt, 29, guild.VanityURL);
-    Bind(m_set_guild_stmt, 30, guild.Description);
-    Bind(m_set_guild_stmt, 31, guild.BannerHash);
-    Bind(m_set_guild_stmt, 32, guild.PremiumTier);
-    Bind(m_set_guild_stmt, 33, guild.PremiumSubscriptionCount);
-    Bind(m_set_guild_stmt, 34, guild.PreferredLocale);
-    Bind(m_set_guild_stmt, 35, guild.PublicUpdatesChannelID);
-    Bind(m_set_guild_stmt, 36, guild.MaxVideoChannelUsers);
-    Bind(m_set_guild_stmt, 37, guild.ApproximateMemberCount);
-    Bind(m_set_guild_stmt, 38, guild.ApproximatePresenceCount);
-    Bind(m_set_guild_stmt, 39, guild.IsLazy);
+
+    if (guild.Features.has_value()) {
+        auto &s = m_stmt_set_guild_feature;
+
+        for (const auto &feature : *guild.Features) {
+            s->Bind(1, guild.ID);
+            s->Bind(2, feature);
+            if (!s->Insert())
+                fprintf(stderr, "guild feature insert failed for %llu/%s: %s\n", static_cast<uint64_t>(guild.ID), feature.c_str(), m_db.ErrStr());
+            s->Reset();
+        }
+    }
+
     if (guild.Threads.has_value()) {
-        snowflakes.clear();
-        for (const auto &x : *guild.Threads) snowflakes.push_back(x.ID);
-        Bind(m_set_guild_stmt, 40, nlohmann::json(snowflakes).dump());
-    } else
-        Bind(m_set_guild_stmt, 40, "[]"s);
+        auto &s = m_stmt_set_thread;
 
-    if (!RunInsert(m_set_guild_stmt))
-        fprintf(stderr, "guild insert failed: %s\n", sqlite3_errstr(m_db_err));
+        for (const auto &thread : *guild.Threads) {
+            s->Bind(1, guild.ID);
+            s->Bind(2, thread.ID);
+            if (!s->Insert())
+                fprintf(stderr, "guild thread insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(thread.ID), m_db.ErrStr());
+            s->Reset();
+        }
+    }
 
-    m_guilds.insert(id);
+    EndTransaction();
 }
 
 void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMember &data) {
-    Bind(m_set_member_stmt, 1, user_id);
-    Bind(m_set_member_stmt, 2, guild_id);
-    Bind(m_set_member_stmt, 3, data.Nickname);
-    Bind(m_set_member_stmt, 4, nlohmann::json(data.Roles).dump());
-    Bind(m_set_member_stmt, 5, data.JoinedAt);
-    Bind(m_set_member_stmt, 6, data.PremiumSince);
-    Bind(m_set_member_stmt, 7, data.IsDeafened);
-    Bind(m_set_member_stmt, 8, data.IsMuted);
-    Bind(m_set_member_stmt, 9, data.Avatar);
-    Bind(m_set_member_stmt, 10, data.IsPending);
+    auto &s = m_stmt_set_member;
 
-    if (!RunInsert(m_set_member_stmt))
-        fprintf(stderr, "member insert failed: %s\n", sqlite3_errstr(m_db_err));
-}
+    s->Bind(1, user_id);
+    s->Bind(2, guild_id);
+    s->Bind(3, data.Nickname);
+    s->Bind(4, data.JoinedAt);
+    s->Bind(5, data.PremiumSince);
+    s->Bind(6, data.IsDeafened);
+    s->Bind(7, data.IsMuted);
+    s->Bind(8, data.Avatar);
+    s->Bind(9, data.IsPending);
 
-void Store::SetMessage(Snowflake id, const Message &message) {
-    Bind(m_set_msg_stmt, 1, id);
-    Bind(m_set_msg_stmt, 2, message.ChannelID);
-    Bind(m_set_msg_stmt, 3, message.GuildID);
-    Bind(m_set_msg_stmt, 4, message.Author.ID);
-    Bind(m_set_msg_stmt, 5, message.Content);
-    Bind(m_set_msg_stmt, 6, message.Timestamp);
-    Bind(m_set_msg_stmt, 7, message.EditedTimestamp);
-    Bind(m_set_msg_stmt, 8, message.IsTTS);
-    Bind(m_set_msg_stmt, 9, message.DoesMentionEveryone);
-    Bind(m_set_msg_stmt, 10, nlohmann::json(message.Mentions).dump());
-    Bind(m_set_msg_stmt, 11, nlohmann::json(message.Attachments).dump());
-    Bind(m_set_msg_stmt, 12, nlohmann::json(message.Embeds).dump());
-    Bind(m_set_msg_stmt, 13, message.IsPinned);
-    Bind(m_set_msg_stmt, 14, message.WebhookID);
-    Bind(m_set_msg_stmt, 15, static_cast<uint64_t>(message.Type));
+    if (!s->Insert())
+        fprintf(stderr, "member insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
 
-    if (message.Application.has_value())
-        Bind(m_set_msg_stmt, 16, nlohmann::json(*message.Application).dump());
-    else
-        Bind(m_set_msg_stmt, 16, nullptr);
+    s->Reset();
 
-    if (message.MessageReference.has_value())
-        Bind(m_set_msg_stmt, 17, nlohmann::json(*message.MessageReference).dump());
-    else
-        Bind(m_set_msg_stmt, 17, nullptr);
+    {
+        auto &s = m_stmt_set_member_roles;
 
-    if (message.Flags.has_value())
-        Bind(m_set_msg_stmt, 18, static_cast<uint64_t>(*message.Flags));
-    else
-        Bind(m_set_msg_stmt, 18, nullptr);
-
-    if (message.Stickers.has_value())
-        Bind(m_set_msg_stmt, 19, nlohmann::json(*message.Stickers).dump());
-    else
-        Bind(m_set_msg_stmt, 19, nullptr);
-
-    if (message.Reactions.has_value()) {
-        std::string tmp = nlohmann::json(*message.Reactions).dump();
-        Bind(m_set_msg_stmt, 20, tmp);
-    } else
-        Bind(m_set_msg_stmt, 20, nullptr);
-    Bind(m_set_msg_stmt, 21, message.IsDeleted());
-    Bind(m_set_msg_stmt, 22, message.IsEdited());
-    Bind(m_set_msg_stmt, 23, message.IsPending);
-    Bind(m_set_msg_stmt, 24, message.Nonce); // sorry
-
-    if (message.StickerItems.has_value()) {
-        std::string tmp = nlohmann::json(*message.StickerItems).dump();
-        Bind(m_set_msg_stmt, 25, tmp);
-    } else
-        Bind(m_set_msg_stmt, 25, nullptr);
-
-    if (!RunInsert(m_set_msg_stmt))
-        fprintf(stderr, "message insert failed: %s\n", sqlite3_errstr(m_db_err));
-
-    if (message.Interaction.has_value())
-        SetMessageInteractionPair(id, *message.Interaction);
-}
-
-void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
-    Bind(m_set_perm_stmt, 1, perm.ID);
-    Bind(m_set_perm_stmt, 2, channel_id);
-    Bind(m_set_perm_stmt, 3, static_cast<int>(perm.Type));
-    Bind(m_set_perm_stmt, 4, static_cast<uint64_t>(perm.Allow));
-    Bind(m_set_perm_stmt, 5, static_cast<uint64_t>(perm.Deny));
-
-    if (!RunInsert(m_set_perm_stmt))
-        fprintf(stderr, "permission insert failed: %s\n", sqlite3_errstr(m_db_err));
-}
-
-void Store::SetRole(Snowflake id, const RoleData &role) {
-    Bind(m_set_role_stmt, 1, id);
-    Bind(m_set_role_stmt, 2, role.Name);
-    Bind(m_set_role_stmt, 3, role.Color);
-    Bind(m_set_role_stmt, 4, role.IsHoisted);
-    Bind(m_set_role_stmt, 5, role.Position);
-    Bind(m_set_role_stmt, 6, static_cast<uint64_t>(role.Permissions));
-    Bind(m_set_role_stmt, 7, role.IsManaged);
-    Bind(m_set_role_stmt, 8, role.IsMentionable);
-
-    if (!RunInsert(m_set_role_stmt))
-        fprintf(stderr, "role insert failed: %s\n", sqlite3_errstr(m_db_err));
-}
-
-void Store::SetUser(Snowflake id, const UserData &user) {
-    Bind(m_set_user_stmt, 1, id);
-    Bind(m_set_user_stmt, 2, user.Username);
-    Bind(m_set_user_stmt, 3, user.Discriminator);
-    Bind(m_set_user_stmt, 4, user.Avatar);
-    Bind(m_set_user_stmt, 5, user.IsBot);
-    Bind(m_set_user_stmt, 6, user.IsSystem);
-    Bind(m_set_user_stmt, 7, user.IsMFAEnabled);
-    Bind(m_set_user_stmt, 8, user.Locale);
-    Bind(m_set_user_stmt, 9, user.IsVerified);
-    Bind(m_set_user_stmt, 10, user.Email);
-    Bind(m_set_user_stmt, 11, user.Flags);
-    Bind(m_set_user_stmt, 12, user.PremiumType);
-    Bind(m_set_user_stmt, 13, user.PublicFlags);
-
-    if (!RunInsert(m_set_user_stmt)) {
-        fprintf(stderr, "user insert failed: %s\n", sqlite3_errstr(m_db_err));
+        BeginTransaction();
+        for (const auto &role : data.Roles) {
+            s->Bind(1, user_id);
+            s->Bind(2, role);
+            if (!s->Insert())
+                fprintf(stderr, "member role insert failed for %llu/%llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), static_cast<uint64_t>(role), m_db.ErrStr());
+            s->Reset();
+        }
+        EndTransaction();
     }
-}
-
-Message Store::GetMessageBound(sqlite3_stmt *stmt) const {
-    Message ret;
-    Get(stmt, 0, ret.ID);
-    Get(stmt, 1, ret.ChannelID);
-    Get(stmt, 2, ret.GuildID);
-    Get(stmt, 3, ret.Author.ID); // yike
-    Get(stmt, 4, ret.Content);
-    Get(stmt, 5, ret.Timestamp);
-    Get(stmt, 6, ret.EditedTimestamp);
-    Get(stmt, 7, ret.IsTTS);
-    Get(stmt, 8, ret.DoesMentionEveryone);
-    std::string tmps;
-    Get(stmt, 9, tmps);
-    nlohmann::json::parse(tmps).get_to(ret.Mentions);
-    Get(stmt, 10, tmps);
-    nlohmann::json::parse(tmps).get_to(ret.Attachments);
-    Get(stmt, 11, tmps);
-    nlohmann::json::parse(tmps).get_to(ret.Embeds);
-    Get(stmt, 12, ret.IsPinned);
-    Get(stmt, 13, ret.WebhookID);
-    uint64_t tmpi;
-    Get(stmt, 14, tmpi);
-    ret.Type = static_cast<MessageType>(tmpi);
-
-    Get(stmt, 15, tmps);
-    if (tmps != "")
-        ret.Application = nlohmann::json::parse(tmps).get<MessageApplicationData>();
-
-    Get(stmt, 16, tmps);
-    if (tmps != "")
-        ret.MessageReference = nlohmann::json::parse(tmps).get<MessageReferenceData>();
-
-    Get(stmt, 17, tmpi);
-    ret.Flags = static_cast<MessageFlags>(tmpi);
-
-    Get(stmt, 18, tmps);
-    if (tmps != "")
-        ret.Stickers = nlohmann::json::parse(tmps).get<std::vector<StickerData>>();
-
-    Get(stmt, 19, tmps);
-    if (tmps != "")
-        ret.Reactions = nlohmann::json::parse(tmps).get<std::vector<ReactionData>>();
-
-    bool tmpb = false;
-    Get(stmt, 20, tmpb);
-    if (tmpb) ret.SetDeleted();
-
-    Get(stmt, 21, tmpb);
-    if (tmpb) ret.SetEdited();
-
-    Get(stmt, 22, ret.IsPending);
-    Get(stmt, 23, ret.Nonce);
-
-    Get(stmt, 24, tmps);
-    if (tmps != "")
-        ret.StickerItems = nlohmann::json::parse(tmps).get<std::vector<StickerItem>>();
-
-    // interaction data from join
-
-    if (!IsNull(stmt, 25)) {
-        auto &interaction = ret.Interaction.emplace();
-        Get(stmt, 25, interaction.ID);
-        Get(stmt, 26, interaction.Name);
-        Get(stmt, 27, interaction.Type);
-        Get(stmt, 28, interaction.User.ID);
-    }
-
-    Reset(stmt);
-
-    if (ret.MessageReference.has_value() && ret.MessageReference->MessageID.has_value()) {
-        auto ref = GetMessage(*ret.MessageReference->MessageID);
-        if (ref.has_value())
-            ret.ReferencedMessage = std::make_unique<Message>(std::move(*ref));
-        else
-            ret.ReferencedMessage = nullptr;
-    }
-
-    return ret;
 }
 
 void Store::SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction) {
-    Bind(m_set_msg_interaction_stmt, 1, message_id);
-    Bind(m_set_msg_interaction_stmt, 2, interaction.ID);
-    Bind(m_set_msg_interaction_stmt, 3, interaction.Type);
-    Bind(m_set_msg_interaction_stmt, 4, interaction.Name);
-    Bind(m_set_msg_interaction_stmt, 5, interaction.User.ID);
+    auto &s = m_stmt_set_interaction;
 
-    if (!RunInsert(m_set_msg_interaction_stmt)) {
-        fprintf(stderr, "message interaction insert failed: %s\n", sqlite3_errstr(m_db_err));
+    s->Bind(1, message_id);
+    s->Bind(2, interaction.ID);
+    s->Bind(3, interaction.Type);
+    s->Bind(4, interaction.Name);
+    s->Bind(5, interaction.User.ID);
+
+    if (!s->Insert())
+        fprintf(stderr, "message interaction failed for %llu: %s\n", static_cast<uint64_t>(message_id), m_db.ErrStr());
+
+    s->Reset();
+}
+
+void Store::SetMessage(Snowflake id, const Message &message) {
+    auto &s = m_stmt_set_msg;
+
+    BeginTransaction();
+
+    s->Bind(1, id);
+    s->Bind(2, message.ChannelID);
+    s->Bind(3, message.GuildID);
+    s->Bind(4, message.Author.ID);
+    s->Bind(5, message.Content);
+    s->Bind(6, message.Timestamp);
+    s->Bind(7, message.EditedTimestamp);
+    s->Bind(8, message.IsTTS);
+    s->Bind(9, message.DoesMentionEveryone);
+    s->BindAsJSON(10, message.Embeds);
+    s->Bind(11, message.IsPinned);
+    s->Bind(12, message.WebhookID);
+    s->Bind(13, message.Type);
+    s->BindAsJSON(14, message.Application);
+    s->Bind(15, message.Flags);
+    s->BindAsJSON(16, message.Stickers);
+    s->Bind(17, message.IsDeleted());
+    s->Bind(18, message.IsEdited());
+    s->Bind(19, message.IsPending);
+    s->Bind(20, message.Nonce);
+    s->BindAsJSON(21, message.StickerItems);
+
+    if (!s->Insert())
+        fprintf(stderr, "message insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+
+    s->Reset();
+
+    if (message.MessageReference.has_value()) {
+        auto &s = m_stmt_set_msg_ref;
+        s->Bind(1, message.ID);
+        s->Bind(2, message.MessageReference->MessageID);
+        s->Bind(3, message.MessageReference->ChannelID);
+        s->Bind(4, message.MessageReference->GuildID);
+
+        if (!s->Insert())
+            fprintf(stderr, "message ref insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+
+        s->Reset();
     }
+
+    for (const auto &u : message.Mentions) {
+        auto &s = m_stmt_set_mention;
+        s->Bind(1, id);
+        s->Bind(2, u.ID);
+        if (!s->Insert())
+            fprintf(stderr, "message mention insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(u.ID), m_db.ErrStr());
+        s->Reset();
+    }
+
+    for (const auto &a : message.Attachments) {
+        auto &s = m_stmt_set_attachment;
+        s->Bind(1, id);
+        s->Bind(2, a.ID);
+        s->Bind(3, a.Filename);
+        s->Bind(4, a.Bytes);
+        s->Bind(5, a.URL);
+        s->Bind(6, a.ProxyURL);
+        s->Bind(7, a.Height);
+        s->Bind(8, a.Width);
+        if (!s->Insert())
+            fprintf(stderr, "message attachment insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(a.ID), m_db.ErrStr());
+        s->Reset();
+    }
+
+    if (message.Reactions.has_value()) {
+        auto &s = m_stmt_add_reaction;
+        for (size_t i = 0; i < message.Reactions->size(); i++) {
+            const auto &reaction = (*message.Reactions)[i];
+            s->Bind(1, id);
+            s->Bind(2, reaction.Emoji.ID);
+            s->Bind(3, reaction.Emoji.Name);
+            s->Bind(4, reaction.Count);
+            s->Bind(5, reaction.HasReactedWith);
+            s->Bind(6, i);
+            if (!s->Insert())
+                fprintf(stderr, "message reaction insert failed for %llu/%llu/%s: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(reaction.Emoji.ID), reaction.Emoji.Name.c_str(), m_db.ErrStr());
+            s->Reset();
+        }
+    }
+
+    if (message.Interaction.has_value())
+        SetMessageInteractionPair(id, *message.Interaction);
+
+    EndTransaction();
+}
+
+void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm) {
+    auto &s = m_stmt_set_perm;
+
+    s->Bind(1, perm.ID);
+    s->Bind(2, channel_id);
+    s->Bind(3, perm.Type);
+    s->Bind(4, perm.Allow);
+    s->Bind(5, perm.Deny);
+
+    if (!s->Insert())
+        fprintf(stderr, "permission insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
+
+    s->Reset();
+}
+
+void Store::SetRole(Snowflake guild_id, const RoleData &role) {
+    auto &s = m_stmt_set_role;
+
+    s->Bind(1, role.ID);
+    s->Bind(2, guild_id);
+    s->Bind(3, role.Name);
+    s->Bind(4, role.Color);
+    s->Bind(5, role.IsHoisted);
+    s->Bind(6, role.Position);
+    s->Bind(7, role.Permissions);
+    s->Bind(8, role.IsManaged);
+    s->Bind(9, role.IsMentionable);
+
+    if (!s->Insert())
+        fprintf(stderr, "role insert failed for %llu: %s\n", static_cast<uint64_t>(role.ID), m_db.ErrStr());
+
+    s->Reset();
+}
+
+void Store::SetUser(Snowflake id, const UserData &user) {
+    auto &s = m_stmt_set_user;
+
+    s->Bind(1, id);
+    s->Bind(2, user.Username);
+    s->Bind(3, user.Discriminator);
+    s->Bind(4, user.Avatar);
+    s->Bind(5, user.IsBot);
+    s->Bind(6, user.IsSystem);
+    s->Bind(7, user.IsMFAEnabled);
+    s->Bind(8, user.PremiumType);
+    s->Bind(9, user.PublicFlags);
+
+    if (!s->Insert())
+        fprintf(stderr, "user insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+
+    s->Reset();
 }
 
 std::optional<BanData> Store::GetBan(Snowflake guild_id, Snowflake user_id) const {
-    Bind(m_get_ban_stmt, 1, guild_id);
-    Bind(m_get_ban_stmt, 2, user_id);
-    if (!FetchOne(m_get_ban_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching ban: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_ban_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_ban;
+
+    s->Bind(1, guild_id);
+    s->Bind(2, user_id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching ban for %llu/%llu: %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    BanData ret;
-    ret.User.ID = user_id;
-    Get(m_get_ban_stmt, 2, ret.Reason);
+    BanData r;
+    r.User.ID = user_id;
+    s->Get(2, r.Reason);
 
-    Reset(m_get_ban_stmt);
-    return ret;
+    s->Reset();
+
+    return r;
 }
 
 std::vector<BanData> Store::GetBans(Snowflake guild_id) const {
-    Bind(m_get_bans_stmt, 1, guild_id);
+    auto &s = m_stmt_get_bans;
 
     std::vector<BanData> ret;
-    while (FetchOne(m_get_bans_stmt)) {
+    s->Bind(1, guild_id);
+    while (s->FetchOne()) {
         auto &ban = ret.emplace_back();
-        Get(m_get_bans_stmt, 1, ban.User.ID);
-        Get(m_get_bans_stmt, 2, ban.Reason);
+        s->Get(1, ban.User.ID);
+        s->Get(2, ban.Reason);
     }
 
-    Reset(m_get_bans_stmt);
+    s->Reset();
 
-    if (m_db_err != SQLITE_DONE)
-        fprintf(stderr, "error while fetching bans: %s\n", sqlite3_errstr(m_db_err));
     return ret;
 }
 
 std::vector<Message> Store::GetLastMessages(Snowflake id, size_t num) const {
-    auto ids = GetChannelMessageIDs(id);
-    std::vector<Message> ret;
-    for (auto it = ids.cend() - std::min(ids.size(), num); it != ids.cend(); it++)
-        ret.push_back(*GetMessage(*it));
-    return ret;
-}
-
-std::vector<Snowflake> Store::GetChannelMessageIDs(Snowflake id) const {
-    std::vector<Snowflake> ret;
-    Bind(m_get_msg_ids_stmt, 1, id);
-
-    while (FetchOne(m_get_msg_ids_stmt)) {
-        Snowflake x;
-        Get(m_get_msg_ids_stmt, 0, x);
-        ret.push_back(x);
+    auto &s = m_stmt_get_last_msgs;
+    std::vector<Message> msgs;
+    s->Bind(1, id);
+    s->Bind(2, num);
+    while (s->FetchOne()) {
+        auto msg = GetMessageBound(s);
+        if (!s->IsNull(33)) { // referenced message id
+            msg.MessageReference.emplace();
+            s->Get(33, msg.MessageReference->MessageID);
+        }
+        msgs.push_back(std::move(msg));
     }
 
-    Reset(m_get_msg_ids_stmt);
+    s->Reset();
 
-    if (m_db_err != SQLITE_DONE)
-        fprintf(stderr, "error while fetching ids: %s\n", sqlite3_errstr(m_db_err));
-    return ret;
+    for (auto &msg : msgs) {
+        if (msg.MessageReference.has_value() && msg.MessageReference->MessageID.has_value()) {
+            auto ref = GetMessage(*msg.MessageReference->MessageID);
+            if (ref.has_value())
+                msg.ReferencedMessage = std::make_shared<Message>(std::move(*ref));
+        }
+    }
+
+    return msgs;
+}
+
+std::vector<Message> Store::GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit) const {
+    std::vector<Message> msgs;
+
+    auto &s = m_stmt_get_messages_before;
+
+    s->Bind(1, channel_id);
+    s->Bind(2, message_id);
+    s->Bind(3, limit);
+
+    while (s->FetchOne()) {
+        auto msg = GetMessageBound(s);
+        if (!s->IsNull(33)) { // referenced message id
+            msg.MessageReference.emplace();
+            s->Get(33, msg.MessageReference->MessageID);
+        }
+        msgs.push_back(std::move(msg));
+    }
+
+    s->Reset();
+
+    for (auto &msg : msgs) {
+        if (msg.MessageReference.has_value() && msg.MessageReference->MessageID.has_value()) {
+            auto ref = GetMessage(*msg.MessageReference->MessageID);
+            if (ref.has_value())
+                msg.ReferencedMessage = std::make_shared<Message>(std::move(*ref));
+        }
+    }
+
+    return msgs;
 }
 
 std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
-    std::vector<Message> ret;
+    std::vector<Message> msgs;
 
-    Bind(m_get_pins_stmt, 1, channel_id);
-    while (FetchOne(m_get_pins_stmt)) {
-        Snowflake x;
-        Get(m_get_pins_stmt, 0, x);
-        auto msg = GetMessage(x);
-        if (msg.has_value())
-            ret.push_back(*msg);
+    auto &s = m_stmt_get_pins;
+
+    s->Bind(1, channel_id);
+
+    while (s->FetchOne()) {
+        auto msg = GetMessageBound(s);
+        if (!s->IsNull(33)) { // referenced message id
+            msg.MessageReference.emplace();
+            s->Get(33, msg.MessageReference->MessageID);
+        }
+        msgs.push_back(std::move(msg));
     }
 
-    Reset(m_get_pins_stmt);
+    s->Reset();
 
-    if (m_db_err != SQLITE_DONE)
-        fprintf(stderr, "error while fetching pins: %s\n", sqlite3_errstr(m_db_err));
-    return ret;
+    for (auto &msg : msgs) {
+        if (msg.MessageReference.has_value() && msg.MessageReference->MessageID.has_value()) {
+            auto ref = GetMessage(*msg.MessageReference->MessageID);
+            if (ref.has_value())
+                msg.ReferencedMessage = std::make_shared<Message>(std::move(*ref));
+        }
+    }
+
+    return msgs;
 }
 
 std::vector<ChannelData> Store::GetActiveThreads(Snowflake channel_id) const {
     std::vector<ChannelData> ret;
 
-    Bind(m_get_threads_stmt, 1, channel_id);
-    while (FetchOne(m_get_threads_stmt)) {
+    auto &s = m_stmt_get_active_threads;
+
+    s->Bind(1, channel_id);
+    while (s->FetchOne()) {
         Snowflake x;
-        Get(m_get_threads_stmt, 0, x);
+        s->Get(0, x);
         auto chan = GetChannel(x);
         if (chan.has_value())
             ret.push_back(*chan);
     }
 
-    Reset(m_get_threads_stmt);
+    s->Reset();
 
-    if (m_db_err != SQLITE_DONE)
-        fprintf(stderr, "error while fetching threads: %s\n", sqlite3_errstr(m_db_err));
     return ret;
+}
+
+void Store::AddReaction(const MessageReactionAddObject &data, bool byself) {
+    auto &s = m_stmt_add_reaction;
+
+    s->Bind(1, data.MessageID);
+    s->Bind(2, data.Emoji.ID);
+    s->Bind(3, data.Emoji.Name);
+    s->Bind(4, 1);
+    if (byself)
+        s->Bind(5, true);
+    else
+        s->Bind(5);
+    s->Bind(6);
+
+    if (!s->Insert())
+        fprintf(stderr, "failed to add reaction for %llu: %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
+
+    s->Reset();
+}
+
+void Store::RemoveReaction(const MessageReactionRemoveObject &data, bool byself) {
+    auto &s = m_stmt_sub_reaction;
+
+    s->Bind(1, data.MessageID);
+    s->Bind(2, data.Emoji.ID);
+    s->Bind(3, data.Emoji.Name);
+    if (byself)
+        s->Bind(4, false);
+    else
+        s->Bind(4);
+
+    if (!s->Insert())
+        fprintf(stderr, "failed to remove reaction for %llu: %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
+
+    s->Reset();
 }
 
 std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
-    Bind(m_get_chan_stmt, 1, id);
-    if (!FetchOne(m_get_chan_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching channel: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_chan_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_chan;
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching channel %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    ChannelData ret;
-    ret.ID = id;
-    int tmpi;
-    Get(m_get_chan_stmt, 1, tmpi);
-    ret.Type = static_cast<ChannelType>(tmpi);
-    Get(m_get_chan_stmt, 2, ret.GuildID);
-    Get(m_get_chan_stmt, 3, ret.Position);
-    ret.PermissionOverwrites = std::nullopt;
-    Get(m_get_chan_stmt, 5, ret.Name);
-    Get(m_get_chan_stmt, 6, ret.Topic);
-    Get(m_get_chan_stmt, 7, ret.IsNSFW);
-    Get(m_get_chan_stmt, 8, ret.LastMessageID);
-    Get(m_get_chan_stmt, 9, ret.Bitrate);
-    Get(m_get_chan_stmt, 10, ret.UserLimit);
-    Get(m_get_chan_stmt, 11, ret.RateLimitPerUser);
-    if (!IsNull(m_get_chan_stmt, 12)) {
-        std::string tmps;
-        Get(m_get_chan_stmt, 12, tmps);
-        ret.RecipientIDs = nlohmann::json::parse(tmps).get<std::vector<Snowflake>>();
-    }
-    Get(m_get_chan_stmt, 13, ret.Icon);
-    Get(m_get_chan_stmt, 14, ret.OwnerID);
-    Get(m_get_chan_stmt, 15, ret.ApplicationID);
-    Get(m_get_chan_stmt, 16, ret.ParentID);
-    Get(m_get_chan_stmt, 17, ret.LastPinTimestamp);
-    if (!IsNull(m_get_chan_stmt, 18)) {
-        ret.ThreadMetadata.emplace();
-        Get(m_get_chan_stmt, 18, ret.ThreadMetadata->IsArchived);
-        Get(m_get_chan_stmt, 19, ret.ThreadMetadata->AutoArchiveDuration);
-        Get(m_get_chan_stmt, 20, ret.ThreadMetadata->ArchiveTimestamp);
+    ChannelData r;
+
+    // uncomment as necessary
+    r.ID = id;
+    s->Get(1, r.Type);
+    s->Get(2, r.GuildID);
+    s->Get(3, r.Position);
+    s->Get(4, r.Name);
+    s->Get(5, r.Topic);
+    s->Get(6, r.IsNSFW);
+    s->Get(7, r.LastMessageID);
+    s->Get(10, r.RateLimitPerUser);
+    s->Get(12, r.OwnerID);
+    s->Get(14, r.ParentID);
+    if (!s->IsNull(16)) {
+        r.ThreadMetadata.emplace();
+        s->Get(16, r.ThreadMetadata->IsArchived);
+        s->Get(17, r.ThreadMetadata->AutoArchiveDuration);
+        s->Get(18, r.ThreadMetadata->ArchiveTimestamp);
     }
 
-    Reset(m_get_chan_stmt);
+    s->Reset();
 
-    return ret;
+    {
+        auto &s = m_stmt_get_recipients;
+        s->Bind(1, id);
+        std::vector<Snowflake> recipients;
+        while (s->FetchOne()) {
+            auto &r = recipients.emplace_back();
+            s->Get(0, r);
+        }
+        s->Reset();
+        if (recipients.size() > 0)
+            r.RecipientIDs = std::move(recipients);
+    }
+
+    return r;
 }
 
 std::optional<EmojiData> Store::GetEmoji(Snowflake id) const {
-    Bind(m_get_emote_stmt, 1, id);
-    if (!FetchOne(m_get_emote_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching emoji: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_emote_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_emoji;
+
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching emoji %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    EmojiData ret;
-    ret.ID = id;
-    Get(m_get_emote_stmt, 1, ret.Name);
+    EmojiData r;
 
-    if (!IsNull(m_get_emote_stmt, 2)) {
-        std::string tmp;
-        Get(m_get_emote_stmt, 2, tmp);
-        ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
+    r.ID = id;
+    s->Get(1, r.Name);
+    if (!s->IsNull(2)) {
+        r.Creator.emplace();
+        s->Get(2, r.Creator->ID);
+    }
+    s->Get(3, r.NeedsColons);
+    s->Get(4, r.IsManaged);
+    s->Get(5, r.IsAnimated);
+    s->Get(6, r.IsAvailable);
+
+    {
+        auto &s = m_stmt_get_emoji_roles;
+
+        s->Bind(1, id);
+        r.Roles.emplace();
+        while (s->FetchOne()) {
+            Snowflake id;
+            s->Get(0, id);
+            r.Roles->push_back(id);
+        }
+        s->Reset();
     }
 
-    if (!IsNull(m_get_emote_stmt, 3)) {
-        ret.Creator = std::optional<UserData>(UserData());
-        Get(m_get_emote_stmt, 3, ret.Creator->ID);
-    }
-    Get(m_get_emote_stmt, 4, ret.NeedsColons);
-    Get(m_get_emote_stmt, 5, ret.IsManaged);
-    Get(m_get_emote_stmt, 6, ret.IsAnimated);
-    Get(m_get_emote_stmt, 7, ret.IsAvailable);
+    s->Reset();
 
-    Reset(m_get_emote_stmt);
-
-    return ret;
+    return r;
 }
 
 std::optional<GuildData> Store::GetGuild(Snowflake id) const {
-    Bind(m_get_guild_stmt, 1, id);
-    if (!FetchOne(m_get_guild_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching guild: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_guild_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_guild;
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching guild %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    GuildData ret;
-    ret.ID = id;
-    Get(m_get_guild_stmt, 1, ret.Name);
-    Get(m_get_guild_stmt, 2, ret.Icon);
-    Get(m_get_guild_stmt, 3, ret.Splash);
-    Get(m_get_guild_stmt, 4, ret.IsOwner);
-    Get(m_get_guild_stmt, 5, ret.OwnerID);
-    Get(m_get_guild_stmt, 6, ret.PermissionsNew);
-    Get(m_get_guild_stmt, 7, ret.VoiceRegion);
-    Get(m_get_guild_stmt, 8, ret.AFKChannelID);
-    Get(m_get_guild_stmt, 9, ret.AFKTimeout);
-    Get(m_get_guild_stmt, 10, ret.VerificationLevel);
-    Get(m_get_guild_stmt, 11, ret.DefaultMessageNotifications);
-    std::string tmp;
-    Get(m_get_guild_stmt, 12, tmp);
-    ret.Roles.emplace();
-    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Roles->emplace_back().ID = id;
-    Get(m_get_guild_stmt, 13, tmp);
-    ret.Emojis.emplace();
-    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Emojis->emplace_back().ID = id;
-    Get(m_get_guild_stmt, 14, tmp);
-    ret.Features = nlohmann::json::parse(tmp).get<std::unordered_set<std::string>>();
-    Get(m_get_guild_stmt, 15, ret.MFALevel);
-    Get(m_get_guild_stmt, 16, ret.ApplicationID);
-    Get(m_get_guild_stmt, 17, ret.IsWidgetEnabled);
-    Get(m_get_guild_stmt, 18, ret.WidgetChannelID);
-    Get(m_get_guild_stmt, 19, ret.SystemChannelFlags);
-    Get(m_get_guild_stmt, 20, ret.RulesChannelID);
-    Get(m_get_guild_stmt, 21, ret.JoinedAt);
-    Get(m_get_guild_stmt, 22, ret.IsLarge);
-    Get(m_get_guild_stmt, 23, ret.IsUnavailable);
-    Get(m_get_guild_stmt, 24, ret.MemberCount);
-    Get(m_get_guild_stmt, 25, tmp);
-    ret.Channels.emplace();
-    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Channels->emplace_back().ID = id;
-    Get(m_get_guild_stmt, 26, ret.MaxPresences);
-    Get(m_get_guild_stmt, 27, ret.MaxMembers);
-    Get(m_get_guild_stmt, 28, ret.VanityURL);
-    Get(m_get_guild_stmt, 29, ret.Description);
-    Get(m_get_guild_stmt, 30, ret.BannerHash);
-    Get(m_get_guild_stmt, 31, ret.PremiumTier);
-    Get(m_get_guild_stmt, 32, ret.PremiumSubscriptionCount);
-    Get(m_get_guild_stmt, 33, ret.PreferredLocale);
-    Get(m_get_guild_stmt, 34, ret.PublicUpdatesChannelID);
-    Get(m_get_guild_stmt, 35, ret.MaxVideoChannelUsers);
-    Get(m_get_guild_stmt, 36, ret.ApproximateMemberCount);
-    Get(m_get_guild_stmt, 37, ret.ApproximatePresenceCount);
-    Get(m_get_guild_stmt, 38, ret.IsLazy);
-    Get(m_get_guild_stmt, 39, tmp);
-    ret.Threads.emplace();
-    for (const auto &id : nlohmann::json::parse(tmp).get<std::vector<Snowflake>>())
-        ret.Threads->emplace_back().ID = id;
+    // unfetched fields arent used anywhere
+    GuildData r;
+    r.ID = id;
+    s->Get(1, r.Name);
+    s->Get(2, r.Icon);
+    s->Get(5, r.OwnerID);
+    s->Get(20, r.IsUnavailable);
 
-    Reset(m_get_guild_stmt);
+    s->Reset();
 
-    return ret;
+    {
+        auto &s = m_stmt_get_guild_emojis;
+
+        s->Bind(1, id);
+        r.Emojis.emplace();
+        while (s->FetchOne()) {
+            auto &q = r.Emojis->emplace_back();
+            s->Get(0, q.ID);
+        }
+        s->Reset();
+    }
+
+    {
+        auto &s = m_stmt_get_guild_features;
+
+        s->Bind(1, id);
+        r.Features.emplace();
+        while (s->FetchOne()) {
+            std::string feature;
+            s->Get(0, feature);
+            r.Features->insert(feature);
+        }
+        s->Reset();
+    }
+
+    {
+        auto &s = m_stmt_get_guild_chans;
+        s->Bind(1, id);
+        r.Channels.emplace();
+        while (s->FetchOne()) {
+            auto &q = r.Channels->emplace_back();
+            s->Get(0, q.ID);
+        }
+        s->Reset();
+    }
+
+    {
+        auto &s = m_stmt_get_threads;
+        s->Bind(1, id);
+        r.Threads.emplace();
+        while (s->FetchOne()) {
+            auto &q = r.Threads->emplace_back();
+            s->Get(0, q.ID);
+        }
+        s->Reset();
+    }
+
+    return r;
 }
 
 std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake user_id) const {
-    Bind(m_get_member_stmt, 1, user_id);
-    Bind(m_get_member_stmt, 2, guild_id);
-    if (!FetchOne(m_get_member_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching member: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_member_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_member;
+
+    s->Bind(1, user_id);
+    s->Bind(2, guild_id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching member %llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    GuildMember ret;
-    ret.User.emplace().ID = user_id;
-    Get(m_get_member_stmt, 2, ret.Nickname);
-    std::string tmp;
-    Get(m_get_member_stmt, 3, tmp);
-    ret.Roles = nlohmann::json::parse(tmp).get<std::vector<Snowflake>>();
-    Get(m_get_member_stmt, 4, ret.JoinedAt);
-    Get(m_get_member_stmt, 5, ret.PremiumSince);
-    Get(m_get_member_stmt, 6, ret.IsDeafened);
-    Get(m_get_member_stmt, 7, ret.IsMuted);
-    Get(m_get_member_stmt, 8, ret.Avatar);
-    Get(m_get_member_stmt, 9, ret.IsPending);
+    GuildMember r;
+    r.User.emplace().ID = user_id;
+    s->Get(2, r.Nickname);
+    s->Get(3, r.JoinedAt);
+    s->Get(4, r.PremiumSince);
+    //s->Get(5, r.IsDeafened);
+    //s->Get(6, r.IsMuted);
+    s->Get(7, r.Avatar);
+    s->Get(8, r.IsPending);
 
-    Reset(m_get_member_stmt);
+    s->Reset();
 
-    return ret;
+    {
+        auto &s = m_stmt_get_member_roles;
+
+        s->Bind(1, user_id);
+        s->Bind(2, guild_id);
+
+        while (s->FetchOne()) {
+            auto &f = r.Roles.emplace_back();
+            s->Get(0, f);
+        }
+
+        s->Reset();
+    }
+
+    return r;
 }
 
 std::optional<Message> Store::GetMessage(Snowflake id) const {
-    Bind(m_get_msg_stmt, 1, id);
-    if (!FetchOne(m_get_msg_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching message: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_msg_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_msg;
+
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching message %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    auto ret = GetMessageBound(m_get_msg_stmt);
+    auto top = GetMessageBound(s);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching message %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return top;
+    }
 
-    return std::optional<Message>(std::move(ret));
+    auto ref = GetMessageBound(s);
+    top.ReferencedMessage = std::make_shared<Message>(std::move(ref));
+
+    return top;
+}
+
+Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
+    Message r;
+
+    s->Get(0, r.ID);
+    s->Get(1, r.ChannelID);
+    s->Get(2, r.GuildID);
+    s->Get(3, r.Author.ID);
+    s->Get(4, r.Content);
+    s->Get(5, r.Timestamp);
+    s->Get(6, r.EditedTimestamp);
+    //s->Get(7, r.IsTTS);
+    //s->Get(8, r.DoesMentionEveryone);
+    s->GetJSON(9, r.Embeds);
+    s->Get(10, r.IsPinned);
+    s->Get(11, r.WebhookID);
+    s->Get(12, r.Type);
+    s->GetJSON(13, r.Application);
+    s->Get(14, r.Flags);
+    s->GetJSON(15, r.Stickers);
+    bool tmpb;
+    s->Get(16, tmpb);
+    if (tmpb) r.SetDeleted();
+    s->Get(17, tmpb);
+    if (tmpb) r.SetEdited();
+    s->Get(18, r.IsPending);
+    s->Get(19, r.Nonce);
+    s->GetJSON(20, r.StickerItems);
+
+    if (!s->IsNull(21)) {
+        auto &i = r.Interaction.emplace();
+        s->Get(21, i.ID);
+        s->Get(22, i.Name);
+        s->Get(23, i.Type);
+        s->Get(24, i.User.ID);
+    }
+
+    if (!s->IsNull(25)) {
+        auto &a = r.Attachments.emplace_back();
+        s->Get(25, a.ID);
+        s->Get(26, a.Filename);
+        s->Get(27, a.Bytes);
+        s->Get(28, a.URL);
+        s->Get(29, a.ProxyURL);
+        s->Get(30, a.Height);
+        s->Get(31, a.Width);
+    }
+
+    {
+        auto &s = m_stmt_get_mentions;
+        s->Bind(1, r.ID);
+        while (s->FetchOne()) {
+            Snowflake id;
+            s->Get(0, id);
+            auto user = GetUser(id);
+            if (user.has_value())
+                r.Mentions.push_back(std::move(*user));
+        }
+        s->Reset();
+    }
+
+    {
+        auto &s = m_stmt_get_reactions;
+        s->Bind(1, r.ID);
+        std::map<size_t, ReactionData> tmp;
+        while (s->FetchOne()) {
+            size_t idx;
+            ReactionData q;
+            s->Get(0, q.Emoji.ID);
+            s->Get(1, q.Emoji.Name);
+            s->Get(2, q.Count);
+            s->Get(3, q.HasReactedWith);
+            s->Get(4, idx);
+            tmp[idx] = q;
+        }
+        s->Reset();
+
+        r.Reactions.emplace();
+        for (const auto &[idx, reaction] : tmp)
+            r.Reactions->push_back(reaction);
+    }
+
+    return r;
 }
 
 std::optional<PermissionOverwrite> Store::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
-    Bind(m_get_perm_stmt, 1, id);
-    Bind(m_get_perm_stmt, 2, channel_id);
-    if (!FetchOne(m_get_perm_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching permission: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_perm_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_perm;
+
+    s->Bind(1, id);
+    s->Bind(2, channel_id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "failed while fetching permission %llu/%llu: %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    PermissionOverwrite ret;
-    ret.ID = id;
-    uint64_t tmp;
-    Get(m_get_perm_stmt, 2, tmp);
-    ret.Type = static_cast<PermissionOverwrite::OverwriteType>(tmp);
-    Get(m_get_perm_stmt, 3, tmp);
-    ret.Allow = static_cast<Permission>(tmp);
-    Get(m_get_perm_stmt, 4, tmp);
-    ret.Deny = static_cast<Permission>(tmp);
+    PermissionOverwrite r;
+    r.ID = id;
+    s->Get(2, r.Type);
+    s->Get(3, r.Allow);
+    s->Get(4, r.Deny);
 
-    Reset(m_get_perm_stmt);
+    s->Reset();
 
-    return ret;
+    return r;
 }
 
 std::optional<RoleData> Store::GetRole(Snowflake id) const {
-    Bind(m_get_role_stmt, 1, id);
-    if (!FetchOne(m_get_role_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching role: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_role_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_role;
+
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching role %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    RoleData ret;
-    ret.ID = id;
-    Get(m_get_role_stmt, 1, ret.Name);
-    Get(m_get_role_stmt, 2, ret.Color);
-    Get(m_get_role_stmt, 3, ret.IsHoisted);
-    Get(m_get_role_stmt, 4, ret.Position);
-    uint64_t tmp;
-    Get(m_get_role_stmt, 5, tmp);
-    ret.Permissions = static_cast<Permission>(tmp);
-    Get(m_get_role_stmt, 6, ret.IsManaged);
-    Get(m_get_role_stmt, 7, ret.IsMentionable);
+    RoleData r;
 
-    Reset(m_get_role_stmt);
+    r.ID = id;
+    //s->Get(1, guild id);
+    s->Get(2, r.Name);
+    s->Get(3, r.Color);
+    s->Get(4, r.IsHoisted);
+    s->Get(5, r.Position);
+    s->Get(6, r.Permissions);
+    s->Get(7, r.IsManaged);
+    s->Get(8, r.IsMentionable);
 
-    return ret;
+    s->Reset();
+
+    return r;
 }
 
 std::optional<UserData> Store::GetUser(Snowflake id) const {
-    Bind(m_get_user_stmt, 1, id);
-    if (!FetchOne(m_get_user_stmt)) {
-        if (m_db_err != SQLITE_DONE)
-            fprintf(stderr, "error while fetching user info: %s\n", sqlite3_errstr(m_db_err));
-        Reset(m_get_user_stmt);
-        return std::nullopt;
+    auto &s = m_stmt_get_user;
+    s->Bind(1, id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching user %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        s->Reset();
+        return {};
     }
 
-    UserData ret;
-    Get(m_get_user_stmt, 0, ret.ID);
-    Get(m_get_user_stmt, 1, ret.Username);
-    Get(m_get_user_stmt, 2, ret.Discriminator);
-    Get(m_get_user_stmt, 3, ret.Avatar);
-    Get(m_get_user_stmt, 4, ret.IsBot);
-    Get(m_get_user_stmt, 5, ret.IsSystem);
-    Get(m_get_user_stmt, 6, ret.IsMFAEnabled);
-    Get(m_get_user_stmt, 7, ret.Locale);
-    Get(m_get_user_stmt, 8, ret.IsVerified);
-    Get(m_get_user_stmt, 9, ret.Email);
-    Get(m_get_user_stmt, 10, ret.Flags);
-    Get(m_get_user_stmt, 11, ret.PremiumType);
-    Get(m_get_user_stmt, 12, ret.PublicFlags);
+    UserData r;
 
-    Reset(m_get_user_stmt);
+    r.ID = id;
+    s->Get(1, r.Username);
+    s->Get(2, r.Discriminator);
+    s->Get(3, r.Avatar);
+    s->Get(4, r.IsBot);
+    s->Get(5, r.IsSystem);
+    s->Get(6, r.IsMFAEnabled);
+    s->Get(7, r.PremiumType);
+    s->Get(8, r.PublicFlags);
 
-    return ret;
+    s->Reset();
+
+    return r;
 }
 
 void Store::ClearGuild(Snowflake id) {
-    m_guilds.erase(id);
+    auto &s = m_stmt_clr_guild;
+
+    s->Bind(1, id);
+    s->Step();
+    s->Reset();
 }
 
 void Store::ClearChannel(Snowflake id) {
-    m_channels.erase(id);
-    Bind(m_clear_chan_stmt, 1, id);
+    auto &s = m_stmt_clr_chan;
 
-    if ((m_db_err = sqlite3_step(m_clear_chan_stmt)) != SQLITE_DONE)
-        printf("clearing channel failed: %s\n", sqlite3_errstr(m_db_err));
-
-    Reset(m_clear_chan_stmt);
+    s->Bind(1, id);
+    s->Step();
+    s->Reset();
 }
 
 void Store::ClearBan(Snowflake guild_id, Snowflake user_id) {
-    Bind(m_clear_ban_stmt, 1, guild_id);
-    Bind(m_clear_ban_stmt, 2, user_id);
+    auto &s = m_stmt_clr_ban;
 
-    if ((m_db_err = sqlite3_step(m_clear_ban_stmt)) != SQLITE_DONE)
-        printf("clearing ban failed: %s\n", sqlite3_errstr(m_db_err));
-
-    Reset(m_clear_ban_stmt);
+    s->Bind(1, guild_id);
+    s->Bind(2, user_id);
+    s->Step();
+    s->Reset();
 }
 
-const std::unordered_set<Snowflake> &Store::GetChannels() const {
-    return m_channels;
+void Store::ClearRecipient(Snowflake channel_id, Snowflake user_id) {
+    auto &s = m_stmt_clr_recipient;
+
+    s->Bind(1, channel_id);
+    s->Bind(2, user_id);
+    s->Step();
+    s->Reset();
 }
 
-const std::unordered_set<Snowflake> &Store::GetGuilds() const {
-    return m_guilds;
+std::unordered_set<Snowflake> Store::GetChannels() const {
+    auto &s = m_stmt_get_chan_ids;
+    std::unordered_set<Snowflake> r;
+
+    while (s->FetchOne()) {
+        Snowflake id;
+        s->Get(0, id);
+        r.insert(id);
+    }
+
+    s->Reset();
+
+    return r;
 }
+
+std::unordered_set<Snowflake> Store::GetGuilds() const {
+    auto &s = m_stmt_get_guild_ids;
+    std::unordered_set<Snowflake> r;
+
+    while (s->FetchOne()) {
+        Snowflake id;
+        s->Get(0, id);
+        r.insert(id);
+    }
+
+    s->Reset();
+
+    return r;
+}
+
 void Store::ClearAll() {
-    m_channels.clear();
-    m_guilds.clear();
+    if (m_db.Execute(R"(
+        DELETE FROM attachments;
+        DELETE FROM bans;
+        DELETE FROM channels;
+        DELETE FROM emojis;
+        DELETE FROM emoji_roles;
+        DELETE FROM guild_emojis;
+        DELETE FROM guild_features;
+        DELETE FROM guilds;
+        DELETE FROM members;
+        DELETE FROM member_roles;
+        DELETE FROM mentions;
+        DELETE FROM message_interactions;
+        DELETE FROM message_references;
+        DELETE FROM messages;
+        DELETE FROM permissions;
+        DELETE FROM reactions;
+        DELETE FROM recipients;
+        DELETE FROM roles;
+        DELETE FROM threads;
+        DELETE FROM users;
+    )") != SQLITE_OK) {
+        fprintf(stderr, "failed to clear: %s\n", m_db.ErrStr());
+    }
 }
 
 void Store::BeginTransaction() {
-    m_db_err = sqlite3_exec(m_db, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+    m_db.StartTransaction();
 }
 
 void Store::EndTransaction() {
-    m_db_err = sqlite3_exec(m_db, "COMMIT", nullptr, nullptr, nullptr);
+    m_db.EndTransaction();
 }
 
 bool Store::CreateTables() {
@@ -853,10 +1115,6 @@ bool Store::CreateTables() {
             bot BOOL,
             system BOOL,
             mfa BOOL,
-            locale TEXT,
-            verified BOOl,
-            email TEXT,
-            flags INTEGER,
             premium INTEGER,
             pubflags INTEGER
         )
@@ -884,17 +1142,13 @@ bool Store::CreateTables() {
             edited_timestamp TEXT,
             tts BOOL NOT NULL,
             everyone BOOL NOT NULL,
-            mentions TEXT NOT NULL, /* json */
-            attachments TEXT NOT NULL, /* json */
             embeds TEXT NOT NULL, /* json */
             pinned BOOL,
             webhook_id INTEGER,
             type INTEGER,
             application TEXT, /* json */
-            reference TEXT, /* json */
             flags INTEGER,
             stickers TEXT, /* json */
-            reactions TEXT, /* json */
             deleted BOOL, /* extra */
             edited BOOL, /* extra */
             pending BOOL, /* extra */
@@ -906,6 +1160,7 @@ bool Store::CreateTables() {
     const char *create_roles = R"(
         CREATE TABLE IF NOT EXISTS roles (
             id INTEGER PRIMARY KEY,
+            guild INTEGER NOT NULL,
             name TEXT NOT NULL,
             color INTEGER NOT NULL,
             hoisted BOOL NOT NULL,
@@ -920,7 +1175,6 @@ bool Store::CreateTables() {
         CREATE TABLE IF NOT EXISTS emojis (
             id INTEGER PRIMARY KEY, /*though nullable, only custom emojis (with non-null ids) are stored*/
             name TEXT NOT NULL, /*same as id*/
-            roles TEXT, /* json */
             creator_id INTEGER,
             colons BOOL,
             managed BOOL,
@@ -934,7 +1188,6 @@ bool Store::CreateTables() {
             user_id INTEGER NOT NULL,
             guild_id INTEGER NOT NULL,
             nickname TEXT,
-            roles TEXT NOT NULL, /* json */
             joined_at TEXT NOT NULL,
             premium_since TEXT,
             deaf BOOL NOT NULL,
@@ -959,9 +1212,6 @@ bool Store::CreateTables() {
             afk_timeout INTEGER NOT NULL,
             verification INTEGER NOT NULL,
             notifications INTEGER NOT NULL,
-            roles TEXT NOT NULL, /* json */
-            emojis TEXT NOT NULL, /* json */
-            features TEXT NOT NULL, /* json */
             mfa INTEGER NOT NULL,
             application INTEGER,
             widget BOOL,
@@ -972,7 +1222,6 @@ bool Store::CreateTables() {
             large BOOL,
             unavailable BOOL,
             member_count INTEGER,
-            channels TEXT NOT NULL, /* json */
             max_presences INTEGER,
             max_members INTEGER,
             vanity TEXT,
@@ -985,8 +1234,7 @@ bool Store::CreateTables() {
             max_video_users INTEGER,
             approx_members INTEGER,
             approx_presences INTEGER,
-            lazy BOOL,
-            threads TEXT NOT NULL /* json */
+            lazy BOOL
         )
     )";
 
@@ -996,7 +1244,6 @@ bool Store::CreateTables() {
             type INTEGER NOT NULL,
             guild_id INTEGER,
             position INTEGER,
-            overwrites TEXT, /* json */
             name TEXT,
             topic TEXT,
             is_nsfw BOOL,
@@ -1004,7 +1251,6 @@ bool Store::CreateTables() {
             bitrate INTEGER,
             user_limit INTEGER,
             rate_limit INTEGER,
-            recipients TEXT, /* json */
             icon TEXT,
             owner_id INTEGER,
             application_id INTEGER,
@@ -1036,63 +1282,205 @@ bool Store::CreateTables() {
         )
     )";
 
-    m_db_err = sqlite3_exec(m_db, create_users, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create user table: %s\n", sqlite3_errstr(m_db_err));
+    const char *create_references = R"(
+        CREATE TABLE IF NOT EXISTS message_references (
+            id INTEGER NOT NULL,
+            message INTEGER,
+            channel INTEGER,
+            guild INTEGER,
+            PRIMARY KEY(id)
+        )
+    )";
+
+    const char *create_member_roles = R"(
+        CREATE TABLE IF NOT EXISTS member_roles (
+            user INTEGER NOT NULL,
+            role INTEGER NOT NULL,
+            PRIMARY KEY(user, role)
+        )
+    )";
+
+    const char *create_guild_emojis = R"(
+        CREATE TABLE IF NOT EXISTS guild_emojis (
+            guild INTEGER NOT NULL,
+            emoji INTEGER NOT NULL,
+            PRIMARY KEY(guild, emoji)
+        )
+    )";
+
+    const char *create_guild_features = R"(
+        CREATE TABLE IF NOT EXISTS guild_features (
+            guild INTEGER NOT NULL,
+            feature CHAR(63) NOT NULL,
+            PRIMARY KEY(guild, feature)
+        )
+    )";
+
+    const char *create_threads = R"(
+        CREATE TABLE IF NOT EXISTS threads (
+            guild INTEGER NOT NULL,
+            id INTEGER NOT NULL,
+            PRIMARY KEY(guild, id)
+        )
+    )";
+
+    const char *create_emoji_roles = R"(
+        CREATE TABLE IF NOT EXISTS emoji_roles (
+            emoji INTEGER NOT NULL,
+            role INTEGER NOT NULL,
+            PRIMARY KEY(emoji, role)
+        )
+    )";
+
+    const char *create_mentions = R"(
+        CREATE TABLE IF NOT EXISTS mentions (
+            message INTEGER NOT NULL,
+            user INTEGER NOT NULL,
+            PRIMARY KEY(message, user)
+        )
+    )";
+
+    const char *create_attachments = R"(
+        CREATE TABLE IF NOT EXISTS attachments (
+            message INTEGER NOT NULL,
+            id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            size INTEGER NOT NULL,
+            url TEXT NOT NULL,
+            proxy TEXT NOT NULL,
+            height INTEGER,
+            width INTEGER,
+            PRIMARY KEY(message, id)
+        )
+    )";
+
+    const char *create_recipients = R"(
+        CREATE TABLE IF NOT EXISTS recipients (
+            channel INTEGER NOT NULL,
+            user INTEGER NOT NULL,
+            PRIMARY KEY(channel, user)
+        )
+    )";
+
+    const char *create_reactions = R"(
+        CREATE TABLE IF NOT EXISTS reactions (
+            message INTEGER NOT NULL,
+            emoji_id INTEGER,
+            name TEXT NOT NULL,
+            count INTEGER NOT NULL,
+            me BOOL NOT NULL,
+            idx INTEGER NOT NULL,
+            PRIMARY KEY(message, emoji_id, name)
+        )
+    )";
+
+    if (m_db.Execute(create_users) != SQLITE_OK) {
+        fprintf(stderr, "failed to create user table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_permissions, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create permissions table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_permissions) != SQLITE_OK) {
+        fprintf(stderr, "failed to create permissions table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_messages, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create messages table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_messages) != SQLITE_OK) {
+        fprintf(stderr, "failed to create messages table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_roles, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create roles table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_roles) != SQLITE_OK) {
+        fprintf(stderr, "failed to create roles table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_emojis, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "faile to create emojis table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_emojis) != SQLITE_OK) {
+        fprintf(stderr, "failed to create emojis table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_members, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create members table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_members) != SQLITE_OK) {
+        fprintf(stderr, "failed to create members table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_guilds, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create guilds table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_guilds) != SQLITE_OK) {
+        fprintf(stderr, "failed to create guilds table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_channels, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create channels table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_channels) != SQLITE_OK) {
+        fprintf(stderr, "failed to create channels table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_bans, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create bans table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_bans) != SQLITE_OK) {
+        fprintf(stderr, "failed to create bans table: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_exec(m_db, create_interactions, nullptr, nullptr, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to create message interactions table: %s\n", sqlite3_errstr(m_db_err));
+    if (m_db.Execute(create_interactions) != SQLITE_OK) {
+        fprintf(stderr, "failed to create interactions table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_references) != SQLITE_OK) {
+        fprintf(stderr, "failed to create references table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_member_roles) != SQLITE_OK) {
+        fprintf(stderr, "failed to create member roles table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_guild_emojis) != SQLITE_OK) {
+        fprintf(stderr, "failed to create guild emojis table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_guild_features) != SQLITE_OK) {
+        fprintf(stderr, "failed to create guild features table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_threads) != SQLITE_OK) {
+        fprintf(stderr, "failed to create threads table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_emoji_roles) != SQLITE_OK) {
+        fprintf(stderr, "failed to create emoji roles table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_mentions) != SQLITE_OK) {
+        fprintf(stderr, "failed to create mentions table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_attachments) != SQLITE_OK) {
+        fprintf(stderr, "failed to create attachments table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_recipients) != SQLITE_OK) {
+        fprintf(stderr, "failed to create recipients table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_reactions) != SQLITE_OK) {
+        fprintf(stderr, "failed to create reactions table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(R"(
+        CREATE TRIGGER remove_zero_reactions AFTER UPDATE ON reactions WHEN new.count = 0
+        BEGIN
+            DELETE FROM reactions WHERE message = new.message AND emoji_id = new.emoji_id AND name = new.name;
+        END
+    )") != SQLITE_OK) {
+        fprintf(stderr, "failed to create reactions trigger: %s\n", m_db.ErrStr());
         return false;
     }
 
@@ -1100,408 +1488,758 @@ bool Store::CreateTables() {
 }
 
 bool Store::CreateStatements() {
-    const char *set_user = R"(
-        REPLACE INTO users VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    m_stmt_set_guild = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO guilds VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_guild->OK()) {
+        fprintf(stderr, "failed to prepare set guild statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_user = R"(
-        SELECT * FROM users WHERE id = ?
-    )";
+    m_stmt_get_guild = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM guilds WHERE id = ?
+    )");
+    if (!m_stmt_get_guild->OK()) {
+        fprintf(stderr, "failed to prepare get guild statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_perm = R"(
-        REPLACE INTO permissions VALUES (
-            ?, ?, ?, ?, ?
+    m_stmt_get_guild_ids = std::make_unique<Statement>(m_db, R"(
+        SELECT id FROM guilds
+    )");
+    if (!m_stmt_get_guild_ids->OK()) {
+        fprintf(stderr, "failed to prepare get guild ids statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_clr_guild = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM guilds WHERE id = ?
+    )");
+    if (!m_stmt_clr_guild->OK()) {
+        fprintf(stderr, "failed to prepare clear guild statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_chan = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO channels VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_chan->OK()) {
+        fprintf(stderr, "failed to prepare set channel statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_perm = R"(
-        SELECT * FROM permissions WHERE id = ? AND channel_id = ?
-    )";
+    m_stmt_get_chan = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM channels WHERE id = ?
+    )");
+    if (!m_stmt_get_chan->OK()) {
+        fprintf(stderr, "failed to prepare get channel statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_msg = R"(
+    m_stmt_get_chan_ids = std::make_unique<Statement>(m_db, R"(
+        SELECT id FROM channels
+    )");
+    if (!m_stmt_get_chan_ids->OK()) {
+        fprintf(stderr, "failed to prepare get channel ids statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_clr_chan = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM channels WHERE id = ?
+    )");
+    if (!m_stmt_clr_chan->OK()) {
+        fprintf(stderr, "failed to prepare clear channel statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_msg = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO messages VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_msg->OK()) {
+        fprintf(stderr, "failed to prepare set message statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_msg = R"(
+    // wew
+    m_stmt_get_msg = std::make_unique<Statement>(m_db, R"(
         SELECT messages.*,
-               message_interactions.interaction_id as interaction_id,
-	           message_interactions.name as interaction_name,
-	           message_interactions.type as interaction_type,
-               message_interactions.user_id as interaction_user_id
+               message_interactions.interaction_id,
+               message_interactions.name,
+               message_interactions.type,
+               message_interactions.user_id,
+               attachments.id,
+               attachments.filename,
+               attachments.size,
+               attachments.url,
+               attachments.proxy,
+               attachments.height,
+               attachments.width
         FROM messages
         LEFT OUTER JOIN
             message_interactions
                 ON messages.id = message_interactions.message_id
-        WHERE id = ?
-    )";
+        LEFT OUTER JOIN
+            attachments
+                ON messages.id = attachments.message
+        WHERE messages.id = ?
+        UNION ALL
+        SELECT messages.*,
+               message_interactions.interaction_id,
+               message_interactions.name,
+               message_interactions.type,
+               message_interactions.user_id,
+               attachments.id,
+               attachments.filename,
+               attachments.size,
+               attachments.url,
+               attachments.proxy,
+               attachments.height,
+               attachments.width
+        FROM messages
+        LEFT OUTER JOIN
+            message_interactions
+                ON messages.id = message_interactions.message_id
+        LEFT OUTER JOIN
+            attachments
+                ON messages.id = attachments.message
+        WHERE messages.id = (SELECT message FROM message_references WHERE id = ?)
+        ORDER BY messages.id DESC
+    )");
+    if (!m_stmt_get_msg->OK()) {
+        fprintf(stderr, "failed to prepare get message statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_role = R"(
-        REPLACE INTO roles VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?
+    m_stmt_set_msg_ref = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO message_references VALUES (
+            ?, ?, ?, ?
+        );
+    )");
+    if (!m_stmt_set_msg_ref->OK()) {
+        fprintf(stderr, "failed to prepare set message reference statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_last_msgs = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM (
+            SELECT messages.*,
+                   message_interactions.interaction_id,
+                   message_interactions.name,
+                   message_interactions.type,
+                   message_interactions.user_id,
+                   attachments.id,
+                   attachments.filename,
+                   attachments.size,
+                   attachments.url,
+                   attachments.proxy,
+                   attachments.height,
+                   attachments.width,
+                   message_references.message
+            FROM messages
+            LEFT OUTER JOIN
+                message_interactions
+                    ON messages.id = message_interactions.message_id
+            LEFT OUTER JOIN
+                attachments
+                    ON messages.id = attachments.message
+            LEFT OUTER JOIN
+                message_references
+                    ON messages.id = message_references.id
+            WHERE channel_id = ? AND pending = 0 ORDER BY id DESC LIMIT ?
+        ) ORDER BY id ASC
+    )");
+    if (!m_stmt_get_last_msgs->OK()) {
+        fprintf(stderr, "failed to prepare get last messages statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_user = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO users VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_user->OK()) {
+        fprintf(stderr, "failed to prepare set user statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_role = R"(
-        SELECT * FROM roles WHERE id = ?
-    )";
+    m_stmt_get_user = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM users WHERE id = ?
+    )");
+    if (!m_stmt_get_user->OK()) {
+        fprintf(stderr, "failed to prepare get user statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_emoji = R"(
-        REPLACE INTO emojis VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?
-        )
-    )";
-
-    const char *get_emoji = R"(
-        SELECT * FROM emojis WHERE id = ?
-    )";
-
-    const char *set_member = R"(
+    m_stmt_set_member = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO members VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_member->OK()) {
+        fprintf(stderr, "failed to prepare set member statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_member = R"(
+    m_stmt_get_member = std::make_unique<Statement>(m_db, R"(
         SELECT * FROM members WHERE user_id = ? AND guild_id = ?
-    )";
+    )");
+    if (!m_stmt_get_member->OK()) {
+        fprintf(stderr, "failed to prepare get member statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_guild = R"(
-        REPLACE INTO guilds VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    m_stmt_set_role = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO roles VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_role->OK()) {
+        fprintf(stderr, "failed to prepare set role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_guild = R"(
-        SELECT * FROM guilds WHERE id = ?
-    )";
+    m_stmt_get_role = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM roles WHERE id = ?
+    )");
+    if (!m_stmt_get_role->OK()) {
+        fprintf(stderr, "failed to prepare get role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_chan = R"(
-        REPLACE INTO channels VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    m_stmt_set_emoji = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO emojis VALUES (
+            ?, ?, ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_emoji->OK()) {
+        fprintf(stderr, "failed to prepare set emoji statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_chan = R"(
-        SELECT * FROM channels WHERE id = ?
-    )";
+    m_stmt_get_emoji = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM emojis WHERE id = ?
+    )");
+    if (!m_stmt_get_emoji->OK()) {
+        fprintf(stderr, "failed to prepare get emoji statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_ban = R"(
+    m_stmt_set_perm = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO permissions VALUES (
+            ?, ?, ?, ?, ?
+        )
+    )");
+    if (!m_stmt_set_perm->OK()) {
+        fprintf(stderr, "failed to prepare set permission statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_perm = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM permissions WHERE id = ? AND channel_id = ?
+    )");
+    if (!m_stmt_get_perm->OK()) {
+        fprintf(stderr, "failed to prepare get permission statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_ban = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO bans VALUES (
             ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_ban->OK()) {
+        fprintf(stderr, "failed to prepare set ban statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_ban = R"(
+    m_stmt_get_ban = std::make_unique<Statement>(m_db, R"(
         SELECT * FROM bans WHERE guild_id = ? AND user_id = ?
-    )";
+    )");
+    if (!m_stmt_get_ban->OK()) {
+        fprintf(stderr, "failed to prepare get ban statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *clear_ban = R"(
-        DELETE FROM bans WHERE guild_id = ? AND user_id = ?
-    )";
-
-    const char *get_bans = R"(
+    m_stmt_get_bans = std::make_unique<Statement>(m_db, R"(
         SELECT * FROM bans WHERE guild_id = ?
-    )";
+    )");
+    if (!m_stmt_get_bans->OK()) {
+        fprintf(stderr, "failed to prepare get bans statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *set_interaction = R"(
+    m_stmt_clr_ban = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM bans WHERE guild_id = ? AND user_id = ?
+    )");
+    if (!m_stmt_clr_ban->OK()) {
+        fprintf(stderr, "failed to prepare clear ban statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_interaction = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO message_interactions VALUES (
             ?, ?, ?, ?, ?
         )
-    )";
+    )");
+    if (!m_stmt_set_interaction->OK()) {
+        fprintf(stderr, "failed to prepare set interaction statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_last_msgs = R"(
-        SELECT * FROM (
-            SELECT * FROM messages
-            WHERE channel_id = ?
-            ORDER BY id DESC
-            LIMIT ?
-        ) T1 ORDER BY id ASC
-    )";
+    m_stmt_set_member_roles = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO member_roles VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_member_roles->OK()) {
+        fprintf(stderr, "faile to prepare set member roles statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_msg_ids = R"(
-        SELECT id FROM messages WHERE channel_id = ? AND pending = 0 ORDER BY id ASC
-    )";
+    m_stmt_get_member_roles = std::make_unique<Statement>(m_db, R"(
+        SELECT id FROM roles, member_roles
+        WHERE roles.id = member_roles.role
+        AND member_roles.user = ?
+        AND roles.guild = ?
+    )");
+    if (!m_stmt_get_member_roles->OK()) {
+        fprintf(stderr, "failed to prepare get member role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_pins = R"(
-        SELECT id FROM messages WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
-    )";
+    m_stmt_set_guild_emoji = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO guild_emojis VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_guild_emoji->OK()) {
+        fprintf(stderr, "failed to prepare set guild emoji statement: %s\n", m_db.ErrStr());
+        return false;
+    }
 
-    const char *get_threads = R"(
+    m_stmt_get_guild_emojis = std::make_unique<Statement>(m_db, R"(
+        SELECT emoji FROM guild_emojis WHERE guild = ?
+    )");
+    if (!m_stmt_get_guild_emojis->OK()) {
+        fprintf(stderr, "failed to prepare get guild emojis statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_clr_guild_emoji = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM guild_emojis WHERE guild = ? AND emoji = ?
+    )");
+    if (!m_stmt_clr_guild_emoji->OK()) {
+        fprintf(stderr, "failed to prepare clear guild emoji statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_guild_feature = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO guild_features VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_guild_feature->OK()) {
+        fprintf(stderr, "failed to prepare set guild feature statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_guild_features = std::make_unique<Statement>(m_db, R"(
+        SELECT feature FROM guild_features WHERE guild = ?  
+    )");
+    if (!m_stmt_get_guild_features->OK()) {
+        fprintf(stderr, "failed to prepare get guild features statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_guild_chans = std::make_unique<Statement>(m_db, R"(
+        SELECT id FROM channels WHERE guild_id = ?
+    )");
+    if (!m_stmt_get_guild_chans->OK()) {
+        fprintf(stderr, "failed to prepare get guild channels statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_thread = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO threads VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_thread->OK()) {
+        fprintf(stderr, "failed to prepare set thread statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_threads = std::make_unique<Statement>(m_db, R"(
+        SELECT id FROM threads WHERE guild = ?
+    )");
+    if (!m_stmt_get_threads->OK()) {
+        fprintf(stderr, "failed to prepare get threads statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_active_threads = std::make_unique<Statement>(m_db, R"(
         SELECT id FROM channels WHERE parent_id = ? AND (type = 10 OR type = 11 OR type = 12) AND archived = FALSE
-    )";
-
-    const char *clear_chan = R"(
-        DELETE FROM channels WHERE id = ?
-    )";
-
-    m_db_err = sqlite3_prepare_v2(m_db, set_user, -1, &m_set_user_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set user statement: %s\n", sqlite3_errstr(m_db_err));
+    )");
+    if (!m_stmt_get_active_threads->OK()) {
+        fprintf(stderr, "faile to prepare get active threads statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_user, -1, &m_get_user_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get user statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_messages_before = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM (
+            SELECT messages.*,
+                   message_interactions.interaction_id,
+                   message_interactions.name,
+                   message_interactions.type,
+                   message_interactions.user_id,
+                   attachments.id,
+                   attachments.filename,
+                   attachments.size,
+                   attachments.url,
+                   attachments.proxy,
+                   attachments.height,
+                   attachments.width,
+                   message_references.message
+            FROM messages
+            LEFT OUTER JOIN
+                message_interactions
+                    ON messages.id = message_interactions.message_id
+            LEFT OUTER JOIN
+                attachments
+                    ON messages.id = attachments.message
+            LEFT OUTER JOIN
+                message_references
+                    ON messages.id = message_references.id
+            WHERE channel_id = ? AND pending = 0 AND messages.id < ? ORDER BY id DESC LIMIT ?
+        ) ORDER BY id ASC
+    )");
+    if (!m_stmt_get_messages_before->OK()) {
+        fprintf(stderr, "failed to prepare get messages before statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_perm, -1, &m_set_perm_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set permission statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_pins = std::make_unique<Statement>(m_db, R"(
+        SELECT messages.*,
+               message_interactions.interaction_id,
+               message_interactions.name,
+               message_interactions.type,
+               message_interactions.user_id,
+               attachments.id,
+               attachments.filename,
+               attachments.size,
+               attachments.url,
+               attachments.proxy,
+               attachments.height,
+               attachments.width,
+               message_references.message
+        FROM messages
+        LEFT OUTER JOIN
+            message_interactions
+                ON messages.id = message_interactions.message_id
+        LEFT OUTER JOIN
+            attachments
+                ON messages.id = attachments.message
+        LEFT OUTER JOIN
+            message_references
+                ON messages.id = message_references.id
+        WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
+    )");
+    if (!m_stmt_get_pins->OK()) {
+        fprintf(stderr, "failed to prepare get pins statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_perm, -1, &m_get_perm_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get permission statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_set_emoji_role = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO emoji_roles VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_emoji_role->OK()) {
+        fprintf(stderr, "failed to prepare set emoji role statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_msg, -1, &m_set_msg_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set message statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_emoji_roles = std::make_unique<Statement>(m_db, R"(
+        SELECT role FROM emoji_roles WHERE emoji = ?
+    )");
+    if (!m_stmt_get_emoji_roles->OK()) {
+        fprintf(stderr, "failed to prepare get emoji role statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_msg, -1, &m_get_msg_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get message statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_set_mention = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO mentions VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_mention->OK()) {
+        fprintf(stderr, "failed to prepare set mention statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_role, -1, &m_set_role_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set role statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_mentions = std::make_unique<Statement>(m_db, R"(
+        SELECT user FROM mentions WHERE message = ?
+    )");
+    if (!m_stmt_get_mentions->OK()) {
+        fprintf(stderr, "failed to prepare get mentions statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_role, -1, &m_get_role_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get role statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_set_attachment = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO attachments VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    )");
+    if (!m_stmt_set_attachment->OK()) {
+        fprintf(stderr, "failed to prepare set attachment statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_emoji, -1, &m_set_emote_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set emoji statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_attachments = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM attachments WHERE message = ?
+    )");
+    if (!m_stmt_get_attachments->OK()) {
+        fprintf(stderr, "failed to prepare get attachments statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_emoji, -1, &m_get_emote_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get emoji statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_set_recipient = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO recipients VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_recipient->OK()) {
+        fprintf(stderr, "failed to prepare set recipient statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_member, -1, &m_set_member_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set member statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_recipients = std::make_unique<Statement>(m_db, R"(
+        SELECT user FROM recipients WHERE channel = ?
+    )");
+    if (!m_stmt_get_recipients->OK()) {
+        fprintf(stderr, "failed to prepare get recipients statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_member, -1, &m_get_member_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get member statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_clr_recipient = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM recipients WHERE channel = ? AND user = ?
+    )");
+    if (!m_stmt_clr_recipient->OK()) {
+        fprintf(stderr, "failed to prepare clear recipient statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_guild, -1, &m_set_guild_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set guild statement: %s\n", sqlite3_errstr(m_db_err));
+    // probably not the best way to do this lol but i just want one statement i guess
+    m_stmt_add_reaction = std::make_unique<Statement>(m_db, R"(
+        INSERT OR REPLACE INTO reactions VALUES (
+            ?1, ?2, ?3,
+            COALESCE(
+                (SELECT count FROM reactions WHERE message = ?1 AND emoji_id = ?2 AND name = ?3),
+                0
+            ) + ?4,
+            COALESCE(
+                ?5,
+                (SELECT me FROM reactions WHERE message = ?1 AND emoji_id = ?2 AND name = ?3),
+                false
+            ),
+            COALESCE(
+                ?6,
+                (SELECT idx FROM reactions WHERE message = ?1 AND emoji_id = ?2 AND name = ?3),
+                (SELECT MAX(idx) + 1 FROM reactions WHERE message = ?1),
+                0
+            )
+        )
+    )");
+    if (!m_stmt_add_reaction->OK()) {
+        fprintf(stderr, "failed to prepare add reaction statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, get_guild, -1, &m_get_guild_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get guild statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_sub_reaction = std::make_unique<Statement>(m_db, R"(
+        UPDATE reactions
+        SET count = count - 1,
+            me = COALESCE(?4, me)
+        WHERE message = ?1 AND emoji_id = ?2 AND name = ?3
+    )");
+    if (!m_stmt_sub_reaction->OK()) {
+        fprintf(stderr, "failed to prepare sub reaction statement: %s\n", m_db.ErrStr());
         return false;
     }
 
-    m_db_err = sqlite3_prepare_v2(m_db, set_chan, -1, &m_set_chan_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set channel statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_chan, -1, &m_get_chan_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get channel statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, set_ban, -1, &m_set_ban_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set ban statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_ban, -1, &m_get_ban_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get ban statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, clear_ban, -1, &m_clear_ban_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare clear ban statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_bans, -1, &m_get_bans_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get bans statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, set_interaction, -1, &m_set_msg_interaction_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare set message interaction statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_last_msgs, -1, &m_get_last_msgs_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get last messages statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_msg_ids, -1, &m_get_msg_ids_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get msg ids statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_pins, -1, &m_get_pins_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get pins statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, get_threads, -1, &m_get_threads_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare get threads statement: %s\n", sqlite3_errstr(m_db_err));
-        return false;
-    }
-
-    m_db_err = sqlite3_prepare_v2(m_db, clear_chan, -1, &m_clear_chan_stmt, nullptr);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "failed to prepare clear channel statement: %s\n", sqlite3_errstr(m_db_err));
+    m_stmt_get_reactions = std::make_unique<Statement>(m_db, R"(
+        SELECT emoji_id, name, count, me, idx FROM reactions WHERE message = ?
+    )");
+    if (!m_stmt_get_reactions->OK()) {
+        fprintf(stderr, "failed to prepare get reactions statement: %s\n", m_db.ErrStr());
         return false;
     }
 
     return true;
 }
 
-void Store::Cleanup() {
-    sqlite3_finalize(m_set_user_stmt);
-    sqlite3_finalize(m_get_user_stmt);
-    sqlite3_finalize(m_set_perm_stmt);
-    sqlite3_finalize(m_get_perm_stmt);
-    sqlite3_finalize(m_set_msg_stmt);
-    sqlite3_finalize(m_get_msg_stmt);
-    sqlite3_finalize(m_set_role_stmt);
-    sqlite3_finalize(m_get_role_stmt);
-    sqlite3_finalize(m_set_emote_stmt);
-    sqlite3_finalize(m_get_emote_stmt);
-    sqlite3_finalize(m_set_member_stmt);
-    sqlite3_finalize(m_get_member_stmt);
-    sqlite3_finalize(m_set_guild_stmt);
-    sqlite3_finalize(m_get_guild_stmt);
-    sqlite3_finalize(m_set_chan_stmt);
-    sqlite3_finalize(m_get_chan_stmt);
-    sqlite3_finalize(m_set_ban_stmt);
-    sqlite3_finalize(m_get_ban_stmt);
-    sqlite3_finalize(m_clear_ban_stmt);
-    sqlite3_finalize(m_get_bans_stmt);
-    sqlite3_finalize(m_set_msg_interaction_stmt);
-    sqlite3_finalize(m_get_last_msgs_stmt);
-    sqlite3_finalize(m_get_msg_ids_stmt);
-    sqlite3_finalize(m_get_pins_stmt);
-    sqlite3_finalize(m_get_threads_stmt);
-    sqlite3_finalize(m_clear_chan_stmt);
+Store::Database::Database(const char *path) {
+    m_err = sqlite3_open(path, &m_db);
 }
 
-void Store::Bind(sqlite3_stmt *stmt, int index, int num) const {
-    m_db_err = sqlite3_bind_int(stmt, index, num);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error binding index %d: %s\n", index, sqlite3_errstr(m_db_err));
-    }
+Store::Database::~Database() {
+    Close();
 }
 
-void Store::Bind(sqlite3_stmt *stmt, int index, uint64_t num) const {
-    m_db_err = sqlite3_bind_int64(stmt, index, num);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error binding index %d: %s\n", index, sqlite3_errstr(m_db_err));
-    }
+int Store::Database::Close() {
+    m_signal_close.emit();
+    m_err = sqlite3_close(m_db);
+    m_db = nullptr;
+    return m_err;
 }
 
-void Store::Bind(sqlite3_stmt *stmt, int index, const std::string &str) const {
-    m_db_err = sqlite3_bind_blob(stmt, index, str.c_str(), str.length(), SQLITE_TRANSIENT);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error binding index %d: %s\n", index, sqlite3_errstr(m_db_err));
-    }
+int Store::Database::StartTransaction() {
+    return m_err = Execute("BEGIN TRANSACTION");
 }
 
-void Store::Bind(sqlite3_stmt *stmt, int index, bool val) const {
-    m_db_err = sqlite3_bind_int(stmt, index, val ? 1 : 0);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error binding index %d: %s\n", index, sqlite3_errstr(m_db_err));
-    }
+int Store::Database::EndTransaction() {
+    return m_err = Execute("COMMIT");
 }
 
-void Store::Bind(sqlite3_stmt *stmt, int index, std::nullptr_t) const {
-    m_db_err = sqlite3_bind_null(stmt, index);
-    if (m_db_err != SQLITE_OK) {
-        fprintf(stderr, "error binding index %d: %s\n", index, sqlite3_errstr(m_db_err));
-    }
+int Store::Database::Execute(const char *command) {
+    return m_err = sqlite3_exec(m_db, command, nullptr, nullptr, nullptr);
 }
 
-bool Store::RunInsert(sqlite3_stmt *stmt) {
-    m_db_err = sqlite3_step(stmt);
-    Reset(stmt);
-    return m_db_err == SQLITE_DONE;
+int Store::Database::Error() const {
+    return m_err;
 }
 
-bool Store::FetchOne(sqlite3_stmt *stmt) const {
-    m_db_err = sqlite3_step(stmt);
-    return m_db_err == SQLITE_ROW;
+bool Store::Database::OK() const {
+    return Error() == SQLITE_OK;
 }
 
-void Store::Get(sqlite3_stmt *stmt, int index, int &out) const {
-    out = sqlite3_column_int(stmt, index);
+const char *Store::Database::ErrStr() const {
+    const char *errstr = sqlite3_errstr(m_err);
+    const char *errmsg = sqlite3_errmsg(m_db);
+    strcpy_s(m_err_scratch, sizeof(m_err_scratch), errstr);
+    strcat_s(m_err_scratch, sizeof(m_err_scratch), "\n\t");
+    strcat_s(m_err_scratch, sizeof(m_err_scratch), errmsg);
+    return m_err_scratch;
 }
 
-void Store::Get(sqlite3_stmt *stmt, int index, uint64_t &out) const {
-    out = sqlite3_column_int64(stmt, index);
+int Store::Database::SetError(int err) {
+    return m_err = err;
 }
 
-void Store::Get(sqlite3_stmt *stmt, int index, std::string &out) const {
-    const unsigned char *ptr = sqlite3_column_text(stmt, index);
+sqlite3 *Store::Database::obj() {
+    return m_db;
+}
+
+Store::Database::type_signal_close Store::Database::signal_close() {
+    return m_signal_close;
+}
+
+Store::Statement::Statement(Database &db, const char *command)
+    : m_db(&db) {
+    if (m_db->SetError(sqlite3_prepare_v2(m_db->obj(), command, -1, &m_stmt, nullptr)) != SQLITE_OK) return;
+    std::string tmp = command;
+    m_db->signal_close().connect([tmp, this] {
+        puts(tmp.c_str());
+        sqlite3_finalize(m_stmt);
+        m_stmt = nullptr;
+    });
+}
+
+Store::Statement::~Statement() {
+    sqlite3_finalize(m_stmt);
+}
+
+bool Store::Statement::OK() const {
+    return m_stmt != nullptr;
+}
+
+int Store::Statement::Bind(int index, int32_t num) {
+    return Bind(index, static_cast<uint32_t>(num));
+}
+
+int Store::Statement::Bind(int index, uint32_t num) {
+    return m_db->SetError(sqlite3_bind_int(m_stmt, index, num));
+}
+
+int Store::Statement::Bind(int index, uint64_t num) {
+    return m_db->SetError(sqlite3_bind_int64(m_stmt, index, num));
+}
+
+int Store::Statement::Bind(int index, const char *str, size_t len) {
+    if (len == -1) len = strlen(str);
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str, len, SQLITE_TRANSIENT));
+}
+
+int Store::Statement::Bind(int index, const std::string &str) {
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), str.size(), SQLITE_TRANSIENT));
+}
+
+int Store::Statement::Bind(int index, bool val) {
+    return m_db->SetError(sqlite3_bind_int(m_stmt, index, val ? 1L : 0L));
+}
+
+int Store::Statement::Bind(int index) {
+    return m_db->SetError(sqlite3_bind_null(m_stmt, index));
+}
+
+void Store::Statement::Get(int index, uint8_t &out) const {
+    out = sqlite3_column_int(m_stmt, index);
+}
+
+void Store::Statement::Get(int index, int32_t &out) const {
+    out = sqlite3_column_int(m_stmt, index);
+}
+
+void Store::Statement::Get(int index, uint64_t &out) const {
+    out = static_cast<uint64_t>(sqlite3_column_int64(m_stmt, index));
+}
+
+void Store::Statement::Get(int index, bool &out) const {
+    out = sqlite3_column_int(m_stmt, index) != 0;
+}
+
+void Store::Statement::Get(int index, Snowflake &out) const {
+    out = static_cast<uint64_t>(sqlite3_column_int64(m_stmt, index));
+}
+
+void Store::Statement::Get(int index, std::string &out) const {
+    const unsigned char *ptr = sqlite3_column_text(m_stmt, index);
     if (ptr == nullptr)
         out = "";
     else
         out = reinterpret_cast<const char *>(ptr);
 }
 
-void Store::Get(sqlite3_stmt *stmt, int index, bool &out) const {
-    out = sqlite3_column_int(stmt, index) != 0;
+bool Store::Statement::IsNull(int index) const {
+    return sqlite3_column_type(m_stmt, index) == SQLITE_NULL;
 }
 
-void Store::Get(sqlite3_stmt *stmt, int index, Snowflake &out) const {
-    const int64_t num = sqlite3_column_int64(stmt, index);
-    out = static_cast<uint64_t>(num);
+int Store::Statement::Step() {
+    return m_db->SetError(sqlite3_step(m_stmt));
 }
 
-bool Store::IsNull(sqlite3_stmt *stmt, int index) const {
-    return sqlite3_column_type(stmt, index) == SQLITE_NULL;
+bool Store::Statement::Insert() {
+    return m_db->SetError(sqlite3_step(m_stmt)) == SQLITE_DONE;
 }
 
-void Store::Reset(sqlite3_stmt *stmt) const {
-    sqlite3_reset(stmt);
-    sqlite3_clear_bindings(stmt);
+bool Store::Statement::FetchOne() {
+    return m_db->SetError(sqlite3_step(m_stmt)) == SQLITE_ROW;
+}
+
+int Store::Statement::Reset() {
+    if (m_db->SetError(sqlite3_reset(m_stmt)) != SQLITE_OK)
+        return m_db->Error();
+    if (m_db->SetError(sqlite3_clear_bindings(m_stmt)) != SQLITE_OK)
+        return m_db->Error();
+    return m_db->Error();
+}
+
+sqlite3_stmt *Store::Statement::obj() {
+    return m_stmt;
 }

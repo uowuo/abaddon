@@ -231,11 +231,13 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             }
         } break;
         case MessageType::RECIPIENT_ADD: {
+            if (data->Mentions.size() == 0) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
             b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> added <span color='#eeeeee'>" + added.Username + "</span></span></i>");
         } break;
         case MessageType::RECIPIENT_REMOVE: {
+            if (data->Mentions.size() == 0) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
             if (adder->ID == added.ID)

@@ -53,20 +53,12 @@ public:
     bool IsStarted() const;
     bool IsStoreValid() const;
 
-    using guilds_type = Store::guilds_type;
-    using channels_type = Store::channels_type;
-    using messages_type = Store::messages_type;
-    using users_type = Store::users_type;
-    using roles_type = Store::roles_type;
-    using members_type = Store::members_type;
-    using permission_overwrites_type = Store::permission_overwrites_type;
-
     std::unordered_set<Snowflake> GetGuilds() const;
     const UserData &GetUserData() const;
     const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
     std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
-    std::vector<Snowflake> GetMessageIDsForChannel(Snowflake id) const;
+    std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit = 50) const;
     std::set<Snowflake> GetPrivateChannels() const;
 
     EPremiumType GetSelfPremiumType() const;

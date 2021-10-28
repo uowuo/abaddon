@@ -2,7 +2,7 @@
 #include <gtkmm.h>
 #include <string>
 #include <set>
-#include "../discord/discord.hpp"
+#include "discord/discord.hpp"
 #include "completer.hpp"
 
 class ChatMessageHeader;

@@ -1,5 +1,5 @@
 #include "auditlogpane.hpp"
-#include "../../abaddon.hpp"
+#include "abaddon.hpp"
 
 using namespace std::string_literals;
 
