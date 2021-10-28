@@ -2169,7 +2169,7 @@ int Store::Statement::Bind(int index, uint32_t num) {
     return m_db->SetError(sqlite3_bind_int(m_stmt, index, num));
 }
 
-int Store::Statement::Bind(int index, uint64_t num) {
+int Store::Statement::Bind(int index, size_t num) {
     return m_db->SetError(sqlite3_bind_int64(m_stmt, index, num));
 }
 
@@ -2198,8 +2198,8 @@ void Store::Statement::Get(int index, int32_t &out) const {
     out = sqlite3_column_int(m_stmt, index);
 }
 
-void Store::Statement::Get(int index, uint64_t &out) const {
-    out = static_cast<uint64_t>(sqlite3_column_int64(m_stmt, index));
+void Store::Statement::Get(int index, size_t &out) const {
+    out = static_cast<size_t>(sqlite3_column_int64(m_stmt, index));
 }
 
 void Store::Statement::Get(int index, bool &out) const {

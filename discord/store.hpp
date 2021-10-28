@@ -102,7 +102,7 @@ private:
 
         int Bind(int index, int32_t num);
         int Bind(int index, uint32_t num);
-        int Bind(int index, uint64_t num);
+        int Bind(int index, size_t num);
         int Bind(int index, const char *str, size_t len = -1);
         int Bind(int index, const std::string &str);
         int Bind(int index, bool val);
@@ -154,7 +154,7 @@ private:
 
         void Get(int index, uint8_t &out) const;
         void Get(int index, int32_t &out) const;
-        void Get(int index, uint64_t &out) const;
+        void Get(int index, size_t &out) const;
         void Get(int index, bool &out) const;
         void Get(int index, Snowflake &out) const;
         void Get(int index, std::string &out) const;
