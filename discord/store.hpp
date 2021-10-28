@@ -149,7 +149,7 @@ private:
         template<typename T>
         inline typename std::enable_if<std::is_enum<T>::value, int>::type
         Bind(int index, T val) {
-            return Bind(index, static_cast<std::underlying_type<T>::type>(val));
+            return Bind(index, static_cast<typename std::underlying_type<T>::type>(val));
         }
 
         void Get(int index, uint8_t &out) const;
