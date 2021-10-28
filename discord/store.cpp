@@ -261,7 +261,7 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
     s->Bind(9, data.IsPending);
 
     if (!s->Insert())
-        fprintf(stderr, "member insert failed for %" PRIu64 "/% " PRIu64 ": %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
+        fprintf(stderr, "member insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
 
     s->Reset();
 
@@ -661,7 +661,7 @@ std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
             s->Get(0, r);
         }
         s->Reset();
-        if (recipients.size() > 0)
+        if (!recipients.empty())
             r.RecipientIDs = std::move(recipients);
     }
 
@@ -2171,6 +2171,10 @@ int Store::Statement::Bind(int index, uint32_t num) {
 
 int Store::Statement::Bind(int index, size_t num) {
     return m_db->SetError(sqlite3_bind_int64(m_stmt, index, num));
+}
+
+int Store::Statement::Bind(int index, Snowflake id) {
+    return m_db->SetError(sqlite3_bind_int64(m_stmt, index, static_cast<sqlite3_int64>(id)));
 }
 
 int Store::Statement::Bind(int index, const char *str, size_t len) {

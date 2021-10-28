@@ -103,6 +103,7 @@ private:
         int Bind(int index, int32_t num);
         int Bind(int index, uint32_t num);
         int Bind(int index, size_t num);
+        int Bind(int index, Snowflake id);
         int Bind(int index, const char *str, size_t len = -1);
         int Bind(int index, const std::string &str);
         int Bind(int index, bool val);
