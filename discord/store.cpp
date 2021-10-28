@@ -2122,9 +2122,9 @@ bool Store::Database::OK() const {
 const char *Store::Database::ErrStr() const {
     const char *errstr = sqlite3_errstr(m_err);
     const char *errmsg = sqlite3_errmsg(m_db);
-    strcpy_s(m_err_scratch, sizeof(m_err_scratch), errstr);
-    strcat_s(m_err_scratch, sizeof(m_err_scratch), "\n\t");
-    strcat_s(m_err_scratch, sizeof(m_err_scratch), errmsg);
+    std::string tmp = errstr + std::string("\n\t") + errmsg;
+    tmp.copy(m_err_scratch, sizeof(m_err_scratch) - 1);
+    m_err_scratch[sizeof(m_err_scratch) - 1] = '\0';
     return m_err_scratch;
 }
 
