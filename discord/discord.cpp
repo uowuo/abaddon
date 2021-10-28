@@ -1,5 +1,6 @@
 #include "discord.hpp"
 #include <cassert>
+#include <cinttypes>
 #include "../util.hpp"
 #include "../abaddon.hpp"
 
@@ -1276,11 +1277,11 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                 }
             } break;
             default:
-                printf("Unknown opcode %d\n", m.Opcode);
+                printf("Unknown opcode %d\n", static_cast<int>(m.Opcode));
                 break;
         }
     } catch (std::exception &e) {
-        fprintf(stderr, "error handling message (opcode %d): %s\n", m.Opcode, e.what());
+        fprintf(stderr, "error handling message (opcode %d): %s\n", static_cast<int>(m.Opcode), e.what());
     }
 }
 
@@ -1320,7 +1321,7 @@ DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &respo
 
 void DiscordClient::ProcessNewGuild(GuildData &guild) {
     if (guild.IsUnavailable) {
-        printf("guild (%lld) unavailable\n", static_cast<uint64_t>(guild.ID));
+        printf("guild (%" PRIu64 ") unavailable\n", static_cast<uint64_t>(guild.ID));
         return;
     }
 
@@ -1913,7 +1914,7 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     bool unavailable = msg.Data.contains("unavilable") && msg.Data.at("unavailable").get<bool>();
 
     if (unavailable)
-        printf("guild %llu became unavailable\n", static_cast<uint64_t>(id));
+        printf("guild %" PRIu64 " became unavailable\n", static_cast<uint64_t>(id));
 
     const auto guild = m_store.GetGuild(id);
     if (!guild.has_value()) {

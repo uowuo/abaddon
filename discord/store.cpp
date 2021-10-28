@@ -1,4 +1,5 @@
 #include "store.hpp"
+#include <cinttypes>
 
 using namespace std::literals::string_literals;
 
@@ -63,7 +64,7 @@ void Store::SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban) {
     s->Bind(3, ban.Reason);
 
     if (!s->Insert())
-        fprintf(stderr, "ban insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
+        fprintf(stderr, "ban insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
 
     s->Reset();
 }
@@ -98,7 +99,7 @@ void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     }
 
     if (!s->Insert())
-        fprintf(stderr, "channel insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        fprintf(stderr, "channel insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
     if (chan.Recipients.has_value()) {
         BeginTransaction();
@@ -107,7 +108,7 @@ void Store::SetChannel(Snowflake id, const ChannelData &chan) {
             s->Bind(1, chan.ID);
             s->Bind(2, r.ID);
             if (!s->Insert())
-                fprintf(stderr, "recipient insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(r.ID), m_db.ErrStr());
+                fprintf(stderr, "recipient insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(r.ID), m_db.ErrStr());
             s->Reset();
         }
         EndTransaction();
@@ -118,7 +119,7 @@ void Store::SetChannel(Snowflake id, const ChannelData &chan) {
             s->Bind(1, chan.ID);
             s->Bind(2, id);
             if (!s->Insert())
-                fprintf(stderr, "recipient insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(id), m_db.ErrStr());
+                fprintf(stderr, "recipient insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(chan.ID), static_cast<uint64_t>(id), m_db.ErrStr());
             s->Reset();
         }
         EndTransaction();
@@ -150,7 +151,7 @@ void Store::SetEmoji(Snowflake id, const EmojiData &emoji) {
             s->Bind(1, id);
             s->Bind(2, r);
             if (!s->Insert())
-                fprintf(stderr, "emoji role insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(r), m_db.ErrStr());
+                fprintf(stderr, "emoji role insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(r), m_db.ErrStr());
             s->Reset();
         }
 
@@ -158,7 +159,7 @@ void Store::SetEmoji(Snowflake id, const EmojiData &emoji) {
     }
 
     if (!s->Insert())
-        fprintf(stderr, "emoji insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        fprintf(stderr, "emoji insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
     s->Reset();
 }
@@ -204,7 +205,7 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
     s->Bind(35, guild.IsLazy);
 
     if (!s->Insert())
-        fprintf(stderr, "guild insert failed for %llu: %s\n", static_cast<uint64_t>(guild.ID), m_db.ErrStr());
+        fprintf(stderr, "guild insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(guild.ID), m_db.ErrStr());
 
     s->Reset();
 
@@ -214,7 +215,7 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
             s->Bind(1, guild.ID);
             s->Bind(2, emoji.ID);
             if (!s->Insert())
-                fprintf(stderr, "guild emoji insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(emoji.ID), m_db.ErrStr());
+                fprintf(stderr, "guild emoji insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(emoji.ID), m_db.ErrStr());
             s->Reset();
         }
     }
@@ -226,7 +227,7 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
             s->Bind(1, guild.ID);
             s->Bind(2, feature);
             if (!s->Insert())
-                fprintf(stderr, "guild feature insert failed for %llu/%s: %s\n", static_cast<uint64_t>(guild.ID), feature.c_str(), m_db.ErrStr());
+                fprintf(stderr, "guild feature insert failed for %" PRIu64 "/%s: %s\n", static_cast<uint64_t>(guild.ID), feature.c_str(), m_db.ErrStr());
             s->Reset();
         }
     }
@@ -238,7 +239,7 @@ void Store::SetGuild(Snowflake id, const GuildData &guild) {
             s->Bind(1, guild.ID);
             s->Bind(2, thread.ID);
             if (!s->Insert())
-                fprintf(stderr, "guild thread insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(thread.ID), m_db.ErrStr());
+                fprintf(stderr, "guild thread insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(guild.ID), static_cast<uint64_t>(thread.ID), m_db.ErrStr());
             s->Reset();
         }
     }
@@ -260,7 +261,7 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
     s->Bind(9, data.IsPending);
 
     if (!s->Insert())
-        fprintf(stderr, "member insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
+        fprintf(stderr, "member insert failed for %" PRIu64 "/% " PRIu64 ": %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
 
     s->Reset();
 
@@ -272,7 +273,8 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
             s->Bind(1, user_id);
             s->Bind(2, role);
             if (!s->Insert())
-                fprintf(stderr, "member role insert failed for %llu/%llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), static_cast<uint64_t>(role), m_db.ErrStr());
+                fprintf(stderr, "member role insert failed for %" PRIu64 "/%" PRIu64 "/%" PRIu64 ": %s\n",
+                        static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), static_cast<uint64_t>(role), m_db.ErrStr());
             s->Reset();
         }
         EndTransaction();
@@ -289,7 +291,7 @@ void Store::SetMessageInteractionPair(Snowflake message_id, const MessageInterac
     s->Bind(5, interaction.User.ID);
 
     if (!s->Insert())
-        fprintf(stderr, "message interaction failed for %llu: %s\n", static_cast<uint64_t>(message_id), m_db.ErrStr());
+        fprintf(stderr, "message interaction failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(message_id), m_db.ErrStr());
 
     s->Reset();
 }
@@ -322,7 +324,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
     s->BindAsJSON(21, message.StickerItems);
 
     if (!s->Insert())
-        fprintf(stderr, "message insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        fprintf(stderr, "message insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
     s->Reset();
 
@@ -334,7 +336,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         s->Bind(4, message.MessageReference->GuildID);
 
         if (!s->Insert())
-            fprintf(stderr, "message ref insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "message ref insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
         s->Reset();
     }
@@ -344,7 +346,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         s->Bind(1, id);
         s->Bind(2, u.ID);
         if (!s->Insert())
-            fprintf(stderr, "message mention insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(u.ID), m_db.ErrStr());
+            fprintf(stderr, "message mention insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(u.ID), m_db.ErrStr());
         s->Reset();
     }
 
@@ -359,7 +361,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         s->Bind(7, a.Height);
         s->Bind(8, a.Width);
         if (!s->Insert())
-            fprintf(stderr, "message attachment insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(a.ID), m_db.ErrStr());
+            fprintf(stderr, "message attachment insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(a.ID), m_db.ErrStr());
         s->Reset();
     }
 
@@ -374,7 +376,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
             s->Bind(5, reaction.HasReactedWith);
             s->Bind(6, i);
             if (!s->Insert())
-                fprintf(stderr, "message reaction insert failed for %llu/%llu/%s: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(reaction.Emoji.ID), reaction.Emoji.Name.c_str(), m_db.ErrStr());
+                fprintf(stderr, "message reaction insert failed for %" PRIu64 "/%" PRIu64 "/%s: %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(reaction.Emoji.ID), reaction.Emoji.Name.c_str(), m_db.ErrStr());
             s->Reset();
         }
     }
@@ -395,7 +397,7 @@ void Store::SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const Per
     s->Bind(5, perm.Deny);
 
     if (!s->Insert())
-        fprintf(stderr, "permission insert failed for %llu/%llu: %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
+        fprintf(stderr, "permission insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
 
     s->Reset();
 }
@@ -414,7 +416,7 @@ void Store::SetRole(Snowflake guild_id, const RoleData &role) {
     s->Bind(9, role.IsMentionable);
 
     if (!s->Insert())
-        fprintf(stderr, "role insert failed for %llu: %s\n", static_cast<uint64_t>(role.ID), m_db.ErrStr());
+        fprintf(stderr, "role insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(role.ID), m_db.ErrStr());
 
     s->Reset();
 }
@@ -433,7 +435,7 @@ void Store::SetUser(Snowflake id, const UserData &user) {
     s->Bind(9, user.PublicFlags);
 
     if (!s->Insert())
-        fprintf(stderr, "user insert failed for %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+        fprintf(stderr, "user insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
 
     s->Reset();
 }
@@ -445,7 +447,7 @@ std::optional<BanData> Store::GetBan(Snowflake guild_id, Snowflake user_id) cons
     s->Bind(2, user_id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching ban for %llu/%llu: %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching ban for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(guild_id), static_cast<uint64_t>(user_id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -595,7 +597,7 @@ void Store::AddReaction(const MessageReactionAddObject &data, bool byself) {
     s->Bind(6);
 
     if (!s->Insert())
-        fprintf(stderr, "failed to add reaction for %llu: %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
+        fprintf(stderr, "failed to add reaction for %" PRIu64 ": %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
 
     s->Reset();
 }
@@ -612,7 +614,7 @@ void Store::RemoveReaction(const MessageReactionRemoveObject &data, bool byself)
         s->Bind(4);
 
     if (!s->Insert())
-        fprintf(stderr, "failed to remove reaction for %llu: %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
+        fprintf(stderr, "failed to remove reaction for %" PRIu64 ": %s\n", static_cast<uint64_t>(data.MessageID), m_db.ErrStr());
 
     s->Reset();
 }
@@ -622,7 +624,7 @@ std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching channel %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching channel %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -672,7 +674,7 @@ std::optional<EmojiData> Store::GetEmoji(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching emoji %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching emoji %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -713,7 +715,7 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching guild %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching guild %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -785,7 +787,7 @@ std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake u
     s->Bind(2, guild_id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching member %llu/%llu: %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching member %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(user_id), static_cast<uint64_t>(guild_id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -825,7 +827,7 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching message %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching message %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -833,7 +835,7 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     auto top = GetMessageBound(s);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching message %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching message %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return top;
     }
@@ -935,7 +937,7 @@ std::optional<PermissionOverwrite> Store::GetPermissionOverwrite(Snowflake chann
     s->Bind(2, channel_id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "failed while fetching permission %llu/%llu: %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "failed while fetching permission %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(channel_id), static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -957,7 +959,7 @@ std::optional<RoleData> Store::GetRole(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching role %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching role %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
@@ -984,7 +986,7 @@ std::optional<UserData> Store::GetUser(Snowflake id) const {
     s->Bind(1, id);
     if (!s->FetchOne()) {
         if (m_db.Error() != SQLITE_DONE)
-            fprintf(stderr, "error while fetching user %llu: %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
+            fprintf(stderr, "error while fetching user %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
         s->Reset();
         return {};
     }
