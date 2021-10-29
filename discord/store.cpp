@@ -2161,20 +2161,8 @@ bool Store::Statement::OK() const {
     return m_stmt != nullptr;
 }
 
-int Store::Statement::Bind(int index, int32_t num) {
-    return Bind(index, static_cast<uint32_t>(num));
-}
-
-int Store::Statement::Bind(int index, uint32_t num) {
-    return m_db->SetError(sqlite3_bind_int(m_stmt, index, num));
-}
-
-int Store::Statement::Bind(int index, size_t num) {
-    return m_db->SetError(sqlite3_bind_int64(m_stmt, index, num));
-}
-
 int Store::Statement::Bind(int index, Snowflake id) {
-    return m_db->SetError(sqlite3_bind_int64(m_stmt, index, static_cast<sqlite3_int64>(id)));
+    return Bind(index, static_cast<uint64_t>(id));
 }
 
 int Store::Statement::Bind(int index, const char *str, size_t len) {
@@ -2186,28 +2174,8 @@ int Store::Statement::Bind(int index, const std::string &str) {
     return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), str.size(), SQLITE_TRANSIENT));
 }
 
-int Store::Statement::Bind(int index, bool val) {
-    return m_db->SetError(sqlite3_bind_int(m_stmt, index, val ? 1L : 0L));
-}
-
 int Store::Statement::Bind(int index) {
     return m_db->SetError(sqlite3_bind_null(m_stmt, index));
-}
-
-void Store::Statement::Get(int index, uint8_t &out) const {
-    out = sqlite3_column_int(m_stmt, index);
-}
-
-void Store::Statement::Get(int index, int32_t &out) const {
-    out = sqlite3_column_int(m_stmt, index);
-}
-
-void Store::Statement::Get(int index, size_t &out) const {
-    out = static_cast<size_t>(sqlite3_column_int64(m_stmt, index));
-}
-
-void Store::Statement::Get(int index, bool &out) const {
-    out = sqlite3_column_int(m_stmt, index) != 0;
 }
 
 void Store::Statement::Get(int index, Snowflake &out) const {

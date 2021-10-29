@@ -100,13 +100,9 @@ private:
 
         bool OK() const;
 
-        int Bind(int index, int32_t num);
-        int Bind(int index, uint32_t num);
-        int Bind(int index, size_t num);
         int Bind(int index, Snowflake id);
         int Bind(int index, const char *str, size_t len = -1);
         int Bind(int index, const std::string &str);
-        int Bind(int index, bool val);
         int Bind(int index);
 
         template<typename T>
@@ -135,14 +131,6 @@ private:
         }
 
         template<typename T>
-        int BindAsJSON(int index, const std::optional<T> &obj) {
-            if (obj.has_value())
-                return Bind(index, nlohmann::json(obj.value()).dump());
-            else
-                return Bind(index);
-        }
-
-        template<typename T>
         int BindAsJSON(int index, const T &obj) {
             return Bind(index, nlohmann::json(obj).dump());
         }
@@ -153,10 +141,26 @@ private:
             return Bind(index, static_cast<typename std::underlying_type<T>::type>(val));
         }
 
-        void Get(int index, uint8_t &out) const;
-        void Get(int index, int32_t &out) const;
-        void Get(int index, size_t &out) const;
-        void Get(int index, bool &out) const;
+        template<typename T>
+        typename std::enable_if<std::is_integral<T>::value, int>::type
+        Bind(int index, T val) {
+            return m_db->SetError(sqlite3_bind_int64(m_stmt, val, static_cast<sqlite3_int64>(val)));
+        }
+
+        template<typename T>
+        int BindAsJSON(int index, const std::optional<T> &obj) {
+            if (obj.has_value())
+                return Bind(index, nlohmann::json(obj.value()).dump());
+            else
+                return Bind(index);
+        }
+
+        template<typename T>
+        typename std::enable_if<std::is_integral<T>::value>::type
+        Get(int index, T &out) const {
+            out = static_cast<T>(sqlite3_column_int64(m_stmt, index));
+        }
+
         void Get(int index, Snowflake &out) const;
         void Get(int index, std::string &out) const;
 
