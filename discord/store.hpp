@@ -144,7 +144,7 @@ private:
         template<typename T>
         typename std::enable_if<std::is_integral<T>::value, int>::type
         Bind(int index, T val) {
-            return m_db->SetError(sqlite3_bind_int64(m_stmt, val, static_cast<sqlite3_int64>(val)));
+            return m_db->SetError(sqlite3_bind_int64(m_stmt, index, val));
         }
 
         template<typename T>
