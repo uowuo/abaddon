@@ -229,10 +229,12 @@ void MainWindow::UpdateChatReactionRemove(Snowflake id, const Glib::ustring &par
 void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto channel_id = GetChatActiveChannel();
-    auto channel = discord.GetChannel(channel_id);
     m_menu_discord_add_recipient.set_visible(false);
-    if (channel.has_value() && channel->GetDMRecipients().size() + 1 < 10)
-        m_menu_discord_add_recipient.set_visible(channel->Type == ChannelType::GROUP_DM);
+    if (channel_id.IsValid()) {
+        auto channel = discord.GetChannel(channel_id);
+        if (channel.has_value() && channel->GetDMRecipients().size() + 1 < 10)
+            m_menu_discord_add_recipient.set_visible(channel->Type == ChannelType::GROUP_DM);
+    }
 
     const bool discord_active = Abaddon::Get().GetDiscordClient().IsStarted();
 
@@ -247,12 +249,14 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
 void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
     m_menu_view_friends.set_sensitive(Abaddon::Get().GetDiscordClient().IsStarted());
     auto channel_id = GetChatActiveChannel();
-    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
     m_menu_view_pins.set_sensitive(false);
     m_menu_view_threads.set_sensitive(false);
-    if (channel.has_value()) {
-        m_menu_view_threads.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->IsThread());
-        m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM || channel->IsThread());
+    if (channel_id.IsValid()) {
+        auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
+        if (channel.has_value()) {
+            m_menu_view_threads.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->IsThread());
+            m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM || channel->IsThread());
+        }
     }
 }
 
