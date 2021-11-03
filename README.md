@@ -93,12 +93,6 @@ On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/
 .app-popup - Additional class for `.app-window`s when the window is not the main window  
   
 .channel-list - Container of the channel list  
-.channel-row - All rows within the channel container  
-.channel-row-channel - Only rows containing a channel  
-.channel-row-category - Only rows containing a category  
-.channel-row-guild - Only rows containing a guild  
-.channel-row-label - All labels within the channel container  
-.nsfw - Applied to channel row labels and their container for NSFW channels  
   
 .messages - Container of user messages  
 .message-container - The container which holds a user's messages  
