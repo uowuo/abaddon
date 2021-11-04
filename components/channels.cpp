@@ -380,6 +380,56 @@ void ChannelList::SetActiveChannel(Snowflake id) {
     }
 }
 
+void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
+    auto recurse = [this](auto &self, const ExpansionStateRoot &root) -> void {
+        // and these are only channels
+        for (const auto &[id, state] : root.Children) {
+            if (const auto iter = GetIteratorForChannelFromID(id)) {
+                if (state.IsExpanded)
+                    m_view.expand_row(m_model->get_path(iter), false);
+                else
+                    m_view.collapse_row(m_model->get_path(iter));
+            }
+
+            self(self, state.Children);
+        }
+    };
+
+    // top level is guild
+    for (const auto &[id, state] : root.Children) {
+        if (const auto iter = GetIteratorForGuildFromID(id)) {
+            if (state.IsExpanded)
+                m_view.expand_row(m_model->get_path(iter), false);
+            else
+                m_view.collapse_row(m_model->get_path(iter));
+        }
+
+        recurse(recurse, state.Children);
+    }
+}
+
+ExpansionStateRoot ChannelList::GetExpansionState() const {
+    ExpansionStateRoot r;
+
+    auto recurse = [this](auto &self, const Gtk::TreeRow &row) -> ExpansionState {
+        ExpansionState r;
+
+        r.IsExpanded = row[m_columns.m_expanded];
+        for (const auto &child : row.children())
+            r.Children.Children[static_cast<Snowflake>(child[m_columns.m_id])] = self(self, child);
+
+        return r;
+    };
+
+    for (const auto &child : m_model->children()) {
+        const auto id = static_cast<Snowflake>(child[m_columns.m_id]);
+        if (static_cast<uint64_t>(id) == 0ULL) continue; // dont save DM header
+        r.Children[id] = recurse(recurse, child);
+    }
+
+    return r;
+}
+
 Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();

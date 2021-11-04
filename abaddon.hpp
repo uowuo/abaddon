@@ -84,13 +84,17 @@ public:
 
     static std::string GetCSSPath();
     static std::string GetResPath();
+    static std::string GetStateCachePath();
     static std::string GetCSSPath(const std::string &path);
     static std::string GetResPath(const std::string &path);
+    static std::string GetStateCachePath(const std::string &path);
 
 protected:
     void ShowGuildVerificationGateDialog(Snowflake guild_id);
 
     void SetupUserMenu();
+    void SaveState();
+    void LoadState();
 
     Snowflake m_shown_user_menu_id;
     Snowflake m_shown_user_menu_guild_id;

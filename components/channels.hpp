@@ -6,7 +6,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <sigc++/sigc++.h>
-#include "../discord/discord.hpp"
+#include "discord/discord.hpp"
+#include "state.hpp"
 
 constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
@@ -133,6 +134,10 @@ public:
 
     void UpdateListing();
     void SetActiveChannel(Snowflake id);
+
+    // channel list should be populated when this is called
+    void UseExpansionState(const ExpansionStateRoot &state);
+    ExpansionStateRoot GetExpansionState() const;
 
 protected:
     void UpdateNewGuild(const GuildData &guild);

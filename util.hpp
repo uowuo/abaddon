@@ -21,6 +21,10 @@ struct is_optional : ::std::false_type {};
 
 template<typename T>
 struct is_optional<::std::optional<T>> : ::std::true_type {};
+
+bool IsFolder(std::string_view path);
+
+bool IsFile(std::string_view path);
 } // namespace util
 
 class Semaphore {

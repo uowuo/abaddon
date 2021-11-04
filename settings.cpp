@@ -109,3 +109,7 @@ std::string SettingsManager::GetAPIBaseURL() const {
 bool SettingsManager::GetAnimatedGuildHoverOnly() const {
     return GetSettingBool("gui", "animated_guild_hover_only", true);
 }
+
+bool SettingsManager::GetSaveState() const {
+    return GetSettingBool("gui", "save_state", true);
+}
