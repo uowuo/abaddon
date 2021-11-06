@@ -2095,6 +2095,7 @@ Store::Database::~Database() {
 }
 
 int Store::Database::Close() {
+    if (m_db == nullptr) return m_err;
     m_signal_close.emit();
     m_err = sqlite3_close(m_db);
     m_db = nullptr;
@@ -2147,7 +2148,6 @@ Store::Statement::Statement(Database &db, const char *command)
     if (m_db->SetError(sqlite3_prepare_v2(m_db->obj(), command, -1, &m_stmt, nullptr)) != SQLITE_OK) return;
     std::string tmp = command;
     m_db->signal_close().connect([tmp, this] {
-        puts(tmp.c_str());
         sqlite3_finalize(m_stmt);
         m_stmt = nullptr;
     });
