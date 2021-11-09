@@ -17,9 +17,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Fetch CMake
-        uses: lukka/get-cmake@v3.21.2
-
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -38,10 +35,9 @@ jobs:
             mingw-w64-x86_64-gtkmm3
 
       - name: Build
-        uses: lukka/run-cmake@v3
-        with:
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
+        run: |
+          cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
 
       - name: Upload build
         uses: actions/upload-artifact@v2
