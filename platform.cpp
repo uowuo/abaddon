@@ -7,10 +7,10 @@
 
 using namespace std::literals::string_literals;
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32)
     #include <Windows.h>
     #include <Shlwapi.h>
-    #include <ShlObj_core.h>
+    #include <ShlObj.h>
     #include <pango/pangocairo.h>
     #include <pango/pangofc-fontmap.h>
     #pragma comment(lib, "Shlwapi.lib")
