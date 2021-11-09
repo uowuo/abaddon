@@ -12,7 +12,7 @@ struct Snowflake {
     static Snowflake FromNow(); // not thread safe
 
     bool IsValid() const;
-    std::string GetLocalTimestamp() const;
+    Glib::ustring GetLocalTimestamp() const;
 
     bool operator==(const Snowflake &s) const noexcept {
         return m_num == s.m_num;

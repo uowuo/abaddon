@@ -1,5 +1,6 @@
 #include "util.hpp"
 #include <filesystem>
+#include <array>
 
 Semaphore::Semaphore(int count)
     : m_count(count) {}
@@ -93,11 +94,9 @@ std::string FormatISO8601(const std::string &in, int extra_offset, const std::st
     int offset = GetTimezoneOffset();
     tm.tm_sec += offset + extra_offset;
     mktime(&tm);
-    std::stringstream ss;
-    const static std::locale locale("");
-    ss.imbue(locale);
-    ss << std::put_time(&tm, fmt.c_str());
-    return ss.str();
+    std::array<char, 512> tmp;
+    std::strftime(tmp.data(), sizeof(tmp), fmt.c_str(), &tm);
+    return tmp.data();
 }
 
 void ScrollListBoxToSelected(Gtk::ListBox &list) {

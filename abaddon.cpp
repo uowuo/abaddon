@@ -728,6 +728,17 @@ EmojiResource &Abaddon::GetEmojis() {
 int main(int argc, char **argv) {
     if (std::getenv("ABADDON_NO_FC") == nullptr)
         Platform::SetupFonts();
+
+    char *systemLocale = std::setlocale(LC_ALL, "");
+    try {
+        std::locale::global(std::locale(systemLocale));
+    } catch (...) {
+        try {
+            std::locale::global(std::locale::classic());
+            std::setlocale(LC_ALL, systemLocale);
+        } catch (...) {}
+    }
+
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };
     GetEnvironmentVariableA("GTK_CSD", buf, sizeof(buf));
