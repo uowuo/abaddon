@@ -2,7 +2,6 @@ name: Abaddon CI
 
 on: [push, pull_request]
 
-
 jobs:
   msys2:
     name: msys2-mingw64
@@ -22,6 +21,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.2
 
       - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
         with:
           msystem: mingw64
           update: true
