@@ -7,6 +7,8 @@
 
 using namespace std::literals::string_literals;
 
+constexpr auto CONFIG_FILENAME = std::string_view { "abaddon.json" };
+
 #if defined(_WIN32) && defined(_MSC_VER)
     #include <Windows.h>
     #include <Shlwapi.h>
@@ -71,10 +73,9 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
-    const auto x = std::getenv("ABADDON_CONFIG");
-    if (x != nullptr)
+    if (const auto x = std::getenv("ABADDON_CONFIG"); x != nullptr)
         return x;
-    return "./abaddon.ini";
+    return std::string { CONFIG_FILENAME };
 }
 
 std::string Platform::FindStateCacheFolder() {
@@ -96,18 +97,17 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
-    const auto x = std::getenv("ABADDON_CONFIG");
-    if (x != nullptr)
+    if (const auto x = std::getenv("ABADDON_CONFIG"); x != nullptr)
         return x;
-
     if (const auto home_env = std::getenv("HOME"); home_env != nullptr) {
-        const auto home_path = std::string(home_env) + "/.config/abaddon/abaddon.ini";
-        for (const auto &path : { "./abaddon.ini"s, home_path }) {
-            if (util::IsFile(path)) return path;
+        auto home_path = std::string(home_env) + "/.config/abaddon/";
+        home_path += CONFIG_FILENAME;
+        for (const auto path : { CONFIG_FILENAME, std::string_view { home_path } }) {
+            if (util::IsFile(path)) return std::string { path };
         }
     }
     puts("can't find configuration file!");
-    return "./abaddon.ini";
+    return std::string { CONFIG_FILENAME };
 }
 
 std::string Platform::FindStateCacheFolder() {
@@ -130,11 +130,10 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
-    const auto x = std::getenv("ABADDON_CONFIG");
-    if (x != nullptr)
+    if (const auto x = std::getenv("ABADDON_CONFIG"); x != nullptr)
         return x;
     puts("unknown OS, trying to load config from cwd");
-    return "./abaddon.ini";
+    return std::string { CONFIG_FILENAME };
 }
 
 std::string Platform::FindStateCacheFolder() {

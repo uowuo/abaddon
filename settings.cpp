@@ -2,32 +2,65 @@
 #include <filesystem>
 #include <fstream>
 
-SettingsManager::SettingsManager(std::string filename)
-    : m_filename(filename) {
-    if (!std::filesystem::exists(filename)) {
+SettingsManager::SettingsManager(std::string_view filename)
+    : m_filename(filename)
+    , m_ok(false) {
+    if (!std::filesystem::exists(m_filename)) {
         std::fstream fs;
-        fs.open(filename, std::ios::out);
+        fs.open(m_filename, std::ios::out);
         fs.close();
     }
 
-    auto rc = m_ini.LoadFile(filename.c_str());
-    m_ok = rc == SI_OK;
+    Reload();
 }
 
 void SettingsManager::Reload() {
-    m_ok = m_ini.LoadFile(m_filename.c_str()) == SI_OK;
+    m_ok = LoadFile();
 }
 
-std::string SettingsManager::GetSettingString(const std::string &section, const std::string &key, std::string fallback) const {
-    return m_ini.GetValue(section.c_str(), key.c_str(), fallback.c_str());
+SettingsManager::json_type const *SettingsManager::GetValue(std::string_view section, std::string_view key) const noexcept {
+    if (!m_json.is_object())
+        return nullptr;
+    if (auto it = m_json.find(section.data()); it != m_json.end())
+        if (auto it2 = it->find(key.data()); it2 != it->end())
+            return &*it2;
+    return nullptr;
 }
 
-int SettingsManager::GetSettingInt(const std::string &section, const std::string &key, int fallback) const {
-    return std::stoul(GetSettingString(section, key, std::to_string(fallback)));
+std::string SettingsManager::GetSettingString(std::string_view section, std::string_view key, std::string_view fallback) const {
+    auto const *v = GetValue(section, key);
+    if (v != nullptr && v->is_string())
+        return v->get<std::string>();
+    return std::string { fallback };
 }
 
-bool SettingsManager::GetSettingBool(const std::string &section, const std::string &key, bool fallback) const {
-    return GetSettingString(section, key, fallback ? "true" : "false") != "false";
+int SettingsManager::GetSettingInt(std::string_view section, std::string_view key, int fallback) const {
+    auto const *v = GetValue(section, key);
+    if (v != nullptr && v->is_number_integer())
+        return v->get<int>();
+    return fallback;
+}
+
+bool SettingsManager::GetSettingBool(std::string_view section, std::string_view key, bool fallback) const {
+    auto const *v = GetValue(section, key);
+    if (v != nullptr && v->is_boolean())
+        return v->get<bool>();
+    return fallback;
+}
+
+bool SettingsManager::LoadFile() noexcept {
+    try {
+        std::ifstream(m_filename, std::ofstream::in) >> m_json;
+    } catch (const std::exception &e) {
+        std::printf("Error while reading config file %s: %s\n", m_filename.data(), e.what());
+        return false;
+    }
+    return true;
+}
+
+void SettingsManager::SaveFile() {
+    std::ofstream f(m_filename, std::ofstream::out);
+    f << std::setw(1) << std::setfill('\t') << m_json;
 }
 
 bool SettingsManager::IsValid() const {
@@ -35,7 +68,7 @@ bool SettingsManager::IsValid() const {
 }
 
 void SettingsManager::Close() {
-    m_ini.SaveFile(m_filename.c_str());
+    SaveFile(); // Maybe just make SaveFile public?
 }
 
 bool SettingsManager::GetUseMemoryDB() const {

@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
-#include <type_traits>
-#include <SimpleIni.h>
+#include <string_view>
+#include <nlohmann/json.hpp>
 
 class SettingsManager {
 public:
-    SettingsManager(std::string filename);
+    SettingsManager(std::string_view filename);
     void Reload();
 
     void Close();
@@ -39,24 +39,34 @@ public:
 
     bool IsValid() const;
 
+    void SetSetting(std::string_view section, std::string_view key, std::string_view value) {
+        m_json[section.data()][key.data()] = value.data();
+        SaveFile();
+    }
+
+    void SetSetting(std::string_view section, std::string_view key, const std::string &value) {
+        SetSetting(section, key, std::string_view { value });
+    }
+
     template<typename T>
-    void SetSetting(std::string section, std::string key, T value) {
-        m_ini.SetValue(section.c_str(), key.c_str(), std::to_string(value).c_str());
-        m_ini.SaveFile(m_filename.c_str());
-    }
-
-    void SetSetting(std::string section, std::string key, std::string value) {
-        m_ini.SetValue(section.c_str(), key.c_str(), value.c_str());
-        m_ini.SaveFile(m_filename.c_str());
+    void SetSetting(std::string_view section, std::string_view key, T value) {
+        m_json[section.data()][key.data()] = value;
+        SaveFile();
     }
 
 private:
-    std::string GetSettingString(const std::string &section, const std::string &key, std::string fallback = "") const;
-    int GetSettingInt(const std::string &section, const std::string &key, int fallback) const;
-    bool GetSettingBool(const std::string &section, const std::string &key, bool fallback) const;
+    using json_type = nlohmann::ordered_json;
+
+    json_type const *GetValue(std::string_view section, std::string_view key) const noexcept;
+    std::string GetSettingString(std::string_view section, std::string_view key, std::string_view fallback = "") const;
+    int GetSettingInt(std::string_view section, std::string_view key, int fallback) const;
+    bool GetSettingBool(std::string_view section, std::string_view key, bool fallback) const;
+
+    bool LoadFile() noexcept;
+    void SaveFile();
 
 private:
+    const std::string m_filename;
     bool m_ok;
-    std::string m_filename;
-    CSimpleIniA m_ini;
+    json_type m_json;
 };
