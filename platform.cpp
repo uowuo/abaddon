@@ -83,27 +83,16 @@ std::string Platform::FindStateCacheFolder() {
 
 #elif defined(__linux__)
 std::string Platform::FindResourceFolder() {
-    static std::string found_path;
-    static bool found = false;
-    if (found) return found_path;
-
-    const auto home_env = std::getenv("HOME");
-    if (home_env != nullptr) {
-        const static std::string home_path = home_env + "/.local/share/abaddon"s;
-
+    if (const auto home_env = std::getenv("HOME"); home_env != nullptr) {
+        auto home_path = std::string(home_env) + "/.local/share/abaddon";
         for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
             if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
-                found_path = path;
-                found = true;
-                return found_path;
+                return path;
             }
         }
     }
-
     puts("cant find a resources folder, will try to load from cwd");
-    found_path = ".";
-    found = true;
-    return found_path;
+    return ".";
 }
 
 std::string Platform::FindConfigFile() {
@@ -111,10 +100,9 @@ std::string Platform::FindConfigFile() {
     if (x != nullptr)
         return x;
 
-    const auto home_env = std::getenv("HOME");
-    if (home_env != nullptr) {
-        const auto home_path = home_env + "/.config/abaddon/abaddon.ini"s;
-        for (auto path : { "./abaddon.ini"s, home_path }) {
+    if (const auto home_env = std::getenv("HOME"); home_env != nullptr) {
+        const auto home_path = std::string(home_env) + "/.config/abaddon/abaddon.ini";
+        for (const auto &path : { "./abaddon.ini"s, home_path }) {
             if (util::IsFile(path)) return path;
         }
     }
@@ -123,9 +111,8 @@ std::string Platform::FindConfigFile() {
 }
 
 std::string Platform::FindStateCacheFolder() {
-    const auto home_env = std::getenv("HOME");
-    if (home_env != nullptr) {
-        auto home_path = home_env + "/.cache/abaddon"s;
+    if (const auto home_env = std::getenv("HOME"); home_env != nullptr) {
+        auto home_path = std::string(home_env) + "/.cache/abaddon";
         std::error_code ec;
         if (!util::IsFolder(home_path))
             std::filesystem::create_directories(home_path, ec);

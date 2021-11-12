@@ -371,8 +371,7 @@ void Abaddon::SaveState() {
     state.ActiveChannel = m_main_window->GetChatActiveChannel();
     state.Expansion = m_main_window->GetChannelList()->GetExpansionState();
 
-    const auto path = GetStateCachePath();
-    if (!util::IsFolder(path)) {
+    if (const auto path = GetStateCachePath(); !util::IsFolder(path)) {
         std::error_code ec;
         std::filesystem::create_directories(path, ec);
     }
@@ -446,18 +445,15 @@ void Abaddon::on_user_menu_remove_recipient() {
 }
 
 std::string Abaddon::GetCSSPath() {
-    const static auto path = Platform::FindResourceFolder() + "/css";
-    return path;
+    return Platform::FindResourceFolder() + "/css";
 }
 
 std::string Abaddon::GetResPath() {
-    const static auto path = Platform::FindResourceFolder() + "/res";
-    return path;
+    return Platform::FindResourceFolder() + "/res";
 }
 
 std::string Abaddon::GetStateCachePath() {
-    const static auto path = Platform::FindStateCacheFolder() + "/state";
-    return path;
+    return Platform::FindStateCacheFolder() + "/state";
 }
 
 std::string Abaddon::GetCSSPath(const std::string &path) {
