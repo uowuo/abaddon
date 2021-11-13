@@ -1762,6 +1762,9 @@ void DiscordClient::HandleGatewayThreadCreate(const GatewayMessage &msg) {
     ThreadCreateData data = msg.Data;
     m_store.SetChannel(data.Channel.ID, data.Channel);
     m_signal_thread_create.emit(data.Channel);
+    if (data.Channel.ThreadMember.has_value()) {
+        m_signal_added_to_thread.emit(data.Channel.ID);
+    }
 }
 
 void DiscordClient::HandleGatewayThreadDelete(const GatewayMessage &msg) {
