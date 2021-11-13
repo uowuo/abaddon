@@ -56,7 +56,6 @@ Abaddon::Abaddon()
 
 Abaddon::~Abaddon() {
     m_settings.Close();
-    StopDiscord();
 }
 
 Abaddon &Abaddon::Get() {
