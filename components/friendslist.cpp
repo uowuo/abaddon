@@ -185,9 +185,9 @@ bool FriendsList::ListFilterFunc(Gtk::ListBoxRow *row_) {
 FriendsListAddComponent::FriendsListAddComponent()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , m_label("Add a Friend", Gtk::ALIGN_START)
-    , m_box(Gtk::ORIENTATION_HORIZONTAL)
+    , m_status("", Gtk::ALIGN_START)
     , m_add("Add")
-    , m_status("", Gtk::ALIGN_START) {
+    , m_box(Gtk::ORIENTATION_HORIZONTAL) {
     m_box.add(m_entry);
     m_box.add(m_add);
     m_box.add(m_status);
@@ -241,9 +241,9 @@ bool FriendsListAddComponent::OnKeyPress(GdkEventKey *e) {
 }
 
 FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData &data)
-    : Name(data.Username + "#" + data.Discriminator)
+    : ID(data.ID)
     , Type(type)
-    , ID(data.ID)
+    , Name(data.Username + "#" + data.Discriminator)
     , Status(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID))
     , m_accept("Accept") {
     auto *ev = Gtk::manage(new Gtk::EventBox);

@@ -3,9 +3,9 @@
 #include <filesystem>
 
 GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
-    : GuildID(id)
+    : m_guild_icon_label("Guild icon")
     , m_guild_name_label("Guild name")
-    , m_guild_icon_label("Guild icon") {
+    , GuildID(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
     const auto self_id = discord.GetUserData().ID;

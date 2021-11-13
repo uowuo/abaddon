@@ -47,7 +47,7 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
     switch (e->keyval) {
         case GDK_KEY_Down: {
             if (m_entries.size() == 0) return true;
-            const int index = m_list.get_selected_row()->get_index();
+            const auto index = static_cast<size_t>(m_list.get_selected_row()->get_index());
             if (index >= m_entries.size() - 1) return true;
             m_list.select_row(*m_entries[index + 1]);
             ScrollListBoxToSelected(m_list);
@@ -55,7 +55,7 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
             return true;
         case GDK_KEY_Up: {
             if (m_entries.size() == 0) return true;
-            const int index = m_list.get_selected_row()->get_index();
+            const auto index = static_cast<size_t>(m_list.get_selected_row()->get_index());
             if (index == 0) return true;
             m_list.select_row(*m_entries[index - 1]);
             ScrollListBoxToSelected(m_list);
@@ -169,7 +169,7 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
             const auto guild = discord.GetGuild(*channel->GuildID);
 
             if (guild.has_value() && guild->Emojis.has_value())
-                for (const auto tmp : *guild->Emojis) {
+                for (const auto &tmp : *guild->Emojis) {
                     const auto emoji = *discord.GetEmoji(tmp.ID);
                     if (emoji.IsAnimated.has_value() && *emoji.IsAnimated) continue;
                     if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
@@ -186,7 +186,7 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
         for (const auto guild_id : discord.GetGuilds()) {
             const auto guild = discord.GetGuild(guild_id);
             if (!guild.has_value()) continue;
-            for (const auto tmp : *guild->Emojis) {
+            for (const auto &tmp : *guild->Emojis) {
                 const auto emoji = *discord.GetEmoji(tmp.ID);
                 const bool is_animated = emoji.IsAnimated.has_value() && *emoji.IsAnimated;
                 if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
@@ -330,8 +330,8 @@ Glib::ustring Completer::GetTerm() {
 }
 
 CompleterEntry::CompleterEntry(const Glib::ustring &completion, int index)
-    : m_index(index)
-    , m_completion(completion)
+    : m_completion(completion)
+    , m_index(index)
     , m_box(Gtk::ORIENTATION_HORIZONTAL) {
     set_halign(Gtk::ALIGN_START);
     get_style_context()->add_class("completer-entry");

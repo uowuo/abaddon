@@ -3,10 +3,10 @@
 
 GuildSettingsMembersPane::GuildSettingsMembersPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
+    , GuildID(id)
     , m_layout(Gtk::ORIENTATION_HORIZONTAL)
     , m_member_list(id)
-    , m_member_info(id)
-    , GuildID(id) {
+    , m_member_info(id) {
     set_name("guild-members-pane");
     set_hexpand(true);
     set_vexpand(true);
@@ -158,9 +158,9 @@ void GuildSettingsMembersListItem::UpdateColor() {
 }
 
 GuildSettingsMembersPaneInfo::GuildSettingsMembersPaneInfo(Snowflake guild_id)
-    : m_box(Gtk::ORIENTATION_VERTICAL)
-    , GuildID(guild_id)
-    , m_roles(guild_id) {
+    : GuildID(guild_id)
+    , m_roles(guild_id)
+    , m_box(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("guild-members-pane-info");
 
     const auto label = [](Gtk::Label &lbl) {

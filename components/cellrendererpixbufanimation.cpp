@@ -61,7 +61,6 @@ void CellRendererPixbufAnimation::render_vfunc(const Cairo::RefPtr<Cairo::Contex
                                                Gtk::CellRendererState flags) {
     Gtk::Requisition minimum, natural;
     get_preferred_size(widget, minimum, natural);
-    auto alloc = widget.get_allocation();
     int xpad, ypad;
     get_padding(xpad, ypad);
     int pix_x = cell_area.get_x() + xpad;

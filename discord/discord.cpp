@@ -707,19 +707,20 @@ void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::
 
 void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(DiscordError code)> callback) {
     const auto roles = GetGuild(guild_id)->FetchRoles();
-    if (position > roles.size()) return;
+    if (static_cast<size_t>(position) > roles.size()) return;
     // gay and makes you send every role in between new and old position
-    size_t index_from = -1, index_to = -1;
+    constexpr auto IDX_MAX = ~size_t { 0 };
+    size_t index_from = IDX_MAX, index_to = IDX_MAX;
     for (size_t i = 0; i < roles.size(); i++) {
         const auto &role = roles[i];
         if (role.ID == role_id)
             index_from = i;
         else if (role.Position == position)
             index_to = i;
-        if (index_from != -1 && index_to != -1) break;
+        if (index_from != IDX_MAX && index_to != IDX_MAX) break;
     }
 
-    if (index_from == -1 || index_to == -1) return;
+    if (index_from == IDX_MAX || index_to == IDX_MAX) return;
 
     int dir;
     size_t range_from, range_to;
@@ -1276,11 +1277,11 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                 }
             } break;
             default:
-                printf("Unknown opcode %d\n", m.Opcode);
+                printf("Unknown opcode %d\n", static_cast<int>(m.Opcode));
                 break;
         }
     } catch (std::exception &e) {
-        fprintf(stderr, "error handling message (opcode %d): %s\n", m.Opcode, e.what());
+        fprintf(stderr, "error handling message (opcode %d): %s\n", static_cast<int>(m.Opcode), e.what());
     }
 }
 
@@ -1320,7 +1321,7 @@ DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &respo
 
 void DiscordClient::ProcessNewGuild(GuildData &guild) {
     if (guild.IsUnavailable) {
-        printf("guild (%lld) unavailable\n", static_cast<uint64_t>(guild.ID));
+        printf("guild (%lu) unavailable\n", static_cast<uint64_t>(guild.ID));
         return;
     }
 
@@ -1375,7 +1376,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
             m_store.SetUser(user.ID, user);
 
     if (data.MergedMembers.has_value()) {
-        for (int i = 0; i < data.MergedMembers->size(); i++) {
+        for (size_t i = 0; i < data.MergedMembers->size(); i++) {
             const auto guild_id = data.Guilds[i].ID;
             for (const auto &member : data.MergedMembers.value()[i]) {
                 m_store.SetGuildMember(guild_id, *member.UserID, member);
@@ -1978,7 +1979,7 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     bool unavailable = msg.Data.contains("unavilable") && msg.Data.at("unavailable").get<bool>();
 
     if (unavailable)
-        printf("guild %llu became unavailable\n", static_cast<uint64_t>(id));
+        printf("guild %lu became unavailable\n", static_cast<uint64_t>(id));
 
     const auto guild = m_store.GetGuild(id);
     if (!guild.has_value()) {

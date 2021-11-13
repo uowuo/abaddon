@@ -112,7 +112,7 @@ void ChatInputIndicator::ComputeTypingString() {
         SetTypingString(typers[0].Username + " and " + typers[1].Username + " are typing...");
     } else if (typers.size() > 2 && typers.size() <= MaxUsersInIndicator) {
         Glib::ustring str;
-        for (int i = 0; i < typers.size() - 1; i++)
+        for (size_t i = 0; i < typers.size() - 1; i++)
             str += typers[i].Username + ", ";
         SetTypingString(str + "and " + typers[typers.size() - 1].Username + " are typing...");
     } else { // size() > MaxUsersInIndicator
