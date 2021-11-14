@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include <filesystem>
 
 Semaphore::Semaphore(int count)
     : m_count(count) {}
@@ -199,4 +200,18 @@ void AddPointerCursor(Gtk::Widget &widget) {
         auto cursor = Gdk::Cursor::create(display, "pointer");
         window->set_cursor(cursor);
     });
+}
+
+bool util::IsFolder(std::string_view path) {
+    std::error_code ec;
+    const auto status = std::filesystem::status(path, ec);
+    if (ec) return false;
+    return status.type() == std::filesystem::file_type::directory;
+}
+
+bool util::IsFile(std::string_view path) {
+    std::error_code ec;
+    const auto status = std::filesystem::status(path, ec);
+    if (ec) return false;
+    return status.type() == std::filesystem::file_type::regular;
 }

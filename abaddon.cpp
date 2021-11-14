@@ -56,7 +56,6 @@ Abaddon::Abaddon()
 
 Abaddon::~Abaddon() {
     m_settings.Close();
-    m_discord.Stop();
 }
 
 Abaddon &Abaddon::Get() {
@@ -134,9 +133,7 @@ int Abaddon::StartGTK() {
 
     ActionReloadCSS();
 
-    m_gtk_app->signal_shutdown().connect([&]() {
-        StopDiscord();
-    });
+    m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::StopDiscord), false);
 
     m_main_window->show();
     return m_gtk_app->run(*m_main_window);
@@ -156,6 +153,7 @@ void Abaddon::StartDiscord() {
 
 void Abaddon::StopDiscord() {
     m_discord.Stop();
+    SaveState();
 }
 
 bool Abaddon::IsDiscordActive() const {
@@ -178,6 +176,7 @@ const DiscordClient &Abaddon::GetDiscordClient() const {
 
 void Abaddon::DiscordOnReady() {
     m_main_window->UpdateComponents();
+    LoadState();
 }
 
 void Abaddon::DiscordOnMessageCreate(const Message &message) {
@@ -367,6 +366,40 @@ void Abaddon::SetupUserMenu() {
     m_user_menu->show_all();
 }
 
+void Abaddon::SaveState() {
+    if (!m_settings.GetSaveState()) return;
+
+    AbaddonApplicationState state;
+    state.ActiveChannel = m_main_window->GetChatActiveChannel();
+    state.Expansion = m_main_window->GetChannelList()->GetExpansionState();
+
+    const auto path = GetStateCachePath();
+    if (!util::IsFolder(path)) {
+        std::error_code ec;
+        std::filesystem::create_directories(path, ec);
+    }
+
+    auto *fp = std::fopen(GetStateCachePath("/state.json").c_str(), "wb");
+    if (fp == nullptr) return;
+    const auto s = nlohmann::json(state).dump(4);
+    std::fwrite(s.c_str(), 1, s.size(), fp);
+    std::fclose(fp);
+}
+
+void Abaddon::LoadState() {
+    if (!m_settings.GetSaveState()) return;
+
+    const auto data = ReadWholeFile(GetStateCachePath("/state.json"));
+    if (data.empty()) return;
+    try {
+        AbaddonApplicationState state = nlohmann::json::parse(data.begin(), data.end());
+        m_main_window->GetChannelList()->UseExpansionState(state.Expansion);
+        ActionChannelOpened(state.ActiveChannel);
+    } catch (const std::exception &e) {
+        printf("failed to load application state: %s\n", e.what());
+    }
+}
+
 void Abaddon::ManageHeapWindow(Gtk::Window *window) {
     window->signal_hide().connect([this, window]() {
         delete window;
@@ -424,12 +457,21 @@ std::string Abaddon::GetResPath() {
     return path;
 }
 
+std::string Abaddon::GetStateCachePath() {
+    const static auto path = Platform::FindStateCacheFolder() + "/state";
+    return path;
+}
+
 std::string Abaddon::GetCSSPath(const std::string &path) {
     return GetCSSPath() + path;
 }
 
 std::string Abaddon::GetResPath(const std::string &path) {
     return GetResPath() + path;
+}
+
+std::string Abaddon::GetStateCachePath(const std::string &path) {
+    return GetStateCachePath() + path;
 }
 
 void Abaddon::ActionConnect() {
@@ -463,7 +505,7 @@ void Abaddon::ActionJoinGuildDialog() {
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id) {
-    if (id == m_main_window->GetChatActiveChannel()) return;
+    if (!id.IsValid() || id == m_main_window->GetChatActiveChannel()) return;
 
     m_main_window->GetChatWindow()->SetTopic("");
 

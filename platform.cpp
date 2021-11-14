@@ -1,24 +1,11 @@
 #include "platform.hpp"
+#include "util.hpp"
 #include <string>
 #include <fstream>
 #include <filesystem>
 #include <config.h>
 
 using namespace std::literals::string_literals;
-
-bool IsFolder(std::string_view path) {
-    std::error_code ec;
-    const auto status = std::filesystem::status(path, ec);
-    if (ec) return false;
-    return status.type() == std::filesystem::file_type::directory;
-}
-
-bool IsFile(std::string_view path) {
-    std::error_code ec;
-    const auto status = std::filesystem::status(path, ec);
-    if (ec) return false;
-    return status.type() == std::filesystem::file_type::regular;
-}
 
 #if defined(_WIN32) && defined(_MSC_VER)
     #include <Windows.h>
@@ -90,19 +77,26 @@ std::string Platform::FindConfigFile() {
     return "./abaddon.ini";
 }
 
+std::string Platform::FindStateCacheFolder() {
+    return ".";
+}
+
 #elif defined(__linux__)
 std::string Platform::FindResourceFolder() {
     static std::string found_path;
     static bool found = false;
     if (found) return found_path;
 
-    const static std::string home_path = std::getenv("HOME") + "/.local/share/abaddon"s;
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        const static std::string home_path = home_env + "/.local/share/abaddon"s;
 
-    for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
-        if (IsFolder(path + "/res") && IsFolder(path + "/css")) {
-            found_path = path;
-            found = true;
-            return found_path;
+        for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
+            if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
+                found_path = path;
+                found = true;
+                return found_path;
+            }
         }
     }
 
@@ -117,13 +111,31 @@ std::string Platform::FindConfigFile() {
     if (x != nullptr)
         return x;
 
-    const auto home_path = std::string(std::getenv("HOME")) + "/.config/abaddon/abaddon.ini";
-    for (const auto path : { "./abaddon.ini"s, home_path }) {
-        if (IsFile(path)) return path;
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        const auto home_path = home_env + "/.config/abaddon/abaddon.ini"s;
+        for (auto path : { "./abaddon.ini"s, home_path }) {
+            if (util::IsFile(path)) return path;
+        }
     }
     puts("can't find configuration file!");
     return "./abaddon.ini";
 }
+
+std::string Platform::FindStateCacheFolder() {
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        auto home_path = home_env + "/.cache/abaddon"s;
+        std::error_code ec;
+        if (!util::IsFolder(home_path))
+            std::filesystem::create_directories(home_path, ec);
+        if (util::IsFolder(home_path))
+            return home_path;
+    }
+    puts("can't find cache folder!");
+    return ".";
+}
+
 #else
 std::string Platform::FindResourceFolder() {
     puts("unknown OS, trying to load resources from cwd");
@@ -136,5 +148,10 @@ std::string Platform::FindConfigFile() {
         return x;
     puts("unknown OS, trying to load config from cwd");
     return "./abaddon.ini";
+}
+
+std::string Platform::FindStateCacheFolder() {
+    puts("unknown OS, setting state cache folder to cwd");
+    return ".";
 }
 #endif

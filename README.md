@@ -25,7 +25,7 @@ Current features:
   
 1 - Abaddon tries its best to make Discord think it's a legitimate web client. Some of the things done to do this include: using a browser user agent, sending the same IDENTIFY message that the official web client does, using API v9 endpoints in all cases, and not using endpoints the web client does not normally use. There are still a few smaller inconsistencies, however. For example the web client sends lots of telemetry via the `/science` endpoint (uBlock origin stops this) as well as in the headers of all requests. **In any case,** you should use an official client for joining servers, sending new DMs, or managing your friends list if you are afraid of being caught in Discord's spam filters (unlikely).
 
-2 - Unicode emojis are subtituted manually as opposed to rendered by GTK on non-Windows platforms. This can be changed with the `stock_emojis` setting as shown at the bottom of this README. A CBDT-based font using Twemoji is provided to allow GTK to render emojis natively on Windows.
+2 - Unicode emojis are substituted manually as opposed to rendered by GTK on non-Windows platforms. This can be changed with the `stock_emojis` setting as shown at the bottom of this README. A CBDT-based font using Twemoji is provided to allow GTK to render emojis natively on Windows.
 
 3 - There are some inconsistencies with thread state that might be encountered in some more uncommon cases, but they are the result of fundamental issues with Discord's thread implementation.
   
@@ -93,12 +93,6 @@ On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/
 .app-popup - Additional class for `.app-window`s when the window is not the main window  
   
 .channel-list - Container of the channel list  
-.channel-row - All rows within the channel container  
-.channel-row-channel - Only rows containing a channel  
-.channel-row-category - Only rows containing a category  
-.channel-row-guild - Only rows containing a guild  
-.channel-row-label - All labels within the channel container  
-.nsfw - Applied to channel row labels and their container for NSFW channels  
   
 .messages - Container of user messages  
 .message-container - The container which holds a user's messages  

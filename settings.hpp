@@ -23,6 +23,7 @@ public:
     std::string GetGatewayURL() const;
     std::string GetAPIBaseURL() const;
     bool GetAnimatedGuildHoverOnly() const;
+    bool GetSaveState() const;
 
     // i would like to use Gtk::StyleProperty for this, but it will not work on windows
     // #1 it's missing from the project files for the version used by vcpkg
