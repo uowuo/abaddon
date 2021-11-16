@@ -1321,7 +1321,7 @@ DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &respo
 
 void DiscordClient::ProcessNewGuild(GuildData &guild) {
     if (guild.IsUnavailable) {
-        printf("guild (%lu) unavailable\n", static_cast<uint64_t>(guild.ID));
+        printf("guild (%" PRIu64 ") unavailable\n", static_cast<uint64_t>(guild.ID));
         return;
     }
 
@@ -1979,7 +1979,7 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     bool unavailable = msg.Data.contains("unavilable") && msg.Data.at("unavailable").get<bool>();
 
     if (unavailable)
-        printf("guild %lu became unavailable\n", static_cast<uint64_t>(id));
+        printf("guild %" PRIu64 " became unavailable\n", static_cast<uint64_t>(id));
 
     const auto guild = m_store.GetGuild(id);
     if (!guild.has_value()) {
