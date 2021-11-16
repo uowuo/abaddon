@@ -1,5 +1,6 @@
 #include "discord.hpp"
 #include <cassert>
+#include <cinttypes>
 #include "../util.hpp"
 #include "../abaddon.hpp"
 
