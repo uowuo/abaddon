@@ -657,6 +657,14 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
         return author->GetEscapedBoldString<false>();
     };
 
+    // if the message wasnt fetched from store it might have an un-fetched reference
+    std::optional<std::shared_ptr<Message>> referenced_message = data.ReferencedMessage;
+    if (data.MessageReference.has_value() && data.MessageReference->MessageID.has_value() && !referenced_message.has_value()) {
+        auto refd = discord.GetMessage(*data.MessageReference->MessageID);
+        if (refd.has_value())
+            referenced_message = std::make_shared<Message>(std::move(*refd));
+    }
+
     if (data.Interaction.has_value()) {
         const auto user = *discord.GetUser(data.Interaction->User.ID);
 
@@ -668,16 +676,16 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
         } else {
             lbl->set_markup(user.GetEscapedBoldString<false>());
         }
-    } else if (data.ReferencedMessage.has_value()) {
-        if (data.ReferencedMessage.value().get() == nullptr) {
+    } else if (referenced_message.has_value()) {
+        if (referenced_message.value() == nullptr) {
             lbl->set_markup("<i>deleted message</i>");
         } else {
-            const auto &referenced = *data.ReferencedMessage.value().get();
+            const auto &referenced = *referenced_message.value();
             Glib::ustring text;
-            if (referenced.Content == "") {
-                if (referenced.Attachments.size() > 0) {
+            if (referenced.Content.empty()) {
+                if (!referenced.Attachments.empty()) {
                     text = "<i>attachment</i>";
-                } else if (referenced.Embeds.size() > 0) {
+                } else if (!referenced.Embeds.empty()) {
                     text = "<i>embed</i>";
                 }
             } else {

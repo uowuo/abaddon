@@ -484,10 +484,6 @@ std::vector<Message> Store::GetLastMessages(Snowflake id, size_t num) const {
     s->Bind(2, num);
     while (s->FetchOne()) {
         auto msg = GetMessageBound(s);
-        if (!s->IsNull(33)) { // referenced message id
-            msg.MessageReference.emplace();
-            s->Get(33, msg.MessageReference->MessageID);
-        }
         msgs.push_back(std::move(msg));
     }
 
@@ -515,10 +511,6 @@ std::vector<Message> Store::GetMessagesBefore(Snowflake channel_id, Snowflake me
 
     while (s->FetchOne()) {
         auto msg = GetMessageBound(s);
-        if (!s->IsNull(33)) { // referenced message id
-            msg.MessageReference.emplace();
-            s->Get(33, msg.MessageReference->MessageID);
-        }
         msgs.push_back(std::move(msg));
     }
 
@@ -544,10 +536,6 @@ std::vector<Message> Store::GetPinnedMessages(Snowflake channel_id) const {
 
     while (s->FetchOne()) {
         auto msg = GetMessageBound(s);
-        if (!s->IsNull(33)) { // referenced message id
-            msg.MessageReference.emplace();
-            s->Get(33, msg.MessageReference->MessageID);
-        }
         msgs.push_back(std::move(msg));
     }
 
@@ -843,6 +831,8 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     auto ref = GetMessageBound(s);
     top.ReferencedMessage = std::make_shared<Message>(std::move(ref));
 
+    s->Reset();
+
     return top;
 }
 
@@ -891,6 +881,13 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
         s->Get(29, a.ProxyURL);
         s->Get(30, a.Height);
         s->Get(31, a.Width);
+    }
+
+    if (!s->IsNull(32)) {
+        auto &q = r.MessageReference.emplace();
+        s->Get(32, q.MessageID);
+        s->Get(33, q.ChannelID);
+        s->Get(34, q.GuildID);
     }
 
     {
@@ -1581,7 +1578,10 @@ bool Store::CreateStatements() {
                attachments.url,
                attachments.proxy,
                attachments.height,
-               attachments.width
+               attachments.width,
+               message_references.message,
+               message_references.channel,
+               message_references.guild
         FROM messages
         LEFT OUTER JOIN
             message_interactions
@@ -1589,7 +1589,10 @@ bool Store::CreateStatements() {
         LEFT OUTER JOIN
             attachments
                 ON messages.id = attachments.message
-        WHERE messages.id = ?
+        LEFT OUTER JOIN
+            message_references
+                ON messages.id = message_references.id
+        WHERE messages.id = ?1
         UNION ALL
         SELECT messages.*,
                message_interactions.interaction_id,
@@ -1602,7 +1605,10 @@ bool Store::CreateStatements() {
                attachments.url,
                attachments.proxy,
                attachments.height,
-               attachments.width
+               attachments.width,
+               message_references.message,
+               message_references.channel,
+               message_references.guild
         FROM messages
         LEFT OUTER JOIN
             message_interactions
@@ -1610,7 +1616,10 @@ bool Store::CreateStatements() {
         LEFT OUTER JOIN
             attachments
                 ON messages.id = attachments.message
-        WHERE messages.id = (SELECT message FROM message_references WHERE id = ?)
+        LEFT OUTER JOIN
+            message_references
+                ON messages.id = message_references.id
+        WHERE messages.id = (SELECT message FROM message_references WHERE id = ?1)
         ORDER BY messages.id DESC
     )");
     if (!m_stmt_get_msg->OK()) {
@@ -1642,7 +1651,9 @@ bool Store::CreateStatements() {
                    attachments.proxy,
                    attachments.height,
                    attachments.width,
-                   message_references.message
+                   message_references.message,
+                   message_references.channel,
+                   message_references.guild
             FROM messages
             LEFT OUTER JOIN
                 message_interactions
@@ -1940,7 +1951,9 @@ bool Store::CreateStatements() {
                attachments.proxy,
                attachments.height,
                attachments.width,
-               message_references.message
+               message_references.message,
+               message_references.channel,
+               message_references.guild
         FROM messages
         LEFT OUTER JOIN
             message_interactions
