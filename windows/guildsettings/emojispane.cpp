@@ -7,8 +7,8 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     , GuildID(guild_id)
     , m_model(Gtk::ListStore::create(m_columns))
     , m_filter(Gtk::TreeModelFilter::create(m_model))
-    , m_menu_copy_id("Copy ID")
     , m_menu_delete("Delete")
+    , m_menu_copy_id("Copy ID")
     , m_menu_copy_emoji_url("Copy Emoji URL")
     , m_menu_show_emoji("Open in Browser") {
     signal_map().connect(sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnMap));
@@ -31,7 +31,6 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     m_menu.show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto &img = Abaddon::Get().GetImageManager();
 
     discord.signal_guild_emojis_update().connect(sigc::hide<0>(sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnFetchEmojis)));
 

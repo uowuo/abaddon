@@ -57,8 +57,8 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
             auto &discord = Abaddon::Get().GetDiscordClient();
             const auto num_rows = m_list.get_children().size();
             const auto new_pos = num_rows - new_index - 1;
-            if (row->RoleID == GuildID) return true; // moving role @everyone
-            if (new_index == num_rows) return true;  // trying to move row below @everyone
+            if (row->RoleID == GuildID) return true;                     // moving role @everyone
+            if (static_cast<size_t>(new_index) == num_rows) return true; // trying to move row below @everyone
             // make sure it wont modify a neighbor role u dont have perms to modify
             if (!discord.CanModifyRole(GuildID, row->RoleID)) return false;
             const auto cb = [this](DiscordError code) {

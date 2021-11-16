@@ -3,8 +3,8 @@
 #include "../../abaddon.hpp"
 
 ConnectionItem::ConnectionItem(const ConnectionData &conn)
-    : m_name(conn.Name)
-    , m_box(Gtk::ORIENTATION_HORIZONTAL) {
+    : m_box(Gtk::ORIENTATION_HORIZONTAL)
+    , m_name(conn.Name) {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
     try {
         pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/" + conn.Type + ".png"), 32, 32);
@@ -97,7 +97,7 @@ void ConnectionsContainer::SetConnections(const std::vector<ConnectionData> &con
         "facebook"
     };
 
-    for (int i = 0; i < connections.size(); i++) {
+    for (size_t i = 0; i < connections.size(); i++) {
         const auto &conn = connections[i];
         if (supported_services.find(conn.Type) == supported_services.end()) continue;
         auto widget = Gtk::manage(new ConnectionItem(conn));

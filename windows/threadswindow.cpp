@@ -3,11 +3,11 @@
 
 ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     : m_channel_id(channel.ID)
+    , m_filter_public(m_group, "Public")
+    , m_filter_private(m_group, "Private")
     , m_box(Gtk::ORIENTATION_VERTICAL)
     , m_active(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc))
-    , m_archived(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc))
-    , m_filter_public(m_group, "Public")
-    , m_filter_private(m_group, "Private") {
+    , m_archived(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc)) {
     set_name("threads-window");
     set_default_size(450, 375);
     set_title("#" + *channel.Name + " - Threads");

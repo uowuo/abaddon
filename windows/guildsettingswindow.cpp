@@ -3,14 +3,14 @@
 
 GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
-    , GuildID(id)
     , m_pane_info(id)
-    , m_pane_bans(id)
-    , m_pane_invites(id)
-    , m_pane_audit_log(id)
     , m_pane_members(id)
     , m_pane_roles(id)
-    , m_pane_emojis(id) {
+    , m_pane_bans(id)
+    , m_pane_invites(id)
+    , m_pane_emojis(id)
+    , m_pane_audit_log(id)
+    , GuildID(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
 

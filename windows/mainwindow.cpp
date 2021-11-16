@@ -179,7 +179,6 @@ void MainWindow::UpdateChatWindowContents() {
 }
 
 void MainWindow::UpdateChatActiveChannel(Snowflake id) {
-    auto &discord = Abaddon::Get().GetDiscordClient();
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
     m_channel_list.SetActiveChannel(id);

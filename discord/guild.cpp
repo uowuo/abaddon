@@ -191,7 +191,8 @@ std::vector<Snowflake> GuildData::GetSortedChannels(Snowflake ignore) const {
 std::vector<RoleData> GuildData::FetchRoles() const {
     if (!Roles.has_value()) return {};
     std::vector<RoleData> ret;
-    for (const auto thing : *Roles)
+    ret.reserve(Roles->size());
+    for (const auto &thing : *Roles)
         ret.push_back(*Abaddon::Get().GetDiscordClient().GetRole(thing.ID));
     std::sort(ret.begin(), ret.end(), [](const RoleData &a, const RoleData &b) -> bool {
         return a.Position > b.Position;

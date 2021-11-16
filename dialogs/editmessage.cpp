@@ -3,9 +3,9 @@
 EditMessageDialog::EditMessageDialog(Gtk::Window &parent)
     : Gtk::Dialog("Edit Message", parent, true)
     , m_layout(Gtk::ORIENTATION_VERTICAL)
-    , m_bbox(Gtk::ORIENTATION_HORIZONTAL)
     , m_ok("OK")
-    , m_cancel("Cancel") {
+    , m_cancel("Cancel")
+    , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
