@@ -52,4 +52,13 @@ find_package_handle_standard_args(gtk
                                     GTK_INCLUDE_DIR
                                   VERSION_VAR GTK_VERSION)
 
+if (${gtk_FOUND})
+  add_library(gtk::gtk UNKNOWN IMPORTED)
+  set_target_properties(gtk::gtk
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${GTK_INCLUDE_DIR}
+                          IMPORTED_LOCATION ${GTK_LIBRARY})
+  target_link_libraries(gtk::gtk INTERFACE gdk::gdkpixbuf)
+endif()
+
 mark_as_advanced(GTK_INCLUDE_DIR GTK_LIBRARY)

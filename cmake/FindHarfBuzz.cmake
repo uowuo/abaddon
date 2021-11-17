@@ -36,4 +36,12 @@ find_package_handle_standard_args(HarfBuzz
                                     HARFBUZZ_INCLUDE_DIR
                                   VERSION_VAR HARFBUZZ_VERSION)
 
+if (${HarfBuzz_FOUND})
+  add_library(HarfBuzz::HarfBuzz UNKNOWN IMPORTED)
+  set_target_properties(HarfBuzz::HarfBuzz
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${HARFBUZZ_INCLUDE_DIRS}
+                          IMPORTED_LOCATION ${HARFBUZZ_LIBRARIES})
+endif()
+
 mark_as_advanced(HARFBUZZ_INCLUDE_DIR HARFBUZZ_LIBRARY)

@@ -58,7 +58,17 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(pangomm
                                   REQUIRED_VARS
                                     PANGOMM_LIBRARY
-                                    PANGOMM_INCLUDE_DIRS
+                                    PANGOMM_INCLUDE_DIR
+                                    PANGOMM_CONFIG_INCLUDE_DIR
                                   VERSION_VAR PANGOMM_VERSION)
+
+if (${pangomm_FOUND})
+  add_library(pango::pangomm UNKNOWN IMPORTED)
+  set_target_properties(pango::pangomm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${PANGOMM_INCLUDE_DIR};${PANGOMM_CONFIG_INCLUDE_DIR}"
+                          IMPORTED_LOCATION ${PANGOMM_LIBRARY})
+  target_link_libraries(pango::pangomm INTERFACE pango::pango)
+endif()
 
 mark_as_advanced(PANGOMM_INCLUDE_DIR PANGOMM_LIBRARY)

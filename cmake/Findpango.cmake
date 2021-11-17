@@ -74,4 +74,35 @@ find_package_handle_standard_args(pango
                                     PANGO_INCLUDE_DIR
                                   VERSION_VAR PANGO_VERSION)
 
+if (${pango_FOUND})
+  set(PANGO_TARGET_INCLUDE_DIRS "${PANGO_INCLUDE_DIR}")
+  if (NOT ${PANGO_CONFIG_INCLUDE_DIR-NOTFOUND})
+      set(PANGO_TARGET_INCLUDE_DIRS "${PANGO_TARGET_INCLUDE_DIRS};${PANGO_CONFIG_INCLUDE_DIR}")
+  endif()
+
+  add_library(pango::pangocairo UNKNOWN IMPORTED)
+  set_target_properties(pango::pangocairo
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${PANGO_TARGET_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION "${PANGOCAIRO_LIBRARY}")
+
+  add_library(pango::pangoft2 UNKNOWN IMPORTED)
+  set_target_properties(pango::pangoft2
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${PANGO_TARGET_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION "${PANGOFT2_LIBRARY}")
+
+  add_library(pango::pango UNKNOWN IMPORTED)
+  set_target_properties(pango::pango
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${PANGO_TARGET_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION "${PANGO_LIBRARY}")
+  target_link_libraries(pango::pango INTERFACE
+                        pango::pangocairo
+                        pango::pangoft2
+                        HarfBuzz::HarfBuzz
+                        cairo::cairo
+                        Freetype::Freetype)
+endif()
+
 mark_as_advanced(PANGO_INCLUDE_DIR PANGO_LIBRARY)

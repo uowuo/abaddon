@@ -37,8 +37,8 @@ find_library(ATKMM_LIBRARY
              PATH_SUFFIXES ${ATKMM_LIBRARY_NAME}
                            ${ATKMM_LIBRARY_NAME}/include)
 
-set(ATKMM_LIBRARIES    ${ATKMM_LIBRARY};${ATK_LIBRARIES})
-set(ATKMM_INCLUDE_DIRS ${ATKMM_INCLUDE_DIR};${ATKMM_CONFIG_INCLUDE_DIR};${ATK_INCLUDE_DIRS})
+set(ATKMM_LIBRARIES    ${ATKMM_LIBRARY};atk::atk)
+set(ATKMM_INCLUDE_DIRS ${ATKMM_INCLUDE_DIR};${ATKMM_CONFIG_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(atkmm
@@ -46,5 +46,14 @@ find_package_handle_standard_args(atkmm
                                     ATKMM_LIBRARY
                                     ATKMM_INCLUDE_DIRS
                                   VERSION_VAR ATKMM_VERSION)
+
+if(${atkmm_FOUND})
+  add_library(atk::atkmm UNKNOWN IMPORTED)
+  set_target_properties(atk::atkmm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${ATKMM_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION ${ATKMM_LIBRARY})
+  target_link_libraries(atk::atkmm INTERFACE atk::atk)
+endif()
 
 mark_as_advanced(ATKMM_INCLUDE_DIR ATKMM_LIBRARY)

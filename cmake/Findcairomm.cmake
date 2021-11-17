@@ -50,4 +50,12 @@ find_package_handle_standard_args(cairomm
                                     CAIROMM_INCLUDE_DIR
                                   VERSION_VAR CAIROMM_VERSION)
 
+if (${cairomm_FOUND})
+  add_library(cairo::cairomm UNKNOWN IMPORTED)
+  set_target_properties(cairo::cairomm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${CAIROMM_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION ${CAIROMM_LIBRARY})
+endif()
+
 mark_as_advanced(CAIROMM_INCLUDE_DIR CAIROMM_LIBRARY)

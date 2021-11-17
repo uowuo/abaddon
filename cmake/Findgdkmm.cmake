@@ -45,4 +45,12 @@ find_package_handle_standard_args(gdkmm
                                     GDKMM_INCLUDE_DIRS
                                   VERSION_VAR GDKMM_VERSION)
 
+if (${gdkmm_FOUND})
+  add_library(gdk::gdkmm UNKNOWN IMPORTED)
+  set_target_properties(gdk::gdkmm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${GDKMM_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION ${GDKMM_LIBRARY})
+endif()
+
 mark_as_advanced(GDKMM_INCLUDE_DIR GDKMM_LIBRARY)

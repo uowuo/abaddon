@@ -36,4 +36,12 @@ find_package_handle_standard_args(atk
                                     ATK_INCLUDE_DIR
                                   VERSION_VAR ATK_VERSION)
 
+if (${ATK_FOUND})
+  add_library(atk::atk UNKNOWN IMPORTED)
+  set_target_properties(atk::atk
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${ATK_INCLUDE_DIRS}
+                          IMPORTED_LOCATION ${ATK_LIBRARY})
+endif()
+
 mark_as_advanced(ATK_INCLUDE_DIR ATK_LIBRARY)

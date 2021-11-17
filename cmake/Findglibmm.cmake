@@ -65,4 +65,19 @@ find_package_handle_standard_args(glibmm
                                     GLIBMM_INCLUDE_DIR
                                   VERSION_VAR GLIBMM_VERSION)
 
+if (${glibmm_FOUND})
+  add_library(glib::giomm UNKNOWN IMPORTED)
+  set_target_properties(glib::giomm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${GIOMM_INCLUDE_DIR};${GIOMM_CONFIG_INCLUDE_DIR}"
+                          IMPORTED_LOCATION "${GIOMM_LIBRARY}")
+
+  add_library(glib::glibmm UNKNOWN IMPORTED)
+  set_target_properties(glib::glibmm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${GLIBMM_INCLUDE_DIR};${GLIBMM_CONFIG_INCLUDE_DIR}"
+                          IMPORTED_LOCATION ${GLIBMM_LIBRARIES})
+  target_link_libraries(glib::glibmm INTERFACE glib::glib glib::giomm sigc++::sigc++)
+endif()
+
 mark_as_advanced(GLIBMM_INCLUDE_DIR GLIBMM_LIBRARY)

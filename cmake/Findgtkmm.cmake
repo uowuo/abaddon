@@ -56,4 +56,20 @@ find_package_handle_standard_args(gtkmm
                                     GTKMM_INCLUDE_DIRS
                                   VERSION_VAR GTKMM_VERSION)
 
+if (${gtkmm_FOUND})
+  add_library(gtk::gtkmm UNKNOWN IMPORTED)
+  set_target_properties(gtk::gtkmm
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${GTKMM_INCLUDE_DIR};${GTKMM_CONFIG_INCLUDE_DIR}"
+                          IMPORTED_LOCATION ${GTKMM_LIB})
+  target_link_libraries(gtk::gtkmm INTERFACE
+                        gdk::gdkmm
+                        gtk::gtk
+                        glib::glibmm
+                        pango::pangomm
+                        cairo::cairomm
+                        atk::atkmm
+                        sigc++::sigc++)
+endif()
+
 mark_as_advanced(GTKMM_INCLUDE_DIR GTKMM_LIBRARY)

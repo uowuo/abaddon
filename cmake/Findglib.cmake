@@ -54,4 +54,13 @@ find_package_handle_standard_args(glib
                                     GLIB_LIBRARIES
                                     GLIB_INCLUDE_DIRS
                                   VERSION_VAR GLIB_VERSION)
+
+if (${glib_FOUND})
+  add_library(glib::glib UNKNOWN IMPORTED)
+  set_target_properties(glib::glib
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${GLIB_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION "${GLIB_LIBRARIES}")
+endif()
+
 mark_as_advanced(GLIB_INCLUDE_DIR GLIB_CONFIG_INCLUDE_DIR)

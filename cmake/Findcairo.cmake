@@ -36,4 +36,12 @@ find_package_handle_standard_args(cairo
                                     CAIRO_INCLUDE_DIR
                                   VERSION_VAR CAIRO_VERSION)
 
+if(${cairo_FOUND})
+  add_library(cairo::cairo UNKNOWN IMPORTED)
+  set_target_properties(cairo::cairo
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${CAIRO_INCLUDE_DIRS}
+                          IMPORTED_LOCATION ${CAIRO_LIBRARIES})
+endif()
+
 mark_as_advanced(CAIRO_INCLUDE_DIR CAIRO_LIBRARY)

@@ -38,4 +38,12 @@ find_package_handle_standard_args(gdkpixbuf
                                     GDKPIXBUF_INCLUDE_DIR
                                   VERSION_VAR GDKPIXBUF_VERSION)
 
+if (${gdkpixbuf_FOUND})
+  add_library(gdk::gdkpixbuf UNKNOWN IMPORTED)
+  set_target_properties(gdk::gdkpixbuf
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES ${GDKPIXBUF_INCLUDE_DIRS}
+                          IMPORTED_LOCATION ${GDKPIXBUF_LIBRARIES})
+endif()
+
 mark_as_advanced(GDKPIXBUF_INCLUDE_DIR GDKPIXBUF_LIBRARY)

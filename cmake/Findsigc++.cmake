@@ -37,4 +37,12 @@ find_package_handle_standard_args(sigc++
                                     SIGC++_LIBRARY
                                   VERSION_VAR SIGC++_VERSION)
 
+if (${sigc++_FOUND})
+  add_library(sigc++::sigc++ UNKNOWN IMPORTED)
+  set_target_properties(sigc++::sigc++
+                        PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES "${SIGC++_INCLUDE_DIRS}"
+                          IMPORTED_LOCATION ${SIGC++_LIBRARIES})
+endif()
+
 mark_as_advanced(SIGC++_INCLUDE_DIR SIGC++_LIBRARY)
