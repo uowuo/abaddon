@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build-windows-msys2-${{ matrix.buildtype }}
-          path: ${{ runner.workspace }}/build
+          path: ${{ runner.workspace }}/abaddon/build
 
   windows:
     name: windows-${{ matrix.buildtype }}
