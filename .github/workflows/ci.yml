@@ -39,11 +39,17 @@ jobs:
           cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
           cmake --build build
 
+      - name: Setup Artifact
+        run: |
+          mkdir build/artifactdir
+          cp *.exe "build/artifactdir"
+          cat "ci/deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir
+
       - name: Upload build
         uses: actions/upload-artifact@v2
         with:
           name: build-windows-msys2-${{ matrix.buildtype }}
-          path: ${{ runner.workspace }}/abaddon/build
+          path: build/artifactdir
 
   windows:
     name: windows-${{ matrix.buildtype }}
