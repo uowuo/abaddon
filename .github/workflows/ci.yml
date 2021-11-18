@@ -45,7 +45,7 @@ jobs:
           cd build
           cp *.exe artifactdir
           cd ..
-          cat "ci/deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir
+          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir
 
       - name: Upload build
         uses: actions/upload-artifact@v2
