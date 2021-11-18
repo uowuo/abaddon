@@ -13,6 +13,7 @@
 /bin/libfontconfig-1.dll
 /bin/libfreetype-6.dll
 /bin/libfribidi-0.dll
+/bin/libgcc_s_seh-1.dll
 /bin/libgdk-3-0.dll
 /bin/libgdk_pixbuf-2.0-0.dll
 /bin/libgdkmm-3.0-1.dll
