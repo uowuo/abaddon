@@ -308,8 +308,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
 
         constexpr static int AuthorIconSize = 20;
         if (embed.Author->ProxyIconURL.has_value()) {
-            auto &img = Abaddon::Get().GetImageManager();
-
             auto *author_img = Gtk::manage(new LazyImage(*embed.Author->ProxyIconURL, AuthorIconSize, AuthorIconSize));
             author_img->set_halign(Gtk::ALIGN_START);
             author_img->set_valign(Gtk::ALIGN_START);

@@ -49,7 +49,6 @@ void GuildSettingsInvitesPane::OnMap() {
 }
 
 void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {
-    auto &discord = Abaddon::Get().GetDiscordClient();
     auto row = *m_model->append();
     row[m_columns.m_col_code] = invite.Code;
     if (invite.Inviter.has_value())
@@ -77,7 +76,6 @@ void GuildSettingsInvitesPane::OnInviteFetch(const std::optional<InviteData> &in
 }
 
 void GuildSettingsInvitesPane::OnInvitesFetch(const std::vector<InviteData> &invites) {
-    auto &discord = Abaddon::Get().GetDiscordClient();
     for (const auto &invite : invites)
         AppendInvite(invite);
 }

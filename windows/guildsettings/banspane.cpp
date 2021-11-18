@@ -7,9 +7,9 @@
 GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , GuildID(id)
+    , m_model(Gtk::ListStore::create(m_columns))
     , m_menu_unban("Unban")
-    , m_menu_copy_id("Copy ID")
-    , m_model(Gtk::ListStore::create(m_columns)) {
+    , m_menu_copy_id("Copy ID") {
     signal_map().connect(sigc::mem_fun(*this, &GuildSettingsBansPane::OnMap));
     set_name("guild-bans-pane");
     set_hexpand(true);

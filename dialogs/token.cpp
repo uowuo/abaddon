@@ -10,9 +10,9 @@ std::string trim(const std::string& str) {
 TokenDialog::TokenDialog(Gtk::Window &parent)
     : Gtk::Dialog("Set Token", parent, true)
     , m_layout(Gtk::ORIENTATION_VERTICAL)
-    , m_bbox(Gtk::ORIENTATION_HORIZONTAL)
     , m_ok("OK")
-    , m_cancel("Cancel") {
+    , m_cancel("Cancel")
+    , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");

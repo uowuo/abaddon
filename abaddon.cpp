@@ -23,8 +23,8 @@
 
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
-    , m_emojis(GetResPath("/emojis.bin"))
-    , m_discord(m_settings.GetUseMemoryDB()) { // stupid but easy
+    , m_discord(m_settings.GetUseMemoryDB()) // stupid but easy
+    , m_emojis(GetResPath("/emojis.bin")) {
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
@@ -56,7 +56,6 @@ Abaddon::Abaddon()
 
 Abaddon::~Abaddon() {
     m_settings.Close();
-    StopDiscord();
 }
 
 Abaddon &Abaddon::Get() {
@@ -268,7 +267,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     if (guild.has_value() && user.has_value()) {
         const auto roles = user->GetSortedRoles();
         m_user_menu_roles->set_visible(roles.size() > 0);
-        for (const auto role : roles) {
+        for (const auto &role : roles) {
             auto *item = Gtk::manage(new Gtk::MenuItem(role.Name));
             if (role.Color != 0) {
                 Gdk::RGBA color;

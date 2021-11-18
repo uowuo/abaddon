@@ -16,8 +16,8 @@ ChannelList::ChannelList()
     , m_menu_guild_leave("_Leave", true)
     , m_menu_category_copy_id("_Copy ID", true)
     , m_menu_channel_copy_id("_Copy ID", true)
-    , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_dm_copy_id("_Copy ID", true)
+    , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_thread_copy_id("_Copy ID", true)
     , m_menu_thread_leave("_Leave", true)
     , m_menu_thread_archive("_Archive", true)
@@ -167,7 +167,6 @@ void ChannelList::UpdateListing() {
     m_model->clear();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto &img = Abaddon::Get().GetImageManager();
 
     const auto guild_ids = discord.GetUserSortedGuilds();
     int sortnum = 0;
@@ -185,10 +184,7 @@ void ChannelList::UpdateListing() {
 }
 
 void ChannelList::UpdateNewGuild(const GuildData &guild) {
-    auto &img = Abaddon::Get().GetImageManager();
-
-    auto iter = AddGuild(guild);
-
+    AddGuild(guild);
     // update sort order
     int sortnum = 0;
     for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
@@ -561,7 +557,7 @@ void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
 }
 
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
-    for (const auto child : m_model->children()) {
+    for (const auto &child : m_model->children()) {
         if (child[m_columns.m_id] == id)
             return child;
     }
@@ -570,14 +566,14 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
 
 Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) {
     std::queue<Gtk::TreeModel::iterator> queue;
-    for (const auto child : m_model->children())
-        for (const auto child2 : child.children())
+    for (const auto &child : m_model->children())
+        for (const auto &child2 : child.children())
             queue.push(child2);
 
     while (!queue.empty()) {
         auto item = queue.front();
         if ((*item)[m_columns.m_id] == id) return item;
-        for (const auto child : item->children())
+        for (const auto &child : item->children())
             queue.push(child);
         queue.pop();
     }
@@ -1052,9 +1048,6 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_category(Gtk::Wi
 }
 
 void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    int available_xpad = background_area.get_width();
-    int available_ypad = background_area.get_height();
-
     // todo: figure out how Gtk::Arrow is rendered because i like it better :^)
     constexpr static int len = 5;
     int x1, y1, x2, y2, x3, y3;
