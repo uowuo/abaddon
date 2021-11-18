@@ -42,7 +42,7 @@ jobs:
       - name: Setup Artifact
         run: |
           mkdir build/artifactdir
-          mkdir build
+          cd build
           cp *.exe artifactdir
           cd ..
           cat "ci/deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir
