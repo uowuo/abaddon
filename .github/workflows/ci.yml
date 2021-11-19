@@ -41,11 +41,11 @@ jobs:
 
       - name: Setup Artifact
         run: |
-          mkdir -p build/artifactdir/bin build/artifactdir/ssl build/artifactdir/lib
+          mkdir -p build/artifactdir/bin build/artifactdir/ssl/certs build/artifactdir/lib
           cd build
           cp *.exe artifactdir/bin
           cd ..
-          cp /mingw64/ssl/certs/ca-bundle.crt build/artifactdir/ssl
+          cp /mingw64/ssl/certs/ca-bundle.crt build/artifactdir/ssl/certs
           cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
           cp -r css res build/artifactdir/bin
           cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin
