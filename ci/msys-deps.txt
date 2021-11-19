@@ -51,7 +51,7 @@
 /bin/libssl-1_1-x64.dll
 /bin/libstdc++-6.dll
 /bin/libthai-0.dll
+/bin/libunistring-2.dll
 /bin/libwinpthread-1.dll
 /bin/libzstd.dll
-/bin/unistring-2.dll
 /bin/zlib1.dll
