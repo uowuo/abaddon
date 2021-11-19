@@ -2140,7 +2140,7 @@ const char *Store::Database::ErrStr() const {
     const char *errmsg = sqlite3_errmsg(m_db);
     std::string tmp = errstr + std::string("\n\t") + errmsg;
     tmp.copy(m_err_scratch, sizeof(m_err_scratch) - 1);
-    m_err_scratch[sizeof(m_err_scratch) - 1] = '\0';
+    m_err_scratch[std::min(tmp.size(), sizeof(m_err_scratch) - 1)] = '\0';
     return m_err_scratch;
 }
 
