@@ -82,8 +82,29 @@ int Abaddon::StartGTK() {
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
-    m_main_window->UpdateComponents();
     m_main_window->set_position(Gtk::WIN_POS_CENTER);
+
+    if (!m_settings.IsValid()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+
+    if (!m_emojis.Load()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The emoji file couldn't be loaded!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+
+    if (!m_discord.IsStoreValid()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The Discord cache could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+        return 1;
+    }
+
+    // store must be checked before this can be called
+    m_main_window->UpdateComponents();
 
     // crashes for some stupid reason if i put it somewhere else
     SetupUserMenu();
@@ -113,25 +134,6 @@ int Abaddon::StartGTK() {
     ActionReloadCSS();
 
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::StopDiscord), false);
-
-    if (!m_settings.IsValid()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
-        dlg.set_position(Gtk::WIN_POS_CENTER);
-        dlg.run();
-    }
-
-    if (!m_emojis.Load()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The emoji file couldn't be loaded!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
-        dlg.set_position(Gtk::WIN_POS_CENTER);
-        dlg.run();
-    }
-
-    if (!m_discord.IsStoreValid()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The Discord cache could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
-        dlg.set_position(Gtk::WIN_POS_CENTER);
-        dlg.run();
-        return 1;
-    }
 
     m_main_window->show();
     return m_gtk_app->run(*m_main_window);
@@ -552,16 +554,9 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
         return;
 
     Snowflake before_id = m_main_window->GetChatOldestListedMessage();
-    auto knownset = m_discord.GetMessageIDsForChannel(id);
-    std::vector<Snowflake> knownvec(knownset.begin(), knownset.end());
-    std::sort(knownvec.begin(), knownvec.end());
-    auto latest = std::find_if(knownvec.begin(), knownvec.end(), [&before_id](Snowflake x) -> bool { return x == before_id; });
-    int distance = std::distance(knownvec.begin(), latest);
+    auto msgs = m_discord.GetMessagesBefore(id, before_id);
 
-    if (distance >= 50) {
-        std::vector<Message> msgs;
-        for (auto it = knownvec.begin() + distance - 50; it != knownvec.begin() + distance; it++)
-            msgs.push_back(*m_discord.GetMessage(*it));
+    if (msgs.size() >= 50) {
         m_main_window->UpdateChatPrependHistory(msgs);
         return;
     }

@@ -109,8 +109,8 @@ std::vector<Message> DiscordClient::GetMessagesForChannel(Snowflake id, size_t l
     return m_store.GetLastMessages(id, limit);
 }
 
-std::vector<Snowflake> DiscordClient::GetMessageIDsForChannel(Snowflake id) const {
-    return m_store.GetChannelMessageIDs(id);
+std::vector<Message> DiscordClient::GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit) const {
+    return m_store.GetMessagesBefore(channel_id, message_id, limit);
 }
 
 void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback) {
@@ -1349,7 +1349,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
     }
 
     for (auto &r : *guild.Roles)
-        m_store.SetRole(r.ID, r);
+        m_store.SetRole(guild.ID, r);
 
     for (auto &e : *guild.Emojis)
         m_store.SetEmoji(e.ID, e);
@@ -1517,7 +1517,7 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildRoleUpdate(const GatewayMessage &msg) {
     GuildRoleUpdateObject data = msg.Data;
-    m_store.SetRole(data.Role.ID, data.Role);
+    m_store.SetRole(data.GuildID, data.Role);
     m_signal_role_update.emit(data.GuildID, data.Role.ID);
 }
 
@@ -1526,7 +1526,7 @@ void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
     auto guild = *m_store.GetGuild(data.GuildID);
     guild.Roles->push_back(data.Role);
     m_store.BeginTransaction();
-    m_store.SetRole(data.Role.ID, data.Role);
+    m_store.SetRole(guild.ID, data.Role);
     m_store.SetGuild(guild.ID, guild);
     m_store.EndTransaction();
     m_signal_role_create.emit(data.GuildID, data.Role.ID);
@@ -1545,81 +1545,22 @@ void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayMessageReactionAdd(const GatewayMessage &msg) {
     MessageReactionAddObject data = msg.Data;
-    auto to = m_store.GetMessage(data.MessageID);
-    if (data.Emoji.ID.IsValid()) {
-        const auto cur_emoji = m_store.GetEmoji(data.Emoji.ID);
-        if (!cur_emoji.has_value())
-            m_store.SetEmoji(data.Emoji.ID, data.Emoji);
-    }
-    if (!to.has_value()) return;
-    if (!to->Reactions.has_value()) to->Reactions.emplace();
-    // add if present
-    bool stock;
-    auto it = std::find_if(to->Reactions->begin(), to->Reactions->end(), [&](const ReactionData &x) {
-        if (data.Emoji.ID.IsValid() && x.Emoji.ID.IsValid()) {
-            stock = false;
-            return data.Emoji.ID == x.Emoji.ID;
-        } else {
-            stock = true;
-            return data.Emoji.Name == x.Emoji.Name;
-        }
-    });
 
-    if (it != to->Reactions->end()) {
-        it->Count++;
-        if (data.UserID == GetUserData().ID)
-            it->HasReactedWith = true;
-        m_store.SetMessage(data.MessageID, *to);
-        if (stock)
-            m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
-        else
-            m_signal_reaction_add.emit(data.MessageID, std::to_string(data.Emoji.ID));
-        return;
-    }
-
-    // create new
-    auto &rdata = to->Reactions->emplace_back();
-    rdata.Count = 1;
-    rdata.Emoji = data.Emoji;
-    rdata.HasReactedWith = data.UserID == GetUserData().ID;
-    m_store.SetMessage(data.MessageID, *to);
-    if (stock)
-        m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
-    else
+    m_store.AddReaction(data, data.UserID == GetUserData().ID);
+    if (data.Emoji.ID.IsValid())
         m_signal_reaction_add.emit(data.MessageID, std::to_string(data.Emoji.ID));
+    else
+        m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
 }
 
 void DiscordClient::HandleGatewayMessageReactionRemove(const GatewayMessage &msg) {
     MessageReactionRemoveObject data = msg.Data;
-    auto to = m_store.GetMessage(data.MessageID);
-    if (!to.has_value()) return;
-    if (!to->Reactions.has_value()) return;
-    bool stock;
-    auto it = std::find_if(to->Reactions->begin(), to->Reactions->end(), [&](const ReactionData &x) {
-        if (data.Emoji.ID.IsValid() && x.Emoji.ID.IsValid()) {
-            stock = false;
-            return data.Emoji.ID == x.Emoji.ID;
-        } else {
-            stock = true;
-            return data.Emoji.Name == x.Emoji.Name;
-        }
-    });
-    if (it == to->Reactions->end()) return;
 
-    if (it->Count == 1)
-        to->Reactions->erase(it);
-    else {
-        if (data.UserID == GetUserData().ID)
-            it->HasReactedWith = false;
-        it->Count--;
-    }
-
-    m_store.SetMessage(data.MessageID, *to);
-
-    if (stock)
-        m_signal_reaction_remove.emit(data.MessageID, data.Emoji.Name);
-    else
+    m_store.RemoveReaction(data, data.UserID == GetUserData().ID);
+    if (data.Emoji.ID.IsValid())
         m_signal_reaction_remove.emit(data.MessageID, std::to_string(data.Emoji.ID));
+    else
+        m_signal_reaction_remove.emit(data.MessageID, data.Emoji.Name);
 }
 
 // todo: update channel list item and member list
@@ -1635,10 +1576,7 @@ void DiscordClient::HandleGatewayChannelRecipientAdd(const GatewayMessage &msg) 
 
 void DiscordClient::HandleGatewayChannelRecipientRemove(const GatewayMessage &msg) {
     ChannelRecipientRemove data = msg.Data;
-    auto cur = m_store.GetChannel(data.ChannelID);
-    if (!cur.has_value() || !cur->RecipientIDs.has_value()) return;
-    cur->RecipientIDs->erase(std::remove(cur->RecipientIDs->begin(), cur->RecipientIDs->end(), data.User.ID));
-    m_store.SetChannel(cur->ID, *cur);
+    m_store.ClearRecipient(data.ChannelID, data.User.ID);
 }
 
 void DiscordClient::HandleGatewayTypingStart(const GatewayMessage &msg) {

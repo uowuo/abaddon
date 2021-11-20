@@ -4,7 +4,7 @@
 #include "json.hpp"
 #include "../util.hpp"
 
-constexpr static uint64_t PERMISSION_MAX_BIT = 31;
+constexpr static uint64_t PERMISSION_MAX_BIT = 36;
 enum class Permission : uint64_t {
     NONE = 0,
     CREATE_INSTANT_INVITE = (1ULL << 0), // Allows creation of instant invites
