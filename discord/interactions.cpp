@@ -1,6 +1,6 @@
 #include "interactions.hpp"
 #include "json.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 void from_json(const nlohmann::json &j, MessageInteractionData &m) {
     JS_D("id", m.ID);

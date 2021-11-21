@@ -1,6 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../discord/guild.hpp"
+#include "discord/guild.hpp"
 
 class GuildSettingsInfoPane : public Gtk::Grid {
 public:

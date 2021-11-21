@@ -1,5 +1,5 @@
 #include "joinguild.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 #include <nlohmann/json.hpp>
 #include <regex>
 

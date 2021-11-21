@@ -1,5 +1,5 @@
 #include "member.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 void from_json(const nlohmann::json &j, GuildMember &m) {
     JS_O("user", m.User);

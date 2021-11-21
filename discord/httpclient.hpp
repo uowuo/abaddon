@@ -7,7 +7,7 @@
 #include <mutex>
 #include <queue>
 #include <glibmm.h>
-#include "../http.hpp"
+#include "http.hpp"
 
 class HTTPClient {
 public:

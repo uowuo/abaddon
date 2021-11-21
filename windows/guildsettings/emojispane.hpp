@@ -1,6 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../discord/emoji.hpp"
+#include "discord/emoji.hpp"
 
 class GuildSettingsEmojisPane : public Gtk::Box {
 public:

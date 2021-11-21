@@ -1,5 +1,5 @@
 #include "infopane.hpp"
-#include "../../abaddon.hpp"
+#include "abaddon.hpp"
 #include <filesystem>
 
 GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)

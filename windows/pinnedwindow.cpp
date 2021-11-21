@@ -1,5 +1,5 @@
 #include "pinnedwindow.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 PinnedWindow::PinnedWindow(const ChannelData &data)
     : ChannelID(data.ID) {

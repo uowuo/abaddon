@@ -1,7 +1,7 @@
 #pragma once
 #include <gtkmm.h>
-#include "../discord/snowflake.hpp"
-#include "../discord/activity.hpp"
+#include "discord/snowflake.hpp"
+#include "discord/activity.hpp"
 
 class StatusIndicator : public Gtk::Widget {
 public:

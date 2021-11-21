@@ -2,7 +2,7 @@
 #include <gtkmm.h>
 #include <unordered_map>
 #include <chrono>
-#include "../discord/message.hpp"
+#include "discord/message.hpp"
 
 class RateLimitIndicator : public Gtk::Box {
 public:

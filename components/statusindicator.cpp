@@ -1,5 +1,5 @@
 #include "statusindicator.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 static const constexpr int Diameter = 8;
 static const auto OnlineColor = Gdk::RGBA("#43B581");

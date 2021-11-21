@@ -2,7 +2,7 @@
 #include <cstdint>
 #include "snowflake.hpp"
 #include "json.hpp"
-#include "../util.hpp"
+#include "util.hpp"
 
 constexpr static uint64_t PERMISSION_MAX_BIT = 36;
 enum class Permission : uint64_t {

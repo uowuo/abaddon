@@ -1,7 +1,7 @@
 #pragma once
 #include <gtkmm.h>
 #include <optional>
-#include "../discord/objects.hpp"
+#include "discord/objects.hpp"
 
 class VerificationGateDialog : public Gtk::Dialog {
 public:

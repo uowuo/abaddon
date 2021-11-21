@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <map>
 #include <unordered_map>
-#include "../abaddon.hpp"
-#include "../imgmanager.hpp"
-#include "../util.hpp"
+#include "abaddon.hpp"
+#include "imgmanager.hpp"
+#include "util.hpp"
 #include "statusindicator.hpp"
 
 ChannelList::ChannelList()

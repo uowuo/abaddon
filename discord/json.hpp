@@ -1,7 +1,7 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <optional>
-#include "../util.hpp"
+#include "util.hpp"
 
 namespace detail { // more or less because idk what to name this stuff
 template<typename T>

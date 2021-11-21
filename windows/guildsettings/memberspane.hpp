@@ -1,9 +1,9 @@
 #pragma once
 #include <unordered_set>
 #include <gtkmm.h>
-#include "../../discord/member.hpp"
-#include "../../discord/guild.hpp"
-#include "../../components/lazyimage.hpp"
+#include "discord/member.hpp"
+#include "discord/guild.hpp"
+#include "components/lazyimage.hpp"
 
 class GuildSettingsMembersPaneRolesItem : public Gtk::ListBoxRow {
 public:

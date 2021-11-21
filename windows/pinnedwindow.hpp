@@ -1,9 +1,9 @@
 #pragma once
 #include <gtkmm.h>
-#include "../discord/errors.hpp"
-#include "../discord/channel.hpp"
-#include "../discord/message.hpp"
-#include "../components/chatlist.hpp"
+#include "discord/errors.hpp"
+#include "discord/channel.hpp"
+#include "discord/message.hpp"
+#include "components/chatlist.hpp"
 
 class PinnedWindow : public Gtk::Window {
 public:

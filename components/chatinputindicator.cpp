@@ -1,7 +1,7 @@
 #include <filesystem>
 #include "chatinputindicator.hpp"
-#include "../abaddon.hpp"
-#include "../util.hpp"
+#include "abaddon.hpp"
+#include "util.hpp"
 
 constexpr static const int MaxUsersInIndicator = 4;
 

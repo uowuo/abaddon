@@ -1,7 +1,7 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../discord/snowflake.hpp"
-#include "../../discord/ban.hpp"
+#include "discord/snowflake.hpp"
+#include "discord/ban.hpp"
 
 class GuildSettingsBansPane : public Gtk::Box {
 public:

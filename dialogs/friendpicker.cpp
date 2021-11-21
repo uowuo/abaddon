@@ -1,5 +1,5 @@
 #include "friendpicker.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 FriendPickerDialog::FriendPickerDialog(Gtk::Window &parent)
     : Gtk::Dialog("Pick a friend", parent, true)

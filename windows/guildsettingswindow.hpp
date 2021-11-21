@@ -1,6 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../discord/snowflake.hpp"
+#include "discord/snowflake.hpp"
 #include "guildsettings/infopane.hpp"
 #include "guildsettings/banspane.hpp"
 #include "guildsettings/invitespane.hpp"

@@ -1,8 +1,8 @@
 #include "discord.hpp"
 #include <cassert>
 #include <cinttypes>
-#include "../util.hpp"
-#include "../abaddon.hpp"
+#include "util.hpp"
+#include "abaddon.hpp"
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)

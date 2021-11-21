@@ -1,8 +1,8 @@
 #pragma once
 #include <gtkmm.h>
 #include <unordered_map>
-#include "../discord/message.hpp"
-#include "../discord/user.hpp"
+#include "discord/message.hpp"
+#include "discord/user.hpp"
 
 class ChatInputIndicator : public Gtk::Box {
 public:

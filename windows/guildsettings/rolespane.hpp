@@ -1,8 +1,8 @@
 #pragma once
 #include <gtkmm.h>
 #include <unordered_map>
-#include "../../discord/guild.hpp"
-#include "../../components/draglistbox.hpp"
+#include "discord/guild.hpp"
+#include "components/draglistbox.hpp"
 
 class GuildSettingsRolesPaneRolesListItem : public Gtk::ListBoxRow {
 public:

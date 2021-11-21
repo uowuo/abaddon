@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <optional>
-#include "../util.hpp"
+#include "util.hpp"
 #include "json.hpp"
 #include "snowflake.hpp"
 

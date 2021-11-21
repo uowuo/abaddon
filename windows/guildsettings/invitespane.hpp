@@ -1,6 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../../discord/objects.hpp"
+#include "discord/objects.hpp"
 
 class GuildSettingsInvitesPane : public Gtk::ScrolledWindow {
 public:

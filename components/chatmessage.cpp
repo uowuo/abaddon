@@ -1,6 +1,6 @@
 #include "chatmessage.hpp"
-#include "../abaddon.hpp"
-#include "../util.hpp"
+#include "abaddon.hpp"
+#include "util.hpp"
 #include "lazyimage.hpp"
 #include <unordered_map>
 

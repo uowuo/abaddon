@@ -1,5 +1,5 @@
 #include "verificationgate.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 VerificationGateDialog::VerificationGateDialog(Gtk::Window &parent, Snowflake guild_id)
     : Gtk::Dialog("Verification Required", parent, true)

@@ -1,5 +1,5 @@
 #include "friendslist.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 #include "lazyimage.hpp"
 
 using namespace std::string_literals;

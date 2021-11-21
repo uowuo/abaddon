@@ -1,5 +1,5 @@
 #pragma once
-#include "../util.hpp"
+#include "util.hpp"
 #include "objects.hpp"
 #include <unordered_map>
 #include <unordered_set>

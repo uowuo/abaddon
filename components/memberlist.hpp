@@ -3,7 +3,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <optional>
-#include "../discord/discord.hpp"
+#include "discord/discord.hpp"
 
 class LazyImage;
 class StatusIndicator;

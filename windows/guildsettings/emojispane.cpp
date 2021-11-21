@@ -1,6 +1,6 @@
 #include "emojispane.hpp"
-#include "../../abaddon.hpp"
-#include "../../components/cellrendererpixbufanimation.hpp"
+#include "abaddon.hpp"
+#include "components/cellrendererpixbufanimation.hpp"
 
 GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)

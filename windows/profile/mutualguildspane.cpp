@@ -1,5 +1,5 @@
 #include "mutualguildspane.hpp"
-#include "../../abaddon.hpp"
+#include "abaddon.hpp"
 
 MutualGuildItem::MutualGuildItem(const MutualGuildData &guild)
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)

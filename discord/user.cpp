@@ -1,5 +1,5 @@
 #include "user.hpp"
-#include "../abaddon.hpp"
+#include "abaddon.hpp"
 
 bool UserData::IsDeleted() const {
     return Discriminator == "0000";

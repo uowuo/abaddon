@@ -1,5 +1,5 @@
 #include "invitespane.hpp"
-#include "../../abaddon.hpp"
+#include "abaddon.hpp"
 
 GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     : GuildID(id)

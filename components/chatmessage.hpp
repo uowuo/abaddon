@@ -1,6 +1,6 @@
 #pragma once
 #include <gtkmm.h>
-#include "../discord/discord.hpp"
+#include "discord/discord.hpp"
 
 class ChatMessageItemContainer : public Gtk::Box {
 public:
