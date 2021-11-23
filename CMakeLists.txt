@@ -18,7 +18,7 @@ set(USE_OPEN_SSL TRUE)
 find_package(IXWebSocket QUIET)
 if (NOT IXWebSocket_FOUND)
 	message("ixwebsocket was not found and will be included as a submodule")
-	add_subdirectory(thirdparty/IXWebSocket)
+	add_subdirectory(subprojects/ixwebsocket)
 	include_directories(IXWEBSOCKET_INCLUDE_DIRS)
 endif()
 
@@ -26,7 +26,7 @@ add_compile_definitions(SI_NO_CONVERSION) # only CSimpleIniA is used
 find_package(simpleini QUIET)
 if (NOT simpleini_FOUND)
 	message("simpleini was not found and will be included as a submodule")
-	include_directories(thirdparty/simpleini)
+	include_directories(subprojects/simpleini)
 endif()
 
 if(MINGW OR WIN32)
@@ -41,28 +41,16 @@ if(WIN32)
 	link_libraries(${Fontconfig_LIBRARIES})
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/src/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 
-file(GLOB ABADDON_SOURCES
-	"*.h"
-	"*.hpp"
-	"*.cpp"
-	"discord/*.hpp"
-	"discord/*.cpp"
-	"components/*.hpp"
-	"components/*.cpp"
-	"windows/*.hpp"
-	"windows/*.cpp"
-	"windows/guildsettings/*.hpp"
-	"windows/guildsettings/*.cpp"
-	"windows/profile/*.hpp"
-	"windows/profile/*.cpp"
-	"dialogs/*.hpp"
-	"dialogs/*.cpp"
+file(GLOB_RECURSE ABADDON_SOURCES
+	"src/*.h"
+	"src/*.hpp"
+	"src/*.cpp"
 )
 
 add_executable(abaddon ${ABADDON_SOURCES})
-target_include_directories(abaddon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(abaddon PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
