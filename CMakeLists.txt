@@ -22,13 +22,6 @@ if (NOT IXWebSocket_FOUND)
 	include_directories(IXWEBSOCKET_INCLUDE_DIRS)
 endif()
 
-add_compile_definitions(SI_NO_CONVERSION) # only CSimpleIniA is used
-find_package(simpleini QUIET)
-if (NOT simpleini_FOUND)
-	message("simpleini was not found and will be included as a submodule")
-	include_directories(subprojects/simpleini)
-endif()
-
 if(MINGW OR WIN32)
 	link_libraries(ws2_32)
 endif()

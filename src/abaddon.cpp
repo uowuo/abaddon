@@ -23,12 +23,12 @@
 
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
-    , m_discord(m_settings.GetUseMemoryDB()) // stupid but easy
+    , m_discord(GetSettings().UseMemoryDB) // stupid but easy
     , m_emojis(GetResPath("/emojis.bin")) {
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
-    std::string ua = m_settings.GetUserAgent();
+    std::string ua = GetSettings().UserAgent;
     m_discord.SetUserAgent(ua);
 
     m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
@@ -43,7 +43,7 @@ Abaddon::Abaddon()
     m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
-    if (m_settings.GetPrefetch())
+    if (GetSettings().Prefetch)
         m_discord.signal_message_create().connect([this](const Message &message) {
             if (message.Author.HasAvatar())
                 m_img_mgr.Prefetch(message.Author.GetAvatarURL());
@@ -52,10 +52,6 @@ Abaddon::Abaddon()
                     m_img_mgr.Prefetch(attachment.ProxyURL);
             }
         });
-}
-
-Abaddon::~Abaddon() {
-    m_settings.Close();
 }
 
 Abaddon &Abaddon::Get() {
@@ -85,7 +81,7 @@ int Abaddon::StartGTK() {
     m_main_window->set_position(Gtk::WIN_POS_CENTER);
 
     if (!m_settings.IsValid()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be opened!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
@@ -133,14 +129,19 @@ int Abaddon::StartGTK() {
 
     ActionReloadCSS();
 
-    m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::StopDiscord), false);
+    m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
     m_main_window->show();
     return m_gtk_app->run(*m_main_window);
 }
 
+void Abaddon::OnShutdown() {
+    StopDiscord();
+    m_settings.Close();
+}
+
 void Abaddon::LoadFromSettings() {
-    std::string token = m_settings.GetDiscordToken();
+    std::string token = GetSettings().DiscordToken;
     if (token.size()) {
         m_discord_token = token;
         m_discord.UpdateToken(m_discord_token);
@@ -248,8 +249,8 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
     }
 }
 
-const SettingsManager &Abaddon::GetSettings() const {
-    return m_settings;
+SettingsManager::Settings &Abaddon::GetSettings() {
+    return m_settings.GetSettings();
 }
 
 Glib::RefPtr<Gtk::CssProvider> Abaddon::GetStyleProvider() {
@@ -367,7 +368,7 @@ void Abaddon::SetupUserMenu() {
 }
 
 void Abaddon::SaveState() {
-    if (!m_settings.GetSaveState()) return;
+    if (!GetSettings().SaveState) return;
 
     AbaddonApplicationState state;
     state.ActiveChannel = m_main_window->GetChatActiveChannel();
@@ -387,7 +388,7 @@ void Abaddon::SaveState() {
 }
 
 void Abaddon::LoadState() {
-    if (!m_settings.GetSaveState()) return;
+    if (!GetSettings().SaveState) return;
 
     const auto data = ReadWholeFile(GetStateCachePath("/state.json"));
     if (data.empty()) return;
@@ -491,7 +492,7 @@ void Abaddon::ActionSetToken() {
         m_discord_token = dlg.GetToken();
         m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
-        m_settings.SetSetting("discord", "token", m_discord_token);
+        GetSettings().DiscordToken = m_discord_token;
     }
 }
 
@@ -698,7 +699,7 @@ bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {
 void Abaddon::ActionReloadCSS() {
     try {
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
-        m_css_provider->load_from_path(GetCSSPath("/" + m_settings.GetMainCSS()));
+        m_css_provider->load_from_path(GetCSSPath("/" + GetSettings().MainCSS));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_low_provider);

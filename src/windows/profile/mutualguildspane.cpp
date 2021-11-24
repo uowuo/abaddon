@@ -13,11 +13,10 @@ MutualGuildItem::MutualGuildItem(const MutualGuildData &guild)
     // discord will return info (id + nick) for "deleted" guilds from this endpoint. strange !
     const auto data = Abaddon::Get().GetDiscordClient().GetGuild(guild.ID);
     if (data.has_value()) {
-        const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
         auto &img = Abaddon::Get().GetImageManager();
         m_icon.property_pixbuf() = img.GetPlaceholder(24);
         if (data->HasIcon()) {
-            if (data->HasAnimatedIcon() && show_animations) {
+            if (data->HasAnimatedIcon() && Abaddon::Get().GetSettings().ShowAnimations) {
                 auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
                     m_icon.property_pixbuf_animation() = pb;
                 };

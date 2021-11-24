@@ -81,7 +81,7 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
 void GuildSettingsInfoPane::FetchGuildIcon(const GuildData &guild) {
     m_guild_icon.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);
     if (guild.HasIcon()) {
-        if (Abaddon::Get().GetSettings().GetShowAnimations() && guild.HasAnimatedIcon()) {
+        if (Abaddon::Get().GetSettings().ShowAnimations && guild.HasAnimatedIcon()) {
             auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
                 m_guild_icon.property_pixbuf_animation() = pixbuf;
             };

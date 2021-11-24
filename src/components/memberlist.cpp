@@ -14,8 +14,7 @@ MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, cons
     m_avatar = Gtk::manage(new LazyImage(16, 16));
     m_status_indicator = Gtk::manage(new StatusIndicator(ID));
 
-    static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
-    if (crown && guild.has_value() && guild->OwnerID == data.ID) {
+    if (Abaddon::Get().GetSettings().ShowOwnerCrown && guild.has_value() && guild->OwnerID == data.ID) {
         try {
             const static auto crown_path = Abaddon::GetResPath("/crown.png");
             auto pixbuf = Gdk::Pixbuf::create_from_file(crown_path, 12, 12);
@@ -40,9 +39,8 @@ MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, cons
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
 
-    static bool show_discriminator = Abaddon::Get().GetSettings().GetShowMemberListDiscriminators();
     std::string display = data.Username;
-    if (show_discriminator)
+    if (Abaddon::Get().GetSettings().ShowMemberListDiscriminators)
         display += "#" + data.Discriminator;
     if (guild.has_value()) {
         if (const auto col_id = data.GetHoistedRole(guild->ID, true); col_id.IsValid()) {

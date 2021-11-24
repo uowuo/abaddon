@@ -1303,13 +1303,11 @@ void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
 
 // perhaps this should be set by the main class
 std::string DiscordClient::GetAPIURL() {
-    static const auto url = Abaddon::Get().GetSettings().GetAPIBaseURL();
-    return url;
+    return Abaddon::Get().GetSettings().APIBaseURL;
 }
 
 std::string DiscordClient::GetGatewayURL() {
-    static const auto url = Abaddon::Get().GetSettings().GetGatewayURL();
-    return url;
+    return Abaddon::Get().GetSettings().GatewayURL;
 }
 
 DiscordError DiscordClient::GetCodeFromResponse(const http::response_type &response) {

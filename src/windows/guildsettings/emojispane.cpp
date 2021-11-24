@@ -130,8 +130,7 @@ void GuildSettingsEmojisPane::AddEmojiRow(const EmojiData &emoji) {
     else
         row[m_columns.m_col_available] = "Yes";
 
-    static bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
-    if (show_animations && emoji.IsAnimated.has_value() && *emoji.IsAnimated) {
+    if (Abaddon::Get().GetSettings().ShowAnimations && emoji.IsAnimated.has_value() && *emoji.IsAnimated) {
         const auto cb = [this, id = emoji.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             for (auto &row : m_model->children()) {
                 if (static_cast<Snowflake>(row[m_columns.m_col_id]) == id) {

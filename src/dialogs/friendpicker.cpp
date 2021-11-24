@@ -67,7 +67,7 @@ FriendPickerDialogItem::FriendPickerDialogItem(Snowflake user_id)
     m_name.set_single_line_mode(true);
 
     m_avatar.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);
-    if (user.HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations()) {
+    if (user.HasAnimatedAvatar() && Abaddon::Get().GetSettings().ShowAnimations) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             m_avatar.property_pixbuf_animation() = pb;
         };

@@ -357,7 +357,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
                 }
                 return false;
             });
-            static auto color = Abaddon::Get().GetSettings().GetLinkColor();
+            static auto color = Abaddon::Get().GetSettings().LinkColor;
             title_label->override_color(Gdk::RGBA(color));
             title_label->set_markup("<b>" + Glib::Markup::escape_text(*embed.Title) + "</b>");
         }
@@ -798,7 +798,6 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
         int mstart, mend;
         if (!match.fetch_pos(0, mstart, mend)) break;
         const bool is_animated = match.fetch(0)[1] == 'a';
-        const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
         const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
@@ -806,7 +805,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
         auto end_it = buf->get_iter_at_offset(chars_end);
 
         startpos = mend;
-        if (is_animated && show_animations) {
+        if (is_animated && Abaddon::Get().GetSettings().ShowAnimations) {
             const auto mark_start = buf->create_mark(start_it, false);
             end_it.backward_char();
             const auto mark_end = buf->create_mark(end_it, false);
@@ -845,11 +844,8 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
 }
 
 void ChatMessageItemContainer::HandleEmojis(Gtk::TextView &tv) {
-    static const bool stock_emojis = Abaddon::Get().GetSettings().GetShowStockEmojis();
-    static const bool custom_emojis = Abaddon::Get().GetSettings().GetShowCustomEmojis();
-
-    if (stock_emojis) HandleStockEmojis(tv);
-    if (custom_emojis) HandleCustomEmojis(tv);
+    if (Abaddon::Get().GetSettings().ShowStockEmojis) HandleStockEmojis(tv);
+    if (Abaddon::Get().GetSettings().ShowCustomEmojis) HandleCustomEmojis(tv);
 }
 
 void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) {
@@ -969,9 +965,6 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView &tv) {
     auto buf = tv.get_buffer();
     Glib::ustring text = GetText(buf);
 
-    // i'd like to let this be done thru css like .message-link { color: #bitch; } but idk how
-    static auto link_color = Abaddon::Get().GetSettings().GetLinkColor();
-
     int startpos = 0;
     Glib::MatchInfo match;
     while (rgx->match(text, startpos, match)) {
@@ -980,7 +973,7 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView &tv) {
         std::string link = match.fetch(0);
         auto tag = buf->create_tag();
         m_link_tagmap[tag] = link;
-        tag->property_foreground_rgba() = Gdk::RGBA(link_color);
+        tag->property_foreground_rgba() = Gdk::RGBA(Abaddon::Get().GetSettings().LinkColor);
         tag->set_property("underline", 1); // stupid workaround for vcpkg bug (i think)
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
@@ -1138,7 +1131,7 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     m_content_box_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
     m_meta_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
     m_avatar_ev.add_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
-    if (Abaddon::Get().GetSettings().GetShowAnimations()) {
+    if (Abaddon::Get().GetSettings().ShowAnimations) {
         m_content_box_ev.signal_enter_notify_event().connect(on_enter_cb);
         m_content_box_ev.signal_leave_notify_event().connect(on_leave_cb);
         m_meta_ev.signal_enter_notify_event().connect(on_enter_cb);

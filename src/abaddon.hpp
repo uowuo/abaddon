@@ -14,7 +14,6 @@
 class Abaddon {
 private:
     Abaddon();
-    ~Abaddon();
     Abaddon(const Abaddon &) = delete;
     Abaddon &operator=(const Abaddon &) = delete;
     Abaddon(Abaddon &&) = delete;
@@ -24,6 +23,8 @@ public:
     static Abaddon &Get();
 
     int StartGTK();
+    void OnShutdown();
+
     void StartDiscord();
     void StopDiscord();
 
@@ -74,7 +75,7 @@ public:
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
     void DiscordOnThreadUpdate(const ThreadUpdateData &data);
 
-    const SettingsManager &GetSettings() const;
+    SettingsManager::Settings &GetSettings();
 
     Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
 

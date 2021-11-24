@@ -142,7 +142,7 @@ void FileCacheWorkerThread::loop() {
                 m_cv.wait(lock);
         }
 
-        static const auto concurrency = static_cast<size_t>(Abaddon::Get().GetSettings().GetCacheHTTPConcurrency());
+        static const auto concurrency = static_cast<size_t>(Abaddon::Get().GetSettings().CacheHTTPConcurrency);
         if (m_handles.size() < concurrency) {
             std::optional<QueueEntry> entry;
             m_queue_mutex.lock();

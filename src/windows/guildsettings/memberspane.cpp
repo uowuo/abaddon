@@ -99,7 +99,7 @@ GuildSettingsMembersListItem::GuildSettingsMembersListItem(const GuildData &guil
 
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    if (member.User->HasAnimatedAvatar() && Abaddon::Get().GetSettings().GetShowAnimations())
+    if (member.User->HasAnimatedAvatar() && Abaddon::Get().GetSettings().ShowAnimations)
         m_avatar.SetURL(member.User->GetAvatarURL("gif", "32"));
     else
         m_avatar.SetURL(member.User->GetAvatarURL("png", "32"));
@@ -113,8 +113,7 @@ GuildSettingsMembersListItem::GuildSettingsMembersListItem(const GuildData &guil
     discord.signal_guild_member_update().connect(sigc::track_obj(member_update_cb, *this));
     UpdateColor();
 
-    static bool crown = Abaddon::Get().GetSettings().GetShowOwnerCrown();
-    if (crown && guild.OwnerID == member.User->ID) {
+    if (Abaddon::Get().GetSettings().ShowOwnerCrown && guild.OwnerID == member.User->ID) {
         try {
             const static auto crown_path = Abaddon::GetResPath("/crown.png");
             auto pixbuf = Gdk::Pixbuf::create_from_file(crown_path, 12, 12);

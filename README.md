@@ -32,7 +32,7 @@ Current features:
 ### Building manually (recommended if not on Windows):
 #### Windows:
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
-2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows zlib:x64-windows simpleini:x64-windows sqlite3:x64-windows openssl:x64-windows curl:x64-windows`
+2. `vcpkg install gtkmm:x64-windows nlohmann-json:x64-windows ixwebsocket:x64-windows zlib:x64-windows sqlite3:x64-windows openssl:x64-windows curl:x64-windows`
 3. `mkdir build && cd build`
 4. `cmake -G"Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=c:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DVCPKG_TARGET_TRIPLET=x64-windows ..`
 5. Build with Visual Studio  
@@ -75,7 +75,6 @@ On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/
 * [IXWebSocket](https://github.com/machinezone/IXWebSocket)
 * [libcurl](https://curl.se/)
 * [zlib](https://zlib.net/)
-* [simpleini](https://github.com/brofield/simpleini)
 * [SQLite3](https://www.sqlite.org/index.html)
 
 ### TODO:
@@ -178,18 +177,24 @@ Used in profile popup:
   
 ### Settings
 Settings are configured (for now) by editing abaddon.ini  
+The format is similar to the standard Windows ini format **except**:  
+* `#` is used to begin comments as opposed to `;`
+* Section and key names are case-sensitive
+
 You should edit these while the client is closed even though there's an option to reload while running  
 This listing is organized by section.  
 For example, memory_db would be set by adding `memory_db = true` under the line `[discord]`
 
 #### discord
+* gateway (string) - override url for Discord gateway. must be json format and use zlib stream compression
+* api_base (string) - override base url for Discord API
 * memory_db (true or false, default false) - if true, Discord data will be kept in memory as opposed to on disk
 * token (string) - Discord token used to login, this can be set from the menu
 * prefetch (true or false, default false) - if true, new messages will cause the avatar and image attachments to be automatically downloaded
 
 #### http
 * user_agent (string) - sets the user-agent to use in HTTP requests to the Discord API (not including media/images)
-* concurrent (int, default 10) - how many images can be concurrently retrieved
+* concurrent (int, default 20) - how many images can be concurrently retrieved
 
 #### gui
 * member_list_discriminator (true or false, default true) - show user discriminators in the member list
@@ -199,8 +204,6 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
 * animated_guild_hover_only (true or false, default true) - only animate guild icons when the guild is being hovered over
 * owner_crown (true or false, default true) - show a crown next to the owner
-* gateway (string) - override url for Discord gateway. must be json format and use zlib stream compression
-* api_base (string) - override base url for Discord API
 
 #### style
 * linkcolor (string) - color to use for links in messages

@@ -9,10 +9,9 @@ MutualFriendItem::MutualFriendItem(const UserData &user)
 
     m_avatar.set_margin_end(10);
 
-    const auto show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
     auto &img = Abaddon::Get().GetImageManager();
     m_avatar.property_pixbuf() = img.GetPlaceholder(24);
-    if (user.HasAnimatedAvatar() && show_animations) {
+    if (user.HasAnimatedAvatar() && Abaddon::Get().GetSettings().ShowAnimations) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             m_avatar.property_pixbuf_animation() = pb;
         };

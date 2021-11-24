@@ -263,11 +263,9 @@ void ChannelList::UpdateGuild(Snowflake id) {
     const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
     if (!iter || !guild.has_value()) return;
 
-    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
-
     (*iter)[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild->Name) + "</b>";
     (*iter)[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
-    if (show_animations && guild->HasAnimatedIcon()) {
+    if (Abaddon::Get().GetSettings().ShowAnimations && guild->HasAnimatedIcon()) {
         const auto cb = [this, id](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             auto iter = GetIteratorForGuildFromID(id);
             if (iter) (*iter)[m_columns.m_icon_anim] = pb;
@@ -436,9 +434,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
     guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
 
-    static const bool show_animations = Abaddon::Get().GetSettings().GetShowAnimations();
-
-    if (show_animations && guild.HasAnimatedIcon()) {
+    if (Abaddon::Get().GetSettings().ShowAnimations && guild.HasAnimatedIcon()) {
         const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             auto iter = GetIteratorForGuildFromID(id);
             if (iter) (*iter)[m_columns.m_icon_anim] = pb;
@@ -998,7 +994,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
-    const static bool hover_only = Abaddon::Get().GetSettings().GetAnimatedGuildHoverOnly();
+    const bool hover_only = Abaddon::Get().GetSettings().AnimatedGuildHoverOnly;
     const bool is_hovered = flags & Gtk::CELL_RENDERER_PRELIT;
     auto anim = m_property_pixbuf_animation.get_value();
 
@@ -1069,7 +1065,7 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
     cr->move_to(x1, y1);
     cr->line_to(x2, y2);
     cr->line_to(x3, y3);
-    static const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetChannelsExpanderColor());
+    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
     cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
     cr->stroke();
 
@@ -1115,7 +1111,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
-    const static auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().GetNSFWChannelColor());
+    const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
     if (m_property_nsfw.get_value())
         m_renderer_text.property_foreground_rgba() = nsfw_color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
