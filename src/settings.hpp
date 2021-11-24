@@ -38,7 +38,7 @@ public:
         std::string NSFWChannelColor { "#ed6666" };
     };
 
-    SettingsManager(std::string_view filename);
+    SettingsManager(const std::string &filename);
 
     void Close();
     bool IsValid() const;

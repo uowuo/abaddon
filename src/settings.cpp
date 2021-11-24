@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <fstream>
 
-SettingsManager::SettingsManager(std::string_view filename)
+SettingsManager::SettingsManager(const std::string &filename)
     : m_filename(filename) {
     if (!std::filesystem::exists(filename)) {
         std::fstream fs;
