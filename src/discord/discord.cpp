@@ -2003,7 +2003,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 91734;
+    msg.Properties.ClientBuildNumber = 105691;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;
