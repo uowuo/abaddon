@@ -4,7 +4,7 @@ Alternative Discord client made in C++ with GTK
 
 <img src="/.readme/s3.png">
 
-[😎Discord Server](https://discord.gg/wkCU3vuzG5)
+<a href="https://discord.gg/wkCU3vuzG5"><img src="https://discord.com/api/guilds/858156817711890443/widget.png?style=shield"></a>
 
 Current features:
 * Not Electron
