@@ -15,6 +15,14 @@ void Websocket::SetUserAgent(std::string agent) {
     m_agent = agent;
 }
 
+bool Websocket::GetPrintMessages() const noexcept {
+    return m_print_messages;
+}
+
+void Websocket::SetPrintMessages(bool show) noexcept {
+    m_print_messages = show;
+}
+
 void Websocket::Stop() {
     Stop(ix::WebSocketCloseConstants::kNormalClosureCode);
 }
@@ -29,7 +37,8 @@ bool Websocket::IsOpen() const {
 }
 
 void Websocket::Send(const std::string &str) {
-    printf("sending %s\n", str.c_str());
+    if (m_print_messages)
+        printf("sending %s\n", str.c_str());
     m_websocket.sendText(str);
 }
 

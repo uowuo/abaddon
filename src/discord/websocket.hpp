@@ -13,6 +13,9 @@ public:
 
     void SetUserAgent(std::string agent);
 
+    bool GetPrintMessages() const noexcept;
+    void SetPrintMessages(bool show) noexcept;
+
     void Send(const std::string &str);
     void Send(const nlohmann::json &j);
     void Stop();
@@ -26,9 +29,9 @@ private:
     std::string m_agent;
 
 public:
-    typedef sigc::signal<void> type_signal_open;
-    typedef sigc::signal<void, uint16_t> type_signal_close;
-    typedef sigc::signal<void, std::string> type_signal_message;
+    using type_signal_open = sigc::signal<void>;
+    using type_signal_close = sigc::signal<void, uint16_t>;
+    using type_signal_message = sigc::signal<void, std::string>;
 
     type_signal_open signal_open();
     type_signal_close signal_close();
@@ -38,4 +41,6 @@ private:
     type_signal_open m_signal_open;
     type_signal_close m_signal_close;
     type_signal_message m_signal_message;
+
+    bool m_print_messages = true;
 };

@@ -2012,7 +2012,10 @@ void DiscordClient::SendIdentify() {
     msg.ClientState.HighestLastMessageID = "0";
     msg.ClientState.ReadStateVersion = 0;
     msg.ClientState.UserGuildSettingsVersion = -1;
+    const bool b = m_websocket.GetPrintMessages();
+    m_websocket.SetPrintMessages(false);
     m_websocket.Send(msg);
+    m_websocket.SetPrintMessages(b);
 }
 
 void DiscordClient::SendResume() {
