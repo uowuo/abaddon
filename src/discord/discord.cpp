@@ -292,6 +292,19 @@ void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<vo
     });
 }
 
+void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback) {
+    m_http.MakeGET("/channels/" + std::to_string(channel_id) + "/users/@me/threads/archived/private", [this, callback](const http::response_type &r) {
+        if (CheckCode(r)) {
+            const auto data = nlohmann::json::parse(r.text).get<ArchivedThreadsResponseData>();
+            for (const auto &thread : data.Threads)
+                m_store.SetChannel(thread.ID, thread);
+            callback(DiscordError::NONE, data);
+        } else {
+            callback(GetCodeFromResponse(r), {});
+        }
+    });
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }

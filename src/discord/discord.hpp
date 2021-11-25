@@ -81,6 +81,7 @@ public:
     std::vector<Snowflake> GetUsersInThread(Snowflake id) const;
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
     void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
+    void GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
 
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;

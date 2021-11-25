@@ -129,14 +129,15 @@ ArchivedThreadsList::ArchivedThreadsList(const ChannelData &channel, const Gtk::
         return false;
     });
 
-    Abaddon::Get().GetDiscordClient().GetArchivedPublicThreads(channel.ID, sigc::mem_fun(*this, &ArchivedThreadsList::OnPublicFetched));
+    Abaddon::Get().GetDiscordClient().GetArchivedPublicThreads(channel.ID, sigc::mem_fun(*this, &ArchivedThreadsList::OnThreadsFetched));
+    Abaddon::Get().GetDiscordClient().GetArchivedPrivateThreads(channel.ID, sigc::mem_fun(*this, &ArchivedThreadsList::OnThreadsFetched));
 }
 
 void ArchivedThreadsList::InvalidateFilter() {
     m_list.invalidate_filter();
 }
 
-void ArchivedThreadsList::OnPublicFetched(DiscordError code, const ArchivedThreadsResponseData &data) {
+void ArchivedThreadsList::OnThreadsFetched(DiscordError code, const ArchivedThreadsResponseData &data) {
     for (const auto &thread : data.Threads) {
         auto row = Gtk::manage(new ThreadListRow(thread));
         row->show();

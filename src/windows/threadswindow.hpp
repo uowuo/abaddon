@@ -27,7 +27,7 @@ public:
 private:
     Gtk::ListBox m_list;
 
-    void OnPublicFetched(DiscordError code, const ArchivedThreadsResponseData &data);
+    void OnThreadsFetched(DiscordError code, const ArchivedThreadsResponseData &data);
 
     using type_signal_thread_open = sigc::signal<void, Snowflake>;
     type_signal_thread_open m_signal_thread_open;
