@@ -2159,8 +2159,7 @@ Store::Database::type_signal_close Store::Database::signal_close() {
 Store::Statement::Statement(Database &db, const char *command)
     : m_db(&db) {
     if (m_db->SetError(sqlite3_prepare_v2(m_db->obj(), command, -1, &m_stmt, nullptr)) != SQLITE_OK) return;
-    std::string tmp = command;
-    m_db->signal_close().connect([tmp, this] {
+    m_db->signal_close().connect([this] {
         sqlite3_finalize(m_stmt);
         m_stmt = nullptr;
     });
