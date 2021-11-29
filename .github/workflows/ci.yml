@@ -95,9 +95,9 @@ jobs:
           del /f /s /q "${{ runner.workspace }}\build\.ninja_log"
           del /f /s /q "${{ runner.workspace }}\build\abaddon.ilk"
           del /f /s /q "${{ runner.workspace }}\build\CMakeCache.txt"
-          xcopy /E /I "${{ github.workspace }}\css" "${{ runner.workspace }}\build\css"
-          xcopy /E /I "${{ github.workspace }}\res" "${{ runner.workspace }}\build\res"
-          xcopy /E /I "${{ github.workspace }}\fonts" "${{ runner.workspace }}\build\fonts"
+          xcopy /E /I "${{ github.workspace }}\res\css" "${{ runner.workspace }}\build\css"
+          xcopy /E /I "${{ github.workspace }}\res\res" "${{ runner.workspace }}\build\res"
+          xcopy /E /I "${{ github.workspace }}\res\fonts" "${{ runner.workspace }}\build\fonts"
           mkdir "${{ runner.workspace }}\build\share"
           xcopy /E /I "${{ github.workspace }}\ci\gtk-for-windows\gtk-nsis-pack\share\glib-2.0" "${{ runner.workspace }}\build\share\glib-2.0"
           copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "${{ runner.workspace }}\build\gspawn-win64-helper.exe"
@@ -137,8 +137,8 @@ jobs:
         run: |
           mkdir "${{ runner.workspace }}/artifactdir"
           cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
-          cp -r "${{ github.workspace }}/css" "${{ runner.workspace }}/artifactdir/css"
-          cp -r "${{ github.workspace }}/res" "${{ runner.workspace }}/artifactdir/res"
+          cp -r "${{ github.workspace }}/res/css" "${{ runner.workspace }}/artifactdir/css"
+          cp -r "${{ github.workspace }}/res/res" "${{ runner.workspace }}/artifactdir/res"
 
       - name: Upload build
         uses: actions/upload-artifact@v2
@@ -190,8 +190,8 @@ jobs:
         run: |
           mkdir "${{ runner.workspace }}/artifactdir"
           cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
-          cp -r "${{ github.workspace }}/css" "${{ runner.workspace }}/artifactdir/css"
-          cp -r "${{ github.workspace }}/res" "${{ runner.workspace }}/artifactdir/res"
+          cp -r "${{ github.workspace }}/res/css" "${{ runner.workspace }}/artifactdir/css"
+          cp -r "${{ github.workspace }}/res/res" "${{ runner.workspace }}/artifactdir/res"
 
       - name: Upload build
         uses: actions/upload-artifact@v2
