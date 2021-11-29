@@ -834,7 +834,9 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
                 buf->delete_mark(mark_start);
                 buf->delete_mark(mark_end);
                 auto it = buf->erase(start_it, end_it);
-                buf->insert_pixbuf(it, pixbuf->scale_simple(EmojiSize, EmojiSize, Gdk::INTERP_BILINEAR));
+                int width, height;
+                GetImageDimensions(pixbuf->get_width(), pixbuf->get_height(), width, height, EmojiSize, EmojiSize);
+                buf->insert_pixbuf(it, pixbuf->scale_simple(width, height, Gdk::INTERP_BILINEAR));
             };
             img.LoadFromURL(EmojiData::URLFromID(match.fetch(2)), sigc::track_obj(cb, tv));
         }
