@@ -235,6 +235,7 @@ private:
     };
 
     Message GetMessageBound(std::unique_ptr<Statement> &stmt) const;
+    RoleData GetRoleBound(std::unique_ptr<Statement> &stmt) const;
 
     void SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction);
 
@@ -264,6 +265,7 @@ private:
     STMT(get_member);
     STMT(set_role);
     STMT(get_role);
+    STMT(get_guild_roles);
     STMT(set_emoji);
     STMT(get_emoji);
     STMT(set_perm);

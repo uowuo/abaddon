@@ -238,9 +238,10 @@ GuildSettingsMembersPaneRoles::GuildSettingsMembersPaneRoles(Snowflake guild_id)
     discord.signal_role_delete().connect(sigc::mem_fun(*this, &GuildSettingsMembersPaneRoles::OnRoleDelete));
 
     const auto guild = *discord.GetGuild(guild_id);
-    const auto roles = guild.FetchRoles();
-    for (const auto &role : roles) {
-        CreateRow(can_modify, role, guild.OwnerID == self_id);
+    if (guild.Roles.has_value()) {
+        for (const auto &role : *guild.Roles) {
+            CreateRow(can_modify, role, guild.OwnerID == self_id);
+        }
     }
 
     m_list.set_sort_func([this](Gtk::ListBoxRow *a, Gtk::ListBoxRow *b) -> int {

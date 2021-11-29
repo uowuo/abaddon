@@ -188,21 +188,6 @@ std::vector<Snowflake> GuildData::GetSortedChannels(Snowflake ignore) const {
     return ret;
 }
 
-std::vector<RoleData> GuildData::FetchRoles() const {
-    if (!Roles.has_value()) return {};
-    std::vector<RoleData> ret;
-    ret.reserve(Roles->size());
-    for (const auto thing : *Roles) {
-        auto r = Abaddon::Get().GetDiscordClient().GetRole(thing.ID);
-        if (r.has_value())
-            ret.push_back(*r);
-    }
-    std::sort(ret.begin(), ret.end(), [](const RoleData &a, const RoleData &b) -> bool {
-        return a.Position > b.Position;
-    });
-    return ret;
-}
-
 void from_json(const nlohmann::json &j, GuildApplicationData &m) {
     JS_D("user_id", m.UserID);
     JS_D("guild_id", m.GuildID);

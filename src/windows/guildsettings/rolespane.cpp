@@ -79,19 +79,20 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
     discord.signal_role_delete().connect(sigc::mem_fun(*this, &GuildSettingsRolesPaneRoles::OnRoleDelete));
 
     const auto guild = *discord.GetGuild(GuildID);
-    const auto roles = guild.FetchRoles();
     const bool can_modify = discord.HasGuildPermission(discord.GetUserData().ID, GuildID, Permission::MANAGE_ROLES);
-    for (const auto &role : roles) {
-        auto *row = Gtk::manage(new GuildSettingsRolesPaneRolesListItem(guild, role));
-        row->drag_source_set(g_target_entries, Gdk::BUTTON1_MASK, Gdk::ACTION_MOVE);
-        row->set_margin_start(5);
-        row->set_halign(Gtk::ALIGN_FILL);
-        row->show();
-        m_rows[role.ID] = row;
-        if (can_modify)
-            m_list.add_draggable(row);
-        else
-            m_list.add(*row);
+    if (guild.Roles.has_value()) {
+        for (const auto &role : *guild.Roles) {
+            auto *row = Gtk::manage(new GuildSettingsRolesPaneRolesListItem(guild, role));
+            row->drag_source_set(g_target_entries, Gdk::BUTTON1_MASK, Gdk::ACTION_MOVE);
+            row->set_margin_start(5);
+            row->set_halign(Gtk::ALIGN_FILL);
+            row->show();
+            m_rows[role.ID] = row;
+            if (can_modify)
+                m_list.add_draggable(row);
+            else
+                m_list.add(*row);
+        }
     }
 
     m_list.set_sort_func([this](Gtk::ListBoxRow *rowa_, Gtk::ListBoxRow *rowb_) -> int {

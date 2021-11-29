@@ -720,7 +720,9 @@ void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::
 }
 
 void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(DiscordError code)> callback) {
-    const auto roles = GetGuild(guild_id)->FetchRoles();
+    const auto guild = GetGuild(guild_id);
+    if (!guild.has_value() || !guild->Roles.has_value()) return;
+    const auto &roles = *guild->Roles;
     if (static_cast<size_t>(position) > roles.size()) return;
     // gay and makes you send every role in between new and old position
     constexpr auto IDX_MAX = ~size_t { 0 };

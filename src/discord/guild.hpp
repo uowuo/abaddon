@@ -50,7 +50,7 @@ struct GuildData {
     std::optional<int> VerificationLevel;
     std::optional<int> DefaultMessageNotifications;
     std::optional<int> ExplicitContentFilter;
-    std::optional<std::vector<RoleData>> Roles;   // only access id
+    std::optional<std::vector<RoleData>> Roles;
     std::optional<std::vector<EmojiData>> Emojis; // only access id
     std::optional<std::unordered_set<std::string>> Features;
     std::optional<int> MFALevel;
@@ -96,5 +96,4 @@ struct GuildData {
     bool HasAnimatedIcon() const;
     std::string GetIconURL(std::string ext = "png", std::string size = "32") const;
     std::vector<Snowflake> GetSortedChannels(Snowflake ignore = Snowflake::Invalid) const;
-    std::vector<RoleData> FetchRoles() const; // sorted
 };

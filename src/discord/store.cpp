@@ -765,6 +765,16 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
         s->Reset();
     }
 
+    {
+        auto &s = m_stmt_get_guild_roles;
+        s->Bind(1, id);
+        r.Roles.emplace();
+        while (s->FetchOne()) {
+            r.Roles->push_back(GetRoleBound(s));
+        }
+        s->Reset();
+    }
+
     return r;
 }
 
@@ -961,9 +971,17 @@ std::optional<RoleData> Store::GetRole(Snowflake id) const {
         return {};
     }
 
+    auto role = GetRoleBound(s);
+
+    s->Reset();
+
+    return role;
+}
+
+RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) const {
     RoleData r;
 
-    r.ID = id;
+    s->Get(0, r.ID);
     //s->Get(1, guild id);
     s->Get(2, r.Name);
     s->Get(3, r.Color);
@@ -972,8 +990,6 @@ std::optional<RoleData> Store::GetRole(Snowflake id) const {
     s->Get(6, r.Permissions);
     s->Get(7, r.IsManaged);
     s->Get(8, r.IsMentionable);
-
-    s->Reset();
 
     return r;
 }
@@ -1723,6 +1739,14 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_role->OK()) {
         fprintf(stderr, "failed to prepare get role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_guild_roles = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM roles WHERE guild = ?
+    )");
+    if (!m_stmt_get_guild_roles->OK()) {
+        fprintf(stderr, "failed to prepare get guild roles statement: %s\n", m_db.ErrStr());
         return false;
     }
 
