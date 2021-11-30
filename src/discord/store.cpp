@@ -15,7 +15,7 @@ Store::Store(bool mem_store)
 
     m_db.Execute(R"(
         PRAGMA writable_schema = 1;
-        DELETE FROM sqlite_master;
+        DELETE FROM sqlite_master WHERE TYPE IN ("view", "table", "index", "trigger");
         PRAGMA writable_schema = 0;
         VACUUM;
         PRAGMA integrity_check;
