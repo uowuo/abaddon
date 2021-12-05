@@ -875,6 +875,7 @@ void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(Discor
 }
 
 void DiscordClient::MarkAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    if (m_unread.find(channel_id) == m_unread.end()) return;
     const auto iter = m_last_message_id.find(channel_id);
     if (iter == m_last_message_id.end()) return;
     m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [this, callback](const http::response_type &response) {
