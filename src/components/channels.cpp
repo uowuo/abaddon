@@ -1,21 +1,21 @@
 #include "channels.hpp"
-#include <algorithm>
-#include <map>
-#include <unordered_map>
 #include "abaddon.hpp"
 #include "imgmanager.hpp"
 #include "util.hpp"
 #include "statusindicator.hpp"
+#include <algorithm>
+#include <map>
+#include <unordered_map>
 
 ChannelList::ChannelList()
     : Glib::ObjectBase(typeid(ChannelList))
-    , Gtk::ScrolledWindow()
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_menu_guild_copy_id("_Copy ID", true)
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
     , m_menu_category_copy_id("_Copy ID", true)
     , m_menu_channel_copy_id("_Copy ID", true)
+    , m_menu_channel_mark_as_read("Mark as _Read", true)
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_thread_copy_id("_Copy ID", true)
@@ -24,6 +24,7 @@ ChannelList::ChannelList()
     , m_menu_thread_unarchive("_Unarchive", true) {
     get_style_context()->add_class("channel-list");
 
+    // todo: move to method
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
         auto row = *m_model->get_iter(path);
         const auto type = row[m_columns.m_type];
@@ -40,7 +41,9 @@ ChannelList::ChannelList()
         }
 
         if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
-            m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
+            const auto id = static_cast<Snowflake>(row[m_columns.m_id]);
+            m_signal_action_channel_item_select.emit(id);
+            Abaddon::Get().GetDiscordClient().MarkAsRead(id, [](...) {});
         }
     };
     m_view.signal_row_activated().connect(cb, false);
@@ -77,6 +80,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_icon(), m_columns.m_icon);
     column->add_attribute(renderer->property_icon_animation(), m_columns.m_icon_anim);
     column->add_attribute(renderer->property_name(), m_columns.m_name);
+    column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
     m_view.append_column(*column);
@@ -98,13 +102,18 @@ ChannelList::ChannelList()
     m_menu_category_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+
     m_menu_category.append(m_menu_category_copy_id);
     m_menu_category.show_all();
 
     m_menu_channel_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+    m_menu_channel_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
     m_menu_channel.append(m_menu_channel_copy_id);
+    m_menu_channel.append(m_menu_channel_mark_as_read);
     m_menu_channel.show_all();
 
     m_menu_dm_copy_id.signal_activate().connect([this] {
@@ -159,6 +168,7 @@ ChannelList::ChannelList()
     discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
     discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
+    discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
 }
 
 void ChannelList::UpdateListing() {
@@ -658,7 +668,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
 
     std::optional<UserData> top_recipient;
     const auto recipients = dm.GetDMRecipients();
-    if (recipients.size() > 0)
+    if (!recipients.empty())
         top_recipient = recipients[0];
 
     auto iter = m_model->append(header_row->children());
@@ -680,6 +690,12 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
         };
         img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
     }
+}
+
+void ChannelList::OnMessageAck(const MessageAckData &data) {
+    // trick renderer into redrawing
+    auto iter = GetIteratorForChannelFromID(data.ChannelID);
+    if (iter) m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 void ChannelList::OnMessageCreate(const Message &msg) {

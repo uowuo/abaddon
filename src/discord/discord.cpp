@@ -1,8 +1,8 @@
 #include "discord.hpp"
-#include <cassert>
-#include <cinttypes>
 #include "util.hpp"
 #include "abaddon.hpp"
+#include <cassert>
+#include <cinttypes>
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)
@@ -874,6 +874,17 @@ void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(Discor
     });
 }
 
+void DiscordClient::MarkAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    const auto iter = m_last_message_id.find(channel_id);
+    if (iter == m_last_message_id.end()) return;
+    m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
@@ -1058,6 +1069,12 @@ void DiscordClient::UpdateToken(std::string token) {
 void DiscordClient::SetUserAgent(std::string agent) {
     m_http.SetUserAgent(agent);
     m_websocket.SetUserAgent(agent);
+}
+
+int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
+    const auto iter = m_unread.find(id);
+    if (iter == m_unread.end()) return -1; // todo: no magic number
+    return iter->second;
 }
 
 PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
@@ -1290,6 +1307,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_MEMBER_LIST_UPDATE: {
                         HandleGatewayThreadMemberListUpdate(m);
                     } break;
+                    case GatewayEvent::MESSAGE_ACK: {
+                        HandleGatewayMessageAck(m);
+                    } break;
                 }
             } break;
             default:
@@ -1411,6 +1431,9 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_session_id = data.SessionID;
     m_user_data = data.SelfUser;
     m_user_settings = data.Settings;
+
+    HandleReadyReadState(data);
+
     m_signal_gateway_ready.emit();
 }
 
@@ -1419,6 +1442,7 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     StoreMessageData(data);
     if (data.GuildID.has_value())
         AddUserToGuild(data.Author.ID, *data.GuildID);
+    m_last_message_id[data.ChannelID] = data.ID;
     m_signal_message_create.emit(data);
 }
 
@@ -1778,6 +1802,12 @@ void DiscordClient::HandleGatewayThreadMemberListUpdate(const GatewayMessage &ms
     m_signal_thread_member_list_update.emit(data);
 }
 
+void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
+    MessageAckData data = msg.Data;
+    m_unread.erase(data.ChannelID);
+    m_signal_message_ack.emit(data);
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2105,6 +2135,24 @@ void DiscordClient::StoreMessageData(Message &msg) {
             StoreMessageData(**msg.ReferencedMessage);
 }
 
+// some notes for myself
+// a read channel is determined by checking if the channel object's last message id is equal to the read state's last message id
+// here the absence of an entry in m_unread indicates a read channel and the value is only the mention count since the message doesnt matter
+// no entry.id cannot be a guild even though sometimes it looks like it
+void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
+    for (const auto &guild : data.Guilds)
+        for (const auto &channel : *guild.Channels)
+            if (channel.Type == ChannelType::GUILD_TEXT || channel.Type == ChannelType::GUILD_NEWS && channel.LastMessageID.has_value())
+                m_last_message_id[channel.ID] = *channel.LastMessageID;
+
+    for (const auto &entry : data.ReadState.Entries) {
+        const auto it = m_last_message_id.find(entry.ID);
+        if (it == m_last_message_id.end()) continue;
+        if (it->second > entry.LastMessageID)
+            m_unread[entry.ID] = entry.MentionCount;
+    }
+}
+
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
     m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
@@ -2147,6 +2195,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
     m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
     m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
+    m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2307,6 +2356,10 @@ DiscordClient::type_signal_thread_update DiscordClient::signal_thread_update() {
 
 DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_thread_member_list_update() {
     return m_signal_thread_member_list_update;
+}
+
+DiscordClient::type_signal_message_ack DiscordClient::signal_message_ack() {
+    return m_signal_message_ack;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

@@ -89,6 +89,8 @@ protected:
     void AddPrivateChannels();
     void UpdateCreateDMChannel(const ChannelData &channel);
 
+    void OnMessageAck(const MessageAckData &data);
+
     void OnMessageCreate(const Message &msg);
     Gtk::TreeModel::Path m_path_for_menu;
 
@@ -105,6 +107,7 @@ protected:
 
     Gtk::Menu m_menu_channel;
     Gtk::MenuItem m_menu_channel_copy_id;
+    Gtk::MenuItem m_menu_channel_mark_as_read;
 
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;

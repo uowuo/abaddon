@@ -1,11 +1,13 @@
 #include "channelscellrenderer.hpp"
 #include "abaddon.hpp"
 #include <gtkmm.h>
+#include "unreadrenderer.hpp"
 
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))
     , Gtk::CellRenderer()
     , m_property_type(*this, "render-type")
+    , m_property_id(*this, "id")
     , m_property_name(*this, "name")
     , m_property_pixbuf(*this, "pixbuf")
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
@@ -24,6 +26,10 @@ CellRendererChannels::~CellRendererChannels() {
 
 Glib::PropertyProxy<RenderType> CellRendererChannels::property_type() {
     return m_property_type.get_proxy();
+}
+
+Glib::PropertyProxy<uint64_t> CellRendererChannels::property_id() {
+    return m_property_id.get_proxy();
 }
 
 Glib::PropertyProxy<Glib::ustring> CellRendererChannels::property_name() {
@@ -328,6 +334,8 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
     // so unset it
     m_renderer_text.property_foreground_set() = false;
+
+    UnreadRenderer::RenderUnreadOnChannel(m_property_id.get_value(), cr, background_area, cell_area);
 }
 
 // thread

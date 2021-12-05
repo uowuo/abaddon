@@ -138,6 +138,7 @@ public:
     void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
     void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
     void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -181,6 +182,8 @@ public:
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
+
+    int GetUnreadStateForChannel(Snowflake id) const noexcept;
 
     PresenceStatus GetUserStatus(Snowflake id) const;
 
@@ -244,6 +247,7 @@ private:
     void HandleGatewayThreadMemberUpdate(const GatewayMessage &msg);
     void HandleGatewayThreadUpdate(const GatewayMessage &msg);
     void HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg);
+    void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -259,6 +263,8 @@ private:
 
     void StoreMessageData(Message &msg);
 
+    void HandleReadyReadState(const ReadyEventData &data);
+
     std::string m_token;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
@@ -269,6 +275,8 @@ private:
     std::map<Snowflake, RelationshipType> m_user_relationships;
     std::set<Snowflake> m_joined_threads;
     std::map<Snowflake, std::vector<Snowflake>> m_thread_members;
+    std::map<Snowflake, Snowflake> m_last_message_id;
+    std::unordered_map<Snowflake, int> m_unread;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -343,6 +351,7 @@ public:
     typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
     typedef sigc::signal<void, ThreadUpdateData> type_signal_thread_update;
     typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
+    typedef sigc::signal<void, MessageAckData> type_signal_message_ack;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -393,6 +402,7 @@ public:
     type_signal_thread_members_update signal_thread_members_update();
     type_signal_thread_update signal_thread_update();
     type_signal_thread_member_list_update signal_thread_member_list_update();
+    type_signal_message_ack signal_message_ack();
 
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
@@ -440,6 +450,7 @@ protected:
     type_signal_thread_members_update m_signal_thread_members_update;
     type_signal_thread_update m_signal_thread_update;
     type_signal_thread_member_list_update m_signal_thread_member_list_update;
+    type_signal_message_ack m_signal_message_ack;
 
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;

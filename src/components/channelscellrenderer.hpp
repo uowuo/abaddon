@@ -3,6 +3,7 @@
 #include <gdkmm/pixbufanimation.h>
 #include <glibmm/property.h>
 #include <map>
+#include "discord/snowflake.hpp"
 
 enum class RenderType : uint8_t {
     Guild,
@@ -20,6 +21,7 @@ public:
     virtual ~CellRendererChannels();
 
     Glib::PropertyProxy<RenderType> property_type();
+    Glib::PropertyProxy<uint64_t> property_id();
     Glib::PropertyProxy<Glib::ustring> property_name();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_icon();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> property_icon_animation();
@@ -106,8 +108,9 @@ protected:
 private:
     Gtk::CellRendererText m_renderer_text;
 
-    Glib::Property<RenderType> m_property_type;                                     // all
-    Glib::Property<Glib::ustring> m_property_name;                                  // all
+    Glib::Property<RenderType> m_property_type;    // all
+    Glib::Property<Glib::ustring> m_property_name; // all
+    Glib::Property<uint64_t> m_property_id;
     Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf;                    // guild, dm
     Glib::Property<Glib::RefPtr<Gdk::PixbufAnimation>> m_property_pixbuf_animation; // guild
     Glib::Property<bool> m_property_expanded;                                       // category

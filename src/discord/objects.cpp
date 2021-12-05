@@ -119,6 +119,18 @@ void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
     }
 }
 
+void from_json(const nlohmann::json &j, ReadStateEntry &m) {
+    JS_ON("mention_count", m.MentionCount);
+    JS_ON("last_message_id", m.LastMessageID);
+    JS_D("id", m.ID);
+}
+
+void from_json(const nlohmann::json &j, ReadStateData &m) {
+    JS_ON("version", m.Version);
+    JS_ON("partial", m.IsPartial);
+    JS_ON("entries", m.Entries);
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.SelfUser);
@@ -132,6 +144,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_ON("merged_members", m.MergedMembers);
     JS_O("relationships", m.Relationships);
     JS_O("guild_join_requests", m.GuildJoinRequests);
+    JS_O("read_state", m.ReadState);
 }
 
 void from_json(const nlohmann::json &j, MergedPresence &m) {
@@ -531,4 +544,10 @@ void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m) {
 void to_json(nlohmann::json &j, const ModifyChannelObject &m) {
     JS_IF("archived", m.Archived);
     JS_IF("locked", m.Locked);
+}
+
+void from_json(const nlohmann::json &j, MessageAckData &m) {
+    // JS_D("version", m.Version);
+    JS_D("message_id", m.MessageID);
+    JS_D("channel_id", m.ChannelID);
 }
