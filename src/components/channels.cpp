@@ -699,10 +699,11 @@ void ChannelList::OnMessageAck(const MessageAckData &data) {
 }
 
 void ChannelList::OnMessageCreate(const Message &msg) {
+    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
+    m_model->row_changed(m_model->get_path(iter), iter); // redraw
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
     if (!channel.has_value()) return;
     if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) return;
-    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
     if (iter)
         (*iter)[m_columns.m_sort] = -msg.ID;
 }
