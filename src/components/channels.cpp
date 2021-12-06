@@ -98,10 +98,10 @@ ChannelList::ChannelList()
     m_menu_guild_mark_as_read.signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().MarkGuildAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
-    m_menu_guild.append(m_menu_guild_copy_id);
+    m_menu_guild.append(m_menu_guild_mark_as_read);
     m_menu_guild.append(m_menu_guild_settings);
     m_menu_guild.append(m_menu_guild_leave);
-    m_menu_guild.append(m_menu_guild_mark_as_read);
+    m_menu_guild.append(m_menu_guild_copy_id);
     m_menu_guild.show_all();
 
     m_menu_category_copy_id.signal_activate().connect([this] {
@@ -117,8 +117,8 @@ ChannelList::ChannelList()
     m_menu_channel_mark_as_read.signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
-    m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.append(m_menu_channel_mark_as_read);
+    m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.show_all();
 
     m_menu_dm_copy_id.signal_activate().connect([this] {
@@ -135,8 +135,8 @@ ChannelList::ChannelList()
         else if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this group DM?"))
             Abaddon::Get().GetDiscordClient().CloseDM(id);
     });
-    m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.append(m_menu_dm_close);
+    m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.show_all();
 
     m_menu_thread_copy_id.signal_activate().connect([this] {
