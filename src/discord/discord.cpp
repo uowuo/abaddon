@@ -874,11 +874,32 @@ void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(Discor
     });
 }
 
-void DiscordClient::MarkAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
     if (m_unread.find(channel_id) == m_unread.end()) return;
     const auto iter = m_last_message_id.find(channel_id);
     if (iter == m_last_message_id.end()) return;
     m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback) {
+    AckBulkData data;
+    const auto channels = GetChannelsInGuild(guild_id);
+    for (const auto &[unread, mention_count] : m_unread) {
+        const auto iter = m_last_message_id.find(unread);
+        if (iter == m_last_message_id.end()) continue;
+        auto &e = data.ReadStates.emplace_back();
+        e.ID = unread;
+        e.LastMessageID = iter->second;
+    }
+
+    if (data.ReadStates.empty()) return;
+
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else

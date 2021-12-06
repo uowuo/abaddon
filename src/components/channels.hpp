@@ -101,6 +101,7 @@ protected:
     Gtk::MenuItem m_menu_guild_copy_id;
     Gtk::MenuItem m_menu_guild_settings;
     Gtk::MenuItem m_menu_guild_leave;
+    Gtk::MenuItem m_menu_guild_mark_as_read;
 
     Gtk::Menu m_menu_category;
     Gtk::MenuItem m_menu_category_copy_id;

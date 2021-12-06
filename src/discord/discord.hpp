@@ -138,7 +138,8 @@ public:
     void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
     void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
     void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void MarkAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;

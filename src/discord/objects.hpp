@@ -232,6 +232,7 @@ struct ReadStateEntry {
     // std::string LastPinTimestamp; iso
 
     friend void from_json(const nlohmann::json &j, ReadStateEntry &m);
+    friend void to_json(nlohmann::json &j, const ReadStateEntry &m);
 };
 
 struct ReadStateData {
@@ -771,4 +772,10 @@ struct MessageAckData {
     Snowflake ChannelID;
 
     friend void from_json(const nlohmann::json &j, MessageAckData &m);
+};
+
+struct AckBulkData {
+    std::vector<ReadStateEntry> ReadStates;
+
+    friend void to_json(nlohmann::json &j, const AckBulkData &m);
 };

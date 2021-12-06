@@ -13,6 +13,7 @@ ChannelList::ChannelList()
     , m_menu_guild_copy_id("_Copy ID", true)
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
+    , m_menu_guild_mark_as_read("Mark as _Read", true)
     , m_menu_category_copy_id("_Copy ID", true)
     , m_menu_channel_copy_id("_Copy ID", true)
     , m_menu_channel_mark_as_read("Mark as _Read", true)
@@ -43,7 +44,7 @@ ChannelList::ChannelList()
         if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
             const auto id = static_cast<Snowflake>(row[m_columns.m_id]);
             m_signal_action_channel_item_select.emit(id);
-            Abaddon::Get().GetDiscordClient().MarkAsRead(id, [](...) {});
+            Abaddon::Get().GetDiscordClient().MarkChannelAsRead(id, [](...) {});
         }
     };
     m_view.signal_row_activated().connect(cb, false);
@@ -94,9 +95,13 @@ ChannelList::ChannelList()
     m_menu_guild_leave.signal_activate().connect([this] {
         m_signal_action_guild_leave.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+    m_menu_guild_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkGuildAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
     m_menu_guild.append(m_menu_guild_copy_id);
     m_menu_guild.append(m_menu_guild_settings);
     m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.append(m_menu_guild_mark_as_read);
     m_menu_guild.show_all();
 
     m_menu_category_copy_id.signal_activate().connect([this] {
@@ -110,7 +115,7 @@ ChannelList::ChannelList()
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
     m_menu_channel_mark_as_read.signal_activate().connect([this] {
-        Abaddon::Get().GetDiscordClient().MarkAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+        Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
     m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.append(m_menu_channel_mark_as_read);

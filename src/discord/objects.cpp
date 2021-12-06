@@ -125,6 +125,11 @@ void from_json(const nlohmann::json &j, ReadStateEntry &m) {
     JS_D("id", m.ID);
 }
 
+void to_json(nlohmann::json &j, const ReadStateEntry &m) {
+    j["channel_id"] = m.ID;
+    j["message_id"] = m.LastMessageID;
+}
+
 void from_json(const nlohmann::json &j, ReadStateData &m) {
     JS_ON("version", m.Version);
     JS_ON("partial", m.IsPartial);
@@ -550,4 +555,8 @@ void from_json(const nlohmann::json &j, MessageAckData &m) {
     // JS_D("version", m.Version);
     JS_D("message_id", m.MessageID);
     JS_D("channel_id", m.ChannelID);
+}
+
+void to_json(nlohmann::json &j, const AckBulkData &m) {
+    j["read_states"] = m.ReadStates;
 }
