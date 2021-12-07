@@ -890,6 +890,8 @@ void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordE
     AckBulkData data;
     const auto channels = GetChannelsInGuild(guild_id);
     for (const auto &[unread, mention_count] : m_unread) {
+        if (channels.find(unread) == channels.end()) continue;
+
         const auto iter = m_last_message_id.find(unread);
         if (iter == m_last_message_id.end()) continue;
         auto &e = data.ReadStates.emplace_back();
