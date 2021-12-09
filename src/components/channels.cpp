@@ -701,6 +701,11 @@ void ChannelList::OnMessageAck(const MessageAckData &data) {
     // trick renderer into redrawing
     auto iter = GetIteratorForChannelFromID(data.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(data.ChannelID);
+    if (channel.has_value() && channel->GuildID.has_value()) {
+        iter = GetIteratorForGuildFromID(*channel->GuildID);
+        if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    }
 }
 
 void ChannelList::OnMessageCreate(const Message &msg) {

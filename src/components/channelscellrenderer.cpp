@@ -198,7 +198,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     const double icon_w = pixbuf_w;
     const double icon_h = pixbuf_h;
-    const double icon_x = background_area.get_x();
+    const double icon_x = background_area.get_x() + 3;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
     const double text_x = icon_x + icon_w + 5.0;
@@ -239,6 +239,8 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
         cr->rectangle(icon_x, icon_y, icon_w, icon_h);
         cr->fill();
     }
+
+    UnreadRenderer::RenderUnreadOnGuild(m_property_id.get_value(), cr, background_area, cell_area);
 }
 
 // category
