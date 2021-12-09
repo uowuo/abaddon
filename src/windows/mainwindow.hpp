@@ -74,6 +74,8 @@ protected:
 
     Gtk::Stack m_content_stack;
 
+    Glib::RefPtr<Gtk::AccelGroup> m_accels;
+
     Gtk::MenuBar m_menu_bar;
     Gtk::MenuItem m_menu_discord;
     Gtk::Menu m_menu_discord_sub;
@@ -95,5 +97,6 @@ protected:
     Gtk::MenuItem m_menu_view_friends;
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
+    Gtk::MenuItem m_menu_view_mark_guild_as_read;
     void OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 };
