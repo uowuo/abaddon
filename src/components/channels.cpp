@@ -176,7 +176,7 @@ ChannelList::ChannelList()
     discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
 }
 
-void ChannelList::UsePanedHack(Gtk::Paned& paned) {
+void ChannelList::UsePanedHack(Gtk::Paned &paned) {
     paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelList::OnPanedPositionChanged));
 }
 
@@ -718,12 +718,16 @@ void ChannelList::OnMessageAck(const MessageAckData &data) {
 
 void ChannelList::OnMessageCreate(const Message &msg) {
     auto iter = GetIteratorForChannelFromID(msg.ChannelID);
-    m_model->row_changed(m_model->get_path(iter), iter); // redraw
+    if (iter) m_model->row_changed(m_model->get_path(iter), iter); // redraw
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
     if (!channel.has_value()) return;
-    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) return;
-    if (iter)
-        (*iter)[m_columns.m_sort] = -msg.ID;
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) {
+        if (iter)
+            (*iter)[m_columns.m_sort] = -msg.ID;
+    }
+    if (channel->GuildID.has_value())
+        if ((iter = GetIteratorForGuildFromID(*channel->GuildID)))
+            m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
