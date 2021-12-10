@@ -1095,6 +1095,10 @@ void DiscordClient::SetUserAgent(std::string agent) {
     m_websocket.SetUserAgent(agent);
 }
 
+bool DiscordClient::IsGuildMuted(Snowflake id) const noexcept {
+    return m_muted_guilds.find(id) != m_muted_guilds.end();
+}
+
 int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
     const auto iter = m_unread.find(id);
     if (iter == m_unread.end()) return -1; // todo: no magic number
@@ -1457,6 +1461,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_user_settings = data.Settings;
 
     HandleReadyReadState(data);
+    HandleReadyGuildSettings(data);
 
     m_signal_gateway_ready.emit();
 }
@@ -2178,6 +2183,13 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
         if (it == m_last_message_id.end()) continue;
         if (it->second > entry.LastMessageID)
             m_unread[entry.ID] = entry.MentionCount;
+    }
+}
+
+void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
+    for (const auto &entry : data.GuildSettings.Entries) {
+        if (entry.Muted)
+            m_muted_guilds.insert(entry.GuildID);
     }
 }
 

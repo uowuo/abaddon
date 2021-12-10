@@ -243,6 +243,39 @@ struct ReadStateData {
     friend void from_json(const nlohmann::json &j, ReadStateData &m);
 };
 
+struct UserGuildSettingsChannelOverride {
+    bool Muted;
+    // MuteConfig
+    int MessageNotifications;
+    bool Collapsed;
+    Snowflake ChannelID;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m);
+};
+
+struct UserGuildSettingsEntry {
+    int Version;
+    bool SuppressRoles;
+    bool SuppressEveryone;
+    bool Muted;
+    // MuteConfig
+    bool MobilePush;
+    int MessageNotifications;
+    bool HideMutedChannels;
+    Snowflake GuildID;
+    std::vector<UserGuildSettingsChannelOverride> ChannelOverrides;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m);
+};
+
+struct UserGuildSettingsData {
+    int Version;
+    bool IsParital;
+    std::vector<UserGuildSettingsEntry> Entries;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsData &m);
+};
+
 struct ReadyEventData {
     int GatewayVersion;
     UserData SelfUser;
@@ -259,6 +292,7 @@ struct ReadyEventData {
     std::optional<std::vector<RelationshipData>> Relationships;
     std::optional<std::vector<GuildApplicationData>> GuildJoinRequests;
     ReadStateData ReadState;
+    UserGuildSettingsData GuildSettings;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt

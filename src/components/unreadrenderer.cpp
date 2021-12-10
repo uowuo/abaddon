@@ -55,13 +55,15 @@ void UnreadRenderer::RenderUnreadOnGuild(Snowflake id, Gtk::Widget &widget, cons
     }
     if (!has_unread) return;
 
-    cr->set_source_rgb(1.0, 1.0, 1.0);
-    const auto x = background_area.get_x();
-    const auto y = background_area.get_y();
-    const auto w = background_area.get_width();
-    const auto h = background_area.get_height();
-    cr->rectangle(x, y + h / 2 - 24 / 2, 3, 24);
-    cr->fill();
+    if (!discord.IsGuildMuted(id)) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y + h / 2 - 24 / 2, 3, 24);
+        cr->fill();
+    }
 
     if (total_mentions < 1) return;
     auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));

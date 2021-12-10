@@ -136,6 +136,31 @@ void from_json(const nlohmann::json &j, ReadStateData &m) {
     JS_ON("entries", m.Entries);
 }
 
+void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m) {
+    JS_D("muted", m.Muted);
+    JS_D("message_notifications", m.MessageNotifications);
+    JS_D("collapsed", m.Collapsed);
+    JS_D("channel_id", m.ChannelID);
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m) {
+    JS_D("version", m.Version);
+    JS_D("suppress_roles", m.SuppressRoles);
+    JS_D("suppress_everyone", m.SuppressEveryone);
+    JS_D("muted", m.Muted);
+    JS_D("mobile_push", m.MobilePush);
+    JS_D("message_notifications", m.MessageNotifications);
+    JS_D("hide_muted_channels", m.HideMutedChannels);
+    JS_D("guild_id", m.GuildID);
+    JS_D("channel_overrides", m.ChannelOverrides);
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsData &m) {
+    JS_D("version", m.Version);
+    JS_D("partial", m.IsParital);
+    JS_D("entries", m.Entries);
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.SelfUser);
@@ -150,6 +175,7 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_O("relationships", m.Relationships);
     JS_O("guild_join_requests", m.GuildJoinRequests);
     JS_O("read_state", m.ReadState);
+    JS_D("user_guild_settings", m.GuildSettings);
 }
 
 void from_json(const nlohmann::json &j, MergedPresence &m) {

@@ -184,6 +184,7 @@ public:
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
 
+    bool IsGuildMuted(Snowflake id) const noexcept;
     int GetUnreadStateForChannel(Snowflake id) const noexcept;
 
     PresenceStatus GetUserStatus(Snowflake id) const;
@@ -265,6 +266,7 @@ private:
     void StoreMessageData(Message &msg);
 
     void HandleReadyReadState(const ReadyEventData &data);
+    void HandleReadyGuildSettings(const ReadyEventData &data);
 
     std::string m_token;
 
@@ -277,6 +279,7 @@ private:
     std::set<Snowflake> m_joined_threads;
     std::map<Snowflake, std::vector<Snowflake>> m_thread_members;
     std::map<Snowflake, Snowflake> m_last_message_id;
+    std::unordered_set<Snowflake> m_muted_guilds;
     std::unordered_map<Snowflake, int> m_unread;
 
     UserData m_user_data;
