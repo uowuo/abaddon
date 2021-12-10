@@ -176,6 +176,14 @@ ChannelList::ChannelList()
     discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
 }
 
+void ChannelList::UsePanedHack(Gtk::Paned& paned) {
+    paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelList::OnPanedPositionChanged));
+}
+
+void ChannelList::OnPanedPositionChanged() {
+    m_view.queue_draw();
+}
+
 void ChannelList::UpdateListing() {
     m_updating_listing = true;
 

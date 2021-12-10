@@ -240,7 +240,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
         cr->fill();
     }
 
-    UnreadRenderer::RenderUnreadOnGuild(m_property_id.get_value(), cr, background_area, cell_area);
+    UnreadRenderer::RenderUnreadOnGuild(m_property_id.get_value(), widget, cr, background_area, cell_area);
 }
 
 // category
@@ -337,7 +337,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     // so unset it
     m_renderer_text.property_foreground_set() = false;
 
-    UnreadRenderer::RenderUnreadOnChannel(m_property_id.get_value(), cr, background_area, cell_area);
+    UnreadRenderer::RenderUnreadOnChannel(m_property_id.get_value(), widget, cr, background_area, cell_area);
 }
 
 // thread

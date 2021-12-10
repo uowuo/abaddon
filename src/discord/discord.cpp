@@ -1467,9 +1467,10 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     if (data.GuildID.has_value())
         AddUserToGuild(data.Author.ID, *data.GuildID);
     m_last_message_id[data.ChannelID] = data.ID;
-    const auto iter = m_unread.find(data.ChannelID);
-    if (iter == m_unread.end())
-        m_unread[data.ChannelID] = 0;
+    m_unread[data.ChannelID];
+    if (data.DoesMention(GetUserData().ID)) {
+        m_unread[data.ChannelID]++;
+    }
     m_signal_message_create.emit(data);
 }
 

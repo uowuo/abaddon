@@ -153,6 +153,7 @@ MainWindow::MainWindow()
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
     m_content_box.add(m_chan_content_paned);
+    m_channel_list.UsePanedHack(m_chan_content_paned);
 
     m_content_members_paned.pack1(m_content_stack);
     m_content_members_paned.pack2(*member_list);

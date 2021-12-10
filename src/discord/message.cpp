@@ -263,3 +263,9 @@ bool Message::IsDeleted() const {
 bool Message::IsEdited() const {
     return m_edited;
 }
+
+bool Message::DoesMention(Snowflake id) const noexcept {
+    return std::any_of(Mentions.begin(), Mentions.end(), [id](const UserData &user) {
+        return user.ID == id;
+    });
+}

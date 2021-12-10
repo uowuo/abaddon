@@ -25,7 +25,11 @@ public:
     void UseExpansionState(const ExpansionStateRoot &state);
     ExpansionStateRoot GetExpansionState() const;
 
+    void UsePanedHack(Gtk::Paned &paned);
+
 protected:
+    void OnPanedPositionChanged();
+
     void UpdateNewGuild(const GuildData &guild);
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
