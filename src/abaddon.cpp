@@ -64,17 +64,40 @@ int Abaddon::StartGTK() {
 
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(*m_main_window, "css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg("css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
 
     m_css_low_provider = Gtk::CssProvider::create();
     m_css_low_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(*m_main_window, "low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg("low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
+
+#ifdef _WIN32
+    bool png_found = false;
+    bool gif_found = false;
+    for (const auto &fmt : Gdk::Pixbuf::get_formats()) {
+        if (fmt.get_name() == "png")
+            png_found = true;
+        else if (fmt.get_name() == "gif")
+            gif_found = true;
+    }
+
+    if (!png_found) {
+        Gtk::MessageDialog dlg("The PNG pixbufloader wasn't detected. Abaddon may not work as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+
+    if (!gif_found) {
+        Gtk::MessageDialog dlg("The GIF pixbufloader wasn't detected. Animations may not display as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+#endif
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
