@@ -85,6 +85,7 @@ struct ChannelData {
     void update_from_json(const nlohmann::json &j);
 
     bool NSFW() const;
+    bool IsDM() const noexcept;
     bool IsThread() const noexcept;
     bool IsJoinedThread() const;
     std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;

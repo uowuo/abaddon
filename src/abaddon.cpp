@@ -535,6 +535,9 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
 
     const auto channel = m_discord.GetChannel(id);
     if (!channel.has_value()) return;
+
+    const bool can_access = channel->IsDM() || m_discord.HasChannelPermission(m_discord.GetUserData().ID, id, Permission::VIEW_CHANNEL);
+
     if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
         m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
     else {
@@ -550,23 +553,28 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     }
     m_main_window->UpdateChatActiveChannel(id);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
-        m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Message> &msgs) {
-            m_main_window->UpdateChatWindowContents();
-            m_channels_requested.insert(id);
-        });
+        // dont fire requests we know will fail
+        if (can_access) {
+            m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Message> &msgs) {
+                m_main_window->UpdateChatWindowContents();
+                m_channels_requested.insert(id);
+            });
+        }
     } else {
         m_main_window->UpdateChatWindowContents();
     }
 
-    if (channel->IsThread()) {
-        m_discord.SendThreadLazyLoad(id);
-        if (channel->ThreadMetadata->IsArchived)
-            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
-    } else if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
-        m_discord.SendLazyLoad(id);
+    if (can_access) {
+        if (channel->IsThread()) {
+            m_discord.SendThreadLazyLoad(id);
+            if (channel->ThreadMetadata->IsArchived)
+                m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+        } else if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
+            m_discord.SendLazyLoad(id);
 
-        if (m_discord.IsVerificationRequired(*channel->GuildID))
-            ShowGuildVerificationGateDialog(*channel->GuildID);
+            if (m_discord.IsVerificationRequired(*channel->GuildID))
+                ShowGuildVerificationGateDialog(*channel->GuildID);
+        }
     }
 }
 

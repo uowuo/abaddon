@@ -63,6 +63,11 @@ bool ChannelData::NSFW() const {
     return IsNSFW.has_value() && *IsNSFW;
 }
 
+bool ChannelData::IsDM() const noexcept {
+    return Type == ChannelType::DM ||
+           Type == ChannelType::GROUP_DM;
+}
+
 bool ChannelData::IsThread() const noexcept {
     return Type == ChannelType::GUILD_PUBLIC_THREAD ||
            Type == ChannelType::GUILD_PRIVATE_THREAD ||
