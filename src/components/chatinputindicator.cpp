@@ -25,16 +25,16 @@ ChatInputIndicator::ChatInputIndicator()
     if (!std::filesystem::exists(path)) return;
     auto gif_data = ReadWholeFile(path);
     auto loader = Gdk::PixbufLoader::create();
-    loader->signal_size_prepared().connect([&](int inw, int inh) {
-        int w, h;
-        GetImageDimensions(inw, inh, w, h, 20, 10);
-        loader->set_size(w, h);
-    });
-    loader->write(gif_data.data(), gif_data.size());
     try {
+        loader->signal_size_prepared().connect([&](int inw, int inh) {
+            int w, h;
+            GetImageDimensions(inw, inh, w, h, 20, 10);
+            loader->set_size(w, h);
+        });
+        loader->write(gif_data.data(), gif_data.size());
         loader->close();
         m_img.property_pixbuf_animation() = loader->get_animation();
-    } catch (const std::exception &) {}
+    } catch (...) {}
 }
 
 void ChatInputIndicator::AddUser(Snowflake channel_id, const UserData &user, int timeout) {
