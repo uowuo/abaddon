@@ -2,7 +2,9 @@
 #include "abaddon.hpp"
 
 constexpr static int MentionsRightPad = 7;
+#ifndef M_PI
 constexpr static double M_PI = 3.14159265358979;
+#endif
 constexpr static double M_PI_H = M_PI / 2.0;
 constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
