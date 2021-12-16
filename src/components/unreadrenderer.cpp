@@ -32,7 +32,7 @@ void RenderMentionsCount(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &w
     layout->get_pixel_size(width, height);
     {
         const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
-        const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0;
+        const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;
         CairoPathRoundedRect(cr, x - 4, y + 2, width + 8, height, 5);
         cr->set_source_rgb(184.0 / 255.0, 37.0 / 255.0, 37.0 / 255.0);
         cr->fill();
@@ -70,22 +70,25 @@ void UnreadRenderer::RenderUnreadOnGuild(Snowflake id, Gtk::Widget &widget, cons
     if (total_mentions < 1) return;
     auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
-        const auto edge = std::min(paned->get_position(), cell_area.get_width());
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
 
-        RenderMentionsCount(cr, widget, total_mentions, edge, cell_area);
+        RenderMentionsCount(cr, widget, total_mentions, edge, background_area);
     }
 }
 
 void UnreadRenderer::RenderUnreadOnChannel(Snowflake id, Gtk::Widget &widget, const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area) {
     const auto state = Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id);
     if (state < 0) return;
-    cr->set_source_rgb(1.0, 1.0, 1.0);
-    const auto x = background_area.get_x();
-    const auto y = background_area.get_y();
-    const auto w = background_area.get_width();
-    const auto h = background_area.get_height();
-    cr->rectangle(x, y, 3, h);
-    cr->fill();
+
+    if (!Abaddon::Get().GetDiscordClient().IsChannelMuted(id)) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y, 3, h);
+        cr->fill();
+    }
 
     if (state < 1) return;
     auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));

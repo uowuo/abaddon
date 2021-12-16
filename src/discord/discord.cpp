@@ -1095,6 +1095,10 @@ void DiscordClient::SetUserAgent(std::string agent) {
     m_websocket.SetUserAgent(agent);
 }
 
+bool DiscordClient::IsChannelMuted(Snowflake id) const noexcept {
+    return m_muted_channels.find(id) != m_muted_channels.end();
+}
+
 bool DiscordClient::IsGuildMuted(Snowflake id) const noexcept {
     return m_muted_guilds.find(id) != m_muted_guilds.end();
 }
@@ -2190,6 +2194,10 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
     for (const auto &entry : data.GuildSettings.Entries) {
         if (entry.Muted)
             m_muted_guilds.insert(entry.GuildID);
+        for (const auto &override : entry.ChannelOverrides) {
+            if (override.Muted)
+                m_muted_channels.insert(override.ChannelID);
+        }
     }
 }
 
