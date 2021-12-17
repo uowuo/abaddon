@@ -174,6 +174,8 @@ ChannelList::ChannelList()
     discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
     discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
+    discord.signal_channel_muted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelMute));
+    discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelUnmute));
 }
 
 void ChannelList::UsePanedHack(Gtk::Paned &paned) {
@@ -368,6 +370,16 @@ void ChannelList::DeleteThreadRow(Snowflake id) {
     auto iter = GetIteratorForChannelFromID(id);
     if (iter)
         m_model->erase(iter);
+}
+
+void ChannelList::OnChannelMute(Snowflake id) {
+    if (auto iter = GetIteratorForChannelFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnChannelUnmute(Snowflake id) {
+    if (auto iter = GetIteratorForChannelFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 // create a temporary channel row for non-joined threads

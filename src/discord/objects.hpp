@@ -79,6 +79,7 @@ enum class GatewayEvent : int {
     THREAD_MEMBERS_UPDATE,
     THREAD_MEMBER_LIST_UPDATE,
     MESSAGE_ACK,
+    USER_GUILD_SETTINGS_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -812,4 +813,10 @@ struct AckBulkData {
     std::vector<ReadStateEntry> ReadStates;
 
     friend void to_json(nlohmann::json &j, const AckBulkData &m);
+};
+
+struct UserGuildSettingsUpdateData {
+    UserGuildSettingsEntry Settings;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m);
 };

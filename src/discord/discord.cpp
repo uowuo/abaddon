@@ -1342,6 +1342,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::MESSAGE_ACK: {
                         HandleGatewayMessageAck(m);
                     } break;
+                    case GatewayEvent::USER_GUILD_SETTINGS_UPDATE: {
+                        HandleGatewayUserGuildSettingsUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1845,6 +1848,31 @@ void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
     m_signal_message_ack.emit(data);
 }
 
+void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg) {
+    UserGuildSettingsUpdateData data = msg.Data;
+    const auto channels = GetChannelsInGuild(data.Settings.GuildID);
+    std::set<Snowflake> now_muted_channels;
+    for (const auto &override : data.Settings.ChannelOverrides) {
+        if (override.Muted)
+            now_muted_channels.insert(override.ChannelID);
+    }
+    for (const auto &channel_id : channels) {
+        const bool was_muted = IsChannelMuted(channel_id);
+        const bool now_muted = now_muted_channels.find(channel_id) != now_muted_channels.end();
+        if (now_muted) {
+            m_muted_channels.insert(channel_id);
+            if (!was_muted) {
+                m_signal_channel_muted.emit(channel_id);
+            }
+        } else {
+            m_muted_channels.erase(channel_id);
+            if (was_muted) {
+                m_signal_channel_unmuted.emit(channel_id);
+            }
+        }
+    }
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2244,6 +2272,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
     m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
     m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
+    m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2420,6 +2449,14 @@ DiscordClient::type_signal_removed_from_thread DiscordClient::signal_removed_fro
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {
     return m_signal_message_sent;
+}
+
+DiscordClient::type_signal_channel_muted DiscordClient::signal_channel_muted() {
+    return m_signal_channel_muted;
+}
+
+DiscordClient::type_signal_channel_unmuted DiscordClient::signal_channel_unmuted() {
+    return m_signal_channel_unmuted;
 }
 
 DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_fail() {

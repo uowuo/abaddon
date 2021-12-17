@@ -37,6 +37,8 @@ protected:
     void UpdateCreateChannel(const ChannelData &channel);
     void UpdateGuild(Snowflake id);
     void DeleteThreadRow(Snowflake id);
+    void OnChannelMute(Snowflake id);
+    void OnChannelUnmute(Snowflake id);
 
     void OnThreadJoined(Snowflake id);
     void OnThreadRemoved(Snowflake id);

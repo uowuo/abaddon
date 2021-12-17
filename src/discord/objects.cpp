@@ -586,3 +586,7 @@ void from_json(const nlohmann::json &j, MessageAckData &m) {
 void to_json(nlohmann::json &j, const AckBulkData &m) {
     j["read_states"] = m.ReadStates;
 }
+
+void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m) {
+    m.Settings = j;
+}
