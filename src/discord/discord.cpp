@@ -1,8 +1,10 @@
+#include "abaddon.hpp"
 #include "discord.hpp"
 #include "util.hpp"
-#include "abaddon.hpp"
 #include <cassert>
 #include <cinttypes>
+
+using namespace std::string_literals;
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)
@@ -902,6 +904,35 @@ void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordE
     if (data.ReadStates.empty()) return;
 
     m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value()) return;
+    const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
+    nlohmann::json j;
+    j["channel_overrides"][std::to_string(channel_id)]["mute_config"] = MuteConfigData { std::nullopt, -1 };
+    j["channel_overrides"][std::to_string(channel_id)]["muted"] = true;
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value()) return;
+    const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
+    nlohmann::json j;
+    j["channel_overrides"][std::to_string(channel_id)]["muted"] = false;
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else

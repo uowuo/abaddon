@@ -1,7 +1,7 @@
 #include "channelscellrenderer.hpp"
 #include "abaddon.hpp"
-#include <gtkmm.h>
 #include "unreadrenderer.hpp"
+#include <gtkmm.h>
 
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))

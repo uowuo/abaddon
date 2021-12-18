@@ -244,14 +244,23 @@ struct ReadStateData {
     friend void from_json(const nlohmann::json &j, ReadStateData &m);
 };
 
+struct MuteConfigData {
+    std::optional<std::string> EndTime; // nullopt is encoded as null
+    int SelectedTimeWindow;
+
+    friend void from_json(const nlohmann::json &j, MuteConfigData &m);
+    friend void to_json(nlohmann::json &j, const MuteConfigData &m);
+};
+
 struct UserGuildSettingsChannelOverride {
     bool Muted;
-    // MuteConfig
+    MuteConfigData MuteConfig;
     int MessageNotifications;
     bool Collapsed;
     Snowflake ChannelID;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m);
+    friend void to_json(nlohmann::json &j, const UserGuildSettingsChannelOverride &m);
 };
 
 struct UserGuildSettingsEntry {
@@ -259,7 +268,7 @@ struct UserGuildSettingsEntry {
     bool SuppressRoles;
     bool SuppressEveryone;
     bool Muted;
-    // MuteConfig
+    MuteConfigData MuteConfig;
     bool MobilePush;
     int MessageNotifications;
     bool HideMutedChannels;
@@ -267,11 +276,12 @@ struct UserGuildSettingsEntry {
     std::vector<UserGuildSettingsChannelOverride> ChannelOverrides;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m);
+    friend void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m);
 };
 
 struct UserGuildSettingsData {
     int Version;
-    bool IsParital;
+    bool IsPartial;
     std::vector<UserGuildSettingsEntry> Entries;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsData &m);

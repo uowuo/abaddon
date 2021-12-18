@@ -1,8 +1,8 @@
-#include "channels.hpp"
 #include "abaddon.hpp"
+#include "channels.hpp"
 #include "imgmanager.hpp"
-#include "util.hpp"
 #include "statusindicator.hpp"
+#include "util.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -117,7 +117,16 @@ ChannelList::ChannelList()
     m_menu_channel_mark_as_read.signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
+    m_menu_channel_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsChannelMuted(id))
+            discord.UnmuteChannel(id, [](...) {});
+        else
+            discord.MuteChannel(id, [](...) {});
+    });
     m_menu_channel.append(m_menu_channel_mark_as_read);
+    m_menu_channel.append(m_menu_channel_toggle_mute);
     m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.show_all();
 
@@ -158,6 +167,7 @@ ChannelList::ChannelList()
     m_menu_thread.append(m_menu_thread_unarchive);
     m_menu_thread.show_all();
 
+    m_menu_channel.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnChannelSubmenuPopup));
     m_menu_thread.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnThreadSubmenuPopup));
 
     auto &discord = Abaddon::Get().GetDiscordClient();
@@ -803,6 +813,16 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
 
     // delete original
     m_model->erase(iter);
+}
+
+void ChannelList::OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(id))
+        m_menu_channel_toggle_mute.set_label("Unmute");
+    else
+        m_menu_channel_toggle_mute.set_label("Mute");
 }
 
 void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
