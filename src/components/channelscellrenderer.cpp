@@ -368,22 +368,34 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto id = m_property_id.get_value();
+
+    // move to style in msys?
+    static Gdk::RGBA sfw_unmuted("#FFFFFF");
+
     const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
     if (m_property_nsfw.get_value())
         m_renderer_text.property_foreground_rgba() = nsfw_color;
+    else
+        m_renderer_text.property_foreground_rgba() = sfw_unmuted;
+    if (discord.IsChannelMuted(id)) {
+        auto col = m_renderer_text.property_foreground_rgba().get_value();
+        col.set_red(col.get_red() * 0.5);
+        col.set_green(col.get_green() * 0.5);
+        col.set_blue(col.get_blue() * 0.5);
+        m_renderer_text.property_foreground_rgba() = col;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
-    // so unset it
+    // unset foreground to default so properties dont bleed
     m_renderer_text.property_foreground_set() = false;
 
     // unread
 
-    const auto id = m_property_id.get_value();
+    const auto unread_state = discord.GetUnreadStateForChannel(id);
+    if (unread_state < 0) return;
 
-    const auto state = Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id);
-    if (state < 0) return;
-
-    if (!Abaddon::Get().GetDiscordClient().IsChannelMuted(id)) {
+    if (!discord.IsChannelMuted(id)) {
         cr->set_source_rgb(1.0, 1.0, 1.0);
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
@@ -393,12 +405,12 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
         cr->fill();
     }
 
-    if (state < 1) return;
+    if (unread_state < 1) return;
     auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), cell_area.get_width());
 
-        unread_render_mentions(cr, widget, state, edge, cell_area);
+        unread_render_mentions(cr, widget, unread_state, edge, cell_area);
     }
 }
 
