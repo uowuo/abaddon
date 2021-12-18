@@ -370,6 +370,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto id = m_property_id.get_value();
+    const bool is_muted = discord.IsChannelMuted(id);
 
     // move to style in msys?
     static Gdk::RGBA sfw_unmuted("#FFFFFF");
@@ -379,7 +380,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
         m_renderer_text.property_foreground_rgba() = nsfw_color;
     else
         m_renderer_text.property_foreground_rgba() = sfw_unmuted;
-    if (discord.IsChannelMuted(id)) {
+    if (is_muted) {
         auto col = m_renderer_text.property_foreground_rgba().get_value();
         col.set_red(col.get_red() * 0.5);
         col.set_green(col.get_green() * 0.5);
@@ -395,7 +396,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     const auto unread_state = discord.GetUnreadStateForChannel(id);
     if (unread_state < 0) return;
 
-    if (!discord.IsChannelMuted(id)) {
+    if (!is_muted) {
         cr->set_source_rgb(1.0, 1.0, 1.0);
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
@@ -520,21 +521,43 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
 
     const double icon_w = pixbuf->get_width();
     const double icon_h = pixbuf->get_height();
-    const double icon_x = background_area.get_x() + 2;
+    const double icon_x = background_area.get_x() + 3;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
-    const double text_x = icon_x + icon_w + 5.0;
+    const double text_x = icon_x + icon_w + 6.0;
     const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
     const double text_w = text_natural.width;
     const double text_h = text_natural.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto id = m_property_id.get_value();
+    const bool is_muted = discord.IsChannelMuted(id);
+
+    if (is_muted)
+        m_renderer_text.property_foreground() = "#7f7f7f";
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
     cr->rectangle(icon_x, icon_y, icon_w, icon_h);
     cr->fill();
+
+    // unread
+
+    const auto unread_state = discord.GetUnreadStateForChannel(id);
+    if (unread_state < 0) return;
+
+    if (!is_muted) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y, 3, h);
+        cr->fill();
+    }
 }
 
 void CellRendererChannels::cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Context> &cr, double x, double y, double w, double h, double r) {

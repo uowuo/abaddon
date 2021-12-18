@@ -2240,6 +2240,9 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
         for (const auto &channel : *guild.Channels)
             if (channel.Type == ChannelType::GUILD_TEXT || channel.Type == ChannelType::GUILD_NEWS && channel.LastMessageID.has_value())
                 m_last_message_id[channel.ID] = *channel.LastMessageID;
+    for (const auto &channel : data.PrivateChannels)
+        if (channel.LastMessageID.has_value())
+            m_last_message_id[channel.ID] = *channel.LastMessageID;
 
     for (const auto &entry : data.ReadState.Entries) {
         const auto it = m_last_message_id.find(entry.ID);
