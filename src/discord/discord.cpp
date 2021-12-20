@@ -2238,7 +2238,7 @@ void DiscordClient::StoreMessageData(Message &msg) {
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &guild : data.Guilds)
         for (const auto &channel : *guild.Channels)
-            if (channel.Type == ChannelType::GUILD_TEXT || channel.Type == ChannelType::GUILD_NEWS && channel.LastMessageID.has_value())
+            if (channel.LastMessageID.has_value() && (channel.Type == ChannelType::GUILD_TEXT || channel.Type == ChannelType::GUILD_NEWS))
                 m_last_message_id[channel.ID] = *channel.LastMessageID;
     for (const auto &channel : data.PrivateChannels)
         if (channel.LastMessageID.has_value())
