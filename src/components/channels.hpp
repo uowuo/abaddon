@@ -132,6 +132,8 @@ protected:
 
     bool m_updating_listing = false;
 
+    Snowflake m_active_channel;
+
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
