@@ -15,6 +15,8 @@
 #include <type_traits>
 #include <gtkmm.h>
 
+#define NOOP_CALLBACK [](...) {}
+
 namespace util {
 template<typename T>
 struct is_optional : ::std::false_type {};

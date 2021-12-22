@@ -98,5 +98,6 @@ protected:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
+    Gtk::MenuItem m_menu_view_mark_all_as_read;
     void OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 };

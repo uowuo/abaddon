@@ -940,6 +940,26 @@ void DiscordClient::UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordE
     });
 }
 
+void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) {
+    AckBulkData data;
+    for (const auto &[unread, mention_count] : m_unread) {
+        const auto iter = m_last_message_id.find(unread);
+        if (iter == m_last_message_id.end()) continue;
+        auto &e = data.ReadStates.emplace_back();
+        e.ID = unread;
+        e.LastMessageID = iter->second;
+    }
+
+    if (data.ReadStates.empty()) return;
+
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {

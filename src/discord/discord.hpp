@@ -142,6 +142,7 @@ public:
     void MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback);
     void MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
     void UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkAllAsRead(sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
