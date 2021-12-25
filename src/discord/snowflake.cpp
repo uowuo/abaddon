@@ -1,7 +1,8 @@
 #include "snowflake.hpp"
+#include "util.hpp"
+#include <chrono>
 #include <ctime>
 #include <iomanip>
-#include <chrono>
 
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 
@@ -14,13 +15,13 @@ Snowflake::Snowflake(uint64_t n)
     : m_num(n) {}
 
 Snowflake::Snowflake(const std::string &str) {
-    if (str.size())
+    if (!str.empty())
         m_num = std::stoull(str);
     else
         m_num = Invalid;
 }
 Snowflake::Snowflake(const Glib::ustring &str) {
-    if (str.size())
+    if (!str.empty())
         m_num = std::strtoull(str.c_str(), nullptr, 10);
     else
         m_num = Invalid;
@@ -36,6 +37,14 @@ Snowflake Snowflake::FromNow() {
     // worker id and process id would be OR'd in here but there's no point
     snowflake |= counter++ % 4096;
     return snowflake;
+}
+
+Snowflake Snowflake::FromISO8601(std::string_view ts) {
+    int yr, mon, day, hr, min, sec, tzhr, tzmin;
+    float milli;
+    std::sscanf(ts.data(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
+                &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin);
+    return SecondsInterval * (util::TimeToEpoch(yr, mon, day, hr, min, sec) - DiscordEpochSeconds) + static_cast<uint64_t>(milli * static_cast<float>(SecondsInterval));
 }
 
 bool Snowflake::IsValid() const {

@@ -27,6 +27,8 @@ struct is_optional<::std::optional<T>> : ::std::true_type {};
 bool IsFolder(std::string_view path);
 
 bool IsFile(std::string_view path);
+
+uint64_t TimeToEpoch(int year, int month, int day, int hour, int minute, int seconds);
 } // namespace util
 
 class Semaphore {

@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include <array>
 #include <filesystem>
 
 Semaphore::Semaphore(int count)
@@ -214,4 +215,32 @@ bool util::IsFile(std::string_view path) {
     const auto status = std::filesystem::status(path, ec);
     if (ec) return false;
     return status.type() == std::filesystem::file_type::regular;
+}
+
+constexpr bool IsLeapYear(int year) {
+    if (year % 4 != 0) return false;
+    if (year % 100 != 0) return true;
+    return (year % 400) == 0;
+}
+
+constexpr static int SecsPerMinute = 60;
+constexpr static int SecsPerHour = 3600;
+constexpr static int SecsPerDay = 86400;
+constexpr static std::array<int, 12> DaysOfMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+// may god smite whoever is responsible for the absolutely abominable api that is C time functions
+// i shouldnt have to write this. mktime ALMOST works but it adds the current timezone offset. WHY???
+uint64_t util::TimeToEpoch(int year, int month, int day, int hour, int minute, int seconds) {
+    uint64_t secs = 0;
+    for (int y = 1970; y < year; ++y)
+        secs += (IsLeapYear(y) ? 366 : 365) * SecsPerDay;
+    for (int m = 1; m < month; ++m) {
+        secs += DaysOfMonth[m - 1] * SecsPerDay;
+        if (m == 2 && IsLeapYear(year)) secs += SecsPerDay;
+    }
+    secs += (day - 1) * SecsPerDay;
+    secs += hour * SecsPerHour;
+    secs += minute * SecsPerMinute;
+    secs += seconds;
+    return secs;
 }

@@ -2253,6 +2253,7 @@ void DiscordClient::StoreMessageData(Message &msg) {
 
 // some notes for myself
 // a read channel is determined by checking if the channel object's last message id is equal to the read state's last message id
+// channels without entries are also unread
 // here the absence of an entry in m_unread indicates a read channel and the value is only the mention count since the message doesnt matter
 // no entry.id cannot be a guild even though sometimes it looks like it
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
@@ -2269,6 +2270,26 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
         if (it == m_last_message_id.end()) continue;
         if (it->second > entry.LastMessageID)
             m_unread[entry.ID] = entry.MentionCount;
+    }
+
+    // channels that arent in the read state are considered unread
+    for (const auto &guild : data.Guilds) {
+        if (!guild.JoinedAt.has_value()) continue; // doubt this can happen but whatever
+        const auto joined_at = Snowflake::FromISO8601(*guild.JoinedAt);
+        for (const auto &channel : *guild.Channels) {
+            if (channel.LastMessageID.has_value()) {
+                // unread messages from before you joined dont count as unread
+                if (*channel.LastMessageID < joined_at) continue;
+                if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
+                        return e.ID == id;
+                    }) == data.ReadState.Entries.end()) {
+                    // cant be unread if u cant even see the channel
+                    // better to check here since HasChannelPermission hits the store
+                    if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
+                        m_unread[channel.ID] = 0;
+                }
+            }
+        }
     }
 }
 
