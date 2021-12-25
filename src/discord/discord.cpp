@@ -1156,8 +1156,22 @@ bool DiscordClient::IsGuildMuted(Snowflake id) const noexcept {
 
 int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
     const auto iter = m_unread.find(id);
-    if (iter == m_unread.end()) return -1; // todo: no magic number
+    if (iter == m_unread.end()) return -1; // todo: no magic number (who am i kidding ill never change this)
     return iter->second;
+}
+
+bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept {
+    total_mentions = 0;
+    bool has_any_unread = false;
+    const auto channels = GetChannelsInGuild(id);
+    for (const auto channel_id : channels) {
+        const auto channel_unread = GetUnreadStateForChannel(channel_id);
+        if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
+            has_any_unread = true;
+        if (channel_unread > -1)
+            total_mentions += channel_unread;
+    }
+    return has_any_unread;
 }
 
 PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {

@@ -190,6 +190,7 @@ public:
     bool IsChannelMuted(Snowflake id) const noexcept;
     bool IsGuildMuted(Snowflake id) const noexcept;
     int GetUnreadStateForChannel(Snowflake id) const noexcept;
+    bool GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept;
 
     PresenceStatus GetUserStatus(Snowflake id) const;
 

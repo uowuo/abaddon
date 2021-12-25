@@ -250,20 +250,11 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     const auto id = m_property_id.get_value();
 
-    int total_mentions = 0;
     auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto channels = discord.GetChannelsInGuild(id);
-    bool has_unread = false;
-    for (const auto &id : channels) {
-        const int state = Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id);
-        if (state >= 0) {
-            has_unread = true;
-            total_mentions += state;
-        }
-    }
-    if (!has_unread) return;
+    int total_mentions;
+    const auto has_unread = discord.GetUnreadStateForGuild(id, total_mentions);
 
-    if (!discord.IsGuildMuted(id)) {
+    if (has_unread && !discord.IsGuildMuted(id)) {
         cr->set_source_rgb(1.0, 1.0, 1.0);
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
