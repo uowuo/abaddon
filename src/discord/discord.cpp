@@ -2268,8 +2268,10 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &entry : data.ReadState.Entries) {
         const auto it = m_last_message_id.find(entry.ID);
         if (it == m_last_message_id.end()) continue;
-        if (it->second > entry.LastMessageID)
-            m_unread[entry.ID] = entry.MentionCount;
+        if (it->second > entry.LastMessageID) {
+            if (HasChannelPermission(GetUserData().ID, entry.ID, Permission::VIEW_CHANNEL))
+                m_unread[entry.ID] = entry.MentionCount;
+        }
     }
 
     // channels that arent in the read state are considered unread
