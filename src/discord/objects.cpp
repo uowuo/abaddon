@@ -141,6 +141,7 @@ void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m) {
     JS_D("message_notifications", m.MessageNotifications);
     JS_D("collapsed", m.Collapsed);
     JS_D("channel_id", m.ChannelID);
+    JS_N("mute_config", m.MuteConfig);
 }
 
 void to_json(nlohmann::json &j, const UserGuildSettingsChannelOverride &m) {
@@ -174,6 +175,7 @@ void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m) {
     JS_D("hide_muted_channels", m.HideMutedChannels);
     JS_N("guild_id", m.GuildID);
     JS_D("channel_overrides", m.ChannelOverrides);
+    JS_N("mute_config", m.MuteConfig);
 }
 
 void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m) {
