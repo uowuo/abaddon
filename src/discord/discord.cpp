@@ -1918,9 +1918,17 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
     UserGuildSettingsUpdateData data = msg.Data;
     const auto channels = GetChannelsInGuild(data.Settings.GuildID);
     std::set<Snowflake> now_muted_channels;
+    const auto now = Snowflake::FromNow();
     for (const auto &override : data.Settings.ChannelOverrides) {
-        if (override.Muted)
-            now_muted_channels.insert(override.ChannelID);
+        if (override.Muted) {
+            if (override.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
+                if (end > now)
+                    now_muted_channels.insert(override.ChannelID);
+            } else {
+                now_muted_channels.insert(override.ChannelID);
+            }
+        }
     }
     for (const auto &channel_id : channels) {
         const bool was_muted = IsChannelMuted(channel_id);
@@ -2311,12 +2319,28 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
 }
 
 void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
+    const auto now = Snowflake::FromNow();
     for (const auto &entry : data.GuildSettings.Entries) {
-        if (entry.Muted)
-            m_muted_guilds.insert(entry.GuildID);
+        // even if muted is true a guild/channel can be unmuted if the current time passes mute_config.end_time
+        if (entry.Muted) {
+            if (entry.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*entry.MuteConfig.EndTime);
+                if (end > now)
+                    m_muted_guilds.insert(entry.GuildID);
+            } else {
+                m_muted_guilds.insert(entry.GuildID);
+            }
+        }
         for (const auto &override : entry.ChannelOverrides) {
-            if (override.Muted)
-                m_muted_channels.insert(override.ChannelID);
+            if (override.Muted) {
+                if (override.MuteConfig.EndTime.has_value()) {
+                    const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
+                    if (end > now)
+                        m_muted_channels.insert(override.ChannelID);
+                } else {
+                    m_muted_channels.insert(override.ChannelID);
+                }
+            }
         }
     }
 }
