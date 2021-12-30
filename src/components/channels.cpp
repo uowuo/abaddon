@@ -186,6 +186,8 @@ ChannelList::ChannelList()
     discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
     discord.signal_channel_muted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelMute));
     discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelUnmute));
+    discord.signal_guild_muted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildMute));
+    discord.signal_guild_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildUnmute));
 }
 
 void ChannelList::UsePanedHack(Gtk::Paned &paned) {
@@ -389,6 +391,16 @@ void ChannelList::OnChannelMute(Snowflake id) {
 
 void ChannelList::OnChannelUnmute(Snowflake id) {
     if (auto iter = GetIteratorForChannelFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnGuildMute(Snowflake id) {
+    if (auto iter = GetIteratorForGuildFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnGuildUnmute(Snowflake id) {
+    if (auto iter = GetIteratorForGuildFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 

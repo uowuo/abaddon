@@ -1919,6 +1919,26 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
     const auto channels = GetChannelsInGuild(data.Settings.GuildID);
     std::set<Snowflake> now_muted_channels;
     const auto now = Snowflake::FromNow();
+
+    const bool was_muted = IsGuildMuted(data.Settings.GuildID);
+    bool now_muted = false;
+    if (data.Settings.Muted) {
+        if (data.Settings.MuteConfig.EndTime.has_value()) {
+            const auto end = Snowflake::FromISO8601(*data.Settings.MuteConfig.EndTime);
+            if (end.IsValid() && end > now)
+                now_muted = true;
+        } else {
+            now_muted = true;
+        }
+    }
+    if (was_muted && !now_muted) {
+        m_muted_guilds.erase(data.Settings.GuildID);
+        m_signal_guild_unmuted.emit(data.Settings.GuildID);
+    } else if (!was_muted && now_muted) {
+        m_muted_guilds.insert(data.Settings.GuildID);
+        m_signal_guild_muted.emit(data.Settings.GuildID);
+    }
+
     for (const auto &override : data.Settings.ChannelOverrides) {
         if (override.Muted) {
             if (override.MuteConfig.EndTime.has_value()) {
@@ -2573,6 +2593,14 @@ DiscordClient::type_signal_channel_muted DiscordClient::signal_channel_muted() {
 
 DiscordClient::type_signal_channel_unmuted DiscordClient::signal_channel_unmuted() {
     return m_signal_channel_unmuted;
+}
+
+DiscordClient::type_signal_guild_muted DiscordClient::signal_guild_muted() {
+    return m_signal_guild_muted;
+}
+
+DiscordClient::type_signal_guild_unmuted DiscordClient::signal_guild_unmuted() {
+    return m_signal_guild_unmuted;
 }
 
 DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_fail() {

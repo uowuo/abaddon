@@ -372,6 +372,8 @@ public:
     typedef sigc::signal<void, Message> type_signal_message_sent;
     typedef sigc::signal<void, Snowflake> type_signal_channel_muted;
     typedef sigc::signal<void, Snowflake> type_signal_channel_unmuted;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_muted;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_unmuted;
 
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting
@@ -422,6 +424,8 @@ public:
     type_signal_message_sent signal_message_sent();
     type_signal_channel_muted signal_channel_muted();
     type_signal_channel_unmuted signal_channel_unmuted();
+    type_signal_guild_muted signal_guild_muted();
+    type_signal_guild_unmuted signal_guild_unmuted();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
@@ -472,6 +476,8 @@ protected:
     type_signal_message_sent m_signal_message_sent;
     type_signal_channel_muted m_signal_channel_muted;
     type_signal_channel_unmuted m_signal_channel_unmuted;
+    type_signal_guild_muted m_signal_guild_muted;
+    type_signal_guild_unmuted m_signal_guild_unmuted;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;

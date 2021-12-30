@@ -39,6 +39,8 @@ protected:
     void DeleteThreadRow(Snowflake id);
     void OnChannelMute(Snowflake id);
     void OnChannelUnmute(Snowflake id);
+    void OnGuildMute(Snowflake id);
+    void OnGuildUnmute(Snowflake id);
 
     void OnThreadJoined(Snowflake id);
     void OnThreadRemoved(Snowflake id);
