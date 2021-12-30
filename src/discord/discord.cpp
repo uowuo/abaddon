@@ -1923,7 +1923,7 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
         if (override.Muted) {
             if (override.MuteConfig.EndTime.has_value()) {
                 const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
-                if (end > now)
+                if (end.IsValid() && end > now)
                     now_muted_channels.insert(override.ChannelID);
             } else {
                 now_muted_channels.insert(override.ChannelID);
@@ -2325,7 +2325,7 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
         if (entry.Muted) {
             if (entry.MuteConfig.EndTime.has_value()) {
                 const auto end = Snowflake::FromISO8601(*entry.MuteConfig.EndTime);
-                if (end > now)
+                if (end.IsValid() && end > now)
                     m_muted_guilds.insert(entry.GuildID);
             } else {
                 m_muted_guilds.insert(entry.GuildID);
@@ -2335,7 +2335,7 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
             if (override.Muted) {
                 if (override.MuteConfig.EndTime.has_value()) {
                     const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
-                    if (end > now)
+                    if (end.IsValid() && end > now)
                         m_muted_channels.insert(override.ChannelID);
                 } else {
                     m_muted_channels.insert(override.ChannelID);

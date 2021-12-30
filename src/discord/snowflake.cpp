@@ -42,9 +42,11 @@ Snowflake Snowflake::FromNow() {
 Snowflake Snowflake::FromISO8601(std::string_view ts) {
     int yr, mon, day, hr, min, sec, tzhr, tzmin;
     float milli;
-    std::sscanf(ts.data(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
-                &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin);
-    return SecondsInterval * (util::TimeToEpoch(yr, mon, day, hr, min, sec) - DiscordEpochSeconds) + static_cast<uint64_t>(milli * static_cast<float>(SecondsInterval));
+    if (std::sscanf(ts.data(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
+                    &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin) != 9) return Snowflake::Invalid;
+    const auto epoch = util::TimeToEpoch(yr, mon, day, hr, min, sec);
+    if (epoch < DiscordEpochSeconds) return Snowflake::Invalid;
+    return SecondsInterval * (epoch - DiscordEpochSeconds) + static_cast<uint64_t>(milli * static_cast<float>(SecondsInterval));
 }
 
 bool Snowflake::IsValid() const {
