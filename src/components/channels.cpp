@@ -98,9 +98,18 @@ ChannelList::ChannelList()
     m_menu_guild_mark_as_read.signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().MarkGuildAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
+    m_menu_guild_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsGuildMuted(id))
+            discord.UnmuteGuild(id, NOOP_CALLBACK);
+        else
+            discord.MuteGuild(id, NOOP_CALLBACK);
+    });
     m_menu_guild.append(m_menu_guild_mark_as_read);
     m_menu_guild.append(m_menu_guild_settings);
     m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.append(m_menu_guild_toggle_mute);
     m_menu_guild.append(m_menu_guild_copy_id);
     m_menu_guild.show_all();
 
@@ -121,9 +130,9 @@ ChannelList::ChannelList()
         const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
         auto &discord = Abaddon::Get().GetDiscordClient();
         if (discord.IsChannelMuted(id))
-            discord.UnmuteChannel(id, [](...) {});
+            discord.UnmuteChannel(id, NOOP_CALLBACK);
         else
-            discord.MuteChannel(id, [](...) {});
+            discord.MuteChannel(id, NOOP_CALLBACK);
     });
     m_menu_channel.append(m_menu_channel_mark_as_read);
     m_menu_channel.append(m_menu_channel_toggle_mute);
@@ -167,6 +176,7 @@ ChannelList::ChannelList()
     m_menu_thread.append(m_menu_thread_unarchive);
     m_menu_thread.show_all();
 
+    m_menu_guild.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnGuildSubmenuPopup));
     m_menu_channel.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnChannelSubmenuPopup));
     m_menu_thread.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnThreadSubmenuPopup));
 
@@ -831,6 +841,16 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
 
     // delete original
     m_model->erase(iter);
+}
+
+void ChannelList::OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    if (Abaddon::Get().GetDiscordClient().IsGuildMuted(id))
+        m_menu_guild_toggle_mute.set_label("Unmute");
+    else
+        m_menu_guild_toggle_mute.set_label("Mute");
 }
 
 void ChannelList::OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {

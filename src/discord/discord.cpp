@@ -960,6 +960,24 @@ void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) 
     });
 }
 
+void DiscordClient::MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":true})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":false})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
