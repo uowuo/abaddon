@@ -120,6 +120,10 @@ protected:
 
     bool m_updating_listing = false;
 
+    // (GetIteratorForChannelFromID is rather slow)
+    // only temporary since i dont want to worry about maintaining this map
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_channel_map;
+
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
     typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
