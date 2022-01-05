@@ -583,6 +583,8 @@ std::vector<Snowflake> Store::GetChannelIDsWithParentID(Snowflake channel_id) co
         ret.push_back(x);
     }
 
+    s->Reset();
+
     return ret;
 }
 
