@@ -43,6 +43,7 @@ public:
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit) const;
     std::vector<Message> GetPinnedMessages(Snowflake channel_id) const;
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const; // public
+    std::vector<Snowflake> GetChannelIDsWithParentID(Snowflake channel_id) const;
 
     void AddReaction(const MessageReactionAddObject &data, bool byself);
     void RemoveReaction(const MessageReactionRemoveObject &data, bool byself);
@@ -300,5 +301,6 @@ private:
     STMT(add_reaction);
     STMT(sub_reaction);
     STMT(get_reactions);
+    STMT(get_chan_ids_parent);
 #undef STMT
 };

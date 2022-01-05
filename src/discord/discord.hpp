@@ -82,6 +82,7 @@ public:
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
     void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
     void GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
+    std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
 
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
@@ -290,6 +291,7 @@ private:
     std::unordered_set<Snowflake> m_muted_guilds;
     std::unordered_set<Snowflake> m_muted_channels;
     std::unordered_map<Snowflake, int> m_unread;
+    std::unordered_set<Snowflake> m_channel_muted_parent;
 
     UserData m_user_data;
     UserSettings m_user_settings;

@@ -307,6 +307,10 @@ void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<v
     });
 }
 
+std::vector<Snowflake> DiscordClient::GetChildChannelIDs(Snowflake parent_id) const {
+    return m_store.GetChannelIDsWithParentID(parent_id);
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -1184,10 +1188,15 @@ bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) co
     const auto channels = GetChannelsInGuild(id);
     for (const auto channel_id : channels) {
         const auto channel_unread = GetUnreadStateForChannel(channel_id);
-        if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
-            has_any_unread = true;
         if (channel_unread > -1)
             total_mentions += channel_unread;
+
+        // channels under muted categories wont contribute to unread state
+        if (const auto iter = m_channel_muted_parent.find(channel_id); iter != m_channel_muted_parent.end())
+            continue;
+
+        if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
+            has_any_unread = true;
     }
     return has_any_unread;
 }
@@ -1974,11 +1983,19 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
         if (now_muted) {
             m_muted_channels.insert(channel_id);
             if (!was_muted) {
+                if (const auto chan = GetChannel(channel_id); chan.has_value() && chan->IsCategory())
+                    for (const auto child_id : chan->GetChildIDs())
+                        m_channel_muted_parent.insert(child_id);
+
                 m_signal_channel_muted.emit(channel_id);
             }
         } else {
             m_muted_channels.erase(channel_id);
             if (was_muted) {
+                if (const auto chan = GetChannel(channel_id); chan.has_value() && chan->IsCategory())
+                    for (const auto child_id : chan->GetChildIDs())
+                        m_channel_muted_parent.erase(child_id);
+
                 m_signal_channel_unmuted.emit(channel_id);
             }
         }
@@ -2357,6 +2374,14 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
 }
 
 void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
+    // i dont like this implementation for muted categories but its rather simple and doesnt use a horriiible amount of ram
+
+    std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
+    for (const auto &guild : data.Guilds)
+        for (const auto &channel : *guild.Channels)
+            if (channel.ParentID.has_value() && !channel.IsThread())
+                category_children[*channel.ParentID].push_back(channel.ID);
+
     const auto now = Snowflake::FromNow();
     for (const auto &entry : data.GuildSettings.Entries) {
         // even if muted is true a guild/channel can be unmuted if the current time passes mute_config.end_time
@@ -2371,6 +2396,10 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
         }
         for (const auto &override : entry.ChannelOverrides) {
             if (override.Muted) {
+                if (const auto iter = category_children.find(override.ChannelID); iter != category_children.end())
+                    for (const auto child : iter->second)
+                        m_channel_muted_parent.insert(child);
+
                 if (override.MuteConfig.EndTime.has_value()) {
                     const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
                     if (end.IsValid() && end > now)

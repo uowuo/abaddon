@@ -327,7 +327,11 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    static Gdk::RGBA muted_color("#7f7f7f");
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value()))
+        m_renderer_text.property_foreground_rgba() = muted_color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 }
 
 // text channel

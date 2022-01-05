@@ -114,6 +114,7 @@ protected:
 
     Gtk::Menu m_menu_category;
     Gtk::MenuItem m_menu_category_copy_id;
+    Gtk::MenuItem m_menu_category_toggle_mute;
 
     Gtk::Menu m_menu_channel;
     Gtk::MenuItem m_menu_channel_copy_id;
@@ -131,6 +132,7 @@ protected:
     Gtk::MenuItem m_menu_thread_unarchive;
 
     void OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
+    void OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 
