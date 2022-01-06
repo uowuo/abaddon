@@ -331,6 +331,7 @@ bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel
 bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value()) return false;
+    if (channel->IsDM()) return true;
     const auto base = ComputePermissions(user_id, *channel->GuildID);
     const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
     return (overwrites & perm) == perm;
@@ -2337,7 +2338,7 @@ void DiscordClient::StoreMessageData(Message &msg) {
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &guild : data.Guilds)
         for (const auto &channel : *guild.Channels)
-            if (channel.LastMessageID.has_value() && (channel.Type == ChannelType::GUILD_TEXT || channel.Type == ChannelType::GUILD_NEWS))
+            if (channel.LastMessageID.has_value())
                 m_last_message_id[channel.ID] = *channel.LastMessageID;
     for (const auto &channel : data.PrivateChannels)
         if (channel.LastMessageID.has_value())
