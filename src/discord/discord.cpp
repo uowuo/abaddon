@@ -1527,6 +1527,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_store.BeginTransaction();
 
     for (const auto &dm : data.PrivateChannels) {
+        m_guild_to_channels[Snowflake::Invalid].insert(dm.ID);
         m_store.SetChannel(dm.ID, dm);
         if (dm.Recipients.has_value())
             for (const auto &recipient : *dm.Recipients)
@@ -1944,27 +1945,31 @@ void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg) {
     UserGuildSettingsUpdateData data = msg.Data;
-    const auto channels = GetChannelsInGuild(data.Settings.GuildID);
+    const bool for_dms = !data.Settings.GuildID.IsValid();
+
+    const auto channels = for_dms ? GetPrivateChannels() : GetChannelsInGuild(data.Settings.GuildID);
     std::set<Snowflake> now_muted_channels;
     const auto now = Snowflake::FromNow();
 
-    const bool was_muted = IsGuildMuted(data.Settings.GuildID);
-    bool now_muted = false;
-    if (data.Settings.Muted) {
-        if (data.Settings.MuteConfig.EndTime.has_value()) {
-            const auto end = Snowflake::FromISO8601(*data.Settings.MuteConfig.EndTime);
-            if (end.IsValid() && end > now)
+    if (!for_dms) {
+        const bool was_muted = IsGuildMuted(data.Settings.GuildID);
+        bool now_muted = false;
+        if (data.Settings.Muted) {
+            if (data.Settings.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*data.Settings.MuteConfig.EndTime);
+                if (end.IsValid() && end > now)
+                    now_muted = true;
+            } else {
                 now_muted = true;
-        } else {
-            now_muted = true;
+            }
         }
-    }
-    if (was_muted && !now_muted) {
-        m_muted_guilds.erase(data.Settings.GuildID);
-        m_signal_guild_unmuted.emit(data.Settings.GuildID);
-    } else if (!was_muted && now_muted) {
-        m_muted_guilds.insert(data.Settings.GuildID);
-        m_signal_guild_muted.emit(data.Settings.GuildID);
+        if (was_muted && !now_muted) {
+            m_muted_guilds.erase(data.Settings.GuildID);
+            m_signal_guild_unmuted.emit(data.Settings.GuildID);
+        } else if (!was_muted && now_muted) {
+            m_muted_guilds.insert(data.Settings.GuildID);
+            m_signal_guild_muted.emit(data.Settings.GuildID);
+        }
     }
 
     for (const auto &override : data.Settings.ChannelOverrides) {
@@ -2178,15 +2183,9 @@ void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
 }
 
 std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
-    auto ret = std::set<Snowflake>();
-
-    for (const auto &id : m_store.GetChannels()) {
-        const auto chan = m_store.GetChannel(id);
-        if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
-            ret.insert(id);
-    }
-
-    return ret;
+    if (const auto iter = m_guild_to_channels.find(Snowflake::Invalid); iter != m_guild_to_channels.end())
+        return iter->second;
+    return {};
 }
 
 EPremiumType DiscordClient::GetSelfPremiumType() const {
@@ -2411,6 +2410,12 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
             }
         }
     }
+}
+
+void DiscordClient::HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data) {
+    const auto channels = GetPrivateChannels();
+    std::set<Snowflake> now_muted_channels;
+    const auto now = Snowflake::FromNow();
 }
 
 void DiscordClient::LoadEventMap() {

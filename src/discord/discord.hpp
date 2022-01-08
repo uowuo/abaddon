@@ -277,6 +277,8 @@ private:
     void HandleReadyReadState(const ReadyEventData &data);
     void HandleReadyGuildSettings(const ReadyEventData &data);
 
+    void HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data);
+
     std::string m_token;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
