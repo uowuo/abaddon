@@ -82,6 +82,7 @@ public:
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
     void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
     void GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
+    std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
 
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
@@ -138,6 +139,13 @@ public:
     void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
     void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
     void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback);
+    void MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
+    void MarkAllAsRead(sigc::slot<void(DiscordError code)> callback);
+    void MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback);
+    void UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -181,6 +189,12 @@ public:
 
     void UpdateToken(std::string token);
     void SetUserAgent(std::string agent);
+
+    bool IsChannelMuted(Snowflake id) const noexcept;
+    bool IsGuildMuted(Snowflake id) const noexcept;
+    int GetUnreadStateForChannel(Snowflake id) const noexcept;
+    bool GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept;
+    int GetUnreadDMsCount() const;
 
     PresenceStatus GetUserStatus(Snowflake id) const;
 
@@ -244,6 +258,8 @@ private:
     void HandleGatewayThreadMemberUpdate(const GatewayMessage &msg);
     void HandleGatewayThreadUpdate(const GatewayMessage &msg);
     void HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg);
+    void HandleGatewayMessageAck(const GatewayMessage &msg);
+    void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -259,6 +275,11 @@ private:
 
     void StoreMessageData(Message &msg);
 
+    void HandleReadyReadState(const ReadyEventData &data);
+    void HandleReadyGuildSettings(const ReadyEventData &data);
+
+    void HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data);
+
     std::string m_token;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
@@ -269,6 +290,11 @@ private:
     std::map<Snowflake, RelationshipType> m_user_relationships;
     std::set<Snowflake> m_joined_threads;
     std::map<Snowflake, std::vector<Snowflake>> m_thread_members;
+    std::map<Snowflake, Snowflake> m_last_message_id;
+    std::unordered_set<Snowflake> m_muted_guilds;
+    std::unordered_set<Snowflake> m_muted_channels;
+    std::unordered_map<Snowflake, int> m_unread;
+    std::unordered_set<Snowflake> m_channel_muted_parent;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -343,6 +369,7 @@ public:
     typedef sigc::signal<void, ThreadMembersUpdateData> type_signal_thread_members_update;
     typedef sigc::signal<void, ThreadUpdateData> type_signal_thread_update;
     typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
+    typedef sigc::signal<void, MessageAckData> type_signal_message_ack;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -350,6 +377,10 @@ public:
     typedef sigc::signal<void, Message> type_signal_message_unpinned;
     typedef sigc::signal<void, Message> type_signal_message_pinned;
     typedef sigc::signal<void, Message> type_signal_message_sent;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_muted;
+    typedef sigc::signal<void, Snowflake> type_signal_channel_unmuted;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_muted;
+    typedef sigc::signal<void, Snowflake> type_signal_guild_unmuted;
 
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting
@@ -393,10 +424,15 @@ public:
     type_signal_thread_members_update signal_thread_members_update();
     type_signal_thread_update signal_thread_update();
     type_signal_thread_member_list_update signal_thread_member_list_update();
+    type_signal_message_ack signal_message_ack();
 
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
     type_signal_message_sent signal_message_sent();
+    type_signal_channel_muted signal_channel_muted();
+    type_signal_channel_unmuted signal_channel_unmuted();
+    type_signal_guild_muted signal_guild_muted();
+    type_signal_guild_unmuted signal_guild_unmuted();
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
@@ -440,10 +476,15 @@ protected:
     type_signal_thread_members_update m_signal_thread_members_update;
     type_signal_thread_update m_signal_thread_update;
     type_signal_thread_member_list_update m_signal_thread_member_list_update;
+    type_signal_message_ack m_signal_message_ack;
 
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;
     type_signal_message_sent m_signal_message_sent;
+    type_signal_channel_muted m_signal_channel_muted;
+    type_signal_channel_unmuted m_signal_channel_unmuted;
+    type_signal_guild_muted m_signal_guild_muted;
+    type_signal_guild_unmuted m_signal_guild_unmuted;
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;

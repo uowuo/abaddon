@@ -25,7 +25,11 @@ public:
     void UseExpansionState(const ExpansionStateRoot &state);
     ExpansionStateRoot GetExpansionState() const;
 
+    void UsePanedHack(Gtk::Paned &paned);
+
 protected:
+    void OnPanedPositionChanged();
+
     void UpdateNewGuild(const GuildData &guild);
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
@@ -33,6 +37,10 @@ protected:
     void UpdateCreateChannel(const ChannelData &channel);
     void UpdateGuild(Snowflake id);
     void DeleteThreadRow(Snowflake id);
+    void OnChannelMute(Snowflake id);
+    void OnChannelUnmute(Snowflake id);
+    void OnGuildMute(Snowflake id);
+    void OnGuildUnmute(Snowflake id);
 
     void OnThreadJoined(Snowflake id);
     void OnThreadRemoved(Snowflake id);
@@ -89,6 +97,8 @@ protected:
     void AddPrivateChannels();
     void UpdateCreateDMChannel(const ChannelData &channel);
 
+    void OnMessageAck(const MessageAckData &data);
+
     void OnMessageCreate(const Message &msg);
     Gtk::TreeModel::Path m_path_for_menu;
 
@@ -99,12 +109,17 @@ protected:
     Gtk::MenuItem m_menu_guild_copy_id;
     Gtk::MenuItem m_menu_guild_settings;
     Gtk::MenuItem m_menu_guild_leave;
+    Gtk::MenuItem m_menu_guild_mark_as_read;
+    Gtk::MenuItem m_menu_guild_toggle_mute;
 
     Gtk::Menu m_menu_category;
     Gtk::MenuItem m_menu_category_copy_id;
+    Gtk::MenuItem m_menu_category_toggle_mute;
 
     Gtk::Menu m_menu_channel;
     Gtk::MenuItem m_menu_channel_copy_id;
+    Gtk::MenuItem m_menu_channel_mark_as_read;
+    Gtk::MenuItem m_menu_channel_toggle_mute;
 
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
@@ -116,9 +131,18 @@ protected:
     Gtk::MenuItem m_menu_thread_archive;
     Gtk::MenuItem m_menu_thread_unarchive;
 
+    void OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
+    void OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
+    void OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 
     bool m_updating_listing = false;
+
+    Snowflake m_active_channel;
+
+    // (GetIteratorForChannelFromID is rather slow)
+    // only temporary since i dont want to worry about maintaining this map
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_channel_map;
 
 public:
     typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;

@@ -1,8 +1,10 @@
+#include "abaddon.hpp"
 #include "discord.hpp"
+#include "util.hpp"
 #include <cassert>
 #include <cinttypes>
-#include "util.hpp"
-#include "abaddon.hpp"
+
+using namespace std::string_literals;
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)
@@ -305,6 +307,10 @@ void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<v
     });
 }
 
+std::vector<Snowflake> DiscordClient::GetChildChannelIDs(Snowflake parent_id) const {
+    return m_store.GetChannelIDsWithParentID(parent_id);
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -325,6 +331,7 @@ bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel
 bool DiscordClient::HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value()) return false;
+    if (channel->IsDM()) return true;
     const auto base = ComputePermissions(user_id, *channel->GuildID);
     const auto overwrites = ComputeOverwrites(base, user_id, channel_id);
     return (overwrites & perm) == perm;
@@ -874,6 +881,108 @@ void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(Discor
     });
 }
 
+void DiscordClient::MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    if (m_unread.find(channel_id) == m_unread.end()) return;
+    const auto iter = m_last_message_id.find(channel_id);
+    if (iter == m_last_message_id.end()) return;
+    m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback) {
+    AckBulkData data;
+    const auto channels = GetChannelsInGuild(guild_id);
+    for (const auto &[unread, mention_count] : m_unread) {
+        if (channels.find(unread) == channels.end()) continue;
+
+        const auto iter = m_last_message_id.find(unread);
+        if (iter == m_last_message_id.end()) continue;
+        auto &e = data.ReadStates.emplace_back();
+        e.ID = unread;
+        e.LastMessageID = iter->second;
+    }
+
+    if (data.ReadStates.empty()) return;
+
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value()) return;
+    const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
+    nlohmann::json j;
+    j["channel_overrides"][std::to_string(channel_id)]["mute_config"] = MuteConfigData { std::nullopt, -1 };
+    j["channel_overrides"][std::to_string(channel_id)]["muted"] = true;
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value()) return;
+    const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
+    nlohmann::json j;
+    j["channel_overrides"][std::to_string(channel_id)]["muted"] = false;
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) {
+    AckBulkData data;
+    for (const auto &[unread, mention_count] : m_unread) {
+        const auto iter = m_last_message_id.find(unread);
+        if (iter == m_last_message_id.end()) continue;
+        auto &e = data.ReadStates.emplace_back();
+        e.ID = unread;
+        e.LastMessageID = iter->second;
+    }
+
+    if (data.ReadStates.empty()) return;
+
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":true})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":false})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
@@ -1058,6 +1167,47 @@ void DiscordClient::UpdateToken(std::string token) {
 void DiscordClient::SetUserAgent(std::string agent) {
     m_http.SetUserAgent(agent);
     m_websocket.SetUserAgent(agent);
+}
+
+bool DiscordClient::IsChannelMuted(Snowflake id) const noexcept {
+    return m_muted_channels.find(id) != m_muted_channels.end();
+}
+
+bool DiscordClient::IsGuildMuted(Snowflake id) const noexcept {
+    return m_muted_guilds.find(id) != m_muted_guilds.end();
+}
+
+int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
+    const auto iter = m_unread.find(id);
+    if (iter == m_unread.end()) return -1; // todo: no magic number (who am i kidding ill never change this)
+    return iter->second;
+}
+
+bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept {
+    total_mentions = 0;
+    bool has_any_unread = false;
+    const auto channels = GetChannelsInGuild(id);
+    for (const auto channel_id : channels) {
+        const auto channel_unread = GetUnreadStateForChannel(channel_id);
+        if (channel_unread > -1)
+            total_mentions += channel_unread;
+
+        // channels under muted categories wont contribute to unread state
+        if (const auto iter = m_channel_muted_parent.find(channel_id); iter != m_channel_muted_parent.end())
+            continue;
+
+        if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
+            has_any_unread = true;
+    }
+    return has_any_unread;
+}
+
+int DiscordClient::GetUnreadDMsCount() const {
+    const auto channels = GetPrivateChannels();
+    int count = 0;
+    for (const auto channel_id : channels)
+        if (GetUnreadStateForChannel(channel_id) > -1) count++;
+    return count;
 }
 
 PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
@@ -1290,6 +1440,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::THREAD_MEMBER_LIST_UPDATE: {
                         HandleGatewayThreadMemberListUpdate(m);
                     } break;
+                    case GatewayEvent::MESSAGE_ACK: {
+                        HandleGatewayMessageAck(m);
+                    } break;
+                    case GatewayEvent::USER_GUILD_SETTINGS_UPDATE: {
+                        HandleGatewayUserGuildSettingsUpdate(m);
+                    } break;
                 }
             } break;
             default:
@@ -1379,6 +1535,7 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_store.BeginTransaction();
 
     for (const auto &dm : data.PrivateChannels) {
+        m_guild_to_channels[Snowflake::Invalid].insert(dm.ID);
         m_store.SetChannel(dm.ID, dm);
         if (dm.Recipients.has_value())
             for (const auto &recipient : *dm.Recipients)
@@ -1411,6 +1568,10 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_session_id = data.SessionID;
     m_user_data = data.SelfUser;
     m_user_settings = data.Settings;
+
+    HandleReadyReadState(data);
+    HandleReadyGuildSettings(data);
+
     m_signal_gateway_ready.emit();
 }
 
@@ -1419,6 +1580,12 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     StoreMessageData(data);
     if (data.GuildID.has_value())
         AddUserToGuild(data.Author.ID, *data.GuildID);
+    m_last_message_id[data.ChannelID] = data.ID;
+    if (data.Author.ID != GetUserData().ID)
+        m_unread[data.ChannelID];
+    if (data.DoesMention(GetUserData().ID)) {
+        m_unread[data.ChannelID]++;
+    }
     m_signal_message_create.emit(data);
 }
 
@@ -1778,6 +1945,77 @@ void DiscordClient::HandleGatewayThreadMemberListUpdate(const GatewayMessage &ms
     m_signal_thread_member_list_update.emit(data);
 }
 
+void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
+    MessageAckData data = msg.Data;
+    m_unread.erase(data.ChannelID);
+    m_signal_message_ack.emit(data);
+}
+
+void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg) {
+    UserGuildSettingsUpdateData data = msg.Data;
+    const bool for_dms = !data.Settings.GuildID.IsValid();
+
+    const auto channels = for_dms ? GetPrivateChannels() : GetChannelsInGuild(data.Settings.GuildID);
+    std::set<Snowflake> now_muted_channels;
+    const auto now = Snowflake::FromNow();
+
+    if (!for_dms) {
+        const bool was_muted = IsGuildMuted(data.Settings.GuildID);
+        bool now_muted = false;
+        if (data.Settings.Muted) {
+            if (data.Settings.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*data.Settings.MuteConfig.EndTime);
+                if (end.IsValid() && end > now)
+                    now_muted = true;
+            } else {
+                now_muted = true;
+            }
+        }
+        if (was_muted && !now_muted) {
+            m_muted_guilds.erase(data.Settings.GuildID);
+            m_signal_guild_unmuted.emit(data.Settings.GuildID);
+        } else if (!was_muted && now_muted) {
+            m_muted_guilds.insert(data.Settings.GuildID);
+            m_signal_guild_muted.emit(data.Settings.GuildID);
+        }
+    }
+
+    for (const auto &override : data.Settings.ChannelOverrides) {
+        if (override.Muted) {
+            if (override.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
+                if (end.IsValid() && end > now)
+                    now_muted_channels.insert(override.ChannelID);
+            } else {
+                now_muted_channels.insert(override.ChannelID);
+            }
+        }
+    }
+    for (const auto &channel_id : channels) {
+        const bool was_muted = IsChannelMuted(channel_id);
+        const bool now_muted = now_muted_channels.find(channel_id) != now_muted_channels.end();
+        if (now_muted) {
+            m_muted_channels.insert(channel_id);
+            if (!was_muted) {
+                if (const auto chan = GetChannel(channel_id); chan.has_value() && chan->IsCategory())
+                    for (const auto child_id : chan->GetChildIDs())
+                        m_channel_muted_parent.insert(child_id);
+
+                m_signal_channel_muted.emit(channel_id);
+            }
+        } else {
+            m_muted_channels.erase(channel_id);
+            if (was_muted) {
+                if (const auto chan = GetChannel(channel_id); chan.has_value() && chan->IsCategory())
+                    for (const auto child_id : chan->GetChildIDs())
+                        m_channel_muted_parent.erase(child_id);
+
+                m_signal_channel_unmuted.emit(channel_id);
+            }
+        }
+    }
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -1953,15 +2191,9 @@ void DiscordClient::AddUserToGuild(Snowflake user_id, Snowflake guild_id) {
 }
 
 std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
-    auto ret = std::set<Snowflake>();
-
-    for (const auto &id : m_store.GetChannels()) {
-        const auto chan = m_store.GetChannel(id);
-        if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
-            ret.insert(id);
-    }
-
-    return ret;
+    if (const auto iter = m_guild_to_channels.find(Snowflake::Invalid); iter != m_guild_to_channels.end())
+        return iter->second;
+    return {};
 }
 
 EPremiumType DiscordClient::GetSelfPremiumType() const {
@@ -2105,6 +2337,95 @@ void DiscordClient::StoreMessageData(Message &msg) {
             StoreMessageData(**msg.ReferencedMessage);
 }
 
+// some notes for myself
+// a read channel is determined by checking if the channel object's last message id is equal to the read state's last message id
+// channels without entries are also unread
+// here the absence of an entry in m_unread indicates a read channel and the value is only the mention count since the message doesnt matter
+// no entry.id cannot be a guild even though sometimes it looks like it
+void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
+    for (const auto &guild : data.Guilds)
+        for (const auto &channel : *guild.Channels)
+            if (channel.LastMessageID.has_value())
+                m_last_message_id[channel.ID] = *channel.LastMessageID;
+    for (const auto &channel : data.PrivateChannels)
+        if (channel.LastMessageID.has_value())
+            m_last_message_id[channel.ID] = *channel.LastMessageID;
+
+    for (const auto &entry : data.ReadState.Entries) {
+        const auto it = m_last_message_id.find(entry.ID);
+        if (it == m_last_message_id.end()) continue;
+        if (it->second > entry.LastMessageID) {
+            if (HasChannelPermission(GetUserData().ID, entry.ID, Permission::VIEW_CHANNEL))
+                m_unread[entry.ID] = entry.MentionCount;
+        }
+    }
+
+    // channels that arent in the read state are considered unread
+    for (const auto &guild : data.Guilds) {
+        if (!guild.JoinedAt.has_value()) continue; // doubt this can happen but whatever
+        const auto joined_at = Snowflake::FromISO8601(*guild.JoinedAt);
+        for (const auto &channel : *guild.Channels) {
+            if (channel.LastMessageID.has_value()) {
+                // unread messages from before you joined dont count as unread
+                if (*channel.LastMessageID < joined_at) continue;
+                if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
+                        return e.ID == id;
+                    }) == data.ReadState.Entries.end()) {
+                    // cant be unread if u cant even see the channel
+                    // better to check here since HasChannelPermission hits the store
+                    if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
+                        m_unread[channel.ID] = 0;
+                }
+            }
+        }
+    }
+}
+
+void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
+    // i dont like this implementation for muted categories but its rather simple and doesnt use a horriiible amount of ram
+
+    std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
+    for (const auto &guild : data.Guilds)
+        for (const auto &channel : *guild.Channels)
+            if (channel.ParentID.has_value() && !channel.IsThread())
+                category_children[*channel.ParentID].push_back(channel.ID);
+
+    const auto now = Snowflake::FromNow();
+    for (const auto &entry : data.GuildSettings.Entries) {
+        // even if muted is true a guild/channel can be unmuted if the current time passes mute_config.end_time
+        if (entry.Muted) {
+            if (entry.MuteConfig.EndTime.has_value()) {
+                const auto end = Snowflake::FromISO8601(*entry.MuteConfig.EndTime);
+                if (end.IsValid() && end > now)
+                    m_muted_guilds.insert(entry.GuildID);
+            } else {
+                m_muted_guilds.insert(entry.GuildID);
+            }
+        }
+        for (const auto &override : entry.ChannelOverrides) {
+            if (override.Muted) {
+                if (const auto iter = category_children.find(override.ChannelID); iter != category_children.end())
+                    for (const auto child : iter->second)
+                        m_channel_muted_parent.insert(child);
+
+                if (override.MuteConfig.EndTime.has_value()) {
+                    const auto end = Snowflake::FromISO8601(*override.MuteConfig.EndTime);
+                    if (end.IsValid() && end > now)
+                        m_muted_channels.insert(override.ChannelID);
+                } else {
+                    m_muted_channels.insert(override.ChannelID);
+                }
+            }
+        }
+    }
+}
+
+void DiscordClient::HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data) {
+    const auto channels = GetPrivateChannels();
+    std::set<Snowflake> now_muted_channels;
+    const auto now = Snowflake::FromNow();
+}
+
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
     m_event_map["MESSAGE_CREATE"] = GatewayEvent::MESSAGE_CREATE;
@@ -2147,6 +2468,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_MEMBER_UPDATE"] = GatewayEvent::THREAD_MEMBER_UPDATE;
     m_event_map["THREAD_UPDATE"] = GatewayEvent::THREAD_UPDATE;
     m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
+    m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
+    m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2309,6 +2632,10 @@ DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_threa
     return m_signal_thread_member_list_update;
 }
 
+DiscordClient::type_signal_message_ack DiscordClient::signal_message_ack() {
+    return m_signal_message_ack;
+}
+
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {
     return m_signal_added_to_thread;
 }
@@ -2319,6 +2646,22 @@ DiscordClient::type_signal_removed_from_thread DiscordClient::signal_removed_fro
 
 DiscordClient::type_signal_message_sent DiscordClient::signal_message_sent() {
     return m_signal_message_sent;
+}
+
+DiscordClient::type_signal_channel_muted DiscordClient::signal_channel_muted() {
+    return m_signal_channel_muted;
+}
+
+DiscordClient::type_signal_channel_unmuted DiscordClient::signal_channel_unmuted() {
+    return m_signal_channel_unmuted;
+}
+
+DiscordClient::type_signal_guild_muted DiscordClient::signal_guild_muted() {
+    return m_signal_guild_muted;
+}
+
+DiscordClient::type_signal_guild_unmuted DiscordClient::signal_guild_unmuted() {
+    return m_signal_guild_unmuted;
 }
 
 DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_fail() {

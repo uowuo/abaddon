@@ -1,18 +1,18 @@
 #include "platform.hpp"
 #include "util.hpp"
-#include <string>
-#include <fstream>
-#include <filesystem>
 #include <config.h>
+#include <filesystem>
+#include <fstream>
+#include <string>
 
 using namespace std::literals::string_literals;
 
-#if defined(_WIN32)
-    #include <Windows.h>
-    #include <Shlwapi.h>
-    #include <ShlObj.h>
+#if defined(_WIN32) && defined(_MSC_VER)
     #include <pango/pangocairo.h>
     #include <pango/pangofc-fontmap.h>
+    #include <ShlObj_core.h>
+    #include <Shlwapi.h>
+    #include <Windows.h>
     #pragma comment(lib, "Shlwapi.lib")
 bool Platform::SetupFonts() {
     using namespace std::string_literals;
@@ -107,17 +107,29 @@ std::string Platform::FindResourceFolder() {
 }
 
 std::string Platform::FindConfigFile() {
-    const auto x = std::getenv("ABADDON_CONFIG");
-    if (x != nullptr)
-        return x;
+    const auto cfg = std::getenv("ABADDON_CONFIG");
+    if (cfg != nullptr) return cfg;
 
-    const auto home_env = std::getenv("HOME");
-    if (home_env != nullptr) {
-        const auto home_path = home_env + "/.config/abaddon/abaddon.ini"s;
-        for (auto path : { "./abaddon.ini"s, home_path }) {
-            if (util::IsFile(path)) return path;
+    // use config present in cwd first
+    if (util::IsFile("./abaddon.ini"))
+        return "./abaddon.ini";
+
+    if (const auto home_env = std::getenv("HOME")) {
+        // use ~/.config if present
+        if (auto home_path = home_env + "/.config/abaddon/abaddon.ini"s; util::IsFile(home_path)) {
+            return home_path;
         }
+
+        // fallback to ~/.config if the directory exists/can be created
+        std::error_code ec;
+        const auto home_path = home_env + "/.config/abaddon"s;
+        if (!util::IsFolder(home_path))
+            std::filesystem::create_directories(home_path, ec);
+        if (util::IsFolder(home_path))
+            return home_path + "/abaddon.ini";
     }
+
+    // fallback to cwd if cant find + cant make in ~/.config
     puts("can't find configuration file!");
     return "./abaddon.ini";
 }

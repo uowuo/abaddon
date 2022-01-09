@@ -212,6 +212,8 @@ struct Message {
     bool IsDeleted() const;
     bool IsEdited() const;
 
+    bool DoesMention(Snowflake id) const noexcept;
+
 private:
     bool m_deleted = false;
     bool m_edited = false;

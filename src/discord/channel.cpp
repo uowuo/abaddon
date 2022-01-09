@@ -78,6 +78,14 @@ bool ChannelData::IsJoinedThread() const {
     return Abaddon::Get().GetDiscordClient().IsThreadJoined(ID);
 }
 
+bool ChannelData::IsCategory() const noexcept {
+    return Type == ChannelType::GUILD_CATEGORY;
+}
+
+std::vector<Snowflake> ChannelData::GetChildIDs() const {
+    return Abaddon::Get().GetDiscordClient().GetChildChannelIDs(ID);
+}
+
 std::optional<PermissionOverwrite> ChannelData::GetOverwrite(Snowflake id) const {
     return Abaddon::Get().GetDiscordClient().GetPermissionOverwrite(ID, id);
 }

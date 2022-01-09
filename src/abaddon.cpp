@@ -411,7 +411,11 @@ void Abaddon::SaveState() {
 }
 
 void Abaddon::LoadState() {
-    if (!GetSettings().SaveState) return;
+    if (!GetSettings().SaveState) {
+        // call with empty data to purge the temporary table
+        m_main_window->GetChannelList()->UseExpansionState({});
+        return;
+    }
 
     const auto data = ReadWholeFile(GetStateCachePath("/state.json"));
     if (data.empty()) return;

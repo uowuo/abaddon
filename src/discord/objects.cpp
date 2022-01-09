@@ -119,6 +119,84 @@ void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
     }
 }
 
+void from_json(const nlohmann::json &j, ReadStateEntry &m) {
+    JS_ON("mention_count", m.MentionCount);
+    JS_ON("last_message_id", m.LastMessageID);
+    JS_D("id", m.ID);
+}
+
+void to_json(nlohmann::json &j, const ReadStateEntry &m) {
+    j["channel_id"] = m.ID;
+    j["message_id"] = m.LastMessageID;
+}
+
+void from_json(const nlohmann::json &j, ReadStateData &m) {
+    JS_ON("version", m.Version);
+    JS_ON("partial", m.IsPartial);
+    JS_ON("entries", m.Entries);
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m) {
+    JS_D("muted", m.Muted);
+    JS_D("message_notifications", m.MessageNotifications);
+    JS_D("collapsed", m.Collapsed);
+    JS_D("channel_id", m.ChannelID);
+    JS_N("mute_config", m.MuteConfig);
+}
+
+void to_json(nlohmann::json &j, const UserGuildSettingsChannelOverride &m) {
+    j["channel_id"] = m.ChannelID;
+    j["collapsed"] = m.Collapsed;
+    j["message_notifications"] = m.MessageNotifications;
+    j["mute_config"] = m.MuteConfig;
+    j["muted"] = m.Muted;
+}
+
+void from_json(const nlohmann::json &j, MuteConfigData &m) {
+    JS_ON("end_time", m.EndTime);
+    JS_D("selected_time_window", m.SelectedTimeWindow);
+}
+
+void to_json(nlohmann::json &j, const MuteConfigData &m) {
+    if (m.EndTime.has_value())
+        j["end_time"] = *m.EndTime;
+    else
+        j["end_time"] = nullptr;
+    j["selected_time_window"] = m.SelectedTimeWindow;
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m) {
+    JS_D("version", m.Version);
+    JS_D("suppress_roles", m.SuppressRoles);
+    JS_D("suppress_everyone", m.SuppressEveryone);
+    JS_D("muted", m.Muted);
+    JS_D("mobile_push", m.MobilePush);
+    JS_D("message_notifications", m.MessageNotifications);
+    JS_D("hide_muted_channels", m.HideMutedChannels);
+    JS_N("guild_id", m.GuildID);
+    JS_D("channel_overrides", m.ChannelOverrides);
+    JS_N("mute_config", m.MuteConfig);
+}
+
+void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m) {
+    j["channel_overrides"] = m.ChannelOverrides;
+    j["guild_id"] = m.GuildID;
+    j["hide_muted_channels"] = m.HideMutedChannels;
+    j["message_notifications"] = m.MessageNotifications;
+    j["mobile_push"] = m.MobilePush;
+    j["mute_config"] = m.MuteConfig;
+    j["muted"] = m.Muted;
+    j["suppress_everyone"] = m.SuppressEveryone;
+    j["suppress_roles"] = m.SuppressRoles;
+    j["version"] = m.Version;
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsData &m) {
+    JS_D("version", m.Version);
+    JS_D("partial", m.IsPartial);
+    JS_D("entries", m.Entries);
+}
+
 void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_D("v", m.GatewayVersion);
     JS_D("user", m.SelfUser);
@@ -132,6 +210,8 @@ void from_json(const nlohmann::json &j, ReadyEventData &m) {
     JS_ON("merged_members", m.MergedMembers);
     JS_O("relationships", m.Relationships);
     JS_O("guild_join_requests", m.GuildJoinRequests);
+    JS_O("read_state", m.ReadState);
+    JS_D("user_guild_settings", m.GuildSettings);
 }
 
 void from_json(const nlohmann::json &j, MergedPresence &m) {
@@ -531,4 +611,18 @@ void from_json(const nlohmann::json &j, ThreadMemberListUpdateData &m) {
 void to_json(nlohmann::json &j, const ModifyChannelObject &m) {
     JS_IF("archived", m.Archived);
     JS_IF("locked", m.Locked);
+}
+
+void from_json(const nlohmann::json &j, MessageAckData &m) {
+    // JS_D("version", m.Version);
+    JS_D("message_id", m.MessageID);
+    JS_D("channel_id", m.ChannelID);
+}
+
+void to_json(nlohmann::json &j, const AckBulkData &m) {
+    j["read_states"] = m.ReadStates;
+}
+
+void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m) {
+    m.Settings = j;
 }

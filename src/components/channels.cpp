@@ -1,21 +1,22 @@
+#include "abaddon.hpp"
 #include "channels.hpp"
+#include "imgmanager.hpp"
+#include "statusindicator.hpp"
+#include "util.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
-#include "abaddon.hpp"
-#include "imgmanager.hpp"
-#include "util.hpp"
-#include "statusindicator.hpp"
 
 ChannelList::ChannelList()
     : Glib::ObjectBase(typeid(ChannelList))
-    , Gtk::ScrolledWindow()
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_menu_guild_copy_id("_Copy ID", true)
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
+    , m_menu_guild_mark_as_read("Mark as _Read", true)
     , m_menu_category_copy_id("_Copy ID", true)
     , m_menu_channel_copy_id("_Copy ID", true)
+    , m_menu_channel_mark_as_read("Mark as _Read", true)
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_thread_copy_id("_Copy ID", true)
@@ -24,6 +25,7 @@ ChannelList::ChannelList()
     , m_menu_thread_unarchive("_Unarchive", true) {
     get_style_context()->add_class("channel-list");
 
+    // todo: move to method
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
         auto row = *m_model->get_iter(path);
         const auto type = row[m_columns.m_type];
@@ -40,7 +42,9 @@ ChannelList::ChannelList()
         }
 
         if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
-            m_signal_action_channel_item_select.emit(static_cast<Snowflake>(row[m_columns.m_id]));
+            const auto id = static_cast<Snowflake>(row[m_columns.m_id]);
+            m_signal_action_channel_item_select.emit(id);
+            Abaddon::Get().GetDiscordClient().MarkChannelAsRead(id, [](...) {});
         }
     };
     m_view.signal_row_activated().connect(cb, false);
@@ -77,6 +81,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_icon(), m_columns.m_icon);
     column->add_attribute(renderer->property_icon_animation(), m_columns.m_icon_anim);
     column->add_attribute(renderer->property_name(), m_columns.m_name);
+    column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
     m_view.append_column(*column);
@@ -90,20 +95,55 @@ ChannelList::ChannelList()
     m_menu_guild_leave.signal_activate().connect([this] {
         m_signal_action_guild_leave.emit(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
-    m_menu_guild.append(m_menu_guild_copy_id);
+    m_menu_guild_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkGuildAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
+    m_menu_guild_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsGuildMuted(id))
+            discord.UnmuteGuild(id, NOOP_CALLBACK);
+        else
+            discord.MuteGuild(id, NOOP_CALLBACK);
+    });
+    m_menu_guild.append(m_menu_guild_mark_as_read);
     m_menu_guild.append(m_menu_guild_settings);
     m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.append(m_menu_guild_toggle_mute);
+    m_menu_guild.append(m_menu_guild_copy_id);
     m_menu_guild.show_all();
 
     m_menu_category_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+    m_menu_category_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsChannelMuted(id))
+            discord.UnmuteChannel(id, NOOP_CALLBACK);
+        else
+            discord.MuteChannel(id, NOOP_CALLBACK);
+    });
+    m_menu_category.append(m_menu_category_toggle_mute);
     m_menu_category.append(m_menu_category_copy_id);
     m_menu_category.show_all();
 
     m_menu_channel_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+    m_menu_channel_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
+    });
+    m_menu_channel_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsChannelMuted(id))
+            discord.UnmuteChannel(id, NOOP_CALLBACK);
+        else
+            discord.MuteChannel(id, NOOP_CALLBACK);
+    });
+    m_menu_channel.append(m_menu_channel_mark_as_read);
+    m_menu_channel.append(m_menu_channel_toggle_mute);
     m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.show_all();
 
@@ -121,8 +161,8 @@ ChannelList::ChannelList()
         else if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this group DM?"))
             Abaddon::Get().GetDiscordClient().CloseDM(id);
     });
-    m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.append(m_menu_dm_close);
+    m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.show_all();
 
     m_menu_thread_copy_id.signal_activate().connect([this] {
@@ -144,6 +184,9 @@ ChannelList::ChannelList()
     m_menu_thread.append(m_menu_thread_unarchive);
     m_menu_thread.show_all();
 
+    m_menu_guild.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnGuildSubmenuPopup));
+    m_menu_category.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnCategorySubmenuPopup));
+    m_menu_channel.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnChannelSubmenuPopup));
     m_menu_thread.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnThreadSubmenuPopup));
 
     auto &discord = Abaddon::Get().GetDiscordClient();
@@ -159,6 +202,19 @@ ChannelList::ChannelList()
     discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
     discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
     discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
+    discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
+    discord.signal_channel_muted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelMute));
+    discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelUnmute));
+    discord.signal_guild_muted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildMute));
+    discord.signal_guild_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildUnmute));
+}
+
+void ChannelList::UsePanedHack(Gtk::Paned &paned) {
+    paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelList::OnPanedPositionChanged));
+}
+
+void ChannelList::OnPanedPositionChanged() {
+    m_view.queue_draw();
 }
 
 void ChannelList::UpdateListing() {
@@ -231,7 +287,6 @@ void ChannelList::UpdateChannel(Snowflake id) {
 }
 
 void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
-    ;
     if (channel.Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(channel);
     if (channel.Type == ChannelType::DM || channel.Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(channel);
     if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS) return;
@@ -347,9 +402,35 @@ void ChannelList::DeleteThreadRow(Snowflake id) {
         m_model->erase(iter);
 }
 
+void ChannelList::OnChannelMute(Snowflake id) {
+    if (auto iter = GetIteratorForChannelFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnChannelUnmute(Snowflake id) {
+    if (auto iter = GetIteratorForChannelFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnGuildMute(Snowflake id) {
+    if (auto iter = GetIteratorForGuildFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
+void ChannelList::OnGuildUnmute(Snowflake id) {
+    if (auto iter = GetIteratorForGuildFromID(id))
+        m_model->row_changed(m_model->get_path(iter), iter);
+}
+
 // create a temporary channel row for non-joined threads
 // and delete them when the active channel switches off of them if still not joined
 void ChannelList::SetActiveChannel(Snowflake id) {
+    // mark channel as read when switching off
+    if (m_active_channel.IsValid())
+        Abaddon::Get().GetDiscordClient().MarkChannelAsRead(m_active_channel, [](...) {});
+
+    m_active_channel = id;
+
     if (m_temporary_thread_row) {
         const auto thread_id = static_cast<Snowflake>((*m_temporary_thread_row)[m_columns.m_id]);
         const auto thread = Abaddon::Get().GetDiscordClient().GetChannel(thread_id);
@@ -378,11 +459,11 @@ void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
     auto recurse = [this](auto &self, const ExpansionStateRoot &root) -> void {
         // and these are only channels
         for (const auto &[id, state] : root.Children) {
-            if (const auto iter = GetIteratorForChannelFromID(id)) {
+            if (const auto iter = m_tmp_channel_map.find(id); iter != m_tmp_channel_map.end()) {
                 if (state.IsExpanded)
-                    m_view.expand_row(m_model->get_path(iter), false);
+                    m_view.expand_row(m_model->get_path(iter->second), false);
                 else
-                    m_view.collapse_row(m_model->get_path(iter));
+                    m_view.collapse_row(m_model->get_path(iter->second));
             }
 
             self(self, state.Children);
@@ -400,6 +481,8 @@ void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
 
         recurse(recurse, state.Children);
     }
+
+    m_tmp_channel_map.clear();
 }
 
 ExpansionStateRoot ChannelList::GetExpansionState() const {
@@ -480,7 +563,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         if (it == threads.end()) return;
 
         for (const auto &thread : it->second)
-            CreateThreadRow(row.children(), thread);
+            m_tmp_channel_map[thread.ID] = CreateThreadRow(row.children(), thread);
     };
 
     for (const auto &channel : orphan_channels) {
@@ -491,6 +574,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
         add_threads(channel, channel_row);
+        m_tmp_channel_map[channel.ID] = channel_row;
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -502,6 +586,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
         cat_row[m_columns.m_sort] = *category->Position;
         cat_row[m_columns.m_expanded] = true;
+        m_tmp_channel_map[category_id] = cat_row;
         // m_view.expand_row wont work because it might not have channels
 
         for (const auto &channel : channels) {
@@ -512,6 +597,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
             add_threads(channel, channel_row);
+            m_tmp_channel_map[channel.ID] = channel_row;
         }
     }
 
@@ -658,7 +744,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
 
     std::optional<UserData> top_recipient;
     const auto recipients = dm.GetDMRecipients();
-    if (recipients.size() > 0)
+    if (!recipients.empty())
         top_recipient = recipients[0];
 
     auto iter = m_model->append(header_row->children());
@@ -682,13 +768,30 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     }
 }
 
+void ChannelList::OnMessageAck(const MessageAckData &data) {
+    // trick renderer into redrawing
+    m_model->row_changed(Gtk::TreeModel::Path("0"), m_model->get_iter("0")); // 0 is always path for dm header
+    auto iter = GetIteratorForChannelFromID(data.ChannelID);
+    if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    auto channel = Abaddon::Get().GetDiscordClient().GetChannel(data.ChannelID);
+    if (channel.has_value() && channel->GuildID.has_value()) {
+        iter = GetIteratorForGuildFromID(*channel->GuildID);
+        if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    }
+}
+
 void ChannelList::OnMessageCreate(const Message &msg) {
+    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
+    if (iter) m_model->row_changed(m_model->get_path(iter), iter); // redraw
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
     if (!channel.has_value()) return;
-    if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM) return;
-    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
-    if (iter)
-        (*iter)[m_columns.m_sort] = -msg.ID;
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) {
+        if (iter)
+            (*iter)[m_columns.m_sort] = -msg.ID;
+    }
+    if (channel->GuildID.has_value())
+        if ((iter = GetIteratorForGuildFromID(*channel->GuildID)))
+            m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
@@ -752,6 +855,36 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
 
     // delete original
     m_model->erase(iter);
+}
+
+void ChannelList::OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    if (Abaddon::Get().GetDiscordClient().IsGuildMuted(id))
+        m_menu_guild_toggle_mute.set_label("Unmute");
+    else
+        m_menu_guild_toggle_mute.set_label("Mute");
+}
+
+void ChannelList::OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(id))
+        m_menu_category_toggle_mute.set_label("Unmute");
+    else
+        m_menu_category_toggle_mute.set_label("Mute");
+}
+
+void ChannelList::OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(id))
+        m_menu_channel_toggle_mute.set_label("Unmute");
+    else
+        m_menu_channel_toggle_mute.set_label("Mute");
 }
 
 void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {

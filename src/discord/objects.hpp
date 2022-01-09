@@ -78,6 +78,8 @@ enum class GatewayEvent : int {
     THREAD_MEMBER_UPDATE,
     THREAD_MEMBERS_UPDATE,
     THREAD_MEMBER_LIST_UPDATE,
+    MESSAGE_ACK,
+    USER_GUILD_SETTINGS_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -224,6 +226,67 @@ struct UpdateStatusMessage {
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
 };
 
+struct ReadStateEntry {
+    int MentionCount;
+    Snowflake LastMessageID;
+    Snowflake ID;
+    // std::string LastPinTimestamp; iso
+
+    friend void from_json(const nlohmann::json &j, ReadStateEntry &m);
+    friend void to_json(nlohmann::json &j, const ReadStateEntry &m);
+};
+
+struct ReadStateData {
+    int Version;
+    bool IsPartial;
+    std::vector<ReadStateEntry> Entries;
+
+    friend void from_json(const nlohmann::json &j, ReadStateData &m);
+};
+
+struct MuteConfigData {
+    std::optional<std::string> EndTime; // nullopt is encoded as null
+    int SelectedTimeWindow;
+
+    friend void from_json(const nlohmann::json &j, MuteConfigData &m);
+    friend void to_json(nlohmann::json &j, const MuteConfigData &m);
+};
+
+struct UserGuildSettingsChannelOverride {
+    bool Muted;
+    MuteConfigData MuteConfig;
+    int MessageNotifications;
+    bool Collapsed;
+    Snowflake ChannelID;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsChannelOverride &m);
+    friend void to_json(nlohmann::json &j, const UserGuildSettingsChannelOverride &m);
+};
+
+struct UserGuildSettingsEntry {
+    int Version;
+    bool SuppressRoles;
+    bool SuppressEveryone;
+    bool Muted;
+    MuteConfigData MuteConfig;
+    bool MobilePush;
+    int MessageNotifications;
+    bool HideMutedChannels;
+    Snowflake GuildID;
+    std::vector<UserGuildSettingsChannelOverride> ChannelOverrides;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m);
+    friend void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m);
+};
+
+struct UserGuildSettingsData {
+    int Version;
+    bool IsPartial;
+    std::vector<UserGuildSettingsEntry> Entries;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsData &m);
+};
+
 struct ReadyEventData {
     int GatewayVersion;
     UserData SelfUser;
@@ -239,6 +302,8 @@ struct ReadyEventData {
     std::optional<std::vector<std::vector<GuildMember>>> MergedMembers;
     std::optional<std::vector<RelationshipData>> Relationships;
     std::optional<std::vector<GuildApplicationData>> GuildJoinRequests;
+    ReadStateData ReadState;
+    UserGuildSettingsData GuildSettings;
     // std::vector<Unknown> ConnectedAccounts; // opt
     // std::map<std::string, Unknown> Consents; // opt
     // std::vector<Unknown> Experiments; // opt
@@ -744,4 +809,24 @@ struct ModifyChannelObject {
     std::optional<bool> Locked;
 
     friend void to_json(nlohmann::json &j, const ModifyChannelObject &m);
+};
+
+struct MessageAckData {
+    // int Version; // what is this ?!?!?!!?
+    Snowflake MessageID;
+    Snowflake ChannelID;
+
+    friend void from_json(const nlohmann::json &j, MessageAckData &m);
+};
+
+struct AckBulkData {
+    std::vector<ReadStateEntry> ReadStates;
+
+    friend void to_json(nlohmann::json &j, const AckBulkData &m);
+};
+
+struct UserGuildSettingsUpdateData {
+    UserGuildSettingsEntry Settings;
+
+    friend void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m);
 };

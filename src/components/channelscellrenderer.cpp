@@ -1,11 +1,19 @@
-#include "channelscellrenderer.hpp"
 #include "abaddon.hpp"
+#include "channelscellrenderer.hpp"
 #include <gtkmm.h>
+
+constexpr static int MentionsRightPad = 7;
+#ifndef M_PI
+constexpr static double M_PI = 3.14159265358979;
+#endif
+constexpr static double M_PI_H = M_PI / 2.0;
+constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))
     , Gtk::CellRenderer()
     , m_property_type(*this, "render-type")
+    , m_property_id(*this, "id")
     , m_property_name(*this, "name")
     , m_property_pixbuf(*this, "pixbuf")
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
@@ -24,6 +32,10 @@ CellRendererChannels::~CellRendererChannels() {
 
 Glib::PropertyProxy<RenderType> CellRendererChannels::property_type() {
     return m_property_type.get_proxy();
+}
+
+Glib::PropertyProxy<uint64_t> CellRendererChannels::property_id() {
+    return m_property_id.get_proxy();
 }
 
 Glib::PropertyProxy<Glib::ustring> CellRendererChannels::property_name() {
@@ -192,7 +204,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     const double icon_w = pixbuf_w;
     const double icon_h = pixbuf_h;
-    const double icon_x = background_area.get_x();
+    const double icon_x = background_area.get_x() + 3;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
     const double text_x = icon_x + icon_w + 5.0;
@@ -232,6 +244,32 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
         Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
         cr->rectangle(icon_x, icon_y, icon_w, icon_h);
         cr->fill();
+    }
+
+    // unread
+
+    const auto id = m_property_id.get_value();
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    int total_mentions;
+    const auto has_unread = discord.GetUnreadStateForGuild(id, total_mentions);
+
+    if (has_unread && !discord.IsGuildMuted(id)) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y + h / 2 - 24 / 2, 3, 24);
+        cr->fill();
+    }
+
+    if (total_mentions < 1) return;
+    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
+
+        unread_render_mentions(cr, widget, total_mentions, edge, background_area);
     }
 }
 
@@ -289,7 +327,11 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    static Gdk::RGBA muted_color("#7f7f7f");
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value()))
+        m_renderer_text.property_foreground_rgba() = muted_color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 }
 
 // text channel
@@ -321,13 +363,51 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto id = m_property_id.get_value();
+    const bool is_muted = discord.IsChannelMuted(id);
+
+    // move to style in msys?
+    static Gdk::RGBA sfw_unmuted("#FFFFFF");
+
     const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
     if (m_property_nsfw.get_value())
         m_renderer_text.property_foreground_rgba() = nsfw_color;
+    else
+        m_renderer_text.property_foreground_rgba() = sfw_unmuted;
+    if (is_muted) {
+        auto col = m_renderer_text.property_foreground_rgba().get_value();
+        col.set_red(col.get_red() * 0.5);
+        col.set_green(col.get_green() * 0.5);
+        col.set_blue(col.get_blue() * 0.5);
+        m_renderer_text.property_foreground_rgba() = col;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    // setting property_foreground_rgba() sets this to true which makes non-nsfw cells use the property too which is bad
-    // so unset it
+    // unset foreground to default so properties dont bleed
     m_renderer_text.property_foreground_set() = false;
+
+    // unread
+
+    const auto unread_state = discord.GetUnreadStateForChannel(id);
+    if (unread_state < 0) return;
+
+    if (!is_muted) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y, 3, h);
+        cr->fill();
+    }
+
+    if (unread_state < 1) return;
+    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), cell_area.get_width());
+
+        unread_render_mentions(cr, widget, unread_state, edge, cell_area);
+    }
 }
 
 // thread
@@ -385,6 +465,13 @@ void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Cont
         cell_area.get_x() + 9, cell_area.get_y(), // maybe theres a better way to align this ?
         cell_area.get_width(), cell_area.get_height());
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
+        if (const auto unread = Abaddon::Get().GetDiscordClient().GetUnreadDMsCount(); unread > 0)
+            unread_render_mentions(cr, widget, unread, edge, background_area);
+    }
 }
 
 // dm (basically the same thing as guild)
@@ -436,19 +523,75 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
 
     const double icon_w = pixbuf->get_width();
     const double icon_h = pixbuf->get_height();
-    const double icon_x = background_area.get_x() + 2;
+    const double icon_x = background_area.get_x() + 3;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
-    const double text_x = icon_x + icon_w + 5.0;
+    const double text_x = icon_x + icon_w + 6.0;
     const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
     const double text_w = text_natural.width;
     const double text_h = text_natural.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto id = m_property_id.get_value();
+    const bool is_muted = discord.IsChannelMuted(id);
+
+    if (is_muted)
+        m_renderer_text.property_foreground() = "#7f7f7f";
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
     cr->rectangle(icon_x, icon_y, icon_w, icon_h);
     cr->fill();
+
+    // unread
+
+    const auto unread_state = discord.GetUnreadStateForChannel(id);
+    if (unread_state < 0) return;
+
+    if (!is_muted) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y, 3, h);
+        cr->fill();
+    }
+}
+
+void CellRendererChannels::cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Context> &cr, double x, double y, double w, double h, double r) {
+    const double degrees = M_PI / 180.0;
+
+    cr->begin_new_sub_path();
+    cr->arc(x + w - r, y + r, r, -M_PI_H, 0);
+    cr->arc(x + w - r, y + h - r, r, 0, M_PI_H);
+    cr->arc(x + r, y + h - r, r, M_PI_H, M_PI);
+    cr->arc(x + r, y + r, r, M_PI, M_PI_3_2);
+    cr->close_path();
+}
+
+void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area) {
+    Pango::FontDescription font;
+    font.set_family("sans 14");
+    //font.set_weight(Pango::WEIGHT_BOLD);
+
+    auto layout = widget.create_pango_layout(std::to_string(mentions));
+    layout->set_font_description(font);
+    layout->set_alignment(Pango::ALIGN_RIGHT);
+
+    int width, height;
+    layout->get_pixel_size(width, height);
+    {
+        const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
+        const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;
+        cairo_path_rounded_rect(cr, x - 4, y + 2, width + 8, height, 5);
+        cr->set_source_rgb(184.0 / 255.0, 37.0 / 255.0, 37.0 / 255.0);
+        cr->fill();
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        cr->move_to(x, y);
+        layout->show_in_cairo_context(cr);
+    }
 }

@@ -10,6 +10,7 @@ struct Snowflake {
     Snowflake(const Glib::ustring &str);
 
     static Snowflake FromNow(); // not thread safe
+    static Snowflake FromISO8601(std::string_view ts);
 
     bool IsValid() const;
     Glib::ustring GetLocalTimestamp() const;
@@ -26,7 +27,7 @@ struct Snowflake {
         return m_num;
     }
 
-    const static Snowflake Invalid;            // makes sense to me
+    const static Snowflake Invalid;                        // makes sense to me
     const static uint64_t SecondsInterval = 4194304000ULL; // the "difference" between two snowflakes one second apart
 
     friend void from_json(const nlohmann::json &j, Snowflake &s);

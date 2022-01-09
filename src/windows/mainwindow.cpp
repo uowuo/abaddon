@@ -5,9 +5,12 @@ MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
     , m_chan_content_paned(Gtk::ORIENTATION_HORIZONTAL)
-    , m_content_members_paned(Gtk::ORIENTATION_HORIZONTAL) {
+    , m_content_members_paned(Gtk::ORIENTATION_HORIZONTAL)
+    , m_accels(Gtk::AccelGroup::create()) {
     set_default_size(1200, 800);
     get_style_context()->add_class("app-window");
+
+    add_accel_group(m_accels);
 
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);
@@ -42,9 +45,14 @@ MainWindow::MainWindow()
     m_menu_view_friends.set_label("Friends");
     m_menu_view_pins.set_label("Pins");
     m_menu_view_threads.set_label("Threads");
+    m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
+    m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_mark_all_as_read.set_label("Mark All as Read");
     m_menu_view_sub.append(m_menu_view_friends);
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
+    m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
+    m_menu_view_sub.append(m_menu_view_mark_all_as_read);
     m_menu_view_sub.signal_popped_up().connect(sigc::mem_fun(*this, &MainWindow::OnViewSubmenuPopup));
 
     m_menu_bar.append(m_menu_file);
@@ -98,6 +106,19 @@ MainWindow::MainWindow()
         m_signal_action_view_threads.emit(GetChatActiveChannel());
     });
 
+    m_menu_view_mark_guild_as_read.signal_activate().connect([this] {
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const auto channel_id = GetChatActiveChannel();
+        const auto channel = discord.GetChannel(channel_id);
+        if (channel.has_value() && channel->GuildID.has_value()) {
+            discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
+        }
+    });
+
+    m_menu_view_mark_all_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkAllAsRead(NOOP_CALLBACK);
+    });
+
     m_content_box.set_hexpand(true);
     m_content_box.set_vexpand(true);
     m_content_box.show();
@@ -138,6 +159,7 @@ MainWindow::MainWindow()
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
     m_content_box.add(m_chan_content_paned);
+    m_channel_list.UsePanedHack(m_chan_content_paned);
 
     m_content_members_paned.pack1(m_content_stack);
     m_content_members_paned.pack2(*member_list);
@@ -246,13 +268,18 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
 }
 
 void MainWindow::OnViewSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
-    m_menu_view_friends.set_sensitive(Abaddon::Get().GetDiscordClient().IsStarted());
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const bool discord_active = discord.IsStarted();
+
+    m_menu_view_friends.set_sensitive(discord_active);
+    m_menu_view_mark_guild_as_read.set_sensitive(discord_active);
+    m_menu_view_mark_all_as_read.set_sensitive(discord_active);
+
     auto channel_id = GetChatActiveChannel();
     m_menu_view_pins.set_sensitive(false);
     m_menu_view_threads.set_sensitive(false);
     if (channel_id.IsValid()) {
-        auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id);
-        if (channel.has_value()) {
+        if (auto channel = discord.GetChannel(channel_id); channel.has_value()) {
             m_menu_view_threads.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->IsThread());
             m_menu_view_pins.set_sensitive(channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM || channel->IsThread());
         }
