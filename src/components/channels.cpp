@@ -770,6 +770,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
 
 void ChannelList::OnMessageAck(const MessageAckData &data) {
     // trick renderer into redrawing
+    m_model->row_changed(Gtk::TreeModel::Path("0"), m_model->get_iter("0")); // 0 is always path for dm header
     auto iter = GetIteratorForChannelFromID(data.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(data.ChannelID);

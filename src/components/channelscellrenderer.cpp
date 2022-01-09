@@ -465,6 +465,13 @@ void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Cont
         cell_area.get_x() + 9, cell_area.get_y(), // maybe theres a better way to align this ?
         cell_area.get_width(), cell_area.get_height());
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
+        if (const auto unread = Abaddon::Get().GetDiscordClient().GetUnreadDMsCount(); unread > 0)
+            unread_render_mentions(cr, widget, unread, edge, background_area);
+    }
 }
 
 // dm (basically the same thing as guild)

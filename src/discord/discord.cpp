@@ -1202,6 +1202,14 @@ bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) co
     return has_any_unread;
 }
 
+int DiscordClient::GetUnreadDMsCount() const {
+    const auto channels = GetPrivateChannels();
+    int count = 0;
+    for (const auto channel_id : channels)
+        if (GetUnreadStateForChannel(channel_id) > -1) count++;
+    return count;
+}
+
 PresenceStatus DiscordClient::GetUserStatus(Snowflake id) const {
     auto it = m_user_to_status.find(id);
     if (it != m_user_to_status.end())
