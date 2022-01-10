@@ -576,7 +576,7 @@ void CellRendererChannels::cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Co
 void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area) {
     Pango::FontDescription font;
     font.set_family("sans 14");
-    //font.set_weight(Pango::WEIGHT_BOLD);
+    // font.set_weight(Pango::WEIGHT_BOLD);
 
     auto layout = widget.create_pango_layout(std::to_string(mentions));
     layout->set_font_description(font);

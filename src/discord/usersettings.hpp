@@ -6,7 +6,7 @@
 struct UserSettingsGuildFoldersEntry {
     int Color = -1; // null
     std::vector<Snowflake> GuildIDs;
-    Snowflake ID; // null (this can be a snowflake as a string or an int that isnt a snowflake lol)
+    Snowflake ID;     // null (this can be a snowflake as a string or an int that isnt a snowflake lol)
     std::string Name; // null
 
     friend void from_json(const nlohmann::json &j, UserSettingsGuildFoldersEntry &m);
@@ -19,16 +19,16 @@ struct UserSettings {
     std::string Status;                 //
     bool ShouldShowCurrentGame;         //
     // std::vector<Unknown> RestrictedGuilds; //
-    bool ShouldRenderReactions;            //
-    bool ShouldRenderEmbeds;               //
-    bool IsNativePhoneIntegrationEnabled;  //
-    bool ShouldMessageDisplayCompact;      //
-    std::string Locale;                    //
-    bool ShouldInlineEmbedMedia;           //
-    bool ShouldInlineAttachmentMedia;      //
-    std::vector<Snowflake> GuildPositions; // deprecated?
+    bool ShouldRenderReactions;                              //
+    bool ShouldRenderEmbeds;                                 //
+    bool IsNativePhoneIntegrationEnabled;                    //
+    bool ShouldMessageDisplayCompact;                        //
+    std::string Locale;                                      //
+    bool ShouldInlineEmbedMedia;                             //
+    bool ShouldInlineAttachmentMedia;                        //
+    std::vector<Snowflake> GuildPositions;                   // deprecated?
     std::vector<UserSettingsGuildFoldersEntry> GuildFolders; //
-    bool ShouldGIFAutoplay; //
+    bool ShouldGIFAutoplay;                                  //
     // Unknown FriendSourceFlags; //
     int ExplicitContentFilter;         //
     bool IsTTSCommandEnabled;          //

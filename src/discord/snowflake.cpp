@@ -2,8 +2,8 @@
 #include "util.hpp"
 #include <chrono>
 #include <ctime>
-#include <iomanip>
 #include <glibmm.h>
+#include <iomanip>
 
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 

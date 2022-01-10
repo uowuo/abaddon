@@ -99,7 +99,7 @@ void request::prepare() {
 namespace detail {
     size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
         const size_t n = size * nmemb;
-        static_cast<std::string*>(userdata)->append(static_cast<char*>(ptr), n);
+        static_cast<std::string *>(userdata)->append(static_cast<char *>(ptr), n);
         return n;
     }
 

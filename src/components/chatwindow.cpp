@@ -88,7 +88,7 @@ ChatWindow::ChatWindow() {
 
     m_meta->add(*m_input_indicator);
     m_meta->add(*m_rate_limit_indicator);
-    //m_scroll->add(*m_list);
+    // m_scroll->add(*m_list);
     m_main->add(m_topic);
     m_main->add(*m_chat);
     m_main->add(m_completer);

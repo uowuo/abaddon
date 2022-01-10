@@ -1,6 +1,6 @@
 #include "token.hpp"
 
-std::string trim(const std::string& str) {
+std::string trim(const std::string &str) {
     const auto first = str.find_first_not_of(' ');
     if (first == std::string::npos) return str;
     const auto last = str.find_last_not_of(' ');

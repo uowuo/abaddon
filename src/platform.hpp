@@ -6,4 +6,4 @@ bool SetupFonts();
 std::string FindResourceFolder();
 std::string FindConfigFile();
 std::string FindStateCacheFolder();
-}
+} // namespace Platform

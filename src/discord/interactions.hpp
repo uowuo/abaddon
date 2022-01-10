@@ -14,10 +14,10 @@ enum class InteractionType {
 };
 
 struct MessageInteractionData {
-    Snowflake ID;                      // id of the interaction
-    InteractionType Type;              // the type of interaction
-    std::string Name;                  // the name of the ApplicationCommand
-    UserData User;                     // the user who invoked the interaction
+    Snowflake ID;         // id of the interaction
+    InteractionType Type; // the type of interaction
+    std::string Name;     // the name of the ApplicationCommand
+    UserData User;        // the user who invoked the interaction
     // undocumented???
     std::optional<GuildMember> Member; // the member who invoked the interaction (in a guild)
 

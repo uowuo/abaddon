@@ -47,8 +47,8 @@ protected:
     void OnMessageSendFail(const std::string &nonce, float retry_after);
 
     Gtk::Box *m_main;
-    //Gtk::ListBox *m_list;
-    //Gtk::ScrolledWindow *m_scroll;
+    // Gtk::ListBox *m_list;
+    // Gtk::ScrolledWindow *m_scroll;
 
     Gtk::EventBox m_topic; // todo probably make everything else go on the stack
     Gtk::Label m_topic_text;

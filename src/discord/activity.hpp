@@ -26,7 +26,7 @@ constexpr inline const char *GetPresenceString(PresenceStatus s) {
     return "";
 }
 
-constexpr inline const char* GetPresenceDisplayString(PresenceStatus s) {
+constexpr inline const char *GetPresenceDisplayString(PresenceStatus s) {
     switch (s) {
         case PresenceStatus::Online:
             return "Online";
