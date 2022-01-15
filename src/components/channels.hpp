@@ -124,6 +124,7 @@ protected:
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
+    Gtk::MenuItem m_menu_dm_toggle_mute;
 
     Gtk::Menu m_menu_thread;
     Gtk::MenuItem m_menu_thread_copy_id;
@@ -134,6 +135,7 @@ protected:
     void OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
+    void OnDMSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
 
     bool m_updating_listing = false;
