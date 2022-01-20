@@ -131,6 +131,8 @@ protected:
     Gtk::MenuItem m_menu_thread_leave;
     Gtk::MenuItem m_menu_thread_archive;
     Gtk::MenuItem m_menu_thread_unarchive;
+    Gtk::MenuItem m_menu_thread_mark_as_read;
+    Gtk::MenuItem m_menu_thread_toggle_mute;
 
     void OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
     void OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);

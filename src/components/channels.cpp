@@ -22,7 +22,8 @@ ChannelList::ChannelList()
     , m_menu_thread_copy_id("_Copy ID", true)
     , m_menu_thread_leave("_Leave", true)
     , m_menu_thread_archive("_Archive", true)
-    , m_menu_thread_unarchive("_Unarchive", true) {
+    , m_menu_thread_unarchive("_Unarchive", true)
+    , m_menu_thread_mark_as_read("Mark as _Read", true) {
     get_style_context()->add_class("channel-list");
 
     // todo: move to method
@@ -187,10 +188,23 @@ ChannelList::ChannelList()
     m_menu_thread_unarchive.signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().UnArchiveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), [](...) {});
     });
-    m_menu_thread.append(m_menu_thread_copy_id);
+    m_menu_thread_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), NOOP_CALLBACK);
+    });
+    m_menu_thread_toggle_mute.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsChannelMuted(id))
+            discord.UnmuteThread(id, NOOP_CALLBACK);
+        else
+            discord.MuteThread(id, NOOP_CALLBACK);
+    });
+    m_menu_thread.append(m_menu_thread_mark_as_read);
+    m_menu_thread.append(m_menu_thread_toggle_mute);
     m_menu_thread.append(m_menu_thread_leave);
     m_menu_thread.append(m_menu_thread_archive);
     m_menu_thread.append(m_menu_thread_unarchive);
+    m_menu_thread.append(m_menu_thread_copy_id);
     m_menu_thread.show_all();
 
     m_menu_guild.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnGuildSubmenuPopup));
@@ -914,7 +928,14 @@ void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
-    auto channel = discord.GetChannel(static_cast<Snowflake>((*iter)[m_columns.m_id]));
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+
+    if (discord.IsChannelMuted(id))
+        m_menu_thread_toggle_mute.set_label("Unmute");
+    else
+        m_menu_thread_toggle_mute.set_label("Mute");
+
+    auto channel = discord.GetChannel(id);
     if (!channel.has_value() || !channel->ThreadMetadata.has_value()) return;
     if (!discord.HasGuildPermission(discord.GetUserData().ID, *channel->GuildID, Permission::MANAGE_THREADS)) return;
 
