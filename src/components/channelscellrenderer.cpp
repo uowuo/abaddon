@@ -438,7 +438,39 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     const int text_h = natural_size.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto id = m_property_id.get_value();
+    const bool is_muted = discord.IsChannelMuted(id);
+
+    static Gdk::RGBA muted_color("#7f7f7f");
+    if (discord.IsChannelMuted(m_property_id.get_value()))
+        m_renderer_text.property_foreground_rgba() = muted_color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
+
+    // unread
+
+    const auto unread_state = discord.GetUnreadStateForChannel(id);
+    if (unread_state < 0) return;
+
+    if (!is_muted) {
+        cr->set_source_rgb(1.0, 1.0, 1.0);
+        const auto x = background_area.get_x();
+        const auto y = background_area.get_y();
+        const auto w = background_area.get_width();
+        const auto h = background_area.get_height();
+        cr->rectangle(x, y, 3, h);
+        cr->fill();
+    }
+
+    if (unread_state < 1) return;
+    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), cell_area.get_width());
+
+        unread_render_mentions(cr, widget, unread_state, edge, cell_area);
+    }
 }
 
 // dm header

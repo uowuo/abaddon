@@ -2343,10 +2343,14 @@ void DiscordClient::StoreMessageData(Message &msg) {
 // here the absence of an entry in m_unread indicates a read channel and the value is only the mention count since the message doesnt matter
 // no entry.id cannot be a guild even though sometimes it looks like it
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
-    for (const auto &guild : data.Guilds)
+    for (const auto &guild : data.Guilds) {
         for (const auto &channel : *guild.Channels)
             if (channel.LastMessageID.has_value())
                 m_last_message_id[channel.ID] = *channel.LastMessageID;
+        for (const auto &thread : *guild.Threads)
+            if (thread.LastMessageID.has_value())
+                m_last_message_id[thread.ID] = *thread.LastMessageID;
+    }
     for (const auto &channel : data.PrivateChannels)
         if (channel.LastMessageID.has_value())
             m_last_message_id[channel.ID] = *channel.LastMessageID;
