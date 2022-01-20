@@ -13,6 +13,8 @@ void from_json(const nlohmann::json &j, ThreadMemberObject &m) {
     JS_O("user_id", m.UserID);
     JS_D("join_timestamp", m.JoinTimestamp);
     JS_D("flags", m.Flags);
+    JS_O("muted", m.IsMuted);
+    JS_ON("mute_config", m.MuteConfig);
 }
 
 void from_json(const nlohmann::json &j, ChannelData &m) {

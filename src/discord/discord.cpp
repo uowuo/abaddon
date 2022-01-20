@@ -2389,10 +2389,14 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
     // i dont like this implementation for muted categories but its rather simple and doesnt use a horriiible amount of ram
 
     std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
-    for (const auto &guild : data.Guilds)
+    for (const auto &guild : data.Guilds) {
         for (const auto &channel : *guild.Channels)
             if (channel.ParentID.has_value() && !channel.IsThread())
                 category_children[*channel.ParentID].push_back(channel.ID);
+        for (const auto &thread : *guild.Threads)
+            if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
+                m_muted_channels.insert(thread.ID);
+    }
 
     const auto now = Snowflake::FromNow();
     for (const auto &entry : data.GuildSettings.Entries) {

@@ -244,14 +244,6 @@ struct ReadStateData {
     friend void from_json(const nlohmann::json &j, ReadStateData &m);
 };
 
-struct MuteConfigData {
-    std::optional<std::string> EndTime; // nullopt is encoded as null
-    int SelectedTimeWindow;
-
-    friend void from_json(const nlohmann::json &j, MuteConfigData &m);
-    friend void to_json(nlohmann::json &j, const MuteConfigData &m);
-};
-
 struct UserGuildSettingsChannelOverride {
     bool Muted;
     MuteConfigData MuteConfig;
