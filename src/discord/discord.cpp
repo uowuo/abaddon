@@ -1921,9 +1921,24 @@ void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) 
 
 void DiscordClient::HandleGatewayThreadMemberUpdate(const GatewayMessage &msg) {
     ThreadMemberUpdateData data = msg.Data;
+    if (!data.Member.ThreadID.has_value()) return;
+
     m_joined_threads.insert(*data.Member.ThreadID);
     if (*data.Member.UserID == GetUserData().ID)
         m_signal_added_to_thread.emit(*data.Member.ThreadID);
+
+    if (data.Member.IsMuted.has_value()) {
+        const bool was_muted = IsChannelMuted(*data.Member.ThreadID);
+        const bool now_muted = *data.Member.IsMuted;
+
+        if (was_muted && !now_muted) {
+            m_muted_channels.erase(*data.Member.ThreadID);
+            m_signal_channel_unmuted.emit(*data.Member.ThreadID);
+        } else if (!was_muted && now_muted) {
+            m_muted_channels.insert(*data.Member.ThreadID);
+            m_signal_channel_muted.emit(*data.Member.ThreadID);
+        }
+    }
 }
 
 void DiscordClient::HandleGatewayThreadUpdate(const GatewayMessage &msg) {
