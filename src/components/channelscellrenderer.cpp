@@ -214,6 +214,8 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
+    m_renderer_text.property_foreground_rgba() = color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
     const bool hover_only = Abaddon::Get().GetSettings().AnimatedGuildHoverOnly;
@@ -327,9 +329,16 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
-    static Gdk::RGBA muted_color("#7f7f7f");
-    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value()))
-        m_renderer_text.property_foreground_rgba() = muted_color;
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value())) {
+        auto muted = color;
+        muted.set_red(muted.get_red() * 0.5);
+        muted.set_green(muted.get_green() * 0.5);
+        muted.set_blue(muted.get_blue() * 0.5);
+        m_renderer_text.property_foreground_rgba() = muted;
+    } else {
+        m_renderer_text.property_foreground_rgba() = color;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
 }
@@ -367,10 +376,10 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    // move to style in msys?
-    static Gdk::RGBA sfw_unmuted("#FFFFFF");
+    static const auto sfw_unmuted = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
 
-    const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
+    m_renderer_text.property_sensitive() = false;
+    static const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
     if (m_property_nsfw.get_value())
         m_renderer_text.property_foreground_rgba() = nsfw_color;
     else
@@ -443,9 +452,16 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    static Gdk::RGBA muted_color("#7f7f7f");
-    if (discord.IsChannelMuted(m_property_id.get_value()))
-        m_renderer_text.property_foreground_rgba() = muted_color;
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value())) {
+        auto muted = color;
+        muted.set_red(muted.get_red() * 0.5);
+        muted.set_green(muted.get_green() * 0.5);
+        muted.set_blue(muted.get_blue() * 0.5);
+        m_renderer_text.property_foreground_rgba() = muted;
+    } else {
+        m_renderer_text.property_foreground_rgba() = color;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
 
@@ -569,8 +585,16 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    if (is_muted)
-        m_renderer_text.property_foreground() = "#7f7f7f";
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
+    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value())) {
+        auto muted = color;
+        muted.set_red(muted.get_red() * 0.5);
+        muted.set_green(muted.get_green() * 0.5);
+        muted.set_blue(muted.get_blue() * 0.5);
+        m_renderer_text.property_foreground_rgba() = muted;
+    } else {
+        m_renderer_text.property_foreground_rgba() = color;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
 
@@ -617,12 +641,15 @@ void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Con
     int width, height;
     layout->get_pixel_size(width, height);
     {
+        static const auto bg = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeColor);
+        static const auto text = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeTextColor);
+
         const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
         const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;
         cairo_path_rounded_rect(cr, x - 4, y + 2, width + 8, height, 5);
-        cr->set_source_rgb(184.0 / 255.0, 37.0 / 255.0, 37.0 / 255.0);
+        cr->set_source_rgb(bg.get_red(), bg.get_green(), bg.get_blue());
         cr->fill();
-        cr->set_source_rgb(1.0, 1.0, 1.0);
+        cr->set_source_rgb(text.get_red(), text.get_green(), text.get_blue());
         cr->move_to(x, y);
         layout->show_in_cairo_context(cr);
     }

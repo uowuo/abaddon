@@ -52,6 +52,9 @@ void SettingsManager::ReadSettings() {
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
     SMSTR("style", "linkcolor", LinkColor);
     SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
+    SMSTR("style", "channelcolor", ChannelColor);
+    SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
+    SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
 
 #undef SMBOOL
 #undef SMSTR
@@ -100,6 +103,9 @@ void SettingsManager::Close() {
         SMSTR("style", "expandercolor", ChannelsExpanderColor);
         SMSTR("style", "linkcolor", LinkColor);
         SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
+        SMSTR("style", "channelcolor", ChannelColor);
+        SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
+        SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
 
 #undef SMSTR
 #undef SMBOOL
