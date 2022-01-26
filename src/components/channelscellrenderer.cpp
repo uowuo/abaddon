@@ -249,6 +249,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     }
 
     // unread
+    if (!Abaddon::Get().GetSettings().Unreads) return;
 
     const auto id = m_property_id.get_value();
 
@@ -396,6 +397,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     m_renderer_text.property_foreground_set() = false;
 
     // unread
+    if (!Abaddon::Get().GetSettings().Unreads) return;
 
     const auto unread_state = discord.GetUnreadStateForChannel(id);
     if (unread_state < 0) return;
@@ -466,6 +468,7 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     m_renderer_text.property_foreground_set() = false;
 
     // unread
+    if (!Abaddon::Get().GetSettings().Unreads) return;
 
     const auto unread_state = discord.GetUnreadStateForChannel(id);
     if (unread_state < 0) return;
@@ -513,6 +516,8 @@ void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Cont
         cell_area.get_x() + 9, cell_area.get_y(), // maybe theres a better way to align this ?
         cell_area.get_width(), cell_area.get_height());
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    if (!Abaddon::Get().GetSettings().Unreads) return;
 
     auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
@@ -603,6 +608,7 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     cr->fill();
 
     // unread
+    if (!Abaddon::Get().GetSettings().Unreads) return;
 
     const auto unread_state = discord.GetUnreadStateForChannel(id);
     if (unread_state < 0) return;

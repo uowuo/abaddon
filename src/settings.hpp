@@ -26,6 +26,7 @@ public:
 #else
         bool ShowStockEmojis { true };
 #endif
+        bool Unreads { true };
 
         // [http]
         int CacheHTTPConcurrency { 20 };
