@@ -1224,7 +1224,7 @@ int DiscordClient::GetUnreadDMsCount() const {
     const auto channels = GetPrivateChannels();
     int count = 0;
     for (const auto channel_id : channels)
-        if (GetUnreadStateForChannel(channel_id) > -1) count++;
+        if (!IsChannelMuted(channel_id) && GetUnreadStateForChannel(channel_id) > -1) count++;
     return count;
 }
 
