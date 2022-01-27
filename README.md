@@ -12,6 +12,7 @@ Current features:
 * Completely styleable/customizable with CSS (if you have a system GTK theme it won't really use it though)
 * Identifies to Discord as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
 * Set status
+* Unread and mention indicators
 * Start new DMs and group DMs
 * View user profiles (notes, mutual servers, mutual friends)
 * Kick, ban, and unban members
@@ -79,7 +80,6 @@ On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/
 
 ### TODO:
 * Voice support
-* Unread indicators
 * User activities
 * Nicknames
 * More server management stuff
@@ -204,11 +204,15 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * animations (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used
 * animated_guild_hover_only (true or false, default true) - only animate guild icons when the guild is being hovered over
 * owner_crown (true or false, default true) - show a crown next to the owner
+* unreads (true or false, default true) - show unread indicators and mention badges
 
 #### style
 * linkcolor (string) - color to use for links in messages
 * expandercolor (string) - color to use for the expander in the channel list
 * nsfwchannelcolor (string) - color to use for NSFW channels in the channel list
+* channelcolor (string) - color to use for SFW channels in the channel list
+* mentionbadgecolor (string) - background color for mention badges
+* mentionbadgetextcolor (string) - color to use for number displayed on mention badges
 
 ### Environment variables
 
