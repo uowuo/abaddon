@@ -40,6 +40,7 @@ public:
         std::string ChannelColor { "#fbfbfb" };
         std::string MentionBadgeColor { "#b82525" };
         std::string MentionBadgeTextColor { "#fbfbfb" };
+        std::string UnreadIndicatorColor { "#ffffff" };
     };
 
     SettingsManager(const std::string &filename);

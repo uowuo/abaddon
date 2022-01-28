@@ -213,6 +213,7 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * channelcolor (string) - color to use for SFW channels in the channel list
 * mentionbadgecolor (string) - background color for mention badges
 * mentionbadgetextcolor (string) - color to use for number displayed on mention badges
+* unreadcolor (string) - color to use for the unread indicator
 
 ### Environment variables
 

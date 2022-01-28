@@ -56,6 +56,7 @@ void SettingsManager::ReadSettings() {
     SMSTR("style", "channelcolor", ChannelColor);
     SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
     SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
+    SMSTR("style", "unreadcolor", UnreadIndicatorColor);
 
 #undef SMBOOL
 #undef SMSTR
@@ -108,6 +109,7 @@ void SettingsManager::Close() {
         SMSTR("style", "channelcolor", ChannelColor);
         SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
         SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
+        SMSTR("style", "unreadcolor", UnreadIndicatorColor);
 
 #undef SMSTR
 #undef SMBOOL

@@ -258,7 +258,8 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     const auto has_unread = discord.GetUnreadStateForGuild(id, total_mentions);
 
     if (has_unread && !discord.IsGuildMuted(id)) {
-        cr->set_source_rgb(1.0, 1.0, 1.0);
+        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
         const auto w = background_area.get_width();
@@ -403,7 +404,8 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        cr->set_source_rgb(1.0, 1.0, 1.0);
+        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
         const auto w = background_area.get_width();
@@ -474,7 +476,8 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        cr->set_source_rgb(1.0, 1.0, 1.0);
+        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
         const auto w = background_area.get_width();
@@ -614,7 +617,8 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        cr->set_source_rgb(1.0, 1.0, 1.0);
+        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
         const auto x = background_area.get_x();
         const auto y = background_area.get_y();
         const auto w = background_area.get_width();
