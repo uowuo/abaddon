@@ -154,7 +154,7 @@ void to_json(nlohmann::json &j, const UserGuildSettingsChannelOverride &m) {
 
 void from_json(const nlohmann::json &j, MuteConfigData &m) {
     JS_ON("end_time", m.EndTime);
-    JS_D("selected_time_window", m.SelectedTimeWindow);
+    JS_ON("selected_time_window", m.SelectedTimeWindow);
 }
 
 void to_json(nlohmann::json &j, const MuteConfigData &m) {
