@@ -99,6 +99,8 @@ struct ChannelData {
     bool IsThread() const noexcept;
     bool IsJoinedThread() const;
     bool IsCategory() const noexcept;
+    bool HasIcon() const noexcept;
+    std::string GetIconURL() const;
     std::vector<Snowflake> GetChildIDs() const;
     std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
     std::vector<UserData> GetDMRecipients() const;

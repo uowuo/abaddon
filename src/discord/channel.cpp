@@ -84,6 +84,14 @@ bool ChannelData::IsCategory() const noexcept {
     return Type == ChannelType::GUILD_CATEGORY;
 }
 
+bool ChannelData::HasIcon() const noexcept {
+    return Icon.has_value();
+}
+
+std::string ChannelData::GetIconURL() const {
+    return "https://cdn.discordapp.com/channel-icons/" + std::to_string(ID) + "/" + *Icon + ".png";
+}
+
 std::vector<Snowflake> ChannelData::GetChildIDs() const {
     return Abaddon::Get().GetDiscordClient().GetChildChannelIDs(ID);
 }

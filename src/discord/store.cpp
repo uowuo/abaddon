@@ -646,6 +646,7 @@ std::optional<ChannelData> Store::GetChannel(Snowflake id) const {
     s->Get(6, r.IsNSFW);
     s->Get(7, r.LastMessageID);
     s->Get(10, r.RateLimitPerUser);
+    s->Get(11, r.Icon);
     s->Get(12, r.OwnerID);
     s->Get(14, r.ParentID);
     if (!s->IsNull(16)) {

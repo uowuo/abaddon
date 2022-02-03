@@ -752,7 +752,13 @@ void ChannelList::AddPrivateChannels() {
         else if (dm->Type == ChannelType::GROUP_DM)
             row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
 
-        if (top_recipient.has_value()) {
+        if (dm->HasIcon()) {
+            const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+                if (iter)
+                    (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+            };
+            img.LoadFromURL(dm->GetIconURL(), sigc::track_obj(cb, *this));
+        } else if (top_recipient.has_value()) {
             const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
                 if (iter)
                     (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
