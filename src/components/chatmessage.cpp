@@ -44,17 +44,21 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
         }
     }
 
-    // there should only ever be 1 embed (i think?)
-    if (data.Embeds.size() == 1) {
-        const auto &embed = data.Embeds[0];
-        if (IsEmbedImageOnly(embed)) {
-            auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
-            container->AttachEventHandlers(*widget);
-            container->m_main.add(*widget);
-        } else {
-            container->m_embed_component = container->CreateEmbedComponent(embed);
-            container->AttachEventHandlers(*container->m_embed_component);
-            container->m_main.add(*container->m_embed_component);
+    if (!data.Embeds.empty()) {
+        // todo refactor (all of) this lol
+        auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+        container->m_embed_component = box;
+        container->m_main.add(*container->m_embed_component);
+        for (const auto &embed : data.Embeds) {
+            if (IsEmbedImageOnly(embed)) {
+                auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
+                container->AttachEventHandlers(*widget);
+                container->m_main.add(*widget);
+            } else {
+                auto *widget = container->CreateEmbedComponent(embed);
+                container->AttachEventHandlers(*widget);
+                box->add(*widget);
+            }
         }
     }
 
