@@ -43,8 +43,8 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 #### Mac:
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
 2. `brew install gtkmm3 nlohmann-json`
-3. `mkdir build && cd build`
-4. `git submodule init && git submodule update subprojects`
+3. `git submodule init && git submodule update subprojects`
+4. `mkdir build && cd build`
 5. `cmake ..`
 6. `make`
 
