@@ -44,8 +44,9 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
 2. `brew install gtkmm3 nlohmann-json`
 3. `mkdir build && cd build`
-4. `cmake ..`
-5. `make`
+4. `git submodule init && git submodule update subprojects`
+5. `cmake ..`
+6. `make`
 
 #### Linux:
 1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`, and [nlohmann-json](https://github.com/nlohmann/json)
