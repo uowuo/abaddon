@@ -48,6 +48,14 @@ Or, do steps 1 and 2, and open CMakeLists.txt in Visual Studio if `vcpkg integra
 5. `cmake ..`
 6. `make`
 
+If you encounter this error:
+`/usr/local/Cellar/cairo/1.16.0_5/include/cairo/cairo-ft.h:50:10: fatal error: 'fontconfig/fontconfig.h' file not found
+#include <fontconfig/fontconfig.h>
+^~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.`
+
+then add [this](https://github.com/tgoyne/fontconfig/blob/master/fontconfig/fontconfig.h) file to the same folder as the location of the folder that had the error or that required fontconfig and change line 50 of the `cairo-ft.h` file from `#include <fontconfig/fontconfig.h>` to `#include 'fontconfig.h'
+
 #### Linux:
 1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`, and [nlohmann-json](https://github.com/nlohmann/json)
 2. `git clone https://github.com/uowuo/abaddon && cd abaddon`
