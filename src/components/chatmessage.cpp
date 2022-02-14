@@ -1,7 +1,7 @@
-#include "chatmessage.hpp"
 #include "abaddon.hpp"
-#include "util.hpp"
+#include "chatmessage.hpp"
 #include "lazyimage.hpp"
+#include "util.hpp"
 #include <unordered_map>
 
 constexpr static int EmojiSize = 24; // settings eventually
@@ -1068,11 +1068,11 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     };
     img.LoadFromURL(author->GetAvatarURL(data.GuildID), sigc::track_obj(cb, *this));
 
-    if (author->HasAnimatedAvatar()) {
+    if (author->HasAnimatedAvatar(data.GuildID)) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             m_anim_avatar = pb;
         };
-        img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::track_obj(cb, *this));
+        img.LoadAnimationFromURL(author->GetAvatarURL(data.GuildID, "gif"), AvatarSize, AvatarSize, sigc::track_obj(cb, *this));
     }
 
     get_style_context()->add_class("message-container");

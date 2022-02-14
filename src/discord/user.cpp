@@ -6,22 +6,41 @@ bool UserData::IsDeleted() const {
 }
 
 bool UserData::HasAvatar() const {
-    return Avatar.size() > 0;
+    return !Avatar.empty();
 }
 
-bool UserData::HasAnimatedAvatar() const {
-    return Avatar.size() > 0 && Avatar[0] == 'a' && Avatar[1] == '_';
+bool UserData::HasAnimatedAvatar() const noexcept {
+    return !Avatar.empty() && Avatar[0] == 'a' && Avatar[1] == '_';
+}
+
+bool UserData::HasAnimatedAvatar(Snowflake guild_id) const {
+    const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
+    if (member.has_value() && member->Avatar.has_value() && member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_')
+        return true;
+    else if (!member->Avatar.has_value())
+        return HasAnimatedAvatar();
+    return false;
+}
+
+bool UserData::HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const {
+    if (guild_id.has_value())
+        return HasAnimatedAvatar(*guild_id);
+    else
+        return HasAnimatedAvatar();
 }
 
 std::string UserData::GetAvatarURL(Snowflake guild_id, std::string ext, std::string size) const {
     const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
-    if (member.has_value() && member->Avatar.has_value())
+    if (member.has_value() && member->Avatar.has_value()) {
+        if (ext == "gif" && !(member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_'))
+            return GetAvatarURL(ext, size);
         return "https://cdn.discordapp.com/guilds/" +
                std::to_string(guild_id) + "/users/" + std::to_string(ID) +
                "/avatars/" + *member->Avatar + "." +
                ext + "?" + "size=" + size;
-    else
+    } else {
         return GetAvatarURL(ext, size);
+    }
 }
 
 std::string UserData::GetAvatarURL(const std::optional<Snowflake> &guild_id, std::string ext, std::string size) const {
