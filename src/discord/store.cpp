@@ -13,18 +13,6 @@ Store::Store(bool mem_store)
         return;
     }
 
-    m_db.Execute(R"(
-        PRAGMA writable_schema = 1;
-        DELETE FROM sqlite_master WHERE TYPE IN ("view", "table", "index", "trigger");
-        PRAGMA writable_schema = 0;
-        VACUUM;
-        PRAGMA integrity_check;
-    )");
-    if (!m_db.OK()) {
-        fprintf(stderr, "failed to clear database: %s\n", m_db.ErrStr());
-        return;
-    }
-
     if (m_db.Execute("PRAGMA journal_mode = WAL") != SQLITE_OK) {
         fprintf(stderr, "enabling write-ahead-log failed: %s\n", m_db.ErrStr());
         return;
@@ -2150,6 +2138,13 @@ bool Store::CreateStatements() {
 }
 
 Store::Database::Database(const char *path) {
+    if (path != ":memory:"s) {
+        std::error_code ec;
+        if (std::filesystem::exists(path, ec) && !std::filesystem::remove(path, ec)) {
+            fprintf(stderr, "the database could not be removed. the database may be corrupted as a result\n");
+        }
+    }
+
     m_err = sqlite3_open(path, &m_db);
 }
 
