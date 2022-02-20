@@ -45,21 +45,8 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     }
 
     if (!data.Embeds.empty()) {
-        // todo refactor (all of) this lol
-        auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
-        container->m_embed_component = box;
+        container->m_embed_component = container->CreateEmbedsComponent(data.Embeds);
         container->m_main.add(*container->m_embed_component);
-        for (const auto &embed : data.Embeds) {
-            if (IsEmbedImageOnly(embed)) {
-                auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
-                container->AttachEventHandlers(*widget);
-                container->m_main.add(*widget);
-            } else {
-                auto *widget = container->CreateEmbedComponent(embed);
-                container->AttachEventHandlers(*widget);
-                box->add(*widget);
-            }
-        }
     }
 
     // i dont think attachments can be edited
@@ -112,10 +99,11 @@ void ChatMessageItemContainer::UpdateContent() {
         m_embed_component = nullptr;
     }
 
-    if (data->Embeds.size() == 1) {
-        m_embed_component = CreateEmbedComponent(data->Embeds[0]);
+    if (!data->Embeds.empty()) {
+        m_embed_component = CreateEmbedsComponent(data->Embeds);
         AttachEventHandlers(*m_embed_component);
         m_main.add(*m_embed_component);
+        m_embed_component->show_all();
     }
 }
 
@@ -301,6 +289,24 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         } break;
         default: break;
     }
+}
+
+Gtk::Widget *ChatMessageItemContainer::CreateEmbedsComponent(const std::vector<EmbedData> &embeds) {
+    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    for (const auto &embed : embeds) {
+        if (IsEmbedImageOnly(embed)) {
+            auto *widget = CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
+            widget->show();
+            AttachEventHandlers(*widget);
+            box->add(*widget);
+        } else {
+            auto *widget = CreateEmbedComponent(embed);
+            widget->show();
+            AttachEventHandlers(*widget);
+            box->add(*widget);
+        }
+    }
+    return box;
 }
 
 Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &embed) {
