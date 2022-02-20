@@ -34,7 +34,8 @@ protected:
 
     static bool IsEmbedImageOnly(const EmbedData &data);
 
-    void HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
+    void HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+    void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
     void HandleStockEmojis(Gtk::TextView &tv);
     void HandleCustomEmojis(Gtk::TextView &tv);
     void HandleEmojis(Gtk::TextView &tv);

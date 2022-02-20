@@ -12,3 +12,11 @@ void from_json(const nlohmann::json &j, RoleData &m) {
     JS_D("managed", m.IsManaged);
     JS_D("mentionable", m.IsMentionable);
 }
+
+bool RoleData::HasColor() const noexcept {
+    return Color != 0;
+}
+
+Glib::ustring RoleData::GetEscapedName() const {
+    return Glib::Markup::escape_text(Name);
+}

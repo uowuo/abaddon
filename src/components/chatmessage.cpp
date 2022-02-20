@@ -203,6 +203,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::DEFAULT:
         case MessageType::INLINE_REPLY:
             b->insert(s, data->Content);
+            HandleRoleMentions(b);
             HandleUserMentions(b);
             HandleLinks(*tv);
             HandleChannelMentions(tv);
@@ -736,7 +737,47 @@ bool ChatMessageItemContainer::IsEmbedImageOnly(const EmbedData &data) {
     return data.Thumbnail->ProxyURL.has_value() && data.Thumbnail->URL.has_value() && data.Thumbnail->Width.has_value() && data.Thumbnail->Height.has_value();
 }
 
-void ChatMessageItemContainer::HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf) {
+void ChatMessageItemContainer::HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
+    constexpr static const auto mentions_regex = R"(<@&(\d+)>)";
+
+    static auto rgx = Glib::Regex::create(mentions_regex);
+
+    Glib::ustring text = GetText(buf);
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+
+    int startpos = 0;
+    Glib::MatchInfo match;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        if (!match.fetch_pos(0, mstart, mend)) break;
+        const Glib::ustring role_id = match.fetch(1);
+        const auto role = discord.GetRole(role_id);
+        if (!role.has_value()) {
+            startpos = mend;
+            continue;
+        }
+
+        Glib::ustring replacement;
+        if (role->HasColor()) {
+            replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + role->GetEscapedName() + "</span></b>";
+        } else {
+            replacement = "<b>@" + role->GetEscapedName() + "</b>";
+        }
+
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        const auto start_it = buf->get_iter_at_offset(chars_start);
+        const auto end_it = buf->get_iter_at_offset(chars_end);
+
+        auto it = buf->erase(start_it, end_it);
+        buf->insert_markup(it, replacement);
+
+        text = GetText(buf);
+        startpos = 0;
+    }
+}
+
+void ChatMessageItemContainer::HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
     static auto rgx = Glib::Regex::create(mentions_regex);
