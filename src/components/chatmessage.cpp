@@ -541,6 +541,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickersComponent(const std::vector
         if (sticker.FormatType != StickerFormatType::PNG && sticker.FormatType != StickerFormatType::APNG) continue;
         auto *ev = Gtk::manage(new Gtk::EventBox);
         auto *img = Gtk::manage(new LazyImage(sticker.GetURL(), StickerComponentSize, StickerComponentSize, false));
+        img->set_halign(Gtk::ALIGN_START);
         img->set_size_request(StickerComponentSize, StickerComponentSize); // should this go in LazyImage ?
         img->show();
         ev->show();
