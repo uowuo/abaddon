@@ -1328,7 +1328,7 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
             case GatewayOp::InvalidSession: {
                 HandleGatewayInvalidSession(m);
             } break;
-            case GatewayOp::Event: {
+            case GatewayOp::Dispatch: {
                 auto iter = m_event_map.find(m.Type);
                 if (iter == m_event_map.end()) {
                     printf("Unknown event %s\n", m.Type.c_str());

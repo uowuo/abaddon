@@ -77,7 +77,7 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage &m) {
 }
 
 void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
-    j["op"] = GatewayOp::LazyLoadRequest;
+    j["op"] = GatewayOp::GuildSubscriptions;
     j["d"] = nlohmann::json::object();
     j["d"]["guild_id"] = m.GuildID;
     if (m.Channels.has_value()) {
@@ -98,7 +98,7 @@ void to_json(nlohmann::json &j, const LazyLoadRequestMessage &m) {
 }
 
 void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
-    j["op"] = GatewayOp::UpdateStatus;
+    j["op"] = GatewayOp::PresenceUpdate;
     j["d"] = nlohmann::json::object();
     j["d"]["since"] = m.Since;
     j["d"]["activities"] = m.Activities;

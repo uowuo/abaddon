@@ -24,16 +24,35 @@
 // most stuff below should just be objects that get processed and thrown away immediately
 
 enum class GatewayOp : int {
-    Event = 0,
+    Dispatch = 0,
     Heartbeat = 1,
     Identify = 2,
-    UpdateStatus = 3,
+    PresenceUpdate = 3,
+    VoiceStateUpdate = 4,
+    VoiceServerPing = 5,
     Resume = 6,
     Reconnect = 7,
+    RequestGuildMembers = 8,
     InvalidSession = 9,
     Hello = 10,
     HeartbeatAck = 11,
-    LazyLoadRequest = 14,
+    // 12 unused
+    CallConnect = 13,
+    GuildSubscriptions = 14,
+    LobbyConnect = 15,
+    LobbyDisconnect = 16,
+    LobbyVoiceStatesUpdate = 17,
+    StreamCreate = 18,
+    StreamDelete = 19,
+    StreamWatch = 20,
+    StreamPing = 21,
+    StreamSetPaused = 22,
+    // 23 unused
+    RequestGuildApplicationCommands = 24,
+    EmbeddedActivityLaunch = 25,
+    EmbeddedActivityClose = 26,
+    EmbeddedActivityUpdate = 27,
+    RequestForumUnreads = 28,
 };
 
 enum class GatewayEvent : int {
