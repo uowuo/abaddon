@@ -1464,6 +1464,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::USER_GUILD_SETTINGS_UPDATE: {
                         HandleGatewayUserGuildSettingsUpdate(m);
                     } break;
+                    case GatewayEvent::GUILD_MEMBERS_CHUNK: {
+                        HandleGatewayGuildMembersChunk(m);
+                    } break;
                 }
             } break;
             default:
@@ -2049,6 +2052,14 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
     }
 }
 
+void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
+    GuildMembersChunkData data = msg.Data;
+    m_store.BeginTransaction();
+    for (const auto &member : data.Members)
+        m_store.SetGuildMember(data.GuildID, member.User->ID, member);
+    m_store.EndTransaction();
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2511,6 +2522,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
     m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
     m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
+    m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2675,6 +2687,10 @@ DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_threa
 
 DiscordClient::type_signal_message_ack DiscordClient::signal_message_ack() {
     return m_signal_message_ack;
+}
+
+DiscordClient::type_signal_guild_members_chunk DiscordClient::signal_guild_members_chunk() {
+    return m_signal_guild_members_chunk;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

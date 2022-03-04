@@ -119,6 +119,14 @@ void to_json(nlohmann::json &j, const UpdateStatusMessage &m) {
     }
 }
 
+void to_json(nlohmann::json &j, const RequestGuildMembersMessage &m) {
+    j["op"] = GatewayOp::RequestGuildMembers;
+    j["d"] = nlohmann::json::object();
+    j["d"]["guild_id"] = m.GuildID;
+    j["d"]["presences"] = m.Presences;
+    j["d"]["user_ids"] = m.UserIDs;
+}
+
 void from_json(const nlohmann::json &j, ReadStateEntry &m) {
     JS_ON("mention_count", m.MentionCount);
     JS_ON("last_message_id", m.LastMessageID);
@@ -625,4 +633,9 @@ void to_json(nlohmann::json &j, const AckBulkData &m) {
 
 void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m) {
     m.Settings = j;
+}
+
+void from_json(const nlohmann::json &j, GuildMembersChunkData &m) {
+    JS_D("members", m.Members);
+    JS_D("guild_id", m.GuildID);
 }

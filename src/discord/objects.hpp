@@ -99,6 +99,7 @@ enum class GatewayEvent : int {
     THREAD_MEMBER_LIST_UPDATE,
     MESSAGE_ACK,
     USER_GUILD_SETTINGS_UPDATE,
+    GUILD_MEMBERS_CHUNK,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -243,6 +244,14 @@ struct UpdateStatusMessage {
     bool IsAFK = false;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
+};
+
+struct RequestGuildMembersMessage {
+    Snowflake GuildID;
+    bool Presences;
+    std::vector<Snowflake> UserIDs;
+
+    friend void to_json(nlohmann::json &j, const RequestGuildMembersMessage &m);
 };
 
 struct ReadStateEntry {
@@ -840,4 +849,17 @@ struct UserGuildSettingsUpdateData {
     UserGuildSettingsEntry Settings;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m);
+};
+
+struct GuildMembersChunkData {
+    /*
+    not needed so not deserialized
+    int ChunkCount;
+    int ChunkIndex;
+    std::vector<?> NotFound;
+    */
+    Snowflake GuildID;
+    std::vector<GuildMember> Members;
+
+    friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
 };

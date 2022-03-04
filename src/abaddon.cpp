@@ -325,6 +325,22 @@ void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
     }
 }
 
+void Abaddon::CheckMessagesForMembers(const ChannelData &chan, const std::vector<Message> &msgs) {
+    if (!chan.GuildID.has_value()) return;
+
+    // TODO sql query
+    std::set<Snowflake> fetch;
+    std::set<Snowflake> ids;
+    for (const auto& msg : msgs)
+        ids.insert(msg.Author.ID);
+    for (const auto id : ids) {
+        const auto member = m_discord.GetMember(id, *chan.GuildID);
+        if (!member.has_value())
+            fetch.insert(id);
+    }
+    m_discord.RequestMembers(*chan.GuildID, fetch.begin(), fetch.end());
+}
+
 void Abaddon::SetupUserMenu() {
     m_user_menu = Gtk::manage(new Gtk::Menu);
     m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert Mention"));
@@ -536,7 +552,8 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         // dont fire requests we know will fail
         if (can_access) {
-            m_discord.FetchMessagesInChannel(id, [this, id](const std::vector<Message> &msgs) {
+            m_discord.FetchMessagesInChannel(id, [channel, this, id](const std::vector<Message> &msgs) {
+                CheckMessagesForMembers(*channel, msgs);
                 m_main_window->UpdateChatWindowContents();
                 m_channels_requested.insert(id);
             });

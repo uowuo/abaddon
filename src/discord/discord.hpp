@@ -152,6 +152,16 @@ public:
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
 
+    // send op 8 to get member data for unknown members
+    template<typename Iter>
+    void RequestMembers(Snowflake guild_id, Iter begin, Iter end) {
+        RequestGuildMembersMessage obj;
+        obj.GuildID = guild_id;
+        obj.Presences = false;
+        obj.UserIDs = { begin, end };
+        m_websocket.Send(obj);
+    }
+
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>
     auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, sigc::slot<void(DiscordError code)> callback) {
@@ -262,6 +272,7 @@ private:
     void HandleGatewayThreadMemberListUpdate(const GatewayMessage &msg);
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
+    void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -372,6 +383,7 @@ public:
     typedef sigc::signal<void, ThreadUpdateData> type_signal_thread_update;
     typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
     typedef sigc::signal<void, MessageAckData> type_signal_message_ack;
+    typedef sigc::signal<void, GuildMembersChunkData> type_signal_guild_members_chunk;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -427,6 +439,7 @@ public:
     type_signal_thread_update signal_thread_update();
     type_signal_thread_member_list_update signal_thread_member_list_update();
     type_signal_message_ack signal_message_ack();
+    type_signal_guild_members_chunk signal_guild_members_chunk();
 
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
@@ -479,6 +492,7 @@ protected:
     type_signal_thread_update m_signal_thread_update;
     type_signal_thread_member_list_update m_signal_thread_member_list_update;
     type_signal_message_ack m_signal_message_ack;
+    type_signal_guild_members_chunk m_signal_guild_members_chunk;
 
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;
