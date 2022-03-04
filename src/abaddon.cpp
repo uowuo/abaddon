@@ -331,7 +331,7 @@ void Abaddon::CheckMessagesForMembers(const ChannelData &chan, const std::vector
     // TODO sql query
     std::set<Snowflake> fetch;
     std::set<Snowflake> ids;
-    for (const auto& msg : msgs)
+    for (const auto &msg : msgs)
         ids.insert(msg.Author.ID);
     for (const auto id : ids) {
         const auto member = m_discord.GetMember(id, *chan.GuildID);
@@ -596,7 +596,11 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     m_discord.FetchMessagesInChannelBefore(id, before_id, [this, id](const std::vector<Message> &msgs) {
         m_channels_history_loading.erase(id);
 
-        if (msgs.size() == 0) {
+        const auto channel = m_discord.GetChannel(id);
+        if (channel.has_value())
+            CheckMessagesForMembers(*channel, msgs);
+
+        if (msgs.empty()) {
             m_channels_history_loaded.insert(id);
         } else {
             m_main_window->UpdateChatPrependHistory(msgs);
