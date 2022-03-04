@@ -155,6 +155,8 @@ public:
     // send op 8 to get member data for unknown members
     template<typename Iter>
     void RequestMembers(Snowflake guild_id, Iter begin, Iter end) {
+        if (std::distance(begin, end) == 0) return;
+
         RequestGuildMembersMessage obj;
         obj.GuildID = guild_id;
         obj.Presences = false;
