@@ -84,6 +84,17 @@ public:
     void GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
     std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
 
+    // get ids of given list of members for who we do not have the member data
+    template<typename Iter>
+    std::unordered_set<Snowflake> FilterUnknownMembersFrom(Snowflake guild_id, Iter begin, Iter end) {
+        std::unordered_set<Snowflake> ret;
+        const auto known = m_store.GetMembersInGuild(guild_id);
+        for (auto iter = begin; iter != end; iter++)
+            if (known.find(*iter) == known.end())
+                ret.insert(*iter);
+        return ret;
+    }
+
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
 

@@ -576,6 +576,23 @@ std::vector<Snowflake> Store::GetChannelIDsWithParentID(Snowflake channel_id) co
     return ret;
 }
 
+std::unordered_set<Snowflake> Store::GetMembersInGuild(Snowflake guild_id) const {
+    auto &s = m_stmt_get_guild_member_ids;
+
+    s->Bind(1, guild_id);
+
+    std::unordered_set<Snowflake> ret;
+    while (s->FetchOne()) {
+        Snowflake x;
+        s->Get(0, x);
+        ret.insert(x);
+    }
+
+    s->Reset();
+
+    return ret;
+}
+
 void Store::AddReaction(const MessageReactionAddObject &data, bool byself) {
     auto &s = m_stmt_add_reaction;
 
@@ -2131,6 +2148,14 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_chan_ids_parent->OK()) {
         fprintf(stderr, "failed to prepare get channel ids for parent statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_guild_member_ids = std::make_unique<Statement>(m_db, R"(
+        SELECT user_id FROM members WHERE guild_id = ?
+    )");
+    if (!m_stmt_get_guild_member_ids->OK()) {
+        fprintf(stderr, "failed to prepare get guild member ids statement: %s\n", m_db.ErrStr());
         return false;
     }
 

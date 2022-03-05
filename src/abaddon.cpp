@@ -328,16 +328,14 @@ void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
 void Abaddon::CheckMessagesForMembers(const ChannelData &chan, const std::vector<Message> &msgs) {
     if (!chan.GuildID.has_value()) return;
 
-    // TODO sql query
-    std::set<Snowflake> fetch;
-    std::set<Snowflake> ids;
-    for (const auto &msg : msgs)
-        ids.insert(msg.Author.ID);
-    for (const auto id : ids) {
-        const auto member = m_discord.GetMember(id, *chan.GuildID);
-        if (!member.has_value())
-            fetch.insert(id);
-    }
+    std::vector<Snowflake> unknown;
+    std::transform(msgs.begin(), msgs.end(),
+                   std::back_inserter(unknown),
+                   [](const Message &msg) -> Snowflake {
+                       return msg.Author.ID;
+                   });
+
+    const auto fetch = m_discord.FilterUnknownMembersFrom(*chan.GuildID, unknown.begin(), unknown.end());
     m_discord.RequestMembers(*chan.GuildID, fetch.begin(), fetch.end());
 }
 
