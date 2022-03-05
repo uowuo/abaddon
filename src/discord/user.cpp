@@ -17,7 +17,7 @@ bool UserData::HasAnimatedAvatar(Snowflake guild_id) const {
     const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
     if (member.has_value() && member->Avatar.has_value() && member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_')
         return true;
-    else if (!member->Avatar.has_value())
+    else if (member.has_value() && !member->Avatar.has_value())
         return HasAnimatedAvatar();
     return false;
 }
