@@ -16,5 +16,8 @@ struct RoleData {
     bool IsManaged;
     bool IsMentionable;
 
+    bool HasColor() const noexcept;
+    Glib::ustring GetEscapedName() const;
+
     friend void from_json(const nlohmann::json &j, RoleData &m);
 };

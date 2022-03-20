@@ -1,7 +1,7 @@
-#include "chatmessage.hpp"
 #include "abaddon.hpp"
-#include "util.hpp"
+#include "chatmessage.hpp"
 #include "lazyimage.hpp"
+#include "util.hpp"
 #include <unordered_map>
 
 constexpr static int EmojiSize = 24; // settings eventually
@@ -44,18 +44,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
         }
     }
 
-    // there should only ever be 1 embed (i think?)
-    if (data.Embeds.size() == 1) {
-        const auto &embed = data.Embeds[0];
-        if (IsEmbedImageOnly(embed)) {
-            auto *widget = container->CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
-            container->AttachEventHandlers(*widget);
-            container->m_main.add(*widget);
-        } else {
-            container->m_embed_component = container->CreateEmbedComponent(embed);
-            container->AttachEventHandlers(*container->m_embed_component);
-            container->m_main.add(*container->m_embed_component);
-        }
+    if (!data.Embeds.empty()) {
+        container->m_embed_component = container->CreateEmbedsComponent(data.Embeds);
+        container->m_main.add(*container->m_embed_component);
     }
 
     // i dont think attachments can be edited
@@ -108,10 +99,11 @@ void ChatMessageItemContainer::UpdateContent() {
         m_embed_component = nullptr;
     }
 
-    if (data->Embeds.size() == 1) {
-        m_embed_component = CreateEmbedComponent(data->Embeds[0]);
+    if (!data->Embeds.empty()) {
+        m_embed_component = CreateEmbedsComponent(data->Embeds);
         AttachEventHandlers(*m_embed_component);
         m_main.add(*m_embed_component);
+        m_embed_component->show_all();
     }
 }
 
@@ -199,6 +191,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::DEFAULT:
         case MessageType::INLINE_REPLY:
             b->insert(s, data->Content);
+            HandleRoleMentions(b);
             HandleUserMentions(b);
             HandleLinks(*tv);
             HandleChannelMentions(tv);
@@ -296,6 +289,24 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         } break;
         default: break;
     }
+}
+
+Gtk::Widget *ChatMessageItemContainer::CreateEmbedsComponent(const std::vector<EmbedData> &embeds) {
+    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+    for (const auto &embed : embeds) {
+        if (IsEmbedImageOnly(embed)) {
+            auto *widget = CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
+            widget->show();
+            AttachEventHandlers(*widget);
+            box->add(*widget);
+        } else {
+            auto *widget = CreateEmbedComponent(embed);
+            widget->show();
+            AttachEventHandlers(*widget);
+            box->add(*widget);
+        }
+    }
+    return box;
 }
 
 Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &embed) {
@@ -530,6 +541,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickersComponent(const std::vector
         if (sticker.FormatType != StickerFormatType::PNG && sticker.FormatType != StickerFormatType::APNG) continue;
         auto *ev = Gtk::manage(new Gtk::EventBox);
         auto *img = Gtk::manage(new LazyImage(sticker.GetURL(), StickerComponentSize, StickerComponentSize, false));
+        img->set_halign(Gtk::ALIGN_START);
         img->set_size_request(StickerComponentSize, StickerComponentSize); // should this go in LazyImage ?
         img->show();
         ev->show();
@@ -732,7 +744,47 @@ bool ChatMessageItemContainer::IsEmbedImageOnly(const EmbedData &data) {
     return data.Thumbnail->ProxyURL.has_value() && data.Thumbnail->URL.has_value() && data.Thumbnail->Width.has_value() && data.Thumbnail->Height.has_value();
 }
 
-void ChatMessageItemContainer::HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf) {
+void ChatMessageItemContainer::HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
+    constexpr static const auto mentions_regex = R"(<@&(\d+)>)";
+
+    static auto rgx = Glib::Regex::create(mentions_regex);
+
+    Glib::ustring text = GetText(buf);
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+
+    int startpos = 0;
+    Glib::MatchInfo match;
+    while (rgx->match(text, startpos, match)) {
+        int mstart, mend;
+        if (!match.fetch_pos(0, mstart, mend)) break;
+        const Glib::ustring role_id = match.fetch(1);
+        const auto role = discord.GetRole(role_id);
+        if (!role.has_value()) {
+            startpos = mend;
+            continue;
+        }
+
+        Glib::ustring replacement;
+        if (role->HasColor()) {
+            replacement = "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + role->GetEscapedName() + "</span></b>";
+        } else {
+            replacement = "<b>@" + role->GetEscapedName() + "</b>";
+        }
+
+        const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);
+        const auto chars_end = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mend);
+        const auto start_it = buf->get_iter_at_offset(chars_start);
+        const auto end_it = buf->get_iter_at_offset(chars_end);
+
+        auto it = buf->erase(start_it, end_it);
+        buf->insert_markup(it, replacement);
+
+        text = GetText(buf);
+        startpos = 0;
+    }
+}
+
+void ChatMessageItemContainer::HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
     static auto rgx = Glib::Regex::create(mentions_regex);
@@ -1064,11 +1116,11 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     };
     img.LoadFromURL(author->GetAvatarURL(data.GuildID), sigc::track_obj(cb, *this));
 
-    if (author->HasAnimatedAvatar()) {
+    if (author->HasAnimatedAvatar(data.GuildID)) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
             m_anim_avatar = pb;
         };
-        img.LoadAnimationFromURL(author->GetAvatarURL("gif"), AvatarSize, AvatarSize, sigc::track_obj(cb, *this));
+        img.LoadAnimationFromURL(author->GetAvatarURL(data.GuildID, "gif"), AvatarSize, AvatarSize, sigc::track_obj(cb, *this));
     }
 
     get_style_context()->add_class("message-container");

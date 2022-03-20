@@ -24,16 +24,35 @@
 // most stuff below should just be objects that get processed and thrown away immediately
 
 enum class GatewayOp : int {
-    Event = 0,
+    Dispatch = 0,
     Heartbeat = 1,
     Identify = 2,
-    UpdateStatus = 3,
+    PresenceUpdate = 3,
+    VoiceStateUpdate = 4,
+    VoiceServerPing = 5,
     Resume = 6,
     Reconnect = 7,
+    RequestGuildMembers = 8,
     InvalidSession = 9,
     Hello = 10,
     HeartbeatAck = 11,
-    LazyLoadRequest = 14,
+    // 12 unused
+    CallConnect = 13,
+    GuildSubscriptions = 14,
+    LobbyConnect = 15,
+    LobbyDisconnect = 16,
+    LobbyVoiceStatesUpdate = 17,
+    StreamCreate = 18,
+    StreamDelete = 19,
+    StreamWatch = 20,
+    StreamPing = 21,
+    StreamSetPaused = 22,
+    // 23 unused
+    RequestGuildApplicationCommands = 24,
+    EmbeddedActivityLaunch = 25,
+    EmbeddedActivityClose = 26,
+    EmbeddedActivityUpdate = 27,
+    RequestForumUnreads = 28,
 };
 
 enum class GatewayEvent : int {
@@ -80,6 +99,7 @@ enum class GatewayEvent : int {
     THREAD_MEMBER_LIST_UPDATE,
     MESSAGE_ACK,
     USER_GUILD_SETTINGS_UPDATE,
+    GUILD_MEMBERS_CHUNK,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -224,6 +244,14 @@ struct UpdateStatusMessage {
     bool IsAFK = false;
 
     friend void to_json(nlohmann::json &j, const UpdateStatusMessage &m);
+};
+
+struct RequestGuildMembersMessage {
+    Snowflake GuildID;
+    bool Presences;
+    std::vector<Snowflake> UserIDs;
+
+    friend void to_json(nlohmann::json &j, const RequestGuildMembersMessage &m);
 };
 
 struct ReadStateEntry {
@@ -821,4 +849,17 @@ struct UserGuildSettingsUpdateData {
     UserGuildSettingsEntry Settings;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsUpdateData &m);
+};
+
+struct GuildMembersChunkData {
+    /*
+    not needed so not deserialized
+    int ChunkCount;
+    int ChunkIndex;
+    std::vector<?> NotFound;
+    */
+    Snowflake GuildID;
+    std::vector<GuildMember> Members;
+
+    friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
 };

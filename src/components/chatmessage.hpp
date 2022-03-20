@@ -22,6 +22,7 @@ protected:
     void AddClickHandler(Gtk::Widget *widget, std::string);
     Gtk::TextView *CreateTextComponent(const Message &data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
+    Gtk::Widget *CreateEmbedsComponent(const std::vector<EmbedData> &embeds);
     Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
@@ -34,7 +35,8 @@ protected:
 
     static bool IsEmbedImageOnly(const EmbedData &data);
 
-    void HandleUserMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
+    void HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+    void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
     void HandleStockEmojis(Gtk::TextView &tv);
     void HandleCustomEmojis(Gtk::TextView &tv);
     void HandleEmojis(Gtk::TextView &tv);

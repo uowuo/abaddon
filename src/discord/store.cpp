@@ -13,18 +13,6 @@ Store::Store(bool mem_store)
         return;
     }
 
-    m_db.Execute(R"(
-        PRAGMA writable_schema = 1;
-        DELETE FROM sqlite_master WHERE TYPE IN ("view", "table", "index", "trigger");
-        PRAGMA writable_schema = 0;
-        VACUUM;
-        PRAGMA integrity_check;
-    )");
-    if (!m_db.OK()) {
-        fprintf(stderr, "failed to clear database: %s\n", m_db.ErrStr());
-        return;
-    }
-
     if (m_db.Execute("PRAGMA journal_mode = WAL") != SQLITE_OK) {
         fprintf(stderr, "enabling write-ahead-log failed: %s\n", m_db.ErrStr());
         return;
@@ -581,6 +569,23 @@ std::vector<Snowflake> Store::GetChannelIDsWithParentID(Snowflake channel_id) co
         Snowflake x;
         s->Get(0, x);
         ret.push_back(x);
+    }
+
+    s->Reset();
+
+    return ret;
+}
+
+std::unordered_set<Snowflake> Store::GetMembersInGuild(Snowflake guild_id) const {
+    auto &s = m_stmt_get_guild_member_ids;
+
+    s->Bind(1, guild_id);
+
+    std::unordered_set<Snowflake> ret;
+    while (s->FetchOne()) {
+        Snowflake x;
+        s->Get(0, x);
+        ret.insert(x);
     }
 
     s->Reset();
@@ -2146,10 +2151,25 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_stmt_get_guild_member_ids = std::make_unique<Statement>(m_db, R"(
+        SELECT user_id FROM members WHERE guild_id = ?
+    )");
+    if (!m_stmt_get_guild_member_ids->OK()) {
+        fprintf(stderr, "failed to prepare get guild member ids statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
     return true;
 }
 
 Store::Database::Database(const char *path) {
+    if (path != ":memory:"s) {
+        std::error_code ec;
+        if (std::filesystem::exists(path, ec) && !std::filesystem::remove(path, ec)) {
+            fprintf(stderr, "the database could not be removed. the database may be corrupted as a result\n");
+        }
+    }
+
     m_err = sqlite3_open(path, &m_db);
 }
 

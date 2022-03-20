@@ -62,7 +62,9 @@ struct UserData {
 
     bool IsDeleted() const;
     bool HasAvatar() const;
-    bool HasAnimatedAvatar() const;
+    bool HasAnimatedAvatar() const noexcept;
+    bool HasAnimatedAvatar(Snowflake guild_id) const;
+    bool HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const;
     std::string GetAvatarURL(Snowflake guild_id, std::string ext = "png", std::string size = "32") const;
     std::string GetAvatarURL(const std::optional<Snowflake> &guild_id, std::string ext = "png", std::string size = "32") const;
     std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;
