@@ -983,6 +983,24 @@ void DiscordClient::UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)
     });
 }
 
+void DiscordClient::MuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":true})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
+void DiscordClient::UnmuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
+    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":false})", [this, callback](const http::response_type &response) {
+        if (CheckCode(response))
+            callback(DiscordError::NONE);
+        else
+            callback(GetCodeFromResponse(response));
+    });
+}
+
 void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
@@ -1206,7 +1224,7 @@ int DiscordClient::GetUnreadDMsCount() const {
     const auto channels = GetPrivateChannels();
     int count = 0;
     for (const auto channel_id : channels)
-        if (GetUnreadStateForChannel(channel_id) > -1) count++;
+        if (!IsChannelMuted(channel_id) && GetUnreadStateForChannel(channel_id) > -1) count++;
     return count;
 }
 
@@ -1310,7 +1328,7 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
             case GatewayOp::InvalidSession: {
                 HandleGatewayInvalidSession(m);
             } break;
-            case GatewayOp::Event: {
+            case GatewayOp::Dispatch: {
                 auto iter = m_event_map.find(m.Type);
                 if (iter == m_event_map.end()) {
                     printf("Unknown event %s\n", m.Type.c_str());
@@ -1445,6 +1463,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::USER_GUILD_SETTINGS_UPDATE: {
                         HandleGatewayUserGuildSettingsUpdate(m);
+                    } break;
+                    case GatewayEvent::GUILD_MEMBERS_CHUNK: {
+                        HandleGatewayGuildMembersChunk(m);
                     } break;
                 }
             } break;
@@ -1921,9 +1942,24 @@ void DiscordClient::HandleGatewayThreadMembersUpdate(const GatewayMessage &msg) 
 
 void DiscordClient::HandleGatewayThreadMemberUpdate(const GatewayMessage &msg) {
     ThreadMemberUpdateData data = msg.Data;
+    if (!data.Member.ThreadID.has_value()) return;
+
     m_joined_threads.insert(*data.Member.ThreadID);
     if (*data.Member.UserID == GetUserData().ID)
         m_signal_added_to_thread.emit(*data.Member.ThreadID);
+
+    if (data.Member.IsMuted.has_value()) {
+        const bool was_muted = IsChannelMuted(*data.Member.ThreadID);
+        const bool now_muted = *data.Member.IsMuted;
+
+        if (was_muted && !now_muted) {
+            m_muted_channels.erase(*data.Member.ThreadID);
+            m_signal_channel_unmuted.emit(*data.Member.ThreadID);
+        } else if (!was_muted && now_muted) {
+            m_muted_channels.insert(*data.Member.ThreadID);
+            m_signal_channel_muted.emit(*data.Member.ThreadID);
+        }
+    }
 }
 
 void DiscordClient::HandleGatewayThreadUpdate(const GatewayMessage &msg) {
@@ -2014,6 +2050,14 @@ void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &m
             }
         }
     }
+}
+
+void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
+    GuildMembersChunkData data = msg.Data;
+    m_store.BeginTransaction();
+    for (const auto &member : data.Members)
+        m_store.SetGuildMember(data.GuildID, member.User->ID, member);
+    m_store.EndTransaction();
 }
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
@@ -2343,10 +2387,14 @@ void DiscordClient::StoreMessageData(Message &msg) {
 // here the absence of an entry in m_unread indicates a read channel and the value is only the mention count since the message doesnt matter
 // no entry.id cannot be a guild even though sometimes it looks like it
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
-    for (const auto &guild : data.Guilds)
+    for (const auto &guild : data.Guilds) {
         for (const auto &channel : *guild.Channels)
             if (channel.LastMessageID.has_value())
                 m_last_message_id[channel.ID] = *channel.LastMessageID;
+        for (const auto &thread : *guild.Threads)
+            if (thread.LastMessageID.has_value())
+                m_last_message_id[thread.ID] = *thread.LastMessageID;
+    }
     for (const auto &channel : data.PrivateChannels)
         if (channel.LastMessageID.has_value())
             m_last_message_id[channel.ID] = *channel.LastMessageID;
@@ -2385,10 +2433,14 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
     // i dont like this implementation for muted categories but its rather simple and doesnt use a horriiible amount of ram
 
     std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
-    for (const auto &guild : data.Guilds)
+    for (const auto &guild : data.Guilds) {
         for (const auto &channel : *guild.Channels)
             if (channel.ParentID.has_value() && !channel.IsThread())
                 category_children[*channel.ParentID].push_back(channel.ID);
+        for (const auto &thread : *guild.Threads)
+            if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
+                m_muted_channels.insert(thread.ID);
+    }
 
     const auto now = Snowflake::FromNow();
     for (const auto &entry : data.GuildSettings.Entries) {
@@ -2470,6 +2522,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["THREAD_MEMBER_LIST_UPDATE"] = GatewayEvent::THREAD_MEMBER_LIST_UPDATE;
     m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
     m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
+    m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -2634,6 +2687,10 @@ DiscordClient::type_signal_thread_member_list_update DiscordClient::signal_threa
 
 DiscordClient::type_signal_message_ack DiscordClient::signal_message_ack() {
     return m_signal_message_ack;
+}
+
+DiscordClient::type_signal_guild_members_chunk DiscordClient::signal_guild_members_chunk() {
+    return m_signal_guild_members_chunk;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

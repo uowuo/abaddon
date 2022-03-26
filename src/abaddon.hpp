@@ -93,6 +93,8 @@ public:
 protected:
     void ShowGuildVerificationGateDialog(Snowflake guild_id);
 
+    void CheckMessagesForMembers(const ChannelData &chan, const std::vector<Message> &msgs);
+
     void SetupUserMenu();
     void SaveState();
     void LoadState();

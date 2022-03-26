@@ -30,6 +30,8 @@ TokenDialog::TokenDialog(Gtk::Window &parent)
     m_bbox.pack_start(m_cancel, Gtk::PACK_SHRINK);
     m_bbox.set_layout(Gtk::BUTTONBOX_END);
 
+    m_entry.set_input_purpose(Gtk::INPUT_PURPOSE_PASSWORD);
+    m_entry.set_visibility(false);
     m_entry.set_hexpand(true);
     m_layout.add(m_entry);
     m_layout.add(m_bbox);

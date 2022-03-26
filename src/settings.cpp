@@ -47,11 +47,16 @@ void SettingsManager::ReadSettings() {
     SMBOOL("gui", "owner_crown", ShowOwnerCrown);
     SMBOOL("gui", "save_state", SaveState);
     SMBOOL("gui", "stock_emojis", ShowStockEmojis);
+    SMBOOL("gui", "unreads", Unreads);
     SMINT("http", "concurrent", CacheHTTPConcurrency);
     SMSTR("http", "user_agent", UserAgent);
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
     SMSTR("style", "linkcolor", LinkColor);
     SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
+    SMSTR("style", "channelcolor", ChannelColor);
+    SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
+    SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
+    SMSTR("style", "unreadcolor", UnreadIndicatorColor);
 
 #undef SMBOOL
 #undef SMSTR
@@ -95,11 +100,16 @@ void SettingsManager::Close() {
         SMBOOL("gui", "owner_crown", ShowOwnerCrown);
         SMBOOL("gui", "save_state", SaveState);
         SMBOOL("gui", "stock_emojis", ShowStockEmojis);
+        SMBOOL("gui", "unreads", Unreads);
         SMINT("http", "concurrent", CacheHTTPConcurrency);
         SMSTR("http", "user_agent", UserAgent);
         SMSTR("style", "expandercolor", ChannelsExpanderColor);
         SMSTR("style", "linkcolor", LinkColor);
         SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
+        SMSTR("style", "channelcolor", ChannelColor);
+        SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
+        SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
+        SMSTR("style", "unreadcolor", UnreadIndicatorColor);
 
 #undef SMSTR
 #undef SMBOOL

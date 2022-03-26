@@ -49,9 +49,19 @@ struct ThreadMetadataData {
     friend void from_json(const nlohmann::json &j, ThreadMetadataData &m);
 };
 
+struct MuteConfigData {
+    std::optional<std::string> EndTime; // nullopt is encoded as null
+    int SelectedTimeWindow;
+
+    friend void from_json(const nlohmann::json &j, MuteConfigData &m);
+    friend void to_json(nlohmann::json &j, const MuteConfigData &m);
+};
+
 struct ThreadMemberObject {
     std::optional<Snowflake> ThreadID;
     std::optional<Snowflake> UserID;
+    std::optional<bool> IsMuted;
+    std::optional<MuteConfigData> MuteConfig;
     std::string JoinTimestamp;
     int Flags;
 
@@ -89,6 +99,8 @@ struct ChannelData {
     bool IsThread() const noexcept;
     bool IsJoinedThread() const;
     bool IsCategory() const noexcept;
+    bool HasIcon() const noexcept;
+    std::string GetIconURL() const;
     std::vector<Snowflake> GetChildIDs() const;
     std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
     std::vector<UserData> GetDMRecipients() const;

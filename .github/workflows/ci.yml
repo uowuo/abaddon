@@ -59,7 +59,7 @@ jobs:
 
   windows:
     name: windows-${{ matrix.buildtype }}
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         buildtype: [Debug, RelWithDebInfo, MinSizeRel]
