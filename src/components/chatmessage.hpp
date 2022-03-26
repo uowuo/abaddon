@@ -91,11 +91,12 @@ public:
 
     ChatMessageHeader(const Message &data);
     void AddContent(Gtk::Widget *widget, bool prepend);
-    void UpdateNameColor();
+    void UpdateName();
     std::vector<Gtk::Widget *> GetChildContent();
 
 protected:
     void AttachUserMenuHandler(Gtk::Widget &widget);
+    static Glib::ustring GetEscapedDisplayName(const UserData &user, const std::optional<GuildMember> &member);
 
     bool on_author_button_press(GdkEventButton *ev);
 

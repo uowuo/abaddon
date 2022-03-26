@@ -1131,11 +1131,10 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     m_avatar.set_valign(Gtk::ALIGN_START);
     m_avatar.set_margin_right(10);
 
-    m_author.set_markup(data.Author.GetEscapedBoldName());
     m_author.set_single_line_mode(true);
     m_author.set_line_wrap(false);
     m_author.set_ellipsize(Pango::ELLIPSIZE_END);
-    m_author.set_xalign(0.f);
+    m_author.set_xalign(0.0F);
     m_author.set_can_focus(false);
 
     m_meta_ev.signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
@@ -1212,30 +1211,32 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto role_update_cb = [this](...) { UpdateNameColor(); };
+    auto role_update_cb = [this](...) { UpdateName(); };
     discord.signal_role_update().connect(sigc::track_obj(role_update_cb, *this));
-    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateNameColor(); };
+    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateName(); };
     discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
-    UpdateNameColor();
+    UpdateName();
     AttachUserMenuHandler(m_meta_ev);
     AttachUserMenuHandler(m_avatar_ev);
 }
 
-void ChatMessageHeader::UpdateNameColor() {
+void ChatMessageHeader::UpdateName() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto user = discord.GetUser(UserID);
     if (!user.has_value()) return;
     const auto chan = discord.GetChannel(ChannelID);
     bool is_guild = chan.has_value() && chan->GuildID.has_value();
     if (is_guild) {
+        const auto member = discord.GetMember(UserID, *chan->GuildID);
         const auto role_id = discord.GetMemberHoistedRole(*chan->GuildID, UserID, true);
         const auto role = discord.GetRole(role_id);
+        const auto name = GetEscapedDisplayName(*user, member);
 
         std::string md;
         if (role.has_value())
-            m_author.set_markup("<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>");
+            m_author.set_markup("<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + name + "</span>");
         else
-            m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
+            m_author.set_markup("<span weight='bold'>" + name + "</span>");
     } else
         m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
 }
@@ -1257,6 +1258,13 @@ void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
 
         return false;
     });
+}
+
+Glib::ustring ChatMessageHeader::GetEscapedDisplayName(const UserData &user, const std::optional<GuildMember> &member) {
+    if (member.has_value() && !member->Nickname.empty())
+        return Glib::Markup::escape_text(member->Nickname);
+    else
+        return Glib::Markup::escape_text(user.GetEscapedName());
 }
 
 bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {
