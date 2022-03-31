@@ -1,6 +1,6 @@
-#include "chatmessage.hpp"
 #include "chatlist.hpp"
 #include "abaddon.hpp"
+#include "chatmessage.hpp"
 #include "constants.hpp"
 
 ChatList::ChatList() {
@@ -8,17 +8,23 @@ ChatList::ChatList() {
 
     set_can_focus(false);
     set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
-    signal_edge_reached().connect(sigc::mem_fun(*this, &ChatList::OnScrollEdgeOvershot));
 
     auto v = get_vadjustment();
     v->signal_value_changed().connect([this, v] {
+        if (m_history_timer.elapsed() > 1 && v->get_value() < 500) {
+            m_history_timer.start();
+            m_signal_action_chat_load_history.emit(m_active_channel);
+        }
         m_should_scroll_to_bottom = v->get_upper() - v->get_page_size() <= v->get_value();
     });
 
-    m_list.signal_size_allocate().connect([this](Gtk::Allocation &) {
-        if (m_should_scroll_to_bottom)
-            ScrollToBottom();
-    });
+    v->property_upper().signal_changed().connect(sigc::mem_fun(*this, &ChatList::OnUpperAdjustmentChanged));
+
+    m_list.signal_size_allocate()
+        .connect([this](Gtk::Allocation &) {
+            if (m_should_scroll_to_bottom)
+                ScrollToBottom();
+        });
 
     m_list.set_focus_hadjustment(get_hadjustment());
     m_list.set_focus_vadjustment(get_vadjustment());
@@ -243,7 +249,7 @@ void ChatList::RefetchMessage(Snowflake id) {
 }
 
 Snowflake ChatList::GetOldestListedMessage() {
-    if (m_id_to_widget.size() > 0)
+    if (!m_id_to_widget.empty())
         return m_id_to_widget.begin()->first;
     else
         return Snowflake::Invalid;
@@ -306,9 +312,14 @@ void ChatList::ActuallyRemoveMessage(Snowflake id) {
         RemoveMessageAndHeader(it->second);
 }
 
-void ChatList::OnScrollEdgeOvershot(Gtk::PositionType pos) {
-    if (pos == Gtk::POS_TOP)
-        m_signal_action_chat_load_history.emit(m_active_channel);
+void ChatList::OnUpperAdjustmentChanged() {
+    const auto v = get_vadjustment();
+    const auto upper = v->get_upper();
+    if (m_needs_upper_adjustment && m_old_upper > -1.0) {
+        const auto inc = upper - m_old_upper;
+        v->set_value(v->get_value() + inc);
+    }
+    m_old_upper = v->get_upper();
 }
 
 void ChatList::ScrollToBottom() {
