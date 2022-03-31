@@ -7,10 +7,14 @@
 
 using namespace std::literals::string_literals;
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32)
     #include <pango/pangocairo.h>
     #include <pango/pangofc-fontmap.h>
-    #include <ShlObj_core.h>
+    #if defined(_MSC_VER)
+        #include <ShlObj_core.h>
+    #else
+        #include <shlobj.h>
+    #endif
     #include <Shlwapi.h>
     #include <Windows.h>
     #pragma comment(lib, "Shlwapi.lib")
@@ -22,8 +26,8 @@ bool Platform::SetupFonts() {
     {
         // thanks @WorkingRobot for da help :^))
 
-        std::ifstream template_stream(buf + "\\fonts\\fonts.template.conf"s);
-        std::ofstream conf_stream(buf + "\\fonts\\fonts.conf"s);
+        std::ifstream template_stream(buf + R"(\fonts\fonts.template.conf)"s);
+        std::ofstream conf_stream(buf + R"(\fonts\fonts.conf)"s);
         if (!template_stream.good()) {
             printf("can't open fonts/fonts.template.conf\n");
             return false;
@@ -36,7 +40,7 @@ bool Platform::SetupFonts() {
         std::string line;
         while (std::getline(template_stream, line)) {
             if (line == "<!--(CONFD)-->")
-                conf_stream << "<include ignore_missing=\"no\">" << (buf + "\\fonts\\conf.d"s) << "</include>";
+                conf_stream << "<include ignore_missing=\"no\">" << (buf + R"(\fonts\conf.d)"s) << "</include>";
             else
                 conf_stream << line;
             conf_stream << '\n';
@@ -45,11 +49,11 @@ bool Platform::SetupFonts() {
 
     auto fc = FcConfigCreate();
     FcConfigSetCurrent(fc);
-    FcConfigParseAndLoad(fc, const_cast<FcChar8 *>(reinterpret_cast<const FcChar8 *>((buf + "\\fonts\\fonts.conf"s).c_str())), true);
+    FcConfigParseAndLoad(fc, const_cast<FcChar8 *>(reinterpret_cast<const FcChar8 *>((buf + R"(\fonts\fonts.conf)"s).c_str())), true);
     FcConfigAppFontAddDir(fc, const_cast<FcChar8 *>(reinterpret_cast<const FcChar8 *>((buf + "\\fonts"s).c_str())));
 
     char fonts_path[MAX_PATH];
-    if (SHGetFolderPathA(NULL, CSIDL_FONTS, NULL, SHGFP_TYPE_CURRENT, fonts_path) == S_OK) {
+    if (SHGetFolderPathA(nullptr, CSIDL_FONTS, nullptr, SHGFP_TYPE_CURRENT, fonts_path) == S_OK) {
         FcConfigAppFontAddDir(fc, reinterpret_cast<FcChar8 *>(fonts_path));
     }
 
