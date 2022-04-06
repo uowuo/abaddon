@@ -43,7 +43,7 @@ public:
 
 private:
     // this filtering is rather cringe but idk what a better alternative would be
-    bool ListFilterFunc(Gtk::ListBoxRow *row_);
+    bool ListFilterFunc(Gtk::ListBoxRow *row_) const;
 
     enum FilterMode {
         FILTER_PUBLIC = 0,

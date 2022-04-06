@@ -1,8 +1,10 @@
 #include "http.hpp"
 
+#include <utility>
+
 namespace http {
-request::request(EMethod method, const std::string &url)
-    : m_url(url) {
+request::request(EMethod method, std::string url)
+    : m_url(std::move(url)) {
     switch (method) {
         case REQUEST_GET:
             m_method = "GET";

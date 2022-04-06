@@ -197,7 +197,7 @@ struct GuildMemberListUpdateMessage {
         std::string HoistedRole; // null
         bool IsDefeaned;
 
-        GuildMember GetAsMemberData() const;
+        [[nodiscard]] GuildMember GetAsMemberData() const;
 
         friend void from_json(const nlohmann::json &j, MemberItem &m);
 

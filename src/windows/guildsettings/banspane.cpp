@@ -94,7 +94,7 @@ void GuildSettingsBansPane::OnMenuUnban() {
     auto selected_row = *m_view.get_selection()->get_selected();
     if (selected_row) {
         Snowflake id = selected_row[m_columns.m_col_id];
-        auto cb = [this](DiscordError code) {
+        auto cb = [](DiscordError code) {
             if (code != DiscordError::NONE) {
                 Gtk::MessageDialog dlg("Failed to unban user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -119,7 +119,7 @@ bool GuildSettingsBansPane::OnTreeButtonPress(GdkEventButton *event) {
         m_menu_unban.set_sensitive(can_ban);
         auto selection = m_view.get_selection();
         Gtk::TreeModel::Path path;
-        if (m_view.get_path_at_pos(event->x, event->y, path)) {
+        if (m_view.get_path_at_pos(static_cast<int>(event->x), static_cast<int>(event->y), path)) {
             m_view.get_selection()->select(path);
             m_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(event));
         }

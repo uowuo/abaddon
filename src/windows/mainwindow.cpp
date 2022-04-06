@@ -84,7 +84,7 @@ MainWindow::MainWindow()
         m_signal_action_set_status.emit();
     });
 
-    m_menu_file_clear_cache.signal_activate().connect([this] {
+    m_menu_file_clear_cache.signal_activate().connect([] {
         Abaddon::Get().GetImageManager().ClearCache();
     });
 
@@ -115,7 +115,7 @@ MainWindow::MainWindow()
         }
     });
 
-    m_menu_view_mark_all_as_read.signal_activate().connect([this] {
+    m_menu_view_mark_all_as_read.signal_activate().connect([] {
         Abaddon::Get().GetDiscordClient().MarkAllAsRead(NOOP_CALLBACK);
     });
 
@@ -231,7 +231,7 @@ void MainWindow::UpdateChatPrependHistory(const std::vector<Message> &msgs) {
     m_chat.AddNewHistory(msgs); // given vector should be sorted ascending
 }
 
-void MainWindow::InsertChatInput(std::string text) {
+void MainWindow::InsertChatInput(const std::string &text) {
     m_chat.InsertChatInput(text);
 }
 
@@ -260,7 +260,7 @@ void MainWindow::OnDiscordSubmenuPopup(const Gdk::Rectangle *flipped_rect, const
     const bool discord_active = Abaddon::Get().GetDiscordClient().IsStarted();
 
     std::string token = Abaddon::Get().GetDiscordToken();
-    m_menu_discord_connect.set_sensitive(token.size() > 0 && !discord_active);
+    m_menu_discord_connect.set_sensitive(!token.empty() && !discord_active);
     m_menu_discord_disconnect.set_sensitive(discord_active);
     m_menu_discord_join_guild.set_sensitive(discord_active);
     m_menu_discord_set_token.set_sensitive(!discord_active);

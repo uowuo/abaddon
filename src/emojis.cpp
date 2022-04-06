@@ -1,8 +1,9 @@
 #include "emojis.hpp"
 #include <sstream>
+#include <utility>
 
 EmojiResource::EmojiResource(std::string filepath)
-    : m_filepath(filepath) {}
+    : m_filepath(std::move(filepath)) {}
 
 bool EmojiResource::Load() {
     m_fp = std::fopen(m_filepath.c_str(), "rb");
@@ -31,7 +32,7 @@ bool EmojiResource::Load() {
         std::fread(&surrogates_count, 4, 1, m_fp);
         std::string surrogates(surrogates_count, '\0');
         std::fread(surrogates.data(), surrogates_count, 1, m_fp);
-        m_patterns.push_back(surrogates);
+        m_patterns.emplace_back(surrogates);
 
         int data_size, data_offset;
         std::fread(&data_size, 4, 1, m_fp);
@@ -52,7 +53,7 @@ bool EmojiResource::Load() {
 
 Glib::RefPtr<Gdk::Pixbuf> EmojiResource::GetPixBuf(const Glib::ustring &pattern) {
     const auto it = m_index.find(pattern);
-    if (it == m_index.end()) return Glib::RefPtr<Gdk::Pixbuf>();
+    if (it == m_index.end()) return {};
     const int pos = it->second.first;
     const int len = it->second.second;
     std::fseek(m_fp, pos, SEEK_SET);
@@ -86,17 +87,17 @@ void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
                 else
                     break;
             }
-            searchpos = r + pattern.size();
+            searchpos = static_cast<int>(r + pattern.size());
 
-            const auto start_it = buf->get_iter_at_offset(r);
-            const auto end_it = buf->get_iter_at_offset(r + pattern.size());
+            const auto start_it = buf->get_iter_at_offset(static_cast<int>(r));
+            const auto end_it = buf->get_iter_at_offset(static_cast<int>(r + pattern.size()));
 
             auto it = buf->erase(start_it, end_it);
             buf->insert_pixbuf(it, pixbuf);
 
-            int alen = text.size();
+            int alen = static_cast<int>(text.size());
             text = get_text();
-            int blen = text.size();
+            int blen = static_cast<int>(text.size());
             searchpos -= (alen - blen);
         }
     }
@@ -107,10 +108,6 @@ std::string EmojiResource::GetShortCodeForPattern(const Glib::ustring &pattern) 
     if (it != m_pattern_shortcode_index.end())
         return it->second.front();
     return "";
-}
-
-const std::vector<Glib::ustring> &EmojiResource::GetPatterns() const {
-    return m_patterns;
 }
 
 const std::map<std::string, std::string> &EmojiResource::GetShortCodes() const {

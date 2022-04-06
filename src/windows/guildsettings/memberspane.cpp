@@ -64,7 +64,7 @@ GuildSettingsMembersPaneMembers::GuildSettingsMembersPaneMembers(Snowflake id)
 
     m_list.set_filter_func([this](Gtk::ListBoxRow *row_) -> bool {
         const auto search_term = m_search.get_text();
-        if (search_term.size() == 0) return true;
+        if (search_term.empty()) return true;
         if (auto *row = dynamic_cast<GuildSettingsMembersListItem *>(row_))
             return StringContainsCaseless(row->DisplayTerm, m_search.get_text());
         return true;
@@ -208,12 +208,12 @@ void GuildSettingsMembersPaneInfo::SetUser(Snowflake user_id) {
 
     m_id.set_text("User ID: " + std::to_string(user_id));
     m_created.set_text("Account created: " + user_id.GetLocalTimestamp());
-    if (member.JoinedAt != "")
+    if (!member.JoinedAt.empty())
         m_joined.set_text("Joined server: " + FormatISO8601(member.JoinedAt));
     else
         m_joined.set_text("Joined server: Unknown");
     m_nickname.set_text("Nickname: " + member.Nickname);
-    m_nickname.set_visible(member.Nickname != "");
+    m_nickname.set_visible(!member.Nickname.empty());
     if (member.PremiumSince.has_value()) {
         m_boosting.set_text("Boosting since " + FormatISO8601(*member.PremiumSince));
         m_boosting.show();
@@ -244,7 +244,7 @@ GuildSettingsMembersPaneRoles::GuildSettingsMembersPaneRoles(Snowflake guild_id)
         }
     }
 
-    m_list.set_sort_func([this](Gtk::ListBoxRow *a, Gtk::ListBoxRow *b) -> int {
+    m_list.set_sort_func([](Gtk::ListBoxRow *a, Gtk::ListBoxRow *b) -> int {
         auto *rowa = dynamic_cast<GuildSettingsMembersPaneRolesItem *>(a);
         auto *rowb = dynamic_cast<GuildSettingsMembersPaneRolesItem *>(b);
         return rowb->Position - rowa->Position;
@@ -319,8 +319,8 @@ void GuildSettingsMembersPaneRoles::OnRoleToggle(Snowflake role_id, bool new_set
 
     // hack to prevent cb from being called if SetRoles is called before callback completion
     sigc::signal<void, bool> tmp;
-    m_update_connection.push_back(tmp.connect(std::move(cb)));
-    const auto tmp_cb = [this, tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
+    m_update_connection.emplace_back(tmp.connect(std::move(cb)));
+    const auto tmp_cb = [tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
     discord.SetMemberRoles(GuildID, UserID, m_set_role_ids.begin(), m_set_role_ids.end(), sigc::track_obj(tmp_cb, *this));
 }
 

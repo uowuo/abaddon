@@ -55,7 +55,6 @@ public:
 
     std::unordered_set<Snowflake> GetGuilds() const;
     const UserData &GetUserData() const;
-    const UserSettings &GetUserSettings() const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
     std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit = 50) const;
@@ -63,8 +62,8 @@ public:
 
     EPremiumType GetSelfPremiumType() const;
 
-    void FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb);
-    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, sigc::slot<void(const std::vector<Message> &)> cb);
+    void FetchMessagesInChannel(Snowflake id, const sigc::slot<void(const std::vector<Message> &)> &cb);
+    void FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, const sigc::slot<void(const std::vector<Message> &)> &cb);
     std::optional<Message> GetMessage(Snowflake id) const;
     std::optional<ChannelData> GetChannel(Snowflake id) const;
     std::optional<EmojiData> GetEmoji(Snowflake id) const;
@@ -73,15 +72,14 @@ public:
     std::optional<RoleData> GetRole(Snowflake id) const;
     std::optional<GuildData> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
-    std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
     std::vector<Snowflake> GetUsersInThread(Snowflake id) const;
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
-    void GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
-    void GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback);
+    void GetArchivedPublicThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback);
+    void GetArchivedPrivateThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback);
     std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
 
     // get ids of given list of members for who we do not have the member data
@@ -104,7 +102,7 @@ public:
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
 
-    void ChatMessageCallback(std::string nonce, const http::response_type &response);
+    void ChatMessageCallback(const std::string &nonce, const http::response_type &response);
 
     void SendChatMessage(const std::string &content, Snowflake channel);
     void SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message);
@@ -112,53 +110,47 @@ public:
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
     void SendThreadLazyLoad(Snowflake id);
-    void JoinGuild(std::string code);
+    void JoinGuild(const std::string &code);
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
     void UpdateStatus(PresenceStatus status, bool is_afk);
     void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
-    void CreateDM(Snowflake user_id);
-    void CreateDM(Snowflake user_id, sigc::slot<void(DiscordError code, Snowflake channel_id)> callback);
+    void CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback);
     void CloseDM(Snowflake channel_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
     void RemoveReaction(Snowflake id, Glib::ustring param);
-    void SetGuildName(Snowflake id, const Glib::ustring &name);
-    void SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
-    void SetGuildIcon(Snowflake id, const std::string &data);
-    void SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(DiscordError code)> callback);
-    void UnbanUser(Snowflake guild_id, Snowflake user_id);
-    void UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(DiscordError code)> callback);
-    void DeleteInvite(const std::string &code);
-    void DeleteInvite(const std::string &code, sigc::slot<void(DiscordError code)> callback);
+    void SetGuildName(Snowflake id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback);
+    void SetGuildIcon(Snowflake id, const std::string &data, const sigc::slot<void(DiscordError code)> &callback);
+    void UnbanUser(Snowflake guild_id, Snowflake user_id, const sigc::slot<void(DiscordError code)> &callback);
+    void DeleteInvite(const std::string &code, const sigc::slot<void(DiscordError code)> &callback);
     void AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
     void RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id);
-    void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(DiscordError code)> callback);
-    void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
-    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(DiscordError code)> callback);
-    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(DiscordError code)> callback);
-    void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(DiscordError code)> callback);
-    void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback);
-    void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(DiscordError code)> callback);
-    std::optional<GuildApplicationData> GetGuildApplication(Snowflake guild_id) const;
-    void RemoveRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback);
-    void SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(DiscordError code)> callback);
-    void PutRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback); // send fr by id, accept incoming
-    void Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
-    void Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback);
-    void LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback);
-    void ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback);
-    void MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback);
-    void MarkAllAsRead(sigc::slot<void(DiscordError code)> callback);
-    void MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback);
-    void UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback);
-    void MuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback);
-    void UnmuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback);
+    void ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, const sigc::slot<void(DiscordError code)> &callback);
+    void ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, const sigc::slot<void(DiscordError code)> &callback);
+    void ModifyRoleColor(Snowflake guild_id, Snowflake role_id, const Gdk::RGBA &color, const sigc::slot<void(DiscordError code)> &callback);
+    void ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, const sigc::slot<void(DiscordError code)> &callback);
+    void ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback);
+    void DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, const sigc::slot<void(DiscordError code)> &callback);
+    void RemoveRelationship(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
+    void SendFriendRequest(const Glib::ustring &username, int discriminator, const sigc::slot<void(DiscordError code)> &callback);
+    void PutRelationship(Snowflake id, const sigc::slot<void(DiscordError code)> &callback); // send fr by id, accept incoming
+    void Pin(Snowflake channel_id, Snowflake message_id, const sigc::slot<void(DiscordError code)> &callback);
+    void Unpin(Snowflake channel_id, Snowflake message_id, const sigc::slot<void(DiscordError code)> &callback);
+    void LeaveThread(Snowflake channel_id, const std::string &location, const sigc::slot<void(DiscordError code)> &callback);
+    void ArchiveThread(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
+    void UnArchiveThread(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
+    void MarkChannelAsRead(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
+    void MarkGuildAsRead(Snowflake guild_id, const sigc::slot<void(DiscordError code)> &callback);
+    void MuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
+    void UnmuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
+    void MarkAllAsRead(const sigc::slot<void(DiscordError code)> &callback);
+    void MuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
+    void UnmuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
+    void MuteThread(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
+    void UnmuteThread(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
 
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id) const;
     bool CanModifyRole(Snowflake guild_id, Snowflake role_id, Snowflake user_id) const;
@@ -177,7 +169,7 @@ public:
 
     // real client doesn't seem to use the single role endpoints so neither do we
     template<typename Iter>
-    auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, sigc::slot<void(DiscordError code)> callback) {
+    auto SetMemberRoles(Snowflake guild_id, Snowflake user_id, Iter begin, Iter end, const sigc::slot<void(DiscordError code)> &callback) {
         ModifyGuildMemberObject obj;
         obj.Roles = { begin, end };
         m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/members/" + std::to_string(user_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
@@ -190,30 +182,29 @@ public:
 
     // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)
     std::vector<BanData> GetBansInGuild(Snowflake guild_id);
-    void FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback);
-    void FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback);
+    void FetchGuildBan(Snowflake guild_id, Snowflake user_id, const sigc::slot<void(BanData)> &callback);
+    void FetchGuildBans(Snowflake guild_id, const sigc::slot<void(std::vector<BanData>)> &callback);
 
-    void FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback);
-    void FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback);
+    void FetchInvite(const std::string &code, const sigc::slot<void(std::optional<InviteData>)> &callback);
+    void FetchGuildInvites(Snowflake guild_id, const sigc::slot<void(std::vector<InviteData>)> &callback);
 
-    void FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback);
+    void FetchAuditLog(Snowflake guild_id, const sigc::slot<void(AuditLogData)> &callback);
 
-    void FetchGuildEmojis(Snowflake guild_id, sigc::slot<void(std::vector<EmojiData>)> callback);
+    void FetchGuildEmojis(Snowflake guild_id, const sigc::slot<void(std::vector<EmojiData>)> &callback);
 
-    void FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback);
-    void FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback);
-    void SetUserNote(Snowflake user_id, std::string note);
-    void SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(DiscordError code)> callback);
-    void FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback);
+    void FetchUserProfile(Snowflake user_id, const sigc::slot<void(UserProfileData)> &callback);
+    void FetchUserNote(Snowflake user_id, const sigc::slot<void(std::string note)> &callback);
+    void SetUserNote(Snowflake user_id, std::string note, const sigc::slot<void(DiscordError code)> &callback);
+    void FetchUserRelationships(Snowflake user_id, const sigc::slot<void(std::vector<UserData>)> &callback);
 
-    void FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback);
+    void FetchPinned(Snowflake id, const sigc::slot<void(std::vector<Message>, DiscordError code)> &callback);
 
-    bool IsVerificationRequired(Snowflake guild_id);
-    void GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback);
-    void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(DiscordError code)> callback);
+    bool IsVerificationRequired(Snowflake guild_id) const;
+    void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
+    void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
-    void UpdateToken(std::string token);
-    void SetUserAgent(std::string agent);
+    void UpdateToken(const std::string &token);
+    void SetUserAgent(const std::string &agent);
 
     bool IsChannelMuted(Snowflake id) const noexcept;
     bool IsGuildMuted(Snowflake id) const noexcept;
@@ -233,8 +224,8 @@ private:
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
 
-    std::string GetAPIURL();
-    std::string GetGatewayURL();
+    static std::string GetAPIURL();
+    static std::string GetGatewayURL();
 
     static DiscordError GetCodeFromResponse(const http::response_type &response);
 
@@ -296,15 +287,13 @@ private:
     void HandleSocketOpen();
     void HandleSocketClose(uint16_t code);
 
-    bool CheckCode(const http::response_type &r);
-    bool CheckCode(const http::response_type &r, int expected);
+    static bool CheckCode(const http::response_type &r);
+    static bool CheckCode(const http::response_type &r, int expected);
 
     void StoreMessageData(Message &msg);
 
     void HandleReadyReadState(const ReadyEventData &data);
     void HandleReadyGuildSettings(const ReadyEventData &data);
-
-    void HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data);
 
     std::string m_token;
 

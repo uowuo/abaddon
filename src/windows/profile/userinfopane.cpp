@@ -39,8 +39,8 @@ ConnectionItem::ConnectionItem(const ConnectionData &conn)
     m_name.set_single_line_mode(true);
     m_name.set_ellipsize(Pango::ELLIPSIZE_END);
     m_box.add(m_name);
-    if (url != "") {
-        auto cb = [this, url](GdkEventButton *event) -> bool {
+    if (!url.empty()) {
+        auto cb = [url](GdkEventButton *event) -> bool {
             if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
                 LaunchBrowser(url);
                 return true;
@@ -102,7 +102,7 @@ void ConnectionsContainer::SetConnections(const std::vector<ConnectionData> &con
         if (supported_services.find(conn.Type) == supported_services.end()) continue;
         auto widget = Gtk::manage(new ConnectionItem(conn));
         widget->show();
-        attach(*widget, i % 2, i / 2, 1, 1);
+        attach(*widget, static_cast<int>(i % 2), static_cast<int>(i / 2), 1, 1);
     }
 
     set_halign(Gtk::ALIGN_FILL);
@@ -185,7 +185,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     m_created.get_style_context()->add_class("profile-info-created");
 
     m_note.signal_update_note().connect([this](const Glib::ustring &note) {
-        auto cb = [this](DiscordError code) {
+        auto cb = [](DiscordError code) {
             if (code != DiscordError::NONE) {
                 Gtk::MessageDialog dlg("Failed to set note", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -196,7 +196,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     });
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto note_update_cb = [this](Snowflake id, std::string note) {
+    auto note_update_cb = [this](Snowflake id, const std::string &note) {
         if (id == UserID)
             m_note.SetNote(note);
     };
@@ -225,7 +225,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
 }
 
 void ProfileUserInfoPane::SetProfile(const UserProfileData &data) {
-    if (data.User.Bio.has_value() && *data.User.Bio != "") {
+    if (data.User.Bio.has_value() && !data.User.Bio->empty()) {
         m_bio.SetBio(*data.User.Bio);
         m_bio.show();
     } else {

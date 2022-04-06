@@ -30,7 +30,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto guild = *discord.GetGuild(GuildID);
     for (const auto &entry : data.Entries) {
-        if (entry.TargetID == "") continue;
+        if (entry.TargetID.empty()) continue;
 
         auto expander = Gtk::manage(new Gtk::Expander);
         auto label = Gtk::manage(new Gtk::Label);
@@ -56,7 +56,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "icon_hash") {
-                            extra_markup.push_back("Set the server icon");
+                            extra_markup.emplace_back("Set the server icon");
                         } else if (change.Key == "name") {
                             auto new_name = change.NewValue;
                             if (new_name.has_value())
@@ -64,7 +64,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                                        Glib::Markup::escape_text(new_name->get<std::string>()) +
                                                        "</b>");
                             else
-                                extra_markup.push_back("Set the server name");
+                                extra_markup.emplace_back("Set the server name");
                         }
                     }
             } break;
@@ -82,8 +82,8 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                                    Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
                                                    "</b>");
                         else if (change.Key == "nsfw" && change.NewValue.has_value())
-                            extra_markup.push_back((*change.NewValue ? "Marked" : "Unmarked") +
-                                                   " the channel as NSFW"s);
+                            extra_markup.emplace_back((*change.NewValue ? "Marked" : "Unmarked") +
+                                                      " the channel as NSFW"s);
                     }
 
             } break;
@@ -119,16 +119,16 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                                        Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
                                                        "</b>");
                             else
-                                extra_markup.push_back("Cleared the topic");
+                                extra_markup.emplace_back("Cleared the topic");
                         } else if (change.Key == "nsfw" && change.NewValue.has_value()) {
-                            extra_markup.push_back((*change.NewValue ? "Marked" : "Unmarked") + " the channel as NSFW"s);
+                            extra_markup.emplace_back((*change.NewValue ? "Marked" : "Unmarked") + " the channel as NSFW"s);
                         } else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
                             const int secs = change.NewValue->get<int>();
                             if (secs == 0)
-                                extra_markup.push_back("Disabled slowmode");
+                                extra_markup.emplace_back("Disabled slowmode");
                             else
-                                extra_markup.push_back("Set slowmode to <b>" +
-                                                       std::to_string(secs) + " seconds</b>");
+                                extra_markup.emplace_back("Set slowmode to <b>" +
+                                                          std::to_string(secs) + " seconds</b>");
                         }
                     }
             } break;
@@ -186,9 +186,9 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                          " pruned <b>" +
                          *entry.Options->MembersRemoved +
                          "</b> members";
-                extra_markup.push_back("For <b>" +
-                                       *entry.Options->DeleteMemberDays +
-                                       " days</b> of inactivity");
+                extra_markup.emplace_back("For <b>" +
+                                          *entry.Options->DeleteMemberDays +
+                                          " days</b> of inactivity");
             } break;
             case AuditLogActionType::MEMBER_BAN_ADD: {
                 const auto target_user = discord.GetUser(entry.TargetID);
@@ -213,13 +213,11 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "deaf" && change.NewValue.has_value())
-                            extra_markup.push_back(
-                                (change.NewValue->get<bool>() ? "<b>Deafened</b>"s : "<b>Undeafened</b>"s) +
-                                " them");
+                            extra_markup.emplace_back((change.NewValue->get<bool>() ? "<b>Deafened</b>"s : "<b>Undeafened</b>"s) +
+                                                      " them");
                         else if (change.Key == "mute" && change.NewValue.has_value())
-                            extra_markup.push_back(
-                                (change.NewValue->get<bool>() ? "<b>Muted</b>"s : "<b>Unmuted</b>"s) +
-                                " them");
+                            extra_markup.emplace_back((change.NewValue->get<bool>() ? "<b>Muted</b>"s : "<b>Unmuted</b>"s) +
+                                                      " them");
                         else if (change.Key == "nick" && change.NewValue.has_value())
                             extra_markup.push_back("Set their nickname to <b>" +
                                                    Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
@@ -289,17 +287,17 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                         } else if (change.Key == "color" && change.NewValue.has_value()) {
                             const auto col = change.NewValue->get<int>();
                             if (col == 0)
-                                extra_markup.push_back("Removed the color");
+                                extra_markup.emplace_back("Removed the color");
                             else
-                                extra_markup.push_back("Set the color to <b>" +
-                                                       IntToCSSColor(col) +
-                                                       "</b>");
+                                extra_markup.emplace_back("Set the color to <b>" +
+                                                          IntToCSSColor(col) +
+                                                          "</b>");
                         } else if (change.Key == "permissions") {
-                            extra_markup.push_back("Updated the permissions");
+                            extra_markup.emplace_back("Updated the permissions");
                         } else if (change.Key == "mentionable" && change.NewValue.has_value()) {
-                            extra_markup.push_back(change.NewValue->get<bool>() ? "Mentionable" : "Not mentionable");
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? "Mentionable" : "Not mentionable");
                         } else if (change.Key == "hoist" && change.NewValue.has_value()) {
-                            extra_markup.push_back(change.NewValue->get<bool>() ? "Not hoisted" : "Hoisted");
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? "Not hoisted" : "Hoisted");
                         }
                     }
             } break;
@@ -324,13 +322,13 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                         } else if (change.Key == "max_uses" && change.NewValue.has_value()) {
                             const auto uses = change.NewValue->get<int>();
                             if (uses == 0)
-                                extra_markup.push_back("Which has <b>unlimited</b> uses");
+                                extra_markup.emplace_back("Which has <b>unlimited</b> uses");
                             else
-                                extra_markup.push_back("Which has <b>" + std::to_string(uses) + "</b> uses");
+                                extra_markup.emplace_back("Which has <b>" + std::to_string(uses) + "</b> uses");
                         } else if (change.Key == "temporary" && change.NewValue.has_value()) {
-                            extra_markup.push_back("With temporary <b>"s +
-                                                   (change.NewValue->get<bool>() ? "on" : "off") +
-                                                   "</b>");
+                            extra_markup.emplace_back("With temporary <b>"s +
+                                                      (change.NewValue->get<bool>() ? "on" : "off") +
+                                                      "</b>");
                         } // no max_age cuz fuck time
                     }
             } break;
@@ -378,7 +376,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                                    Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
                                                    "</b>");
                         } else if (change.Key == "avatar_hash") {
-                            extra_markup.push_back("Changed the avatar");
+                            extra_markup.emplace_back("Changed the avatar");
                         } else if (change.Key == "channel_id" && change.NewValue.has_value()) {
                             const auto channel = discord.GetChannel(change.NewValue->get<Snowflake>());
                             if (channel.has_value()) {
@@ -386,7 +384,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                                                        Glib::Markup::escape_text(*channel->Name) +
                                                        "</b>");
                             } else {
-                                extra_markup.push_back("Changed the channel");
+                                extra_markup.emplace_back("Changed the channel");
                             }
                         }
                     }
@@ -552,18 +550,18 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                         if (change.Key == "name")
                             extra_markup.push_back("Set the name to <b>" + Glib::Markup::escape_text(change.NewValue->get<std::string>()) + "</b>");
                         else if (change.Key == "archived")
-                            extra_markup.push_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
                         else if (change.Key == "auto_archive_duration")
-                            extra_markup.push_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
+                            extra_markup.emplace_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
                         else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
                             const int secs = change.NewValue->get<int>();
                             if (secs == 0)
-                                extra_markup.push_back("Disabled slowmode");
+                                extra_markup.emplace_back("Disabled slowmode");
                             else
-                                extra_markup.push_back("Set slowmode to <b>" +
-                                                       std::to_string(secs) + " seconds</b>");
+                                extra_markup.emplace_back("Set slowmode to <b>" +
+                                                          std::to_string(secs) + " seconds</b>");
                         } else if (change.Key == "locked")
-                            extra_markup.push_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
                     }
                 }
             } break;
@@ -584,19 +582,19 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                             Glib::Markup::escape_text(change.NewValue->get<std::string>()) +
                             "</b>");
                     else if (change.Key == "auto_archive_duration")
-                        extra_markup.push_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
+                        extra_markup.emplace_back("Set auto archive duration to <b>"s + std::to_string(change.NewValue->get<int>()) + " minutes</b>"s);
                     else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
                         const int secs = change.NewValue->get<int>();
                         if (secs == 0)
-                            extra_markup.push_back("Disabled slowmode");
+                            extra_markup.emplace_back("Disabled slowmode");
                         else
-                            extra_markup.push_back("Set slowmode to <b>" +
-                                                   std::to_string(secs) +
-                                                   " seconds</b>");
+                            extra_markup.emplace_back("Set slowmode to <b>" +
+                                                      std::to_string(secs) +
+                                                      " seconds</b>");
                     } else if (change.Key == "locked")
-                        extra_markup.push_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
+                        extra_markup.emplace_back(change.NewValue->get<bool>() ? "Locked the thread, restricting it to only be unarchived by moderators" : "Unlocked the thread, allowing it to be unarchived by non-moderators");
                     else if (change.Key == "archived")
-                        extra_markup.push_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
+                        extra_markup.emplace_back(change.NewValue->get<bool>() ? "Archived the thread" : "Unarchived the thread");
                 }
             } break;
             case AuditLogActionType::THREAD_DELETE: {

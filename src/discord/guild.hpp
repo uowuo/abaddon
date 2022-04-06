@@ -94,6 +94,5 @@ struct GuildData {
     bool HasFeature(const std::string &feature);
     bool HasIcon() const;
     bool HasAnimatedIcon() const;
-    std::string GetIconURL(std::string ext = "png", std::string size = "32") const;
-    std::vector<Snowflake> GetSortedChannels(Snowflake ignore = Snowflake::Invalid) const;
+    std::string GetIconURL(const std::string &ext = "png", const std::string &size = "32") const;
 };

@@ -12,8 +12,8 @@ struct Snowflake {
     static Snowflake FromNow(); // not thread safe
     static Snowflake FromISO8601(std::string_view ts);
 
-    bool IsValid() const;
-    Glib::ustring GetLocalTimestamp() const;
+    [[nodiscard]] bool IsValid() const;
+    [[nodiscard]] Glib::ustring GetLocalTimestamp() const;
 
     bool operator==(const Snowflake &s) const noexcept {
         return m_num == s.m_num;

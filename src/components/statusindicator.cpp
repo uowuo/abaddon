@@ -2,10 +2,6 @@
 #include "abaddon.hpp"
 
 static const constexpr int Diameter = 8;
-static const auto OnlineColor = Gdk::RGBA("#43B581");
-static const auto IdleColor = Gdk::RGBA("#FAA61A");
-static const auto DNDColor = Gdk::RGBA("#982929");
-static const auto OfflineColor = Gdk::RGBA("#808080");
 
 StatusIndicator::StatusIndicator(Snowflake user_id)
     : Glib::ObjectBase("statusindicator")
@@ -24,9 +20,6 @@ StatusIndicator::StatusIndicator(Snowflake user_id)
     Abaddon::Get().GetDiscordClient().signal_presence_update().connect(sigc::track_obj(cb, *this));
 
     CheckStatus();
-}
-
-StatusIndicator::~StatusIndicator() {
 }
 
 void StatusIndicator::CheckStatus() {
@@ -121,7 +114,7 @@ bool StatusIndicator::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     const auto color = get_style_context()->get_color(Gtk::STATE_FLAG_NORMAL);
 
     cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-    cr->arc(width / 2, height / 2, width / 3, 0.0, 2 * (4 * std::atan(1)));
+    cr->arc(width / 2.0, height / 2.0, width / 3.0, 0.0, 2 * (4 * std::atan(1)));
     cr->close_path();
     cr->fill_preserve();
     cr->stroke();

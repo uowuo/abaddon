@@ -60,7 +60,7 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
             guild_icon_url = guild.GetIconURL("gif", "512");
         else
             guild_icon_url = guild.GetIconURL("png", "512");
-        m_guild_icon_ev.signal_button_press_event().connect([this, guild_icon_url](GdkEventButton *event) -> bool {
+        m_guild_icon_ev.signal_button_press_event().connect([guild_icon_url](GdkEventButton *event) -> bool {
             if (event->type == GDK_BUTTON_PRESS)
                 if (event->button == GDK_BUTTON_PRIMARY)
                     LaunchBrowser(guild_icon_url);
@@ -114,7 +114,7 @@ void GuildSettingsInfoPane::UpdateGuildIconFromData(const std::vector<uint8_t> &
     auto encoded = "data:" + mime + ";base64," + Glib::Base64::encode(std::string(data.begin(), data.end()));
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    auto cb = [this](DiscordError code) {
+    auto cb = [](DiscordError code) {
         if (code != DiscordError::NONE) {
             Gtk::MessageDialog dlg("Failed to set guild icon", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -160,7 +160,7 @@ void GuildSettingsInfoPane::UpdateGuildIconPicker() {
                     loader->write(data.data(), data.size());
                     loader->close();
                     UpdateGuildIconFromPixbuf(loader->get_pixbuf());
-                } catch (const std::exception &) {};
+                } catch (const std::exception &) {}
         }
     });
 
@@ -209,7 +209,7 @@ void GuildSettingsInfoPane::UpdateGuildIconClipboard() {
             UpdateGuildIconFromPixbuf(pb);
 
             return;
-        } catch (const std::exception &) {};
+        } catch (const std::exception &) {}
     }
 
     if (cb->wait_is_image_available()) {

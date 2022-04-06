@@ -20,7 +20,7 @@ struct GuildMember {
     // undocuemtned moment !!!1
     std::optional<std::string> Avatar;
 
-    std::vector<RoleData> GetSortedRoles() const;
+    [[nodiscard]] std::vector<RoleData> GetSortedRoles() const;
 
     void update_from_json(const nlohmann::json &j);
     friend void from_json(const nlohmann::json &j, GuildMember &m);

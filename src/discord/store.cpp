@@ -1001,7 +1001,7 @@ std::optional<RoleData> Store::GetRole(Snowflake id) const {
     return role;
 }
 
-RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) const {
+RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) {
     RoleData r;
 
     s->Get(0, r.ID);
@@ -2249,11 +2249,11 @@ int Store::Statement::Bind(int index, Snowflake id) {
 
 int Store::Statement::Bind(int index, const char *str, size_t len) {
     if (len == -1) len = strlen(str);
-    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str, len, SQLITE_TRANSIENT));
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str, static_cast<int>(len), SQLITE_TRANSIENT));
 }
 
 int Store::Statement::Bind(int index, const std::string &str) {
-    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), str.size(), SQLITE_TRANSIENT));
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), static_cast<int>(str.size()), SQLITE_TRANSIENT));
 }
 
 int Store::Statement::Bind(int index) {

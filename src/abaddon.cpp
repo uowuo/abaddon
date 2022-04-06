@@ -63,14 +63,14 @@ int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
 
     m_css_provider = Gtk::CssProvider::create();
-    m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
+    m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
         Gtk::MessageDialog dlg("css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
 
     m_css_low_provider = Gtk::CssProvider::create();
-    m_css_low_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
+    m_css_low_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
         Gtk::MessageDialog dlg("low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
@@ -165,7 +165,7 @@ void Abaddon::OnShutdown() {
 
 void Abaddon::LoadFromSettings() {
     std::string token = GetSettings().DiscordToken;
-    if (token.size()) {
+    if (!token.empty()) {
         m_discord_token = token;
         m_discord.UpdateToken(m_discord_token);
     }
@@ -292,7 +292,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
         delete child;
     if (guild.has_value() && user.has_value()) {
         const auto roles = user->GetSortedRoles();
-        m_user_menu_roles->set_visible(roles.size() > 0);
+        m_user_menu_roles->set_visible(!roles.empty());
         for (const auto &role : roles) {
             auto *item = Gtk::manage(new Gtk::MenuItem(role.Name));
             if (role.Color != 0) {
@@ -691,7 +691,7 @@ void Abaddon::ActionSetStatus() {
     const auto status = dlg.GetStatusType();
     const auto activity_type = dlg.GetActivityType();
     const auto activity_name = dlg.GetActivityName();
-    if (activity_name == "") {
+    if (activity_name.empty()) {
         m_discord.UpdateStatus(status, false);
     } else {
         ActivityData activity;

@@ -291,7 +291,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!iter || !channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
-    if (!IsTextChannel(channel->Type)) return;
+    if (!channel->IsText()) return;
 
     // refresh stuff that might have changed
     const bool is_orphan_TMP = !channel->ParentID.has_value();
@@ -399,7 +399,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
         queue.pop();
         if ((*item)[m_columns.m_type] == RenderType::Thread)
             threads.push_back(static_cast<Snowflake>((*item)[m_columns.m_id]));
-        for (auto child : item->children())
+        for (const auto& child : item->children())
             queue.push(child);
     }
 
@@ -580,7 +580,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         if (thread.has_value())
             threads[*thread->ParentID].push_back(*thread);
     }
-    const auto add_threads = [&](const ChannelData &channel, Gtk::TreeRow row) {
+    const auto add_threads = [&](const ChannelData &channel, const Gtk::TreeRow& row) {
         row[m_columns.m_expanded] = true;
 
         const auto it = threads.find(channel.ID);
@@ -648,7 +648,7 @@ Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildre
     thread_row[m_columns.m_type] = RenderType::Thread;
     thread_row[m_columns.m_id] = channel.ID;
     thread_row[m_columns.m_name] = "- " + Glib::Markup::escape_text(*channel.Name);
-    thread_row[m_columns.m_sort] = channel.ID;
+    thread_row[m_columns.m_sort] = static_cast<int64_t>(channel.ID);
     thread_row[m_columns.m_nsfw] = false;
 
     return thread_iter;
@@ -692,7 +692,7 @@ bool ChannelList::IsTextChannel(ChannelType type) {
 }
 
 // this should be unncessary but something is behaving strange so its just in case
-void ChannelList::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+void ChannelList::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) const {
     (*iter)[m_columns.m_expanded] = false;
 }
 
@@ -737,14 +737,14 @@ void ChannelList::AddPrivateChannels() {
 
         std::optional<UserData> top_recipient;
         const auto recipients = dm->GetDMRecipients();
-        if (recipients.size() > 0)
+        if (!recipients.empty())
             top_recipient = recipients[0];
 
         auto iter = m_model->append(header_row->children());
         auto row = *iter;
         row[m_columns.m_type] = RenderType::DM;
         row[m_columns.m_id] = dm_id;
-        row[m_columns.m_sort] = -(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id);
+        row[m_columns.m_sort] = static_cast<int64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
         row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
 
         if (dm->Type == ChannelType::DM && top_recipient.has_value())
@@ -781,7 +781,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     auto row = *iter;
     row[m_columns.m_type] = RenderType::DM;
     row[m_columns.m_id] = dm.ID;
-    row[m_columns.m_sort] = -(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID);
+    row[m_columns.m_sort] = static_cast<int64_t>(-(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID));
     row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
 
     if (dm.Type == ChannelType::DM && top_recipient.has_value())
@@ -817,7 +817,7 @@ void ChannelList::OnMessageCreate(const Message &msg) {
     if (!channel.has_value()) return;
     if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) {
         if (iter)
-            (*iter)[m_columns.m_sort] = -msg.ID;
+            (*iter)[m_columns.m_sort] = static_cast<int64_t>(-msg.ID);
     }
     if (channel->GuildID.has_value())
         if ((iter = GetIteratorForGuildFromID(*channel->GuildID)))
@@ -826,7 +826,7 @@ void ChannelList::OnMessageCreate(const Message &msg) {
 
 bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
-        if (m_view.get_path_at_pos(ev->x, ev->y, m_path_for_menu)) {
+        if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
             auto row = (*m_model->get_iter(m_path_for_menu));
             switch (static_cast<RenderType>(row[m_columns.m_type])) {
                 case RenderType::Guild:

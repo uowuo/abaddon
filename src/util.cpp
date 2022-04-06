@@ -1,33 +1,15 @@
 #include "util.hpp"
 #include <array>
 #include <filesystem>
-#include <array>
 
-Semaphore::Semaphore(int count)
-    : m_count(count) {}
-
-void Semaphore::notify() {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_count++;
-    lock.unlock();
-    m_cv.notify_one();
-}
-
-void Semaphore::wait() {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    while (m_count == 0)
-        m_cv.wait(lock);
-    m_count--;
-}
-
-void LaunchBrowser(Glib::ustring url) {
+void LaunchBrowser(const Glib::ustring &url) {
     GError *err = nullptr;
     if (!gtk_show_uri_on_window(nullptr, url.c_str(), GDK_CURRENT_TIME, &err))
         printf("failed to open uri: %s\n", err->message);
 }
 
 void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw, int clamph) {
-    const auto frac = static_cast<float>(inw) / inh;
+    const auto frac = static_cast<float>(inw) / static_cast<float>(inh);
 
     outw = inw;
     outh = inh;
@@ -43,7 +25,7 @@ void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw, int 
     }
 }
 
-std::vector<uint8_t> ReadWholeFile(std::string path) {
+std::vector<uint8_t> ReadWholeFile(const std::string &path) {
     std::vector<uint8_t> ret;
     FILE *fp = std::fopen(path.c_str(), "rb");
     if (fp == nullptr)
@@ -74,7 +56,7 @@ int GetTimezoneOffset() {
     std::time_t local_secs = std::mktime(tptr);
     tptr = std::gmtime(&secs);
     std::time_t gmt_secs = std::mktime(tptr);
-    return local_secs - gmt_secs;
+    return static_cast<int>(local_secs - gmt_secs);
 }
 
 std::string FormatISO8601(const std::string &in, int extra_offset, const std::string &fmt) {
@@ -82,7 +64,7 @@ std::string FormatISO8601(const std::string &in, int extra_offset, const std::st
     float milli;
     std::sscanf(in.c_str(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
                 &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin);
-    std::tm tm;
+    std::tm tm {};
     tm.tm_year = yr - 1900;
     tm.tm_mon = mon - 1;
     tm.tm_mday = day;
@@ -95,7 +77,7 @@ std::string FormatISO8601(const std::string &in, int extra_offset, const std::st
     int offset = GetTimezoneOffset();
     tm.tm_sec += offset + extra_offset;
     mktime(&tm);
-    std::array<char, 512> tmp;
+    std::array<char, 512> tmp {};
     std::strftime(tmp.data(), sizeof(tmp), fmt.c_str(), &tm);
     return tmp.data();
 }
@@ -144,13 +126,9 @@ Gdk::RGBA IntToRGBA(int color) {
     return ret;
 }
 
-void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu) {
-    AddWidgetMenuHandler(widget, menu, []() {});
-}
-
 // so widgets can modify the menu before it is displayed
 // maybe theres a better way to do this idk
-void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, sigc::slot<void()> pre_callback) {
+void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, const sigc::slot<void()> &pre_callback) {
     sigc::signal<void()> signal;
     signal.connect(pre_callback);
     widget->signal_button_press_event().connect([&menu, signal](GdkEventButton *ev) -> bool {
@@ -169,7 +147,7 @@ std::vector<std::string> StringSplit(const std::string &str, const char *delim) 
     std::vector<std::string> parts;
     char *token = std::strtok(const_cast<char *>(str.c_str()), delim);
     while (token != nullptr) {
-        parts.push_back(token);
+        parts.emplace_back(token);
         token = std::strtok(nullptr, delim);
     }
     return parts;
@@ -178,7 +156,7 @@ std::vector<std::string> StringSplit(const std::string &str, const char *delim) 
 std::string GetExtension(std::string url) {
     url = StringSplit(url, "?")[0];
     url = StringSplit(url, "/").back();
-    return url.find(".") != std::string::npos ? url.substr(url.find_last_of(".")) : "";
+    return url.find('.') != std::string::npos ? url.substr(url.find_last_of('.')) : "";
 }
 
 bool IsURLViewableImage(const std::string &url) {

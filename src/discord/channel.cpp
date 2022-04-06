@@ -116,5 +116,8 @@ std::vector<UserData> ChannelData::GetDMRecipients() const {
         return ret;
     }
 
-    return std::vector<UserData>();
+    return {};
+}
+bool ChannelData::IsText() const noexcept {
+    return Type == ChannelType::GUILD_TEXT || Type == ChannelType::GUILD_NEWS;
 }

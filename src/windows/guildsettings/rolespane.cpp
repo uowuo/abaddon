@@ -61,14 +61,14 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
             if (static_cast<size_t>(new_index) == num_rows) return true; // trying to move row below @everyone
             // make sure it wont modify a neighbor role u dont have perms to modify
             if (!discord.CanModifyRole(GuildID, row->RoleID)) return false;
-            const auto cb = [this](DiscordError code) {
+            const auto cb = [](DiscordError code) {
                 if (code != DiscordError::NONE) {
                     Gtk::MessageDialog dlg("Failed to set role position", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                     dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
                     dlg.run();
                 }
             };
-            discord.ModifyRolePosition(GuildID, row->RoleID, new_pos, sigc::track_obj(cb, *this));
+            discord.ModifyRolePosition(GuildID, row->RoleID, static_cast<int>(new_pos), sigc::track_obj(cb, *this));
             return true;
         }
         return false;
@@ -95,7 +95,7 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
         }
     }
 
-    m_list.set_sort_func([this](Gtk::ListBoxRow *rowa_, Gtk::ListBoxRow *rowb_) -> int {
+    m_list.set_sort_func([](Gtk::ListBoxRow *rowa_, Gtk::ListBoxRow *rowb_) -> int {
         auto *rowa = dynamic_cast<GuildSettingsRolesPaneRolesListItem *>(rowa_);
         auto *rowb = dynamic_cast<GuildSettingsRolesPaneRolesListItem *>(rowb_);
         return rowb->Position - rowa->Position;
@@ -104,7 +104,7 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
 
     m_list.set_filter_func([this](Gtk::ListBoxRow *row_) -> bool {
         const auto search_term = m_search.get_text();
-        if (search_term.size() == 0) return true;
+        if (search_term.empty()) return true;
         if (auto *row = dynamic_cast<GuildSettingsRolesPaneRolesListItem *>(row_))
             return StringContainsCaseless(row->DisplayTerm, m_search.get_text());
         return true;
@@ -380,8 +380,8 @@ void GuildSettingsRolesPaneInfo::OnPermissionToggle(Permission perm, bool new_se
         m_perms &= ~perm;
 
     sigc::signal<void, bool> tmp;
-    m_update_connections.push_back(tmp.connect(std::move(cb)));
-    const auto tmp_cb = [this, tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
+    m_update_connections.emplace_back(tmp.connect(std::move(cb)));
+    const auto tmp_cb = [tmp = std::move(tmp)](DiscordError code) { tmp.emit(code == DiscordError::NONE); };
     discord.ModifyRolePermissions(GuildID, RoleID, m_perms, sigc::track_obj(tmp_cb, *this));
 }
 

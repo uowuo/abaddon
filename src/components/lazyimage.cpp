@@ -1,4 +1,6 @@
 #include "lazyimage.hpp"
+
+#include <utility>
 #include "abaddon.hpp"
 
 LazyImage::LazyImage(int w, int h, bool use_placeholder)
@@ -9,8 +11,8 @@ LazyImage::LazyImage(int w, int h, bool use_placeholder)
     signal_draw().connect(sigc::mem_fun(*this, &LazyImage::OnDraw));
 }
 
-LazyImage::LazyImage(const std::string &url, int w, int h, bool use_placeholder)
-    : m_url(url)
+LazyImage::LazyImage(std::string url, int w, int h, bool use_placeholder)
+    : m_url(std::move(url))
     , m_width(w)
     , m_height(h) {
     if (use_placeholder)
@@ -27,7 +29,7 @@ void LazyImage::SetURL(const std::string &url) {
 }
 
 bool LazyImage::OnDraw(const Cairo::RefPtr<Cairo::Context> &context) {
-    if (!m_needs_request || m_url == "") return false;
+    if (!m_needs_request || m_url.empty()) return false;
     m_needs_request = false;
 
     if (m_animated) {

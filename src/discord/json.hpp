@@ -141,8 +141,8 @@ inline void json_update_optional_nullable_default(const ::nlohmann::json &j, con
     } while (0)
 
 // set a json value from a std::optional only if it has a value
-#define JS_IF(k, v)        \
-    do {                   \
-        if (v.has_value()) \
-            j[k] = *v;     \
+#define JS_IF(k, v)          \
+    do {                     \
+        if ((v).has_value()) \
+            j[k] = *(v);     \
     } while (0)

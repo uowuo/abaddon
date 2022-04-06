@@ -62,7 +62,7 @@ ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     add(m_box);
 }
 
-bool ThreadsWindow::ListFilterFunc(Gtk::ListBoxRow *row_) {
+bool ThreadsWindow::ListFilterFunc(Gtk::ListBoxRow *row_) const {
     if (auto *row = dynamic_cast<ThreadListRow *>(row_))
         return (m_filter_mode == FILTER_PUBLIC && (row->Type == ChannelType::GUILD_PUBLIC_THREAD || row->Type == ChannelType::GUILD_NEWS_THREAD)) ||
                (m_filter_mode == FILTER_PRIVATE && row->Type == ChannelType::GUILD_PRIVATE_THREAD);

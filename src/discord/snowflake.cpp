@@ -2,7 +2,6 @@
 #include "util.hpp"
 #include <chrono>
 #include <ctime>
-#include <glibmm.h>
 #include <iomanip>
 
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
@@ -26,7 +25,7 @@ Snowflake::Snowflake(const Glib::ustring &str) {
         m_num = std::strtoull(str.c_str(), nullptr, 10);
     else
         m_num = Invalid;
-};
+}
 
 Snowflake Snowflake::FromNow() {
     using namespace std::chrono;
@@ -57,7 +56,7 @@ bool Snowflake::IsValid() const {
 Glib::ustring Snowflake::GetLocalTimestamp() const {
     const time_t secs_since_epoch = (m_num / SecondsInterval) + DiscordEpochSeconds;
     const std::tm tm = *localtime(&secs_since_epoch);
-    std::array<char, 256> tmp;
+    std::array<char, 256> tmp {};
     std::strftime(tmp.data(), sizeof(tmp), "%X %x", &tm);
     return tmp.data();
 }

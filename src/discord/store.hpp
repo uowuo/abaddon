@@ -101,7 +101,7 @@ private:
         ~Statement();
         Statement &operator=(Statement &other) = delete;
 
-        bool OK() const;
+        [[nodiscard]] bool OK() const;
 
         int Bind(int index, Snowflake id);
         int Bind(int index, const char *str, size_t len = -1);
@@ -224,7 +224,7 @@ private:
                 *first++ = id.get<T>();
         }
 
-        bool IsNull(int index) const;
+        [[nodiscard]] bool IsNull(int index) const;
         int Step();
         bool Insert();
         bool FetchOne();
@@ -238,7 +238,7 @@ private:
     };
 
     Message GetMessageBound(std::unique_ptr<Statement> &stmt) const;
-    RoleData GetRoleBound(std::unique_ptr<Statement> &stmt) const;
+    static RoleData GetRoleBound(std::unique_ptr<Statement> &stmt);
 
     void SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction);
 

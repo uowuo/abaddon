@@ -25,7 +25,7 @@ public:
     void DeleteMessage(Snowflake id);                     // add [deleted] indicator
     void UpdateMessage(Snowflake id);                     // add [edited] indicator
     void AddNewHistory(const std::vector<Message> &msgs); // prepend messages
-    void InsertChatInput(std::string text);
+    void InsertChatInput(const std::string& text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
     void SetTopic(const std::string &text);

@@ -9,7 +9,7 @@
 class Websocket {
 public:
     Websocket();
-    void StartConnection(std::string url);
+    void StartConnection(const std::string &url);
 
     void SetUserAgent(std::string agent);
 
@@ -20,7 +20,6 @@ public:
     void Send(const nlohmann::json &j);
     void Stop();
     void Stop(uint16_t code);
-    bool IsOpen() const;
 
 private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);

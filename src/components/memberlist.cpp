@@ -151,7 +151,7 @@ void MemberList::UpdateMemberList() {
         if (!pos_role.has_value()) {
             roleless_users.push_back(id);
             continue;
-        };
+        }
 
         pos_to_role[pos_role->Position] = *pos_role;
         pos_to_users[pos_role->Position].push_back(std::move(*user));
@@ -161,7 +161,7 @@ void MemberList::UpdateMemberList() {
 
     int num_rows = 0;
     const auto guild = *discord.GetGuild(m_guild_id);
-    auto add_user = [this, &user_to_color, &num_rows, guild](const UserData &data) -> bool {
+    auto add_user = [this, &num_rows, guild](const UserData &data) -> bool {
         if (num_rows++ > MaxMemberListRows) return false;
         auto *row = Gtk::manage(new MemberListUserRow(guild, data));
         m_id_to_row[data.ID] = row;
@@ -170,7 +170,7 @@ void MemberList::UpdateMemberList() {
         return true;
     };
 
-    auto add_role = [this](std::string name) {
+    auto add_role = [this](const std::string &name) {
         auto *role_row = Gtk::manage(new Gtk::ListBoxRow);
         auto *role_lbl = Gtk::manage(new Gtk::Label);
 
@@ -215,7 +215,7 @@ void MemberList::UpdateMemberList() {
 }
 
 void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
-    row->signal_button_press_event().connect([this, row, id](GdkEventButton *e) -> bool {
+    row->signal_button_press_event().connect([this, id](GdkEventButton *e) -> bool {
         if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
             Abaddon::Get().ShowUserMenu(reinterpret_cast<const GdkEvent *>(e), id, m_guild_id);
             return true;

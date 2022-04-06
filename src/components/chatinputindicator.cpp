@@ -84,14 +84,14 @@ void ChatInputIndicator::OnMessageCreate(const Message &message) {
 
 void ChatInputIndicator::SetTypingString(const Glib::ustring &str) {
     m_label.set_text(str);
-    if (str == "")
+    if (str.empty())
         m_img.hide();
     else if (m_img.property_pixbuf_animation().get_value())
         m_img.show();
 }
 
 void ChatInputIndicator::ComputeTypingString() {
-    if (m_custom_markup != "") {
+    if (!m_custom_markup.empty()) {
         m_label.set_markup(m_custom_markup);
         m_img.hide();
         return;
@@ -104,7 +104,7 @@ void ChatInputIndicator::ComputeTypingString() {
         if (user.has_value())
             typers.push_back(*user);
     }
-    if (typers.size() == 0) {
+    if (typers.empty()) {
         SetTypingString("");
     } else if (typers.size() == 1) {
         SetTypingString(typers[0].Username + " is typing...");

@@ -59,13 +59,13 @@ public:
     ~Cache();
 
     using callback_type = std::function<void(std::string)>;
-    void GetFileFromURL(std::string url, callback_type cb);
-    std::string GetPathIfCached(std::string url);
+    void GetFileFromURL(const std::string &url, const callback_type &cb);
+    std::string GetPathIfCached(const std::string &url);
     void ClearCache();
 
 private:
     void CleanupFutures();
-    void RespondFromPath(std::filesystem::path path, callback_type cb);
+    static void RespondFromPath(const std::filesystem::path &path, const callback_type &cb);
     void OnResponse(const std::string &url);
     void OnFetchComplete(const std::string &url);
 

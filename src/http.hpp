@@ -97,7 +97,7 @@ struct response {
 };
 
 struct request {
-    request(EMethod method, const std::string &url);
+    request(EMethod method, std::string url);
     ~request();
 
     void set_verify_ssl(bool verify);

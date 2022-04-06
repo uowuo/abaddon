@@ -10,7 +10,7 @@ public:
 
 protected:
     void on_entry_changed();
-    bool IsCode(std::string str);
+    static bool IsCode(std::string str);
 
     Gtk::Box m_layout;
     Gtk::Button m_ok;

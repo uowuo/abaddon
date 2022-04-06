@@ -6,7 +6,7 @@
 class StatusIndicator : public Gtk::Widget {
 public:
     StatusIndicator(Snowflake user_id);
-    virtual ~StatusIndicator();
+    ~StatusIndicator() override = default;
 
 protected:
     Gtk::SizeRequestMode get_request_mode_vfunc() const override;

@@ -29,7 +29,7 @@ bool UserData::HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const
         return HasAnimatedAvatar();
 }
 
-std::string UserData::GetAvatarURL(Snowflake guild_id, std::string ext, std::string size) const {
+std::string UserData::GetAvatarURL(Snowflake guild_id, const std::string &ext, std::string size) const {
     const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
     if (member.has_value() && member->Avatar.has_value()) {
         if (ext == "gif" && !(member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_'))
@@ -43,14 +43,14 @@ std::string UserData::GetAvatarURL(Snowflake guild_id, std::string ext, std::str
     }
 }
 
-std::string UserData::GetAvatarURL(const std::optional<Snowflake> &guild_id, std::string ext, std::string size) const {
+std::string UserData::GetAvatarURL(const std::optional<Snowflake> &guild_id, const std::string &ext, std::string size) const {
     if (guild_id.has_value())
         return GetAvatarURL(*guild_id, ext, size);
     else
         return GetAvatarURL(ext, size);
 }
 
-std::string UserData::GetAvatarURL(std::string ext, std::string size) const {
+std::string UserData::GetAvatarURL(const std::string &ext, std::string size) const {
     if (HasAvatar())
         return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
     else
@@ -107,7 +107,7 @@ void to_json(nlohmann::json &j, const UserData &m) {
     j["id"] = m.ID;
     j["username"] = m.Username;
     j["discriminator"] = m.Discriminator;
-    if (m.Avatar == "")
+    if (m.Avatar.empty())
         j["avatar"] = nullptr;
     else
         j["avatar"] = m.Avatar;

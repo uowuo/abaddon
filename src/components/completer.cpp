@@ -1,4 +1,5 @@
 #include <unordered_set>
+#include <utility>
 #include "completer.hpp"
 #include "abaddon.hpp"
 #include "util.hpp"
@@ -46,7 +47,7 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
 
     switch (e->keyval) {
         case GDK_KEY_Down: {
-            if (m_entries.size() == 0) return true;
+            if (m_entries.empty()) return true;
             const auto index = static_cast<size_t>(m_list.get_selected_row()->get_index());
             if (index >= m_entries.size() - 1) return true;
             m_list.select_row(*m_entries[index + 1]);
@@ -54,7 +55,7 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
         }
             return true;
         case GDK_KEY_Up: {
-            if (m_entries.size() == 0) return true;
+            if (m_entries.empty()) return true;
             const auto index = static_cast<size_t>(m_list.get_selected_row()->get_index());
             if (index == 0) return true;
             m_list.select_row(*m_entries[index - 1]);
@@ -62,7 +63,7 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
         }
             return true;
         case GDK_KEY_Return: {
-            if (m_entries.size() == 0) return true;
+            if (m_entries.empty()) return true;
             DoCompletion(m_list.get_selected_row());
         }
             return true;
@@ -74,11 +75,11 @@ bool Completer::ProcessKeyPress(GdkEventKey *e) {
 }
 
 void Completer::SetGetRecentAuthors(get_recent_authors_cb cb) {
-    m_recent_authors_cb = cb;
+    m_recent_authors_cb = std::move(cb);
 }
 
 void Completer::SetGetChannelID(get_channel_id_cb cb) {
-    m_channel_id_cb = cb;
+    m_channel_id_cb = std::move(cb);
 }
 
 bool Completer::IsShown() const {
@@ -86,7 +87,7 @@ bool Completer::IsShown() const {
 }
 
 CompleterEntry *Completer::CreateEntry(const Glib::ustring &completion) {
-    auto entry = Gtk::manage(new CompleterEntry(completion, m_entries.size()));
+    auto entry = Gtk::manage(new CompleterEntry(completion, static_cast<int>(m_entries.size())));
     m_entries.push_back(entry);
     entry->show_all();
     m_list.add(*entry);
@@ -152,7 +153,7 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
     const auto make_entry = [&](const Glib::ustring &name, const Glib::ustring &completion, const Glib::ustring &url = "", bool animated = false) -> CompleterEntry * {
         const auto entry = CreateEntry(completion);
         entry->SetText(name);
-        if (url == "") return entry;
+        if (url.empty()) return entry;
         if (animated)
             entry->SetAnimation(url);
         else
@@ -173,8 +174,8 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
                     const auto emoji = *discord.GetEmoji(tmp.ID);
                     if (emoji.IsAnimated.has_value() && *emoji.IsAnimated) continue;
                     if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
-                    if (emoji.Roles.has_value() && emoji.Roles->size() > 0) continue;
-                    if (term.size() > 0)
+                    if (emoji.Roles.has_value() && !emoji.Roles->empty()) continue;
+                    if (!term.empty())
                         if (!StringContainsCaseless(emoji.Name, term)) continue;
 
                     if (i++ > MaxCompleterEntries) break;
@@ -190,8 +191,8 @@ void Completer::CompleteEmojis(const Glib::ustring &term) {
                 const auto emoji = *discord.GetEmoji(tmp.ID);
                 const bool is_animated = emoji.IsAnimated.has_value() && *emoji.IsAnimated;
                 if (emoji.IsAvailable.has_value() && !*emoji.IsAvailable) continue;
-                if (emoji.Roles.has_value() && emoji.Roles->size() > 0) continue;
-                if (term.size() > 0)
+                if (emoji.Roles.has_value() && !emoji.Roles->empty()) continue;
+                if (!term.empty())
                     if (!StringContainsCaseless(emoji.Name, term)) continue;
 
                 if (i++ > MaxCompleterEntries) goto done;
@@ -275,7 +276,7 @@ void Completer::OnTextBufferChanged() {
         default:
             break;
     }
-    if (m_entries.size() > 0) {
+    if (!m_entries.empty()) {
         m_list.select_row(*m_entries[0]);
         set_reveal_child(true);
     } else {
@@ -329,8 +330,8 @@ Glib::ustring Completer::GetTerm() {
     return m_start.get_text(m_end);
 }
 
-CompleterEntry::CompleterEntry(const Glib::ustring &completion, int index)
-    : m_completion(completion)
+CompleterEntry::CompleterEntry(Glib::ustring completion, int index)
+    : m_completion(std::move(completion))
     , m_index(index)
     , m_box(Gtk::ORIENTATION_HORIZONTAL) {
     set_halign(Gtk::ALIGN_START);

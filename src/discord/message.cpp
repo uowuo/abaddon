@@ -176,7 +176,7 @@ void to_json(nlohmann::json &j, const MessageApplicationData &m) {
     j["id"] = m.ID;
     JS_IF("cover_image", m.CoverImage);
     j["description"] = m.Description;
-    if (m.Icon == "")
+    if (m.Icon.empty())
         j["icon"] = nullptr;
     else
         j["icon"] = m.Icon;
@@ -230,7 +230,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("content", Content);
     JS_O("timestamp", Timestamp);
     JS_ON("edited_timestamp", EditedTimestamp);
-    if (EditedTimestamp.size() > 0)
+    if (!EditedTimestamp.empty())
         SetEdited();
     JS_O("tts", IsTTS);
     JS_O("mention_everyone", DoesMentionEveryone);

@@ -19,7 +19,7 @@ public:
     void UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id);
     void UpdateChatMessageUpdated(Snowflake id, Snowflake channel_id);
     void UpdateChatPrependHistory(const std::vector<Message> &msgs);
-    void InsertChatInput(std::string text);
+    void InsertChatInput(const std::string &text);
     Snowflake GetChatOldestListedMessage();
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);

@@ -1,8 +1,8 @@
 #include "abaddon.hpp"
 #include "discord.hpp"
 #include "util.hpp"
-#include <cassert>
 #include <cinttypes>
+#include <utility>
 
 using namespace std::string_literals;
 
@@ -68,10 +68,6 @@ bool DiscordClient::IsStoreValid() const {
     return m_store.IsValid();
 }
 
-const UserSettings &DiscordClient::GetUserSettings() const {
-    return m_user_settings;
-}
-
 std::unordered_set<Snowflake> DiscordClient::GetGuilds() const {
     return m_store.GetGuilds();
 }
@@ -87,7 +83,7 @@ std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
     auto guilds = GetGuilds();
     for (const auto &entry : m_user_settings.GuildFolders) { // can contain guilds not a part of
         for (const auto &id : entry.GuildIDs) {
-            if (std::find(guilds.begin(), guilds.end(), id) != guilds.end())
+            if (guilds.find(id) != guilds.end())
                 folder_order.push_back(id);
         }
     }
@@ -115,19 +111,19 @@ std::vector<Message> DiscordClient::GetMessagesBefore(Snowflake channel_id, Snow
     return m_store.GetMessagesBefore(channel_id, message_id, limit);
 }
 
-void DiscordClient::FetchInvite(std::string code, sigc::slot<void(std::optional<InviteData>)> callback) {
-    m_http.MakeGET("/invites/" + code + "?with_counts=true", [this, callback](http::response_type r) {
+void DiscordClient::FetchInvite(const std::string &code, const sigc::slot<void(std::optional<InviteData>)> &callback) {
+    m_http.MakeGET("/invites/" + code + "?with_counts=true", [callback](http::response_type r) {
         if (!CheckCode(r)) {
             if (r.status_code == 404)
                 callback(std::nullopt);
             return;
-        };
+        }
 
         callback(nlohmann::json::parse(r.text).get<InviteData>());
     });
 }
 
-void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const std::vector<Message> &)> cb) {
+void DiscordClient::FetchMessagesInChannel(Snowflake id, const sigc::slot<void(const std::vector<Message> &)> &cb) {
     std::string path = "/channels/" + std::to_string(id) + "/messages?limit=50";
     m_http.MakeGET(path, [this, id, cb](const http::response_type &r) {
         if (!CheckCode(r)) {
@@ -164,9 +160,9 @@ void DiscordClient::FetchMessagesInChannel(Snowflake id, sigc::slot<void(const s
     });
 }
 
-void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, sigc::slot<void(const std::vector<Message> &)> cb) {
+void DiscordClient::FetchMessagesInChannelBefore(Snowflake channel_id, Snowflake before_id, const sigc::slot<void(const std::vector<Message> &)> &cb) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages?limit=50&before=" + std::to_string(before_id);
-    m_http.MakeGET(path, [this, channel_id, cb](http::response_type r) {
+    m_http.MakeGET(path, [this, cb](http::response_type r) {
         if (!CheckCode(r)) return;
 
         std::vector<Message> msgs;
@@ -210,10 +206,6 @@ std::optional<GuildMember> DiscordClient::GetMember(Snowflake user_id, Snowflake
     return m_store.GetGuildMember(guild_id, user_id);
 }
 
-std::optional<BanData> DiscordClient::GetBan(Snowflake guild_id, Snowflake user_id) const {
-    return m_store.GetBan(guild_id, user_id);
-}
-
 std::optional<PermissionOverwrite> DiscordClient::GetPermissionOverwrite(Snowflake channel_id, Snowflake id) const {
     return m_store.GetPermissionOverwrite(channel_id, id);
 }
@@ -243,14 +235,14 @@ std::optional<RoleData> DiscordClient::GetMemberHighestRole(Snowflake guild_id, 
     const auto data = GetMember(user_id, guild_id);
     if (!data.has_value()) return std::nullopt;
 
-    if (data->Roles.size() == 0) return std::nullopt;
+    if (data->Roles.empty()) return std::nullopt;
     if (data->Roles.size() == 1) return GetRole(data->Roles[0]);
 
     std::vector<RoleData> roles;
     for (const auto id : data->Roles)
         roles.push_back(*GetRole(id));
 
-    return *std::max_element(roles.begin(), roles.end(), [this](const auto &a, const auto &b) -> bool {
+    return *std::max_element(roles.begin(), roles.end(), [](const auto &a, const auto &b) -> bool {
         return a.Position < b.Position;
     });
 }
@@ -281,7 +273,7 @@ std::vector<ChannelData> DiscordClient::GetActiveThreads(Snowflake channel_id) c
     return m_store.GetActiveThreads(channel_id);
 }
 
-void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback) {
+void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback) {
     m_http.MakeGET("/channels/" + std::to_string(channel_id) + "/threads/archived/public", [this, callback](const http::response_type &r) {
         if (CheckCode(r)) {
             const auto data = nlohmann::json::parse(r.text).get<ArchivedThreadsResponseData>();
@@ -294,7 +286,7 @@ void DiscordClient::GetArchivedPublicThreads(Snowflake channel_id, sigc::slot<vo
     });
 }
 
-void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> callback) {
+void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback) {
     m_http.MakeGET("/channels/" + std::to_string(channel_id) + "/users/@me/threads/archived/private", [this, callback](const http::response_type &r) {
         if (CheckCode(r)) {
             const auto data = nlohmann::json::parse(r.text).get<ArchivedThreadsResponseData>();
@@ -411,7 +403,7 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     return actor_highest->Position > target_highest->Position;
 }
 
-void DiscordClient::ChatMessageCallback(std::string nonce, const http::response_type &response) {
+void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response) {
     if (!CheckCode(response)) {
         if (response.status_code == http::TooManyRequests) {
             try { // not sure if this body is guaranteed
@@ -481,7 +473,7 @@ void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
 void DiscordClient::EditMessage(Snowflake channel_id, Snowflake id, std::string content) {
     std::string path = "/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id);
     MessageEditObject obj;
-    obj.Content = content;
+    obj.Content = std::move(content);
     nlohmann::json j = obj;
     m_http.MakePATCH(path, j.dump(), [](auto) {});
 }
@@ -516,7 +508,7 @@ void DiscordClient::SendThreadLazyLoad(Snowflake id) {
     m_websocket.Send(msg);
 }
 
-void DiscordClient::JoinGuild(std::string code) {
+void DiscordClient::JoinGuild(const std::string &code) {
     m_http.MakePOST("/invites/" + code, "{}", [](auto) {});
 }
 
@@ -554,14 +546,10 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const Activ
     m_signal_presence_update.emit(GetUserData(), status);
 }
 
-void DiscordClient::CreateDM(Snowflake user_id) {
-    CreateDM(user_id, [](...) {});
-}
-
-void DiscordClient::CreateDM(Snowflake user_id, sigc::slot<void(DiscordError code, Snowflake channel_id)> callback) {
+void DiscordClient::CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback) {
     CreateDMObject obj;
     obj.Recipients.push_back(user_id);
-    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [this, callback](const http::response &response) {
+    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [callback](const http::response &response) {
         if (!CheckCode(response)) {
             callback(DiscordError::NONE, Snowflake::Invalid);
             return;
@@ -572,7 +560,7 @@ void DiscordClient::CreateDM(Snowflake user_id, sigc::slot<void(DiscordError cod
 }
 
 void DiscordClient::CloseDM(Snowflake channel_id) {
-    m_http.MakeDELETE("/channels/" + std::to_string(channel_id), [this](const http::response &response) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id), [](const http::response &response) {
         CheckCode(response);
     });
 }
@@ -617,14 +605,10 @@ void DiscordClient::RemoveReaction(Snowflake id, Glib::ustring param) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(id) + "/reactions/" + param + "/@me", [](auto) {});
 }
 
-void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name) {
-    SetGuildName(id, name, [](auto) {});
-}
-
-void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildObject obj;
     obj.Name = name;
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [callback](const http::response_type &r) {
         if (CheckCode(r))
             callback(DiscordError::NONE);
         else
@@ -632,14 +616,10 @@ void DiscordClient::SetGuildName(Snowflake id, const Glib::ustring &name, sigc::
     });
 }
 
-void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data) {
-    SetGuildIcon(id, data, [](auto) {});
-}
-
-void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildObject obj;
     obj.IconData = data;
-    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &r) {
+    m_http.MakePATCH("/guilds/" + std::to_string(id), nlohmann::json(obj).dump(), [callback](const http::response_type &r) {
         if (CheckCode(r))
             callback(DiscordError::NONE);
         else
@@ -647,12 +627,8 @@ void DiscordClient::SetGuildIcon(Snowflake id, const std::string &data, sigc::sl
     });
 }
 
-void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id) {
-    UnbanUser(guild_id, user_id, [](const auto) {});
-}
-
-void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback](const http::response_type &response) {
+void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -660,12 +636,8 @@ void DiscordClient::UnbanUser(Snowflake guild_id, Snowflake user_id, sigc::slot<
     });
 }
 
-void DiscordClient::DeleteInvite(const std::string &code) {
-    DeleteInvite(code, [](const auto) {});
-}
-
-void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/invites/" + code, [this, callback](const http::response_type &response) {
+void DiscordClient::DeleteInvite(const std::string &code, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakeDELETE("/invites/" + code, [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -674,21 +646,21 @@ void DiscordClient::DeleteInvite(const std::string &code, sigc::slot<void(Discor
 }
 
 void DiscordClient::AddGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
-    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), "", [this](const http::response_type &response) {
+    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), "", [](const http::response_type &response) {
         CheckCode(response);
     });
 }
 
 void DiscordClient::RemoveGroupDMRecipient(Snowflake channel_id, Snowflake user_id) {
-    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), [this](const http::response_type &response) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/recipients/" + std::to_string(user_id), [](const http::response_type &response) {
         CheckCode(response);
     });
 }
 
-void DiscordClient::ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyRolePermissions(Snowflake guild_id, Snowflake role_id, Permission permissions, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildRoleObject obj;
     obj.Permissions = permissions;
-    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -696,10 +668,10 @@ void DiscordClient::ModifyRolePermissions(Snowflake guild_id, Snowflake role_id,
     });
 }
 
-void DiscordClient::ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyRoleName(Snowflake guild_id, Snowflake role_id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildRoleObject obj;
     obj.Name = name;
-    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -707,10 +679,10 @@ void DiscordClient::ModifyRoleName(Snowflake guild_id, Snowflake role_id, const 
     });
 }
 
-void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint32_t color, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildRoleObject obj;
     obj.Color = color;
-    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles/" + std::to_string(role_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -718,7 +690,7 @@ void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, uint3
     });
 }
 
-void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::RGBA color, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, const Gdk::RGBA &color, const sigc::slot<void(DiscordError code)> &callback) {
     uint32_t int_color = 0;
     int_color |= static_cast<uint32_t>(color.get_blue() * 255.0) << 0;
     int_color |= static_cast<uint32_t>(color.get_green() * 255.0) << 8;
@@ -726,7 +698,7 @@ void DiscordClient::ModifyRoleColor(Snowflake guild_id, Snowflake role_id, Gdk::
     ModifyRoleColor(guild_id, role_id, int_color, callback);
 }
 
-void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, int position, const sigc::slot<void(DiscordError code)> &callback) {
     const auto guild = GetGuild(guild_id);
     if (!guild.has_value() || !guild->Roles.has_value()) return;
     const auto &roles = *guild->Roles;
@@ -763,7 +735,7 @@ void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, in
     for (size_t i = range_from; i < range_to; i++)
         obj.Positions.push_back({ roles[i].ID, roles[i].Position + dir });
 
-    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles", nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/roles", nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -771,11 +743,11 @@ void DiscordClient::ModifyRolePosition(Snowflake guild_id, Snowflake role_id, in
     });
 }
 
-void DiscordClient::ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, const Glib::ustring &name, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyGuildEmojiObject obj;
     obj.Name = name;
 
-    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -783,8 +755,8 @@ void DiscordClient::ModifyEmojiName(Snowflake guild_id, Snowflake emoji_id, cons
     });
 }
 
-void DiscordClient::DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), [this, callback](const http::response_type &response) {
+void DiscordClient::DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakeDELETE("/guilds/" + std::to_string(guild_id) + "/emojis/" + std::to_string(emoji_id), [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -792,14 +764,8 @@ void DiscordClient::DeleteEmoji(Snowflake guild_id, Snowflake emoji_id, sigc::sl
     });
 }
 
-std::optional<GuildApplicationData> DiscordClient::GetGuildApplication(Snowflake guild_id) const {
-    const auto it = m_guild_join_requests.find(guild_id);
-    if (it == m_guild_join_requests.end()) return std::nullopt;
-    return it->second;
-}
-
-void DiscordClient::RemoveRelationship(Snowflake id, sigc::slot<void(DiscordError Code)> callback) {
-    m_http.MakeDELETE("/users/@me/relationships/" + std::to_string(id), [this, callback](const http::response_type &response) {
+void DiscordClient::RemoveRelationship(Snowflake id, const sigc::slot<void(DiscordError Code)> &callback) {
+    m_http.MakeDELETE("/users/@me/relationships/" + std::to_string(id), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -807,11 +773,11 @@ void DiscordClient::RemoveRelationship(Snowflake id, sigc::slot<void(DiscordErro
     });
 }
 
-void DiscordClient::SendFriendRequest(const Glib::ustring &username, int discriminator, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::SendFriendRequest(const Glib::ustring &username, int discriminator, const sigc::slot<void(DiscordError code)> &callback) {
     FriendRequestObject obj;
     obj.Username = username;
     obj.Discriminator = discriminator;
-    m_http.MakePOST("/users/@me/relationships", nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePOST("/users/@me/relationships", nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -819,8 +785,8 @@ void DiscordClient::SendFriendRequest(const Glib::ustring &username, int discrim
     });
 }
 
-void DiscordClient::PutRelationship(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePUT("/users/@me/relationships/" + std::to_string(id), "{}", [this, callback](const http::response_type &response) {
+void DiscordClient::PutRelationship(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePUT("/users/@me/relationships/" + std::to_string(id), "{}", [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -828,8 +794,8 @@ void DiscordClient::PutRelationship(Snowflake id, sigc::slot<void(DiscordError c
     });
 }
 
-void DiscordClient::Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), "", [this, callback](const http::response_type &response) {
+void DiscordClient::Pin(Snowflake channel_id, Snowflake message_id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePUT("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), "", [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -837,8 +803,8 @@ void DiscordClient::Pin(Snowflake channel_id, Snowflake message_id, sigc::slot<v
     });
 }
 
-void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), [this, callback](const http::response_type &response) {
+void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/pins/" + std::to_string(message_id), [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -848,8 +814,8 @@ void DiscordClient::Unpin(Snowflake channel_id, Snowflake message_id, sigc::slot
 
 // i dont know if the location parameter is necessary at all but discord's thread implementation is extremely strange
 // so its here just in case
-void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &location, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [this, callback](const http::response_type &response) {
+void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &location, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakeDELETE("/channels/" + std::to_string(channel_id) + "/thread-members/@me?location=" + location, [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -857,11 +823,11 @@ void DiscordClient::LeaveThread(Snowflake channel_id, const std::string &locatio
     });
 }
 
-void DiscordClient::ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::ArchiveThread(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyChannelObject obj;
     obj.Archived = true;
     obj.Locked = true;
-    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -869,11 +835,11 @@ void DiscordClient::ArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordE
     });
 }
 
-void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::UnArchiveThread(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
     ModifyChannelObject obj;
     obj.Archived = false;
     obj.Locked = false;
-    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/channels/" + std::to_string(channel_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -881,11 +847,11 @@ void DiscordClient::UnArchiveThread(Snowflake channel_id, sigc::slot<void(Discor
     });
 }
 
-void DiscordClient::MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::MarkChannelAsRead(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
     if (m_unread.find(channel_id) == m_unread.end()) return;
     const auto iter = m_last_message_id.find(channel_id);
     if (iter == m_last_message_id.end()) return;
-    m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [this, callback](const http::response_type &response) {
+    m_http.MakePOST("/channels/" + std::to_string(channel_id) + "/messages/" + std::to_string(iter->second) + "/ack", "{\"token\":null}", [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -893,7 +859,7 @@ void DiscordClient::MarkChannelAsRead(Snowflake channel_id, sigc::slot<void(Disc
     });
 }
 
-void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::MarkGuildAsRead(Snowflake guild_id, const sigc::slot<void(DiscordError code)> &callback) {
     AckBulkData data;
     const auto channels = GetChannelsInGuild(guild_id);
     for (const auto &[unread, mention_count] : m_unread) {
@@ -908,7 +874,7 @@ void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordE
 
     if (data.ReadStates.empty()) return;
 
-    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -916,14 +882,14 @@ void DiscordClient::MarkGuildAsRead(Snowflake guild_id, sigc::slot<void(DiscordE
     });
 }
 
-void DiscordClient::MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::MuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
     const auto channel = GetChannel(channel_id);
     if (!channel.has_value()) return;
     const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
     nlohmann::json j;
     j["channel_overrides"][std::to_string(channel_id)]["mute_config"] = MuteConfigData { std::nullopt, -1 };
     j["channel_overrides"][std::to_string(channel_id)]["muted"] = true;
-    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -931,13 +897,13 @@ void DiscordClient::MuteChannel(Snowflake channel_id, sigc::slot<void(DiscordErr
     });
 }
 
-void DiscordClient::UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::UnmuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
     const auto channel = GetChannel(channel_id);
     if (!channel.has_value()) return;
     const auto guild_id_path = channel->GuildID.has_value() ? std::to_string(*channel->GuildID) : "@me"s;
     nlohmann::json j;
     j["channel_overrides"][std::to_string(channel_id)]["muted"] = false;
-    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePATCH("/users/@me/guilds/" + guild_id_path + "/settings", j.dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -945,7 +911,7 @@ void DiscordClient::UnmuteChannel(Snowflake channel_id, sigc::slot<void(DiscordE
     });
 }
 
-void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::MarkAllAsRead(const sigc::slot<void(DiscordError code)> &callback) {
     AckBulkData data;
     for (const auto &[unread, mention_count] : m_unread) {
         const auto iter = m_last_message_id.find(unread);
@@ -957,7 +923,7 @@ void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) 
 
     if (data.ReadStates.empty()) return;
 
-    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -965,8 +931,8 @@ void DiscordClient::MarkAllAsRead(sigc::slot<void(DiscordError code)> callback) 
     });
 }
 
-void DiscordClient::MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":true})", [this, callback](const http::response_type &response) {
+void DiscordClient::MuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":true})", [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -974,8 +940,8 @@ void DiscordClient::MuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> 
     });
 }
 
-void DiscordClient::UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":false})", [this, callback](const http::response_type &response) {
+void DiscordClient::UnmuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":false})", [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -983,8 +949,8 @@ void DiscordClient::UnmuteGuild(Snowflake id, sigc::slot<void(DiscordError code)
     });
 }
 
-void DiscordClient::MuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":true})", [this, callback](const http::response_type &response) {
+void DiscordClient::MuteThread(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":true})", [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -992,8 +958,8 @@ void DiscordClient::MuteThread(Snowflake id, sigc::slot<void(DiscordError code)>
     });
 }
 
-void DiscordClient::UnmuteThread(Snowflake id, sigc::slot<void(DiscordError code)> callback) {
-    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":false})", [this, callback](const http::response_type &response) {
+void DiscordClient::UnmuteThread(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
+    m_http.MakePATCH("/channels/" + std::to_string(id) + "/thread-members/@me/settings", R"({"muted":false})", [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -1001,7 +967,7 @@ void DiscordClient::UnmuteThread(Snowflake id, sigc::slot<void(DiscordError code
     });
 }
 
-void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Message>, DiscordError code)> callback) {
+void DiscordClient::FetchPinned(Snowflake id, const sigc::slot<void(std::vector<Message>, DiscordError code)> &callback) {
     // return from db if we know the pins have already been requested
     if (m_channels_pinned_requested.find(id) != m_channels_pinned_requested.end()) {
         callback(m_store.GetPinnedMessages(id), DiscordError::NONE);
@@ -1019,7 +985,7 @@ void DiscordClient::FetchPinned(Snowflake id, sigc::slot<void(std::vector<Messag
         std::sort(data.begin(), data.end(), [](const Message &a, const Message &b) { return a.ID < b.ID; });
         for (auto &msg : data)
             StoreMessageData(msg);
-        callback(std::move(data), DiscordError::NONE);
+        callback(data, DiscordError::NONE);
     });
 }
 
@@ -1040,7 +1006,7 @@ std::vector<BanData> DiscordClient::GetBansInGuild(Snowflake guild_id) {
     return m_store.GetBans(guild_id);
 }
 
-void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::slot<void(BanData)> callback) {
+void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, const sigc::slot<void(BanData)> &callback) {
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans/" + std::to_string(user_id), [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto ban = nlohmann::json::parse(response.text).get<BanData>();
@@ -1050,7 +1016,7 @@ void DiscordClient::FetchGuildBan(Snowflake guild_id, Snowflake user_id, sigc::s
     });
 }
 
-void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vector<BanData>)> callback) {
+void DiscordClient::FetchGuildBans(Snowflake guild_id, const sigc::slot<void(std::vector<BanData>)> &callback) {
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/bans", [this, callback, guild_id](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto bans = nlohmann::json::parse(response.text).get<std::vector<BanData>>();
@@ -1064,8 +1030,8 @@ void DiscordClient::FetchGuildBans(Snowflake guild_id, sigc::slot<void(std::vect
     });
 }
 
-void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::vector<InviteData>)> callback) {
-    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/invites", [this, callback, guild_id](const http::response_type &response) {
+void DiscordClient::FetchGuildInvites(Snowflake guild_id, const sigc::slot<void(std::vector<InviteData>)> &callback) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/invites", [this, callback](const http::response_type &response) {
         // store?
         if (!CheckCode(response)) return;
         auto invites = nlohmann::json::parse(response.text).get<std::vector<InviteData>>();
@@ -1080,7 +1046,7 @@ void DiscordClient::FetchGuildInvites(Snowflake guild_id, sigc::slot<void(std::v
     });
 }
 
-void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogData)> callback) {
+void DiscordClient::FetchAuditLog(Snowflake guild_id, const sigc::slot<void(AuditLogData)> &callback) {
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/audit-logs", [this, callback](const http::response &response) {
         if (!CheckCode(response)) return;
         auto data = nlohmann::json::parse(response.text).get<AuditLogData>();
@@ -1094,7 +1060,7 @@ void DiscordClient::FetchAuditLog(Snowflake guild_id, sigc::slot<void(AuditLogDa
     });
 }
 
-void DiscordClient::FetchGuildEmojis(Snowflake guild_id, sigc::slot<void(std::vector<EmojiData>)> callback) {
+void DiscordClient::FetchGuildEmojis(Snowflake guild_id, const sigc::slot<void(std::vector<EmojiData>)> &callback) {
     m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/emojis", [this, callback](const http::response_type &response) {
         if (!CheckCode(response)) return;
         auto emojis = nlohmann::json::parse(response.text).get<std::vector<EmojiData>>();
@@ -1102,19 +1068,19 @@ void DiscordClient::FetchGuildEmojis(Snowflake guild_id, sigc::slot<void(std::ve
         for (const auto &emoji : emojis)
             m_store.SetEmoji(emoji.ID, emoji);
         m_store.EndTransaction();
-        callback(std::move(emojis));
+        callback(emojis);
     });
 }
 
-void DiscordClient::FetchUserProfile(Snowflake user_id, sigc::slot<void(UserProfileData)> callback) {
-    m_http.MakeGET("/users/" + std::to_string(user_id) + "/profile", [this, callback](const http::response_type &response) {
+void DiscordClient::FetchUserProfile(Snowflake user_id, const sigc::slot<void(UserProfileData)> &callback) {
+    m_http.MakeGET("/users/" + std::to_string(user_id) + "/profile", [callback](const http::response_type &response) {
         if (!CheckCode(response)) return;
         callback(nlohmann::json::parse(response.text).get<UserProfileData>());
     });
 }
 
-void DiscordClient::FetchUserNote(Snowflake user_id, sigc::slot<void(std::string note)> callback) {
-    m_http.MakeGET("/users/@me/notes/" + std::to_string(user_id), [this, callback](const http::response_type &response) {
+void DiscordClient::FetchUserNote(Snowflake user_id, const sigc::slot<void(std::string note)> &callback) {
+    m_http.MakeGET("/users/@me/notes/" + std::to_string(user_id), [callback](const http::response_type &response) {
         if (response.status_code == 404) return;
         if (!CheckCode(response)) return;
         const auto note = nlohmann::json::parse(response.text).get<UserNoteObject>().Note;
@@ -1123,14 +1089,10 @@ void DiscordClient::FetchUserNote(Snowflake user_id, sigc::slot<void(std::string
     });
 }
 
-void DiscordClient::SetUserNote(Snowflake user_id, std::string note) {
-    SetUserNote(user_id, note, [](auto) {});
-}
-
-void DiscordClient::SetUserNote(Snowflake user_id, std::string note, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::SetUserNote(Snowflake user_id, std::string note, const sigc::slot<void(DiscordError code)> &callback) {
     UserSetNoteObject obj;
-    obj.Note = note;
-    m_http.MakePUT("/users/@me/notes/" + std::to_string(user_id), nlohmann::json(obj).dump(), [this, callback](const http::response_type &response) {
+    obj.Note = std::move(note);
+    m_http.MakePUT("/users/@me/notes/" + std::to_string(user_id), nlohmann::json(obj).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response, 204))
             callback(DiscordError::NONE);
         else
@@ -1138,7 +1100,7 @@ void DiscordClient::SetUserNote(Snowflake user_id, std::string note, sigc::slot<
     });
 }
 
-void DiscordClient::FetchUserRelationships(Snowflake user_id, sigc::slot<void(std::vector<UserData>)> callback) {
+void DiscordClient::FetchUserRelationships(Snowflake user_id, const sigc::slot<void(std::vector<UserData>)> &callback) {
     m_http.MakeGET("/users/" + std::to_string(user_id) + "/relationships", [this, callback](const http::response_type &response) {
         if (!CheckCode(response)) return;
         RelationshipsData data = nlohmann::json::parse(response.text);
@@ -1148,26 +1110,26 @@ void DiscordClient::FetchUserRelationships(Snowflake user_id, sigc::slot<void(st
     });
 }
 
-bool DiscordClient::IsVerificationRequired(Snowflake guild_id) {
+bool DiscordClient::IsVerificationRequired(Snowflake guild_id) const {
     const auto member = GetMember(GetUserData().ID, guild_id);
     if (member.has_value() && member->IsPending.has_value())
         return *member->IsPending;
     return false;
 }
 
-void DiscordClient::GetVerificationGateInfo(Snowflake guild_id, sigc::slot<void(std::optional<VerificationGateInfoObject>)> callback) {
-    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/member-verification", [this, callback](const http::response_type &response) {
+void DiscordClient::GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback) {
+    m_http.MakeGET("/guilds/" + std::to_string(guild_id) + "/member-verification", [callback](const http::response_type &response) {
         if (!CheckCode(response)) return;
         if (response.status_code == 204) callback(std::nullopt);
         callback(nlohmann::json::parse(response.text).get<VerificationGateInfoObject>());
     });
 }
 
-void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, sigc::slot<void(DiscordError code)> callback) {
+void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback) {
     if (info.VerificationFields.has_value())
         for (auto &field : *info.VerificationFields)
             field.Response = true;
-    m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/requests/@me", nlohmann::json(info).dump(), [this, callback](const http::response_type &response) {
+    m_http.MakePUT("/guilds/" + std::to_string(guild_id) + "/requests/@me", nlohmann::json(info).dump(), [callback](const http::response_type &response) {
         if (CheckCode(response))
             callback(DiscordError::NONE);
         else
@@ -1175,14 +1137,14 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
     });
 }
 
-void DiscordClient::UpdateToken(std::string token) {
+void DiscordClient::UpdateToken(const std::string &token) {
     if (!IsStarted()) {
         m_token = token;
         m_http.SetAuth(token);
     }
 }
 
-void DiscordClient::SetUserAgent(std::string agent) {
+void DiscordClient::SetUserAgent(const std::string &agent) {
     m_http.SetUserAgent(agent);
     m_websocket.SetUserAgent(agent);
 }
@@ -1483,7 +1445,7 @@ void DiscordClient::HandleGatewayHello(const GatewayMessage &msg) {
     HelloMessageData d = msg.Data;
     m_heartbeat_msec = d.HeartbeatInterval;
     m_heartbeat_waiter.revive();
-    m_heartbeat_thread = std::thread(std::bind(&DiscordClient::HeartbeatThread, this));
+    m_heartbeat_thread = std::thread([this] { HeartbeatThread(); });
     m_signal_connected.emit(); // socket is connected before this but emitting here should b fine
     m_reconnecting = false;    // maybe should go elsewhere?
     if (m_wants_resume) {
@@ -1736,7 +1698,7 @@ void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
     GuildRoleDeleteObject data = msg.Data;
     auto guild = *m_store.GetGuild(data.GuildID);
-    const auto pred = [this, id = data.RoleID](const RoleData &role) -> bool {
+    const auto pred = [id = data.RoleID](const RoleData &role) -> bool {
         return role.ID == id;
     };
     guild.Roles->erase(std::remove_if(guild.Roles->begin(), guild.Roles->end(), pred), guild.Roles->end());
@@ -1826,12 +1788,12 @@ void DiscordClient::HandleGatewayInviteCreate(const GatewayMessage &msg) {
     invite.CreatedAt = std::move(data.CreatedAt);
     invite.Channel = *m_store.GetChannel(data.ChannelID);
     invite.Inviter = std::move(data.Inviter);
-    invite.IsTemporary = std::move(data.IsTemporary);
-    invite.MaxAge = std::move(data.MaxAge);
-    invite.MaxUses = std::move(data.MaxUses);
+    invite.IsTemporary = data.IsTemporary;
+    invite.MaxAge = data.MaxAge;
+    invite.MaxUses = data.MaxUses;
     invite.TargetUser = std::move(data.TargetUser);
-    invite.TargetUserType = std::move(data.TargetUserType);
-    invite.Uses = std::move(data.Uses);
+    invite.TargetUserType = data.TargetUserType;
+    invite.Uses = data.Uses;
     if (data.GuildID.has_value())
         invite.Guild = m_store.GetGuild(*data.GuildID);
     m_signal_invite_create.emit(invite);
@@ -1893,7 +1855,7 @@ void DiscordClient::HandleGatewayRelationshipAdd(const GatewayMessage &msg) {
     RelationshipAddData data = msg.Data;
     m_store.SetUser(data.ID, data.User);
     m_user_relationships[data.ID] = data.Type;
-    m_signal_relationship_add.emit(std::move(data));
+    m_signal_relationship_add.emit(data);
 }
 
 // remarkably this doesnt actually mean a thread was created
@@ -2168,7 +2130,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
             has_sync = true;
             for (const auto &item : *op.Items) {
                 if (item->Type == "member") {
-                    auto member = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
+                    auto member = dynamic_cast<const GuildMemberListUpdateMessage::MemberItem *>(item.get());
                     m_store.SetUser(member->User.ID, member->User);
                     AddUserToGuild(member->User.ID, data.GuildID);
                     m_store.SetGuildMember(data.GuildID, member->User.ID, member->GetAsMemberData());
@@ -2187,7 +2149,7 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
             }
         } else if (op.Op == "UPDATE") {
             if (op.OpItem.has_value() && op.OpItem.value()->Type == "member") {
-                const auto &m = static_cast<const GuildMemberListUpdateMessage::MemberItem *>(op.OpItem.value().get())->GetAsMemberData();
+                const auto &m = dynamic_cast<const GuildMemberListUpdateMessage::MemberItem *>(op.OpItem.value().get())->GetAsMemberData();
                 m_store.SetGuildMember(data.GuildID, m.User->ID, m);
                 m_signal_guild_member_update.emit(data.GuildID, m.User->ID); // cheeky
             }
@@ -2470,12 +2432,6 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
             }
         }
     }
-}
-
-void DiscordClient::HandleUserGuildSettingsUpdateForDMs(const UserGuildSettingsUpdateData &data) {
-    const auto channels = GetPrivateChannels();
-    std::set<Snowflake> now_muted_channels;
-    const auto now = Snowflake::FromNow();
 }
 
 void DiscordClient::LoadEventMap() {

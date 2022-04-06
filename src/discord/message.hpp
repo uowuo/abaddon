@@ -209,10 +209,10 @@ struct Message {
 
     void SetDeleted();
     void SetEdited();
-    bool IsDeleted() const;
-    bool IsEdited() const;
+    [[nodiscard]] bool IsDeleted() const;
+    [[nodiscard]] bool IsEdited() const;
 
-    bool DoesMention(Snowflake id) const noexcept;
+    [[nodiscard]] bool DoesMention(Snowflake id) const noexcept;
 
 private:
     bool m_deleted = false;
