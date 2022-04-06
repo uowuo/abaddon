@@ -26,8 +26,11 @@ public:
     void ActuallyRemoveMessage(Snowflake id); // perhaps not the best method name
 
 private:
-    void OnUpperAdjustmentChanged();
+    void SetupMenu();
     void ScrollToBottom();
+    void OnVAdjustmentValueChanged();
+    void OnVAdjustmentUpperChanged();
+    void OnListSizeAllocate(Gtk::Allocation &allocation);
     void RemoveMessageAndHeader(Gtk::Widget *widget);
 
     bool m_use_pinned_menu = false;
@@ -48,14 +51,14 @@ private:
     int m_num_rows = 0;
     std::map<Snowflake, Gtk::Widget *> m_id_to_widget;
 
+    bool m_ignore_next_upper = false;
+    double m_old_upper = -1.0;
     bool m_should_scroll_to_bottom = true;
     Gtk::ListBox m_list;
 
     bool m_separate_all = false;
 
     Glib::Timer m_history_timer;
-    bool m_needs_upper_adjustment = false;
-    double m_old_upper = -1.0;
 
 public:
     // these are all forwarded by the parent
@@ -93,7 +96,6 @@ private:
 
 template<typename Iter>
 inline void ChatList::SetMessages(Iter begin, Iter end) {
-    m_needs_upper_adjustment = false;
     Clear();
     m_num_rows = 0;
     m_num_messages = 0;
@@ -107,7 +109,6 @@ inline void ChatList::SetMessages(Iter begin, Iter end) {
 
 template<typename Iter>
 inline void ChatList::PrependMessages(Iter begin, Iter end) {
-    m_needs_upper_adjustment = true;
     for (Iter it = begin; it != end; it++)
         ProcessNewMessage(*it, true);
 }

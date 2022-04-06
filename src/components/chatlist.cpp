@@ -9,22 +9,10 @@ ChatList::ChatList() {
     set_can_focus(false);
     set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
 
-    auto v = get_vadjustment();
-    v->signal_value_changed().connect([this, v] {
-        if (m_history_timer.elapsed() > 1 && v->get_value() < 500) {
-            m_history_timer.start();
-            m_signal_action_chat_load_history.emit(m_active_channel);
-        }
-        m_should_scroll_to_bottom = v->get_upper() - v->get_page_size() <= v->get_value();
-    });
+    get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &ChatList::OnVAdjustmentValueChanged));
+    get_vadjustment()->property_upper().signal_changed().connect(sigc::mem_fun(*this, &ChatList::OnVAdjustmentUpperChanged));
 
-    v->property_upper().signal_changed().connect(sigc::mem_fun(*this, &ChatList::OnUpperAdjustmentChanged));
-
-    m_list.signal_size_allocate()
-        .connect([this](Gtk::Allocation &) {
-            if (m_should_scroll_to_bottom)
-                ScrollToBottom();
-        });
+    m_list.signal_size_allocate().connect(sigc::mem_fun(*this, &ChatList::OnListSizeAllocate));
 
     m_list.set_focus_hadjustment(get_hadjustment());
     m_list.set_focus_vadjustment(get_vadjustment());
@@ -36,56 +24,7 @@ ChatList::ChatList() {
 
     m_list.show();
 
-    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_menu_copy_id->signal_activate().connect([this] {
-        Gtk::Clipboard::get()->set_text(std::to_string(m_menu_selected_message));
-    });
-    m_menu_copy_id->show();
-    m_menu.append(*m_menu_copy_id);
-
-    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
-    m_menu_delete_message->signal_activate().connect([this] {
-        Abaddon::Get().GetDiscordClient().DeleteMessage(m_active_channel, m_menu_selected_message);
-    });
-    m_menu_delete_message->show();
-    m_menu.append(*m_menu_delete_message);
-
-    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
-    m_menu_edit_message->signal_activate().connect([this] {
-        m_signal_action_message_edit.emit(m_active_channel, m_menu_selected_message);
-    });
-    m_menu_edit_message->show();
-    m_menu.append(*m_menu_edit_message);
-
-    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
-    m_menu_copy_content->signal_activate().connect([this] {
-        const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(m_menu_selected_message);
-        if (msg.has_value())
-            Gtk::Clipboard::get()->set_text(msg->Content);
-    });
-    m_menu_copy_content->show();
-    m_menu.append(*m_menu_copy_content);
-
-    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
-    m_menu_reply_to->signal_activate().connect([this] {
-        m_signal_action_reply_to.emit(m_menu_selected_message);
-    });
-    m_menu_reply_to->show();
-    m_menu.append(*m_menu_reply_to);
-
-    m_menu_unpin = Gtk::manage(new Gtk::MenuItem("Unpin"));
-    m_menu_unpin->signal_activate().connect([this] {
-        Abaddon::Get().GetDiscordClient().Unpin(m_active_channel, m_menu_selected_message, [](...) {});
-    });
-    m_menu.append(*m_menu_unpin);
-
-    m_menu_pin = Gtk::manage(new Gtk::MenuItem("Pin"));
-    m_menu_pin->signal_activate().connect([this] {
-        Abaddon::Get().GetDiscordClient().Pin(m_active_channel, m_menu_selected_message, [](...) {});
-    });
-    m_menu.append(*m_menu_pin);
-
-    m_menu.show();
+    SetupMenu();
 }
 
 void ChatList::Clear() {
@@ -104,6 +43,7 @@ void ChatList::SetActiveChannel(Snowflake id) {
 void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (!discord.IsStarted()) return;
+    if (!prepend) m_ignore_next_upper = true;
 
     // delete preview message when gateway sends it back
     if (!data.IsPending && data.Nonce.has_value() && data.Author.ID == discord.GetUserData().ID) {
@@ -312,19 +252,85 @@ void ChatList::ActuallyRemoveMessage(Snowflake id) {
         RemoveMessageAndHeader(it->second);
 }
 
-void ChatList::OnUpperAdjustmentChanged() {
-    const auto v = get_vadjustment();
-    const auto upper = v->get_upper();
-    if (m_needs_upper_adjustment && m_old_upper > -1.0) {
-        const auto inc = upper - m_old_upper;
-        v->set_value(v->get_value() + inc);
-    }
-    m_old_upper = v->get_upper();
+void ChatList::SetupMenu() {
+    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_menu_copy_id->signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string(m_menu_selected_message));
+    });
+    m_menu_copy_id->show();
+    m_menu.append(*m_menu_copy_id);
+
+    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
+    m_menu_delete_message->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().DeleteMessage(m_active_channel, m_menu_selected_message);
+    });
+    m_menu_delete_message->show();
+    m_menu.append(*m_menu_delete_message);
+
+    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
+    m_menu_edit_message->signal_activate().connect([this] {
+        m_signal_action_message_edit.emit(m_active_channel, m_menu_selected_message);
+    });
+    m_menu_edit_message->show();
+    m_menu.append(*m_menu_edit_message);
+
+    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
+    m_menu_copy_content->signal_activate().connect([this] {
+        const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(m_menu_selected_message);
+        if (msg.has_value())
+            Gtk::Clipboard::get()->set_text(msg->Content);
+    });
+    m_menu_copy_content->show();
+    m_menu.append(*m_menu_copy_content);
+
+    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
+    m_menu_reply_to->signal_activate().connect([this] {
+        m_signal_action_reply_to.emit(m_menu_selected_message);
+    });
+    m_menu_reply_to->show();
+    m_menu.append(*m_menu_reply_to);
+
+    m_menu_unpin = Gtk::manage(new Gtk::MenuItem("Unpin"));
+    m_menu_unpin->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().Unpin(m_active_channel, m_menu_selected_message, [](...) {});
+    });
+    m_menu.append(*m_menu_unpin);
+
+    m_menu_pin = Gtk::manage(new Gtk::MenuItem("Pin"));
+    m_menu_pin->signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().Pin(m_active_channel, m_menu_selected_message, [](...) {});
+    });
+    m_menu.append(*m_menu_pin);
+
+    m_menu.show();
 }
 
 void ChatList::ScrollToBottom() {
-    auto x = get_vadjustment();
-    x->set_value(x->get_upper());
+    auto v = get_vadjustment();
+    v->set_value(v->get_upper());
+}
+
+void ChatList::OnVAdjustmentValueChanged() {
+    auto v = get_vadjustment();
+    if (m_history_timer.elapsed() > 1 && v->get_value() < 500) {
+        m_history_timer.start();
+        m_signal_action_chat_load_history.emit(m_active_channel);
+    }
+    m_should_scroll_to_bottom = v->get_upper() - v->get_page_size() <= v->get_value();
+}
+
+void ChatList::OnVAdjustmentUpperChanged() {
+    auto v = get_vadjustment();
+    if (!m_ignore_next_upper && !m_should_scroll_to_bottom && m_old_upper > -1.0) {
+        const auto inc = v->get_upper() - m_old_upper;
+        v->set_value(v->get_value() + inc);
+    }
+    m_ignore_next_upper = false;
+    m_old_upper = v->get_upper();
+}
+
+void ChatList::OnListSizeAllocate(Gtk::Allocation &allocation) {
+    if (m_should_scroll_to_bottom) ScrollToBottom();
 }
 
 void ChatList::RemoveMessageAndHeader(Gtk::Widget *widget) {
