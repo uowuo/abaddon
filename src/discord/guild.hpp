@@ -91,7 +91,7 @@ struct GuildData {
     friend void from_json(const nlohmann::json &j, GuildData &m);
     void update_from_json(const nlohmann::json &j);
 
-    bool HasFeature(const std::string &feature);
+    bool HasFeature(const std::string &feature) const;
     bool HasIcon() const;
     bool HasAnimatedIcon() const;
     std::string GetIconURL(const std::string &ext = "png", const std::string &size = "32") const;
