@@ -570,7 +570,7 @@ std::optional<Snowflake> DiscordClient::FindDM(Snowflake user_id) {
     for (const auto &id : channels) {
         const auto channel = m_store.GetChannel(id);
         const auto recipients = channel->GetDMRecipients();
-        if (recipients.size() == 1 && recipients[0].ID == user_id)
+        if (channel->Type == ChannelType::DM && recipients.size() == 1 && recipients[0].ID == user_id)
             return id;
     }
 
