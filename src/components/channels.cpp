@@ -207,12 +207,6 @@ ChannelList::ChannelList()
     m_menu_thread.append(m_menu_thread_copy_id);
     m_menu_thread.show_all();
 
-    m_menu_guild.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnGuildSubmenuPopup));
-    m_menu_category.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnCategorySubmenuPopup));
-    m_menu_channel.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnChannelSubmenuPopup));
-    m_menu_dm.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnDMSubmenuPopup));
-    m_menu_thread.signal_popped_up().connect(sigc::mem_fun(*this, &ChannelList::OnThreadSubmenuPopup));
-
     auto &discord = Abaddon::Get().GetDiscordClient();
     discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
     discord.signal_guild_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateNewGuild));
@@ -399,7 +393,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
         queue.pop();
         if ((*item)[m_columns.m_type] == RenderType::Thread)
             threads.push_back(static_cast<Snowflake>((*item)[m_columns.m_id]));
-        for (const auto& child : item->children())
+        for (const auto &child : item->children())
             queue.push(child);
     }
 
@@ -580,7 +574,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         if (thread.has_value())
             threads[*thread->ParentID].push_back(*thread);
     }
-    const auto add_threads = [&](const ChannelData &channel, const Gtk::TreeRow& row) {
+    const auto add_threads = [&](const ChannelData &channel, const Gtk::TreeRow &row) {
         row[m_columns.m_expanded] = true;
 
         const auto it = threads.find(channel.ID);
@@ -830,15 +824,19 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
             auto row = (*m_model->get_iter(m_path_for_menu));
             switch (static_cast<RenderType>(row[m_columns.m_type])) {
                 case RenderType::Guild:
+                    OnGuildSubmenuPopup();
                     m_menu_guild.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
                 case RenderType::Category:
+                    OnCategorySubmenuPopup();
                     m_menu_category.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
                 case RenderType::TextChannel:
+                    OnChannelSubmenuPopup();
                     m_menu_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
                 case RenderType::DM: {
+                    OnDMSubmenuPopup();
                     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
                     if (channel.has_value()) {
                         m_menu_dm_close.set_label(channel->Type == ChannelType::DM ? "Close" : "Leave");
@@ -848,6 +846,7 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
                     m_menu_dm.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                 } break;
                 case RenderType::Thread: {
+                    OnThreadSubmenuPopup();
                     m_menu_thread.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
                 } break;
@@ -887,7 +886,7 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
     m_model->erase(iter);
 }
 
-void ChannelList::OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void ChannelList::OnGuildSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -897,7 +896,7 @@ void ChannelList::OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const 
         m_menu_guild_toggle_mute.set_label("Mute");
 }
 
-void ChannelList::OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void ChannelList::OnCategorySubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -907,7 +906,7 @@ void ChannelList::OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, con
         m_menu_category_toggle_mute.set_label("Mute");
 }
 
-void ChannelList::OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void ChannelList::OnChannelSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -917,7 +916,7 @@ void ChannelList::OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, cons
         m_menu_channel_toggle_mute.set_label("Mute");
 }
 
-void ChannelList::OnDMSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void ChannelList::OnDMSubmenuPopup() {
     auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -927,7 +926,7 @@ void ChannelList::OnDMSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk
         m_menu_dm_toggle_mute.set_label("Mute");
 }
 
-void ChannelList::OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y) {
+void ChannelList::OnThreadSubmenuPopup() {
     m_menu_thread_archive.set_visible(false);
     m_menu_thread_unarchive.set_visible(false);
 
