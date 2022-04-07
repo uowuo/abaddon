@@ -57,57 +57,6 @@ jobs:
           name: build-windows-msys2-${{ matrix.buildtype }}
           path: build/artifactdir
 
-  windows:
-    name: windows-${{ matrix.buildtype }}
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          submodules: true
-
-      - name: Fetch CMake
-        uses: lukka/get-cmake@v3.21.2
-
-      - name: Fetch dependencies
-        uses: lukka/run-vcpkg@v7
-        with:
-          vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket curl
-          vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
-          vcpkgTriplet: x64-windows
-
-      - name: Build
-        uses: lukka/run-cmake@v3
-        with:
-          useVcpkgToolchainFile: true
-          vcpkgTriplet: x64-windows
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
-
-      - name: Setup artifact files
-        shell: cmd
-        run: |
-          del /f /s /q "${{ runner.workspace }}\build\CMakeFiles"
-          rmdir /s /q "${{ runner.workspace }}\build\CMakeFiles"
-          del /f /s /q "${{ runner.workspace }}\build\.ninja_deps"
-          del /f /s /q "${{ runner.workspace }}\build\.ninja_log"
-          del /f /s /q "${{ runner.workspace }}\build\abaddon.ilk"
-          del /f /s /q "${{ runner.workspace }}\build\CMakeCache.txt"
-          xcopy /E /I "${{ github.workspace }}\res\css" "${{ runner.workspace }}\build\css"
-          xcopy /E /I "${{ github.workspace }}\res\res" "${{ runner.workspace }}\build\res"
-          xcopy /E /I "${{ github.workspace }}\res\fonts" "${{ runner.workspace }}\build\fonts"
-          mkdir "${{ runner.workspace }}\build\share"
-          xcopy /E /I "${{ github.workspace }}\ci\gtk-for-windows\gtk-nsis-pack\share\glib-2.0" "${{ runner.workspace }}\build\share\glib-2.0"
-          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "${{ runner.workspace }}\build\gspawn-win64-helper.exe"
-          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper-console.exe" "${{ runner.workspace }}\build\gspawn-win64-helper-console.exe"
-
-      - name: Upload build
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-windows-${{ matrix.buildtype }}
-          path: ${{ runner.workspace }}/build
   mac:
     name: macos-${{ matrix.buildtype }}
     runs-on: macos-latest
