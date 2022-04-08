@@ -168,7 +168,6 @@ void MainWindow::OnViewSubmenuPopup() {
 
     m_menu_view_friends.set_sensitive(discord_active);
     m_menu_view_mark_guild_as_read.set_sensitive(discord_active);
-    m_menu_view_mark_all_as_read.set_sensitive(discord_active);
 
     auto channel_id = GetChatActiveChannel();
     m_menu_view_pins.set_sensitive(false);
@@ -228,12 +227,10 @@ void MainWindow::SetupMenu() {
     m_menu_view_threads.set_label("Threads");
     m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
-    m_menu_view_mark_all_as_read.set_label("Mark All as Read");
     m_menu_view_sub.append(m_menu_view_friends);
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
-    m_menu_view_sub.append(m_menu_view_mark_all_as_read);
 
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
@@ -299,10 +296,6 @@ void MainWindow::SetupMenu() {
         if (channel.has_value() && channel->GuildID.has_value()) {
             discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
         }
-    });
-
-    m_menu_view_mark_all_as_read.signal_activate().connect([] {
-        Abaddon::Get().GetDiscordClient().MarkAllAsRead(NOOP_CALLBACK);
     });
 }
 

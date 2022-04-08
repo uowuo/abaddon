@@ -146,7 +146,6 @@ public:
     void MarkGuildAsRead(Snowflake guild_id, const sigc::slot<void(DiscordError code)> &callback);
     void MuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
     void UnmuteChannel(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
-    void MarkAllAsRead(const sigc::slot<void(DiscordError code)> &callback);
     void MuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
     void UnmuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);
     void MuteThread(Snowflake id, const sigc::slot<void(DiscordError code)> &callback);

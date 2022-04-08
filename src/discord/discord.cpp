@@ -911,26 +911,6 @@ void DiscordClient::UnmuteChannel(Snowflake channel_id, const sigc::slot<void(Di
     });
 }
 
-void DiscordClient::MarkAllAsRead(const sigc::slot<void(DiscordError code)> &callback) {
-    AckBulkData data;
-    for (const auto &[unread, mention_count] : m_unread) {
-        const auto iter = m_last_message_id.find(unread);
-        if (iter == m_last_message_id.end()) continue;
-        auto &e = data.ReadStates.emplace_back();
-        e.ID = unread;
-        e.LastMessageID = iter->second;
-    }
-
-    if (data.ReadStates.empty()) return;
-
-    m_http.MakePOST("/read-states/ack-bulk", nlohmann::json(data).dump(), [callback](const http::response_type &response) {
-        if (CheckCode(response))
-            callback(DiscordError::NONE);
-        else
-            callback(GetCodeFromResponse(response));
-    });
-}
-
 void DiscordClient::MuteGuild(Snowflake id, const sigc::slot<void(DiscordError code)> &callback) {
     m_http.MakePATCH("/users/@me/guilds/" + std::to_string(id) + "/settings", R"({"muted":true})", [callback](const http::response_type &response) {
         if (CheckCode(response))

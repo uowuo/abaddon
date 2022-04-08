@@ -67,7 +67,6 @@ private:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
-    Gtk::MenuItem m_menu_view_mark_all_as_read;
     void OnViewSubmenuPopup();
 
 public:
