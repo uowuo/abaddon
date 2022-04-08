@@ -17,6 +17,10 @@
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
 
+#ifdef WITH_LIBHANDY
+    #include <handy.h>
+#endif
+
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
 #endif
@@ -61,6 +65,12 @@ Abaddon &Abaddon::Get() {
 
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
+
+#ifdef WITH_LIBHANDY
+    m_gtk_app->signal_activate().connect([] {
+        hdy_init();
+    });
+#endif
 
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
