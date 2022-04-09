@@ -35,6 +35,12 @@ find_library(glib_GOBJECT_LIBRARIES
         ${PC_GLIB2_LIBRARY_DIRS}
         )
 
+find_library(glib_GIO_LIBRARIES
+        NAMES gio-2.0
+        HINTS ${PC_GLIB2_LIBDIR}
+        ${PC_GLIB2_LIBRARY_DIRS}
+        )
+
 get_filename_component(_GLIB2_LIB_DIR "${GLIB_LIBRARIES}" PATH)
 find_path(GLIB_CONFIG_INCLUDE_DIR
         NAMES glibconfig.h
@@ -54,7 +60,7 @@ if (GLIB_CONFIG_INCLUDE_DIR)
     set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIRS} ${GLIB_CONFIG_INCLUDE_DIR})
 endif ()
 
-set(GLIB_LIBRARIES ${GLIB_LIBRARIES} ${glib_GOBJECT_LIBRARIES})
+set(GLIB_LIBRARIES ${GLIB_LIBRARIES} ${glib_GOBJECT_LIBRARIES} ${glib_GIO_LIBRARIES})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(glib

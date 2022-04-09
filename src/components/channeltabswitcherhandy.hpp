@@ -6,6 +6,8 @@
     #include <handy.h>
     #include "discord/snowflake.hpp"
 
+class ChannelData;
+
 // thin wrapper over c api
 // HdyTabBar + invisible HdyTabView since it needs one
 class ChannelTabSwitcherHandy : public Gtk::Box {
@@ -20,6 +22,8 @@ public:
 private:
     void CheckUnread(Snowflake id);
     void ClearPage(HdyTabPage *page);
+    void OnPageIconLoad(HdyTabPage *page, const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    void CheckPageIcon(HdyTabPage *page, const ChannelData &data);
 
     HdyTabBar *m_tab_bar;
     Gtk::Widget *m_tab_bar_wrapped;
@@ -28,6 +32,8 @@ private:
 
     std::unordered_map<Snowflake, HdyTabPage *> m_pages;
     std::unordered_map<HdyTabPage *, Snowflake> m_pages_rev;
+    // need to hold a reference to the pixbuf data
+    std::unordered_map<HdyTabPage *, Glib::RefPtr<Gdk::Pixbuf>> m_page_icons;
 
     friend void selected_page_notify_cb(HdyTabView *, GParamSpec *, ChannelTabSwitcherHandy *);
     friend gboolean close_page_cb(HdyTabView *, HdyTabPage *, ChannelTabSwitcherHandy *);
