@@ -12,10 +12,15 @@ class ChannelTabSwitcherHandy : public Gtk::Box {
 public:
     ChannelTabSwitcherHandy();
 
+    // no-op if already added
     void AddChannelTab(Snowflake id);
+    // switches to existing tab if it exists
     void ReplaceActiveTab(Snowflake id);
 
 private:
+    void CheckUnread(Snowflake id);
+    void ClearPage(HdyTabPage *page);
+
     HdyTabBar *m_tab_bar;
     Gtk::Widget *m_tab_bar_wrapped;
     HdyTabView *m_tab_view;
@@ -25,6 +30,7 @@ private:
     std::unordered_map<HdyTabPage *, Snowflake> m_pages_rev;
 
     friend void selected_page_notify_cb(HdyTabView *, GParamSpec *, ChannelTabSwitcherHandy *);
+    friend gboolean close_page_cb(HdyTabView *, HdyTabPage *, ChannelTabSwitcherHandy *);
 
 public:
     using type_signal_channel_switched_to = sigc::signal<void, Snowflake>;
