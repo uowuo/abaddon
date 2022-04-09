@@ -121,6 +121,10 @@ protected:
     Gtk::MenuItem m_menu_channel_mark_as_read;
     Gtk::MenuItem m_menu_channel_toggle_mute;
 
+#ifdef WITH_LIBHANDY
+    Gtk::MenuItem m_menu_channel_open_tab;
+#endif
+
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
@@ -149,16 +153,25 @@ protected:
     std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_channel_map;
 
 public:
-    typedef sigc::signal<void, Snowflake> type_signal_action_channel_item_select;
-    typedef sigc::signal<void, Snowflake> type_signal_action_guild_leave;
-    typedef sigc::signal<void, Snowflake> type_signal_action_guild_settings;
+    using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;
+    using type_signal_action_guild_leave = sigc::signal<void, Snowflake>;
+    using type_signal_action_guild_settings = sigc::signal<void, Snowflake>;
+
+#ifdef WITH_LIBHANDY
+    using type_signal_action_open_new_tab = sigc::signal<void, Snowflake>;
+    type_signal_action_open_new_tab signal_action_open_new_tab();
+#endif
 
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_leave signal_action_guild_leave();
     type_signal_action_guild_settings signal_action_guild_settings();
 
-protected:
+private:
     type_signal_action_channel_item_select m_signal_action_channel_item_select;
     type_signal_action_guild_leave m_signal_action_guild_leave;
     type_signal_action_guild_settings m_signal_action_guild_settings;
+
+#ifdef WITH_LIBHANDY
+    type_signal_action_open_new_tab m_signal_action_open_new_tab;
+#endif
 };

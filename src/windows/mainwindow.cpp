@@ -27,6 +27,12 @@ MainWindow::MainWindow()
     chat->set_hexpand(true);
     chat->show();
 
+#ifdef WITH_LIBHANDY
+    m_channel_list.signal_action_open_new_tab().connect([this](Snowflake id) {
+        m_chat.OpenNewTab(id);
+    });
+#endif
+
     m_channel_list.set_vexpand(true);
     m_channel_list.set_size_request(-1, -1);
     m_channel_list.show();
