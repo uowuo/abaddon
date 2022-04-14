@@ -70,7 +70,7 @@ void ChannelTabSwitcherHandy::ReplaceActiveTab(Snowflake id) {
         const auto channel = discord.GetChannel(id);
         if (!channel.has_value()) return;
 
-        hdy_tab_page_set_title(page, ("#" + *channel->Name).c_str());
+        hdy_tab_page_set_title(page, channel->GetDisplayName().c_str());
 
         ClearPage(page);
         m_pages[id] = page;
