@@ -154,6 +154,8 @@ int Abaddon::StartGTK() {
 
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
+    m_main_window->UpdateMenus();
+
     m_main_window->show();
     return m_gtk_app->run(*m_main_window);
 }
@@ -173,11 +175,13 @@ void Abaddon::LoadFromSettings() {
 
 void Abaddon::StartDiscord() {
     m_discord.Start();
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::StopDiscord() {
     m_discord.Stop();
     SaveState();
+    m_main_window->UpdateMenus();
 }
 
 bool Abaddon::IsDiscordActive() const {
@@ -535,6 +539,7 @@ void Abaddon::ActionSetToken() {
         m_main_window->UpdateComponents();
         GetSettings().DiscordToken = m_discord_token;
     }
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::ActionJoinGuildDialog() {
@@ -595,6 +600,8 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
                 ShowGuildVerificationGateDialog(*channel->GuildID);
         }
     }
+
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::ActionChatLoadHistory(Snowflake id) {
