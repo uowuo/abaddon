@@ -81,7 +81,7 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 
 **CI:**
 
-- Windows: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-windows-RelWithDebInfo.zip)
+- Windows: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-windows-msys2-MinSizeRel.zip)
 - MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned,
   unpackaged, requires gtkmm3 (e.g. from homebrew)
 - Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now),
