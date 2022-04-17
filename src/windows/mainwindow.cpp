@@ -148,6 +148,11 @@ void MainWindow::UpdateChatReactionRemove(Snowflake id, const Glib::ustring &par
     m_chat.UpdateReactions(id);
 }
 
+void MainWindow::UpdateMenus() {
+    OnDiscordSubmenuPopup();
+    OnViewSubmenuPopup();
+}
+
 void MainWindow::OnDiscordSubmenuPopup() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto channel_id = GetChatActiveChannel();
@@ -242,12 +247,6 @@ void MainWindow::SetupMenu() {
     m_menu_bar.append(m_menu_discord);
     m_menu_bar.append(m_menu_view);
     m_menu_bar.show_all();
-
-    m_menu_bar.signal_event().connect([this](GdkEvent *ev) -> bool {
-        OnViewSubmenuPopup();
-        OnDiscordSubmenuPopup();
-        return false;
-    });
 
     m_menu_discord_connect.signal_activate().connect([this] {
         m_signal_action_connect.emit();

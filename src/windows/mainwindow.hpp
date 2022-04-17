@@ -23,6 +23,7 @@ public:
     Snowflake GetChatOldestListedMessage();
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
+    void UpdateMenus();
 
     ChannelList *GetChannelList();
     ChatWindow *GetChatWindow();
