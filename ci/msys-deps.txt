@@ -31,6 +31,7 @@
 /bin/libgraphite2.dll
 /bin/libgtk-3-0.dll
 /bin/libgtkmm-3.0-1.dll
+/bin/libhandy-1-0.dll
 /bin/libharfbuzz-0.dll
 /bin/libiconv-2.dll
 /bin/libidn2-0.dll
