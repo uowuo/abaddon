@@ -19,6 +19,7 @@ ChannelList::ChannelList()
     , m_menu_channel_mark_as_read("Mark as _Read", true)
 #ifdef WITH_LIBHANDY
     , m_menu_channel_open_tab("Open in New _Tab", true)
+    , m_menu_dm_open_tab("Open in New _Tab", true)
 #endif
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
@@ -182,6 +183,13 @@ ChannelList::ChannelList()
         else
             discord.MuteChannel(id, NOOP_CALLBACK);
     });
+#ifdef WITH_LIBHANDY
+    m_menu_dm_open_tab.signal_activate().connect([this] {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        m_signal_action_open_new_tab.emit(id);
+    });
+    m_menu_dm.append(m_menu_dm_open_tab);
+#endif
     m_menu_dm.append(m_menu_dm_toggle_mute);
     m_menu_dm.append(m_menu_dm_close);
     m_menu_dm.append(m_menu_dm_copy_id);

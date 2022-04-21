@@ -49,7 +49,7 @@ void ChannelTabSwitcherHandy::AddChannelTab(Snowflake id) {
     auto *dummy = Gtk::make_managed<Gtk::Box>(); // minimal
     auto *page = hdy_tab_view_append(m_tab_view, GTK_WIDGET(dummy->gobj()));
 
-    hdy_tab_page_set_title(page, ("#" + *channel->Name).c_str());
+    hdy_tab_page_set_title(page, channel->GetDisplayName().c_str());
     hdy_tab_page_set_tooltip(page, nullptr);
 
     m_pages[id] = page;

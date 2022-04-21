@@ -130,6 +130,10 @@ protected:
     Gtk::MenuItem m_menu_dm_close;
     Gtk::MenuItem m_menu_dm_toggle_mute;
 
+#ifdef WITH_LIBHANDY
+    Gtk::MenuItem m_menu_dm_open_tab;
+#endif
+
     Gtk::Menu m_menu_thread;
     Gtk::MenuItem m_menu_thread_copy_id;
     Gtk::MenuItem m_menu_thread_leave;
