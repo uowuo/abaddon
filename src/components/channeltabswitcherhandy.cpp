@@ -81,6 +81,28 @@ void ChannelTabSwitcherHandy::ReplaceActiveTab(Snowflake id) {
     }
 }
 
+TabsState ChannelTabSwitcherHandy::GetTabsState() {
+    TabsState state;
+
+    const gint num_pages = hdy_tab_view_get_n_pages(m_tab_view);
+    for (gint i = 0; i < num_pages; i++) {
+        auto *page = hdy_tab_view_get_nth_page(m_tab_view, i);
+        if (page != nullptr) {
+            if (const auto it = m_pages_rev.find(page); it != m_pages_rev.end()) {
+                state.Channels.push_back(it->second);
+            }
+        }
+    }
+
+    return state;
+}
+
+void ChannelTabSwitcherHandy::UseTabsState(const TabsState &state) {
+    for (auto id : state.Channels) {
+        AddChannelTab(id);
+    }
+}
+
 void ChannelTabSwitcherHandy::CheckUnread(Snowflake id) {
     if (auto it = m_pages.find(id); it != m_pages.end()) {
         hdy_tab_page_set_needs_attention(it->second, Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id) > -1);

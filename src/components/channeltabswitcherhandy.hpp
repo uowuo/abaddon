@@ -5,6 +5,7 @@
     #include <unordered_map>
     #include <handy.h>
     #include "discord/snowflake.hpp"
+    #include "state.hpp"
 
 class ChannelData;
 
@@ -18,6 +19,8 @@ public:
     void AddChannelTab(Snowflake id);
     // switches to existing tab if it exists
     void ReplaceActiveTab(Snowflake id);
+    TabsState GetTabsState();
+    void UseTabsState(const TabsState &state);
 
 private:
     void CheckUnread(Snowflake id);

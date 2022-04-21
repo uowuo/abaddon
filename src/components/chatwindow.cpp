@@ -172,6 +172,14 @@ void ChatWindow::SetTopic(const std::string &text) {
 void ChatWindow::OpenNewTab(Snowflake id) {
     m_tab_switcher->AddChannelTab(id);
 }
+
+TabsState ChatWindow::GetTabsState() {
+    return m_tab_switcher->GetTabsState();
+}
+
+void ChatWindow::UseTabsState(const TabsState &state) {
+    m_tab_switcher->UseTabsState(state);
+}
 #endif
 
 Snowflake ChatWindow::GetActiveChannel() const {

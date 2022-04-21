@@ -24,9 +24,18 @@ void from_json(const nlohmann::json &j, ExpansionState &m) {
     j.at("c").get_to(m.Children);
 }
 
+void to_json(nlohmann::json &j, const TabsState &m) {
+    j = m.Channels;
+}
+
+void from_json(const nlohmann::json &j, TabsState &m) {
+    j.get_to(m.Channels);
+}
+
 void to_json(nlohmann::json &j, const AbaddonApplicationState &m) {
     j["active_channel"] = m.ActiveChannel;
     j["expansion"] = m.Expansion;
+    j["tabs"] = m.Tabs;
 }
 
 void from_json(const nlohmann::json &j, AbaddonApplicationState &m) {
@@ -34,4 +43,6 @@ void from_json(const nlohmann::json &j, AbaddonApplicationState &m) {
         j.at("active_channel").get_to(m.ActiveChannel);
     if (j.contains("expansion"))
         j.at("expansion").get_to(m.Expansion);
+    if (j.contains("tabs"))
+        j.at("tabs").get_to(m.Tabs);
 }

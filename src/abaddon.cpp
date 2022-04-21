@@ -424,6 +424,9 @@ void Abaddon::SaveState() {
     AbaddonApplicationState state;
     state.ActiveChannel = m_main_window->GetChatActiveChannel();
     state.Expansion = m_main_window->GetChannelList()->GetExpansionState();
+#ifdef WITH_LIBHANDY
+    state.Tabs = m_main_window->GetChatWindow()->GetTabsState();
+#endif
 
     const auto path = GetStateCachePath();
     if (!util::IsFolder(path)) {
@@ -450,6 +453,9 @@ void Abaddon::LoadState() {
     try {
         AbaddonApplicationState state = nlohmann::json::parse(data.begin(), data.end());
         m_main_window->GetChannelList()->UseExpansionState(state.Expansion);
+#ifdef WITH_LIBHANDY
+        m_main_window->GetChatWindow()->UseTabsState(state.Tabs);
+#endif
         ActionChannelOpened(state.ActiveChannel);
     } catch (const std::exception &e) {
         printf("failed to load application state: %s\n", e.what());

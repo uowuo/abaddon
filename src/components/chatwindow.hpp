@@ -4,6 +4,7 @@
 #include <set>
 #include "discord/discord.hpp"
 #include "completer.hpp"
+#include "state.hpp"
 
 #ifdef WITH_LIBHANDY
 class ChannelTabSwitcherHandy;
@@ -36,6 +37,8 @@ public:
 
 #ifdef WITH_LIBHANDY
     void OpenNewTab(Snowflake id);
+    TabsState GetTabsState();
+    void UseTabsState(const TabsState &state);
 #endif
 
 protected:
