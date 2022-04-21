@@ -9,6 +9,10 @@ jobs:
     strategy:
       matrix:
         buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+        mindeps: [false]
+        include:
+          - buildtype: RelWithDebInfo
+            mindeps: true
     defaults:
       run:
         shell: msys2 {0}
@@ -17,12 +21,23 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
+      - name: Setup MSYS2 (1)
+        uses: haya14busa/action-cond@v1
+        id: setupmsys
         with:
-          msystem: mingw64
-          update: true
-          install: >-
+          cond: ${{ matrix.mindeps == true }}
+          if_true: >-
+            git
+            make
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-sqlite3
+            mingw-w64-x86_64-nlohmann-json
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-gtkmm3
+          if_false: >-
             git
             make
             mingw-w64-x86_64-toolchain
@@ -34,6 +49,13 @@ jobs:
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-gtkmm3
             mingw-w64-x86_64-libhandy
+
+      - name: Setup MSYS2 (2)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: mingw64
+          update: true
+          install: ${{ steps.setupmsys.outputs.value }}
 
       - name: Build
         run: |
@@ -50,12 +72,20 @@ jobs:
           cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
           cp -r res/css res/res res/fonts build/artifactdir/bin
           cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas
-          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin
+          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin || :
 
-      - name: Upload build
+      - name: Upload build (1)
+        uses: haya14busa/action-cond@v1
+        id: buildname
+        with:
+          cond: ${{ matrix.mindeps == true }}
+          if_true: "${{ matrix.buildtype }}-mindeps"
+          if_false: "${{ matrix.buildtype }}"
+
+      - name: Upload build (2)
         uses: actions/upload-artifact@v2
         with:
-          name: build-windows-msys2-${{ matrix.buildtype }}
+          name: build-windows-msys2-${{ steps.buildname.outputs.value }}
           path: build/artifactdir
 
   mac:
