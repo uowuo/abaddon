@@ -19,7 +19,7 @@ public:
     ChannelList();
 
     void UpdateListing();
-    void SetActiveChannel(Snowflake id);
+    void SetActiveChannel(Snowflake id, bool expand_to);
 
     // channel list should be populated when this is called
     void UseExpansionState(const ExpansionStateRoot &state);

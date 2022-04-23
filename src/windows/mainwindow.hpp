@@ -13,7 +13,7 @@ public:
     void UpdateMembers();
     void UpdateChannelListing();
     void UpdateChatWindowContents();
-    void UpdateChatActiveChannel(Snowflake id);
+    void UpdateChatActiveChannel(Snowflake id, bool expand_to);
     Snowflake GetChatActiveChannel() const;
     void UpdateChatNewMessage(const Message &data);
     void UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id);

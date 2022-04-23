@@ -81,7 +81,7 @@ public:
     using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
     using type_signal_action_chat_submit = sigc::signal<void, std::string, Snowflake, Snowflake>;
     using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
-    using type_signal_action_channel_click = sigc::signal<void, Snowflake>;
+    using type_signal_action_channel_click = sigc::signal<void, Snowflake, bool>;
     using type_signal_action_insert_mention = sigc::signal<void, Snowflake>;
     using type_signal_action_reaction_add = sigc::signal<void, Snowflake, Glib::ustring>;
     using type_signal_action_reaction_remove = sigc::signal<void, Snowflake, Glib::ustring>;

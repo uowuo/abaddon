@@ -462,7 +462,7 @@ void ChannelList::OnGuildUnmute(Snowflake id) {
 
 // create a temporary channel row for non-joined threads
 // and delete them when the active channel switches off of them if still not joined
-void ChannelList::SetActiveChannel(Snowflake id) {
+void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
     // mark channel as read when switching off
     if (m_active_channel.IsValid())
         Abaddon::Get().GetDiscordClient().MarkChannelAsRead(m_active_channel, [](...) {});
@@ -479,11 +479,12 @@ void ChannelList::SetActiveChannel(Snowflake id) {
 
     const auto channel_iter = GetIteratorForChannelFromID(id);
     if (channel_iter) {
-        m_view.expand_to_path(m_model->get_path(channel_iter));
+        if (expand_to) {
+            m_view.expand_to_path(m_model->get_path(channel_iter));
+        }
         m_view.get_selection()->select(channel_iter);
     } else {
         m_view.get_selection()->unselect_all();
-        // SetActiveChannel should probably just take the channel object
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
         if (!channel.has_value() || !channel->IsThread()) return;
         auto parent_iter = GetIteratorForChannelFromID(*channel->ParentID);

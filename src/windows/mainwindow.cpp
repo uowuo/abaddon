@@ -101,10 +101,10 @@ void MainWindow::UpdateChatWindowContents() {
     m_members.UpdateMemberList();
 }
 
-void MainWindow::UpdateChatActiveChannel(Snowflake id) {
+void MainWindow::UpdateChatActiveChannel(Snowflake id, bool expand_to) {
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
-    m_channel_list.SetActiveChannel(id);
+    m_channel_list.SetActiveChannel(id, expand_to);
     m_content_stack.set_visible_child("chat");
 }
 
@@ -281,7 +281,7 @@ void MainWindow::SetupMenu() {
     });
 
     m_menu_view_friends.signal_activate().connect([this] {
-        UpdateChatActiveChannel(Snowflake::Invalid);
+        UpdateChatActiveChannel(Snowflake::Invalid, true);
         m_members.UpdateMemberList();
         m_content_stack.set_visible_child("friends");
     });

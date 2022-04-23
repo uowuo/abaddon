@@ -21,7 +21,7 @@ ChatWindow::ChatWindow() {
 #ifdef WITH_LIBHANDY
     m_tab_switcher = Gtk::make_managed<ChannelTabSwitcherHandy>();
     m_tab_switcher->signal_channel_switched_to().connect([this](Snowflake id) {
-        m_signal_action_channel_click.emit(id);
+        m_signal_action_channel_click.emit(id, false);
     });
 #endif
 
@@ -65,7 +65,7 @@ ChatWindow::ChatWindow() {
     m_completer.show();
 
     m_chat->signal_action_channel_click().connect([this](Snowflake id) {
-        m_signal_action_channel_click.emit(id);
+        m_signal_action_channel_click.emit(id, true);
     });
     m_chat->signal_action_chat_load_history().connect([this](Snowflake id) {
         m_signal_action_chat_load_history.emit(id);

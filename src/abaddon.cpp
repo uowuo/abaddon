@@ -148,7 +148,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
     m_main_window->signal_action_view_threads().connect(sigc::mem_fun(*this, &Abaddon::ActionViewThreads));
 
-    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
+    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::bind(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened), true));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
 
@@ -567,7 +567,7 @@ void Abaddon::ActionJoinGuildDialog() {
     }
 }
 
-void Abaddon::ActionChannelOpened(Snowflake id) {
+void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     if (!id.IsValid() || id == m_main_window->GetChatActiveChannel()) return;
 
     m_main_window->GetChatWindow()->SetTopic("");
@@ -590,7 +590,7 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
             display = "Empty group";
         m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
     }
-    m_main_window->UpdateChatActiveChannel(id);
+    m_main_window->UpdateChatActiveChannel(id, expand_to);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         // dont fire requests we know will fail
         if (can_access) {
