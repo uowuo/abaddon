@@ -22,7 +22,7 @@ has to be separate to allow main.css to override certain things
     border: 1px solid #808080;
 }
 
-.app-window tabbar tab.needs-attention {
+.app-window tabbar tab.needs-attention:not(:checked) {
   font-weight: bold;
   animation: 150ms ease-in;
   background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%);
