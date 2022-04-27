@@ -73,6 +73,10 @@ private:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
+#ifdef WITH_LIBHANDY
+    Gtk::MenuItem m_menu_view_go_back;
+    Gtk::MenuItem m_menu_view_go_forward;
+#endif
     void OnViewSubmenuPopup();
 
 public:
