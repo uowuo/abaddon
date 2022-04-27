@@ -153,6 +153,16 @@ void MainWindow::UpdateMenus() {
     OnViewSubmenuPopup();
 }
 
+#ifdef WITH_LIBHANDY
+void MainWindow::GoBack() {
+    m_chat.GoBack();
+}
+
+void MainWindow::GoForward() {
+    m_chat.GoForward();
+}
+#endif
+
 void MainWindow::OnDiscordSubmenuPopup() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto channel_id = GetChatActiveChannel();

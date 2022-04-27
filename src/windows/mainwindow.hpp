@@ -25,6 +25,11 @@ public:
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
     void UpdateMenus();
 
+#ifdef WITH_LIBHANDY
+    void GoBack();
+    void GoForward();
+#endif
+
     ChannelList *GetChannelList();
     ChatWindow *GetChatWindow();
     MemberList *GetMemberList();

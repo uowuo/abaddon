@@ -180,6 +180,14 @@ TabsState ChatWindow::GetTabsState() {
 void ChatWindow::UseTabsState(const TabsState &state) {
     m_tab_switcher->UseTabsState(state);
 }
+
+void ChatWindow::GoBack() {
+    m_tab_switcher->GoBackOnCurrent();
+}
+
+void ChatWindow::GoForward() {
+    m_tab_switcher->GoForwardOnCurrent();
+}
 #endif
 
 Snowflake ChatWindow::GetActiveChannel() const {

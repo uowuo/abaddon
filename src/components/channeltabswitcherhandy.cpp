@@ -57,6 +57,7 @@ void ChannelTabSwitcherHandy::AddChannelTab(Snowflake id) {
 
     CheckUnread(id);
     CheckPageIcon(page, *channel);
+    AppendPageHistory(page, id);
 }
 
 void ChannelTabSwitcherHandy::ReplaceActiveTab(Snowflake id) {
@@ -78,6 +79,7 @@ void ChannelTabSwitcherHandy::ReplaceActiveTab(Snowflake id) {
 
         CheckUnread(id);
         CheckPageIcon(page, *channel);
+        AppendPageHistory(page, id);
     }
 }
 
@@ -101,6 +103,14 @@ void ChannelTabSwitcherHandy::UseTabsState(const TabsState &state) {
     for (auto id : state.Channels) {
         AddChannelTab(id);
     }
+}
+
+void ChannelTabSwitcherHandy::GoBackOnCurrent() {
+    AdvanceOnCurrent(-1);
+}
+
+void ChannelTabSwitcherHandy::GoForwardOnCurrent() {
+    AdvanceOnCurrent(1);
 }
 
 void ChannelTabSwitcherHandy::CheckUnread(Snowflake id) {
@@ -141,6 +151,41 @@ void ChannelTabSwitcherHandy::CheckPageIcon(HdyTabPage *page, const ChannelData 
     }
 
     hdy_tab_page_set_icon(page, nullptr);
+}
+
+void ChannelTabSwitcherHandy::AppendPageHistory(HdyTabPage *page, Snowflake channel) {
+    auto it = m_page_history.find(page);
+    if (it == m_page_history.end()) {
+        m_page_history[page] = PageHistory { { channel }, 0 };
+        return;
+    }
+
+    // drop everything beyond current position
+    it->second.Visited.resize(++it->second.CurrentVisitedIndex);
+    it->second.Visited.push_back(channel);
+}
+
+void ChannelTabSwitcherHandy::AdvanceOnCurrent(size_t by) {
+    auto *current = hdy_tab_view_get_selected_page(m_tab_view);
+    if (current == nullptr) return;
+    auto history = m_page_history.find(current);
+    if (history == m_page_history.end()) return;
+    if (by + history->second.CurrentVisitedIndex < 0 || by + history->second.CurrentVisitedIndex >= history->second.Visited.size()) return;
+
+    history->second.CurrentVisitedIndex += by;
+    const auto to_id = history->second.Visited.at(history->second.CurrentVisitedIndex);
+
+    // temporarily point current index to the end so that it doesnt fuck up the history
+    // remove it immediately after cuz the emit will call ReplaceActiveTab
+    const auto real = history->second.CurrentVisitedIndex;
+    history->second.CurrentVisitedIndex = history->second.Visited.size() - 1;
+    m_signal_channel_switched_to.emit(to_id);
+    // iterator might not be valid
+    history = m_page_history.find(current);
+    if (history != m_page_history.end()) {
+        history->second.Visited.pop_back();
+    }
+    history->second.CurrentVisitedIndex = real;
 }
 
 ChannelTabSwitcherHandy::type_signal_channel_switched_to ChannelTabSwitcherHandy::signal_channel_switched_to() {

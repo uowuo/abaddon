@@ -63,6 +63,39 @@ Abaddon &Abaddon::Get() {
     return instance;
 }
 
+#ifdef WITH_LIBHANDY
+    #ifdef _WIN32
+constexpr static guint BUTTON_BACK = 4;
+constexpr static guint BUTTON_FORWARD = 5;
+    #else
+constexpr static guint BUTTON_BACK = 8;
+constexpr static guint BUTTON_FORWARD = 9;
+    #endif
+
+static void HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
+    if (event->type != GDK_BUTTON_PRESS) return;
+
+    auto *widget = gtk_get_event_widget(event);
+    if (widget == nullptr) return;
+    auto *window = gtk_widget_get_toplevel(widget);
+    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return; // is this the right way???
+
+    switch (event->button.button) {
+        case BUTTON_BACK:
+            main_window->GoBack();
+            break;
+        case BUTTON_FORWARD:
+            main_window->GoForward();
+            break;
+    }
+}
+
+static void MainEventHandler(GdkEvent *event, void *main_window) {
+    HandleButtonEvents(event, static_cast<MainWindow *>(main_window));
+    gtk_main_do_event(event);
+}
+#endif
+
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
 
@@ -112,6 +145,10 @@ int Abaddon::StartGTK() {
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
     m_main_window->set_position(Gtk::WIN_POS_CENTER);
+
+#ifdef WITH_LIBHANDY
+    gdk_event_handler_set(&MainEventHandler, m_main_window.get(), nullptr);
+#endif
 
     if (!m_settings.IsValid()) {
         Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be opened!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);

@@ -1,48 +1,50 @@
-set(GDKMM_LIBRARY_NAME gdkmm-3.0)
+set(gdkmm_LIBRARY_NAME gdkmm-3.0)
 
 find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
-	pkg_check_modules(PKGCONFIG_GDKMM QUIET ${GDKMM_LIBRARY_NAME})
-	set(GDKMM_DEFINITIONS ${PKGCONFIG_GDKMM_CFLAGS_OTHER})
+    pkg_check_modules(PKGCONFIG_gdkmm QUIET ${gdkmm_LIBRARY_NAME})
+    set(gdkmm_DEFINITIONS                   ${PKGCONFIG_gdkmm_CFLAGS_OTHER})
 endif (PKG_CONFIG_FOUND)
 
-set(GDKMM_INCLUDE_HINTS ${PKGCONFIG_GDKMM_INCLUDEDIR} ${PKGCONFIG_GDKMM_INCLUDE_DIRS})
-set(GDKMM_LIBRARY_HINTS ${PKGCONFIG_GDKMM_LIBDIR}     ${PKGCONFIG_GDKMM_LIBRARY_DIRS})
+set(gdkmm_INCLUDE_HINTS ${PKGCONFIG_gdkmm_INCLUDEDIR} ${PKGCONFIG_gdkmm_INCLUDE_DIRS})
+set(gdkmm_LIBRARY_HINTS ${PKGCONFIG_gdkmm_LIBDIR}     ${PKGCONFIG_gdkmm_LIBRARY_DIRS})
 
-find_path(GDKMM_INCLUDE_DIR
+find_path(gdkmm_INCLUDE_DIR
           NAMES gdkmm.h
-          HINTS ${GDKMM_INCLUDE_HINTS}
+          HINTS ${gdkmm_INCLUDE_HINTS}
                 /usr/include
                 /usr/local/include
                 /opt/local/include
-          PATH_SUFFIXES ${GDKMM_LIBRARY_NAME})
+          PATH_SUFFIXES ${gdkmm_LIBRARY_NAME})
 
-find_path(GDKMM_CONFIG_INCLUDE_DIR
+find_path(gdkmm_CONFIG_INCLUDE_DIR
           NAMES gdkmmconfig.h
-          HINTS ${GDKMM_LIBRARY_HINTS}
+          HINTS ${gdkmm_LIBRARY_HINTS}
                 /usr/lib
                 /usr/local/lib
                 /opt/local/lib
-          PATH_SUFFIXES ${GDKMM_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${gdkmm_LIBRARY_NAME}/include)
 
-find_library(GDKMM_LIBRARY
-             NAMES ${GDKMM_LIBRARY_NAME}
-                  gdkmm
-             HINTS ${GDKMM_LIBRARY_HINTS}
+find_library(gdkmm_LIBRARY
+             NAMES ${gdkmm_LIBRARY_NAME}
+                   gdkmm
+             HINTS ${gdkmm_LIBRARY_HINTS}
                    /usr/lib
                    /usr/local/lib
                    /opt/local/lib
-             PATH_SUFFIXES ${GDKMM_LIBRARY_NAME}
-                           ${GDKMM_LIBRARY_NAME}/include)
+             PATH_SUFFIXES ${gdkmm_LIBRARY_NAME}
+                           ${gdkmm_LIBRARY_NAME}/include)
 
-set(GDKMM_LIBRARIES    ${GDKMM_LIBRARY})
-set(GDKMM_INCLUDE_DIRS ${GDKMM_INCLUDE_DIR};${GDKMM_CONFIG_INCLUDE_DIRS};${GDKMM_CONFIG_INCLUDE_DIR})
+find_package(gdk)
+
+set(gdkmm_LIBRARIES    ${gdkmm_LIBRARY};${gdk_LIBRARIES})
+set(gdkmm_INCLUDE_DIRS ${gdkmm_INCLUDE_DIR};${gdkmm_CONFIG_INCLUDE_DIRS};${gdkmm_CONFIG_INCLUDE_DIR};${gdk_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(gdkmm
                                   REQUIRED_VARS
-                                    GDKMM_LIBRARY
-                                    GDKMM_INCLUDE_DIRS
-                                  VERSION_VAR GDKMM_VERSION)
+                                      gdkmm_LIBRARY
+                                      gdkmm_INCLUDE_DIRS
+                                  VERSION_VAR gdkmm_VERSION)
 
-mark_as_advanced(GDKMM_INCLUDE_DIR GDKMM_LIBRARY)
+mark_as_advanced(gdkmm_INCLUDE_DIR gdkmm_LIBRARY)

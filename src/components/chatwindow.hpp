@@ -39,6 +39,8 @@ public:
     void OpenNewTab(Snowflake id);
     TabsState GetTabsState();
     void UseTabsState(const TabsState &state);
+    void GoBack();
+    void GoForward();
 #endif
 
 protected:

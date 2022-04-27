@@ -18,7 +18,7 @@ find_path(libhandy_INCLUDE_DIR
           PATH_SUFFIXES ${libhandy_LIBRARY_NAME})
 
 find_library(libhandy_LIBRARY
-             NAMES ${libhandy_LIBRARY_NAME}
+             NAMES ${libhandy_LIBRARY_NAME} handy-1
              HINTS ${libhandy_LIBRARY_HINTS}
                    /usr/lib
                    /usr/local/lib
