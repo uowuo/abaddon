@@ -25,6 +25,8 @@ public:
     void GoBackOnCurrent();
     void GoForwardOnCurrent();
 
+    [[nodiscard]] int GetNumberOfTabs() const;
+
 private:
     void CheckUnread(Snowflake id);
     void ClearPage(HdyTabPage *page);

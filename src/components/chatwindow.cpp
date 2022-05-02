@@ -170,6 +170,10 @@ void ChatWindow::SetTopic(const std::string &text) {
 
 #ifdef WITH_LIBHANDY
 void ChatWindow::OpenNewTab(Snowflake id) {
+    // open if its the first tab (in which case it really isnt a tab but whatever)
+    if (m_tab_switcher->GetNumberOfTabs() == 0) {
+        m_signal_action_channel_click.emit(id, false);
+    }
     m_tab_switcher->AddChannelTab(id);
 }
 

@@ -113,6 +113,10 @@ void ChannelTabSwitcherHandy::GoForwardOnCurrent() {
     AdvanceOnCurrent(1);
 }
 
+int ChannelTabSwitcherHandy::GetNumberOfTabs() const {
+    return hdy_tab_view_get_n_pages(m_tab_view);
+}
+
 void ChannelTabSwitcherHandy::CheckUnread(Snowflake id) {
     if (auto it = m_pages.find(id); it != m_pages.end()) {
         hdy_tab_page_set_needs_attention(it->second, Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id) > -1);
