@@ -119,7 +119,10 @@ int ChannelTabSwitcherHandy::GetNumberOfTabs() const {
 
 void ChannelTabSwitcherHandy::CheckUnread(Snowflake id) {
     if (auto it = m_pages.find(id); it != m_pages.end()) {
-        hdy_tab_page_set_needs_attention(it->second, Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id) > -1);
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const bool has_unreads = discord.GetUnreadStateForChannel(id) > -1;
+        const bool show_indicator = has_unreads && !discord.IsChannelMuted(id);
+        hdy_tab_page_set_needs_attention(it->second, show_indicator);
     }
 }
 
