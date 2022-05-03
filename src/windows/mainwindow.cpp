@@ -53,8 +53,10 @@ MainWindow::MainWindow()
 
     m_chan_content_paned.pack1(m_channel_list);
     m_chan_content_paned.pack2(m_content_members_paned);
-    m_chan_content_paned.child_property_shrink(m_channel_list) = false;
-    m_chan_content_paned.child_property_resize(m_channel_list) = false;
+    m_chan_content_paned.child_property_shrink(m_content_members_paned) = true;
+    m_chan_content_paned.child_property_resize(m_content_members_paned) = true;
+    m_chan_content_paned.child_property_shrink(m_channel_list) = true;
+    m_chan_content_paned.child_property_resize(m_channel_list) = true;
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
     m_content_box.add(m_chan_content_paned);
@@ -62,8 +64,10 @@ MainWindow::MainWindow()
 
     m_content_members_paned.pack1(m_content_stack);
     m_content_members_paned.pack2(*member_list);
-    m_content_members_paned.child_property_shrink(*member_list) = false;
-    m_content_members_paned.child_property_resize(*member_list) = false;
+    m_content_members_paned.child_property_shrink(m_content_stack) = true;
+    m_content_members_paned.child_property_resize(m_content_stack) = true;
+    m_content_members_paned.child_property_shrink(*member_list) = true;
+    m_content_members_paned.child_property_resize(*member_list) = true;
     int w, h;
     get_default_size(w, h); // :s
     m_content_members_paned.set_position(w - m_chan_content_paned.get_position() - 150);
