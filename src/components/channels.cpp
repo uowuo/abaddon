@@ -932,8 +932,10 @@ void ChannelList::OnChannelSubmenuPopup() {
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     auto &discord = Abaddon::Get().GetDiscordClient();
+#ifdef WITH_LIBHANDY
     const auto perms = discord.HasChannelPermission(discord.GetUserData().ID, id, Permission::VIEW_CHANNEL);
     m_menu_channel_open_tab.set_sensitive(perms);
+#endif
     if (discord.IsChannelMuted(id))
         m_menu_channel_toggle_mute.set_label("Unmute");
     else
