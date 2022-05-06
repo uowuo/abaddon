@@ -35,6 +35,8 @@ private:
     void AppendPageHistory(HdyTabPage *page, Snowflake channel);
     void AdvanceOnCurrent(size_t by);
 
+    void OnChannelAccessibilityChanged(Snowflake id, bool accessibility);
+
     HdyTabBar *m_tab_bar;
     Gtk::Widget *m_tab_bar_wrapped;
     HdyTabView *m_tab_view;

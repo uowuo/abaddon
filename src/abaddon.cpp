@@ -610,7 +610,11 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     m_main_window->GetChatWindow()->SetTopic("");
 
     const auto channel = m_discord.GetChannel(id);
-    if (!channel.has_value()) return;
+    if (!channel.has_value()) {
+        m_main_window->UpdateChatActiveChannel(Snowflake::Invalid, false);
+        m_main_window->UpdateChatWindowContents();
+        return;
+    }
 
     const bool can_access = channel->IsDM() || m_discord.HasChannelPermission(m_discord.GetUserData().ID, id, Permission::VIEW_CHANNEL);
 

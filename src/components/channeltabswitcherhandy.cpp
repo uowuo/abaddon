@@ -37,6 +37,8 @@ ChannelTabSwitcherHandy::ChannelTabSwitcherHandy() {
     discord.signal_message_ack().connect([this](const MessageAckData &data) {
         CheckUnread(data.ChannelID);
     });
+
+    discord.signal_channel_accessibility_changed().connect(sigc::mem_fun(*this, &ChannelTabSwitcherHandy::OnChannelAccessibilityChanged));
 }
 
 void ChannelTabSwitcherHandy::AddChannelTab(Snowflake id) {
@@ -193,6 +195,18 @@ void ChannelTabSwitcherHandy::AdvanceOnCurrent(size_t by) {
         history->second.Visited.pop_back();
     }
     history->second.CurrentVisitedIndex = real;
+}
+
+void ChannelTabSwitcherHandy::OnChannelAccessibilityChanged(Snowflake id, bool accessibility) {
+    if (accessibility) return;
+    if (auto it = m_pages.find(id); it != m_pages.end()) {
+        if (hdy_tab_page_get_selected(it->second))
+            if (!hdy_tab_view_select_previous_page(m_tab_view))
+                hdy_tab_view_select_next_page(m_tab_view);
+
+        hdy_tab_view_close_page(m_tab_view, it->second);
+        ClearPage(it->second);
+    }
 }
 
 ChannelTabSwitcherHandy::type_signal_channel_switched_to ChannelTabSwitcherHandy::signal_channel_switched_to() {
