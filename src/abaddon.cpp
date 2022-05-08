@@ -47,6 +47,10 @@ Abaddon::Abaddon()
     m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
+    m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
+        if (!accessible)
+            m_channels_requested.erase(id);
+    });
     if (GetSettings().Prefetch)
         m_discord.signal_message_create().connect([this](const Message &message) {
             if (message.Author.HasAvatar())
