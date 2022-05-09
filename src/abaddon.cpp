@@ -76,13 +76,13 @@ constexpr static guint BUTTON_BACK = 8;
 constexpr static guint BUTTON_FORWARD = 9;
     #endif
 
-static void HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
-    if (event->type != GDK_BUTTON_PRESS) return;
+static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
+    if (event->type != GDK_BUTTON_PRESS) return false;
 
     auto *widget = gtk_get_event_widget(event);
-    if (widget == nullptr) return;
+    if (widget == nullptr) return false;
     auto *window = gtk_widget_get_toplevel(widget);
-    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return; // is this the right way???
+    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false; // is this the right way???
 
     switch (event->button.button) {
         case BUTTON_BACK:
@@ -92,10 +92,40 @@ static void HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
             main_window->GoForward();
             break;
     }
+
+    return false;
+}
+
+static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
+    if (event->type != GDK_KEY_PRESS) return false;
+
+    auto *widget = gtk_get_event_widget(event);
+    if (widget == nullptr) return false;
+    auto *window = gtk_widget_get_toplevel(widget);
+    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false;
+
+    const bool ctrl = (event->key.state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK;
+    const bool shft = (event->key.state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
+
+    if (ctrl) {
+        switch (event->key.keyval) {
+            case GDK_KEY_Tab:
+            case GDK_KEY_KP_Tab:
+            case GDK_KEY_ISO_Left_Tab:
+                if (shft)
+                    main_window->GoToPreviousTab();
+                else
+                    main_window->GoToNextTab();
+                return true;
+        }
+    }
+
+    return false;
 }
 
 static void MainEventHandler(GdkEvent *event, void *main_window) {
-    HandleButtonEvents(event, static_cast<MainWindow *>(main_window));
+    if (HandleButtonEvents(event, static_cast<MainWindow *>(main_window))) return;
+    if (HandleKeyEvents(event, static_cast<MainWindow *>(main_window))) return;
     gtk_main_do_event(event);
 }
 #endif

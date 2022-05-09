@@ -28,6 +28,8 @@ public:
 #ifdef WITH_LIBHANDY
     void GoBack();
     void GoForward();
+    void GoToPreviousTab();
+    void GoToNextTab();
 #endif
 
     ChannelList *GetChannelList();

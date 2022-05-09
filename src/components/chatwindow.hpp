@@ -41,6 +41,8 @@ public:
     void UseTabsState(const TabsState &state);
     void GoBack();
     void GoForward();
+    void GoToPreviousTab();
+    void GoToNextTab();
 #endif
 
 protected:

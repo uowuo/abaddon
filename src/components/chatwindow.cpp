@@ -192,6 +192,14 @@ void ChatWindow::GoBack() {
 void ChatWindow::GoForward() {
     m_tab_switcher->GoForwardOnCurrent();
 }
+
+void ChatWindow::GoToPreviousTab() {
+    m_tab_switcher->GoToPreviousTab();
+}
+
+void ChatWindow::GoToNextTab() {
+    m_tab_switcher->GoToNextTab();
+}
 #endif
 
 Snowflake ChatWindow::GetActiveChannel() const {

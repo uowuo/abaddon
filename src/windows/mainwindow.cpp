@@ -165,6 +165,14 @@ void MainWindow::GoBack() {
 void MainWindow::GoForward() {
     m_chat.GoForward();
 }
+
+void MainWindow::GoToPreviousTab() {
+    m_chat.GoToPreviousTab();
+}
+
+void MainWindow::GoToNextTab() {
+    m_chat.GoToNextTab();
+}
 #endif
 
 void MainWindow::OnDiscordSubmenuPopup() {

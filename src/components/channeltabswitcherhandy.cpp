@@ -115,6 +115,22 @@ void ChannelTabSwitcherHandy::GoForwardOnCurrent() {
     AdvanceOnCurrent(1);
 }
 
+void ChannelTabSwitcherHandy::GoToPreviousTab() {
+    if (!hdy_tab_view_select_previous_page(m_tab_view)) {
+        if (const auto num_pages = hdy_tab_view_get_n_pages(m_tab_view); num_pages > 1) {
+            hdy_tab_view_set_selected_page(m_tab_view, hdy_tab_view_get_nth_page(m_tab_view, num_pages - 1));
+        }
+    }
+}
+
+void ChannelTabSwitcherHandy::GoToNextTab() {
+    if (!hdy_tab_view_select_next_page(m_tab_view)) {
+        if (hdy_tab_view_get_n_pages(m_tab_view) > 1) {
+            hdy_tab_view_set_selected_page(m_tab_view, hdy_tab_view_get_nth_page(m_tab_view, 0));
+        }
+    }
+}
+
 int ChannelTabSwitcherHandy::GetNumberOfTabs() const {
     return hdy_tab_view_get_n_pages(m_tab_view);
 }
