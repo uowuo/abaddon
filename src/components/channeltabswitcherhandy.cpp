@@ -131,6 +131,11 @@ void ChannelTabSwitcherHandy::GoToNextTab() {
     }
 }
 
+void ChannelTabSwitcherHandy::GoToTab(int idx) {
+    if (hdy_tab_view_get_n_pages(m_tab_view) >= idx + 1)
+        hdy_tab_view_set_selected_page(m_tab_view, hdy_tab_view_get_nth_page(m_tab_view, idx));
+}
+
 int ChannelTabSwitcherHandy::GetNumberOfTabs() const {
     return hdy_tab_view_get_n_pages(m_tab_view);
 }

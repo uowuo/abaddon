@@ -173,6 +173,10 @@ void MainWindow::GoToPreviousTab() {
 void MainWindow::GoToNextTab() {
     m_chat.GoToNextTab();
 }
+
+void MainWindow::GoToTab(int idx) {
+    m_chat.GoToTab(idx);
+}
 #endif
 
 void MainWindow::OnDiscordSubmenuPopup() {

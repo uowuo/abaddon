@@ -26,6 +26,7 @@ public:
     void GoForwardOnCurrent();
     void GoToPreviousTab();
     void GoToNextTab();
+    void GoToTab(int idx);
 
     [[nodiscard]] int GetNumberOfTabs() const;
 

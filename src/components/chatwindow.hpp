@@ -43,6 +43,7 @@ public:
     void GoForward();
     void GoToPreviousTab();
     void GoToNextTab();
+    void GoToTab(int idx);
 #endif
 
 protected:

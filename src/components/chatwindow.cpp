@@ -200,6 +200,10 @@ void ChatWindow::GoToPreviousTab() {
 void ChatWindow::GoToNextTab() {
     m_tab_switcher->GoToNextTab();
 }
+
+void ChatWindow::GoToTab(int idx) {
+    m_tab_switcher->GoToTab(idx);
+}
 #endif
 
 Snowflake ChatWindow::GetActiveChannel() const {

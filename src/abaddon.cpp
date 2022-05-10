@@ -117,6 +117,20 @@ static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
                 else
                     main_window->GoToNextTab();
                 return true;
+            case GDK_KEY_1:
+            case GDK_KEY_2:
+            case GDK_KEY_3:
+            case GDK_KEY_4:
+            case GDK_KEY_5:
+            case GDK_KEY_6:
+            case GDK_KEY_7:
+            case GDK_KEY_8:
+            case GDK_KEY_9:
+                main_window->GoToTab(event->key.keyval - GDK_KEY_1);
+                return true;
+            case GDK_KEY_0:
+                main_window->GoToTab(9);
+                return true;
         }
     }
 
