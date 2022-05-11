@@ -89,7 +89,15 @@ bool ChannelData::HasIcon() const noexcept {
 }
 
 std::string ChannelData::GetIconURL() const {
-    return "https://cdn.discordapp.com/channel-icons/" + std::to_string(ID) + "/" + *Icon + ".png";
+    if (HasIcon()) {
+        return "https://cdn.discordapp.com/channel-icons/" + std::to_string(ID) + "/" + *Icon + ".png";
+    } else {
+        const auto recipients = GetDMRecipients();
+        if (!recipients.empty())
+            return recipients[0].GetAvatarURL("png", "32");
+        else
+            return "https://cdn.discordapp.com/embed/avatars/0.png";
+    }
 }
 
 std::string ChannelData::GetDisplayName() const {

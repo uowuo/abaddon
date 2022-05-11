@@ -164,19 +164,26 @@ void ChannelTabSwitcherHandy::OnPageIconLoad(HdyTabPage *page, const Glib::RefPt
 }
 
 void ChannelTabSwitcherHandy::CheckPageIcon(HdyTabPage *page, const ChannelData &data) {
+    std::optional<std::string> icon_url;
+
     if (data.GuildID.has_value()) {
         if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data.GuildID); guild.has_value() && guild->HasIcon()) {
-            auto *child_widget = hdy_tab_page_get_child(page);
-            if (child_widget == nullptr) return; // probably wont happen :---)
-            // i think this works???
-            auto *trackable = Glib::wrap(GTK_WIDGET(child_widget));
-
-            Abaddon::Get().GetImageManager().LoadFromURL(
-                guild->GetIconURL("png", "16"),
-                sigc::track_obj([this, page](const Glib::RefPtr<Gdk::Pixbuf> &pb) { OnPageIconLoad(page, pb); },
-                                *trackable));
-            return;
+            icon_url = guild->GetIconURL("png", "16");
         }
+    } else if (data.IsDM()) {
+        icon_url = data.GetIconURL();
+    }
+
+    if (icon_url.has_value()) {
+        auto *child_widget = hdy_tab_page_get_child(page);
+        if (child_widget == nullptr) return; // probably wont happen :---)
+        // i think this works???
+        auto *trackable = Glib::wrap(GTK_WIDGET(child_widget));
+        Abaddon::Get().GetImageManager().LoadFromURL(
+            *icon_url,
+            sigc::track_obj([this, page](const Glib::RefPtr<Gdk::Pixbuf> &pb) { OnPageIconLoad(page, pb); },
+                            *trackable));
+
         return;
     }
 
