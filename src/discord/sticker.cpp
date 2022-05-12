@@ -22,15 +22,6 @@ void from_json(const nlohmann::json &j, StickerData &m) {
     JS_D("format_type", m.FormatType);
 }
 
-std::string StickerData::GetURL() const {
-    if (!AssetHash.has_value()) return "";
-    if (FormatType == StickerFormatType::PNG || FormatType == StickerFormatType::APNG)
-        return "https://media.discordapp.net/stickers/" + std::to_string(ID) + "/" + *AssetHash + ".png?size=256";
-    else if (FormatType == StickerFormatType::LOTTIE)
-        return "https://media.discordapp.net/stickers/" + std::to_string(ID) + "/" + *AssetHash + ".json";
-    return "";
-}
-
 void to_json(nlohmann::json &j, const StickerItem &m) {
     j["id"] = m.ID;
     j["name"] = m.Name;

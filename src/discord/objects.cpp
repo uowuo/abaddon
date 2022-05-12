@@ -251,7 +251,7 @@ void to_json(nlohmann::json &j, const IdentifyProperties &m) {
     j["referring_domain_current"] = m.ReferringDomainCurrent;
     j["release_channel"] = m.ReleaseChannel;
     j["client_build_number"] = m.ClientBuildNumber;
-    if (m.ClientEventSource == "")
+    if (m.ClientEventSource.empty())
         j["client_event_source"] = nullptr;
     else
         j["client_event_source"] = m.ClientEventSource;
@@ -290,7 +290,7 @@ void to_json(nlohmann::json &j, const CreateMessageObject &m) {
 }
 
 void to_json(nlohmann::json &j, const MessageEditObject &m) {
-    if (m.Content.size() > 0)
+    if (!m.Content.empty())
         j["content"] = m.Content;
 
     // todo EmbedData to_json

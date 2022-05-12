@@ -14,13 +14,14 @@
 class Abaddon {
 private:
     Abaddon();
+
+public:
+    static Abaddon &Get();
+
     Abaddon(const Abaddon &) = delete;
     Abaddon &operator=(const Abaddon &) = delete;
     Abaddon(Abaddon &&) = delete;
     Abaddon &operator=(Abaddon &&) = delete;
-
-public:
-    static Abaddon &Get();
 
     int StartGTK();
     void OnShutdown();

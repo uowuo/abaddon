@@ -818,8 +818,8 @@ std::optional<GuildMember> Store::GetGuildMember(Snowflake guild_id, Snowflake u
     s->Get(2, r.Nickname);
     s->Get(3, r.JoinedAt);
     s->Get(4, r.PremiumSince);
-    //s->Get(5, r.IsDeafened);
-    //s->Get(6, r.IsMuted);
+    // s->Get(5, r.IsDeafened);
+    // s->Get(6, r.IsMuted);
     s->Get(7, r.Avatar);
     s->Get(8, r.IsPending);
 
@@ -879,8 +879,8 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     s->Get(4, r.Content);
     s->Get(5, r.Timestamp);
     s->Get(6, r.EditedTimestamp);
-    //s->Get(7, r.IsTTS);
-    //s->Get(8, r.DoesMentionEveryone);
+    // s->Get(7, r.IsTTS);
+    // s->Get(8, r.DoesMentionEveryone);
     s->GetJSON(9, r.Embeds);
     s->Get(10, r.IsPinned);
     s->Get(11, r.WebhookID);
@@ -1001,11 +1001,11 @@ std::optional<RoleData> Store::GetRole(Snowflake id) const {
     return role;
 }
 
-RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) const {
+RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) {
     RoleData r;
 
     s->Get(0, r.ID);
-    //s->Get(1, guild id);
+    // s->Get(1, guild id);
     s->Get(2, r.Name);
     s->Get(3, r.Color);
     s->Get(4, r.IsHoisted);
@@ -2249,11 +2249,11 @@ int Store::Statement::Bind(int index, Snowflake id) {
 
 int Store::Statement::Bind(int index, const char *str, size_t len) {
     if (len == -1) len = strlen(str);
-    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str, len, SQLITE_TRANSIENT));
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str, static_cast<int>(len), SQLITE_TRANSIENT));
 }
 
 int Store::Statement::Bind(int index, const std::string &str) {
-    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), str.size(), SQLITE_TRANSIENT));
+    return m_db->SetError(sqlite3_bind_blob(m_stmt, index, str.c_str(), static_cast<int>(str.size()), SQLITE_TRANSIENT));
 }
 
 int Store::Statement::Bind(int index) {

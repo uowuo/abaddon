@@ -1,9 +1,3 @@
-[submodule "vcpkg"]
-	path = ci/vcpkg
-	url = https://github.com/microsoft/vcpkg/
-[submodule "ci/vcpkg"]
-	path = ci/vcpkg
-	url = https://github.com/microsoft/vcpkg
 [submodule "ci/gtk-for-windows"]
 	path = ci/gtk-for-windows
 	url = https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer

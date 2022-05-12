@@ -63,18 +63,41 @@ int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
 
     m_css_provider = Gtk::CssProvider::create();
-    m_css_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(*m_main_window, "css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+    m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
+        Gtk::MessageDialog dlg("css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
 
     m_css_low_provider = Gtk::CssProvider::create();
-    m_css_low_provider->signal_parsing_error().connect([this](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(*m_main_window, "low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+    m_css_low_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
+        Gtk::MessageDialog dlg("low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
+
+#ifdef _WIN32
+    bool png_found = false;
+    bool gif_found = false;
+    for (const auto &fmt : Gdk::Pixbuf::get_formats()) {
+        if (fmt.get_name() == "png")
+            png_found = true;
+        else if (fmt.get_name() == "gif")
+            gif_found = true;
+    }
+
+    if (!png_found) {
+        Gtk::MessageDialog dlg("The PNG pixbufloader wasn't detected. Abaddon may not work as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+
+    if (!gif_found) {
+        Gtk::MessageDialog dlg("The GIF pixbufloader wasn't detected. Animations may not display as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+    }
+#endif
 
     m_main_window = std::make_unique<MainWindow>();
     m_main_window->set_title(APP_TITLE);
@@ -131,6 +154,8 @@ int Abaddon::StartGTK() {
 
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
+    m_main_window->UpdateMenus();
+
     m_main_window->show();
     return m_gtk_app->run(*m_main_window);
 }
@@ -142,7 +167,7 @@ void Abaddon::OnShutdown() {
 
 void Abaddon::LoadFromSettings() {
     std::string token = GetSettings().DiscordToken;
-    if (token.size()) {
+    if (!token.empty()) {
         m_discord_token = token;
         m_discord.UpdateToken(m_discord_token);
     }
@@ -150,11 +175,13 @@ void Abaddon::LoadFromSettings() {
 
 void Abaddon::StartDiscord() {
     m_discord.Start();
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::StopDiscord() {
     m_discord.Stop();
     SaveState();
+    m_main_window->UpdateMenus();
 }
 
 bool Abaddon::IsDiscordActive() const {
@@ -269,7 +296,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
         delete child;
     if (guild.has_value() && user.has_value()) {
         const auto roles = user->GetSortedRoles();
-        m_user_menu_roles->set_visible(roles.size() > 0);
+        m_user_menu_roles->set_visible(!roles.empty());
         for (const auto &role : roles) {
             auto *item = Gtk::manage(new Gtk::MenuItem(role.Name));
             if (role.Color != 0) {
@@ -512,6 +539,7 @@ void Abaddon::ActionSetToken() {
         m_main_window->UpdateComponents();
         GetSettings().DiscordToken = m_discord_token;
     }
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::ActionJoinGuildDialog() {
@@ -572,6 +600,8 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
                 ShowGuildVerificationGateDialog(*channel->GuildID);
         }
     }
+
+    m_main_window->UpdateMenus();
 }
 
 void Abaddon::ActionChatLoadHistory(Snowflake id) {
@@ -668,7 +698,7 @@ void Abaddon::ActionSetStatus() {
     const auto status = dlg.GetStatusType();
     const auto activity_type = dlg.GetActivityType();
     const auto activity_name = dlg.GetActivityName();
-    if (activity_name == "") {
+    if (activity_name.empty()) {
         m_discord.UpdateStatus(status, false);
     } else {
         ActivityData activity;
@@ -754,6 +784,17 @@ EmojiResource &Abaddon::GetEmojis() {
 int main(int argc, char **argv) {
     if (std::getenv("ABADDON_NO_FC") == nullptr)
         Platform::SetupFonts();
+
+    char *systemLocale = std::setlocale(LC_ALL, "");
+    try {
+        std::locale::global(std::locale(systemLocale));
+    } catch (...) {
+        try {
+            std::locale::global(std::locale::classic());
+            std::setlocale(LC_ALL, systemLocale);
+        } catch (...) {}
+    }
+
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };
     GetEnvironmentVariableA("GTK_CSD", buf, sizeof(buf));

@@ -5,7 +5,7 @@
 class LazyImage : public Gtk::Image {
 public:
     LazyImage(int w, int h, bool use_placeholder = true);
-    LazyImage(const std::string &url, int w, int h, bool use_placeholder = true);
+    LazyImage(std::string url, int w, int h, bool use_placeholder = true);
 
     void SetAnimated(bool is_animated);
     void SetURL(const std::string &url);

@@ -3,8 +3,7 @@
 #include <filesystem>
 
 GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
-    : m_guild_icon_label("Guild icon")
-    , m_guild_name_label("Guild name")
+    : m_guild_name_label("Guild name")
     , GuildID(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
@@ -45,11 +44,8 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
         m_guild_icon_ev.set_tooltip_text("Click to choose a file, right click to paste");
 
         m_guild_icon_ev.signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
-            if (event->type == GDK_BUTTON_PRESS) {
-                if (event->button == GDK_BUTTON_PRIMARY)
-                    UpdateGuildIconPicker();
-                else if (event->button == GDK_BUTTON_SECONDARY)
-                    UpdateGuildIconClipboard();
+            if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+                UpdateGuildIconPicker();
             }
 
             return false;
@@ -60,7 +56,7 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
             guild_icon_url = guild.GetIconURL("gif", "512");
         else
             guild_icon_url = guild.GetIconURL("png", "512");
-        m_guild_icon_ev.signal_button_press_event().connect([this, guild_icon_url](GdkEventButton *event) -> bool {
+        m_guild_icon_ev.signal_button_press_event().connect([guild_icon_url](GdkEventButton *event) -> bool {
             if (event->type == GDK_BUTTON_PRESS)
                 if (event->button == GDK_BUTTON_PRIMARY)
                     LaunchBrowser(guild_icon_url);
@@ -114,7 +110,7 @@ void GuildSettingsInfoPane::UpdateGuildIconFromData(const std::vector<uint8_t> &
     auto encoded = "data:" + mime + ";base64," + Glib::Base64::encode(std::string(data.begin(), data.end()));
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    auto cb = [this](DiscordError code) {
+    auto cb = [](DiscordError code) {
         if (code != DiscordError::NONE) {
             Gtk::MessageDialog dlg("Failed to set guild icon", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -140,14 +136,12 @@ void GuildSettingsInfoPane::UpdateGuildIconFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> 
 }
 
 void GuildSettingsInfoPane::UpdateGuildIconPicker() {
-    // this picker fucking sucks
-    Gtk::FileChooserDialog dlg("Choose new guild icon", Gtk::FILE_CHOOSER_ACTION_OPEN);
-    dlg.get_style_context()->remove_provider(Abaddon::Get().GetStyleProvider());
-    dlg.set_modal(true);
-    dlg.signal_response().connect([this, &dlg](int response) {
-        if (response == Gtk::RESPONSE_OK) {
-            auto data = ReadWholeFile(dlg.get_filename());
-            if (GetExtension(dlg.get_filename()) == ".gif")
+    auto dlg = Gtk::FileChooserNative::create("Choose new guild icon", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    dlg->set_modal(true);
+    dlg->signal_response().connect([this, dlg](int response) {
+        if (response == Gtk::RESPONSE_ACCEPT) {
+            auto data = ReadWholeFile(dlg->get_filename());
+            if (GetExtension(dlg->get_filename()) == ".gif")
                 UpdateGuildIconFromData(data, "image/gif");
             else
                 try {
@@ -160,15 +154,12 @@ void GuildSettingsInfoPane::UpdateGuildIconPicker() {
                     loader->write(data.data(), data.size());
                     loader->close();
                     UpdateGuildIconFromPixbuf(loader->get_pixbuf());
-                } catch (const std::exception &) {};
+                } catch (...) {}
         }
     });
 
-    dlg.add_button(Gtk::Stock::SAVE, Gtk::RESPONSE_OK);
-    dlg.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-
     auto filter_images = Gtk::FileFilter::create();
-    if (Abaddon::Get().GetDiscordClient().GetGuild(GuildID)->HasFeature("ANIMATED_ICON")) {
+    if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(GuildID); guild.has_value() && guild->HasFeature("ANIMATED_ICON")) {
         filter_images->set_name("Supported images (*.jpg, *.jpeg, *.png, *.gif)");
         filter_images->add_pattern("*.gif");
     } else {
@@ -177,44 +168,12 @@ void GuildSettingsInfoPane::UpdateGuildIconPicker() {
     filter_images->add_pattern("*.jpg");
     filter_images->add_pattern("*.jpeg");
     filter_images->add_pattern("*.png");
-    dlg.add_filter(filter_images);
+    dlg->add_filter(filter_images);
 
     auto filter_all = Gtk::FileFilter::create();
     filter_all->set_name("All files (*.*)");
     filter_all->add_pattern("*.*");
-    dlg.add_filter(filter_all);
+    dlg->add_filter(filter_all);
 
-    dlg.run();
-}
-
-void GuildSettingsInfoPane::UpdateGuildIconClipboard() {
-    std::vector<uint8_t> icon_data;
-
-    auto cb = Gtk::Clipboard::get();
-    // query for file path then for actual image
-    if (cb->wait_is_text_available()) {
-        auto path = cb->wait_for_text();
-        if (!std::filesystem::exists(path.c_str())) return;
-        auto data = ReadWholeFile(path);
-        try {
-            auto loader = Gdk::PixbufLoader::create();
-            loader->signal_size_prepared().connect([&loader](int inw, int inh) {
-                int w, h;
-                GetImageDimensions(inw, inh, w, h, 1024, 1024);
-                loader->set_size(w, h);
-            });
-            loader->write(data.data(), data.size());
-            loader->close();
-            auto pb = loader->get_pixbuf();
-            UpdateGuildIconFromPixbuf(pb);
-
-            return;
-        } catch (const std::exception &) {};
-    }
-
-    if (cb->wait_is_image_available()) {
-        auto pb = cb->wait_for_image();
-        UpdateGuildIconFromPixbuf(pb);
-        return;
-    }
+    dlg->run();
 }

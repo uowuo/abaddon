@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include <map>
 #include <vector>
+#include "discord/message.hpp"
 #include "discord/snowflake.hpp"
 
 class ChatList : public Gtk::ScrolledWindow {
@@ -25,8 +26,11 @@ public:
     void ActuallyRemoveMessage(Snowflake id); // perhaps not the best method name
 
 private:
-    void OnScrollEdgeOvershot(Gtk::PositionType pos);
+    void SetupMenu();
     void ScrollToBottom();
+    void OnVAdjustmentValueChanged();
+    void OnVAdjustmentUpperChanged();
+    void OnListSizeAllocate(Gtk::Allocation &allocation);
     void RemoveMessageAndHeader(Gtk::Widget *widget);
 
     bool m_use_pinned_menu = false;
@@ -47,10 +51,14 @@ private:
     int m_num_rows = 0;
     std::map<Snowflake, Gtk::Widget *> m_id_to_widget;
 
+    bool m_ignore_next_upper = false;
+    double m_old_upper = -1.0;
     bool m_should_scroll_to_bottom = true;
     Gtk::ListBox m_list;
 
     bool m_separate_all = false;
+
+    Glib::Timer m_history_timer;
 
 public:
     // these are all forwarded by the parent
@@ -101,15 +109,6 @@ inline void ChatList::SetMessages(Iter begin, Iter end) {
 
 template<typename Iter>
 inline void ChatList::PrependMessages(Iter begin, Iter end) {
-    const auto old_upper = get_vadjustment()->get_upper();
-    const auto old_value = get_vadjustment()->get_value();
     for (Iter it = begin; it != end; it++)
         ProcessNewMessage(*it, true);
-    // force everything to process before getting new values
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
-    const auto new_upper = get_vadjustment()->get_upper();
-    if (old_value == 0.0 && (new_upper - old_upper) > 0.0)
-        get_vadjustment()->set_value(new_upper - old_upper);
-    // this isn't ideal
 }

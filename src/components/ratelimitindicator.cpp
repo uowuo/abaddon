@@ -66,7 +66,7 @@ int RateLimitIndicator::GetTimeLeft() const {
     if (sec_diff <= 0)
         return 0;
     else
-        return sec_diff;
+        return static_cast<int>(sec_diff);
 }
 
 int RateLimitIndicator::GetRateLimit() const {

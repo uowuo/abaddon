@@ -52,7 +52,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
 
     m_filter->set_visible_func([this](const Gtk::TreeModel::const_iterator &iter) -> bool {
         const auto text = m_search.get_text();
-        if (text == "") return true;
+        if (text.empty()) return true;
         return StringContainsCaseless((*iter)[m_columns.m_col_name], text);
     });
     m_view.set_enable_search(false);
@@ -71,12 +71,12 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
         column->pack_start(*renderer);
         column->add_attribute(renderer->property_text(), m_columns.m_col_name);
         renderer->property_editable() = true;
-        renderer->signal_edited().connect([this, renderer, column](const Glib::ustring &path, const Glib::ustring &text) {
+        renderer->signal_edited().connect([this](const Glib::ustring &path, const Glib::ustring &text) {
             std::string new_str;
             int size = 0;
             for (const auto ch : text) {
                 if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')
-                    new_str += ch;
+                    new_str += static_cast<char>(ch);
                 else if (ch == ' ')
                     new_str += '_';
                 if (++size == 32) break;
@@ -174,7 +174,7 @@ void GuildSettingsEmojisPane::OnFetchEmojis(std::vector<EmojiData> emojis) {
 }
 
 void GuildSettingsEmojisPane::OnEditName(Snowflake id, const std::string &name) {
-    const auto cb = [this](DiscordError code) {
+    const auto cb = [](DiscordError code) {
         if (code != DiscordError::NONE) {
             Gtk::MessageDialog dlg("Failed to set emoji name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
             dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -197,7 +197,7 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
         if (auto *window = dynamic_cast<Gtk::Window *>(get_toplevel()))
             if (Abaddon::Get().ShowConfirm("Are you sure you want to delete " + name + "?", window)) {
-                const auto cb = [this](DiscordError code) {
+                const auto cb = [](DiscordError code) {
                     if (code != DiscordError::NONE) {
                         Gtk::MessageDialog dlg("Failed to delete emoji", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
                         dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -234,7 +234,7 @@ bool GuildSettingsEmojisPane::OnTreeButtonPress(GdkEventButton *event) {
 
         auto selection = m_view.get_selection();
         Gtk::TreeModel::Path path;
-        if (m_view.get_path_at_pos(event->x, event->y, path)) {
+        if (m_view.get_path_at_pos(static_cast<int>(event->x), static_cast<int>(event->y), path)) {
             m_view.get_selection()->select(path);
             m_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(event));
         }

@@ -27,9 +27,6 @@ CellRendererChannels::CellRendererChannels()
     });
 }
 
-CellRendererChannels::~CellRendererChannels() {
-}
-
 Glib::PropertyProxy<RenderType> CellRendererChannels::property_type() {
     return m_property_type.get_proxy();
 }
@@ -212,7 +209,10 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     const double text_w = text_natural.width;
     const double text_h = text_natural.height;
 
-    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    Gdk::Rectangle text_cell_area(static_cast<int>(text_x),
+                                  static_cast<int>(text_y),
+                                  static_cast<int>(text_w),
+                                  static_cast<int>(text_h));
 
     static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
     m_renderer_text.property_foreground_rgba() = color;
@@ -231,7 +231,11 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
 
         const auto cb = [this, &widget, anim, icon_x, icon_y, icon_w, icon_h] {
             if (m_pixbuf_anim_iters.at(anim)->advance())
-                widget.queue_draw_area(icon_x, icon_y, icon_w, icon_h);
+                widget.queue_draw_area(
+                    static_cast<int>(icon_x),
+                    static_cast<int>(icon_y),
+                    static_cast<int>(icon_w),
+                    static_cast<int>(icon_h));
         };
 
         if ((hover_only && is_hovered) || !hover_only)
@@ -264,12 +268,12 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
         const auto y = background_area.get_y();
         const auto w = background_area.get_width();
         const auto h = background_area.get_height();
-        cr->rectangle(x, y + h / 2 - 24 / 2, 3, 24);
+        cr->rectangle(x, y + h / 2.0 - 24.0 / 2.0, 3.0, 24.0);
         cr->fill();
     }
 
     if (total_mentions < 1) return;
-    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), background_area.get_width());
 
@@ -415,7 +419,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     }
 
     if (unread_state < 1) return;
-    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), cell_area.get_width());
 
@@ -487,7 +491,7 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     }
 
     if (unread_state < 1) return;
-    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), cell_area.get_width());
 
@@ -522,7 +526,7 @@ void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Cont
 
     if (!Abaddon::Get().GetSettings().Unreads) return;
 
-    auto *paned = static_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), background_area.get_width());
         if (const auto unread = Abaddon::Get().GetDiscordClient().GetUnreadDMsCount(); unread > 0)
@@ -587,7 +591,10 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     const double text_w = text_natural.width;
     const double text_h = text_natural.height;
 
-    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    Gdk::Rectangle text_cell_area(static_cast<int>(text_x),
+                                  static_cast<int>(text_y),
+                                  static_cast<int>(text_w),
+                                  static_cast<int>(text_h));
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto id = m_property_id.get_value();
@@ -642,7 +649,7 @@ void CellRendererChannels::cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Co
 void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area) {
     Pango::FontDescription font;
     font.set_family("sans 14");
-    //font.set_weight(Pango::WEIGHT_BOLD);
+    // font.set_weight(Pango::WEIGHT_BOLD);
 
     auto layout = widget.create_pango_layout(std::to_string(mentions));
     layout->set_font_description(font);

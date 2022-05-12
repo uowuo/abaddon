@@ -12,7 +12,6 @@ public:
     EmojiResource(std::string filepath);
     bool Load();
     Glib::RefPtr<Gdk::Pixbuf> GetPixBuf(const Glib::ustring &pattern);
-    const std::vector<Glib::ustring> &GetPatterns() const;
     const std::map<std::string, std::string> &GetShortCodes() const;
     void ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size = 24);
     std::string GetShortCodeForPattern(const Glib::ustring &pattern);

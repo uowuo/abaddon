@@ -8,7 +8,7 @@ constexpr static int CompleterImageSize = 24;
 
 class CompleterEntry : public Gtk::ListBoxRow {
 public:
-    CompleterEntry(const Glib::ustring &completion, int index);
+    CompleterEntry(Glib::ustring completion, int index);
     void SetTextColor(int color); // SetText will reset
     void SetText(const Glib::ustring &text);
     void SetImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);

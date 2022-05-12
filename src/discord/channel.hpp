@@ -94,14 +94,15 @@ struct ChannelData {
     friend void from_json(const nlohmann::json &j, ChannelData &m);
     void update_from_json(const nlohmann::json &j);
 
-    bool NSFW() const;
-    bool IsDM() const noexcept;
-    bool IsThread() const noexcept;
-    bool IsJoinedThread() const;
-    bool IsCategory() const noexcept;
-    bool HasIcon() const noexcept;
-    std::string GetIconURL() const;
-    std::vector<Snowflake> GetChildIDs() const;
-    std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
-    std::vector<UserData> GetDMRecipients() const;
+    [[nodiscard]] bool NSFW() const;
+    [[nodiscard]] bool IsDM() const noexcept;
+    [[nodiscard]] bool IsThread() const noexcept;
+    [[nodiscard]] bool IsJoinedThread() const;
+    [[nodiscard]] bool IsCategory() const noexcept;
+    [[nodiscard]] bool IsText() const noexcept;
+    [[nodiscard]] bool HasIcon() const noexcept;
+    [[nodiscard]] std::string GetIconURL() const;
+    [[nodiscard]] std::vector<Snowflake> GetChildIDs() const;
+    [[nodiscard]] std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
+    [[nodiscard]] std::vector<UserData> GetDMRecipients() const;
 };

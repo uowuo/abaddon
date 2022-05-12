@@ -84,7 +84,7 @@ protected:
 
     bool IsTextChannel(ChannelType type);
 
-    void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
+    void OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) const;
     void OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path);
     bool SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected);
     bool OnButtonPressEvent(GdkEventButton *ev);
@@ -134,11 +134,11 @@ protected:
     Gtk::MenuItem m_menu_thread_mark_as_read;
     Gtk::MenuItem m_menu_thread_toggle_mute;
 
-    void OnGuildSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
-    void OnCategorySubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
-    void OnChannelSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
-    void OnDMSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
-    void OnThreadSubmenuPopup(const Gdk::Rectangle *flipped_rect, const Gdk::Rectangle *final_rect, bool flipped_x, bool flipped_y);
+    void OnGuildSubmenuPopup();
+    void OnCategorySubmenuPopup();
+    void OnChannelSubmenuPopup();
+    void OnDMSubmenuPopup();
+    void OnThreadSubmenuPopup();
 
     bool m_updating_listing = false;
 

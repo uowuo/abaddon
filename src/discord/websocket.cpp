@@ -1,18 +1,18 @@
 #include "websocket.hpp"
-#include <functional>
+#include <utility>
 
-Websocket::Websocket() {}
+Websocket::Websocket() = default;
 
-void Websocket::StartConnection(std::string url) {
+void Websocket::StartConnection(const std::string &url) {
     m_websocket.disableAutomaticReconnection();
     m_websocket.setUrl(url);
-    m_websocket.setOnMessageCallback(std::bind(&Websocket::OnMessage, this, std::placeholders::_1));
+    m_websocket.setOnMessageCallback([this](auto &&msg) { OnMessage(std::forward<decltype(msg)>(msg)); });
     m_websocket.setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent } }); // idk if this actually works
     m_websocket.start();
 }
 
 void Websocket::SetUserAgent(std::string agent) {
-    m_agent = agent;
+    m_agent = std::move(agent);
 }
 
 bool Websocket::GetPrintMessages() const noexcept {
@@ -29,11 +29,6 @@ void Websocket::Stop() {
 
 void Websocket::Stop(uint16_t code) {
     m_websocket.stop(code);
-}
-
-bool Websocket::IsOpen() const {
-    auto state = m_websocket.getReadyState();
-    return state == ix::ReadyState::Open;
 }
 
 void Websocket::Send(const std::string &str) {

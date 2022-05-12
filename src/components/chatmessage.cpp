@@ -30,7 +30,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     if (data.Nonce.has_value())
         container->Nonce = *data.Nonce;
 
-    if (data.Content.size() > 0 || data.Type != MessageType::DEFAULT) {
+    if (!data.Content.empty() || data.Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(data);
         container->AttachEventHandlers(*container->m_text_component);
         container->m_main.add(*container->m_text_component);
@@ -78,7 +78,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
         container->m_main.add(*widget);
     }
 
-    if (data.Reactions.has_value() && data.Reactions->size() > 0) {
+    if (data.Reactions.has_value() && !data.Reactions->empty()) {
         container->m_reactions_component = container->CreateReactionsComponent(data);
         container->m_main.add(*container->m_reactions_component);
     }
@@ -114,7 +114,7 @@ void ChatMessageItemContainer::UpdateReactions() {
     }
 
     const auto data = Abaddon::Get().GetDiscordClient().GetMessage(ID);
-    if (data->Reactions.has_value() && data->Reactions->size() > 0) {
+    if (data->Reactions.has_value() && !data->Reactions->empty()) {
         m_reactions_component = CreateReactionsComponent(*data);
         m_reactions_component->show_all();
         m_main.add(*m_reactions_component);
@@ -150,7 +150,7 @@ void ChatMessageItemContainer::UpdateAttributes() {
         m_attrib_label->set_markup("<span color='#999999'>[edited]</span>");
 }
 
-void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, std::string url) {
+void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, const std::string &url) {
     // clang-format off
     widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
@@ -224,13 +224,13 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             }
         } break;
         case MessageType::RECIPIENT_ADD: {
-            if (data->Mentions.size() == 0) break;
+            if (data->Mentions.empty()) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
             b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> added <span color='#eeeeee'>" + added.Username + "</span></span></i>");
         } break;
         case MessageType::RECIPIENT_REMOVE: {
-            if (data->Mentions.size() == 0) break;
+            if (data->Mentions.empty()) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
             if (adder->ID == added.ID)
@@ -361,7 +361,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         if (embed.URL.has_value()) {
             AddPointerCursor(*title_ev);
             auto url = *embed.URL;
-            title_ev->signal_button_press_event().connect([this, url = std::move(url)](GdkEventButton *event) -> bool {
+            title_ev->signal_button_press_event().connect([url = std::move(url)](GdkEventButton *event) -> bool {
                 if (event->button == GDK_BUTTON_PRIMARY) {
                     LaunchBrowser(url);
                     return true;
@@ -389,7 +389,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
     }
 
     // todo: handle inline fields
-    if (embed.Fields.has_value() && embed.Fields->size() > 0) {
+    if (embed.Fields.has_value() && !embed.Fields->empty()) {
         auto *flow = Gtk::manage(new Gtk::FlowBox);
         flow->set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         flow->set_min_children_per_line(3);
@@ -516,23 +516,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     return ev;
 }
 
-Gtk::Widget *ChatMessageItemContainer::CreateStickerComponentDeprecated(const StickerData &data) {
-    auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    auto *imgw = Gtk::manage(new Gtk::Image);
-    box->add(*imgw);
-    auto &img = Abaddon::Get().GetImageManager();
-
-    if (data.FormatType == StickerFormatType::PNG || data.FormatType == StickerFormatType::APNG) {
-        auto cb = [this, imgw](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
-            imgw->property_pixbuf() = pixbuf;
-        };
-        img.LoadFromURL(data.GetURL(), sigc::track_obj(cb, *imgw));
-    }
-
-    AttachEventHandlers(*box);
-    return box;
-}
-
 Gtk::Widget *ChatMessageItemContainer::CreateStickersComponent(const std::vector<StickerItem> &data) {
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
 
@@ -608,7 +591,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
         // image
         if (is_stock) { // unicode/stock
             const auto shortcode = emojis.GetShortCodeForPattern(reaction.Emoji.Name);
-            if (shortcode != "")
+            if (!shortcode.empty())
                 ev->set_tooltip_text(shortcode);
 
             const auto &pb = emojis.GetPixBuf(reaction.Emoji.Name);
@@ -784,7 +767,7 @@ void ChatMessageItemContainer::HandleRoleMentions(const Glib::RefPtr<Gtk::TextBu
     }
 }
 
-void ChatMessageItemContainer::HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
+void ChatMessageItemContainer::HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) const {
     constexpr static const auto mentions_regex = R"(<@!?(\d+)>)";
 
     static auto rgx = Glib::Regex::create(mentions_regex);
@@ -861,7 +844,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
             const auto mark_start = buf->create_mark(start_it, false);
             end_it.backward_char();
             const auto mark_end = buf->create_mark(end_it, false);
-            const auto cb = [this, &tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
+            const auto cb = [&tv, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::PixbufAnimation> &pixbuf) {
                 auto start_it = mark_start->get_iter();
                 auto end_it = mark_end->get_iter();
                 end_it.forward_char();
@@ -879,7 +862,7 @@ void ChatMessageItemContainer::HandleCustomEmojis(Gtk::TextView &tv) {
             const auto mark_start = buf->create_mark(start_it, false);
             end_it.backward_char();
             const auto mark_end = buf->create_mark(end_it, false);
-            const auto cb = [this, buf, mark_start, mark_end](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
+            const auto cb = [buf, mark_start, mark_end](const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) {
                 auto start_it = mark_start->get_iter();
                 auto end_it = mark_end->get_iter();
                 end_it.forward_char();
@@ -902,7 +885,7 @@ void ChatMessageItemContainer::HandleEmojis(Gtk::TextView &tv) {
     if (Abaddon::Get().GetSettings().ShowCustomEmojis) HandleCustomEmojis(tv);
 }
 
-void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) {
+void ChatMessageItemContainer::CleanupEmojis(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
     static auto rgx = Glib::Regex::create(R"(<a?:([\w\d_]+):(\d+)>)");
 
     auto text = GetText(buf);
@@ -922,9 +905,9 @@ void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) 
 
         startpos = mend;
         const auto it = buf->erase(start_it, end_it);
-        const int alen = text.size();
+        const int alen = static_cast<int>(text.size());
         text = GetText(buf);
-        const int blen = text.size();
+        const int blen = static_cast<int>(text.size());
         startpos -= (alen - blen);
 
         buf->insert(it, new_term);
@@ -933,7 +916,7 @@ void ChatMessageItemContainer::CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf) 
     }
 }
 
-void ChatMessageItemContainer::HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffer> buf) {
+void ChatMessageItemContainer::HandleChannelMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) {
     static auto rgx = Glib::Regex::create(R"(<#(\d+)>)");
 
     Glib::ustring text = GetText(buf);
@@ -990,12 +973,12 @@ bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
         return false;
 
     int x, y;
-    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, ev->x, ev->y, x, y);
+    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, static_cast<int>(ev->x), static_cast<int>(ev->y), x, y);
     Gtk::TextBuffer::iterator iter;
     m_text_component->get_iter_at_location(iter, x, y);
 
     const auto tags = iter.get_tags();
-    for (auto tag : tags) {
+    for (const auto &tag : tags) {
         const auto it = m_channel_tagmap.find(tag);
         if (it != m_channel_tagmap.end()) {
             m_signal_action_channel_click.emit(it->second);
@@ -1053,12 +1036,12 @@ bool ChatMessageItemContainer::OnLinkClick(GdkEventButton *ev) {
         return false;
 
     int x, y;
-    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, ev->x, ev->y, x, y);
+    m_text_component->window_to_buffer_coords(Gtk::TEXT_WINDOW_WIDGET, static_cast<int>(ev->x), static_cast<int>(ev->y), x, y);
     Gtk::TextBuffer::iterator iter;
     m_text_component->get_iter_at_location(iter, x, y);
 
     const auto tags = iter.get_tags();
-    for (auto tag : tags) {
+    for (const auto &tag : tags) {
         const auto it = m_link_tagmap.find(tag);
         if (it != m_link_tagmap.end()) {
             if (ev->button == GDK_BUTTON_PRIMARY) {
@@ -1131,11 +1114,10 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     m_avatar.set_valign(Gtk::ALIGN_START);
     m_avatar.set_margin_right(10);
 
-    m_author.set_markup(data.Author.GetEscapedBoldName());
     m_author.set_single_line_mode(true);
     m_author.set_line_wrap(false);
     m_author.set_ellipsize(Pango::ELLIPSIZE_END);
-    m_author.set_xalign(0.f);
+    m_author.set_xalign(0.0F);
     m_author.set_can_focus(false);
 
     m_meta_ev.signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageHeader::on_author_button_press));
@@ -1212,30 +1194,32 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto role_update_cb = [this](...) { UpdateNameColor(); };
+    auto role_update_cb = [this](...) { UpdateName(); };
     discord.signal_role_update().connect(sigc::track_obj(role_update_cb, *this));
-    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateNameColor(); };
+    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateName(); };
     discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
-    UpdateNameColor();
+    UpdateName();
     AttachUserMenuHandler(m_meta_ev);
     AttachUserMenuHandler(m_avatar_ev);
 }
 
-void ChatMessageHeader::UpdateNameColor() {
+void ChatMessageHeader::UpdateName() {
     const auto &discord = Abaddon::Get().GetDiscordClient();
     const auto user = discord.GetUser(UserID);
     if (!user.has_value()) return;
     const auto chan = discord.GetChannel(ChannelID);
     bool is_guild = chan.has_value() && chan->GuildID.has_value();
     if (is_guild) {
+        const auto member = discord.GetMember(UserID, *chan->GuildID);
         const auto role_id = discord.GetMemberHoistedRole(*chan->GuildID, UserID, true);
         const auto role = discord.GetRole(role_id);
+        const auto name = GetEscapedDisplayName(*user, member);
 
         std::string md;
         if (role.has_value())
-            m_author.set_markup("<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + user->GetEscapedName() + "</span>");
+            m_author.set_markup("<span weight='bold' color='#" + IntToCSSColor(role->Color) + "'>" + name + "</span>");
         else
-            m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
+            m_author.set_markup("<span weight='bold'>" + name + "</span>");
     } else
         m_author.set_markup("<span weight='bold'>" + user->GetEscapedName() + "</span>");
 }
@@ -1257,6 +1241,13 @@ void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
 
         return false;
     });
+}
+
+Glib::ustring ChatMessageHeader::GetEscapedDisplayName(const UserData &user, const std::optional<GuildMember> &member) {
+    if (member.has_value() && !member->Nickname.empty())
+        return Glib::Markup::escape_text(member->Nickname);
+    else
+        return Glib::Markup::escape_text(user.GetEscapedName());
 }
 
 bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {

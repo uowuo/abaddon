@@ -25,7 +25,7 @@ public:
     void DeleteMessage(Snowflake id);                     // add [deleted] indicator
     void UpdateMessage(Snowflake id);                     // add [edited] indicator
     void AddNewHistory(const std::vector<Message> &msgs); // prepend messages
-    void InsertChatInput(std::string text);
+    void InsertChatInput(const std::string& text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
     void SetTopic(const std::string &text);
@@ -47,8 +47,8 @@ protected:
     void OnMessageSendFail(const std::string &nonce, float retry_after);
 
     Gtk::Box *m_main;
-    //Gtk::ListBox *m_list;
-    //Gtk::ScrolledWindow *m_scroll;
+    // Gtk::ListBox *m_list;
+    // Gtk::ScrolledWindow *m_scroll;
 
     Gtk::EventBox m_topic; // todo probably make everything else go on the stack
     Gtk::Label m_topic_text;

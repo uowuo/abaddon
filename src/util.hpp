@@ -31,28 +31,15 @@ bool IsFile(std::string_view path);
 uint64_t TimeToEpoch(int year, int month, int day, int hour, int minute, int seconds);
 } // namespace util
 
-class Semaphore {
-public:
-    Semaphore(int count = 0);
-    void notify();
-    void wait();
-
-private:
-    std::mutex m_mutex;
-    std::condition_variable m_cv;
-    int m_count;
-};
-
-void LaunchBrowser(Glib::ustring url);
+void LaunchBrowser(const Glib::ustring &url);
 void GetImageDimensions(int inw, int inh, int &outw, int &outh, int clampw = 400, int clamph = 300);
 std::string IntToCSSColor(int color);
 Gdk::RGBA IntToRGBA(int color);
-void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu);
-void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, sigc::slot<void()> pre_callback);
+void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, const sigc::slot<void()> &pre_callback);
 std::vector<std::string> StringSplit(const std::string &str, const char *delim);
 std::string GetExtension(std::string url);
 bool IsURLViewableImage(const std::string &url);
-std::vector<uint8_t> ReadWholeFile(std::string path);
+std::vector<uint8_t> ReadWholeFile(const std::string &path);
 std::string HumanReadableBytes(uint64_t bytes);
 std::string FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
 void AddPointerCursor(Gtk::Widget &widget);

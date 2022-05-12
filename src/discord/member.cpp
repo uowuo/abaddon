@@ -19,7 +19,7 @@ std::vector<RoleData> GuildMember::GetSortedRoles() const {
     for (const auto role_id : Roles) {
         const auto role = Abaddon::Get().GetDiscordClient().GetRole(role_id);
         if (!role.has_value()) continue;
-        roles.push_back(std::move(*role));
+        roles.push_back(*role);
     }
 
     std::sort(roles.begin(), roles.end(), [](const RoleData &a, const RoleData &b) {

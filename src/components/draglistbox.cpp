@@ -102,7 +102,7 @@ bool DragListBox::scroll() {
 }
 
 void DragListBox::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &context, int x, int y, const Gtk::SelectionData &selection_data, guint info, guint time) {
-    int index = 0;
+    int index;
     if (m_hover_row != nullptr) {
         if (m_top) {
             index = m_hover_row->get_index() - 1;
@@ -130,7 +130,7 @@ void DragListBox::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &co
 void DragListBox::add_draggable(Gtk::ListBoxRow *widget) {
     widget->drag_source_set(m_entries, Gdk::BUTTON1_MASK, Gdk::ACTION_MOVE);
     widget->signal_drag_begin().connect(sigc::bind<0>(sigc::mem_fun(*this, &DragListBox::row_drag_begin), widget));
-    widget->signal_drag_data_get().connect([this, widget](const Glib::RefPtr<Gdk::DragContext> &context, Gtk::SelectionData &selection_data, guint info, guint time) {
+    widget->signal_drag_data_get().connect([widget](const Glib::RefPtr<Gdk::DragContext> &context, Gtk::SelectionData &selection_data, guint info, guint time) {
         selection_data.set("GTK_LIST_BOX_ROW", 32, reinterpret_cast<const guint8 *>(&widget), sizeof(&widget));
     });
     add(*widget);

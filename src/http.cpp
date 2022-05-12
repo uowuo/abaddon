@@ -1,8 +1,10 @@
 #include "http.hpp"
 
+#include <utility>
+
 namespace http {
-request::request(EMethod method, const std::string &url)
-    : m_url(url) {
+request::request(EMethod method, std::string url)
+    : m_url(std::move(url)) {
     switch (method) {
         case REQUEST_GET:
             m_method = "GET";
@@ -99,7 +101,7 @@ void request::prepare() {
 namespace detail {
     size_t curl_write_data_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
         const size_t n = size * nmemb;
-        static_cast<std::string*>(userdata)->append(static_cast<char*>(ptr), n);
+        static_cast<std::string *>(userdata)->append(static_cast<char *>(ptr), n);
         return n;
     }
 

@@ -1,10 +1,12 @@
 #include "abaddon.hpp"
 #include "filecache.hpp"
+
+#include <utility>
 #include "MurmurHash3.h"
 
-std::string GetCachedName(std::string str) {
+std::string GetCachedName(const std::string &str) {
     uint32_t out;
-    MurmurHash3_x86_32(str.c_str(), str.size(), 0, &out);
+    MurmurHash3_x86_32(str.c_str(), static_cast<int>(str.size()), 0, &out);
     return std::to_string(out);
 }
 
@@ -35,15 +37,15 @@ void Cache::ClearCache() {
         std::filesystem::remove_all(path);
 }
 
-void Cache::RespondFromPath(std::filesystem::path path, callback_type cb) {
+void Cache::RespondFromPath(const std::filesystem::path &path, const callback_type &cb) {
     cb(path.string());
 }
 
-void Cache::GetFileFromURL(std::string url, callback_type cb) {
+void Cache::GetFileFromURL(const std::string &url, const callback_type &cb) {
     auto cache_path = m_tmp_path / GetCachedName(url);
     if (std::filesystem::exists(cache_path)) {
         m_mutex.lock();
-        m_futures.push_back(std::async(std::launch::async, [this, cache_path, cb]() { RespondFromPath(cache_path, cb); }));
+        m_futures.push_back(std::async(std::launch::async, [cache_path, cb]() { RespondFromPath(cache_path, cb); }));
         m_mutex.unlock();
         return;
     }
@@ -58,7 +60,7 @@ void Cache::GetFileFromURL(std::string url, callback_type cb) {
     }
 }
 
-std::string Cache::GetPathIfCached(std::string url) {
+std::string Cache::GetPathIfCached(const std::string &url) {
     auto cache_path = m_tmp_path / GetCachedName(url);
     if (std::filesystem::exists(cache_path)) {
         return cache_path.string();
@@ -94,13 +96,13 @@ void Cache::OnResponse(const std::string &url) {
 
 void Cache::OnFetchComplete(const std::string &url) {
     m_mutex.lock();
-    m_futures.push_back(std::async(std::launch::async, std::bind(&Cache::OnResponse, this, url)));
+    m_futures.push_back(std::async(std::launch::async, [this, url] { OnResponse(url); }));
     m_mutex.unlock();
 }
 
 FileCacheWorkerThread::FileCacheWorkerThread() {
     m_multi_handle = curl_multi_init();
-    m_thread = std::thread(std::bind(&FileCacheWorkerThread::loop, this));
+    m_thread = std::thread([this] { loop(); });
 }
 
 FileCacheWorkerThread::~FileCacheWorkerThread() {
@@ -116,7 +118,7 @@ void FileCacheWorkerThread::set_file_path(const std::filesystem::path &path) {
 
 void FileCacheWorkerThread::add_image(const std::string &string, callback_type callback) {
     m_queue_mutex.lock();
-    m_queue.push({ string, callback });
+    m_queue.push({ string, std::move(callback) });
     m_cv.notify_one();
     m_queue_mutex.unlock();
 }
@@ -130,15 +132,14 @@ void FileCacheWorkerThread::stop() {
 }
 
 void FileCacheWorkerThread::loop() {
-    timeval timeout;
+    timeval timeout {};
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
 
     while (!m_stop) {
-        if (m_handles.size() == 0) {
+        if (m_handles.empty()) {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
-            int s = m_queue.size();
-            if (s == 0)
+            if (m_queue.empty())
                 m_cv.wait(lock);
         }
 
@@ -146,7 +147,7 @@ void FileCacheWorkerThread::loop() {
         if (m_handles.size() < concurrency) {
             std::optional<QueueEntry> entry;
             m_queue_mutex.lock();
-            if (m_queue.size() > 0) {
+            if (!m_queue.empty()) {
                 entry = std::move(m_queue.front());
                 m_queue.pop();
             }

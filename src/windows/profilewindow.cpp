@@ -34,7 +34,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
 
     if (user.HasAvatar())
         AddPointerCursor(m_avatar_ev);
-    m_avatar_ev.signal_button_press_event().connect([this, user](GdkEventButton *event) -> bool {
+    m_avatar_ev.signal_button_press_event().connect([user](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
             if (user.HasAnimatedAvatar())
                 LaunchBrowser(user.GetAvatarURL("gif", "512"));

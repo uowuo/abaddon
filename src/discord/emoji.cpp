@@ -16,7 +16,7 @@ void to_json(nlohmann::json &j, const EmojiData &m) {
         j["id"] = m.ID;
     else
         j["id"] = nullptr;
-    if (m.Name != "")
+    if (!m.Name.empty())
         j["name"] = m.Name;
     else
         j["name"] = nullptr;

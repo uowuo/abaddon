@@ -19,14 +19,13 @@ public:
     void SetFailed();
 
 protected:
-    void AddClickHandler(Gtk::Widget *widget, std::string);
+    static void AddClickHandler(Gtk::Widget *widget, const std::string &);
     Gtk::TextView *CreateTextComponent(const Message &data); // Message.Content
     void UpdateTextComponent(Gtk::TextView *tv);
     Gtk::Widget *CreateEmbedsComponent(const std::vector<EmbedData> &embeds);
-    Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
+    static Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
-    Gtk::Widget *CreateStickerComponentDeprecated(const StickerData &data);
     Gtk::Widget *CreateStickersComponent(const std::vector<StickerItem> &data);
     Gtk::Widget *CreateReactionsComponent(const Message &data);
     Gtk::Widget *CreateReplyComponent(const Message &data);
@@ -35,14 +34,14 @@ protected:
 
     static bool IsEmbedImageOnly(const EmbedData &data);
 
-    void HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
-    void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
-    void HandleStockEmojis(Gtk::TextView &tv);
-    void HandleCustomEmojis(Gtk::TextView &tv);
-    void HandleEmojis(Gtk::TextView &tv);
-    void CleanupEmojis(Glib::RefPtr<Gtk::TextBuffer> buf);
+    static void HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
+    void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) const;
+    static void HandleStockEmojis(Gtk::TextView &tv);
+    static void HandleCustomEmojis(Gtk::TextView &tv);
+    static void HandleEmojis(Gtk::TextView &tv);
+    static void CleanupEmojis(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
-    void HandleChannelMentions(Glib::RefPtr<Gtk::TextBuffer> buf);
+    void HandleChannelMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
 
@@ -91,11 +90,12 @@ public:
 
     ChatMessageHeader(const Message &data);
     void AddContent(Gtk::Widget *widget, bool prepend);
-    void UpdateNameColor();
+    void UpdateName();
     std::vector<Gtk::Widget *> GetChildContent();
 
 protected:
     void AttachUserMenuHandler(Gtk::Widget &widget);
+    static Glib::ustring GetEscapedDisplayName(const UserData &user, const std::optional<GuildMember> &member);
 
     bool on_author_button_press(GdkEventButton *ev);
 

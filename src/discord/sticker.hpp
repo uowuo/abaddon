@@ -24,8 +24,6 @@ struct StickerData {
 
     friend void to_json(nlohmann::json &j, const StickerData &m);
     friend void from_json(const nlohmann::json &j, StickerData &m);
-
-    std::string GetURL() const;
 };
 
 struct StickerItem {
@@ -36,5 +34,5 @@ struct StickerItem {
     friend void to_json(nlohmann::json &j, const StickerItem &m);
     friend void from_json(const nlohmann::json &j, StickerItem &m);
 
-    std::string GetURL() const;
+    [[nodiscard]] std::string GetURL() const;
 };

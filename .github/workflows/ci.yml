@@ -3,57 +3,60 @@ name: Abaddon CI
 on: [push, pull_request]
 
 jobs:
-  windows:
-    name: windows-${{ matrix.buildtype }}
-    runs-on: windows-2019
+  msys2:
+    name: msys2-mingw64
+    runs-on: windows-latest
     strategy:
       matrix:
         buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
 
-      - name: Fetch CMake
-        uses: lukka/get-cmake@v3.21.2
-
-      - name: Fetch dependencies
-        uses: lukka/run-vcpkg@v7
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
         with:
-          vcpkgArguments: gtkmm nlohmann-json zlib sqlite3 glibmm openssl ixwebsocket curl
-          vcpkgDirectory: ${{ github.workspace }}/ci/vcpkg/
-          vcpkgTriplet: x64-windows
+          msystem: mingw64
+          update: true
+          install: >-
+            git
+            make
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-sqlite3
+            mingw-w64-x86_64-nlohmann-json
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-gtkmm3
 
       - name: Build
-        uses: lukka/run-cmake@v3
-        with:
-          useVcpkgToolchainFile: true
-          vcpkgTriplet: x64-windows
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
-
-      - name: Setup artifact files
-        shell: cmd
         run: |
-          del /f /s /q "${{ runner.workspace }}\build\CMakeFiles"
-          rmdir /s /q "${{ runner.workspace }}\build\CMakeFiles"
-          del /f /s /q "${{ runner.workspace }}\build\.ninja_deps"
-          del /f /s /q "${{ runner.workspace }}\build\.ninja_log"
-          del /f /s /q "${{ runner.workspace }}\build\abaddon.ilk"
-          del /f /s /q "${{ runner.workspace }}\build\CMakeCache.txt"
-          xcopy /E /I "${{ github.workspace }}\res\css" "${{ runner.workspace }}\build\css"
-          xcopy /E /I "${{ github.workspace }}\res\res" "${{ runner.workspace }}\build\res"
-          xcopy /E /I "${{ github.workspace }}\res\fonts" "${{ runner.workspace }}\build\fonts"
-          mkdir "${{ runner.workspace }}\build\share"
-          xcopy /E /I "${{ github.workspace }}\ci\gtk-for-windows\gtk-nsis-pack\share\glib-2.0" "${{ runner.workspace }}\build\share\glib-2.0"
-          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper.exe" "${{ runner.workspace }}\build\gspawn-win64-helper.exe"
-          copy "${{ github.workspace }}\ci\vcpkg\installed\x64-windows\tools\glib\gspawn-win64-helper-console.exe" "${{ runner.workspace }}\build\gspawn-win64-helper-console.exe"
+          cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
+
+      - name: Setup Artifact
+        run: |
+          mkdir -p build/artifactdir/bin build/artifactdir/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
+          cd build
+          cp *.exe artifactdir/bin
+          cd ..
+          cp /mingw64/ssl/certs/ca-bundle.crt build/artifactdir/ssl/certs
+          cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
+          cp -r res/css res/res res/fonts build/artifactdir/bin
+          cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas
+          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin
 
       - name: Upload build
         uses: actions/upload-artifact@v2
         with:
-          name: build-windows-${{ matrix.buildtype }}
-          path: ${{ runner.workspace }}/build
+          name: build-windows-msys2-${{ matrix.buildtype }}
+          path: build/artifactdir
+
   mac:
     name: macos-${{ matrix.buildtype }}
     runs-on: macos-latest

@@ -10,8 +10,6 @@ CellRendererPixbufAnimation::CellRendererPixbufAnimation()
     property_ypad() = 2;
 }
 
-CellRendererPixbufAnimation::~CellRendererPixbufAnimation() {}
-
 Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererPixbufAnimation::property_pixbuf() {
     return m_property_pixbuf.get_proxy();
 }

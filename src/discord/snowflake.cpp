@@ -25,7 +25,7 @@ Snowflake::Snowflake(const Glib::ustring &str) {
         m_num = std::strtoull(str.c_str(), nullptr, 10);
     else
         m_num = Invalid;
-};
+}
 
 Snowflake Snowflake::FromNow() {
     using namespace std::chrono;
@@ -53,14 +53,12 @@ bool Snowflake::IsValid() const {
     return m_num != Invalid;
 }
 
-std::string Snowflake::GetLocalTimestamp() const {
+Glib::ustring Snowflake::GetLocalTimestamp() const {
     const time_t secs_since_epoch = (m_num / SecondsInterval) + DiscordEpochSeconds;
     const std::tm tm = *localtime(&secs_since_epoch);
-    std::stringstream ss;
-    const static std::locale locale("");
-    ss.imbue(locale);
-    ss << std::put_time(&tm, "%X %x");
-    return ss.str();
+    std::array<char, 256> tmp {};
+    std::strftime(tmp.data(), sizeof(tmp), "%X %x", &tm);
+    return tmp.data();
 }
 
 void from_json(const nlohmann::json &j, Snowflake &s) {

@@ -60,22 +60,22 @@ struct UserData {
     friend void to_json(nlohmann::json &j, const UserData &m);
     void update_from_json(const nlohmann::json &j);
 
-    bool IsDeleted() const;
-    bool HasAvatar() const;
-    bool HasAnimatedAvatar() const noexcept;
-    bool HasAnimatedAvatar(Snowflake guild_id) const;
-    bool HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const;
-    std::string GetAvatarURL(Snowflake guild_id, std::string ext = "png", std::string size = "32") const;
-    std::string GetAvatarURL(const std::optional<Snowflake> &guild_id, std::string ext = "png", std::string size = "32") const;
-    std::string GetAvatarURL(std::string ext = "png", std::string size = "32") const;
-    std::string GetDefaultAvatarURL() const;
-    Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
-    std::string GetMention() const;
-    std::string GetEscapedName() const;
-    std::string GetEscapedBoldName() const;
-    std::string GetEscapedString() const;
+    [[nodiscard]] bool IsDeleted() const;
+    [[nodiscard]] bool HasAvatar() const;
+    [[nodiscard]] bool HasAnimatedAvatar() const noexcept;
+    [[nodiscard]] bool HasAnimatedAvatar(Snowflake guild_id) const;
+    [[nodiscard]] bool HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const;
+    [[nodiscard]] std::string GetAvatarURL(Snowflake guild_id, const std::string &ext = "png", std::string size = "32") const;
+    [[nodiscard]] std::string GetAvatarURL(const std::optional<Snowflake> &guild_id, const std::string &ext = "png", std::string size = "32") const;
+    [[nodiscard]] std::string GetAvatarURL(const std::string &ext = "png", std::string size = "32") const;
+    [[nodiscard]] std::string GetDefaultAvatarURL() const;
+    [[nodiscard]] Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
+    [[nodiscard]] std::string GetMention() const;
+    [[nodiscard]] std::string GetEscapedName() const;
+    [[nodiscard]] std::string GetEscapedBoldName() const;
+    [[nodiscard]] std::string GetEscapedString() const;
     template<bool with_at>
-    inline std::string GetEscapedBoldString() const {
+    [[nodiscard]] inline std::string GetEscapedBoldString() const {
         if constexpr (with_at)
             return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
         else

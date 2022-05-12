@@ -6,7 +6,7 @@
 class CellRendererPixbufAnimation : public Gtk::CellRenderer {
 public:
     CellRendererPixbufAnimation();
-    virtual ~CellRendererPixbufAnimation();
+    ~CellRendererPixbufAnimation() override = default;
 
     Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_pixbuf();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> property_pixbuf_animation();

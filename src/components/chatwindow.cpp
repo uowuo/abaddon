@@ -1,5 +1,4 @@
 #include "chatwindow.hpp"
-#include "chatmessage.hpp"
 #include "abaddon.hpp"
 #include "chatinputindicator.hpp"
 #include "ratelimitindicator.hpp"
@@ -88,7 +87,7 @@ ChatWindow::ChatWindow() {
 
     m_meta->add(*m_input_indicator);
     m_meta->add(*m_rate_limit_indicator);
-    //m_scroll->add(*m_list);
+    // m_scroll->add(*m_list);
     m_main->add(m_topic);
     m_main->add(*m_chat);
     m_main->add(m_completer);
@@ -134,7 +133,7 @@ void ChatWindow::AddNewHistory(const std::vector<Message> &msgs) {
     m_chat->PrependMessages(msgs.crbegin(), msgs.crend());
 }
 
-void ChatWindow::InsertChatInput(std::string text) {
+void ChatWindow::InsertChatInput(const std::string &text) {
     m_input->InsertText(text);
 }
 
@@ -159,7 +158,7 @@ bool ChatWindow::OnInputSubmit(const Glib::ustring &text) {
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
-    if (text.size() == 0)
+    if (text.empty())
         return false;
 
     if (m_active_channel.IsValid())

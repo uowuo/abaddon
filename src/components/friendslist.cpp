@@ -133,7 +133,7 @@ void FriendsList::OnActionRemove(Snowflake id) {
                 break;
         }
         if (Abaddon::Get().ShowConfirm(str, window)) {
-            const auto cb = [this, window](DiscordError code) {
+            const auto cb = [window](DiscordError code) {
                 if (code == DiscordError::NONE) return;
                 Gtk::MessageDialog dlg(*window, "Failed to remove user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -215,7 +215,7 @@ void FriendsListAddComponent::Submit() {
     if (hashpos == Glib::ustring::npos) return;
     const auto username = text.substr(0, hashpos);
     const auto discriminator = text.substr(hashpos + 1);
-    if (username.size() == 0 || discriminator.size() != 4) return;
+    if (username.empty() || discriminator.size() != 4) return;
     if (discriminator.find_first_not_of("0123456789") != Glib::ustring::npos) return;
 
     m_requesting = true;
@@ -229,7 +229,9 @@ void FriendsListAddComponent::Submit() {
             m_label.set_text("Failed: "s + GetDiscordErrorDisplayString(code));
         }
     };
-    Abaddon::Get().GetDiscordClient().SendFriendRequest(username, std::stoul(discriminator), sigc::track_obj(cb, *this));
+    Abaddon::Get().GetDiscordClient().SendFriendRequest(username,
+                                                        static_cast<int>(std::stoul(discriminator)),
+                                                        sigc::track_obj(cb, *this));
 }
 
 bool FriendsListAddComponent::OnKeyPress(GdkEventKey *e) {

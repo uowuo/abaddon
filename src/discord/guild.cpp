@@ -77,7 +77,7 @@ void GuildData::update_from_json(const nlohmann::json &j) {
     JS_RD("owner_id", OwnerID);
     std::string tmp;
     JS_RD("permissions", tmp);
-    if (tmp != "")
+    if (!tmp.empty())
         Permissions = std::stoull(tmp);
     JS_RD("region", VoiceRegion);
     JS_RD("afk_channel_id", AFKChannelID);
@@ -119,7 +119,7 @@ void GuildData::update_from_json(const nlohmann::json &j) {
     JS_RD("approximate_presence_count", ApproximatePresenceCount);
 }
 
-bool GuildData::HasFeature(const std::string &search_feature) {
+bool GuildData::HasFeature(const std::string &search_feature) const {
     if (!Features.has_value()) return false;
     for (const auto &feature : *Features)
         if (search_feature == feature)
@@ -128,64 +128,15 @@ bool GuildData::HasFeature(const std::string &search_feature) {
 }
 
 bool GuildData::HasIcon() const {
-    return Icon != "";
+    return !Icon.empty();
 }
 
 bool GuildData::HasAnimatedIcon() const {
     return HasIcon() && Icon[0] == 'a' && Icon[1] == '_';
 }
 
-std::string GuildData::GetIconURL(std::string ext, std::string size) const {
+std::string GuildData::GetIconURL(const std::string &ext, const std::string &size) const {
     return "https://cdn.discordapp.com/icons/" + std::to_string(ID) + "/" + Icon + "." + ext + "?size=" + size;
-}
-
-std::vector<Snowflake> GuildData::GetSortedChannels(Snowflake ignore) const {
-    std::vector<Snowflake> ret;
-
-    const auto &discord = Abaddon::Get().GetDiscordClient();
-    auto channels = discord.GetChannelsInGuild(ID);
-
-    std::unordered_map<Snowflake, std::vector<ChannelData>> category_to_channels;
-    std::map<int, std::vector<ChannelData>> position_to_categories;
-    std::map<int, std::vector<ChannelData>> orphan_channels;
-    for (const auto &channel_id : channels) {
-        const auto data = discord.GetChannel(channel_id);
-        if (!data->ParentID.has_value() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
-            orphan_channels[*data->Position].push_back(*data);
-        else if (data->ParentID.has_value() && (data->Type == ChannelType::GUILD_TEXT || data->Type == ChannelType::GUILD_NEWS))
-            category_to_channels[*data->ParentID].push_back(*data);
-        else if (data->Type == ChannelType::GUILD_CATEGORY)
-            position_to_categories[*data->Position].push_back(*data);
-    }
-
-    for (auto &[pos, channels] : orphan_channels) {
-        std::sort(channels.begin(), channels.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
-            return a.ID < b.ID;
-        });
-        for (const auto &chan : channels)
-            ret.push_back(chan.ID);
-    }
-
-    for (auto &[pos, categories] : position_to_categories) {
-        std::sort(categories.begin(), categories.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
-            return a.ID < b.ID;
-        });
-        for (const auto &category : categories) {
-            ret.push_back(category.ID);
-            if (ignore == category.ID) continue; // stupid hack to save me some time
-            auto it = category_to_channels.find(category.ID);
-            if (it == category_to_channels.end()) continue;
-            auto &channels = it->second;
-            std::sort(channels.begin(), channels.end(), [&](const ChannelData &a, const ChannelData &b) -> bool {
-                return a.Position < b.Position;
-            });
-            for (auto &channel : channels) {
-                ret.push_back(channel.ID);
-            }
-        }
-    }
-
-    return ret;
 }
 
 void from_json(const nlohmann::json &j, GuildApplicationData &m) {

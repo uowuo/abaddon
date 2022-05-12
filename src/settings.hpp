@@ -46,7 +46,7 @@ public:
     SettingsManager(const std::string &filename);
 
     void Close();
-    bool IsValid() const;
+    [[nodiscard]] bool IsValid() const;
     Settings &GetSettings();
 
 private:

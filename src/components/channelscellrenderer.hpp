@@ -18,7 +18,7 @@ enum class RenderType : uint8_t {
 class CellRendererChannels : public Gtk::CellRenderer {
 public:
     CellRendererChannels();
-    virtual ~CellRendererChannels();
+    ~CellRendererChannels() override = default;
 
     Glib::PropertyProxy<RenderType> property_type();
     Glib::PropertyProxy<uint64_t> property_id();
@@ -106,7 +106,7 @@ protected:
                          Gtk::CellRendererState flags);
 
     static void cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Context> &cr, double x, double y, double w, double h, double r);
-    void unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area);
+    static void unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area);
 
 private:
     Gtk::CellRendererText m_renderer_text;
