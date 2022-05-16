@@ -300,12 +300,13 @@
 .channel-tab-switcher tab {
     background: #1A1A1A;
     border: 1px solid #808080;
+    min-height: 35px;
 }
 
 .channel-tab-switcher tab.needs-attention:not(:checked) {
   font-weight: bold;
   animation: 150ms ease-in;
-  background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%);
+  /* background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%); */
   box-shadow: inset 0 -6px red;
 }
 
