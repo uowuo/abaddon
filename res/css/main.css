@@ -282,3 +282,43 @@
 .friends-list-row-bot {
     color: #ff0000;
 }
+
+.channel-tab-switcher .box {
+    margin: -7px -1px -7px -1px;
+    background: #2a2a2a;
+    border: 1px solid black;
+}
+
+.channel-tab-switcher tab:hover {
+    box-shadow: inset 0 -6px #17633e;
+}
+
+.channel-tab-switcher tab:checked {
+    box-shadow: inset 0 -6px #2feb90;
+}
+
+.channel-tab-switcher tab {
+    background: #1A1A1A;
+    border: 1px solid #808080;
+}
+
+.channel-tab-switcher tab.needs-attention:not(:checked) {
+  font-weight: bold;
+  animation: 150ms ease-in;
+  background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%);
+  box-shadow: inset 0 -6px red;
+}
+
+.channel-tab-switcher tab > button {
+    border: none;
+    padding: 0;
+    margin: 5px;
+    min-width: 16px;
+    min-height: 16px;
+    color: #FF5370;
+    background-color: rgba(0.21, 0.21, 0.21, 0.5);
+}
+
+.channel-tab-switcher tab > button:hover {
+    background-color: alpha(#ff0000, 0.5);
+}

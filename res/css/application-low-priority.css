@@ -3,31 +3,6 @@ application wide stuff
 has to be separate to allow main.css to override certain things
 */
 
-.app-window tabbar .box {
-    margin: -7px -1px -7px -1px;
-    background: #2a2a2a;
-    border: 1px solid black;
-}
-
-.app-window tabbar tab:hover {
-    box-shadow: inset 0 -7px lighter(blue);
-}
-
-.app-window tabbar tab:checked {
-    box-shadow: inset 0 -7px blue;
-}
-
-.app-window tabbar tab {
-    background: #1A1A1A;
-    border: 1px solid #808080;
-}
-
-.app-window tabbar tab.needs-attention:not(:checked) {
-  font-weight: bold;
-  animation: 150ms ease-in;
-  background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%);
-}
-
 .app-window label:not(:disabled) {
     color: @text_color;
 }

@@ -22,6 +22,8 @@ ChannelTabSwitcherHandy::ChannelTabSwitcherHandy() {
     m_tab_view = hdy_tab_view_new();
     m_tab_view_wrapped = Glib::wrap(GTK_WIDGET(m_tab_view));
 
+    m_tab_bar_wrapped->get_style_context()->add_class("channel-tab-switcher");
+
     g_signal_connect(m_tab_view, "notify::selected-page", G_CALLBACK(selected_page_notify_cb), this);
     g_signal_connect(m_tab_view, "close-page", G_CALLBACK(close_page_cb), this);
 
