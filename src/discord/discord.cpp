@@ -41,7 +41,7 @@ void DiscordClient::Start() {
     m_websocket.StartConnection(GetGatewayURL());
 }
 
-void DiscordClient::Stop() {
+bool DiscordClient::Stop() {
     if (m_client_started) {
         inflateEnd(&m_zstream);
         m_compressed_buf.clear();
@@ -55,9 +55,15 @@ void DiscordClient::Stop() {
         m_guild_to_users.clear();
 
         m_websocket.Stop();
+
+        m_client_started = false;
+
+        return true;
     }
 
     m_client_started = false;
+
+    return false;
 }
 
 bool DiscordClient::IsStarted() const {

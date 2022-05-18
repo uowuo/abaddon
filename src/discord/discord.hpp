@@ -49,7 +49,7 @@ class DiscordClient {
 public:
     DiscordClient(bool mem_store = false);
     void Start();
-    void Stop();
+    bool Stop();
     bool IsStarted() const;
     bool IsStoreValid() const;
 
