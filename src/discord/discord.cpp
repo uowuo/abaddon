@@ -1699,23 +1699,13 @@ void DiscordClient::HandleGatewayGuildRoleUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
     GuildRoleCreateObject data = msg.Data;
-    auto guild = *m_store.GetGuild(data.GuildID);
-    guild.Roles->push_back(data.Role);
-    m_store.BeginTransaction();
-    m_store.SetRole(guild.ID, data.Role);
-    m_store.SetGuild(guild.ID, guild);
-    m_store.EndTransaction();
+    m_store.SetRole(data.GuildID, data.Role);
     m_signal_role_create.emit(data.GuildID, data.Role.ID);
 }
 
 void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
     GuildRoleDeleteObject data = msg.Data;
-    auto guild = *m_store.GetGuild(data.GuildID);
-    const auto pred = [id = data.RoleID](const RoleData &role) -> bool {
-        return role.ID == id;
-    };
-    guild.Roles->erase(std::remove_if(guild.Roles->begin(), guild.Roles->end(), pred), guild.Roles->end());
-    m_store.SetGuild(guild.ID, guild);
+    m_store.ClearRole(data.RoleID);
     m_signal_role_delete.emit(data.GuildID, data.RoleID);
 }
 
