@@ -2180,8 +2180,6 @@ bool Store::CreateStatements() {
     m_stmt_clr_role = std::make_unique<Statement>(m_db, R"(
         DELETE FROM roles
         WHERE id = ?1;
-        DELETE FROM member_roles
-        WHERE role = ?1;
     )");
     if (!m_stmt_clr_role->OK()) {
         fprintf(stderr, "failed to prepare clear role statement: %s\n", m_db.ErrStr());
