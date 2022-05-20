@@ -519,7 +519,8 @@ void Abaddon::SaveState() {
         std::filesystem::create_directories(path, ec);
     }
 
-    auto *fp = std::fopen(GetStateCachePath("/state.json").c_str(), "wb");
+    auto file_name = "/" + std::to_string(m_discord.GetUserData().ID) + ".json";
+    auto *fp = std::fopen(GetStateCachePath(file_name).c_str(), "wb");
     if (fp == nullptr) return;
     const auto s = nlohmann::json(state).dump(4);
     std::fwrite(s.c_str(), 1, s.size(), fp);
@@ -533,7 +534,8 @@ void Abaddon::LoadState() {
         return;
     }
 
-    const auto data = ReadWholeFile(GetStateCachePath("/state.json"));
+    auto file_name = "/" + std::to_string(m_discord.GetUserData().ID) + ".json";
+    const auto data = ReadWholeFile(GetStateCachePath(file_name));
     if (data.empty()) return;
     try {
         AbaddonApplicationState state = nlohmann::json::parse(data.begin(), data.end());
