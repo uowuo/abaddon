@@ -31,9 +31,6 @@ endif ()
 if (WIN32)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(NOMINMAX)
-
-    find_package(Fontconfig REQUIRED)
-    link_libraries(${Fontconfig_LIBRARIES})
 endif ()
 
 configure_file(${PROJECT_SOURCE_DIR}/src/config.h.in ${PROJECT_BINARY_DIR}/config.h)
@@ -79,6 +76,11 @@ endif ()
 find_package(Threads)
 if (Threads_FOUND)
     target_link_libraries(abaddon Threads::Threads)
+endif ()
+
+find_package(Fontconfig QUIET)
+if (Fontconfig_FOUND)
+    target_link_libraries(abaddon Fontconfig::Fontconfig)
 endif ()
 
 target_link_libraries(abaddon ${SQLite3_LIBRARIES})
