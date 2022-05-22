@@ -17,6 +17,10 @@
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
 
+#ifdef WITH_LIBHANDY
+    #include <handy.h>
+#endif
+
 #ifdef _WIN32
     #pragma comment(lib, "crypt32.lib")
 #endif
@@ -43,6 +47,10 @@ Abaddon::Abaddon()
     m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
+    m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
+        if (!accessible)
+            m_channels_requested.erase(id);
+    });
     if (GetSettings().Prefetch)
         m_discord.signal_message_create().connect([this](const Message &message) {
             if (message.Author.HasAvatar())
@@ -59,8 +67,91 @@ Abaddon &Abaddon::Get() {
     return instance;
 }
 
+#ifdef WITH_LIBHANDY
+    #ifdef _WIN32
+constexpr static guint BUTTON_BACK = 4;
+constexpr static guint BUTTON_FORWARD = 5;
+    #else
+constexpr static guint BUTTON_BACK = 8;
+constexpr static guint BUTTON_FORWARD = 9;
+    #endif
+
+static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
+    if (event->type != GDK_BUTTON_PRESS) return false;
+
+    auto *widget = gtk_get_event_widget(event);
+    if (widget == nullptr) return false;
+    auto *window = gtk_widget_get_toplevel(widget);
+    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false; // is this the right way???
+
+    switch (event->button.button) {
+        case BUTTON_BACK:
+            main_window->GoBack();
+            break;
+        case BUTTON_FORWARD:
+            main_window->GoForward();
+            break;
+    }
+
+    return false;
+}
+
+static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
+    if (event->type != GDK_KEY_PRESS) return false;
+
+    auto *widget = gtk_get_event_widget(event);
+    if (widget == nullptr) return false;
+    auto *window = gtk_widget_get_toplevel(widget);
+    if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false;
+
+    const bool ctrl = (event->key.state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK;
+    const bool shft = (event->key.state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
+
+    if (ctrl) {
+        switch (event->key.keyval) {
+            case GDK_KEY_Tab:
+            case GDK_KEY_KP_Tab:
+            case GDK_KEY_ISO_Left_Tab:
+                if (shft)
+                    main_window->GoToPreviousTab();
+                else
+                    main_window->GoToNextTab();
+                return true;
+            case GDK_KEY_1:
+            case GDK_KEY_2:
+            case GDK_KEY_3:
+            case GDK_KEY_4:
+            case GDK_KEY_5:
+            case GDK_KEY_6:
+            case GDK_KEY_7:
+            case GDK_KEY_8:
+            case GDK_KEY_9:
+                main_window->GoToTab(event->key.keyval - GDK_KEY_1);
+                return true;
+            case GDK_KEY_0:
+                main_window->GoToTab(9);
+                return true;
+        }
+    }
+
+    return false;
+}
+
+static void MainEventHandler(GdkEvent *event, void *main_window) {
+    if (HandleButtonEvents(event, static_cast<MainWindow *>(main_window))) return;
+    if (HandleKeyEvents(event, static_cast<MainWindow *>(main_window))) return;
+    gtk_main_do_event(event);
+}
+#endif
+
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
+
+#ifdef WITH_LIBHANDY
+    m_gtk_app->signal_activate().connect([] {
+        hdy_init();
+    });
+#endif
 
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
@@ -103,6 +194,10 @@ int Abaddon::StartGTK() {
     m_main_window->set_title(APP_TITLE);
     m_main_window->set_position(Gtk::WIN_POS_CENTER);
 
+#ifdef WITH_LIBHANDY
+    gdk_event_handler_set(&MainEventHandler, m_main_window.get(), nullptr);
+#endif
+
     if (!m_settings.IsValid()) {
         Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be opened!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
@@ -138,7 +233,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
     m_main_window->signal_action_view_threads().connect(sigc::mem_fun(*this, &Abaddon::ActionViewThreads));
 
-    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened));
+    m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::bind(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened), true));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
 
@@ -179,8 +274,8 @@ void Abaddon::StartDiscord() {
 }
 
 void Abaddon::StopDiscord() {
-    m_discord.Stop();
-    SaveState();
+    if (m_discord.Stop())
+        SaveState();
     m_main_window->UpdateMenus();
 }
 
@@ -414,6 +509,9 @@ void Abaddon::SaveState() {
     AbaddonApplicationState state;
     state.ActiveChannel = m_main_window->GetChatActiveChannel();
     state.Expansion = m_main_window->GetChannelList()->GetExpansionState();
+#ifdef WITH_LIBHANDY
+    state.Tabs = m_main_window->GetChatWindow()->GetTabsState();
+#endif
 
     const auto path = GetStateCachePath();
     if (!util::IsFolder(path)) {
@@ -421,7 +519,8 @@ void Abaddon::SaveState() {
         std::filesystem::create_directories(path, ec);
     }
 
-    auto *fp = std::fopen(GetStateCachePath("/state.json").c_str(), "wb");
+    auto file_name = "/" + std::to_string(m_discord.GetUserData().ID) + ".json";
+    auto *fp = std::fopen(GetStateCachePath(file_name).c_str(), "wb");
     if (fp == nullptr) return;
     const auto s = nlohmann::json(state).dump(4);
     std::fwrite(s.c_str(), 1, s.size(), fp);
@@ -435,11 +534,15 @@ void Abaddon::LoadState() {
         return;
     }
 
-    const auto data = ReadWholeFile(GetStateCachePath("/state.json"));
+    auto file_name = "/" + std::to_string(m_discord.GetUserData().ID) + ".json";
+    const auto data = ReadWholeFile(GetStateCachePath(file_name));
     if (data.empty()) return;
     try {
         AbaddonApplicationState state = nlohmann::json::parse(data.begin(), data.end());
         m_main_window->GetChannelList()->UseExpansionState(state.Expansion);
+#ifdef WITH_LIBHANDY
+        m_main_window->GetChatWindow()->UseTabsState(state.Tabs);
+#endif
         ActionChannelOpened(state.ActiveChannel);
     } catch (const std::exception &e) {
         printf("failed to load application state: %s\n", e.what());
@@ -551,13 +654,17 @@ void Abaddon::ActionJoinGuildDialog() {
     }
 }
 
-void Abaddon::ActionChannelOpened(Snowflake id) {
+void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     if (!id.IsValid() || id == m_main_window->GetChatActiveChannel()) return;
 
     m_main_window->GetChatWindow()->SetTopic("");
 
     const auto channel = m_discord.GetChannel(id);
-    if (!channel.has_value()) return;
+    if (!channel.has_value()) {
+        m_main_window->UpdateChatActiveChannel(Snowflake::Invalid, false);
+        m_main_window->UpdateChatWindowContents();
+        return;
+    }
 
     const bool can_access = channel->IsDM() || m_discord.HasChannelPermission(m_discord.GetUserData().ID, id, Permission::VIEW_CHANNEL);
 
@@ -574,7 +681,7 @@ void Abaddon::ActionChannelOpened(Snowflake id) {
             display = "Empty group";
         m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
     }
-    m_main_window->UpdateChatActiveChannel(id);
+    m_main_window->UpdateChatActiveChannel(id, expand_to);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         // dont fire requests we know will fail
         if (can_access) {
@@ -639,6 +746,10 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
 void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message) {
     if (msg.substr(0, 7) == "/shrug " || msg == "/shrug")
         msg = msg.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
+
+    if (!channel.IsValid()) return;
+    if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, channel, Permission::VIEW_CHANNEL)) return;
+
     if (referenced_message.IsValid())
         m_discord.SendChatMessage(msg, channel, referenced_message);
     else

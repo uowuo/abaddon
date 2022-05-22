@@ -4,6 +4,11 @@
 #include <set>
 #include "discord/discord.hpp"
 #include "completer.hpp"
+#include "state.hpp"
+
+#ifdef WITH_LIBHANDY
+class ChannelTabSwitcherHandy;
+#endif
 
 class ChatMessageHeader;
 class ChatMessageItemContainer;
@@ -25,10 +30,21 @@ public:
     void DeleteMessage(Snowflake id);                     // add [deleted] indicator
     void UpdateMessage(Snowflake id);                     // add [edited] indicator
     void AddNewHistory(const std::vector<Message> &msgs); // prepend messages
-    void InsertChatInput(const std::string& text);
+    void InsertChatInput(const std::string &text);
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
     void SetTopic(const std::string &text);
+
+#ifdef WITH_LIBHANDY
+    void OpenNewTab(Snowflake id);
+    TabsState GetTabsState();
+    void UseTabsState(const TabsState &state);
+    void GoBack();
+    void GoForward();
+    void GoToPreviousTab();
+    void GoToNextTab();
+    void GoToTab(int idx);
+#endif
 
 protected:
     bool m_is_replying = false;
@@ -62,14 +78,18 @@ protected:
     RateLimitIndicator *m_rate_limit_indicator;
     Gtk::Box *m_meta;
 
+#ifdef WITH_LIBHANDY
+    ChannelTabSwitcherHandy *m_tab_switcher;
+#endif
+
 public:
-    typedef sigc::signal<void, Snowflake, Snowflake> type_signal_action_message_edit;
-    typedef sigc::signal<void, std::string, Snowflake, Snowflake> type_signal_action_chat_submit;
-    typedef sigc::signal<void, Snowflake> type_signal_action_chat_load_history;
-    typedef sigc::signal<void, Snowflake> type_signal_action_channel_click;
-    typedef sigc::signal<void, Snowflake> type_signal_action_insert_mention;
-    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_add;
-    typedef sigc::signal<void, Snowflake, Glib::ustring> type_signal_action_reaction_remove;
+    using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
+    using type_signal_action_chat_submit = sigc::signal<void, std::string, Snowflake, Snowflake>;
+    using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
+    using type_signal_action_channel_click = sigc::signal<void, Snowflake, bool>;
+    using type_signal_action_insert_mention = sigc::signal<void, Snowflake>;
+    using type_signal_action_reaction_add = sigc::signal<void, Snowflake, Glib::ustring>;
+    using type_signal_action_reaction_remove = sigc::signal<void, Snowflake, Glib::ustring>;
 
     type_signal_action_message_edit signal_action_message_edit();
     type_signal_action_chat_submit signal_action_chat_submit();

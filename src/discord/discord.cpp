@@ -41,7 +41,7 @@ void DiscordClient::Start() {
     m_websocket.StartConnection(GetGatewayURL());
 }
 
-void DiscordClient::Stop() {
+bool DiscordClient::Stop() {
     if (m_client_started) {
         inflateEnd(&m_zstream);
         m_compressed_buf.clear();
@@ -55,9 +55,15 @@ void DiscordClient::Stop() {
         m_guild_to_users.clear();
 
         m_websocket.Stop();
+
+        m_client_started = false;
+
+        return true;
     }
 
     m_client_started = false;
+
+    return false;
 }
 
 bool DiscordClient::IsStarted() const {
@@ -1622,18 +1628,27 @@ void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
         it->second.erase(id);
     m_store.ClearChannel(id);
     m_signal_channel_delete.emit(id);
+    m_signal_channel_accessibility_changed.emit(id, false);
 }
 
 void DiscordClient::HandleGatewayChannelUpdate(const GatewayMessage &msg) {
     const auto id = msg.Data.at("id").get<Snowflake>();
     auto cur = m_store.GetChannel(id);
     if (cur.has_value()) {
+        const bool old_perms = HasChannelPermission(m_user_data.ID, id, Permission::VIEW_CHANNEL);
+
         cur->update_from_json(msg.Data);
         m_store.SetChannel(id, *cur);
         if (cur->PermissionOverwrites.has_value())
             for (const auto &p : *cur->PermissionOverwrites)
                 m_store.SetPermissionOverwrite(id, p.ID, p);
         m_signal_channel_update.emit(id);
+
+        const bool new_perms = HasChannelPermission(m_user_data.ID, id, Permission::VIEW_CHANNEL);
+        if (old_perms && !new_perms)
+            m_signal_channel_accessibility_changed.emit(id, false);
+        else if (!old_perms && new_perms)
+            m_signal_channel_accessibility_changed.emit(id, true);
     }
 }
 
@@ -1660,29 +1675,37 @@ void DiscordClient::HandleGatewayGuildUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildRoleUpdate(const GatewayMessage &msg) {
     GuildRoleUpdateObject data = msg.Data;
+
+    const auto channels = GetChannelsInGuild(data.GuildID);
+    std::unordered_set<Snowflake> accessible;
+    for (auto channel : channels) {
+        if (HasChannelPermission(m_user_data.ID, channel, Permission::VIEW_CHANNEL))
+            accessible.insert(channel);
+    }
+
     m_store.SetRole(data.GuildID, data.Role);
     m_signal_role_update.emit(data.GuildID, data.Role.ID);
+
+    for (auto channel : channels) {
+        const bool old_perms = accessible.find(channel) != accessible.end();
+        const bool new_perms = HasChannelPermission(m_user_data.ID, channel, Permission::VIEW_CHANNEL);
+        if (old_perms && !new_perms) {
+            m_signal_channel_accessibility_changed.emit(channel, false);
+        } else if (!old_perms && new_perms) {
+            m_signal_channel_accessibility_changed.emit(channel, true);
+        }
+    }
 }
 
 void DiscordClient::HandleGatewayGuildRoleCreate(const GatewayMessage &msg) {
     GuildRoleCreateObject data = msg.Data;
-    auto guild = *m_store.GetGuild(data.GuildID);
-    guild.Roles->push_back(data.Role);
-    m_store.BeginTransaction();
-    m_store.SetRole(guild.ID, data.Role);
-    m_store.SetGuild(guild.ID, guild);
-    m_store.EndTransaction();
+    m_store.SetRole(data.GuildID, data.Role);
     m_signal_role_create.emit(data.GuildID, data.Role.ID);
 }
 
 void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
     GuildRoleDeleteObject data = msg.Data;
-    auto guild = *m_store.GetGuild(data.GuildID);
-    const auto pred = [id = data.RoleID](const RoleData &role) -> bool {
-        return role.ID == id;
-    };
-    guild.Roles->erase(std::remove_if(guild.Roles->begin(), guild.Roles->end(), pred), guild.Roles->end());
-    m_store.SetGuild(guild.ID, guild);
+    m_store.ClearRole(data.RoleID);
     m_signal_role_delete.emit(data.GuildID, data.RoleID);
 }
 
@@ -2152,7 +2175,7 @@ void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     Snowflake id = msg.Data.at("id");
-    bool unavailable = msg.Data.contains("unavilable") && msg.Data.at("unavailable").get<bool>();
+    bool unavailable = msg.Data.contains("unavailable") && msg.Data.at("unavailable").get<bool>();
 
     if (unavailable)
         printf("guild %" PRIu64 " became unavailable\n", static_cast<uint64_t>(id));
@@ -2165,9 +2188,12 @@ void DiscordClient::HandleGatewayGuildDelete(const GatewayMessage &msg) {
     }
 
     m_store.ClearGuild(id);
-    if (guild->Channels.has_value())
-        for (const auto &c : *guild->Channels)
+    if (guild->Channels.has_value()) {
+        for (const auto &c : *guild->Channels) {
             m_store.ClearChannel(c.ID);
+            m_signal_channel_accessibility_changed.emit(c.ID, false);
+        }
+    }
 
     m_signal_guild_delete.emit(id);
 }
@@ -2655,6 +2681,10 @@ DiscordClient::type_signal_guild_muted DiscordClient::signal_guild_muted() {
 
 DiscordClient::type_signal_guild_unmuted DiscordClient::signal_guild_unmuted() {
     return m_signal_guild_unmuted;
+}
+
+DiscordClient::type_signal_channel_accessibility_changed DiscordClient::signal_channel_accessibility_changed() {
+    return m_signal_channel_accessibility_changed;
 }
 
 DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_fail() {

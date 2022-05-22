@@ -1078,6 +1078,14 @@ void Store::ClearRecipient(Snowflake channel_id, Snowflake user_id) {
     s->Reset();
 }
 
+void Store::ClearRole(Snowflake id) {
+    auto &s = m_stmt_clr_role;
+
+    s->Bind(1, id);
+    s->Step();
+    s->Reset();
+}
+
 std::unordered_set<Snowflake> Store::GetChannels() const {
     auto &s = m_stmt_get_chan_ids;
     std::unordered_set<Snowflake> r;
@@ -1519,6 +1527,16 @@ bool Store::CreateTables() {
         END
     )") != SQLITE_OK) {
         fprintf(stderr, "failed to create reactions trigger: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(R"(
+        CREATE TRIGGER remove_deleted_roles AFTER DELETE ON roles
+        BEGIN
+            DELETE FROM member_roles WHERE role = old.id;
+        END
+    )") != SQLITE_OK) {
+        fprintf(stderr, "failed to create roles trigger: %s\n", m_db.ErrStr());
         return false;
     }
 
@@ -2156,6 +2174,15 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_guild_member_ids->OK()) {
         fprintf(stderr, "failed to prepare get guild member ids statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_clr_role = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM roles
+        WHERE id = ?1;
+    )");
+    if (!m_stmt_clr_role->OK()) {
+        fprintf(stderr, "failed to prepare clear role statement: %s\n", m_db.ErrStr());
         return false;
     }
 

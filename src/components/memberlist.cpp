@@ -160,10 +160,11 @@ void MemberList::UpdateMemberList() {
     }
 
     int num_rows = 0;
-    const auto guild = *discord.GetGuild(m_guild_id);
+    const auto guild = discord.GetGuild(m_guild_id);
+    if (!guild.has_value()) return;
     auto add_user = [this, &num_rows, guild](const UserData &data) -> bool {
         if (num_rows++ > MaxMemberListRows) return false;
-        auto *row = Gtk::manage(new MemberListUserRow(guild, data));
+        auto *row = Gtk::manage(new MemberListUserRow(*guild, data));
         m_id_to_row[data.ID] = row;
         AttachUserMenuHandler(row, data.ID);
         m_listbox->add(*row);

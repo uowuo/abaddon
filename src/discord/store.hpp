@@ -54,6 +54,7 @@ public:
     void ClearChannel(Snowflake id);
     void ClearBan(Snowflake guild_id, Snowflake user_id);
     void ClearRecipient(Snowflake channel_id, Snowflake user_id);
+    void ClearRole(Snowflake id);
 
     std::unordered_set<Snowflake> GetChannels() const;
     std::unordered_set<Snowflake> GetGuilds() const;
@@ -305,5 +306,6 @@ private:
     STMT(get_reactions);
     STMT(get_chan_ids_parent);
     STMT(get_guild_member_ids);
+    STMT(clr_role);
 #undef STMT
 };

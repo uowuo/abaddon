@@ -27,6 +27,12 @@ MainWindow::MainWindow()
     chat->set_hexpand(true);
     chat->show();
 
+#ifdef WITH_LIBHANDY
+    m_channel_list.signal_action_open_new_tab().connect([this](Snowflake id) {
+        m_chat.OpenNewTab(id);
+    });
+#endif
+
     m_channel_list.set_vexpand(true);
     m_channel_list.set_size_request(-1, -1);
     m_channel_list.show();
@@ -99,10 +105,10 @@ void MainWindow::UpdateChatWindowContents() {
     m_members.UpdateMemberList();
 }
 
-void MainWindow::UpdateChatActiveChannel(Snowflake id) {
+void MainWindow::UpdateChatActiveChannel(Snowflake id, bool expand_to) {
     m_chat.SetActiveChannel(id);
     m_members.SetActiveChannel(id);
-    m_channel_list.SetActiveChannel(id);
+    m_channel_list.SetActiveChannel(id, expand_to);
     m_content_stack.set_visible_child("chat");
 }
 
@@ -150,6 +156,28 @@ void MainWindow::UpdateMenus() {
     OnDiscordSubmenuPopup();
     OnViewSubmenuPopup();
 }
+
+#ifdef WITH_LIBHANDY
+void MainWindow::GoBack() {
+    m_chat.GoBack();
+}
+
+void MainWindow::GoForward() {
+    m_chat.GoForward();
+}
+
+void MainWindow::GoToPreviousTab() {
+    m_chat.GoToPreviousTab();
+}
+
+void MainWindow::GoToNextTab() {
+    m_chat.GoToNextTab();
+}
+
+void MainWindow::GoToTab(int idx) {
+    m_chat.GoToTab(idx);
+}
+#endif
 
 void MainWindow::OnDiscordSubmenuPopup() {
     auto &discord = Abaddon::Get().GetDiscordClient();
@@ -236,10 +264,20 @@ void MainWindow::SetupMenu() {
     m_menu_view_threads.set_label("Threads");
     m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
+#ifdef WITH_LIBHANDY
+    m_menu_view_go_back.set_label("Go Back");
+    m_menu_view_go_forward.set_label("Go Forward");
+    m_menu_view_go_back.add_accelerator("activate", m_accels, GDK_KEY_Left, Gdk::MOD1_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_go_forward.add_accelerator("activate", m_accels, GDK_KEY_Right, Gdk::MOD1_MASK, Gtk::ACCEL_VISIBLE);
+#endif
     m_menu_view_sub.append(m_menu_view_friends);
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
+#ifdef WITH_LIBHANDY
+    m_menu_view_sub.append(m_menu_view_go_back);
+    m_menu_view_sub.append(m_menu_view_go_forward);
+#endif
 
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
@@ -279,7 +317,7 @@ void MainWindow::SetupMenu() {
     });
 
     m_menu_view_friends.signal_activate().connect([this] {
-        UpdateChatActiveChannel(Snowflake::Invalid);
+        UpdateChatActiveChannel(Snowflake::Invalid, true);
         m_members.UpdateMemberList();
         m_content_stack.set_visible_child("friends");
     });
@@ -300,6 +338,16 @@ void MainWindow::SetupMenu() {
             discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
         }
     });
+
+#ifdef WITH_LIBHANDY
+    m_menu_view_go_back.signal_activate().connect([this] {
+        GoBack();
+    });
+
+    m_menu_view_go_forward.signal_activate().connect([this] {
+        GoForward();
+    });
+#endif
 }
 
 MainWindow::type_signal_action_connect MainWindow::signal_action_connect() {

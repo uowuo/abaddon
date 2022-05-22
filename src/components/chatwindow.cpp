@@ -4,6 +4,9 @@
 #include "ratelimitindicator.hpp"
 #include "chatinput.hpp"
 #include "chatlist.hpp"
+#ifdef WITH_LIBHANDY
+    #include "channeltabswitcherhandy.hpp"
+#endif
 
 ChatWindow::ChatWindow() {
     Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
@@ -14,6 +17,13 @@ ChatWindow::ChatWindow() {
     m_input_indicator = Gtk::manage(new ChatInputIndicator);
     m_rate_limit_indicator = Gtk::manage(new RateLimitIndicator);
     m_meta = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
+
+#ifdef WITH_LIBHANDY
+    m_tab_switcher = Gtk::make_managed<ChannelTabSwitcherHandy>();
+    m_tab_switcher->signal_channel_switched_to().connect([this](Snowflake id) {
+        m_signal_action_channel_click.emit(id, false);
+    });
+#endif
 
     m_rate_limit_indicator->set_margin_end(5);
     m_rate_limit_indicator->set_hexpand(true);
@@ -55,7 +65,7 @@ ChatWindow::ChatWindow() {
     m_completer.show();
 
     m_chat->signal_action_channel_click().connect([this](Snowflake id) {
-        m_signal_action_channel_click.emit(id);
+        m_signal_action_channel_click.emit(id, true);
     });
     m_chat->signal_action_chat_load_history().connect([this](Snowflake id) {
         m_signal_action_chat_load_history.emit(id);
@@ -88,6 +98,10 @@ ChatWindow::ChatWindow() {
     m_meta->add(*m_input_indicator);
     m_meta->add(*m_rate_limit_indicator);
     // m_scroll->add(*m_list);
+#ifdef WITH_LIBHANDY
+    m_main->add(*m_tab_switcher);
+    m_tab_switcher->show();
+#endif
     m_main->add(m_topic);
     m_main->add(*m_chat);
     m_main->add(m_completer);
@@ -115,6 +129,10 @@ void ChatWindow::SetActiveChannel(Snowflake id) {
     m_rate_limit_indicator->SetActiveChannel(id);
     if (m_is_replying)
         StopReplying();
+
+#ifdef WITH_LIBHANDY
+    m_tab_switcher->ReplaceActiveTab(id);
+#endif
 }
 
 void ChatWindow::AddNewMessage(const Message &data) {
@@ -149,6 +167,44 @@ void ChatWindow::SetTopic(const std::string &text) {
     m_topic_text.set_text(text);
     m_topic.set_visible(text.length() > 0);
 }
+
+#ifdef WITH_LIBHANDY
+void ChatWindow::OpenNewTab(Snowflake id) {
+    // open if its the first tab (in which case it really isnt a tab but whatever)
+    if (m_tab_switcher->GetNumberOfTabs() == 0) {
+        m_signal_action_channel_click.emit(id, false);
+    }
+    m_tab_switcher->AddChannelTab(id);
+}
+
+TabsState ChatWindow::GetTabsState() {
+    return m_tab_switcher->GetTabsState();
+}
+
+void ChatWindow::UseTabsState(const TabsState &state) {
+    m_tab_switcher->UseTabsState(state);
+}
+
+void ChatWindow::GoBack() {
+    m_tab_switcher->GoBackOnCurrent();
+}
+
+void ChatWindow::GoForward() {
+    m_tab_switcher->GoForwardOnCurrent();
+}
+
+void ChatWindow::GoToPreviousTab() {
+    m_tab_switcher->GoToPreviousTab();
+}
+
+void ChatWindow::GoToNextTab() {
+    m_tab_switcher->GoToNextTab();
+}
+
+void ChatWindow::GoToTab(int idx) {
+    m_tab_switcher->GoToTab(idx);
+}
+#endif
 
 Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;

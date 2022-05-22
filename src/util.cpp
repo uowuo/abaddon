@@ -1,5 +1,6 @@
 #include "util.hpp"
 #include <array>
+#include <cstring>
 #include <filesystem>
 
 void LaunchBrowser(const Glib::ustring &url) {

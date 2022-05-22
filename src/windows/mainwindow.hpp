@@ -13,7 +13,7 @@ public:
     void UpdateMembers();
     void UpdateChannelListing();
     void UpdateChatWindowContents();
-    void UpdateChatActiveChannel(Snowflake id);
+    void UpdateChatActiveChannel(Snowflake id, bool expand_to);
     Snowflake GetChatActiveChannel() const;
     void UpdateChatNewMessage(const Message &data);
     void UpdateChatMessageDeleted(Snowflake id, Snowflake channel_id);
@@ -24,6 +24,14 @@ public:
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
     void UpdateMenus();
+
+#ifdef WITH_LIBHANDY
+    void GoBack();
+    void GoForward();
+    void GoToPreviousTab();
+    void GoToNextTab();
+    void GoToTab(int idx);
+#endif
 
     ChannelList *GetChannelList();
     ChatWindow *GetChatWindow();
@@ -68,6 +76,10 @@ private:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
+#ifdef WITH_LIBHANDY
+    Gtk::MenuItem m_menu_view_go_back;
+    Gtk::MenuItem m_menu_view_go_forward;
+#endif
     void OnViewSubmenuPopup();
 
 public:
