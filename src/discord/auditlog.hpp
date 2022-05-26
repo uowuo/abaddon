@@ -49,6 +49,7 @@ enum class AuditLogActionType {
     THREAD_CREATE = 110,
     THREAD_UPDATE = 111,
     THREAD_DELETE = 112,
+    SESSIONS_REPLACE = 120,
 };
 
 struct AuditLogChange {

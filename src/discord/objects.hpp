@@ -100,6 +100,7 @@ enum class GatewayEvent : int {
     MESSAGE_ACK,
     USER_GUILD_SETTINGS_UPDATE,
     GUILD_MEMBERS_CHUNK,
+    SESSIONS_REPLACE,
 };
 
 enum class GatewayCloseCode : uint16_t {

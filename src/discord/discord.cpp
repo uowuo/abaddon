@@ -1415,6 +1415,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBERS_CHUNK: {
                         HandleGatewayGuildMembersChunk(m);
                     } break;
+                    case GatewayEvent::SESSIONS_REPLACE: {
+                        HandleGatewaySessionsReplace(m);
+                    } break;
                 }
             } break;
             default:
@@ -2025,6 +2028,10 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
     m_store.EndTransaction();
 }
 
+void DiscordClient::HandleGatewaySessionsReplace(const GatewayMessage &msg) {
+    printf("gateway session replace!\n");
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2485,6 +2492,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
     m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
     m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
+    m_event_map["SESSIONS_REPLACE"] = GatewayEvent::SESSIONS_REPLACE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

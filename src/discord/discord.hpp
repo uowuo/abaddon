@@ -276,6 +276,7 @@ private:
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
+    void HandleGatewaySessionsReplace(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
