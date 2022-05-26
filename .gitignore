@@ -356,3 +356,9 @@ build/
 out/
 
 fonts/fonts.conf
+
+# To make sure no zipped resources are added to the repo
+*.7z
+*.zip
+*.tar.*
+*.rar
