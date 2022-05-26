@@ -152,6 +152,73 @@ std::string Platform::FindStateCacheFolder() {
     return ".";
 }
 
+#elif defined(__MACH__)
+std::string Platform::FindResourceFolder() {
+    static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        const static std::string home_path = home_env + "/.local/share/abaddon"s;
+
+        for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
+            if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
+                found_path = path;
+                found = true;
+                return found_path;
+            }
+        }
+    }
+
+    puts("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
+    found = true;
+    return found_path;
+}
+
+std::string Platform::FindConfigFile() {
+    const auto cfg = std::getenv("ABADDON_CONFIG");
+    if (cfg != nullptr) return cfg;
+
+    // use config present in cwd first
+    if (util::IsFile("./abaddon.ini"))
+        return "./abaddon.ini";
+
+    if (const auto home_env = std::getenv("HOME")) {
+        // use ~/.config if present
+        if (auto home_path = home_env + "/.config/abaddon/abaddon.ini"s; util::IsFile(home_path)) {
+            return home_path;
+        }
+
+        // fallback to ~/.config if the directory exists/can be created
+        std::error_code ec;
+        const auto home_path = home_env + "/.config/abaddon"s;
+        if (!util::IsFolder(home_path))
+            std::filesystem::create_directories(home_path, ec);
+        if (util::IsFolder(home_path))
+            return home_path + "/abaddon.ini";
+    }
+
+    // fallback to cwd if cant find + cant make in ~/.config
+    puts("can't find configuration file!");
+    return "./abaddon.ini";
+}
+
+std::string Platform::FindStateCacheFolder() {
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        auto home_path = home_env + "/.cache/abaddon"s;
+        std::error_code ec;
+        if (!util::IsFolder(home_path))
+            std::filesystem::create_directories(home_path, ec);
+        if (util::IsFolder(home_path))
+            return home_path;
+    }
+    puts("can't find cache folder!");
+    return ".";
+}
+
 #else
 std::string Platform::FindResourceFolder() {
     puts("unknown OS, trying to load resources from cwd");
