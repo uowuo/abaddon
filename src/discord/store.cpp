@@ -906,21 +906,28 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     }
 
     if (!s->IsNull(25)) {
-        auto &a = r.Attachments.emplace_back();
-        s->Get(25, a.ID);
-        s->Get(26, a.Filename);
-        s->Get(27, a.Bytes);
-        s->Get(28, a.URL);
-        s->Get(29, a.ProxyURL);
-        s->Get(30, a.Height);
-        s->Get(31, a.Width);
+        auto &q = r.MessageReference.emplace();
+        s->Get(25, q.MessageID);
+        s->Get(26, q.ChannelID);
+        s->Get(27, q.GuildID);
     }
 
-    if (!s->IsNull(32)) {
-        auto &q = r.MessageReference.emplace();
-        s->Get(32, q.MessageID);
-        s->Get(33, q.ChannelID);
-        s->Get(34, q.GuildID);
+    int num_attachments;
+    s->Get(28, num_attachments);
+    if (num_attachments > 0) {
+        auto &s = m_stmt_get_attachments;
+        s->Bind(1, r.ID);
+        while (s->FetchOne()) {
+            auto &q = r.Attachments.emplace_back();
+            s->Get(1, q.ID);
+            s->Get(2, q.Filename);
+            s->Get(3, q.Bytes);
+            s->Get(4, q.URL);
+            s->Get(5, q.ProxyURL);
+            s->Get(6, q.Height);
+            s->Get(7, q.Width);
+        }
+        s->Reset();
     }
 
     {
@@ -1629,55 +1636,43 @@ bool Store::CreateStatements() {
                message_interactions.name,
                message_interactions.type,
                message_interactions.user_id,
-               attachments.id,
-               attachments.filename,
-               attachments.size,
-               attachments.url,
-               attachments.proxy,
-               attachments.height,
-               attachments.width,
                message_references.message,
                message_references.channel,
-               message_references.guild
+               message_references.guild,
+               COUNT(attachments.id)
         FROM messages
         LEFT OUTER JOIN
             message_interactions
                 ON messages.id = message_interactions.message_id
         LEFT OUTER JOIN
-            attachments
-                ON messages.id = attachments.message
-        LEFT OUTER JOIN
             message_references
                 ON messages.id = message_references.id
-        WHERE messages.id = ?1
+        LEFT JOIN
+            attachments
+                ON messages.id = attachments.message
+        WHERE messages.id = ?1 GROUP BY messages.id
         UNION ALL
         SELECT messages.*,
                message_interactions.interaction_id,
                message_interactions.name,
                message_interactions.type,
                message_interactions.user_id,
-               attachments.id,
-               attachments.filename,
-               attachments.size,
-               attachments.url,
-               attachments.proxy,
-               attachments.height,
-               attachments.width,
                message_references.message,
                message_references.channel,
-               message_references.guild
+               message_references.guild,
+               COUNT(attachments.id)
         FROM messages
         LEFT OUTER JOIN
             message_interactions
                 ON messages.id = message_interactions.message_id
         LEFT OUTER JOIN
-            attachments
-                ON messages.id = attachments.message
-        LEFT OUTER JOIN
             message_references
                 ON messages.id = message_references.id
+        LEFT JOIN
+            attachments
+                ON messages.id = attachments.message
         WHERE messages.id = (SELECT message FROM message_references WHERE id = ?1)
-        ORDER BY messages.id DESC
+        GROUP BY messages.id ORDER BY messages.id DESC
     )");
     if (!m_stmt_get_msg->OK()) {
         fprintf(stderr, "failed to prepare get message statement: %s\n", m_db.ErrStr());
@@ -1701,27 +1696,21 @@ bool Store::CreateStatements() {
                    message_interactions.name,
                    message_interactions.type,
                    message_interactions.user_id,
-                   attachments.id,
-                   attachments.filename,
-                   attachments.size,
-                   attachments.url,
-                   attachments.proxy,
-                   attachments.height,
-                   attachments.width,
                    message_references.message,
                    message_references.channel,
-                   message_references.guild
+                   message_references.guild,
+                   COUNT(attachments.id)
             FROM messages
             LEFT OUTER JOIN
                 message_interactions
                     ON messages.id = message_interactions.message_id
             LEFT OUTER JOIN
-                attachments
-                    ON messages.id = attachments.message
-            LEFT OUTER JOIN
                 message_references
                     ON messages.id = message_references.id
-            WHERE channel_id = ? AND pending = 0 ORDER BY id DESC LIMIT ?
+            LEFT JOIN
+                attachments
+                    ON messages.id = attachments.message
+            WHERE channel_id = ? AND pending = 0 GROUP BY messages.id ORDER BY id DESC LIMIT ?
         ) ORDER BY id ASC
     )");
     if (!m_stmt_get_last_msgs->OK()) {
