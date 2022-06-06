@@ -104,8 +104,11 @@ ChatInputAttachmentContainer::ChatInputAttachmentContainer()
 }
 
 void ChatInputAttachmentContainer::Clear() {
-    for (auto *x : m_attachments)
-        delete x;
+    for (auto *item : m_attachments) {
+        std::error_code ec;
+        std::filesystem::remove(item->GetPath(), ec);
+        delete item;
+    }
     m_attachments.clear();
 }
 
@@ -137,6 +140,8 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
     m_attachments.insert(item);
 
     item->signal_remove().connect([this, item] {
+        std::error_code ec;
+        std::filesystem::remove(item->GetPath(), ec);
         m_attachments.erase(item);
         delete item;
         if (m_attachments.empty())
