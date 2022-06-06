@@ -70,27 +70,13 @@ bool ChatInputText::CheckHandleClipboardPaste() {
     if (!clip->wait_is_image_available()) return false;
 
     const auto pb = clip->wait_for_image();
-    std::array<char, L_tmpnam> dest_name {};
-    if (std::tmpnam(dest_name.data()) == nullptr) {
-        fprintf(stderr, "failed to get temporary path\n");
+    if (pb) {
+        m_signal_image_paste.emit(pb);
+
         return true;
+    } else {
+        return false;
     }
-
-    // stinky
-    std::filesystem::path part1(std::filesystem::temp_directory_path() / "abaddon-cache");
-    std::filesystem::path part2(dest_name.data());
-    const auto dest_path = (part1 / part2.relative_path()).string();
-
-    try {
-        pb->save(dest_path, "png");
-    } catch (...) {
-        fprintf(stderr, "pasted image save error\n");
-        return true;
-    }
-
-    m_signal_image_paste.emit(pb, dest_path);
-
-    return true;
 }
 
 ChatInputText::type_signal_submit ChatInputText::signal_submit() {
@@ -123,8 +109,25 @@ void ChatInputAttachmentContainer::Clear() {
     m_attachments.clear();
 }
 
-bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb, const std::string &path) {
+bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     if (m_attachments.size() == 10) return false;
+
+    std::array<char, L_tmpnam> dest_name {};
+    if (std::tmpnam(dest_name.data()) == nullptr) {
+        fprintf(stderr, "failed to get temporary path\n");
+        return false;
+    }
+
+    std::filesystem::path part1(std::filesystem::temp_directory_path() / "abaddon-cache");
+    std::filesystem::path part2(dest_name.data());
+    const auto path = (part1 / part2.relative_path()).string();
+
+    try {
+        pb->save(path, "png");
+    } catch (...) {
+        fprintf(stderr, "pasted image save error\n");
+        return false;
+    }
 
     auto *item = Gtk::make_managed<ChatInputAttachmentItem>(path, pb);
     item->show();
@@ -223,8 +226,8 @@ ChatInput::ChatInput()
     add(m_input);
     show_all_children();
 
-    m_input.signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb, const std::string &path) {
-        if (m_attachments.AddImage(pb, path))
+    m_input.signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+        if (m_attachments.AddImage(pb))
             m_attachments_revealer.set_reveal_child(true);
     });
 

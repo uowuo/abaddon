@@ -32,7 +32,7 @@ public:
     ChatInputAttachmentContainer();
 
     void Clear();
-    bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb, const std::string &path);
+    bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
     [[nodiscard]] std::vector<std::string> GetFilePaths() const;
 
 private:
@@ -64,12 +64,11 @@ private:
     Gtk::TextView m_textview;
 
     bool CheckHandleClipboardPaste();
-    void HandleNewPastedImage(const Glib::RefPtr<Gdk::Pixbuf> &pb, const std::string &filename);
 
 public:
     using type_signal_submit = sigc::signal<bool, Glib::ustring>;
     using type_signal_escape = sigc::signal<void>;
-    using type_signal_image_paste = sigc::signal<void, Glib::RefPtr<Gdk::Pixbuf>, std::string>;
+    using type_signal_image_paste = sigc::signal<void, Glib::RefPtr<Gdk::Pixbuf>>;
 
     type_signal_submit signal_submit();
     type_signal_escape signal_escape();
