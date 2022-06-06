@@ -352,10 +352,6 @@ ChatList::type_signal_action_message_edit ChatList::signal_action_message_edit()
     return m_signal_action_message_edit;
 }
 
-ChatList::type_signal_action_chat_submit ChatList::signal_action_chat_submit() {
-    return m_signal_action_chat_submit;
-}
-
 ChatList::type_signal_action_chat_load_history ChatList::signal_action_chat_load_history() {
     return m_signal_action_chat_load_history;
 }

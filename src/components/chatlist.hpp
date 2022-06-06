@@ -63,7 +63,6 @@ private:
 public:
     // these are all forwarded by the parent
     using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
-    using type_signal_action_chat_submit = sigc::signal<void, std::string, Snowflake, Snowflake>;
     using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
     using type_signal_action_channel_click = sigc::signal<void, Snowflake>;
     using type_signal_action_insert_mention = sigc::signal<void, Snowflake>;
@@ -73,7 +72,6 @@ public:
     using type_signal_action_reply_to = sigc::signal<void, Snowflake>;
 
     type_signal_action_message_edit signal_action_message_edit();
-    type_signal_action_chat_submit signal_action_chat_submit();
     type_signal_action_chat_load_history signal_action_chat_load_history();
     type_signal_action_channel_click signal_action_channel_click();
     type_signal_action_insert_mention signal_action_insert_mention();
@@ -84,7 +82,6 @@ public:
 
 private:
     type_signal_action_message_edit m_signal_action_message_edit;
-    type_signal_action_chat_submit m_signal_action_chat_submit;
     type_signal_action_chat_load_history m_signal_action_chat_load_history;
     type_signal_action_channel_click m_signal_action_channel_click;
     type_signal_action_insert_mention m_signal_action_insert_mention;

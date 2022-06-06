@@ -45,6 +45,8 @@ ChatWindow::ChatWindow() {
     m_topic_text.set_halign(Gtk::ALIGN_START);
     m_topic_text.show();
 
+    m_input->set_valign(Gtk::ALIGN_END);
+
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
         if (m_is_replying)
@@ -69,9 +71,6 @@ ChatWindow::ChatWindow() {
     });
     m_chat->signal_action_chat_load_history().connect([this](Snowflake id) {
         m_signal_action_chat_load_history.emit(id);
-    });
-    m_chat->signal_action_chat_submit().connect([this](const std::string &str, Snowflake channel_id, Snowflake referenced_id) {
-        m_signal_action_chat_submit.emit(str, channel_id, referenced_id);
     });
     m_chat->signal_action_insert_mention().connect([this](Snowflake id) {
         // lowkey gross
@@ -210,15 +209,15 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-bool ChatWindow::OnInputSubmit(const Glib::ustring &text) {
+bool ChatWindow::OnInputSubmit(const Glib::ustring &text, const std::vector<std::string> &attachment_paths) {
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
-    if (text.empty())
+    if (text.empty() && attachment_paths.empty())
         return false;
 
     if (m_active_channel.IsValid())
-        m_signal_action_chat_submit.emit(text, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
+        m_signal_action_chat_submit.emit(text, attachment_paths, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
     if (m_is_replying)
         StopReplying();
 

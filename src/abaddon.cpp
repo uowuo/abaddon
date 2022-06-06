@@ -743,7 +743,7 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     });
 }
 
-void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message) {
+void Abaddon::ActionChatInputSubmit(std::string msg, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message) {
     if (msg.substr(0, 7) == "/shrug " || msg == "/shrug")
         msg = msg.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
 
@@ -751,9 +751,9 @@ void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflak
     if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, channel, Permission::VIEW_CHANNEL)) return;
 
     if (referenced_message.IsValid())
-        m_discord.SendChatMessage(msg, channel, referenced_message);
+        m_discord.SendChatMessage(msg, attachment_paths, channel, referenced_message);
     else
-        m_discord.SendChatMessage(msg, channel);
+        m_discord.SendChatMessage(msg, attachment_paths, channel);
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {

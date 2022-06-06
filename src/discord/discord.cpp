@@ -424,12 +424,32 @@ void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::re
     }
 }
 
-void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel) {
+void DiscordClient::SendChatMessageAttachments(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message) {
+    const auto nonce = std::to_string(Snowflake::FromNow());
+    CreateMessageObject obj;
+    obj.Content = content;
+    obj.Nonce = nonce;
+    if (referenced_message.IsValid())
+        obj.MessageReference.emplace().MessageID = referenced_message;
+
+    auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(channel) + "/messages");
+    req.make_form();
+    req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
+    for (size_t i = 0; i < attachment_paths.size(); i++) {
+        const auto field_name = "files[" + std::to_string(i) + "]";
+        req.add_file(field_name, attachment_paths.at(i), "unknown.png");
+    }
+    m_http.Execute(std::move(req), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
+}
+
+void DiscordClient::SendChatMessageText(const std::string &content, Snowflake channel, Snowflake referenced_message) {
     // @([^@#]{1,32})#(\\d{4})
     const auto nonce = std::to_string(Snowflake::FromNow());
     CreateMessageObject obj;
     obj.Content = content;
     obj.Nonce = nonce;
+    if (referenced_message.IsValid())
+        obj.MessageReference.emplace().MessageID = referenced_message;
     m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
     // dummy data so the content can be shown while waiting for MESSAGE_CREATE
     Message tmp;
@@ -448,27 +468,22 @@ void DiscordClient::SendChatMessage(const std::string &content, Snowflake channe
     m_signal_message_sent.emit(tmp);
 }
 
-void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message) {
-    const auto nonce = std::to_string(Snowflake::FromNow());
-    CreateMessageObject obj;
-    obj.Content = content;
-    obj.Nonce = nonce;
-    obj.MessageReference.emplace().MessageID = referenced_message;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
-    Message tmp;
-    tmp.Content = content;
-    tmp.ID = nonce;
-    tmp.ChannelID = channel;
-    tmp.Author = GetUserData();
-    tmp.IsTTS = false;
-    tmp.DoesMentionEveryone = false;
-    tmp.Type = MessageType::DEFAULT;
-    tmp.IsPinned = false;
-    tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
-    tmp.Nonce = obj.Nonce;
-    tmp.IsPending = true;
-    m_store.SetMessage(tmp.ID, tmp);
-    m_signal_message_sent.emit(tmp);
+void DiscordClient::SendChatMessage(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel) {
+    if (attachment_paths.empty())
+        SendChatMessageText(content, channel);
+    else {
+        puts("attach");
+        SendChatMessageAttachments(content, attachment_paths, channel, Snowflake::Invalid);
+    }
+}
+
+void DiscordClient::SendChatMessage(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message) {
+    if (attachment_paths.empty())
+        SendChatMessageText(content, channel, referenced_message);
+    else {
+        puts("attach");
+        SendChatMessageAttachments(content, attachment_paths, channel, referenced_message);
+    }
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {

@@ -112,6 +112,25 @@ void HTTPClient::MakeGET(const std::string &path, const std::function<void(http:
     }));
 }
 
+http::request HTTPClient::CreateRequest(http::EMethod method, std::string path) {
+    http::request req(method, m_api_base + path);
+    req.set_header("Authorization", m_authorization);
+    req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
+#ifdef USE_LOCAL_PROXY
+    req.set_proxy("http://127.0.0.1:8888");
+    req.set_verify_ssl(false);
+#endif
+    return req;
+}
+
+void HTTPClient::Execute(http::request &&req, const std::function<void(http::response_type r)> &cb) {
+    printf("%s %s\n", req.get_method(), req.get_url().c_str());
+    m_futures.push_back(std::async(std::launch::async, [this, cb, req = std::move(req)]() mutable {
+        auto res = req.execute();
+        OnResponse(res, cb);
+    }));
+}
+
 void HTTPClient::CleanupFutures() {
     for (auto it = m_futures.begin(); it != m_futures.end();) {
         if (it->wait_for(std::chrono::seconds(0)) == std::future_status::ready)

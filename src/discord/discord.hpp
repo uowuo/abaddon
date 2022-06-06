@@ -104,8 +104,8 @@ public:
 
     void ChatMessageCallback(const std::string &nonce, const http::response_type &response);
 
-    void SendChatMessage(const std::string &content, Snowflake channel);
-    void SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message);
+    void SendChatMessage(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel);
+    void SendChatMessage(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message);
     void DeleteMessage(Snowflake channel_id, Snowflake id);
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
@@ -222,6 +222,9 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
+
+    void SendChatMessageAttachments(const std::string &content, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message = Snowflake::Invalid);
+    void SendChatMessageText(const std::string &content, Snowflake channel, Snowflake referenced_message = Snowflake::Invalid);
 
     static std::string GetAPIURL();
     static std::string GetGatewayURL();

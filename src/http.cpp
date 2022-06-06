@@ -29,12 +29,33 @@ request::request(EMethod method, std::string url)
     prepare();
 }
 
+request::request(request &&other) noexcept
+    : m_curl(std::exchange(other.m_curl, nullptr))
+    , m_url(std::exchange(other.m_url, ""))
+    , m_method(std::exchange(other.m_method, nullptr))
+    , m_header_list(std::exchange(other.m_header_list, nullptr))
+    , m_error_buf(other.m_error_buf)
+    , m_form(std::exchange(other.m_form, nullptr)) {
+    // i think this is correct???
+}
+
 request::~request() {
     if (m_curl != nullptr)
         curl_easy_cleanup(m_curl);
 
     if (m_header_list != nullptr)
         curl_slist_free_all(m_header_list);
+
+    if (m_form != nullptr)
+        curl_mime_free(m_form);
+}
+
+const std::string &request::get_url() const {
+    return m_url;
+}
+
+const char *request::get_method() const {
+    return m_method;
 }
 
 void request::set_verify_ssl(bool verify) {
@@ -57,6 +78,26 @@ void request::set_user_agent(const std::string &data) {
     curl_easy_setopt(m_curl, CURLOPT_USERAGENT, data.c_str());
 }
 
+void request::make_form() {
+    m_form = curl_mime_init(m_curl);
+}
+
+// file must exist until request completes
+void request::add_file(std::string_view name, std::string_view file_path, std::string_view filename) {
+    auto *field = curl_mime_addpart(m_form);
+    curl_mime_name(field, name.data());
+    curl_mime_filedata(field, file_path.data());
+    curl_mime_filename(field, filename.data());
+}
+
+// copied
+void request::add_field(std::string_view name, const char *data, size_t size) {
+    puts(name.data());
+    auto *field = curl_mime_addpart(m_form);
+    curl_mime_name(field, name.data());
+    curl_mime_data(field, data, size);
+}
+
 response request::execute() {
     if (m_curl == nullptr) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLInit);
@@ -76,12 +117,14 @@ response request::execute() {
     m_error_buf[0] = '\0';
     if (m_header_list != nullptr)
         curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, m_header_list);
+    if (m_form != nullptr)
+        curl_easy_setopt(m_curl, CURLOPT_MIMEPOST, m_form);
 
     CURLcode result = curl_easy_perform(m_curl);
     if (result != CURLE_OK) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLPerform);
         response.error_string = curl_easy_strerror(result);
-        response.error_string += " " + std::string(m_error_buf);
+        response.error_string += " " + std::string(m_error_buf.data());
         return response;
     }
 
