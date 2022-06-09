@@ -47,6 +47,9 @@ ChatWindow::ChatWindow() {
 
     m_input->set_valign(Gtk::ALIGN_END);
 
+    m_input->signal_check_permission().connect([this](Permission perm) {
+        return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, perm);
+    });
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
         if (m_is_replying)

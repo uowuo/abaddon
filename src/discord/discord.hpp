@@ -96,6 +96,7 @@ public:
     bool IsThreadJoined(Snowflake thread_id) const;
     bool HasGuildPermission(Snowflake user_id, Snowflake guild_id, Permission perm) const;
 
+    bool HasSelfChannelPermission(Snowflake channel_id, Permission perm) const;
     bool HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
     bool HasChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const;
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;

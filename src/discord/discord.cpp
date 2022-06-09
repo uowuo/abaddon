@@ -318,6 +318,10 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
     return (base & perm) == perm;
 }
 
+bool DiscordClient::HasSelfChannelPermission(Snowflake channel_id, Permission perm) const {
+    return HasChannelPermission(m_user_data.ID, channel_id, perm);
+}
+
 bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value() || !channel->GuildID.has_value()) return false;
@@ -439,7 +443,13 @@ void DiscordClient::SendChatMessageAttachments(const std::string &content, const
         const auto field_name = "files[" + std::to_string(i) + "]";
         req.add_file(field_name, attachment_paths.at(i), "unknown.png");
     }
-    m_http.Execute(std::move(req), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
+    m_http.Execute(std::move(req), [this, attachment_paths, nonce](const http::response_type &res) {
+        for (const auto &path : attachment_paths) {
+            std::error_code ec;
+            std::filesystem::remove(path, ec);
+        }
+        ChatMessageCallback(nonce, res);
+    });
 }
 
 void DiscordClient::SendChatMessageText(const std::string &content, Snowflake channel, Snowflake referenced_message) {

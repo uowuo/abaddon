@@ -112,6 +112,13 @@ void ChatInputAttachmentContainer::Clear() {
     m_attachments.clear();
 }
 
+void ChatInputAttachmentContainer::ClearNoPurge() {
+    for (auto *item : m_attachments) {
+        delete item;
+    }
+    m_attachments.clear();
+}
+
 bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     if (m_attachments.size() == 10) return false;
 
@@ -217,8 +224,8 @@ ChatInput::ChatInput()
         const auto attachments = m_attachments.GetFilePaths();
         bool b = m_signal_submit.emit(input, attachments);
         if (b) {
-            m_attachments.Clear();
             m_attachments_revealer.set_reveal_child(false);
+            m_attachments.ClearNoPurge();
         }
         return b;
     });
@@ -232,7 +239,9 @@ ChatInput::ChatInput()
     show_all_children();
 
     m_input.signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-        if (m_attachments.AddImage(pb))
+        const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
+
+        if (can_attach_files && m_attachments.AddImage(pb))
             m_attachments_revealer.set_reveal_child(true);
     });
 
@@ -265,4 +274,8 @@ ChatInput::type_signal_submit ChatInput::signal_submit() {
 
 ChatInput::type_signal_escape ChatInput::signal_escape() {
     return m_signal_escape;
+}
+
+ChatInput::type_signal_check_permission ChatInput::signal_check_permission() {
+    return m_signal_check_permission;
 }

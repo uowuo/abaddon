@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm.h>
+#include "discord/permissions.hpp"
 
 class ChatInputAttachmentItem : public Gtk::EventBox {
 public:
@@ -32,6 +33,7 @@ public:
     ChatInputAttachmentContainer();
 
     void Clear();
+    void ClearNoPurge();
     bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
     [[nodiscard]] std::vector<std::string> GetFilePaths() const;
 
@@ -98,11 +100,14 @@ public:
     // maybe this should be reduced to a single struct, its bound to get more complicated (application commands?)
     using type_signal_submit = sigc::signal<bool, Glib::ustring, std::vector<std::string>>;
     using type_signal_escape = sigc::signal<void>;
+    using type_signal_check_permission = sigc::signal<bool, Permission>;
 
     type_signal_submit signal_submit();
     type_signal_escape signal_escape();
+    type_signal_check_permission signal_check_permission();
 
 private:
     type_signal_submit m_signal_submit;
     type_signal_escape m_signal_escape;
+    type_signal_check_permission m_signal_check_permission;
 };
