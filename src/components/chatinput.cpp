@@ -122,15 +122,9 @@ void ChatInputAttachmentContainer::ClearNoPurge() {
 bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     if (m_attachments.size() == 10) return false;
 
-    std::array<char, L_tmpnam> dest_name {};
-    if (std::tmpnam(dest_name.data()) == nullptr) {
-        fprintf(stderr, "failed to get temporary path\n");
-        return false;
-    }
-
-    std::filesystem::path part1(std::filesystem::temp_directory_path() / "abaddon-cache");
-    std::filesystem::path part2(dest_name.data());
-    const auto path = (part1 / part2.relative_path()).string();
+    static unsigned go_up = 0;
+    std::string dest_name = "pasted-image-" + std::to_string(go_up++);
+    const auto path = (std::filesystem::temp_directory_path() / "abaddon-cache" / dest_name).string();
 
     try {
         pb->save(path, "png");
