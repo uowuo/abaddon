@@ -41,7 +41,7 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::MemberItem
     JS_D("mute", m.IsMuted);
     JS_D("joined_at", m.JoinedAt);
     JS_D("deaf", m.IsDefeaned);
-    JS_N("hoisted_role", m.HoistedRole);
+    JS_ON("hoisted_role", m.HoistedRole);
     JS_ON("premium_since", m.PremiumSince);
     JS_ON("nick", m.Nickname);
     JS_ON("presence", m.Presence);
