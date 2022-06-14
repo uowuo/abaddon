@@ -3,6 +3,7 @@
 #include <string>
 #include <set>
 #include "discord/discord.hpp"
+#include "discord/chatsubmitparams.hpp"
 #include "completer.hpp"
 #include "state.hpp"
 
@@ -55,7 +56,7 @@ protected:
 
     Snowflake m_active_channel;
 
-    bool OnInputSubmit(const Glib::ustring &text, const std::vector<std::string> &attachment_paths);
+    bool OnInputSubmit(ChatSubmitParams data);
 
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
@@ -84,7 +85,7 @@ protected:
 
 public:
     using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
-    using type_signal_action_chat_submit = sigc::signal<void, std::string, std::vector<std::string>, Snowflake, Snowflake>;
+    using type_signal_action_chat_submit = sigc::signal<void, ChatSubmitParams>;
     using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
     using type_signal_action_channel_click = sigc::signal<void, Snowflake, bool>;
     using type_signal_action_insert_mention = sigc::signal<void, Snowflake>;

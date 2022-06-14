@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm.h>
+#include "discord/chatsubmitparams.hpp"
 #include "discord/permissions.hpp"
 
 class ChatInputAttachmentItem : public Gtk::EventBox {
@@ -7,6 +8,7 @@ public:
     ChatInputAttachmentItem(std::string path, const Glib::RefPtr<Gdk::Pixbuf> &pb);
 
     [[nodiscard]] std::string GetPath() const;
+    [[nodiscard]] ChatSubmitParams::AttachmentType GetType() const;
 
 private:
     void SetupMenu();
@@ -18,6 +20,7 @@ private:
     Gtk::Image *m_img = nullptr;
 
     std::string m_path;
+    ChatSubmitParams::AttachmentType m_type;
 
 private:
     using type_signal_remove = sigc::signal<void>;
@@ -35,7 +38,7 @@ public:
     void Clear();
     void ClearNoPurge();
     bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
-    [[nodiscard]] std::vector<std::string> GetFilePaths() const;
+    [[nodiscard]] std::vector<ChatSubmitParams::Attachment> GetAttachments() const;
 
 private:
     std::set<ChatInputAttachmentItem *> m_attachments;
@@ -96,9 +99,7 @@ private:
     ChatInputText m_input;
 
 public:
-    // text, attachments -> request sent
-    // maybe this should be reduced to a single struct, its bound to get more complicated (application commands?)
-    using type_signal_submit = sigc::signal<bool, Glib::ustring, std::vector<std::string>>;
+    using type_signal_submit = sigc::signal<bool, ChatSubmitParams>;
     using type_signal_escape = sigc::signal<void>;
     using type_signal_check_permission = sigc::signal<bool, Permission>;
 

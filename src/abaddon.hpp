@@ -36,7 +36,7 @@ public:
     void ActionSetToken();
     void ActionJoinGuildDialog();
     void ActionChannelOpened(Snowflake id, bool expand_to = true);
-    void ActionChatInputSubmit(std::string msg, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message);
+    void ActionChatInputSubmit(ChatSubmitParams data);
     void ActionChatLoadHistory(Snowflake id);
     void ActionChatEditMessage(Snowflake channel_id, Snowflake id);
     void ActionInsertMention(Snowflake id);

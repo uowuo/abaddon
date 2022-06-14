@@ -212,15 +212,18 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-bool ChatWindow::OnInputSubmit(const Glib::ustring &text, const std::vector<std::string> &attachment_paths) {
+bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
-    if (text.empty() && attachment_paths.empty())
+    if (data.Message.empty() && data.Attachments.empty())
         return false;
 
+    data.ChannelID = m_active_channel;
+    data.InReplyToID = m_replying_to;
+
     if (m_active_channel.IsValid())
-        m_signal_action_chat_submit.emit(text, attachment_paths, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
+        m_signal_action_chat_submit.emit(data); // m_replying_to is checked for invalid in the handler
     if (m_is_replying)
         StopReplying();
 

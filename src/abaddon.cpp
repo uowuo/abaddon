@@ -743,17 +743,22 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     });
 }
 
-void Abaddon::ActionChatInputSubmit(std::string msg, const std::vector<std::string> &attachment_paths, Snowflake channel, Snowflake referenced_message) {
-    if (msg.substr(0, 7) == "/shrug " || msg == "/shrug")
-        msg = msg.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
+static void ChatMessageSentCallback(const ChatSubmitParams &data) {
+    printf("completed for %s\n", data.Message.c_str());
+    for (const auto &attachment : data.Attachments) {
+        puts(attachment.Path.c_str());
+    }
+}
 
-    if (!channel.IsValid()) return;
-    if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, channel, Permission::VIEW_CHANNEL)) return;
+void Abaddon::ActionChatInputSubmit(ChatSubmitParams data) {
+    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug")
+        data.Message = data.Message.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
 
-    if (referenced_message.IsValid())
-        m_discord.SendChatMessage(msg, attachment_paths, channel, referenced_message);
-    else
-        m_discord.SendChatMessage(msg, attachment_paths, channel);
+    if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, data.ChannelID, Permission::VIEW_CHANNEL)) return;
+
+    m_discord.SendChatMessage(data, [data](DiscordError code) {
+        ChatMessageSentCallback(data);
+    });
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {

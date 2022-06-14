@@ -152,10 +152,10 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
     return true;
 }
 
-std::vector<std::string> ChatInputAttachmentContainer::GetFilePaths() const {
-    std::vector<std::string> ret;
+std::vector<ChatSubmitParams::Attachment> ChatInputAttachmentContainer::GetAttachments() const {
+    std::vector<ChatSubmitParams::Attachment> ret;
     for (auto *x : m_attachments)
-        ret.push_back(x->GetPath());
+        ret.push_back({ x->GetPath(), x->GetType() });
     return ret;
 }
 
@@ -165,7 +165,8 @@ ChatInputAttachmentContainer::type_signal_emptied ChatInputAttachmentContainer::
 
 ChatInputAttachmentItem::ChatInputAttachmentItem(std::string path, const Glib::RefPtr<Gdk::Pixbuf> &pb)
     : m_path(std::move(path))
-    , m_img(Gtk::make_managed<Gtk::Image>()) {
+    , m_img(Gtk::make_managed<Gtk::Image>())
+    , m_type(ChatSubmitParams::PastedImage) {
     get_style_context()->add_class("attachment-item");
 
     int outw, outh;
@@ -182,6 +183,10 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(std::string path, const Glib::R
 
 std::string ChatInputAttachmentItem::GetPath() const {
     return m_path;
+}
+
+ChatSubmitParams::AttachmentType ChatInputAttachmentItem::GetType() const {
+    return m_type;
 }
 
 void ChatInputAttachmentItem::SetupMenu() {
@@ -215,8 +220,11 @@ ChatInput::ChatInput()
         m_signal_escape.emit();
     });
     m_input.signal_submit().connect([this](const Glib::ustring &input) -> bool {
-        const auto attachments = m_attachments.GetFilePaths();
-        bool b = m_signal_submit.emit(input, attachments);
+        ChatSubmitParams data;
+        data.Message = input;
+        data.Attachments = m_attachments.GetAttachments();
+
+        bool b = m_signal_submit.emit(data);
         if (b) {
             m_attachments_revealer.set_reveal_child(false);
             m_attachments.ClearNoPurge();
