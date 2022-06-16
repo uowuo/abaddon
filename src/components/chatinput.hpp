@@ -41,7 +41,7 @@ public:
     [[nodiscard]] std::vector<ChatSubmitParams::Attachment> GetAttachments() const;
 
 private:
-    std::set<ChatInputAttachmentItem *> m_attachments;
+    std::vector<ChatInputAttachmentItem *> m_attachments;
 
     Gtk::Box m_box;
 

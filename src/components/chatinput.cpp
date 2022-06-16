@@ -138,12 +138,13 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
     item->set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*item);
 
-    m_attachments.insert(item);
+    m_attachments.push_back(item);
 
     item->signal_remove().connect([this, item] {
         std::error_code ec;
         std::filesystem::remove(item->GetPath(), ec);
-        m_attachments.erase(item);
+        if (auto it = std::find(m_attachments.begin(), m_attachments.end(), item); it != m_attachments.end())
+            m_attachments.erase(it);
         delete item;
         if (m_attachments.empty())
             m_signal_emptied.emit();
