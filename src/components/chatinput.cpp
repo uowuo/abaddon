@@ -105,8 +105,7 @@ ChatInputAttachmentContainer::ChatInputAttachmentContainer()
 
 void ChatInputAttachmentContainer::Clear() {
     for (auto *item : m_attachments) {
-        std::error_code ec;
-        std::filesystem::remove(item->GetPath(), ec);
+        item->RemoveIfTemp();
         delete item;
     }
     m_attachments.clear();
@@ -133,16 +132,36 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
         return false;
     }
 
-    auto *item = Gtk::make_managed<ChatInputAttachmentItem>(path, pb);
+    auto *item = Gtk::make_managed<ChatInputAttachmentItem>(Gio::File::create_for_path(path), pb);
     item->show();
     item->set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*item);
 
     m_attachments.push_back(item);
 
-    item->signal_remove().connect([this, item] {
-        std::error_code ec;
-        std::filesystem::remove(item->GetPath(), ec);
+    item->signal_item_removed().connect([this, item] {
+        item->RemoveIfTemp();
+        if (auto it = std::find(m_attachments.begin(), m_attachments.end(), item); it != m_attachments.end())
+            m_attachments.erase(it);
+        delete item;
+        if (m_attachments.empty())
+            m_signal_emptied.emit();
+    });
+
+    return true;
+}
+
+bool ChatInputAttachmentContainer::AddFile(const Glib::RefPtr<Gio::File> &file) {
+    if (m_attachments.size() == 10) return false;
+
+    auto *item = Gtk::make_managed<ChatInputAttachmentItem>(file);
+    item->show();
+    item->set_valign(Gtk::ALIGN_CENTER);
+    m_box.add(*item);
+
+    m_attachments.push_back(item);
+
+    item->signal_item_removed().connect([this, item] {
         if (auto it = std::find(m_attachments.begin(), m_attachments.end(), item); it != m_attachments.end())
             m_attachments.erase(it);
         delete item;
@@ -155,8 +174,11 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
 
 std::vector<ChatSubmitParams::Attachment> ChatInputAttachmentContainer::GetAttachments() const {
     std::vector<ChatSubmitParams::Attachment> ret;
-    for (auto *x : m_attachments)
-        ret.push_back({ x->GetPath(), x->GetType() });
+    for (auto *x : m_attachments) {
+        if (!x->GetFile()->query_exists())
+            puts("bad!");
+        ret.push_back({ x->GetFile(), x->GetType(), x->GetFilename() });
+    }
     return ret;
 }
 
@@ -164,10 +186,28 @@ ChatInputAttachmentContainer::type_signal_emptied ChatInputAttachmentContainer::
     return m_signal_emptied;
 }
 
-ChatInputAttachmentItem::ChatInputAttachmentItem(std::string path, const Glib::RefPtr<Gdk::Pixbuf> &pb)
-    : m_path(std::move(path))
+ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file)
+    : m_file(file)
+    , m_img(Gtk::make_managed<Gtk::Image>(Abaddon::Get().GetImageManager().GetPlaceholder(AttachmentItemSize)))
+    , m_type(ChatSubmitParams::ExtantFile) {
+    get_style_context()->add_class("attachment-item");
+
+    set_size_request(AttachmentItemSize, AttachmentItemSize);
+    m_box.add(*m_img);
+    add(m_box);
+    show_all_children();
+
+    SetupMenu();
+
+    auto info = m_file->query_info(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+    m_filename = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+}
+
+ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb)
+    : m_file(file)
     , m_img(Gtk::make_managed<Gtk::Image>())
-    , m_type(ChatSubmitParams::PastedImage) {
+    , m_type(ChatSubmitParams::PastedImage)
+    , m_filename("unknown.png") {
     get_style_context()->add_class("attachment-item");
 
     int outw, outh;
@@ -182,18 +222,31 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(std::string path, const Glib::R
     SetupMenu();
 }
 
-std::string ChatInputAttachmentItem::GetPath() const {
-    return m_path;
+Glib::RefPtr<Gio::File> ChatInputAttachmentItem::GetFile() const {
+    return m_file;
 }
 
 ChatSubmitParams::AttachmentType ChatInputAttachmentItem::GetType() const {
     return m_type;
 }
 
+std::string ChatInputAttachmentItem::GetFilename() const {
+    return m_filename;
+}
+
+bool ChatInputAttachmentItem::IsTemp() const noexcept {
+    return m_type == ChatSubmitParams::PastedImage;
+}
+
+void ChatInputAttachmentItem::RemoveIfTemp() {
+    if (IsTemp())
+        m_file->remove();
+}
+
 void ChatInputAttachmentItem::SetupMenu() {
     m_menu_remove.set_label("Remove");
     m_menu_remove.signal_activate().connect([this] {
-        m_signal_remove.emit();
+        m_signal_item_removed.emit();
     });
 
     m_menu.add(m_menu_remove);
@@ -209,8 +262,8 @@ void ChatInputAttachmentItem::SetupMenu() {
     });
 }
 
-ChatInputAttachmentItem::type_signal_remove ChatInputAttachmentItem::signal_remove() {
-    return m_signal_remove;
+ChatInputAttachmentItem::type_signal_item_removed ChatInputAttachmentItem::signal_item_removed() {
+    return m_signal_item_removed;
 }
 
 ChatInput::ChatInput()
@@ -269,6 +322,13 @@ Glib::RefPtr<Gtk::TextBuffer> ChatInput::GetBuffer() {
 
 bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
     return m_input.ProcessKeyPress(event);
+}
+
+void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
+    const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
+
+    if (can_attach_files && m_attachments.AddFile(file))
+        m_attachments_revealer.set_reveal_child(true);
 }
 
 ChatInput::type_signal_submit ChatInput::signal_submit() {

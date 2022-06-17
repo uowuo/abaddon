@@ -5,10 +5,14 @@
 
 class ChatInputAttachmentItem : public Gtk::EventBox {
 public:
-    ChatInputAttachmentItem(std::string path, const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file);
+    ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb);
 
-    [[nodiscard]] std::string GetPath() const;
+    [[nodiscard]] Glib::RefPtr<Gio::File> GetFile() const;
     [[nodiscard]] ChatSubmitParams::AttachmentType GetType() const;
+    [[nodiscard]] std::string GetFilename() const;
+    [[nodiscard]] bool IsTemp() const noexcept;
+    void RemoveIfTemp();
 
 private:
     void SetupMenu();
@@ -19,16 +23,17 @@ private:
     Gtk::Box m_box;
     Gtk::Image *m_img = nullptr;
 
-    std::string m_path;
+    Glib::RefPtr<Gio::File> m_file;
     ChatSubmitParams::AttachmentType m_type;
+    std::string m_filename;
 
 private:
-    using type_signal_remove = sigc::signal<void>;
+    using type_signal_item_removed = sigc::signal<void>;
 
-    type_signal_remove m_signal_remove;
+    type_signal_item_removed m_signal_item_removed;
 
 public:
-    type_signal_remove signal_remove();
+    type_signal_item_removed signal_item_removed();
 };
 
 class ChatInputAttachmentContainer : public Gtk::ScrolledWindow {
@@ -38,6 +43,7 @@ public:
     void Clear();
     void ClearNoPurge();
     bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    bool AddFile(const Glib::RefPtr<Gio::File> &file);
     [[nodiscard]] std::vector<ChatSubmitParams::Attachment> GetAttachments() const;
 
 private:
@@ -92,6 +98,7 @@ public:
     void InsertText(const Glib::ustring &text);
     Glib::RefPtr<Gtk::TextBuffer> GetBuffer();
     bool ProcessKeyPress(GdkEventKey *event);
+    void AddAttachment(const Glib::RefPtr<Gio::File> &file);
 
 private:
     Gtk::Revealer m_attachments_revealer;

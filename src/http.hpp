@@ -1,9 +1,9 @@
 #pragma once
 #include <array>
+#include <set>
 #include <string>
 #include <curl/curl.h>
-
-// i regret not using snake case for everything oh well
+#include <giomm/file.h>
 
 namespace http {
 enum EStatusCode : int {
@@ -115,7 +115,7 @@ struct request {
     void set_body(const std::string &data);
     void set_user_agent(const std::string &data);
     void make_form();
-    void add_file(std::string_view name, std::string_view file_path, std::string_view filename);
+    void add_file(std::string_view name, const Glib::RefPtr<Gio::File> &file, std::string_view filename);
     void add_field(std::string_view name, const char *data, size_t size);
 
     response execute();
@@ -129,6 +129,8 @@ private:
     curl_slist *m_header_list = nullptr;
     std::array<char, CURL_ERROR_SIZE> m_error_buf = { 0 };
     curl_mime *m_form = nullptr;
+
+    std::set<Glib::RefPtr<Gio::FileInputStream>> m_read_streams;
 };
 
 using response_type = response;

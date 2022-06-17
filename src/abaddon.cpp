@@ -746,7 +746,7 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
 static void ChatMessageSentCallback(const ChatSubmitParams &data) {
     printf("completed for %s\n", data.Message.c_str());
     for (const auto &attachment : data.Attachments) {
-        puts(attachment.Path.c_str());
+        puts(attachment.File->get_path().c_str());
     }
 }
 

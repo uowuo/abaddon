@@ -170,6 +170,10 @@ void ChatWindow::SetTopic(const std::string &text) {
     m_topic.set_visible(text.length() > 0);
 }
 
+void ChatWindow::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
+    m_input->AddAttachment(file);
+}
+
 #ifdef WITH_LIBHANDY
 void ChatWindow::OpenNewTab(Snowflake id) {
     // open if its the first tab (in which case it really isnt a tab but whatever)

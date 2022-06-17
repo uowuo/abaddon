@@ -35,7 +35,8 @@ request::request(request &&other) noexcept
     , m_method(std::exchange(other.m_method, nullptr))
     , m_header_list(std::exchange(other.m_header_list, nullptr))
     , m_error_buf(other.m_error_buf)
-    , m_form(std::exchange(other.m_form, nullptr)) {
+    , m_form(std::exchange(other.m_form, nullptr))
+    , m_read_streams(std::move(other.m_read_streams)) {
     // i think this is correct???
 }
 
@@ -82,12 +83,29 @@ void request::make_form() {
     m_form = curl_mime_init(m_curl);
 }
 
+static size_t http_readfunc(char *buffer, size_t size, size_t nitems, void *arg) {
+    auto stream = Glib::wrap(G_FILE_INPUT_STREAM(arg), true);
+    int r = stream->read(buffer, size * nitems);
+    if (r == -1) {
+        // https://github.com/curl/curl/blob/ad9bc5976d6661cd5b03ebc379313bf657701c14/lib/mime.c#L724
+        return size_t(-1);
+    }
+    return r;
+}
+
 // file must exist until request completes
-void request::add_file(std::string_view name, std::string_view file_path, std::string_view filename) {
+void request::add_file(std::string_view name, const Glib::RefPtr<Gio::File> &file, std::string_view filename) {
+    if (!file->query_exists()) return;
+
     auto *field = curl_mime_addpart(m_form);
     curl_mime_name(field, name.data());
-    curl_mime_filedata(field, file_path.data());
+    auto info = file->query_info();
+    auto stream = file->read();
+    curl_mime_data_cb(field, info->get_size(), http_readfunc, nullptr, nullptr, stream->gobj());
     curl_mime_filename(field, filename.data());
+
+    // hold ref
+    m_read_streams.insert(stream);
 }
 
 // copied

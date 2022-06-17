@@ -39,6 +39,9 @@ public:
 
 private:
     void SetupMenu();
+    void SetupDND();
+
+    void HandleDroppedURIs(const Gtk::SelectionData &selection);
 
     Gtk::Box m_main_box;
     Gtk::Box m_content_box;

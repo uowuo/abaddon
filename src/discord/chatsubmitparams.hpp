@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <glibmm/ustring.h>
+#include <giomm/file.h>
 #include "discord/snowflake.hpp"
 
 struct ChatSubmitParams {
@@ -11,8 +12,9 @@ struct ChatSubmitParams {
     };
 
     struct Attachment {
-        std::string Path;
+        Glib::RefPtr<Gio::File> File;
         AttachmentType Type;
+        std::string Filename;
     };
 
     Snowflake ChannelID;

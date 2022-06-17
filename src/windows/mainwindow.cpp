@@ -76,6 +76,7 @@ MainWindow::MainWindow()
     add(m_main_box);
 
     SetupMenu();
+    SetupDND();
 }
 
 void MainWindow::UpdateComponents() {
@@ -348,6 +349,22 @@ void MainWindow::SetupMenu() {
         GoForward();
     });
 #endif
+}
+
+void MainWindow::SetupDND() {
+    std::vector<Gtk::TargetEntry> targets;
+    targets.emplace_back("text/uri-list", Gtk::TargetFlags(0), 0);
+    drag_dest_set(targets, Gtk::DEST_DEFAULT_DROP | Gtk::DEST_DEFAULT_MOTION | Gtk::DEST_DEFAULT_HIGHLIGHT, Gdk::DragAction::ACTION_COPY);
+    signal_drag_data_received().connect([this](const Glib::RefPtr<Gdk::DragContext> &ctx, int x, int y, const Gtk::SelectionData &selection, guint info, guint time) {
+        HandleDroppedURIs(selection);
+    });
+}
+
+void MainWindow::HandleDroppedURIs(const Gtk::SelectionData &selection) {
+    for (const auto &uri : selection.get_uris()) {
+        // not using Glib::get_filename_for_uri or whatever because the conversion is BAD (on windows at least)
+        m_chat.AddAttachment(Gio::File::create_for_uri(uri));
+    }
 }
 
 MainWindow::type_signal_action_connect MainWindow::signal_action_connect() {

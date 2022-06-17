@@ -35,6 +35,7 @@ public:
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
     void SetTopic(const std::string &text);
+    void AddAttachment(const Glib::RefPtr<Gio::File> &file);
 
 #ifdef WITH_LIBHANDY
     void OpenNewTab(Snowflake id);
