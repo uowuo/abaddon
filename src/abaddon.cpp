@@ -11,6 +11,7 @@
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
+#include "dialogs/textinput.hpp"
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
@@ -865,6 +866,15 @@ void Abaddon::ActionViewThreads(Snowflake channel_id) {
     auto window = new ThreadsWindow(*data);
     ManageHeapWindow(window);
     window->show();
+}
+
+std::optional<Glib::ustring> Abaddon::ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window *window) {
+    TextInputDialog dlg(prompt, title, placeholder, window != nullptr ? *window : *m_main_window);
+    const auto code = dlg.run();
+    if (code == Gtk::RESPONSE_OK)
+        return dlg.GetInput();
+    else
+        return {};
 }
 
 bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {

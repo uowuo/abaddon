@@ -16,9 +16,11 @@ public:
 
 private:
     void SetupMenu();
+    void UpdateTooltip();
 
     Gtk::Menu m_menu;
     Gtk::MenuItem m_menu_remove;
+    Gtk::MenuItem m_menu_set_filename;
 
     Gtk::Box m_box;
     Gtk::Image *m_img = nullptr;

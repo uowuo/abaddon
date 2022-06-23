@@ -220,6 +220,7 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     show_all_children();
 
     SetupMenu();
+    UpdateTooltip();
 }
 
 Glib::RefPtr<Gio::File> ChatInputAttachmentItem::GetFile() const {
@@ -249,6 +250,16 @@ void ChatInputAttachmentItem::SetupMenu() {
         m_signal_item_removed.emit();
     });
 
+    m_menu_set_filename.set_label("Change Filename");
+    m_menu_set_filename.signal_activate().connect([this] {
+        const auto name = Abaddon::Get().ShowTextPrompt("Enter new filename for attachment", "Enter filename", m_filename);
+        if (name.has_value()) {
+            m_filename = *name;
+            UpdateTooltip();
+        }
+    });
+
+    m_menu.add(m_menu_set_filename);
     m_menu.add(m_menu_remove);
     m_menu.show_all();
 
@@ -260,6 +271,10 @@ void ChatInputAttachmentItem::SetupMenu() {
 
         return false;
     });
+}
+
+void ChatInputAttachmentItem::UpdateTooltip() {
+    set_tooltip_text(m_filename);
 }
 
 ChatInputAttachmentItem::type_signal_item_removed ChatInputAttachmentItem::signal_item_removed() {
