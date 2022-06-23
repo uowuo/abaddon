@@ -59,18 +59,17 @@ the result of fundamental issues with Discord's thread implementation.
 
 #### Mac:
 
-1. `git clone https://github.com/uowuo/abaddon && cd abaddon`
+1. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 2. `brew install gtkmm3 nlohmann-json`
-3. `git submodule update --init subprojects`
-4. `mkdir build && cd build`
-5. `cmake ..`
-6. `make`
+3. `mkdir build && cd build`
+4. `cmake ..`
+5. `make`
 
 #### Linux:
 
 1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`,
    and [nlohmann-json](https://github.com/nlohmann/json)
-2. `git clone https://github.com/uowuo/abaddon && cd abaddon`
+2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
