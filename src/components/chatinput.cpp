@@ -188,14 +188,19 @@ ChatInputAttachmentContainer::type_signal_emptied ChatInputAttachmentContainer::
 
 ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file)
     : m_file(file)
-    , m_img(Gtk::make_managed<Gtk::Image>(Abaddon::Get().GetImageManager().GetPlaceholder(AttachmentItemSize)))
+    , m_img(Gtk::make_managed<Gtk::Image>())
     , m_type(ChatSubmitParams::ExtantFile) {
     get_style_context()->add_class("attachment-item");
 
     set_size_request(AttachmentItemSize, AttachmentItemSize);
+    m_box.set_halign(Gtk::ALIGN_CENTER);
+    m_box.set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*m_img);
     add(m_box);
     show_all_children();
+
+    m_img->property_icon_name() = "document-send-symbolic";
+    m_img->property_icon_size() = Gtk::ICON_SIZE_DIALOG; // todo figure out how to not use this weird property??? i dont know how icons work (screw your theme)
 
     SetupMenu();
 
@@ -215,6 +220,8 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     m_img->property_pixbuf() = pb->scale_simple(outw, outh, Gdk::INTERP_BILINEAR);
 
     set_size_request(AttachmentItemSize, AttachmentItemSize);
+    m_box.set_halign(Gtk::ALIGN_CENTER);
+    m_box.set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*m_img);
     add(m_box);
     show_all_children();
