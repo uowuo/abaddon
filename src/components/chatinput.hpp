@@ -6,7 +6,7 @@
 class ChatInputAttachmentItem : public Gtk::EventBox {
 public:
     ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file);
-    ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb, bool is_extant = false);
 
     [[nodiscard]] Glib::RefPtr<Gio::File> GetFile() const;
     [[nodiscard]] ChatSubmitParams::AttachmentType GetType() const;
@@ -15,6 +15,7 @@ public:
     void RemoveIfTemp();
 
 private:
+    void SetFilenameFromFile();
     void SetupMenu();
     void UpdateTooltip();
 
@@ -45,7 +46,7 @@ public:
     void Clear();
     void ClearNoPurge();
     bool AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb);
-    bool AddFile(const Glib::RefPtr<Gio::File> &file);
+    bool AddFile(const Glib::RefPtr<Gio::File> &file, Glib::RefPtr<Gdk::Pixbuf> pb = {});
     [[nodiscard]] std::vector<ChatSubmitParams::Attachment> GetAttachments() const;
 
 private:
@@ -103,6 +104,8 @@ public:
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);
 
 private:
+    bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);
+
     Gtk::Revealer m_attachments_revealer;
     ChatInputAttachmentContainer m_attachments;
     ChatInputText m_input;

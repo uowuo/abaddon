@@ -67,6 +67,7 @@ void ChatInputText::on_grab_focus() {
 
 bool ChatInputText::CheckHandleClipboardPaste() {
     auto clip = Gtk::Clipboard::get();
+
     if (!clip->wait_is_image_available()) return false;
 
     const auto pb = clip->wait_for_image();
@@ -151,10 +152,14 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
     return true;
 }
 
-bool ChatInputAttachmentContainer::AddFile(const Glib::RefPtr<Gio::File> &file) {
+bool ChatInputAttachmentContainer::AddFile(const Glib::RefPtr<Gio::File> &file, Glib::RefPtr<Gdk::Pixbuf> pb) {
     if (m_attachments.size() == 10) return false;
 
-    auto *item = Gtk::make_managed<ChatInputAttachmentItem>(file);
+    ChatInputAttachmentItem *item;
+    if (pb)
+        item = Gtk::make_managed<ChatInputAttachmentItem>(file, pb, true);
+    else
+        item = Gtk::make_managed<ChatInputAttachmentItem>(file);
     item->show();
     item->set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*item);
@@ -202,16 +207,16 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     m_img->property_icon_name() = "document-send-symbolic";
     m_img->property_icon_size() = Gtk::ICON_SIZE_DIALOG; // todo figure out how to not use this weird property??? i dont know how icons work (screw your theme)
 
-    SetupMenu();
+    SetFilenameFromFile();
 
-    auto info = m_file->query_info(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
-    m_filename = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+    SetupMenu();
+    UpdateTooltip();
 }
 
-ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb)
+ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb, bool is_extant)
     : m_file(file)
     , m_img(Gtk::make_managed<Gtk::Image>())
-    , m_type(ChatSubmitParams::PastedImage)
+    , m_type(is_extant ? ChatSubmitParams::ExtantFile : ChatSubmitParams::PastedImage)
     , m_filename("unknown.png") {
     get_style_context()->add_class("attachment-item");
 
@@ -225,6 +230,9 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     m_box.add(*m_img);
     add(m_box);
     show_all_children();
+
+    if (is_extant)
+        SetFilenameFromFile();
 
     SetupMenu();
     UpdateTooltip();
@@ -249,6 +257,11 @@ bool ChatInputAttachmentItem::IsTemp() const noexcept {
 void ChatInputAttachmentItem::RemoveIfTemp() {
     if (IsTemp())
         m_file->remove();
+}
+
+void ChatInputAttachmentItem::SetFilenameFromFile() {
+    auto info = m_file->query_info(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+    m_filename = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
 }
 
 void ChatInputAttachmentItem::SetupMenu() {
@@ -348,9 +361,43 @@ bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
 
 void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
     const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
+    if (!can_attach_files) return;
 
-    if (can_attach_files && m_attachments.AddFile(file))
+    std::string content_type;
+
+    try {
+        const auto info = file->query_info(G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+        content_type = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+    } catch (const Gio::Error &err) {
+        printf("io error: %s\n", err.what());
+        return;
+    } catch (...) {
+        puts("attachment query exception");
+        return;
+    }
+
+    static const std::unordered_set<std::string> image_exts {
+        ".png",
+        ".jpg",
+    };
+
+    if (image_exts.find(content_type) != image_exts.end()) {
+        if (AddFileAsImageAttachment(file))
+            m_attachments_revealer.set_reveal_child(true);
+    } else if (m_attachments.AddFile(file)) {
         m_attachments_revealer.set_reveal_child(true);
+    }
+}
+
+bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
+    try {
+        const auto read_stream = file->read();
+        if (!read_stream) return false;
+        const auto pb = Gdk::Pixbuf::create_from_stream(read_stream);
+        return m_attachments.AddFile(file, pb);
+    } catch (...) {
+        return m_attachments.AddFile(file);
+    }
 }
 
 ChatInput::type_signal_submit ChatInput::signal_submit() {
