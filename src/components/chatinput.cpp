@@ -369,7 +369,7 @@ void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
         const auto info = file->query_info(G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
         content_type = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
     } catch (const Gio::Error &err) {
-        printf("io error: %s\n", err.what());
+        printf("io error: %s\n", err.what().c_str());
         return;
     } catch (...) {
         puts("attachment query exception");
