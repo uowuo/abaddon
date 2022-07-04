@@ -382,10 +382,13 @@ void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
     };
 
     if (image_exts.find(content_type) != image_exts.end()) {
-        if (AddFileAsImageAttachment(file))
+        if (AddFileAsImageAttachment(file)) {
             m_attachments_revealer.set_reveal_child(true);
+            m_input.grab_focus();
+        }
     } else if (m_attachments.AddFile(file)) {
         m_attachments_revealer.set_reveal_child(true);
+        m_input.grab_focus();
     }
 }
 
