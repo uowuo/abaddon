@@ -204,7 +204,7 @@ void GuildSettingsMembersPaneInfo::SetUser(Snowflake user_id) {
     auto member = *discord.GetMember(user_id, GuildID);
     member.User = discord.GetUser(user_id);
 
-    m_bot.set_visible(member.User->IsBot.has_value() && *member.User->IsBot);
+    m_bot.set_visible(member.User->IsABot());
 
     m_id.set_text("User ID: " + std::to_string(user_id));
     m_created.set_text("Account created: " + user_id.GetLocalTimestamp());

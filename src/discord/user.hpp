@@ -60,6 +60,7 @@ struct UserData {
     friend void to_json(nlohmann::json &j, const UserData &m);
     void update_from_json(const nlohmann::json &j);
 
+    [[nodiscard]] bool IsABot() const noexcept;
     [[nodiscard]] bool IsDeleted() const;
     [[nodiscard]] bool HasAvatar() const;
     [[nodiscard]] bool HasAnimatedAvatar() const noexcept;
