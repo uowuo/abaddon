@@ -323,3 +323,18 @@
 .channel-tab-switcher tab > button:hover {
     background-color: alpha(#ff0000, 0.5);
 }
+
+.message-progress {
+    border: none;
+}
+
+.message-progress trough {
+    border: none;
+    background-color: transparent;
+}
+
+.message-progress progress {
+    border: none;
+    background-color: #dd3300;
+    margin-left: 1px;
+}

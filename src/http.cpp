@@ -36,8 +36,11 @@ request::request(request &&other) noexcept
     , m_header_list(std::exchange(other.m_header_list, nullptr))
     , m_error_buf(other.m_error_buf)
     , m_form(std::exchange(other.m_form, nullptr))
-    , m_read_streams(std::move(other.m_read_streams)) {
-    // i think this is correct???
+    , m_read_streams(std::move(other.m_read_streams))
+    , m_progress_callback(std::move(other.m_progress_callback)) {
+    if (m_progress_callback) {
+        curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, this);
+    }
 }
 
 request::~request() {
@@ -57,6 +60,22 @@ const std::string &request::get_url() const {
 
 const char *request::get_method() const {
     return m_method;
+}
+
+size_t http_req_xferinfofunc(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+    if (ultotal > 0) {
+        auto *req = reinterpret_cast<request *>(clientp);
+        req->m_progress_callback(ultotal, ulnow);
+    }
+
+    return 0;
+}
+
+void request::set_progress_callback(std::function<void(curl_off_t, curl_off_t)> func) {
+    m_progress_callback = std::move(func);
+    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(m_curl, CURLOPT_XFERINFOFUNCTION, http_req_xferinfofunc);
+    curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, this);
 }
 
 void request::set_verify_ssl(bool verify) {

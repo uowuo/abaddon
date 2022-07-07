@@ -6,6 +6,7 @@
 #include "discord/chatsubmitparams.hpp"
 #include "completer.hpp"
 #include "state.hpp"
+#include "progressbar.hpp"
 
 #ifdef WITH_LIBHANDY
 class ChannelTabSwitcherHandy;
@@ -79,6 +80,7 @@ protected:
     ChatInputIndicator *m_input_indicator;
     RateLimitIndicator *m_rate_limit_indicator;
     Gtk::Box *m_meta;
+    MessageUploadProgressBar m_progress;
 
 #ifdef WITH_LIBHANDY
     ChannelTabSwitcherHandy *m_tab_switcher;

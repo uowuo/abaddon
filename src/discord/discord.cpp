@@ -476,6 +476,15 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
 
     auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
+    req.set_progress_callback([this, nonce](curl_off_t ultotal, curl_off_t ulnow) {
+        m_generic_mutex.lock();
+        m_generic_queue.push(sigc::bind(
+            sigc::mem_fun(m_signal_message_progress, decltype(m_signal_message_progress)::emit),
+            nonce,
+            static_cast<float>(ulnow) / static_cast<float>(ultotal)));
+        m_generic_dispatch.emit();
+        m_generic_mutex.unlock();
+    });
     req.make_form();
     req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
     for (size_t i = 0; i < params.Attachments.size(); i++) {
@@ -490,6 +499,23 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
         }
         ChatMessageCallback(nonce, res, callback);
     });
+
+    // dummy preview data
+    Message tmp;
+    tmp.Content = params.Message;
+    tmp.ID = nonce;
+    tmp.ChannelID = params.ChannelID;
+    tmp.Author = GetUserData();
+    tmp.IsTTS = false;
+    tmp.DoesMentionEveryone = false;
+    tmp.Type = MessageType::DEFAULT;
+    tmp.IsPinned = false;
+    tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
+    tmp.Nonce = nonce;
+    tmp.IsPending = true;
+
+    m_store.SetMessage(tmp.ID, tmp);
+    m_signal_message_create.emit(tmp);
 }
 
 void DiscordClient::SendChatMessage(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
@@ -2566,6 +2592,10 @@ DiscordClient::type_signal_disconnected DiscordClient::signal_disconnected() {
 
 DiscordClient::type_signal_connected DiscordClient::signal_connected() {
     return m_signal_connected;
+}
+
+DiscordClient::type_signal_message_progress DiscordClient::signal_message_progress() {
+    return m_signal_message_progress;
 }
 
 DiscordClient::type_signal_role_update DiscordClient::signal_role_update() {

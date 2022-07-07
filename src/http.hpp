@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <functional>
 #include <set>
 #include <string>
 #include <curl/curl.h>
@@ -109,6 +110,7 @@ struct request {
     const std::string &get_url() const;
     const char *get_method() const;
 
+    void set_progress_callback(std::function<void(curl_off_t, curl_off_t)> func);
     void set_verify_ssl(bool verify);
     void set_proxy(const std::string &proxy);
     void set_header(const std::string &name, const std::string &value);
@@ -129,8 +131,11 @@ private:
     curl_slist *m_header_list = nullptr;
     std::array<char, CURL_ERROR_SIZE> m_error_buf = { 0 };
     curl_mime *m_form = nullptr;
+    std::function<void(curl_off_t, curl_off_t)> m_progress_callback;
 
     std::set<Glib::RefPtr<Gio::FileInputStream>> m_read_streams;
+
+    friend size_t http_req_xferinfofunc(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t);
 };
 
 using response_type = response;

@@ -9,7 +9,8 @@
 #endif
 
 ChatWindow::ChatWindow() {
-    Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_chat = Gtk::manage(new ChatList);
@@ -59,11 +60,11 @@ ChatWindow::ChatWindow() {
     m_input->show();
 
     m_completer.SetBuffer(m_input->GetBuffer());
-    m_completer.SetGetChannelID([this]() -> auto {
+    m_completer.SetGetChannelID([this]() {
         return m_active_channel;
     });
 
-    m_completer.SetGetRecentAuthors([this]() -> auto {
+    m_completer.SetGetRecentAuthors([this]() {
         return m_chat->GetRecentAuthors();
     });
 
@@ -109,6 +110,10 @@ ChatWindow::ChatWindow() {
     m_main->add(m_completer);
     m_main->add(*m_input);
     m_main->add(*m_meta);
+    m_main->add(m_progress);
+
+    m_progress.show();
+
     m_main->show();
 }
 

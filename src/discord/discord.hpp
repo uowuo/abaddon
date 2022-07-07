@@ -404,6 +404,7 @@ public:
     typedef sigc::signal<void, std::string /* nonce */, float /* retry_after */> type_signal_message_send_fail; // retry after param will be 0 if it failed for a reason that isnt slowmode
     typedef sigc::signal<void, bool, GatewayCloseCode> type_signal_disconnected;                                // bool true if reconnecting
     typedef sigc::signal<void> type_signal_connected;
+    typedef sigc::signal<void, std::string, float> type_signal_message_progress;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_message_create signal_message_create();
@@ -457,6 +458,7 @@ public:
     type_signal_message_send_fail signal_message_send_fail();
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
+    type_signal_message_progress signal_message_progress();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -511,4 +513,5 @@ protected:
     type_signal_message_send_fail m_signal_message_send_fail;
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
+    type_signal_message_progress m_signal_message_progress;
 };
