@@ -479,7 +479,7 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
     req.set_progress_callback([this, nonce](curl_off_t ultotal, curl_off_t ulnow) {
         m_generic_mutex.lock();
         m_generic_queue.push(sigc::bind(
-            sigc::mem_fun(m_signal_message_progress, decltype(m_signal_message_progress)::emit),
+            sigc::mem_fun(m_signal_message_progress, type_signal_message_progress::emit),
             nonce,
             static_cast<float>(ulnow) / static_cast<float>(ultotal)));
         m_generic_dispatch.emit();
