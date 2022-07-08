@@ -34,6 +34,9 @@ void ChatList::Clear() {
         delete *it;
         it++;
     }
+    m_id_to_widget.clear();
+    m_num_messages = 0;
+    m_num_rows = 0;
 }
 
 void ChatList::SetActiveChannel(Snowflake id) {
