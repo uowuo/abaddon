@@ -102,6 +102,10 @@ public:
     Glib::RefPtr<Gtk::TextBuffer> GetBuffer();
     bool ProcessKeyPress(GdkEventKey *event);
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);
+    void IndicateTooLarge();
+
+    void StartReplying();
+    void StopReplying();
 
 private:
     bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);

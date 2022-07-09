@@ -4,6 +4,7 @@
 #include "ratelimitindicator.hpp"
 #include "chatinput.hpp"
 #include "chatlist.hpp"
+#include "constants.hpp"
 #ifdef WITH_LIBHANDY
     #include "channeltabswitcherhandy.hpp"
 #endif
@@ -222,6 +223,24 @@ Snowflake ChatWindow::GetActiveChannel() const {
 }
 
 bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
+    int restriction = BaseAttachmentSizeLimit;
+    const auto nitro = Abaddon::Get().GetDiscordClient().GetUserData().PremiumType;
+    if (!nitro.has_value() || nitro == EPremiumType::None) {
+        restriction = BaseAttachmentSizeLimit;
+    } else if (nitro == EPremiumType::NitroClassic) {
+        restriction = NitroClassicAttachmentSizeLimit;
+    } else if (nitro == EPremiumType::Nitro) {
+        restriction = NitroAttachmentSizeLimit;
+    }
+
+    for (const auto &attachment : data.Attachments) {
+        const auto info = attachment.File->query_info();
+        if (info && info->get_size() > restriction) {
+            m_input->IndicateTooLarge();
+            return false;
+        }
+    }
+
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
@@ -255,8 +274,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     const auto author = discord.GetUser(message.Author.ID);
     m_replying_to = message_id;
     m_is_replying = true;
-    m_input->grab_focus();
-    m_input->get_style_context()->add_class("replying");
+    m_input->StartReplying();
     if (author.has_value())
         m_input_indicator->SetCustomMarkup("Replying to " + author->GetEscapedBoldString<false>());
     else
@@ -266,7 +284,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
 void ChatWindow::StopReplying() {
     m_is_replying = false;
     m_replying_to = Snowflake::Invalid;
-    m_input->get_style_context()->remove_class("replying");
+    m_input->StopReplying();
     m_input_indicator->ClearCustom();
 }
 

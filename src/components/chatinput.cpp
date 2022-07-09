@@ -392,6 +392,23 @@ void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
     }
 }
 
+void ChatInput::IndicateTooLarge() {
+    m_input.get_style_context()->add_class("bad-input");
+    const auto cb = [this] {
+        m_input.get_style_context()->remove_class("bad-input");
+    };
+    Glib::signal_timeout().connect_seconds_once(sigc::track_obj(cb, *this), 2);
+}
+
+void ChatInput::StartReplying() {
+    m_input.grab_focus();
+    m_input.get_style_context()->add_class("replying");
+}
+
+void ChatInput::StopReplying() {
+    m_input.get_style_context()->remove_class("replying");
+}
+
 bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
     try {
         const auto read_stream = file->read();

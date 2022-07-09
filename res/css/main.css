@@ -102,10 +102,15 @@
     background-color: #242424;
     color: #adadad;
     border-radius: 15px;
+    border: 1px solid transparent;
 }
 
 .message-input.replying {
     border: 1px solid #026FB9;
+}
+
+.message-input.bad-input {
+    border: 1px solid #dd3300;
 }
 
 .message-input {
