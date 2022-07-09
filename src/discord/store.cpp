@@ -738,6 +738,7 @@ std::optional<GuildData> Store::GetGuild(Snowflake id) const {
     s->Get(2, r.Icon);
     s->Get(5, r.OwnerID);
     s->Get(20, r.IsUnavailable);
+    s->Get(27, r.PremiumTier);
 
     s->Reset();
 

@@ -223,15 +223,32 @@ Snowflake ChatWindow::GetActiveChannel() const {
 }
 
 bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
-    int restriction = BaseAttachmentSizeLimit;
-    const auto nitro = Abaddon::Get().GetDiscordClient().GetUserData().PremiumType;
+    auto &discord = Abaddon::Get().GetDiscordClient();
+
+    int nitro_restriction = BaseAttachmentSizeLimit;
+    const auto nitro = discord.GetUserData().PremiumType;
     if (!nitro.has_value() || nitro == EPremiumType::None) {
-        restriction = BaseAttachmentSizeLimit;
+        nitro_restriction = BaseAttachmentSizeLimit;
     } else if (nitro == EPremiumType::NitroClassic) {
-        restriction = NitroClassicAttachmentSizeLimit;
+        nitro_restriction = NitroClassicAttachmentSizeLimit;
     } else if (nitro == EPremiumType::Nitro) {
-        restriction = NitroAttachmentSizeLimit;
+        nitro_restriction = NitroAttachmentSizeLimit;
     }
+
+    int guild_restriction = BaseAttachmentSizeLimit;
+    if (const auto channel = discord.GetChannel(m_active_channel); channel.has_value() && channel->GuildID.has_value()) {
+        if (const auto guild = discord.GetGuild(*channel->GuildID); guild.has_value()) {
+            if (!guild->PremiumTier.has_value() || guild->PremiumTier == GuildPremiumTier::NONE || guild->PremiumTier == GuildPremiumTier::TIER_1) {
+                guild_restriction = BaseAttachmentSizeLimit;
+            } else if (guild->PremiumTier == GuildPremiumTier::TIER_2) {
+                guild_restriction = BoostLevel2AttachmentSizeLimit;
+            } else if (guild->PremiumTier == GuildPremiumTier::TIER_3) {
+                guild_restriction = BoostLevel3AttachmentSizeLimit;
+            }
+        }
+    }
+
+    int restriction = std::max(nitro_restriction, guild_restriction);
 
     for (const auto &attachment : data.Attachments) {
         const auto info = attachment.File->query_info();
