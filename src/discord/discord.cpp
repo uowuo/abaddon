@@ -478,10 +478,11 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
     auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
     req.set_progress_callback([this, nonce](curl_off_t ultotal, curl_off_t ulnow) {
         m_generic_mutex.lock();
-        m_generic_queue.push(sigc::bind(
-            sigc::mem_fun(m_signal_message_progress, type_signal_message_progress::emit),
-            nonce,
-            static_cast<float>(ulnow) / static_cast<float>(ultotal)));
+        m_generic_queue.push([this, nonce, ultotal, ulnow] {
+            m_signal_message_progress.emit(
+                nonce,
+                static_cast<float>(ulnow) / static_cast<float>(ultotal));
+        });
         m_generic_dispatch.emit();
         m_generic_mutex.unlock();
     });
