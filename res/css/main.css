@@ -331,6 +331,7 @@
 
 .message-progress {
     border: none;
+    margin-bottom: -8px;
 }
 
 .message-progress trough {
