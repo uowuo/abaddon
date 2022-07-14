@@ -483,8 +483,8 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
                 nonce,
                 static_cast<float>(ulnow) / static_cast<float>(ultotal));
         });
-        m_generic_dispatch.emit();
         m_generic_mutex.unlock();
+        m_generic_dispatch.emit();
     });
     req.make_form();
     req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
