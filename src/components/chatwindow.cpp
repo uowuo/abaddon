@@ -250,11 +250,20 @@ bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
 
     int restriction = std::max(nitro_restriction, guild_restriction);
 
+    goffset total_size = 0;
     for (const auto &attachment : data.Attachments) {
         const auto info = attachment.File->query_info();
-        if (info && info->get_size() > restriction) {
-            m_input->IndicateTooLarge();
-            return false;
+        if (info) {
+            const auto size = info->get_size();
+            if (size > restriction) {
+                m_input->IndicateTooLarge();
+                return false;
+            }
+            total_size += size;
+            if (total_size > MaxMessagePayloadSize) {
+                m_input->IndicateTooLarge();
+                return false;
+            }
         }
     }
 

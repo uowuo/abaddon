@@ -8,3 +8,4 @@ constexpr static int NitroClassicAttachmentSizeLimit = 50 * 1024 * 1024;
 constexpr static int NitroAttachmentSizeLimit = 100 * 1024 * 1024;
 constexpr static int BoostLevel2AttachmentSizeLimit = 50 * 1024 * 1024;
 constexpr static int BoostLevel3AttachmentSizeLimit = 100 * 1024 * 1024;
+constexpr static int MaxMessagePayloadSize = 199 * 1024 * 1024;

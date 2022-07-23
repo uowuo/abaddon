@@ -2,7 +2,6 @@
 #include "abaddon.hpp"
 #include "constants.hpp"
 #include <filesystem>
-#include <utility>
 
 ChatInputText::ChatInputText() {
     get_style_context()->add_class("message-input");
@@ -95,6 +94,8 @@ ChatInputText::type_signal_image_paste ChatInputText::signal_image_paste() {
 ChatInputAttachmentContainer::ChatInputAttachmentContainer()
     : m_box(Gtk::ORIENTATION_HORIZONTAL) {
     get_style_context()->add_class("attachment-container");
+
+    m_box.set_halign(Gtk::ALIGN_START);
 
     add(m_box);
     m_box.show();
@@ -194,15 +195,24 @@ ChatInputAttachmentContainer::type_signal_emptied ChatInputAttachmentContainer::
 ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file)
     : m_file(file)
     , m_img(Gtk::make_managed<Gtk::Image>())
-    , m_type(ChatSubmitParams::ExtantFile) {
+    , m_type(ChatSubmitParams::ExtantFile)
+    , m_box(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("attachment-item");
 
     set_size_request(AttachmentItemSize, AttachmentItemSize);
-    m_box.set_halign(Gtk::ALIGN_CENTER);
+    set_halign(Gtk::ALIGN_START);
+    m_box.set_hexpand(true);
+    m_box.set_halign(Gtk::ALIGN_FILL);
     m_box.set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*m_img);
+    m_box.add(m_label);
     add(m_box);
     show_all_children();
+
+    m_label.set_max_width_chars(0); // will constrain to given size
+    m_label.set_ellipsize(Pango::ELLIPSIZE_MIDDLE);
+    m_label.set_margin_start(7);
+    m_label.set_margin_end(7);
 
     m_img->property_icon_name() = "document-send-symbolic";
     m_img->property_icon_size() = Gtk::ICON_SIZE_DIALOG; // todo figure out how to not use this weird property??? i dont know how icons work (screw your theme)
@@ -217,7 +227,9 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     : m_file(file)
     , m_img(Gtk::make_managed<Gtk::Image>())
     , m_type(is_extant ? ChatSubmitParams::ExtantFile : ChatSubmitParams::PastedImage)
-    , m_filename("unknown.png") {
+    , m_filename("unknown.png")
+    , m_label("unknown.png")
+    , m_box(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("attachment-item");
 
     int outw, outh;
@@ -225,11 +237,19 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     m_img->property_pixbuf() = pb->scale_simple(outw, outh, Gdk::INTERP_BILINEAR);
 
     set_size_request(AttachmentItemSize, AttachmentItemSize);
-    m_box.set_halign(Gtk::ALIGN_CENTER);
+    set_halign(Gtk::ALIGN_START);
+    m_box.set_hexpand(true);
+    m_box.set_halign(Gtk::ALIGN_FILL);
     m_box.set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*m_img);
+    m_box.add(m_label);
     add(m_box);
     show_all_children();
+
+    m_label.set_max_width_chars(0); // will constrain to given size
+    m_label.set_ellipsize(Pango::ELLIPSIZE_MIDDLE);
+    m_label.set_margin_start(7);
+    m_label.set_margin_end(7);
 
     if (is_extant)
         SetFilenameFromFile();
@@ -262,6 +282,7 @@ void ChatInputAttachmentItem::RemoveIfTemp() {
 void ChatInputAttachmentItem::SetFilenameFromFile() {
     auto info = m_file->query_info(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
     m_filename = info->get_attribute_string(G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME);
+    m_label.set_text(m_filename);
 }
 
 void ChatInputAttachmentItem::SetupMenu() {
@@ -275,6 +296,7 @@ void ChatInputAttachmentItem::SetupMenu() {
         const auto name = Abaddon::Get().ShowTextPrompt("Enter new filename for attachment", "Enter filename", m_filename);
         if (name.has_value()) {
             m_filename = *name;
+            m_label.set_text(m_filename);
             UpdateTooltip();
         }
     });

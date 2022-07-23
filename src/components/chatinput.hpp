@@ -24,6 +24,7 @@ private:
     Gtk::MenuItem m_menu_set_filename;
 
     Gtk::Box m_box;
+    Gtk::Label m_label;
     Gtk::Image *m_img = nullptr;
 
     Glib::RefPtr<Gio::File> m_file;
