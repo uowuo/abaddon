@@ -476,7 +476,10 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
 
     auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
+    m_progress_cb_timer.start();
     req.set_progress_callback([this, nonce](curl_off_t ultotal, curl_off_t ulnow) {
+        if (m_progress_cb_timer.elapsed() < 0.0417) return; // try to prevent it from blocking ui
+        m_progress_cb_timer.start();
         m_generic_mutex.lock();
         m_generic_queue.push([this, nonce, ultotal, ulnow] {
             m_signal_message_progress.emit(

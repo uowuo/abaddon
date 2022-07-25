@@ -345,6 +345,8 @@ private:
     Glib::Dispatcher m_generic_dispatch;
     std::queue<std::function<void()>> m_generic_queue;
 
+    Glib::Timer m_progress_cb_timer;
+
     std::set<Snowflake> m_channels_pinned_requested;
     std::set<Snowflake> m_channels_lazy_loaded;
 
