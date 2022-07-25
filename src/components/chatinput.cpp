@@ -135,8 +135,10 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
     }
 
     auto *item = Gtk::make_managed<ChatInputAttachmentItem>(Gio::File::create_for_path(path), pb);
+    item->set_valign(Gtk::ALIGN_FILL);
+    item->set_vexpand(true);
+    item->set_margin_bottom(5);
     item->show();
-    item->set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*item);
 
     m_attachments.push_back(item);
@@ -161,8 +163,10 @@ bool ChatInputAttachmentContainer::AddFile(const Glib::RefPtr<Gio::File> &file, 
         item = Gtk::make_managed<ChatInputAttachmentItem>(file, pb, true);
     else
         item = Gtk::make_managed<ChatInputAttachmentItem>(file);
+    item->set_valign(Gtk::ALIGN_FILL);
+    item->set_vexpand(true);
+    item->set_margin_bottom(5);
     item->show();
-    item->set_valign(Gtk::ALIGN_CENTER);
     m_box.add(*item);
 
     m_attachments.push_back(item);
@@ -202,18 +206,21 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     set_size_request(AttachmentItemSize, AttachmentItemSize);
     set_halign(Gtk::ALIGN_START);
     m_box.set_hexpand(true);
+    m_box.set_vexpand(true);
     m_box.set_halign(Gtk::ALIGN_FILL);
-    m_box.set_valign(Gtk::ALIGN_CENTER);
+    m_box.set_valign(Gtk::ALIGN_FILL);
     m_box.add(*m_img);
     m_box.add(m_label);
     add(m_box);
     show_all_children();
 
+    m_label.set_valign(Gtk::ALIGN_END);
     m_label.set_max_width_chars(0); // will constrain to given size
     m_label.set_ellipsize(Pango::ELLIPSIZE_MIDDLE);
     m_label.set_margin_start(7);
     m_label.set_margin_end(7);
 
+    m_img->set_vexpand(true);
     m_img->property_icon_name() = "document-send-symbolic";
     m_img->property_icon_size() = Gtk::ICON_SIZE_DIALOG; // todo figure out how to not use this weird property??? i dont know how icons work (screw your theme)
 
@@ -239,17 +246,21 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     set_size_request(AttachmentItemSize, AttachmentItemSize);
     set_halign(Gtk::ALIGN_START);
     m_box.set_hexpand(true);
+    m_box.set_vexpand(true);
     m_box.set_halign(Gtk::ALIGN_FILL);
-    m_box.set_valign(Gtk::ALIGN_CENTER);
+    m_box.set_valign(Gtk::ALIGN_FILL);
     m_box.add(*m_img);
     m_box.add(m_label);
     add(m_box);
     show_all_children();
 
+    m_label.set_valign(Gtk::ALIGN_END);
     m_label.set_max_width_chars(0); // will constrain to given size
     m_label.set_ellipsize(Pango::ELLIPSIZE_MIDDLE);
     m_label.set_margin_start(7);
     m_label.set_margin_end(7);
+
+    m_img->set_vexpand(true);
 
     if (is_extant)
         SetFilenameFromFile();
