@@ -349,6 +349,9 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# VSCode configuration folder
+.vscode/
+
 abaddon.ini
 testdata/
 

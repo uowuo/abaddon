@@ -578,6 +578,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
 
     for (const auto &channel_ : *guild.Channels) {
         const auto channel = discord.GetChannel(channel_.ID);
+	if (!discord.HasChannelPermission(discord.GetUserData().ID, channel_.ID, Permission::VIEW_CHANNEL)) continue;
         if (!channel.has_value()) continue;
         if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS) {
             if (channel->ParentID.has_value())
