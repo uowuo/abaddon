@@ -911,10 +911,15 @@ void ChannelList::OnGuildSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
-    if (Abaddon::Get().GetDiscordClient().IsGuildMuted(id))
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.IsGuildMuted(id))
         m_menu_guild_toggle_mute.set_label("Unmute");
     else
         m_menu_guild_toggle_mute.set_label("Mute");
+
+    const auto guild = discord.GetGuild(id);
+    const auto self_id = discord.GetUserData().ID;
+    m_menu_guild_leave.set_sensitive(!(guild.has_value() && guild->OwnerID == self_id));
 }
 
 void ChannelList::OnCategorySubmenuPopup() {
