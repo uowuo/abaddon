@@ -898,11 +898,15 @@ int main(int argc, char **argv) {
 
     char *systemLocale = std::setlocale(LC_ALL, "");
     try {
-        std::locale::global(std::locale(systemLocale));
+        if (systemLocale != nullptr) {
+            std::locale::global(std::locale(systemLocale));
+        }
     } catch (...) {
         try {
             std::locale::global(std::locale::classic());
-            std::setlocale(LC_ALL, systemLocale);
+            if (systemLocale != nullptr) {
+                std::setlocale(LC_ALL, systemLocale);
+            }
         } catch (...) {}
     }
 
