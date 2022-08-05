@@ -5,7 +5,7 @@ ChatInput::ChatInput() {
     set_propagate_natural_height(true);
     set_min_content_height(20);
     set_max_content_height(250);
-    set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    set_policy(Gtk::POLICY_EXTERNAL, Gtk::POLICY_AUTOMATIC);
 
     // hack
     auto cb = [this](GdkEventKey *e) -> bool {
