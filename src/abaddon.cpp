@@ -543,7 +543,7 @@ void Abaddon::LoadState() {
 #ifdef WITH_LIBHANDY
         m_main_window->GetChatWindow()->UseTabsState(state.Tabs);
 #endif
-        ActionChannelOpened(state.ActiveChannel);
+        ActionChannelOpened(state.ActiveChannel, false);
     } catch (const std::exception &e) {
         printf("failed to load application state: %s\n", e.what());
     }
