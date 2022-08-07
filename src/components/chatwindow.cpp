@@ -222,6 +222,7 @@ Snowflake ChatWindow::GetActiveChannel() const {
 
 bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
     auto &discord = Abaddon::Get().GetDiscordClient();
+    if (!discord.HasSelfChannelPermission(m_active_channel, Permission::SEND_MESSAGES)) return false;
 
     int nitro_restriction = BaseAttachmentSizeLimit;
     const auto nitro = discord.GetUserData().PremiumType;
