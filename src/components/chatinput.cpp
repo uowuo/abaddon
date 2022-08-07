@@ -107,6 +107,8 @@ ChatInputTextContainer::ChatInputTextContainer() {
     m_upload_ev.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->button == GDK_BUTTON_PRIMARY) {
             ShowFileChooser();
+            // return focus
+            m_input.grab_focus();
             return true;
         }
         return false;
