@@ -95,6 +95,30 @@ private:
     type_signal_image_paste m_signal_image_paste;
 };
 
+// file upload, text
+class ChatInputTextContainer : public Gtk::Overlay {
+public:
+    ChatInputTextContainer();
+
+    // not proxying everythign lol!!
+    ChatInputText &Get();
+
+private:
+    void ShowFileChooser();
+    bool GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos);
+
+    Gtk::EventBox m_upload_ev;
+    Gtk::Image m_upload_img;
+    ChatInputText m_input;
+
+public:
+    using type_signal_add_attachment = sigc::signal<void, Glib::RefPtr<Gio::File>>;
+    type_signal_add_attachment signal_add_attachment();
+
+private:
+    type_signal_add_attachment m_signal_add_attachment;
+};
+
 class ChatInput : public Gtk::Box {
 public:
     ChatInput();
@@ -113,7 +137,7 @@ private:
 
     Gtk::Revealer m_attachments_revealer;
     ChatInputAttachmentContainer m_attachments;
-    ChatInputText m_input;
+    ChatInputTextContainer m_input;
 
 public:
     using type_signal_submit = sigc::signal<bool, ChatSubmitParams>;

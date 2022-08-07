@@ -91,6 +91,95 @@ ChatInputText::type_signal_image_paste ChatInputText::signal_image_paste() {
     return m_signal_image_paste;
 }
 
+ChatInputTextContainer::ChatInputTextContainer() {
+    // triple hack !!!
+    auto cb = [this](GdkEventKey *e) -> bool {
+        return event(reinterpret_cast<GdkEvent *>(e));
+    };
+    m_input.signal_key_press_event().connect(cb, false);
+
+    m_upload_img.property_icon_name() = "document-send-symbolic";
+    m_upload_img.property_icon_size() = Gtk::ICON_SIZE_LARGE_TOOLBAR;
+    m_upload_img.get_style_context()->add_class("message-input-browse-icon");
+
+    AddPointerCursor(m_upload_ev);
+
+    m_upload_ev.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
+        if (ev->button == GDK_BUTTON_PRIMARY) {
+            ShowFileChooser();
+            return true;
+        }
+        return false;
+    });
+
+    m_upload_ev.add(m_upload_img);
+    add_overlay(m_upload_ev);
+    add(m_input);
+
+    show_all_children();
+
+    // stop the overlay from using (start) padding
+    signal_get_child_position().connect(sigc::mem_fun(*this, &ChatInputTextContainer::GetChildPosition), false);
+}
+
+void ChatInputTextContainer::ShowFileChooser() {
+    auto dlg = Gtk::FileChooserNative::create("Choose file", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    dlg->set_select_multiple(true);
+    dlg->set_modal(true);
+
+    dlg->signal_response().connect([this, dlg](int response) {
+        if (response == Gtk::RESPONSE_ACCEPT) {
+            for (const auto &file : dlg->get_files()) {
+                m_signal_add_attachment.emit(file);
+            }
+        }
+    });
+
+    auto filter_all = Gtk::FileFilter::create();
+    filter_all->set_name("All files (*.*)");
+    filter_all->add_pattern("*.*");
+    dlg->add_filter(filter_all);
+
+    dlg->run();
+}
+
+ChatInputText &ChatInputTextContainer::Get() {
+    return m_input;
+}
+
+bool ChatInputTextContainer::GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos) {
+    Gtk::Allocation main_alloc;
+    {
+        auto *grandchild = m_input.get_child();
+        int x, y;
+        if (grandchild->translate_coordinates(m_input, 0, 0, x, y)) {
+            main_alloc.set_x(x);
+            main_alloc.set_y(y);
+        } else {
+            main_alloc.set_x(0);
+            main_alloc.set_y(0);
+        }
+        main_alloc.set_width(grandchild->get_allocated_width());
+        main_alloc.set_height(grandchild->get_allocated_height());
+    }
+
+    Gtk::Requisition min, req;
+    child->get_preferred_size(min, req);
+
+    // yummy hardcoded values
+    pos.set_x(5);
+    pos.set_width(std::max(min.width, std::min(main_alloc.get_width(), req.width)));
+
+    pos.set_y(12);
+    pos.set_height(std::max(min.height, std::min(main_alloc.get_height(), req.height)));
+
+    return true;
+}
+
+ChatInputTextContainer::type_signal_add_attachment ChatInputTextContainer::signal_add_attachment() {
+    return m_signal_add_attachment;
+}
+
 ChatInputAttachmentContainer::ChatInputAttachmentContainer()
     : m_box(Gtk::ORIENTATION_HORIZONTAL) {
     get_style_context()->add_class("attachment-container");
@@ -336,12 +425,15 @@ ChatInputAttachmentItem::type_signal_item_removed ChatInputAttachmentItem::signa
 
 ChatInput::ChatInput()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL) {
-    m_input.signal_escape().connect([this] {
+    m_input.signal_add_attachment().connect(sigc::mem_fun(*this, &ChatInput::AddAttachment));
+
+    m_input.Get().signal_escape().connect([this] {
         m_attachments.Clear();
         m_attachments_revealer.set_reveal_child(false);
         m_signal_escape.emit();
     });
-    m_input.signal_submit().connect([this](const Glib::ustring &input) -> bool {
+
+    m_input.Get().signal_submit().connect([this](const Glib::ustring &input) -> bool {
         ChatSubmitParams data;
         data.Message = input;
         data.Attachments = m_attachments.GetAttachments();
@@ -362,7 +454,7 @@ ChatInput::ChatInput()
     add(m_input);
     show_all_children();
 
-    m_input.signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+    m_input.Get().signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
         const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
 
         if (can_attach_files && m_attachments.AddImage(pb))
@@ -381,15 +473,15 @@ ChatInput::ChatInput()
 }
 
 void ChatInput::InsertText(const Glib::ustring &text) {
-    m_input.InsertText(text);
+    m_input.Get().InsertText(text);
 }
 
 Glib::RefPtr<Gtk::TextBuffer> ChatInput::GetBuffer() {
-    return m_input.GetBuffer();
+    return m_input.Get().GetBuffer();
 }
 
 bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
-    return m_input.ProcessKeyPress(event);
+    return m_input.Get().ProcessKeyPress(event);
 }
 
 void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {

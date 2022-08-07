@@ -118,8 +118,12 @@
     border: 1px solid #dd3300;
 }
 
+.message-input-browse-icon {
+    color: #b9bbbe;
+}
+
 .message-input {
-    padding: 0px 0px 0px 5px;
+    padding: 0px 0px 0px 30px;
 }
 
 .members {
