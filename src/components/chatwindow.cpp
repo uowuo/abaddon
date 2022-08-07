@@ -49,9 +49,6 @@ ChatWindow::ChatWindow() {
 
     m_input->set_valign(Gtk::ALIGN_END);
 
-    m_input->signal_check_permission().connect([this](Permission perm) {
-        return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, perm);
-    });
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
         if (m_is_replying)
@@ -133,6 +130,7 @@ void ChatWindow::SetMessages(const std::vector<Message> &msgs) {
 void ChatWindow::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
     m_chat->SetActiveChannel(id);
+    m_input->SetActiveChannel(id);
     m_input_indicator->SetActiveChannel(id);
     m_rate_limit_indicator->SetActiveChannel(id);
     if (m_is_replying)

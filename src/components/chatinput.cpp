@@ -457,9 +457,7 @@ ChatInput::ChatInput()
     show_all_children();
 
     m_input.Get().signal_image_paste().connect([this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-        const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
-
-        if (can_attach_files && m_attachments.AddImage(pb))
+        if (CanAttachFiles() && m_attachments.AddImage(pb))
             m_attachments_revealer.set_reveal_child(true);
     });
 
@@ -487,8 +485,7 @@ bool ChatInput::ProcessKeyPress(GdkEventKey *event) {
 }
 
 void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
-    const bool can_attach_files = m_signal_check_permission.emit(Permission::ATTACH_FILES);
-    if (!can_attach_files) return;
+    if (!CanAttachFiles()) return;
 
     std::string content_type;
 
@@ -527,6 +524,10 @@ void ChatInput::IndicateTooLarge() {
     Glib::signal_timeout().connect_seconds_once(sigc::track_obj(cb, *this), 2);
 }
 
+void ChatInput::SetActiveChannel(Snowflake id) {
+    m_active_channel = id;
+}
+
 void ChatInput::StartReplying() {
     m_input.Get().grab_focus();
     m_input.Get().get_style_context()->add_class("replying");
@@ -547,14 +548,14 @@ bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
     }
 }
 
+bool ChatInput::CanAttachFiles() {
+    return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES);
+}
+
 ChatInput::type_signal_submit ChatInput::signal_submit() {
     return m_signal_submit;
 }
 
 ChatInput::type_signal_escape ChatInput::signal_escape() {
     return m_signal_escape;
-}
-
-ChatInput::type_signal_check_permission ChatInput::signal_check_permission() {
-    return m_signal_check_permission;
 }

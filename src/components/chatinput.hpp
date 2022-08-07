@@ -129,27 +129,29 @@ public:
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);
     void IndicateTooLarge();
 
+    void SetActiveChannel(Snowflake id);
+
     void StartReplying();
     void StopReplying();
 
 private:
     bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);
+    bool CanAttachFiles();
 
     Gtk::Revealer m_attachments_revealer;
     ChatInputAttachmentContainer m_attachments;
     ChatInputTextContainer m_input;
 
+    Snowflake m_active_channel;
+
 public:
     using type_signal_submit = sigc::signal<bool, ChatSubmitParams>;
     using type_signal_escape = sigc::signal<void>;
-    using type_signal_check_permission = sigc::signal<bool, Permission>;
 
     type_signal_submit signal_submit();
     type_signal_escape signal_escape();
-    type_signal_check_permission signal_check_permission();
 
 private:
     type_signal_submit m_signal_submit;
     type_signal_escape m_signal_escape;
-    type_signal_check_permission m_signal_check_permission;
 };
