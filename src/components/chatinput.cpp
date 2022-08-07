@@ -511,29 +511,29 @@ void ChatInput::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
     if (image_exts.find(content_type) != image_exts.end()) {
         if (AddFileAsImageAttachment(file)) {
             m_attachments_revealer.set_reveal_child(true);
-            m_input.grab_focus();
+            m_input.Get().grab_focus();
         }
     } else if (m_attachments.AddFile(file)) {
         m_attachments_revealer.set_reveal_child(true);
-        m_input.grab_focus();
+        m_input.Get().grab_focus();
     }
 }
 
 void ChatInput::IndicateTooLarge() {
-    m_input.get_style_context()->add_class("bad-input");
+    m_input.Get().get_style_context()->add_class("bad-input");
     const auto cb = [this] {
-        m_input.get_style_context()->remove_class("bad-input");
+        m_input.Get().get_style_context()->remove_class("bad-input");
     };
     Glib::signal_timeout().connect_seconds_once(sigc::track_obj(cb, *this), 2);
 }
 
 void ChatInput::StartReplying() {
-    m_input.grab_focus();
-    m_input.get_style_context()->add_class("replying");
+    m_input.Get().grab_focus();
+    m_input.Get().get_style_context()->add_class("replying");
 }
 
 void ChatInput::StopReplying() {
-    m_input.get_style_context()->remove_class("replying");
+    m_input.Get().get_style_context()->remove_class("replying");
 }
 
 bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
