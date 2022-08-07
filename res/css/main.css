@@ -101,8 +101,13 @@
 .message-input, .message-input textview, .message-input textview text {
     background-color: #242424;
     color: #adadad;
-    border-radius: 15px;
+    border-radius: 3px;
     border: 1px solid transparent;
+}
+
+.message-input {
+    border: 1px solid #444444;
+    margin-right: 15px;
 }
 
 .message-input.replying {
