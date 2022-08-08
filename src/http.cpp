@@ -129,7 +129,6 @@ void request::add_file(std::string_view name, const Glib::RefPtr<Gio::File> &fil
 
 // copied
 void request::add_field(std::string_view name, const char *data, size_t size) {
-    puts(name.data());
     auto *field = curl_mime_addpart(m_form);
     curl_mime_name(field, name.data());
     curl_mime_data(field, data, size);
