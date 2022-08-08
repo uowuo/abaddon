@@ -149,6 +149,14 @@ ChatInputText &ChatInputTextContainer::Get() {
     return m_input;
 }
 
+void ChatInputTextContainer::ShowChooserIcon() {
+    m_upload_ev.show();
+}
+
+void ChatInputTextContainer::HideChooserIcon() {
+    m_upload_ev.hide();
+}
+
 bool ChatInputTextContainer::GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos) {
     Gtk::Allocation main_alloc;
     {
@@ -470,6 +478,8 @@ ChatInput::ChatInput()
     m_attachments.signal_emptied().connect([this] {
         m_attachments_revealer.set_reveal_child(false);
     });
+
+    SetActiveChannel(Snowflake::Invalid);
 }
 
 void ChatInput::InsertText(const Glib::ustring &text) {
@@ -526,6 +536,13 @@ void ChatInput::IndicateTooLarge() {
 
 void ChatInput::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
+    if (CanAttachFiles()) {
+        m_input.Get().get_style_context()->add_class("with-browse-icon");
+        m_input.ShowChooserIcon();
+    } else {
+        m_input.Get().get_style_context()->remove_class("with-browse-icon");
+        m_input.HideChooserIcon();
+    }
 }
 
 void ChatInput::StartReplying() {

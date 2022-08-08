@@ -103,6 +103,9 @@ public:
     // not proxying everythign lol!!
     ChatInputText &Get();
 
+    void ShowChooserIcon();
+    void HideChooserIcon();
+
 private:
     void ShowFileChooser();
     bool GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos);

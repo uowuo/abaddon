@@ -122,7 +122,12 @@
     color: #b9bbbe;
 }
 
-.message-input {
+/* i dont think theres a way to circumvent having to do this to adjust around the browse icon */
+.message-input:not(.with-browser-icon) {
+    padding: 0px 0px 0px 5px;
+}
+
+.message-input.with-browse-icon {
     padding: 0px 0px 0px 30px;
 }
 
