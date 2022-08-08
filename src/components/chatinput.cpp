@@ -549,7 +549,7 @@ bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
 }
 
 bool ChatInput::CanAttachFiles() {
-    return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES);
+    return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES | Permission::SEND_MESSAGES);
 }
 
 ChatInput::type_signal_submit ChatInput::signal_submit() {
