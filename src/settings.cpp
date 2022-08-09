@@ -8,8 +8,8 @@
 #endif
 
 const std::string KeychainPackage = "com.github.uowuo.abaddon";
-const std::string KeychainService = "client-token";
-const std::string KeychainUser = "discord";
+const std::string KeychainService = "abaddon-client-token";
+const std::string KeychainUser = "";
 
 SettingsManager::SettingsManager(const std::string &filename)
     : m_filename(filename) {
