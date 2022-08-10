@@ -120,6 +120,8 @@
 
 .message-input-browse-icon {
     color: #b9bbbe;
+    margin-left: 5px;
+    margin-top: 11px;
 }
 
 /* i dont think theres a way to circumvent having to do this to adjust around the browse icon */
