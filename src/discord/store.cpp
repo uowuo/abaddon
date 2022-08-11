@@ -254,6 +254,14 @@ void Store::SetGuildMember(Snowflake guild_id, Snowflake user_id, const GuildMem
     s->Reset();
 
     {
+        auto &s = m_stmt_clr_member_roles;
+        s->Bind(1, user_id);
+        s->Bind(2, guild_id);
+        s->Step();
+        s->Reset();
+    }
+
+    {
         auto &s = m_stmt_set_member_roles;
 
         BeginTransaction();
@@ -1878,6 +1886,20 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_member_roles->OK()) {
         fprintf(stderr, "failed to prepare get member role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_clr_member_roles = std::make_unique<Statement>(m_db, R"(
+        DELETE FROM member_roles
+        WHERE user = ? AND
+        EXISTS (
+            SELECT 1 FROM roles
+            WHERE member_roles.role = roles.id
+            AND roles.guild = ?
+        )
+    )");
+    if (!m_stmt_clr_member_roles->OK()) {
+        fprintf(stderr, "failed to prepare clear member roles statement: %s\n", m_db.ErrStr());
         return false;
     }
 
