@@ -552,19 +552,6 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const Activ
     m_signal_presence_update.emit(GetUserData(), status);
 }
 
-void DiscordClient::CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback) {
-    CreateDMObject obj;
-    obj.Recipients.push_back(user_id);
-    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [callback](const http::response &response) {
-        if (!CheckCode(response)) {
-            callback(DiscordError::NONE, Snowflake::Invalid);
-            return;
-        }
-        auto channel = nlohmann::json::parse(response.text).get<ChannelData>();
-        callback(GetCodeFromResponse(response), channel.ID);
-    });
-}
-
 void DiscordClient::CloseDM(Snowflake channel_id) {
     m_http.MakeDELETE("/channels/" + std::to_string(channel_id), [](const http::response &response) {
         CheckCode(response);

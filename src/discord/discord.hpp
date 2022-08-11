@@ -116,7 +116,6 @@ public:
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
     void UpdateStatus(PresenceStatus status, bool is_afk);
     void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
-    void CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback);
     void CloseDM(Snowflake channel_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
