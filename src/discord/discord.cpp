@@ -2223,7 +2223,7 @@ void DiscordClient::HeartbeatThread() {
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
     msg.Token = m_token;
-    msg.Capabilities = 125; // no idea what this is
+    msg.Capabilities = 509; // no idea what this is
     msg.Properties.OS = "Windows";
     msg.Properties.Browser = "Chrome";
     msg.Properties.Device = "";
@@ -2236,7 +2236,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 105691;
+    msg.Properties.ClientBuildNumber = 141021;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;
