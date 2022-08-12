@@ -2,7 +2,7 @@
 #include <gtkmm.h>
 #include "discord/discord.hpp"
 
-class ChatMessageItemContainer : public Gtk::Box {
+class ChatMessageItemContainer : public Gtk::EventBox {
 public:
     Snowflake ID;
     Snowflake ChannelID;
@@ -44,6 +44,7 @@ protected:
     void HandleChannelMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
     void HandleChannelMentions(Gtk::TextView *tv);
     bool OnClickChannel(GdkEventButton *ev);
+    bool OnTextViewButtonPress(GdkEventButton *ev);
 
     // reused for images and links
     Gtk::Menu m_link_menu;
@@ -56,8 +57,6 @@ protected:
     bool OnLinkClick(GdkEventButton *ev);
     std::map<Glib::RefPtr<Gtk::TextTag>, std::string> m_link_tagmap;
     std::map<Glib::RefPtr<Gtk::TextTag>, Snowflake> m_channel_tagmap;
-
-    void AttachEventHandlers(Gtk::Widget &widget);
 
     Gtk::EventBox *_ev;
     Gtk::Box m_main;
