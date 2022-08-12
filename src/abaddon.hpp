@@ -50,6 +50,7 @@ public:
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
+    void ActionHideToTray(bool value);
 
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 
@@ -113,6 +114,8 @@ protected:
     Gtk::MenuItem *m_user_menu_roles;
     Gtk::MenuItem *m_user_menu_remove_recipient;
     Gtk::Menu *m_user_menu_roles_submenu;
+    Gtk::Menu* m_tray_menu;
+    Gtk::MenuItem* m_tray_exit;
 
     void on_user_menu_insert_mention();
     void on_user_menu_ban();
@@ -120,6 +123,10 @@ protected:
     void on_user_menu_copy_id();
     void on_user_menu_open_dm();
     void on_user_menu_remove_recipient();
+    void on_tray_click();
+    void on_tray_popup_menu(int button, int activate_time);
+    void on_tray_menu_click();
+    void on_window_hide();
 
 private:
     SettingsManager m_settings;
@@ -138,5 +145,6 @@ private:
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     Glib::RefPtr<Gtk::CssProvider> m_css_provider;
     Glib::RefPtr<Gtk::CssProvider> m_css_low_provider; // registered with a lower priority to allow better customization
+    Glib::RefPtr<Gtk::StatusIcon> m_tray;
     std::unique_ptr<MainWindow> m_main_window;         // wah wah cant create a gtkstylecontext fuck you
 };

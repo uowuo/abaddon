@@ -24,6 +24,7 @@ public:
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
     void UpdateMenus();
+    void UpdateSettingsMenu(bool hide_to_tray);
 
 #ifdef WITH_LIBHANDY
     void GoBack();
@@ -80,6 +81,11 @@ private:
     Gtk::MenuItem m_menu_view_go_back;
     Gtk::MenuItem m_menu_view_go_forward;
 #endif
+    Gtk::MenuItem m_menu_settings;
+    Gtk::Menu m_menu_settings_sub;
+    Gtk::CheckMenuItem m_menu_settings_hide_to_tray;
+
+
     void OnViewSubmenuPopup();
 
 public:
@@ -89,6 +95,7 @@ public:
     typedef sigc::signal<void> type_signal_action_reload_css;
     typedef sigc::signal<void> type_signal_action_join_guild;
     typedef sigc::signal<void> type_signal_action_set_status;
+    typedef sigc::signal<void, bool> type_signal_action_hide_to_tray;
     // this should probably be removed
     typedef sigc::signal<void, Snowflake> type_signal_action_add_recipient; // channel id
     typedef sigc::signal<void, Snowflake> type_signal_action_view_pins;     // channel id
@@ -103,6 +110,7 @@ public:
     type_signal_action_add_recipient signal_action_add_recipient();
     type_signal_action_view_pins signal_action_view_pins();
     type_signal_action_view_threads signal_action_view_threads();
+    type_signal_action_hide_to_tray signal_action_hide_to_tray();
 
 private:
     type_signal_action_connect m_signal_action_connect;
@@ -114,4 +122,5 @@ private:
     type_signal_action_add_recipient m_signal_action_add_recipient;
     type_signal_action_view_pins m_signal_action_view_pins;
     type_signal_action_view_threads m_signal_action_view_threads;
+    type_signal_action_hide_to_tray m_signal_action_hide_to_tray;
 };
