@@ -57,6 +57,10 @@ void request::set_user_agent(const std::string &data) {
     curl_easy_setopt(m_curl, CURLOPT_USERAGENT, data.c_str());
 }
 
+CURL *request::get_curl() {
+    return m_curl;
+}
+
 response request::execute() {
     if (m_curl == nullptr) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLInit);

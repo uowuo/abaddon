@@ -30,6 +30,7 @@ void DiscordClient::Start() {
     if (m_client_started) return;
 
     m_http.SetBase(GetAPIURL());
+    SetHeaders();
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
@@ -1108,6 +1109,25 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
         else
             callback(GetCodeFromResponse(response));
     });
+}
+
+void DiscordClient::SetReferringChannel(Snowflake id) {
+    if (!id.IsValid()) {
+        m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+    } else {
+        const auto channel = GetChannel(id);
+        if (channel.has_value()) {
+            if (channel->IsDM()) {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me/" + std::to_string(id));
+            } else if (channel->GuildID.has_value()) {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/" + std::to_string(*channel->GuildID) + "/" + std::to_string(id));
+            } else {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+            }
+        } else {
+            m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+        }
+    }
 }
 
 void DiscordClient::UpdateToken(const std::string &token) {
@@ -2245,6 +2265,7 @@ void DiscordClient::SendIdentify() {
     msg.ClientState.HighestLastMessageID = "0";
     msg.ClientState.ReadStateVersion = 0;
     msg.ClientState.UserGuildSettingsVersion = -1;
+    SetSuperPropertiesFromIdentity(msg);
     const bool b = m_websocket.GetPrintMessages();
     m_websocket.SetPrintMessages(false);
     m_websocket.Send(msg);
@@ -2257,6 +2278,36 @@ void DiscordClient::SendResume() {
     msg.SessionID = m_session_id;
     msg.Token = m_token;
     m_websocket.Send(msg);
+}
+
+void DiscordClient::SetHeaders() {
+    m_http.SetPersistentHeader("Sec-Fetch-Dest", "empty");
+    m_http.SetPersistentHeader("Sec-Fetch-Mode", "cors");
+    m_http.SetPersistentHeader("Sec-Fetch-Site", "same-origin");
+    m_http.SetPersistentHeader("X-Debug-Options", "bugReporterEnabled");
+    m_http.SetPersistentHeader("Accept-Language", "en-US,en;q=0.9");
+
+    SetReferringChannel(Snowflake::Invalid);
+}
+
+void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identity) {
+    nlohmann::ordered_json j;
+    j["os"] = identity.Properties.OS;
+    j["browser"] = identity.Properties.Browser;
+    j["device"] = identity.Properties.Device;
+    j["system_locale"] = identity.Properties.SystemLocale;
+    j["browser_user_agent"] = identity.Properties.BrowserUserAgent;
+    j["browser_version"] = identity.Properties.BrowserVersion;
+    j["os_version"] = identity.Properties.OSVersion;
+    j["referrer"] = identity.Properties.Referrer;
+    j["referring_domain"] = identity.Properties.ReferringDomain;
+    j["referrer_current"] = identity.Properties.ReferrerCurrent;
+    j["referring_domain_current"] = identity.Properties.ReferringDomainCurrent;
+    j["release_channel"] = identity.Properties.ReleaseChannel;
+    j["client_build_number"] = identity.Properties.ClientBuildNumber;
+    j["client_event_source"] = nullptr; // probably will never be non-null ("") anyways
+    m_http.SetPersistentHeader("X-Super-Properties", Glib::Base64::encode(j.dump()));
+    m_http.SetPersistentHeader("X-Discord-Locale", identity.Properties.SystemLocale);
 }
 
 void DiscordClient::HandleSocketOpen() {

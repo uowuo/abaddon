@@ -201,6 +201,8 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+    void SetReferringChannel(Snowflake id);
+
     void UpdateToken(const std::string &token);
     void SetUserAgent(const std::string &agent);
 
@@ -281,6 +283,9 @@ private:
     void HeartbeatThread();
     void SendIdentify();
     void SendResume();
+
+    void SetHeaders();
+    void SetSuperPropertiesFromIdentity(const IdentifyMessage &identity);
 
     void HandleSocketOpen();
     void HandleSocketClose(uint16_t code);

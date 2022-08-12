@@ -647,12 +647,17 @@ void Abaddon::ActionJoinGuildDialog() {
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
-    if (!id.IsValid() || id == m_main_window->GetChatActiveChannel()) return;
+    if (!id.IsValid()) {
+        m_discord.SetReferringChannel(Snowflake::Invalid);
+        return;
+    }
+    if (id == m_main_window->GetChatActiveChannel()) return;
 
     m_main_window->GetChatWindow()->SetTopic("");
 
     const auto channel = m_discord.GetChannel(id);
     if (!channel.has_value()) {
+        m_discord.SetReferringChannel(Snowflake::Invalid);
         m_main_window->UpdateChatActiveChannel(Snowflake::Invalid, false);
         m_main_window->UpdateChatWindowContents();
         return;
@@ -701,6 +706,7 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     }
 
     m_main_window->UpdateMenus();
+    m_discord.SetReferringChannel(id);
 }
 
 void Abaddon::ActionChatLoadHistory(Snowflake id) {

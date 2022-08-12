@@ -108,6 +108,8 @@ struct request {
 
     response execute();
 
+    CURL *get_curl();
+
 private:
     void prepare();
 

@@ -19,11 +19,17 @@ void HTTPClient::SetAuth(std::string auth) {
     m_authorization = std::move(auth);
 }
 
+void HTTPClient::SetPersistentHeader(std::string name, std::string value) {
+    m_headers.insert_or_assign(std::move(name), std::move(value));
+}
+
 void HTTPClient::MakeDELETE(const std::string &path, const std::function<void(http::response_type r)> &cb) {
     printf("DELETE %s\n", path.c_str());
     m_futures.push_back(std::async(std::launch::async, [this, path, cb] {
         http::request req(http::REQUEST_DELETE, m_api_base + path);
+        AddHeaders(req);
         req.set_header("Authorization", m_authorization);
+        req.set_header("Origin", "https://discord.com");
         req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
 #ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
@@ -40,8 +46,10 @@ void HTTPClient::MakePATCH(const std::string &path, const std::string &payload, 
     printf("PATCH %s\n", path.c_str());
     m_futures.push_back(std::async(std::launch::async, [this, path, cb, payload] {
         http::request req(http::REQUEST_PATCH, m_api_base + path);
+        AddHeaders(req);
         req.set_header("Authorization", m_authorization);
         req.set_header("Content-Type", "application/json");
+        req.set_header("Origin", "https://discord.com");
         req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
         req.set_body(payload);
 #ifdef USE_LOCAL_PROXY
@@ -59,8 +67,10 @@ void HTTPClient::MakePOST(const std::string &path, const std::string &payload, c
     printf("POST %s\n", path.c_str());
     m_futures.push_back(std::async(std::launch::async, [this, path, cb, payload] {
         http::request req(http::REQUEST_POST, m_api_base + path);
+        AddHeaders(req);
         req.set_header("Authorization", m_authorization);
         req.set_header("Content-Type", "application/json");
+        req.set_header("Origin", "https://discord.com");
         req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
         req.set_body(payload);
 #ifdef USE_LOCAL_PROXY
@@ -78,7 +88,9 @@ void HTTPClient::MakePUT(const std::string &path, const std::string &payload, co
     printf("PUT %s\n", path.c_str());
     m_futures.push_back(std::async(std::launch::async, [this, path, cb, payload] {
         http::request req(http::REQUEST_PUT, m_api_base + path);
+        AddHeaders(req);
         req.set_header("Authorization", m_authorization);
+        req.set_header("Origin", "https://discord.com");
         if (!payload.empty())
             req.set_header("Content-Type", "application/json");
         req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
@@ -98,8 +110,8 @@ void HTTPClient::MakeGET(const std::string &path, const std::function<void(http:
     printf("GET %s\n", path.c_str());
     m_futures.push_back(std::async(std::launch::async, [this, path, cb] {
         http::request req(http::REQUEST_GET, m_api_base + path);
+        AddHeaders(req);
         req.set_header("Authorization", m_authorization);
-        req.set_header("Content-Type", "application/json");
         req.set_user_agent(!m_agent.empty() ? m_agent : "Abaddon");
 #ifdef USE_LOCAL_PROXY
         req.set_proxy("http://127.0.0.1:8888");
@@ -126,6 +138,13 @@ void HTTPClient::RunCallbacks() {
     m_queue.front()();
     m_queue.pop();
     m_mutex.unlock();
+}
+
+void HTTPClient::AddHeaders(http::request &r) {
+    for (const auto &[name, val] : m_headers) {
+        r.set_header(name, val);
+    }
+    curl_easy_setopt(r.get_curl(), CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
 }
 
 void HTTPClient::OnResponse(const http::response_type &r, const std::function<void(http::response_type r)> &cb) {
