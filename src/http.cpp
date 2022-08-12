@@ -29,12 +29,53 @@ request::request(EMethod method, std::string url)
     prepare();
 }
 
+request::request(request &&other) noexcept
+    : m_curl(std::exchange(other.m_curl, nullptr))
+    , m_url(std::exchange(other.m_url, ""))
+    , m_method(std::exchange(other.m_method, nullptr))
+    , m_header_list(std::exchange(other.m_header_list, nullptr))
+    , m_error_buf(other.m_error_buf)
+    , m_form(std::exchange(other.m_form, nullptr))
+    , m_read_streams(std::move(other.m_read_streams))
+    , m_progress_callback(std::move(other.m_progress_callback)) {
+    if (m_progress_callback) {
+        curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, this);
+    }
+}
+
 request::~request() {
     if (m_curl != nullptr)
         curl_easy_cleanup(m_curl);
 
     if (m_header_list != nullptr)
         curl_slist_free_all(m_header_list);
+
+    if (m_form != nullptr)
+        curl_mime_free(m_form);
+}
+
+const std::string &request::get_url() const {
+    return m_url;
+}
+
+const char *request::get_method() const {
+    return m_method;
+}
+
+size_t http_req_xferinfofunc(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+    if (ultotal > 0) {
+        auto *req = reinterpret_cast<request *>(clientp);
+        req->m_progress_callback(ultotal, ulnow);
+    }
+
+    return 0;
+}
+
+void request::set_progress_callback(std::function<void(curl_off_t, curl_off_t)> func) {
+    m_progress_callback = std::move(func);
+    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(m_curl, CURLOPT_XFERINFOFUNCTION, http_req_xferinfofunc);
+    curl_easy_setopt(m_curl, CURLOPT_XFERINFODATA, this);
 }
 
 void request::set_verify_ssl(bool verify) {
@@ -61,6 +102,42 @@ CURL *request::get_curl() {
     return m_curl;
 }
 
+void request::make_form() {
+    m_form = curl_mime_init(m_curl);
+}
+
+static size_t http_readfunc(char *buffer, size_t size, size_t nitems, void *arg) {
+    auto stream = Glib::wrap(G_FILE_INPUT_STREAM(arg), true);
+    int r = stream->read(buffer, size * nitems);
+    if (r == -1) {
+        // https://github.com/curl/curl/blob/ad9bc5976d6661cd5b03ebc379313bf657701c14/lib/mime.c#L724
+        return size_t(-1);
+    }
+    return r;
+}
+
+// file must exist until request completes
+void request::add_file(std::string_view name, const Glib::RefPtr<Gio::File> &file, std::string_view filename) {
+    if (!file->query_exists()) return;
+
+    auto *field = curl_mime_addpart(m_form);
+    curl_mime_name(field, name.data());
+    auto info = file->query_info();
+    auto stream = file->read();
+    curl_mime_data_cb(field, info->get_size(), http_readfunc, nullptr, nullptr, stream->gobj());
+    curl_mime_filename(field, filename.data());
+
+    // hold ref
+    m_read_streams.insert(stream);
+}
+
+// copied
+void request::add_field(std::string_view name, const char *data, size_t size) {
+    auto *field = curl_mime_addpart(m_form);
+    curl_mime_name(field, name.data());
+    curl_mime_data(field, data, size);
+}
+
 response request::execute() {
     if (m_curl == nullptr) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLInit);
@@ -80,12 +157,14 @@ response request::execute() {
     m_error_buf[0] = '\0';
     if (m_header_list != nullptr)
         curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, m_header_list);
+    if (m_form != nullptr)
+        curl_easy_setopt(m_curl, CURLOPT_MIMEPOST, m_form);
 
     CURLcode result = curl_easy_perform(m_curl);
     if (result != CURLE_OK) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLPerform);
         response.error_string = curl_easy_strerror(result);
-        response.error_string += " " + std::string(m_error_buf);
+        response.error_string += " " + std::string(m_error_buf.data());
         return response;
     }
 

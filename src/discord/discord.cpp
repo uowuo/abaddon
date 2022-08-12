@@ -319,6 +319,10 @@ bool DiscordClient::HasGuildPermission(Snowflake user_id, Snowflake guild_id, Pe
     return (base & perm) == perm;
 }
 
+bool DiscordClient::HasSelfChannelPermission(Snowflake channel_id, Permission perm) const {
+    return HasChannelPermission(m_user_data.ID, channel_id, perm);
+}
+
 bool DiscordClient::HasAnyChannelPermission(Snowflake user_id, Snowflake channel_id, Permission perm) const {
     const auto channel = m_store.GetChannel(channel_id);
     if (!channel.has_value() || !channel->GuildID.has_value()) return false;
@@ -410,7 +414,7 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     return actor_highest->Position > target_highest->Position;
 }
 
-void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response) {
+void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError)> &callback) {
     if (!CheckCode(response)) {
         if (response.status_code == http::TooManyRequests) {
             try { // not sure if this body is guaranteed
@@ -422,54 +426,108 @@ void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::re
         } else {
             m_signal_message_send_fail.emit(nonce, 0);
         }
+
+        // todo actually callback with correct error code (not necessary rn)
+        callback(DiscordError::GENERIC);
+    } else {
+        callback(DiscordError::NONE);
     }
 }
 
-void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel) {
-    // @([^@#]{1,32})#(\\d{4})
+void DiscordClient::SendChatMessageNoAttachments(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
     const auto nonce = std::to_string(Snowflake::FromNow());
+
     CreateMessageObject obj;
-    obj.Content = content;
+    obj.Content = params.Message;
     obj.Nonce = nonce;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
-    // dummy data so the content can be shown while waiting for MESSAGE_CREATE
+    if (params.InReplyToID.IsValid())
+        obj.MessageReference.emplace().MessageID = params.InReplyToID;
+
+    m_http.MakePOST("/channels/" + std::to_string(params.ChannelID) + "/messages",
+                    nlohmann::json(obj).dump(),
+                    [this, nonce, callback](const http::response_type &r) {
+                        ChatMessageCallback(nonce, r, callback);
+                    });
+
+    // dummy preview data
     Message tmp;
-    tmp.Content = content;
+    tmp.Content = params.Message;
     tmp.ID = nonce;
-    tmp.ChannelID = channel;
+    tmp.ChannelID = params.ChannelID;
     tmp.Author = GetUserData();
     tmp.IsTTS = false;
     tmp.DoesMentionEveryone = false;
     tmp.Type = MessageType::DEFAULT;
     tmp.IsPinned = false;
     tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
-    tmp.Nonce = obj.Nonce;
+    tmp.Nonce = nonce;
     tmp.IsPending = true;
+
     m_store.SetMessage(tmp.ID, tmp);
-    m_signal_message_sent.emit(tmp);
+    m_signal_message_create.emit(tmp);
 }
 
-void DiscordClient::SendChatMessage(const std::string &content, Snowflake channel, Snowflake referenced_message) {
+void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
     const auto nonce = std::to_string(Snowflake::FromNow());
+
     CreateMessageObject obj;
-    obj.Content = content;
+    obj.Content = params.Message;
     obj.Nonce = nonce;
-    obj.MessageReference.emplace().MessageID = referenced_message;
-    m_http.MakePOST("/channels/" + std::to_string(channel) + "/messages", nlohmann::json(obj).dump(), sigc::bind<0>(sigc::mem_fun(*this, &DiscordClient::ChatMessageCallback), nonce));
+    if (params.InReplyToID.IsValid())
+        obj.MessageReference.emplace().MessageID = params.InReplyToID;
+
+    auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
+    m_progress_cb_timer.start();
+    req.set_progress_callback([this, nonce](curl_off_t ultotal, curl_off_t ulnow) {
+        if (m_progress_cb_timer.elapsed() < 0.0417) return; // try to prevent it from blocking ui
+        m_progress_cb_timer.start();
+        m_generic_mutex.lock();
+        m_generic_queue.push([this, nonce, ultotal, ulnow] {
+            m_signal_message_progress.emit(
+                nonce,
+                static_cast<float>(ulnow) / static_cast<float>(ultotal));
+        });
+        m_generic_mutex.unlock();
+        m_generic_dispatch.emit();
+    });
+    req.make_form();
+    req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
+    for (size_t i = 0; i < params.Attachments.size(); i++) {
+        const auto field_name = "files[" + std::to_string(i) + "]";
+        req.add_file(field_name, params.Attachments.at(i).File, params.Attachments.at(i).Filename);
+    }
+    m_http.Execute(std::move(req), [this, params, nonce, callback](const http::response_type &res) {
+        for (const auto &attachment : params.Attachments) {
+            if (attachment.Type == ChatSubmitParams::AttachmentType::PastedImage) {
+                attachment.File->remove();
+            }
+        }
+        ChatMessageCallback(nonce, res, callback);
+    });
+
+    // dummy preview data
     Message tmp;
-    tmp.Content = content;
+    tmp.Content = params.Message;
     tmp.ID = nonce;
-    tmp.ChannelID = channel;
+    tmp.ChannelID = params.ChannelID;
     tmp.Author = GetUserData();
     tmp.IsTTS = false;
     tmp.DoesMentionEveryone = false;
     tmp.Type = MessageType::DEFAULT;
     tmp.IsPinned = false;
     tmp.Timestamp = "2000-01-01T00:00:00.000000+00:00";
-    tmp.Nonce = obj.Nonce;
+    tmp.Nonce = nonce;
     tmp.IsPending = true;
+
     m_store.SetMessage(tmp.ID, tmp);
-    m_signal_message_sent.emit(tmp);
+    m_signal_message_create.emit(tmp);
+}
+
+void DiscordClient::SendChatMessage(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
+    if (params.Attachments.empty())
+        SendChatMessageNoAttachments(params, callback);
+    else
+        SendChatMessageAttachments(params, callback);
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
@@ -2575,6 +2633,10 @@ DiscordClient::type_signal_disconnected DiscordClient::signal_disconnected() {
 
 DiscordClient::type_signal_connected DiscordClient::signal_connected() {
     return m_signal_connected;
+}
+
+DiscordClient::type_signal_message_progress DiscordClient::signal_message_progress() {
+    return m_signal_message_progress;
 }
 
 DiscordClient::type_signal_role_update DiscordClient::signal_role_update() {

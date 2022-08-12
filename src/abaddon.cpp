@@ -11,6 +11,7 @@
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
+#include "dialogs/textinput.hpp"
 #include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
@@ -741,17 +742,13 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
     });
 }
 
-void Abaddon::ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message) {
-    if (msg.substr(0, 7) == "/shrug " || msg == "/shrug")
-        msg = msg.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
+void Abaddon::ActionChatInputSubmit(ChatSubmitParams data) {
+    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug")
+        data.Message = data.Message.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
 
-    if (!channel.IsValid()) return;
-    if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, channel, Permission::VIEW_CHANNEL)) return;
+    if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, data.ChannelID, Permission::VIEW_CHANNEL)) return;
 
-    if (referenced_message.IsValid())
-        m_discord.SendChatMessage(msg, channel, referenced_message);
-    else
-        m_discord.SendChatMessage(msg, channel);
+    m_discord.SendChatMessage(data, NOOP_CALLBACK);
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
@@ -858,6 +855,15 @@ void Abaddon::ActionViewThreads(Snowflake channel_id) {
     auto window = new ThreadsWindow(*data);
     ManageHeapWindow(window);
     window->show();
+}
+
+std::optional<Glib::ustring> Abaddon::ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window *window) {
+    TextInputDialog dlg(prompt, title, placeholder, window != nullptr ? *window : *m_main_window);
+    const auto code = dlg.run();
+    if (code == Gtk::RESPONSE_OK)
+        return dlg.GetInput();
+    else
+        return {};
 }
 
 bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {

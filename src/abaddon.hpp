@@ -36,7 +36,7 @@ public:
     void ActionSetToken();
     void ActionJoinGuildDialog();
     void ActionChannelOpened(Snowflake id, bool expand_to = true);
-    void ActionChatInputSubmit(std::string msg, Snowflake channel, Snowflake referenced_message);
+    void ActionChatInputSubmit(ChatSubmitParams data);
     void ActionChatLoadHistory(Snowflake id);
     void ActionChatEditMessage(Snowflake channel_id, Snowflake id);
     void ActionInsertMention(Snowflake id);
@@ -51,6 +51,7 @@ public:
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
 
+    std::optional<Glib::ustring> ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder = "", Gtk::Window *window = nullptr);
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 
     void ActionReloadCSS();

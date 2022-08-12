@@ -101,15 +101,36 @@
 .message-input, .message-input textview, .message-input textview text {
     background-color: #242424;
     color: #adadad;
-    border-radius: 15px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+}
+
+.message-input {
+    border: 1px solid #444444;
+    margin-right: 15px;
 }
 
 .message-input.replying {
     border: 1px solid #026FB9;
 }
 
-.message-input {
+.message-input.bad-input {
+    border: 1px solid #dd3300;
+}
+
+.message-input-browse-icon {
+    color: #b9bbbe;
+    margin-left: 5px;
+    margin-top: 11px;
+}
+
+/* i dont think theres a way to circumvent having to do this to adjust around the browse icon */
+.message-input:not(.with-browser-icon) {
     padding: 0px 0px 0px 5px;
+}
+
+.message-input.with-browse-icon {
+    padding: 0px 0px 0px 30px;
 }
 
 .members {
@@ -322,4 +343,20 @@
 
 .channel-tab-switcher tab > button:hover {
     background-color: alpha(#ff0000, 0.5);
+}
+
+.message-progress {
+    border: none;
+    margin-bottom: -8px;
+}
+
+.message-progress trough {
+    border: none;
+    background-color: transparent;
+}
+
+.message-progress progress {
+    border: none;
+    background-color: #dd3300;
+    margin-left: 1px;
 }

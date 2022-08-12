@@ -25,6 +25,9 @@ public:
     void MakePOST(const std::string &path, const std::string &payload, const std::function<void(http::response_type r)> &cb);
     void MakePUT(const std::string &path, const std::string &payload, const std::function<void(http::response_type r)> &cb);
 
+    [[nodiscard]] http::request CreateRequest(http::EMethod method, std::string path);
+    void Execute(http::request &&req, const std::function<void(http::response_type r)> &cb);
+
 private:
     void AddHeaders(http::request &r);
 

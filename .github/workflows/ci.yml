@@ -73,6 +73,17 @@ jobs:
           cp -r res/css res/res res/fonts build/artifactdir/bin
           cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas
           cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin || :
+          mkdir -p build/artifactdir/share/icons/Adwaita
+          cd build/artifactdir/share/icons/Adwaita
+          mkdir -p 16x16/actions 24x24/actions 32x32/actions 48x48/actions 64x64/actions 96x96/actions scalable/actions
+          cd ../../../../../
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/16x16/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/24x24/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/32x32/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/48x48/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/48x48/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/64x64/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/96x96/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/actions/%.svg build/artifactdir/share/icons/Adwaita/scalable/actions || :
 
       - name: Upload build (1)
         uses: haya14busa/action-cond@v1

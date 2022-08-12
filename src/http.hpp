@@ -1,8 +1,10 @@
 #pragma once
+#include <array>
+#include <functional>
+#include <set>
 #include <string>
 #include <curl/curl.h>
-
-// i regret not using snake case for everything oh well
+#include <giomm/file.h>
 
 namespace http {
 enum EStatusCode : int {
@@ -98,13 +100,25 @@ struct response {
 
 struct request {
     request(EMethod method, std::string url);
+    request(request &&other) noexcept;
     ~request();
 
+    request(const request &) = delete;
+    request &operator=(const request &) = delete;
+    request &operator=(request &&) noexcept = delete;
+
+    const std::string &get_url() const;
+    const char *get_method() const;
+
+    void set_progress_callback(std::function<void(curl_off_t, curl_off_t)> func);
     void set_verify_ssl(bool verify);
     void set_proxy(const std::string &proxy);
     void set_header(const std::string &name, const std::string &value);
     void set_body(const std::string &data);
     void set_user_agent(const std::string &data);
+    void make_form();
+    void add_file(std::string_view name, const Glib::RefPtr<Gio::File> &file, std::string_view filename);
+    void add_field(std::string_view name, const char *data, size_t size);
 
     response execute();
 
@@ -117,7 +131,13 @@ private:
     std::string m_url;
     const char *m_method;
     curl_slist *m_header_list = nullptr;
-    char m_error_buf[CURL_ERROR_SIZE] = { 0 };
+    std::array<char, CURL_ERROR_SIZE> m_error_buf = { 0 };
+    curl_mime *m_form = nullptr;
+    std::function<void(curl_off_t, curl_off_t)> m_progress_callback;
+
+    std::set<Glib::RefPtr<Gio::FileInputStream>> m_read_streams;
+
+    friend size_t http_req_xferinfofunc(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t);
 };
 
 using response_type = response;

@@ -4,12 +4,14 @@
 #include "ratelimitindicator.hpp"
 #include "chatinput.hpp"
 #include "chatlist.hpp"
+#include "constants.hpp"
 #ifdef WITH_LIBHANDY
     #include "channeltabswitcherhandy.hpp"
 #endif
 
 ChatWindow::ChatWindow() {
-    Abaddon::Get().GetDiscordClient().signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    discord.signal_message_send_fail().connect(sigc::mem_fun(*this, &ChatWindow::OnMessageSendFail));
 
     m_main = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
     m_chat = Gtk::manage(new ChatList);
@@ -45,6 +47,8 @@ ChatWindow::ChatWindow() {
     m_topic_text.set_halign(Gtk::ALIGN_START);
     m_topic_text.show();
 
+    m_input->set_valign(Gtk::ALIGN_END);
+
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
         if (m_is_replying)
@@ -54,11 +58,11 @@ ChatWindow::ChatWindow() {
     m_input->show();
 
     m_completer.SetBuffer(m_input->GetBuffer());
-    m_completer.SetGetChannelID([this]() -> auto {
+    m_completer.SetGetChannelID([this]() {
         return m_active_channel;
     });
 
-    m_completer.SetGetRecentAuthors([this]() -> auto {
+    m_completer.SetGetRecentAuthors([this]() {
         return m_chat->GetRecentAuthors();
     });
 
@@ -69,9 +73,6 @@ ChatWindow::ChatWindow() {
     });
     m_chat->signal_action_chat_load_history().connect([this](Snowflake id) {
         m_signal_action_chat_load_history.emit(id);
-    });
-    m_chat->signal_action_chat_submit().connect([this](const std::string &str, Snowflake channel_id, Snowflake referenced_id) {
-        m_signal_action_chat_submit.emit(str, channel_id, referenced_id);
     });
     m_chat->signal_action_insert_mention().connect([this](Snowflake id) {
         // lowkey gross
@@ -107,6 +108,10 @@ ChatWindow::ChatWindow() {
     m_main->add(m_completer);
     m_main->add(*m_input);
     m_main->add(*m_meta);
+    m_main->add(m_progress);
+
+    m_progress.show();
+
     m_main->show();
 }
 
@@ -125,6 +130,7 @@ void ChatWindow::SetMessages(const std::vector<Message> &msgs) {
 void ChatWindow::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
     m_chat->SetActiveChannel(id);
+    m_input->SetActiveChannel(id);
     m_input_indicator->SetActiveChannel(id);
     m_rate_limit_indicator->SetActiveChannel(id);
     if (m_is_replying)
@@ -166,6 +172,10 @@ void ChatWindow::UpdateReactions(Snowflake id) {
 void ChatWindow::SetTopic(const std::string &text) {
     m_topic_text.set_text(text);
     m_topic.set_visible(text.length() > 0);
+}
+
+void ChatWindow::AddAttachment(const Glib::RefPtr<Gio::File> &file) {
+    m_input->AddAttachment(file);
 }
 
 #ifdef WITH_LIBHANDY
@@ -210,15 +220,64 @@ Snowflake ChatWindow::GetActiveChannel() const {
     return m_active_channel;
 }
 
-bool ChatWindow::OnInputSubmit(const Glib::ustring &text) {
+bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (!discord.HasSelfChannelPermission(m_active_channel, Permission::SEND_MESSAGES)) return false;
+    if (!data.Attachments.empty() && !discord.HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES)) return false;
+
+    int nitro_restriction = BaseAttachmentSizeLimit;
+    const auto nitro = discord.GetUserData().PremiumType;
+    if (!nitro.has_value() || nitro == EPremiumType::None) {
+        nitro_restriction = BaseAttachmentSizeLimit;
+    } else if (nitro == EPremiumType::NitroClassic) {
+        nitro_restriction = NitroClassicAttachmentSizeLimit;
+    } else if (nitro == EPremiumType::Nitro) {
+        nitro_restriction = NitroAttachmentSizeLimit;
+    }
+
+    int guild_restriction = BaseAttachmentSizeLimit;
+    if (const auto channel = discord.GetChannel(m_active_channel); channel.has_value() && channel->GuildID.has_value()) {
+        if (const auto guild = discord.GetGuild(*channel->GuildID); guild.has_value()) {
+            if (!guild->PremiumTier.has_value() || guild->PremiumTier == GuildPremiumTier::NONE || guild->PremiumTier == GuildPremiumTier::TIER_1) {
+                guild_restriction = BaseAttachmentSizeLimit;
+            } else if (guild->PremiumTier == GuildPremiumTier::TIER_2) {
+                guild_restriction = BoostLevel2AttachmentSizeLimit;
+            } else if (guild->PremiumTier == GuildPremiumTier::TIER_3) {
+                guild_restriction = BoostLevel3AttachmentSizeLimit;
+            }
+        }
+    }
+
+    int restriction = std::max(nitro_restriction, guild_restriction);
+
+    goffset total_size = 0;
+    for (const auto &attachment : data.Attachments) {
+        const auto info = attachment.File->query_info();
+        if (info) {
+            const auto size = info->get_size();
+            if (size > restriction) {
+                m_input->IndicateTooLarge();
+                return false;
+            }
+            total_size += size;
+            if (total_size > MaxMessagePayloadSize) {
+                m_input->IndicateTooLarge();
+                return false;
+            }
+        }
+    }
+
     if (!m_rate_limit_indicator->CanSpeak())
         return false;
 
-    if (text.empty())
+    if (data.Message.empty() && data.Attachments.empty())
         return false;
 
+    data.ChannelID = m_active_channel;
+    data.InReplyToID = m_replying_to;
+
     if (m_active_channel.IsValid())
-        m_signal_action_chat_submit.emit(text, m_active_channel, m_replying_to); // m_replying_to is checked for invalid in the handler
+        m_signal_action_chat_submit.emit(data); // m_replying_to is checked for invalid in the handler
     if (m_is_replying)
         StopReplying();
 
@@ -241,8 +300,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     const auto author = discord.GetUser(message.Author.ID);
     m_replying_to = message_id;
     m_is_replying = true;
-    m_input->grab_focus();
-    m_input->get_style_context()->add_class("replying");
+    m_input->StartReplying();
     if (author.has_value())
         m_input_indicator->SetCustomMarkup("Replying to " + author->GetEscapedBoldString<false>());
     else
@@ -252,7 +310,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
 void ChatWindow::StopReplying() {
     m_is_replying = false;
     m_replying_to = Snowflake::Invalid;
-    m_input->get_style_context()->remove_class("replying");
+    m_input->StopReplying();
     m_input_indicator->ClearCustom();
 }
 

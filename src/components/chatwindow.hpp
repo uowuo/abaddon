@@ -3,8 +3,10 @@
 #include <string>
 #include <set>
 #include "discord/discord.hpp"
+#include "discord/chatsubmitparams.hpp"
 #include "completer.hpp"
 #include "state.hpp"
+#include "progressbar.hpp"
 
 #ifdef WITH_LIBHANDY
 class ChannelTabSwitcherHandy;
@@ -34,6 +36,7 @@ public:
     Snowflake GetOldestListedMessage(); // oldest message that is currently in the ListBox
     void UpdateReactions(Snowflake id);
     void SetTopic(const std::string &text);
+    void AddAttachment(const Glib::RefPtr<Gio::File> &file);
 
 #ifdef WITH_LIBHANDY
     void OpenNewTab(Snowflake id);
@@ -55,7 +58,7 @@ protected:
 
     Snowflake m_active_channel;
 
-    bool OnInputSubmit(const Glib::ustring &text);
+    bool OnInputSubmit(ChatSubmitParams data);
 
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
@@ -77,6 +80,7 @@ protected:
     ChatInputIndicator *m_input_indicator;
     RateLimitIndicator *m_rate_limit_indicator;
     Gtk::Box *m_meta;
+    MessageUploadProgressBar m_progress;
 
 #ifdef WITH_LIBHANDY
     ChannelTabSwitcherHandy *m_tab_switcher;
@@ -84,7 +88,7 @@ protected:
 
 public:
     using type_signal_action_message_edit = sigc::signal<void, Snowflake, Snowflake>;
-    using type_signal_action_chat_submit = sigc::signal<void, std::string, Snowflake, Snowflake>;
+    using type_signal_action_chat_submit = sigc::signal<void, ChatSubmitParams>;
     using type_signal_action_chat_load_history = sigc::signal<void, Snowflake>;
     using type_signal_action_channel_click = sigc::signal<void, Snowflake, bool>;
     using type_signal_action_insert_mention = sigc::signal<void, Snowflake>;

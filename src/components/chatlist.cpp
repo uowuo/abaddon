@@ -34,6 +34,9 @@ void ChatList::Clear() {
         delete *it;
         it++;
     }
+    m_id_to_widget.clear();
+    m_num_messages = 0;
+    m_num_rows = 0;
 }
 
 void ChatList::SetActiveChannel(Snowflake id) {
@@ -350,10 +353,6 @@ void ChatList::RemoveMessageAndHeader(Gtk::Widget *widget) {
 
 ChatList::type_signal_action_message_edit ChatList::signal_action_message_edit() {
     return m_signal_action_message_edit;
-}
-
-ChatList::type_signal_action_chat_submit ChatList::signal_action_chat_submit() {
-    return m_signal_action_chat_submit;
 }
 
 ChatList::type_signal_action_chat_load_history ChatList::signal_action_chat_load_history() {

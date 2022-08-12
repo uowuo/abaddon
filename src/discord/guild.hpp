@@ -16,6 +16,13 @@ enum class GuildApplicationStatus {
     UNKNOWN,
 };
 
+enum class GuildPremiumTier {
+    NONE = 0,
+    TIER_1 = 1,
+    TIER_2 = 2,
+    TIER_3 = 3,
+};
+
 struct GuildApplicationData {
     Snowflake UserID;
     Snowflake GuildID;
@@ -73,7 +80,7 @@ struct GuildData {
     std::optional<std::string> VanityURL;   // null
     std::optional<std::string> Description; // null
     std::optional<std::string> BannerHash;  // null
-    std::optional<int> PremiumTier;
+    std::optional<GuildPremiumTier> PremiumTier;
     std::optional<int> PremiumSubscriptionCount;
     std::optional<std::string> PreferredLocale;
     std::optional<Snowflake> PublicUpdatesChannelID; // null
