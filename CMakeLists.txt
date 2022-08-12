@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
 
-find_package(nlohmann_json REQUIRED)
+
 find_package(CURL)
 find_package(ZLIB REQUIRED)
 find_package(SQLite3 REQUIRED)
@@ -17,6 +17,14 @@ find_package(gtkmm REQUIRED)
 
 set(USE_TLS TRUE)
 set(USE_OPEN_SSL TRUE)
+
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+	    message("nlohmann_json was not found and will be included as a submodule")
+        add_subdirectory(subprojects/json)
+        set(NLOHMANN_JSON_INCLUDE_DIRS subprojects/json/include/)
+endif()
+
 find_package(IXWebSocket QUIET)
 if (NOT IXWebSocket_FOUND)
     message("ixwebsocket was not found and will be included as a submodule")
