@@ -251,18 +251,18 @@ int Abaddon::StartGTK() {
     ActionReloadCSS();
     if(m_settings.GetSettings().HideToTray) {
         m_tray = Gtk::StatusIcon::create("discord");
-        m_tray->signal_activate().connect(sigc::mem_fun(this, &Abaddon::on_tray_click));
-        m_tray->signal_popup_menu().connect(sigc::mem_fun(this, &Abaddon::on_tray_popup_menu));
+        m_tray->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_click));
+        m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
     }
     m_tray_menu = Gtk::make_managed<Gtk::Menu>();
     m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("exit",false);
 
-    m_tray_exit->signal_activate().connect(sigc::mem_fun(this, &Abaddon::on_tray_menu_click));
+    m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
 
     m_tray_menu->append(*m_tray_exit);
     m_tray_menu->show_all();
 
-    m_main_window->signal_hide().connect(sigc::mem_fun(this, &Abaddon::on_window_hide));
+    m_main_window->signal_hide().connect(sigc::mem_fun(*this, &Abaddon::on_window_hide));
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
     m_main_window->UpdateMenus();
@@ -923,8 +923,8 @@ void Abaddon::ActionHideToTray(bool value) {
         m_tray.reset();
     }else{
         m_tray = Gtk::StatusIcon::create("discord");
-        m_tray->signal_activate().connect(sigc::mem_fun(this,&Abaddon::on_tray_click));
-        m_tray->signal_popup_menu().connect(sigc::mem_fun(this,&Abaddon::on_tray_popup_menu));
+        m_tray->signal_activate().connect(sigc::mem_fun(*this,&Abaddon::on_tray_click));
+        m_tray->signal_popup_menu().connect(sigc::mem_fun(*this,&Abaddon::on_tray_popup_menu));
     }
 }
 void Abaddon::on_window_hide() {
