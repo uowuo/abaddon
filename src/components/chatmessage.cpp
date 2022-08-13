@@ -32,7 +32,6 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
 
     if (!data.Content.empty() || data.Type != MessageType::DEFAULT) {
         container->m_text_component = container->CreateTextComponent(data);
-        container->AttachEventHandlers(*container->m_text_component);
         container->m_main.add(*container->m_text_component);
     }
 
@@ -101,7 +100,6 @@ void ChatMessageItemContainer::UpdateContent() {
 
     if (!data->Embeds.empty()) {
         m_embed_component = CreateEmbedsComponent(data->Embeds);
-        AttachEventHandlers(*m_embed_component);
         m_main.add(*m_embed_component);
         m_embed_component->show_all();
     }
@@ -155,9 +153,9 @@ void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, const std::s
     widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
             LaunchBrowser(url);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }, false);
     // clang-format on
 }
@@ -173,6 +171,8 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message &data
     tv->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
     tv->set_halign(Gtk::ALIGN_FILL);
     tv->set_hexpand(true);
+
+    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnTextViewButtonPress), false);
 
     UpdateTextComponent(tv);
 
@@ -281,8 +281,6 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
                 tag->property_weight() = Pango::WEIGHT_BOLD;
                 m_channel_tagmap[tag] = *data->MessageReference->ChannelID;
                 b->insert_with_tag(iter, data->Content, tag);
-
-                tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
             } else {
                 b->insert_markup(s, "<i><span color='#999999'>" + author->GetEscapedBoldName() + " started a thread: </span><b>" + Glib::Markup::escape_text(data->Content) + "</b></i>");
             }
@@ -297,12 +295,10 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedsComponent(const std::vector<E
         if (IsEmbedImageOnly(embed)) {
             auto *widget = CreateImageComponent(*embed.Thumbnail->ProxyURL, *embed.Thumbnail->URL, *embed.Thumbnail->Width, *embed.Thumbnail->Height);
             widget->show();
-            AttachEventHandlers(*widget);
             box->add(*widget);
         } else {
             auto *widget = CreateEmbedComponent(embed);
             widget->show();
-            AttachEventHandlers(*widget);
             box->add(*widget);
         }
     }
@@ -493,11 +489,21 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new LazyImage(proxy_url, w, h, false));
     ev->add(*widget);
+    ev->set_halign(Gtk::ALIGN_START);
     widget->set_halign(Gtk::ALIGN_START);
     widget->set_size_request(w, h);
 
-    AttachEventHandlers(*ev);
     AddClickHandler(ev, url);
+
+    const auto on_button_press_event = [this, url](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            m_selected_link = url;
+            m_link_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(e));
+            return true;
+        }
+        return false;
+    };
+    ev->signal_button_press_event().connect(on_button_press_event, false);
 
     return ev;
 }
@@ -510,8 +516,17 @@ Gtk::Widget *ChatMessageItemContainer::CreateAttachmentComponent(const Attachmen
     ev->get_style_context()->add_class("message-attachment-box");
     ev->add(*btn);
 
-    AttachEventHandlers(*ev);
     AddClickHandler(ev, data.URL);
+
+    const auto on_button_press_event = [this, url = data.URL](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            m_selected_link = url;
+            m_link_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(e));
+            return true;
+        }
+        return false;
+    };
+    ev->signal_button_press_event().connect(on_button_press_event, false);
 
     return ev;
 }
@@ -534,7 +549,6 @@ Gtk::Widget *ChatMessageItemContainer::CreateStickersComponent(const std::vector
 
     box->show();
 
-    AttachEventHandlers(*box);
     return box;
 }
 
@@ -956,7 +970,6 @@ void ChatMessageItemContainer::HandleChannelMentions(const Glib::RefPtr<Gtk::Tex
 }
 
 void ChatMessageItemContainer::HandleChannelMentions(Gtk::TextView *tv) {
-    tv->signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnClickChannel), false);
     HandleChannelMentions(tv->get_buffer());
 }
 
@@ -990,14 +1003,26 @@ bool ChatMessageItemContainer::OnClickChannel(GdkEventButton *ev) {
     return false;
 }
 
+bool ChatMessageItemContainer::OnTextViewButtonPress(GdkEventButton *ev) {
+    // run all button press handlers and propagate if none return true
+    if (OnLinkClick(ev)) return true;
+    if (OnClickChannel(ev)) return true;
+
+    if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_SECONDARY) {
+        // send the event upward skipping TextView's handler because we dont want it
+        gtk_propagate_event(GTK_WIDGET(m_main.gobj()), reinterpret_cast<GdkEvent *>(ev));
+        return true;
+    }
+
+    return false;
+}
+
 void ChatMessageItemContainer::on_link_menu_copy() {
     Gtk::Clipboard::get()->set_text(m_selected_link);
 }
 
 void ChatMessageItemContainer::HandleLinks(Gtk::TextView &tv) {
     const auto rgx = Glib::Regex::create(R"(\bhttps?:\/\/[^\s]+\.[^\s]+\b)");
-
-    tv.signal_button_press_event().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::OnLinkClick), false);
 
     auto buf = tv.get_buffer();
     Glib::ustring text = GetText(buf);
@@ -1068,18 +1093,6 @@ ChatMessageItemContainer::type_signal_action_reaction_add ChatMessageItemContain
 
 ChatMessageItemContainer::type_signal_action_reaction_remove ChatMessageItemContainer::signal_action_reaction_remove() {
     return m_signal_action_reaction_remove;
-}
-
-void ChatMessageItemContainer::AttachEventHandlers(Gtk::Widget &widget) {
-    const auto on_button_press_event = [this](GdkEventButton *e) -> bool {
-        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            event(reinterpret_cast<GdkEvent *>(e)); // illegal ooooooh
-            return true;
-        }
-
-        return false;
-    };
-    widget.signal_button_press_event().connect(on_button_press_event, false);
 }
 
 ChatMessageHeader::ChatMessageHeader(const Message &data)

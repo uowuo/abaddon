@@ -98,6 +98,10 @@ void request::set_user_agent(const std::string &data) {
     curl_easy_setopt(m_curl, CURLOPT_USERAGENT, data.c_str());
 }
 
+CURL *request::get_curl() {
+    return m_curl;
+}
+
 void request::make_form() {
     m_form = curl_mime_init(m_curl);
 }

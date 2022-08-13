@@ -262,6 +262,7 @@ void to_json(nlohmann::json &j, const ClientStateProperties &m) {
     j["highest_last_message_id"] = m.HighestLastMessageID;
     j["read_state_version"] = m.ReadStateVersion;
     j["user_guild_settings_version"] = m.UserGuildSettingsVersion;
+    j["user_settings_version"] = m.UserSettingsVersion;
 }
 
 void to_json(nlohmann::json &j, const IdentifyMessage &m) {

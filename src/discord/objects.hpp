@@ -382,6 +382,7 @@ struct ClientStateProperties {
     std::string HighestLastMessageID = "0";
     int ReadStateVersion = 0;
     int UserGuildSettingsVersion = -1;
+    int UserSettingsVersion = -1;
 
     friend void to_json(nlohmann::json &j, const ClientStateProperties &m);
 };
