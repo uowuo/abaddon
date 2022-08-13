@@ -281,6 +281,7 @@ private:
     STMT(set_interaction);
     STMT(set_member_roles);
     STMT(get_member_roles);
+    STMT(clr_member_roles);
     STMT(set_guild_emoji);
     STMT(get_guild_emojis);
     STMT(clr_guild_emoji);

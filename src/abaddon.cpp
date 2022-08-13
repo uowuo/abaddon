@@ -390,6 +390,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
 
     for (const auto child : m_user_menu_roles_submenu->get_children())
         delete child;
+
     if (guild.has_value() && user.has_value()) {
         const auto roles = user->GetSortedRoles();
         m_user_menu_roles->set_visible(!roles.empty());
@@ -412,7 +413,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     if (me == id) {
         m_user_menu_ban->set_visible(false);
         m_user_menu_kick->set_visible(false);
-        m_user_menu_open_dm->set_visible(false);
+        m_user_menu_open_dm->set_sensitive(false);
     } else {
         const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
         const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
@@ -420,7 +421,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
 
         m_user_menu_kick->set_visible(has_kick && can_manage);
         m_user_menu_ban->set_visible(has_ban && can_manage);
-        m_user_menu_open_dm->set_visible(true);
+        m_user_menu_open_dm->set_sensitive(m_discord.FindDM(id).has_value());
     }
 
     m_user_menu_remove_recipient->hide();
@@ -468,7 +469,7 @@ void Abaddon::SetupUserMenu() {
     m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
     m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
     m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
+    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Go to DM"));
     m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
     m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
     m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
@@ -579,18 +580,9 @@ void Abaddon::on_user_menu_copy_id() {
 
 void Abaddon::on_user_menu_open_dm() {
     const auto existing = m_discord.FindDM(m_shown_user_menu_id);
-    if (existing.has_value())
+    if (existing.has_value()) {
         ActionChannelOpened(*existing);
-    else
-        m_discord.CreateDM(m_shown_user_menu_id, [this](DiscordError code, Snowflake channel_id) {
-            if (code == DiscordError::NONE) {
-                // give the gateway a little window to send CHANNEL_CREATE
-                auto cb = [this, channel_id] {
-                    ActionChannelOpened(channel_id);
-                };
-                Glib::signal_timeout().connect_once(sigc::track_obj(cb, *this), 200);
-            }
-        });
+    }
 }
 
 void Abaddon::on_user_menu_remove_recipient() {

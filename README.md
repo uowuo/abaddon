@@ -25,13 +25,13 @@ Current features:
 * Thread support<sup>3</sup>
 * Animated avatars, server icons, emojis (can be turned off)
 
-1 - Abaddon tries its best to make Discord think it's a legitimate web client. Some of the things done to do this
+1 - Abaddon tries its best (though is not perfect) to make Discord think it's a legitimate web client. Some of the things done to do this
 include: using a browser user agent, sending the same IDENTIFY message that the official web client does, using API v9
 endpoints in all cases, and not using endpoints the web client does not normally use. There are still a few smaller
 inconsistencies, however. For example the web client sends lots of telemetry via the `/science` endpoint (uBlock origin
-stops this) as well as in the headers of all requests. **In any case,** you should use an official client for joining
-servers, sending new DMs, or managing your friends list if you are afraid of being caught in Discord's spam filters
-(unlikely).
+stops this) as well as in the headers of all requests.<br>
+
+**See [here](#the-spam-filter)** for things you might want to avoid if you are worried about being caught in the spam filter.
 
 2 - Unicode emojis are substituted manually as opposed to rendered by GTK on non-Windows platforms. This can be changed
 with the `stock_emojis` setting as shown at the bottom of this README. A CBDT-based font using Twemoji is provided to
@@ -52,6 +52,7 @@ the result of fundamental issues with Discord's thread implementation.
     * mingw-w64-x86_64-curl
     * mingw-w64-x86_64-zlib
     * mingw-w64-x86_64-gtkmm3
+    * mingw-w64-x86_64-libhandy
 2. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
@@ -60,7 +61,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Mac:
 
 1. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
-2. `brew install gtkmm3 nlohmann-json`
+2. `brew install gtkmm3 nlohmann-json libhandy`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
@@ -93,6 +94,16 @@ On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/
 `abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is
 no `abaddon.ini` in the working directory
 
+#### The Spam Filter
+
+Discord likes disabling accounts/forcing them to reset their passwords if they think the user is a spam bot or potentially had their account compromised. While the official client still often gets users caught in the spam filter, third party clients tend to upset the spam filter more often. If you get caught by it, you can usually [appeal](https://support.discord.com/hc/en-us/requests/new?ticket_form_id=360000029731) it and get it restored. Here are some things you might want to do with the official client instead if you are particularly afraid of evoking the spam filter's wrath:
+
+* Joining or leaving servers (usually main cause of getting caught)
+* Frequently disconnecting and reconnecting
+* Starting new DMs with people
+* Managing your friends list
+* Managing your user profile while connected to a third party client
+
 #### Dependencies:
 
 * [gtkmm](https://www.gtkmm.org/en/)
@@ -101,6 +112,7 @@ no `abaddon.ini` in the working directory
 * [libcurl](https://curl.se/)
 * [zlib](https://zlib.net/)
 * [SQLite3](https://www.sqlite.org/index.html)
+* [libhandy](https://gnome.pages.gitlab.gnome.org/libhandy/) (optional)
 
 ### TODO:
 
