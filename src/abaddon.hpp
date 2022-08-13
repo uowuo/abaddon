@@ -50,7 +50,6 @@ public:
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
-    void ActionHideToTray(bool value);
 
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 

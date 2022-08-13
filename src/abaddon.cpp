@@ -219,7 +219,6 @@ int Abaddon::StartGTK() {
 
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
-		m_main_window->UpdateSettingsMenu(m_settings.GetSettings().HideToTray);
 
     // crashes for some stupid reason if i put it somewhere else
     SetupUserMenu();
@@ -233,7 +232,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
     m_main_window->signal_action_view_threads().connect(sigc::mem_fun(*this, &Abaddon::ActionViewThreads));
-		m_main_window->signal_action_hide_to_tray().connect(sigc::mem_fun(*this,&Abaddon::ActionHideToTray));
 
 
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::bind(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened), true));
@@ -255,7 +253,7 @@ int Abaddon::StartGTK() {
         m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
     }
     m_tray_menu = Gtk::make_managed<Gtk::Menu>();
-    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("exit",false);
+    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit",false);
 
     m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
 
@@ -915,17 +913,6 @@ void Abaddon::on_tray_menu_click() {
 }
 void Abaddon::on_tray_popup_menu(int button, int activate_time) {
     m_tray->popup_menu_at_position(*m_tray_menu,button, activate_time);
-}
-void Abaddon::ActionHideToTray(bool value) {
-    m_settings.GetSettings().HideToTray = value;
-
-    if(!value){
-        m_tray.reset();
-    }else{
-        m_tray = Gtk::StatusIcon::create("discord");
-        m_tray->signal_activate().connect(sigc::mem_fun(*this,&Abaddon::on_tray_click));
-        m_tray->signal_popup_menu().connect(sigc::mem_fun(*this,&Abaddon::on_tray_popup_menu));
-    }
 }
 void Abaddon::on_window_hide() {
     if(!m_settings.GetSettings().HideToTray){

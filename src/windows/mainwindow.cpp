@@ -279,15 +279,9 @@ void MainWindow::SetupMenu() {
     m_menu_view_sub.append(m_menu_view_go_forward);
 #endif
 
-    m_menu_settings.set_label("settings");
-    m_menu_settings.set_submenu(m_menu_settings_sub);
-    m_menu_settings_hide_to_tray.set_label("hide to tray");
-    m_menu_settings_sub.append(m_menu_settings_hide_to_tray);
-
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
     m_menu_bar.append(m_menu_view);
-    m_menu_bar.append(m_menu_settings);
     m_menu_bar.show_all();
 
     m_menu_discord_connect.signal_activate().connect([this] {
@@ -345,10 +339,6 @@ void MainWindow::SetupMenu() {
         }
     });
 
-    m_menu_settings_hide_to_tray.signal_activate().connect([this]{
-      m_signal_action_hide_to_tray.emit(m_menu_settings_hide_to_tray.get_active());
-    });
-
 #ifdef WITH_LIBHANDY
     m_menu_view_go_back.signal_activate().connect([this] {
         GoBack();
@@ -396,10 +386,4 @@ MainWindow::type_signal_action_view_pins MainWindow::signal_action_view_pins() {
 
 MainWindow::type_signal_action_view_threads MainWindow::signal_action_view_threads() {
     return m_signal_action_view_threads;
-}
-MainWindow::type_signal_action_hide_to_tray MainWindow::signal_action_hide_to_tray() {
-    return m_signal_action_hide_to_tray;
-}
-void MainWindow::UpdateSettingsMenu(bool hide_to_tray) {
-    m_menu_settings_hide_to_tray.set_active(hide_to_tray);
 }
