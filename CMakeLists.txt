@@ -33,6 +33,12 @@ if (WIN32)
     add_compile_definitions(NOMINMAX)
 endif ()
 
+include(TestBigEndian)
+test_big_endian(IS_BIG_ENDIAN)
+if (IS_BIG_ENDIAN)
+    add_compile_definitions(ABADDON_IS_BIG_ENDIAN)
+endif ()
+
 configure_file(${PROJECT_SOURCE_DIR}/src/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 
 file(GLOB_RECURSE ABADDON_SOURCES
