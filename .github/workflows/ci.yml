@@ -117,6 +117,7 @@ jobs:
         run: |
           brew install gtkmm3
           brew install nlohmann-json
+          brew install jpeg
 
       - name: Build
         uses: lukka/run-cmake@v3
