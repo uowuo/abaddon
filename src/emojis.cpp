@@ -1,7 +1,6 @@
 #include "emojis.hpp"
 #include <sstream>
 #include <utility>
-#include <cstdio>
 
 #ifdef ABADDON_IS_BIG_ENDIAN
 /* Allows processing emojis.bin correctly on big-endian systems. */
