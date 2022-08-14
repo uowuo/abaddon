@@ -348,8 +348,6 @@ void MainWindow::SetupMenu() {
         GoForward();
     });
 #endif
-
-
 }
 
 MainWindow::type_signal_action_connect MainWindow::signal_action_connect() {
