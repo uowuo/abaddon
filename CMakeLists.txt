@@ -19,10 +19,10 @@ set(USE_TLS TRUE)
 set(USE_OPEN_SSL TRUE)
 
 find_package(nlohmann_json QUIET)
-if(NOT nlohmann_json_FOUND)
-	    message("nlohmann_json was not found and will be included as a submodule")
-        add_subdirectory(subprojects/json)
-        set(NLOHMANN_JSON_INCLUDE_DIRS subprojects/json/include/)
+if (NOT nlohmann_json_FOUND)
+		include(FetchContent)
+		FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/latest/download/json.tar.xz)
+		FetchContent_MakeAvailable(json)
 endif()
 
 find_package(IXWebSocket QUIET)
@@ -55,7 +55,7 @@ target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
 target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
-target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
+target_include_directories(abaddon PUBLIC nlohmann_json::nlohmann_json)
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -95,7 +95,7 @@ target_link_libraries(abaddon ${SQLite3_LIBRARIES})
 target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
-target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
+target_link_libraries(abaddon nlohmann_json::nlohmann_json)
 
 if (USE_LIBHANDY)
     find_package(libhandy)

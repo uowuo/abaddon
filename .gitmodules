@@ -4,6 +4,3 @@
 [submodule "subprojects/ixwebsocket"]
 	path = subprojects/ixwebsocket
 	url = https://github.com/machinezone/ixwebsocket
-[submodule "subprojects/json"]
-	path = subprojects/json
-	url = https://github.com/nlohmann/json
