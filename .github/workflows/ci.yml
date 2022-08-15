@@ -73,6 +73,7 @@ jobs:
           cp -r res/css res/res res/fonts build/artifactdir/bin
           cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas
           cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin || :
+          cp /usr/bin/msys-ffi-8.dll build/artifactdir/bin/libffi-8.dll
           mkdir -p build/artifactdir/share/icons/Adwaita
           cd build/artifactdir/share/icons/Adwaita
           mkdir -p 16x16/actions 24x24/actions 32x32/actions 48x48/actions 64x64/actions 96x96/actions scalable/actions

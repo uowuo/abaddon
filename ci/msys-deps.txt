@@ -56,3 +56,4 @@
 /bin/libwinpthread-1.dll
 /bin/libzstd.dll
 /bin/zlib1.dll
+../usr/bin/msys-2.0.dll
