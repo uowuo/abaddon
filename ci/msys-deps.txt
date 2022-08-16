@@ -14,7 +14,6 @@
 /bin/libdeflate.dll
 /bin/libepoxy-0.dll
 /bin/libexpat-1.dll
-/bin/libffi-7.dll
 /bin/libfontconfig-1.dll
 /bin/libfreetype-6.dll
 /bin/libfribidi-0.dll
@@ -56,4 +55,4 @@
 /bin/libwinpthread-1.dll
 /bin/libzstd.dll
 /bin/zlib1.dll
-../usr/bin/msys-2.0.dll
+/../usr/bin/msys-2.0.dll
