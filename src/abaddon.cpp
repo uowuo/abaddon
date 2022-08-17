@@ -17,6 +17,7 @@
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
+#include "startup.hpp"
 
 #ifdef WITH_LIBHANDY
     #include <handy.h>
@@ -253,6 +254,9 @@ int Abaddon::StartGTK() {
     m_main_window->UpdateMenus();
 
     m_main_window->show();
+
+    RunFirstTimeDiscordStartup();
+
     return m_gtk_app->run(*m_main_window);
 }
 
@@ -433,6 +437,43 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     }
 
     m_user_menu->popup_at_pointer(event);
+}
+
+void Abaddon::RunFirstTimeDiscordStartup() {
+    DiscordStartupDialog dlg(*m_main_window);
+    dlg.set_position(Gtk::WIN_POS_CENTER);
+
+    std::optional<std::string> cookie;
+    std::optional<uint32_t> build_number;
+
+    dlg.signal_response().connect([&](int response) {
+        if (response == Gtk::RESPONSE_OK) {
+            cookie = dlg.GetCookie();
+            build_number = dlg.GetBuildNumber();
+        }
+    });
+
+    dlg.run();
+
+    Glib::signal_idle().connect_once([this, cookie, build_number]() {
+        if (cookie.has_value()) {
+            m_discord.SetCookie(*cookie);
+        } else {
+            ConfirmDialog confirm(*m_main_window);
+            confirm.SetConfirmText("Cookies could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetAcceptOnly(true);
+            confirm.run();
+        }
+
+        if (build_number.has_value()) {
+            m_discord.SetBuildNumber(*build_number);
+        } else {
+            ConfirmDialog confirm(*m_main_window);
+            confirm.SetConfirmText("Build number could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetAcceptOnly(true);
+            confirm.run();
+        }
+    });
 }
 
 void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {

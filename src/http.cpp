@@ -2,6 +2,8 @@
 
 #include <utility>
 
+// #define USE_LOCAL_PROXY
+
 namespace http {
 request::request(EMethod method, std::string url)
     : m_url(std::move(url)) {
@@ -147,6 +149,10 @@ response request::execute() {
     detail::check_init();
 
     std::string str;
+#ifdef USE_LOCAL_PROXY
+    set_proxy("http://127.0.0.1:8888");
+    set_verify_ssl(false);
+#endif
     curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, m_method);
     curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());

@@ -206,6 +206,9 @@ public:
 
     void SetReferringChannel(Snowflake id);
 
+    void SetBuildNumber(uint32_t build_number);
+    void SetCookie(std::string_view cookie);
+
     void UpdateToken(const std::string &token);
     void SetUserAgent(const std::string &agent);
 
@@ -302,6 +305,8 @@ private:
     void HandleReadyGuildSettings(const ReadyEventData &data);
 
     std::string m_token;
+
+    uint32_t m_build_number = 142000;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;

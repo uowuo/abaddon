@@ -1188,6 +1188,14 @@ void DiscordClient::SetReferringChannel(Snowflake id) {
     }
 }
 
+void DiscordClient::SetBuildNumber(uint32_t build_number) {
+    m_build_number = build_number;
+}
+
+void DiscordClient::SetCookie(std::string_view cookie) {
+    m_http.SetCookie(cookie);
+}
+
 void DiscordClient::UpdateToken(const std::string &token) {
     if (!IsStarted()) {
         m_token = token;
@@ -2314,7 +2322,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 141021;
+    msg.Properties.ClientBuildNumber = m_build_number;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;

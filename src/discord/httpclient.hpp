@@ -18,6 +18,7 @@ public:
     void SetUserAgent(std::string agent);
     void SetAuth(std::string auth);
     void SetPersistentHeader(std::string name, std::string value);
+    void SetCookie(std::string_view cookie);
 
     void MakeDELETE(const std::string &path, const std::function<void(http::response_type r)> &cb);
     void MakeGET(const std::string &path, const std::function<void(http::response_type r)> &cb);
@@ -44,4 +45,5 @@ private:
     std::string m_authorization;
     std::string m_agent;
     std::unordered_map<std::string, std::string> m_headers;
+    std::string m_cookie;
 };

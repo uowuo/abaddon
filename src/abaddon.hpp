@@ -94,6 +94,8 @@ public:
     static std::string GetStateCachePath(const std::string &path);
 
 protected:
+    void RunFirstTimeDiscordStartup();
+
     void ShowGuildVerificationGateDialog(Snowflake guild_id);
 
     void CheckMessagesForMembers(const ChannelData &chan, const std::vector<Message> &msgs);

@@ -34,3 +34,7 @@ ConfirmDialog::ConfirmDialog(Gtk::Window &parent)
 void ConfirmDialog::SetConfirmText(const Glib::ustring &text) {
     m_label.set_text(text);
 }
+
+void ConfirmDialog::SetAcceptOnly(bool accept_only) {
+    m_cancel.set_visible(!accept_only);
+}
