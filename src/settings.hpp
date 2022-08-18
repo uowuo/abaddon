@@ -28,7 +28,7 @@ public:
 #endif
         bool Unreads { true };
 
-        bool HideToTray { true };
+        bool HideToTray { false };
 
         // [http]
         int CacheHTTPConcurrency { 20 };
