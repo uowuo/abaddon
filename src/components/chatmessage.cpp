@@ -55,7 +55,7 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
             container->m_main.add(*widget);
         } else if (IsURLOverrideImage(a.ProxyURL)) {
-            auto *widget = container->CreateOverrideImageComponent(a.ProxyURL, a.URL, 200, 200);
+            auto *widget = container->CreateOverrideImageComponent(a.URL);
             container->m_main.add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
@@ -510,13 +510,16 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
 
     return ev;
 }
+/// TODO; this should not be default behavior and only opt in
 
-Gtk::Widget *ChatMessageItemContainer::CreateOverrideImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh) {
-    int w, h;
-    GetImageDimensions(inw, inh, w, h);
+Gtk::Widget *ChatMessageItemContainer::CreateOverrideImageComponent(const std::string &url) {
+    //debug
+    int w = 200;
+    int h = 200;
+    const bool is_animated = true;
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
-    Gtk::Image *widget = Gtk::manage(new LazyImage(url, w, h, false));
+    Gtk::Image *widget = Gtk::manage(new LazyImage(url, w, h, true)); //debug
     ev->add(*widget);
     ev->set_halign(Gtk::ALIGN_START);
     widget->set_halign(Gtk::ALIGN_START);

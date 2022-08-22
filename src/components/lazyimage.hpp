@@ -13,7 +13,7 @@ public:
 private:
     bool OnDraw(const Cairo::RefPtr<Cairo::Context> &context);
 
-    bool m_animated = false;
+    bool m_animated = true; //debug
     bool m_needs_request = true;
     std::string m_url;
     int m_width;

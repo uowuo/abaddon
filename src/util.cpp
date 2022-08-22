@@ -175,6 +175,9 @@ bool IsURLViewableImage(const std::string &url) {
 bool IsURLOverrideImage(const std::string &url) {
     const auto ext = GetExtension(url);
     static const char *exts[] = { ".avif",
+                                  ".svg",
+                                  ".gif",
+                                  ".webp",
                                   ".jxl", nullptr };
     const char *str = ext.c_str();
     for (int i = 0; exts[i] != nullptr; i++)
