@@ -54,6 +54,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
         if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
             container->m_main.add(*widget);
+        } else if (IsURLOverrideImage(a.ProxyURL)) {
+            auto *widget = container->CreateOverrideImageComponent(a.ProxyURL, a.URL, 200, 200);
+            container->m_main.add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
             container->m_main.add(*widget);
@@ -488,6 +491,32 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new LazyImage(proxy_url, w, h, false));
+    ev->add(*widget);
+    ev->set_halign(Gtk::ALIGN_START);
+    widget->set_halign(Gtk::ALIGN_START);
+    widget->set_size_request(w, h);
+
+    AddClickHandler(ev, url);
+
+    const auto on_button_press_event = [this, url](GdkEventButton *e) -> bool {
+        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
+            m_selected_link = url;
+            m_link_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(e));
+            return true;
+        }
+        return false;
+    };
+    ev->signal_button_press_event().connect(on_button_press_event, false);
+
+    return ev;
+}
+
+Gtk::Widget *ChatMessageItemContainer::CreateOverrideImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh) {
+    int w, h;
+    GetImageDimensions(inw, inh, w, h);
+
+    Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
+    Gtk::Image *widget = Gtk::manage(new LazyImage(url, w, h, false));
     ev->add(*widget);
     ev->set_halign(Gtk::ALIGN_START);
     widget->set_halign(Gtk::ALIGN_START);

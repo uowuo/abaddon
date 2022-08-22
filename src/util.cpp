@@ -172,6 +172,17 @@ bool IsURLViewableImage(const std::string &url) {
     return false;
 }
 
+bool IsURLOverrideImage(const std::string &url) {
+    const auto ext = GetExtension(url);
+    static const char *exts[] = { ".avif",
+                                  ".jxl", nullptr };
+    const char *str = ext.c_str();
+    for (int i = 0; exts[i] != nullptr; i++)
+        if (strcmp(str, exts[i]) == 0)
+            return true;
+    return false;
+}
+
 void AddPointerCursor(Gtk::Widget &widget) {
     widget.signal_realize().connect([&widget]() {
         auto window = widget.get_window();

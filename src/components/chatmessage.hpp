@@ -25,6 +25,7 @@ protected:
     Gtk::Widget *CreateEmbedsComponent(const std::vector<EmbedData> &embeds);
     static Gtk::Widget *CreateEmbedComponent(const EmbedData &data); // Message.Embeds[0]
     Gtk::Widget *CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
+    Gtk::Widget *CreateOverrideImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh);
     Gtk::Widget *CreateAttachmentComponent(const AttachmentData &data); // non-image attachments
     Gtk::Widget *CreateStickersComponent(const std::vector<StickerItem> &data);
     Gtk::Widget *CreateReactionsComponent(const Message &data);

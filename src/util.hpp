@@ -39,6 +39,7 @@ void AddWidgetMenuHandler(Gtk::Widget *widget, Gtk::Menu &menu, const sigc::slot
 std::vector<std::string> StringSplit(const std::string &str, const char *delim);
 std::string GetExtension(std::string url);
 bool IsURLViewableImage(const std::string &url);
+bool IsURLOverrideImage(const std::string &url);
 std::vector<uint8_t> ReadWholeFile(const std::string &path);
 std::string HumanReadableBytes(uint64_t bytes);
 std::string FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
