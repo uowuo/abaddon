@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
+option(ENABLE_VOICE "Enable voice suppport" ON)
 
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
@@ -105,4 +106,8 @@ if (USE_LIBHANDY)
         target_link_libraries(abaddon ${libhandy_LIBRARIES})
         target_compile_definitions(abaddon PRIVATE WITH_LIBHANDY)
     endif ()
+endif ()
+
+if (ENABLE_VOICE)
+    target_include_directories(abaddon PUBLIC subprojects/miniaudio)
 endif ()
