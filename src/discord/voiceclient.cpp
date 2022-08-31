@@ -4,6 +4,13 @@
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 
+#ifdef _WIN32
+    #define S_ADDR(var) (var).sin_addr.S_un.S_addr
+    #define socklen_t int
+#else
+    #define S_ADDR(var) (var).sin_addr.s_addr
+#endif
+
 UDPSocket::UDPSocket() {
     m_socket = socket(AF_INET, SOCK_DGRAM, 0);
 }
@@ -15,7 +22,7 @@ UDPSocket::~UDPSocket() {
 void UDPSocket::Connect(std::string_view ip, uint16_t port) {
     std::memset(&m_server, 0, sizeof(m_server));
     m_server.sin_family = AF_INET;
-    m_server.sin_addr.S_un.S_addr = inet_addr(ip.data());
+    S_ADDR(m_server) = inet_addr(ip.data());
     m_server.sin_port = htons(port);
     bind(m_socket, reinterpret_cast<sockaddr *>(&m_server), sizeof(m_server));
 }
@@ -68,12 +75,12 @@ void UDPSocket::Send(const uint8_t *data, size_t len) {
 std::vector<uint8_t> UDPSocket::Receive() {
     while (true) {
         sockaddr_in from;
-        int fromlen = sizeof(from);
+        socklen_t fromlen = sizeof(from);
         static std::array<uint8_t, 4096> buf;
         int n = recvfrom(m_socket, reinterpret_cast<char *>(buf.data()), sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &fromlen);
         if (n < 0) {
             return {};
-        } else if (from.sin_addr.S_un.S_addr == m_server.sin_addr.S_un.S_addr && from.sin_port == m_server.sin_port) {
+        } else if (S_ADDR(from) == S_ADDR(m_server) && from.sin_port == m_server.sin_port) {
             return { buf.begin(), buf.begin() + n };
         }
     }
@@ -81,7 +88,11 @@ std::vector<uint8_t> UDPSocket::Receive() {
 
 void UDPSocket::Stop() {
     m_running = false;
+#ifdef _WIN32
     shutdown(m_socket, SD_BOTH);
+#else
+    shutdown(m_socket, SHUT_RDWR);
+#endif
     if (m_thread.joinable()) m_thread.join();
 }
 
@@ -89,9 +100,9 @@ void UDPSocket::ReadThread() {
     while (m_running) {
         static std::array<uint8_t, 4096> buf;
         sockaddr_in from;
-        int addrlen = sizeof(from);
+        socklen_t addrlen = sizeof(from);
         int n = recvfrom(m_socket, reinterpret_cast<char *>(buf.data()), sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &addrlen);
-        if (n > 0 && from.sin_addr.S_un.S_addr == m_server.sin_addr.S_un.S_addr && from.sin_port == m_server.sin_port) {
+        if (n > 0 && S_ADDR(from) == S_ADDR(m_server) && from.sin_port == m_server.sin_port) {
             m_signal_data.emit({ buf.begin(), buf.begin() + n });
         }
     }

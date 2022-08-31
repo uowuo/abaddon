@@ -119,4 +119,6 @@ if (ENABLE_VOICE)
 
     pkg_check_modules(libsodium REQUIRED IMPORTED_TARGET libsodium)
     target_link_libraries(abaddon PkgConfig::libsodium)
+
+    target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 endif ()
