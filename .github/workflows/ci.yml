@@ -59,10 +59,20 @@ jobs:
           update: true
           install: ${{ steps.setupmsys.outputs.value }}
 
-      - name: Build
-        run: |
-          cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
-          cmake --build build
+      - name: Build (1)
+        uses: haya14busa/action-cond@v1
+        id: buildcmd
+        with:
+          cond: ${{ matrix.mindeps == true }}
+          if_true: |
+            cmake -GNinja -Bbuild -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake --build build
+          if_false: |
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake --build build
+
+      - name: Build (2)
+        run: ${{ steps.buildcmd.outputs.value }}
 
       - name: Setup Artifact
         run: |
