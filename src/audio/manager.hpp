@@ -4,7 +4,7 @@
 #include <thread>
 #include <queue>
 #include <miniaudio.h>
-#include <opus/opus.h>
+#include <opus.h>
 
 class AudioManager {
 public:
