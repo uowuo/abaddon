@@ -6,7 +6,7 @@
 #include <array>
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
-#include <opus/opus.h>
+#include <opus.h>
 #include <cstring>
 
 const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
