@@ -49,6 +49,8 @@ jobs:
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-gtkmm3
             mingw-w64-x86_64-libhandy
+            mingw-w64-x86_64-opus
+            mingw-w64-x86_64-libsodium
 
       - name: Setup MSYS2 (2)
         uses: msys2/setup-msys2@v2
@@ -119,6 +121,8 @@ jobs:
           brew install gtkmm3
           brew install nlohmann-json
           brew install jpeg
+          brew install opus
+          brew install libsodium
 
       - name: Build
         uses: lukka/run-cmake@v3
@@ -168,6 +172,8 @@ jobs:
           sudo make install
           sudo apt-get install libgtkmm-3.0-dev
           sudo apt-get install libcurl4-gnutls-dev
+          sudo apt-get install libopus-dev
+          sudo apt-get install libsodium-dev
 
       - name: Build
         uses: lukka/run-cmake@v3
