@@ -109,5 +109,14 @@ if (USE_LIBHANDY)
 endif ()
 
 if (ENABLE_VOICE)
+    target_compile_definitions(abaddon PRIVATE WITH_VOICE)
+
+    find_package(PkgConfig)
+
     target_include_directories(abaddon PUBLIC subprojects/miniaudio)
+    pkg_check_modules(Opus REQUIRED IMPORTED_TARGET opus)
+    target_link_libraries(abaddon PkgConfig::Opus)
+
+    pkg_check_modules(libsodium REQUIRED IMPORTED_TARGET libsodium)
+    target_link_libraries(abaddon PkgConfig::libsodium)
 endif ()

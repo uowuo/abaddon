@@ -10,6 +10,7 @@ enum class RenderType : uint8_t {
     Category,
     TextChannel,
     Thread,
+    VoiceChannel,
 
     DMHeader,
     DM,
@@ -82,6 +83,19 @@ protected:
                              const Gdk::Rectangle &background_area,
                              const Gdk::Rectangle &cell_area,
                              Gtk::CellRendererState flags);
+
+#ifdef WITH_VOICE
+    // voice channel
+    void get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_voice_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_voice_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr,
+                                    Gtk::Widget &widget,
+                                    const Gdk::Rectangle &background_area,
+                                    const Gdk::Rectangle &cell_area,
+                                    Gtk::CellRendererState flags);
+#endif
 
     // dm header
     void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;

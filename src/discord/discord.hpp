@@ -1,9 +1,11 @@
 #pragma once
-#include "websocket.hpp"
+#include "chatsubmitparams.hpp"
+#include "waiter.hpp"
 #include "httpclient.hpp"
 #include "objects.hpp"
 #include "store.hpp"
-#include "chatsubmitparams.hpp"
+#include "voiceclient.hpp"
+#include "websocket.hpp"
 #include <sigc++/sigc++.h>
 #include <nlohmann/json.hpp>
 #include <thread>
@@ -17,31 +19,6 @@
 #ifdef GetMessage
     #undef GetMessage
 #endif
-
-class HeartbeatWaiter {
-public:
-    template<class R, class P>
-    bool wait_for(std::chrono::duration<R, P> const &time) const {
-        std::unique_lock<std::mutex> lock(m);
-        return !cv.wait_for(lock, time, [&] { return terminate; });
-    }
-
-    void kill() {
-        std::unique_lock<std::mutex> lock(m);
-        terminate = true;
-        cv.notify_all();
-    }
-
-    void revive() {
-        std::unique_lock<std::mutex> lock(m);
-        terminate = false;
-    }
-
-private:
-    mutable std::condition_variable cv;
-    mutable std::mutex m;
-    bool terminate = false;
-};
 
 class Abaddon;
 class DiscordClient {
@@ -204,6 +181,8 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+    void ConnectToVoice(Snowflake channel_id);
+
     void SetReferringChannel(Snowflake id);
 
     void SetBuildNumber(uint32_t build_number);
@@ -283,6 +262,8 @@ private:
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
+    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
+    void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
@@ -338,12 +319,14 @@ private:
     std::thread m_heartbeat_thread;
     std::atomic<int> m_last_sequence = -1;
     std::atomic<int> m_heartbeat_msec = 0;
-    HeartbeatWaiter m_heartbeat_waiter;
+    Waiter m_heartbeat_waiter;
     std::atomic<bool> m_heartbeat_acked = true;
 
     bool m_reconnecting = false; // reconnecting either to resume or reidentify
     bool m_wants_resume = false; // reconnecting specifically to resume
     std::string m_session_id;
+
+    DiscordVoiceClient m_voice;
 
     mutable std::mutex m_msg_mutex;
     Glib::Dispatcher m_msg_dispatch;

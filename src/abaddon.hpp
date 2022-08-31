@@ -12,6 +12,8 @@
 
 #define APP_TITLE "Abaddon"
 
+class AudioManager;
+
 class Abaddon {
 private:
     Abaddon();
@@ -51,6 +53,7 @@ public:
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
+    void ActionJoinVoiceChannel(Snowflake channel_id);
 
     std::optional<Glib::ustring> ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder = "", Gtk::Window *window = nullptr);
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
@@ -59,6 +62,7 @@ public:
 
     ImageManager &GetImageManager();
     EmojiResource &GetEmojis();
+    AudioManager &GetAudio();
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -137,6 +141,7 @@ private:
 
     ImageManager m_img_mgr;
     EmojiResource m_emojis;
+    std::unique_ptr<AudioManager> m_audio;
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;

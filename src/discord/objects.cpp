@@ -640,3 +640,24 @@ void from_json(const nlohmann::json &j, GuildMembersChunkData &m) {
     JS_D("members", m.Members);
     JS_D("guild_id", m.GuildID);
 }
+
+void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
+    j["op"] = GatewayOp::VoiceStateUpdate;
+    j["d"]["guild_id"] = m.GuildID;
+    j["d"]["channel_id"] = m.ChannelID;
+    j["d"]["self_mute"] = m.SelfMute;
+    j["d"]["self_deaf"] = m.SelfDeaf;
+    j["d"]["self_video"] = m.SelfVideo;
+    j["d"]["preferred_region"] = m.PreferredRegion;
+}
+
+void from_json(const nlohmann::json &j, VoiceStateUpdateData &m) {
+    JS_ON("user_id", m.UserID);
+    JS_ON("session_id", m.SessionID);
+}
+
+void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
+    JS_D("token", m.Token);
+    JS_D("guild_id", m.GuildID);
+    JS_D("endpoint", m.Endpoint);
+}

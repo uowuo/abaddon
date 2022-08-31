@@ -125,6 +125,9 @@ protected:
     Gtk::MenuItem m_menu_channel_open_tab;
 #endif
 
+    Gtk::Menu m_menu_voice_channel;
+    Gtk::MenuItem m_menu_voice_channel_join;
+
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
@@ -145,6 +148,7 @@ protected:
     void OnGuildSubmenuPopup();
     void OnCategorySubmenuPopup();
     void OnChannelSubmenuPopup();
+    void OnVoiceChannelSubmenuPopup();
     void OnDMSubmenuPopup();
     void OnThreadSubmenuPopup();
 
@@ -166,6 +170,11 @@ public:
     type_signal_action_open_new_tab signal_action_open_new_tab();
 #endif
 
+#ifdef WITH_VOICE
+    using type_signal_action_join_voice_channel = sigc::signal<void, Snowflake>;
+    type_signal_action_join_voice_channel signal_action_join_voice_channel();
+#endif
+
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_leave signal_action_guild_leave();
     type_signal_action_guild_settings signal_action_guild_settings();
@@ -177,5 +186,9 @@ private:
 
 #ifdef WITH_LIBHANDY
     type_signal_action_open_new_tab m_signal_action_open_new_tab;
+#endif
+
+#ifdef WITH_VOICE
+    type_signal_action_join_voice_channel m_signal_action_join_voice_channel;
 #endif
 };

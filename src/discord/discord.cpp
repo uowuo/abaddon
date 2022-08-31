@@ -1169,6 +1169,16 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
     });
 }
 
+void DiscordClient::ConnectToVoice(Snowflake channel_id) {
+    auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+    VoiceStateUpdateMessage m;
+    m.GuildID = *channel->GuildID;
+    m.ChannelID = channel_id;
+    m.PreferredRegion = "newark";
+    m_websocket.Send(m);
+}
+
 void DiscordClient::SetReferringChannel(Snowflake id) {
     if (!id.IsValid()) {
         m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
@@ -1487,6 +1497,12 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::GUILD_MEMBERS_CHUNK: {
                         HandleGatewayGuildMembersChunk(m);
+                    } break;
+                    case GatewayEvent::VOICE_STATE_UPDATE: {
+                        HandleGatewayVoiceStateUpdate(m);
+                    } break;
+                    case GatewayEvent::VOICE_SERVER_UPDATE: {
+                        HandleGatewayVoiceServerUpdate(m);
                     } break;
                 }
             } break;
@@ -2098,6 +2114,25 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
     m_store.EndTransaction();
 }
 
+void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
+    VoiceStateUpdateData data = msg.Data;
+    if (data.UserID == m_user_data.ID) {
+        printf("voice session id: %s\n", data.SessionID.c_str());
+        m_voice.SetSessionID(data.SessionID);
+    }
+}
+
+void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
+    VoiceServerUpdateData data = msg.Data;
+    printf("endpoint: %s\n", data.Endpoint.c_str());
+    printf("token: %s\n", data.Token.c_str());
+    m_voice.SetEndpoint(data.Endpoint);
+    m_voice.SetToken(data.Token);
+    m_voice.SetServerID(data.GuildID);
+    m_voice.SetUserID(m_user_data.ID);
+    m_voice.Start();
+}
+
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
     for (const auto &p : data.MergedPresences.Friends) {
@@ -2589,6 +2624,8 @@ void DiscordClient::LoadEventMap() {
     m_event_map["MESSAGE_ACK"] = GatewayEvent::MESSAGE_ACK;
     m_event_map["USER_GUILD_SETTINGS_UPDATE"] = GatewayEvent::USER_GUILD_SETTINGS_UPDATE;
     m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
+    m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
+    m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

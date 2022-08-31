@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include "platform.hpp"
+#include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
@@ -219,6 +220,14 @@ int Abaddon::StartGTK() {
         return 1;
     }
 
+    m_audio = std::make_unique<AudioManager>();
+    if (!m_audio->OK()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+        return 1;
+    }
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
@@ -238,6 +247,7 @@ int Abaddon::StartGTK() {
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::bind(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened), true));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
+    m_main_window->GetChannelList()->signal_action_join_voice_channel().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinVoiceChannel));
 
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
     m_main_window->GetChatWindow()->signal_action_chat_submit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatInputSubmit));
@@ -898,6 +908,10 @@ void Abaddon::ActionViewThreads(Snowflake channel_id) {
     window->show();
 }
 
+void Abaddon::ActionJoinVoiceChannel(Snowflake channel_id) {
+    m_discord.ConnectToVoice(channel_id);
+}
+
 std::optional<Glib::ustring> Abaddon::ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window *window) {
     TextInputDialog dlg(prompt, title, placeholder, window != nullptr ? *window : *m_main_window);
     const auto code = dlg.run();
@@ -935,6 +949,10 @@ ImageManager &Abaddon::GetImageManager() {
 
 EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
+}
+
+AudioManager &Abaddon::GetAudio() {
+    return *m_audio.get();
 }
 
 int main(int argc, char **argv) {

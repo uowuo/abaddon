@@ -65,6 +65,8 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
+        case RenderType::VoiceChannel:
+            return get_preferred_width_vfunc_voice_channel(widget, minimum_width, natural_width);
         case RenderType::DMHeader:
             return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
         case RenderType::DM:
@@ -82,6 +84,8 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_for_height_vfunc_thread(widget, height, minimum_width, natural_width);
+        case RenderType::VoiceChannel:
+            return get_preferred_width_for_height_vfunc_voice_channel(widget, height, minimum_width, natural_width);
         case RenderType::DMHeader:
             return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
         case RenderType::DM:
@@ -99,6 +103,8 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
+        case RenderType::VoiceChannel:
+            return get_preferred_height_vfunc_voice_channel(widget, minimum_height, natural_height);
         case RenderType::DMHeader:
             return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
         case RenderType::DM:
@@ -116,6 +122,8 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_for_width_vfunc_thread(widget, width, minimum_height, natural_height);
+        case RenderType::VoiceChannel:
+            return get_preferred_height_for_width_vfunc_voice_channel(widget, width, minimum_height, natural_height);
         case RenderType::DMHeader:
             return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
         case RenderType::DM:
@@ -133,6 +141,8 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
         case RenderType::Thread:
             return render_vfunc_thread(cr, widget, background_area, cell_area, flags);
+        case RenderType::VoiceChannel:
+            return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags);
         case RenderType::DMHeader:
             return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
         case RenderType::DM:
@@ -497,6 +507,39 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
 
         unread_render_mentions(cr, widget, unread_state, edge, cell_area);
     }
+}
+
+// voice channel
+
+void CellRendererChannels::get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_voice_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition minimum_size, natural_size;
+    m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
+
+    const int text_x = background_area.get_x() + 21;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
+    const int text_w = natural_size.width;
+    const int text_h = natural_size.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    m_renderer_text.property_foreground_rgba() = Gdk::RGBA("#0f0");
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 }
 
 // dm header

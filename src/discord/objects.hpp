@@ -100,6 +100,8 @@ enum class GatewayEvent : int {
     MESSAGE_ACK,
     USER_GUILD_SETTINGS_UPDATE,
     GUILD_MEMBERS_CHUNK,
+    VOICE_STATE_UPDATE,
+    VOICE_SERVER_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -863,4 +865,30 @@ struct GuildMembersChunkData {
     std::vector<GuildMember> Members;
 
     friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
+};
+
+struct VoiceStateUpdateMessage {
+    Snowflake GuildID;
+    Snowflake ChannelID;
+    bool SelfMute = false;
+    bool SelfDeaf = false;
+    bool SelfVideo = false;
+    std::string PreferredRegion;
+
+    friend void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m);
+};
+
+struct VoiceStateUpdateData {
+    Snowflake UserID;
+    std::string SessionID;
+
+    friend void from_json(const nlohmann::json &j, VoiceStateUpdateData &m);
+};
+
+struct VoiceServerUpdateData {
+    std::string Token;
+    Snowflake GuildID;
+    std::string Endpoint;
+
+    friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
 };
