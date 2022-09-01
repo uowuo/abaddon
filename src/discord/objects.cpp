@@ -648,7 +648,7 @@ void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
     j["d"]["self_mute"] = m.SelfMute;
     j["d"]["self_deaf"] = m.SelfDeaf;
     j["d"]["self_video"] = m.SelfVideo;
-    j["d"]["preferred_region"] = m.PreferredRegion;
+    // j["d"]["preferred_region"] = m.PreferredRegion;
 }
 
 void from_json(const nlohmann::json &j, VoiceStateUpdateData &m) {
