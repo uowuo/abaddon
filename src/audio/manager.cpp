@@ -9,6 +9,8 @@
 #include <opus.h>
 #include <cstring>
 
+#define BUFFER_SAMPLES 4800
+
 const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
     if (buf[0] == 0xbe && buf[1] == 0xde && num_bytes > 4) {
         uint64_t offset = 4 + 4 * ((buf[2] << 8) | buf[3]);
@@ -27,10 +29,8 @@ void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uin
 
     const auto buffered_frames = std::min(static_cast<ma_uint32>(mgr->m_dumb.size() / 2), frameCount);
     auto *pOutputCast = static_cast<ma_int16 *>(pOutput);
-    for (ma_uint32 i = 0; i < buffered_frames * 2; i++) {
-        pOutputCast[i] = mgr->m_dumb.front();
-        mgr->m_dumb.pop();
-    }
+    std::copy(mgr->m_dumb.begin(), mgr->m_dumb.begin() + buffered_frames * 2, pOutputCast);
+    mgr->m_dumb.erase(mgr->m_dumb.begin(), mgr->m_dumb.begin() + buffered_frames * 2);
 }
 
 AudioManager::AudioManager() {
@@ -60,7 +60,6 @@ AudioManager::AudioManager() {
     m_opus_decoder = opus_decoder_create(48000, 2, &err);
 
     m_active = true;
-    // m_thread = std::thread(&AudioManager::testthread, this);
 }
 
 AudioManager::~AudioManager() {
@@ -71,20 +70,19 @@ AudioManager::~AudioManager() {
 void AudioManager::FeedMeOpus(const std::vector<uint8_t> &data) {
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
-    static std::array<opus_int16, 120 * 48 * 2 * sizeof(opus_int16)> pcm;
+    static std::array<opus_int16, 120 * 48 * 2> pcm;
     int decoded = opus_decode(m_opus_decoder, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
     if (decoded <= 0) {
         printf("failed decode: %d\n", decoded);
     } else {
-        m_dumb_mutex.lock();
-        for (size_t i = 0; i < decoded * 2; i++) {
-            m_dumb.push(pcm[i]);
+        m_buffer.insert(m_buffer.end(), pcm.begin(), pcm.begin() + decoded * 2);
+        if (m_buffer.size() >= BUFFER_SAMPLES * 2) {
+            m_dumb_mutex.lock();
+            m_dumb.insert(m_dumb.end(), m_buffer.begin(), m_buffer.begin() + BUFFER_SAMPLES * 2);
+            m_dumb_mutex.unlock();
+            m_buffer.erase(m_buffer.begin(), m_buffer.begin() + BUFFER_SAMPLES * 2);
         }
-        m_dumb_mutex.unlock();
     }
-}
-
-void AudioManager::testthread() {
 }
 
 bool AudioManager::OK() const {

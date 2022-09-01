@@ -1,8 +1,10 @@
 #pragma once
+#include <array>
 #include <atomic>
+#include <deque>
 #include <mutex>
 #include <thread>
-#include <queue>
+#include <vector>
 #include <miniaudio.h>
 #include <opus.h>
 
@@ -19,7 +21,6 @@ private:
     friend void data_callback(ma_device *, void *, const void *, ma_uint32);
 
     std::atomic<bool> m_active;
-    void testthread();
     std::thread m_thread;
 
     bool m_ok;
@@ -29,7 +30,8 @@ private:
     ma_device_config m_device_config;
 
     std::mutex m_dumb_mutex;
-    std::queue<int16_t> m_dumb;
+    std::deque<int16_t> m_dumb;
+    std::deque<int16_t> m_buffer;
 
     OpusDecoder *m_opus_decoder;
 };
