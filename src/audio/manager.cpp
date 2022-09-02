@@ -1,5 +1,5 @@
 #ifdef WITH_VOICE
-// clang-format off
+    // clang-format off
 #ifdef _WIN32
     #include <winsock2.h>
 #endif
@@ -31,7 +31,7 @@ void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uin
     auto *pOutputF32 = static_cast<float *>(pOutput);
     for (auto &[ssrc, pair] : mgr->m_sources) {
         auto &buf = pair.first;
-        const size_t n = std::min(buf.size(), frameCount * 2ULL);
+        const size_t n = std::min(static_cast<size_t>(buf.size()), static_cast<size_t>(frameCount * 2ULL));
         for (size_t i = 0; i < n; i++) {
             pOutputF32[i] += buf[i] / 32768.F;
         }
