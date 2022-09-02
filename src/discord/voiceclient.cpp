@@ -298,12 +298,16 @@ void DiscordVoiceClient::SelectProtocol(std::string_view ip, uint16_t port) {
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     uint8_t *payload = data.data() + 12;
+    uint32_t ssrc = (data[8] << 24) |
+                    (data[9] << 16) |
+                    (data[10] << 8) |
+                    (data[11] << 0);
     static std::array<uint8_t, 24> nonce = {};
     std::memcpy(nonce.data(), data.data(), 12);
     if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
         puts("decrypt fail");
     } else {
-        Abaddon::Get().GetAudio().FeedMeOpus({ payload, payload + data.size() - 12 - crypto_box_MACBYTES });
+        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
     }
 }
 

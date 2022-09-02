@@ -9,8 +9,6 @@
 #include <opus.h>
 #include <cstring>
 
-#define BUFFER_SAMPLES 4800
-
 const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
     if (buf[0] == 0xbe && buf[1] == 0xde && num_bytes > 4) {
         uint64_t offset = 4 + 4 * ((buf[2] << 8) | buf[3]);
@@ -25,19 +23,24 @@ const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t
 void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
     AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
     if (mgr == nullptr) return;
-    std::lock_guard<std::mutex> _(mgr->m_dumb_mutex);
+    std::lock_guard<std::mutex> _(mgr->m_mutex);
 
-    const auto buffered_frames = std::min(static_cast<ma_uint32>(mgr->m_dumb.size() / 2), frameCount);
-    auto *pOutputCast = static_cast<ma_int16 *>(pOutput);
-    std::copy(mgr->m_dumb.begin(), mgr->m_dumb.begin() + buffered_frames * 2, pOutputCast);
-    mgr->m_dumb.erase(mgr->m_dumb.begin(), mgr->m_dumb.begin() + buffered_frames * 2);
+    auto *pOutputF32 = static_cast<float *>(pOutput);
+    for (auto &[ssrc, pair] : mgr->m_sources) {
+        auto &buf = pair.first;
+        const size_t n = std::min(buf.size(), frameCount * 2ULL);
+        for (size_t i = 0; i < n; i++) {
+            pOutputF32[i] += buf[i] / 32768.F;
+        }
+        buf.erase(buf.begin(), buf.begin() + n);
+    }
 }
 
 AudioManager::AudioManager() {
     m_ok = true;
 
     m_device_config = ma_device_config_init(ma_device_type_playback);
-    m_device_config.playback.format = ma_format_s16;
+    m_device_config.playback.format = ma_format_f32;
     m_device_config.playback.channels = 2;
     m_device_config.sampleRate = 48000;
     m_device_config.dataCallback = data_callback;
@@ -55,33 +58,31 @@ AudioManager::AudioManager() {
         m_ok = false;
         return;
     }
-
-    int err;
-    m_opus_decoder = opus_decoder_create(48000, 2, &err);
-
-    m_active = true;
 }
 
 AudioManager::~AudioManager() {
-    m_active = false;
     ma_device_uninit(&m_device);
+    for (auto &[ssrc, pair] : m_sources) {
+        opus_decoder_destroy(pair.second);
+    }
 }
 
-void AudioManager::FeedMeOpus(const std::vector<uint8_t> &data) {
+void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
-    int decoded = opus_decode(m_opus_decoder, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
+    if (m_sources.find(ssrc) == m_sources.end()) {
+        int err;
+        auto *decoder = opus_decoder_create(48000, 2, &err);
+        m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
+    }
+    int decoded = opus_decode(m_sources.at(ssrc).second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
     if (decoded <= 0) {
-        printf("failed decode: %d\n", decoded);
     } else {
-        m_buffer.insert(m_buffer.end(), pcm.begin(), pcm.begin() + decoded * 2);
-        if (m_buffer.size() >= BUFFER_SAMPLES * 2) {
-            m_dumb_mutex.lock();
-            m_dumb.insert(m_dumb.end(), m_buffer.begin(), m_buffer.begin() + BUFFER_SAMPLES * 2);
-            m_dumb_mutex.unlock();
-            m_buffer.erase(m_buffer.begin(), m_buffer.begin() + BUFFER_SAMPLES * 2);
-        }
+        m_mutex.lock();
+        auto &buf = m_sources.at(ssrc).first;
+        buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
+        m_mutex.unlock();
     }
 }
 
