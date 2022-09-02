@@ -1,4 +1,6 @@
 #pragma once
+#ifdef WITH_VOICE
+// clang-format off
 #include <array>
 #include <atomic>
 #include <deque>
@@ -8,6 +10,7 @@
 #include <vector>
 #include <miniaudio.h>
 #include <opus.h>
+// clang-format on
 
 class AudioManager {
 public:
@@ -31,3 +34,4 @@ private:
     std::mutex m_mutex;
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 };
+#endif

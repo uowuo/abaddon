@@ -10,7 +10,10 @@ enum class RenderType : uint8_t {
     Category,
     TextChannel,
     Thread,
+
+#ifdef WITH_VOICE
     VoiceChannel,
+#endif
 
     DMHeader,
     DM,

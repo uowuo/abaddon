@@ -867,6 +867,7 @@ struct GuildMembersChunkData {
     friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
 };
 
+#ifdef WITH_VOICE
 struct VoiceStateUpdateMessage {
     Snowflake GuildID;
     Snowflake ChannelID;
@@ -892,3 +893,4 @@ struct VoiceServerUpdateData {
 
     friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
 };
+#endif

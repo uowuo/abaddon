@@ -36,7 +36,11 @@ ChannelList::ChannelList()
         const auto type = row[m_columns.m_type];
         // text channels should not be allowed to be collapsed
         // maybe they should be but it seems a little difficult to handle expansion to permit this
+#ifdef WITH_VOICE
         if (type != RenderType::TextChannel && type != RenderType::VoiceChannel) {
+#else
+        if (type != RenderType::TextChannel) {
+#endif
             if (row[m_columns.m_expanded]) {
                 m_view.collapse_row(path);
                 row[m_columns.m_expanded] = false;
@@ -161,6 +165,7 @@ ChannelList::ChannelList()
     m_menu_channel.append(m_menu_channel_copy_id);
     m_menu_channel.show_all();
 
+#ifdef WITH_VOICE
     m_menu_voice_channel_join.signal_activate().connect([this]() {
         const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
         printf("join voice: %llu\n", static_cast<uint64_t>(id));
@@ -169,6 +174,7 @@ ChannelList::ChannelList()
 
     m_menu_voice_channel.append(m_menu_voice_channel_join);
     m_menu_voice_channel.show_all();
+#endif
 
     m_menu_dm_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
@@ -588,7 +594,11 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
     for (const auto &channel_ : *guild.Channels) {
         const auto channel = discord.GetChannel(channel_.ID);
         if (!channel.has_value()) continue;
+#ifdef WITH_VOICE
         if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS || channel->Type == ChannelType::GUILD_VOICE) {
+#else
+        if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS) {
+#endif
             if (channel->ParentID.has_value())
                 categories[*channel->ParentID].push_back(*channel);
             else
@@ -618,8 +628,10 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         auto channel_row = *m_model->append(guild_row.children());
         if (IsTextChannel(channel.Type))
             channel_row[m_columns.m_type] = RenderType::TextChannel;
+#ifdef WITH_VOICE
         else
             channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+#endif
         channel_row[m_columns.m_id] = channel.ID;
         channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
@@ -644,8 +656,10 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             auto channel_row = *m_model->append(cat_row.children());
             if (IsTextChannel(channel.Type))
                 channel_row[m_columns.m_type] = RenderType::TextChannel;
+#ifdef WITH_VOICE
             else
                 channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+#endif
             channel_row[m_columns.m_id] = channel.ID;
             channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
             channel_row[m_columns.m_sort] = *channel.Position;
@@ -871,10 +885,12 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
                     OnChannelSubmenuPopup();
                     m_menu_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
+#ifdef WITH_VOICE
                 case RenderType::VoiceChannel:
                     OnVoiceChannelSubmenuPopup();
                     m_menu_voice_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
+#endif
                 case RenderType::DM: {
                     OnDMSubmenuPopup();
                     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
@@ -966,8 +982,10 @@ void ChannelList::OnChannelSubmenuPopup() {
         m_menu_channel_toggle_mute.set_label("Mute");
 }
 
+#ifdef WITH_VOICE
 void ChannelList::OnVoiceChannelSubmenuPopup() {
 }
+#endif
 
 void ChannelList::OnDMSubmenuPopup() {
     auto iter = m_model->get_iter(m_path_for_menu);

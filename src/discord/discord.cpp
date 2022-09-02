@@ -1169,6 +1169,7 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
     });
 }
 
+#ifdef WITH_VOICE
 void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     auto channel = GetChannel(channel_id);
     if (!channel.has_value() || !channel->GuildID.has_value()) return;
@@ -1178,6 +1179,7 @@ void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     m.PreferredRegion = "newark";
     m_websocket.Send(m);
 }
+#endif
 
 void DiscordClient::SetReferringChannel(Snowflake id) {
     if (!id.IsValid()) {
@@ -1498,12 +1500,14 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBERS_CHUNK: {
                         HandleGatewayGuildMembersChunk(m);
                     } break;
+#ifdef WITH_VOICE
                     case GatewayEvent::VOICE_STATE_UPDATE: {
                         HandleGatewayVoiceStateUpdate(m);
                     } break;
                     case GatewayEvent::VOICE_SERVER_UPDATE: {
                         HandleGatewayVoiceServerUpdate(m);
                     } break;
+#endif
                 }
             } break;
             default:
@@ -2114,6 +2118,7 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
     m_store.EndTransaction();
 }
 
+#ifdef WITH_VOICE
 void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     VoiceStateUpdateData data = msg.Data;
     if (data.UserID == m_user_data.ID) {
@@ -2132,6 +2137,7 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     m_voice.SetUserID(m_user_data.ID);
     m_voice.Start();
 }
+#endif
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;

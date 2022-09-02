@@ -181,7 +181,9 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+#ifdef WITH_VOICE
     void ConnectToVoice(Snowflake channel_id);
+#endif
 
     void SetReferringChannel(Snowflake id);
 
@@ -262,11 +264,15 @@ private:
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
-    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
-    void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
+
+#ifdef WITH_VOICE
+    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
+    void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
+#endif
+
     void HeartbeatThread();
     void SendIdentify();
     void SendResume();
@@ -326,7 +332,9 @@ private:
     bool m_wants_resume = false; // reconnecting specifically to resume
     std::string m_session_id;
 
+#ifdef WITH_VOICE
     DiscordVoiceClient m_voice;
+#endif
 
     mutable std::mutex m_msg_mutex;
     Glib::Dispatcher m_msg_dispatch;

@@ -1,4 +1,6 @@
 #pragma once
+#ifdef WITH_VOICE
+// clang-format off
 #include "snowflake.hpp"
 #include "waiter.hpp"
 #include "websocket.hpp"
@@ -6,6 +8,7 @@
 #include <queue>
 #include <string>
 #include <glibmm/dispatcher.h>
+// clang-format on
 
 enum class VoiceGatewayCloseCode : uint16_t {
     UnknownOpcode = 4001,
@@ -124,11 +127,11 @@ public:
 private:
     void ReadThread();
 
-#ifdef _WIN32
+    #ifdef _WIN32
     SOCKET m_socket;
-#else
+    #else
     int m_socket;
-#endif
+    #endif
     sockaddr_in m_server;
 
     std::atomic<bool> m_running = false;
@@ -203,3 +206,4 @@ private:
     Waiter m_heartbeat_waiter;
     std::thread m_heartbeat_thread;
 };
+#endif

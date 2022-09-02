@@ -641,6 +641,7 @@ void from_json(const nlohmann::json &j, GuildMembersChunkData &m) {
     JS_D("guild_id", m.GuildID);
 }
 
+#ifdef WITH_VOICE
 void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
     j["op"] = GatewayOp::VoiceStateUpdate;
     j["d"]["guild_id"] = m.GuildID;
@@ -661,3 +662,4 @@ void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
     JS_D("guild_id", m.GuildID);
     JS_D("endpoint", m.Endpoint);
 }
+#endif

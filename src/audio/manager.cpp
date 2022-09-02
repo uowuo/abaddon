@@ -1,3 +1,5 @@
+#ifdef WITH_VOICE
+// clang-format off
 #ifdef _WIN32
     #include <winsock2.h>
 #endif
@@ -8,6 +10,7 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <cstring>
+// clang-format on
 
 const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
     if (buf[0] == 0xbe && buf[1] == 0xde && num_bytes > 4) {
@@ -89,3 +92,4 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
 bool AudioManager::OK() const {
     return m_ok;
 }
+#endif

@@ -125,8 +125,10 @@ protected:
     Gtk::MenuItem m_menu_channel_open_tab;
 #endif
 
+#ifdef WITH_VOICE
     Gtk::Menu m_menu_voice_channel;
     Gtk::MenuItem m_menu_voice_channel_join;
+#endif
 
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
@@ -148,9 +150,12 @@ protected:
     void OnGuildSubmenuPopup();
     void OnCategorySubmenuPopup();
     void OnChannelSubmenuPopup();
-    void OnVoiceChannelSubmenuPopup();
     void OnDMSubmenuPopup();
     void OnThreadSubmenuPopup();
+
+#ifdef WITH_VOICE
+    void OnVoiceChannelSubmenuPopup();
+#endif
 
     bool m_updating_listing = false;
 

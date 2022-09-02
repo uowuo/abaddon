@@ -53,7 +53,10 @@ public:
     void ActionAddRecipient(Snowflake channel_id);
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
+
+#ifdef WITH_VOICE
     void ActionJoinVoiceChannel(Snowflake channel_id);
+#endif
 
     std::optional<Glib::ustring> ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder = "", Gtk::Window *window = nullptr);
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
@@ -62,7 +65,10 @@ public:
 
     ImageManager &GetImageManager();
     EmojiResource &GetEmojis();
+
+#ifdef WITH_VOICE
     AudioManager &GetAudio();
+#endif
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -141,7 +147,10 @@ private:
 
     ImageManager m_img_mgr;
     EmojiResource m_emojis;
+
+#ifdef WITH_VOICE
     std::unique_ptr<AudioManager> m_audio;
+#endif
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;

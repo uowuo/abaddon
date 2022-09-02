@@ -1,3 +1,5 @@
+#ifdef WITH_VOICE
+    // clang-format off
 #include "voiceclient.hpp"
 #include "json.hpp"
 #include <sodium.h>
@@ -10,6 +12,7 @@
 #else
     #define S_ADDR(var) (var).sin_addr.s_addr
 #endif
+// clang-format on
 
 UDPSocket::UDPSocket() {
     m_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -88,11 +91,11 @@ std::vector<uint8_t> UDPSocket::Receive() {
 
 void UDPSocket::Stop() {
     m_running = false;
-#ifdef _WIN32
+    #ifdef _WIN32
     shutdown(m_socket, SD_BOTH);
-#else
+    #else
     shutdown(m_socket, SHUT_RDWR);
-#endif
+    #endif
     if (m_thread.joinable()) m_thread.join();
 }
 
@@ -385,3 +388,4 @@ void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m) {
     JS_D("mode", m.Mode);
     JS_D("secret_key", m.SecretKey);
 }
+#endif
