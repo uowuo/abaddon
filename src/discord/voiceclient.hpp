@@ -110,6 +110,20 @@ struct VoiceSessionDescriptionData {
     friend void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m);
 };
 
+struct VoiceSpeakingMessage {
+    enum {
+        Microphone = 1 << 0,
+        Soundshare = 1 << 1,
+        Priority = 1 << 2,
+    };
+
+    int Speaking;
+    int Delay;
+    uint32_t SSRC;
+
+    friend void to_json(nlohmann::json &j, const VoiceSpeakingMessage &m);
+};
+
 class UDPSocket {
 public:
     UDPSocket();
@@ -119,6 +133,7 @@ public:
     void Run();
     void SetSecretKey(std::array<uint8_t, 32> key);
     void SetSSRC(uint32_t ssrc);
+    void SendEncrypted(const uint8_t *data, size_t len);
     void SendEncrypted(const std::vector<uint8_t> &data);
     void Send(const uint8_t *data, size_t len);
     std::vector<uint8_t> Receive();
@@ -205,5 +220,9 @@ private:
     int m_heartbeat_msec;
     Waiter m_heartbeat_waiter;
     std::thread m_heartbeat_thread;
+
+    std::array<uint8_t, 1275> m_opus_buffer;
+
+    std::atomic<bool> m_connected = false;
 };
 #endif

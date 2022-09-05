@@ -43,11 +43,11 @@ void UDPSocket::SetSSRC(uint32_t ssrc) {
     m_ssrc = ssrc;
 }
 
-void UDPSocket::SendEncrypted(const std::vector<uint8_t> &data) {
+void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
     m_sequence++;
-    m_timestamp += (48000 / 100) * 2;
+    m_timestamp += 480; // this is important
 
-    std::vector<uint8_t> rtp(12, 0);
+    std::vector<uint8_t> rtp(12 + len + crypto_secretbox_MACBYTES, 0);
     rtp[0] = 0x80; // ver 2
     rtp[1] = 0x78; // payload type 0x78
     rtp[2] = (m_sequence >> 8) & 0xFF;
@@ -63,12 +63,13 @@ void UDPSocket::SendEncrypted(const std::vector<uint8_t> &data) {
 
     static std::array<uint8_t, 24> nonce = {};
     std::memcpy(nonce.data(), rtp.data(), 12);
-
-    std::vector<uint8_t> ciphertext(crypto_secretbox_MACBYTES + rtp.size(), 0);
-    crypto_secretbox_easy(ciphertext.data(), rtp.data(), rtp.size(), nonce.data(), m_secret_key.data());
-    rtp.insert(rtp.end(), ciphertext.begin(), ciphertext.end());
+    crypto_secretbox_easy(rtp.data() + 12, data, len, nonce.data(), m_secret_key.data());
 
     Send(rtp.data(), rtp.size());
+}
+
+void UDPSocket::SendEncrypted(const std::vector<uint8_t> &data) {
+    SendEncrypted(data.data(), data.size());
 }
 
 void UDPSocket::Send(const uint8_t *data, size_t len) {
@@ -172,6 +173,14 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 
 void DiscordVoiceClient::Start() {
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
+
+    // cant put in ctor or deadlock in singleton initialization
+    auto &aud = Abaddon::Get().GetAudio();
+    aud.SetOpusBuffer(m_opus_buffer.data());
+    aud.signal_opus_packet().connect([this](int payload_size) {
+        if (m_connected)
+            m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
+    });
 }
 
 void DiscordVoiceClient::SetSessionID(std::string_view session_id) {
@@ -241,6 +250,13 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
         printf("%02X", b);
     }
     printf("\n");
+
+    VoiceSpeakingMessage msg;
+    msg.Delay = 0;
+    msg.SSRC = m_ssrc;
+    msg.Speaking = VoiceSpeakingMessage::Microphone;
+    m_ws.Send(msg);
+
     m_secret_key = d.SecretKey;
     m_udp.SetSSRC(m_ssrc);
     m_udp.SetSecretKey(m_secret_key);
@@ -250,6 +266,7 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.Run();
+    m_connected = true;
 }
 
 void DiscordVoiceClient::Identify() {
@@ -387,5 +404,12 @@ void to_json(nlohmann::json &j, const VoiceSelectProtocolMessage &m) {
 void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m) {
     JS_D("mode", m.Mode);
     JS_D("secret_key", m.SecretKey);
+}
+
+void to_json(nlohmann::json &j, const VoiceSpeakingMessage &m) {
+    j["op"] = VoiceGatewayOp::Speaking;
+    j["d"]["speaking"] = m.Speaking;
+    j["d"]["delay"] = m.Delay;
+    j["d"]["ssrc"] = m.SSRC;
 }
 #endif
