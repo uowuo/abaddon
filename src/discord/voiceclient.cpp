@@ -92,22 +92,28 @@ std::vector<uint8_t> UDPSocket::Receive() {
 
 void UDPSocket::Stop() {
     m_running = false;
-    #ifdef _WIN32
-    shutdown(m_socket, SD_BOTH);
-    #else
-    shutdown(m_socket, SHUT_RDWR);
-    #endif
     if (m_thread.joinable()) m_thread.join();
 }
 
 void UDPSocket::ReadThread() {
+    timeval tv;
     while (m_running) {
         static std::array<uint8_t, 4096> buf;
         sockaddr_in from;
         socklen_t addrlen = sizeof(from);
-        int n = recvfrom(m_socket, reinterpret_cast<char *>(buf.data()), sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &addrlen);
-        if (n > 0 && S_ADDR(from) == S_ADDR(m_server) && from.sin_port == m_server.sin_port) {
-            m_signal_data.emit({ buf.begin(), buf.begin() + n });
+
+        tv.tv_sec = 0;
+        tv.tv_usec = 1000000;
+
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(m_socket, &read_fds);
+
+        if (select(m_socket + 1, &read_fds, nullptr, nullptr, &tv) > 0) {
+            int n = recvfrom(m_socket, reinterpret_cast<char *>(buf.data()), sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &addrlen);
+            if (n > 0 && S_ADDR(from) == S_ADDR(m_server) && from.sin_port == m_server.sin_port) {
+                m_signal_data.emit({ buf.begin(), buf.begin() + n });
+            }
         }
     }
 }
