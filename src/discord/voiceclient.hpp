@@ -173,12 +173,15 @@ public:
     ~DiscordVoiceClient();
 
     void Start();
+    void Stop();
 
     void SetSessionID(std::string_view session_id);
     void SetEndpoint(std::string_view endpoint);
     void SetToken(std::string_view token);
     void SetServerID(Snowflake id);
     void SetUserID(Snowflake id);
+
+    [[nodiscard]] bool IsConnected() const noexcept;
 
 private:
     void OnGatewayMessage(const std::string &str);
@@ -198,6 +201,7 @@ private:
     std::string m_endpoint;
     std::string m_token;
     Snowflake m_server_id;
+    Snowflake m_channel_id;
     Snowflake m_user_id;
 
     std::string m_ip;

@@ -168,25 +168,34 @@ DiscordVoiceClient::DiscordVoiceClient() {
         m_udp_dispatch_mutex.unlock();
         OnUDPData(data);
     });
+
+    Glib::signal_idle().connect_once([this]() {
+        // cant put in ctor or deadlock in singleton initialization
+        auto &aud = Abaddon::Get().GetAudio();
+        aud.SetOpusBuffer(m_opus_buffer.data());
+        aud.signal_opus_packet().connect([this](int payload_size) {
+            if (m_connected)
+                m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
+        });
+    });
 }
 
 DiscordVoiceClient::~DiscordVoiceClient() {
-    m_ws.Stop();
-    m_udp.Stop();
-    m_heartbeat_waiter.kill();
-    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+    Stop();
 }
 
 void DiscordVoiceClient::Start() {
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
+}
 
-    // cant put in ctor or deadlock in singleton initialization
-    auto &aud = Abaddon::Get().GetAudio();
-    aud.SetOpusBuffer(m_opus_buffer.data());
-    aud.signal_opus_packet().connect([this](int payload_size) {
-        if (m_connected)
-            m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
-    });
+void DiscordVoiceClient::Stop() {
+    if (m_connected) {
+        m_ws.Stop();
+        m_udp.Stop();
+        m_heartbeat_waiter.kill();
+        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_connected = false;
+    }
 }
 
 void DiscordVoiceClient::SetSessionID(std::string_view session_id) {
@@ -207,6 +216,10 @@ void DiscordVoiceClient::SetServerID(Snowflake id) {
 
 void DiscordVoiceClient::SetUserID(Snowflake id) {
     m_user_id = id;
+}
+
+bool DiscordVoiceClient::IsConnected() const noexcept {
+    return m_connected;
 }
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {

@@ -21,6 +21,10 @@ ChannelList::ChannelList()
     , m_menu_channel_open_tab("Open in New _Tab", true)
     , m_menu_dm_open_tab("Open in New _Tab", true)
 #endif
+#ifdef WITH_VOICE
+    , m_menu_voice_channel_join("_Join", true)
+    , m_menu_voice_channel_disconnect("_Disconnect", true)
+#endif
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
     , m_menu_thread_copy_id("_Copy ID", true)
@@ -168,11 +172,15 @@ ChannelList::ChannelList()
 #ifdef WITH_VOICE
     m_menu_voice_channel_join.signal_activate().connect([this]() {
         const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
-        printf("join voice: %llu\n", static_cast<uint64_t>(id));
         m_signal_action_join_voice_channel.emit(id);
     });
 
+    m_menu_voice_channel_disconnect.signal_activate().connect([this]() {
+        m_signal_action_disconnect_voice.emit();
+    });
+
     m_menu_voice_channel.append(m_menu_voice_channel_join);
+    m_menu_voice_channel.append(m_menu_voice_channel_disconnect);
     m_menu_voice_channel.show_all();
 #endif
 
@@ -984,6 +992,17 @@ void ChannelList::OnChannelSubmenuPopup() {
 
 #ifdef WITH_VOICE
 void ChannelList::OnVoiceChannelSubmenuPopup() {
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.IsConnectedToVoice()) {
+        m_menu_voice_channel_join.set_sensitive(false);
+        m_menu_voice_channel_disconnect.set_sensitive(discord.GetVoiceChannelID() == id);
+    } else {
+        m_menu_voice_channel_join.set_sensitive(true);
+        m_menu_voice_channel_disconnect.set_sensitive(false);
+    }
 }
 #endif
 
@@ -1040,6 +1059,10 @@ ChannelList::type_signal_action_open_new_tab ChannelList::signal_action_open_new
 #ifdef WITH_VOICE
 ChannelList::type_signal_action_join_voice_channel ChannelList::signal_action_join_voice_channel() {
     return m_signal_action_join_voice_channel;
+}
+
+ChannelList::type_signal_action_disconnect_voice ChannelList::signal_action_disconnect_voice() {
+    return m_signal_action_disconnect_voice;
 }
 #endif
 

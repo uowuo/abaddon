@@ -252,6 +252,7 @@ int Abaddon::StartGTK() {
 
 #ifdef WITH_VOICE
     m_main_window->GetChannelList()->signal_action_join_voice_channel().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinVoiceChannel));
+    m_main_window->GetChannelList()->signal_action_disconnect_voice().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnectVoice));
 #endif
 
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
@@ -916,6 +917,10 @@ void Abaddon::ActionViewThreads(Snowflake channel_id) {
 #ifdef WITH_VOICE
 void Abaddon::ActionJoinVoiceChannel(Snowflake channel_id) {
     m_discord.ConnectToVoice(channel_id);
+}
+
+void Abaddon::ActionDisconnectVoice() {
+    m_discord.DisconnectFromVoice();
 }
 #endif
 

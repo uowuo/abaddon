@@ -869,8 +869,8 @@ struct GuildMembersChunkData {
 
 #ifdef WITH_VOICE
 struct VoiceStateUpdateMessage {
-    Snowflake GuildID;
-    Snowflake ChannelID;
+    std::optional<Snowflake> GuildID;
+    std::optional<Snowflake> ChannelID;
     bool SelfMute = false;
     bool SelfDeaf = false;
     bool SelfVideo = false;

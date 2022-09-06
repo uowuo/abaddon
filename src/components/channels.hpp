@@ -128,6 +128,7 @@ protected:
 #ifdef WITH_VOICE
     Gtk::Menu m_menu_voice_channel;
     Gtk::MenuItem m_menu_voice_channel_join;
+    Gtk::MenuItem m_menu_voice_channel_disconnect;
 #endif
 
     Gtk::Menu m_menu_dm;
@@ -177,7 +178,10 @@ public:
 
 #ifdef WITH_VOICE
     using type_signal_action_join_voice_channel = sigc::signal<void, Snowflake>;
+    using type_signal_action_disconnect_voice = sigc::signal<void>;
+
     type_signal_action_join_voice_channel signal_action_join_voice_channel();
+    type_signal_action_disconnect_voice signal_action_disconnect_voice();
 #endif
 
     type_signal_action_channel_item_select signal_action_channel_item_select();
@@ -195,5 +199,6 @@ private:
 
 #ifdef WITH_VOICE
     type_signal_action_join_voice_channel m_signal_action_join_voice_channel;
+    type_signal_action_disconnect_voice m_signal_action_disconnect_voice;
 #endif
 };

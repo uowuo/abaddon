@@ -1173,11 +1173,26 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
 void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     auto channel = GetChannel(channel_id);
     if (!channel.has_value() || !channel->GuildID.has_value()) return;
+    m_voice_channel_id = channel_id;
     VoiceStateUpdateMessage m;
     m.GuildID = *channel->GuildID;
     m.ChannelID = channel_id;
     m.PreferredRegion = "newark";
     m_websocket.Send(m);
+}
+
+void DiscordClient::DisconnectFromVoice() {
+    m_voice.Stop();
+    VoiceStateUpdateMessage m;
+    m_websocket.Send(m);
+}
+
+bool DiscordClient::IsConnectedToVoice() const noexcept {
+    return m_voice.IsConnected();
+}
+
+Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
+    return m_voice_channel_id;
 }
 #endif
 

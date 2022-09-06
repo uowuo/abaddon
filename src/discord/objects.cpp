@@ -644,8 +644,14 @@ void from_json(const nlohmann::json &j, GuildMembersChunkData &m) {
 #ifdef WITH_VOICE
 void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
     j["op"] = GatewayOp::VoiceStateUpdate;
-    j["d"]["guild_id"] = m.GuildID;
-    j["d"]["channel_id"] = m.ChannelID;
+    if (m.GuildID.has_value())
+        j["d"]["guild_id"] = *m.GuildID;
+    else
+        j["d"]["guild_id"] = nullptr;
+    if (m.ChannelID.has_value())
+        j["d"]["channel_id"] = *m.ChannelID;
+    else
+        j["d"]["channel_id"] = nullptr;
     j["d"]["self_mute"] = m.SelfMute;
     j["d"]["self_deaf"] = m.SelfDeaf;
     j["d"]["self_video"] = m.SelfVideo;

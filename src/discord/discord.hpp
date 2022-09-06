@@ -183,6 +183,9 @@ public:
 
 #ifdef WITH_VOICE
     void ConnectToVoice(Snowflake channel_id);
+    void DisconnectFromVoice();
+    [[nodiscard]] bool IsConnectedToVoice() const noexcept;
+    [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
 #endif
 
     void SetReferringChannel(Snowflake id);
@@ -334,6 +337,8 @@ private:
 
 #ifdef WITH_VOICE
     DiscordVoiceClient m_voice;
+
+    Snowflake m_voice_channel_id;
 #endif
 
     mutable std::mutex m_msg_mutex;
