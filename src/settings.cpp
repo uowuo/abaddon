@@ -48,6 +48,7 @@ void SettingsManager::ReadSettings() {
     SMBOOL("gui", "save_state", SaveState);
     SMBOOL("gui", "stock_emojis", ShowStockEmojis);
     SMBOOL("gui", "unreads", Unreads);
+    SMBOOL("gui", "hide_to_tray", HideToTray);
     SMINT("http", "concurrent", CacheHTTPConcurrency);
     SMSTR("http", "user_agent", UserAgent);
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
@@ -101,6 +102,7 @@ void SettingsManager::Close() {
         SMBOOL("gui", "save_state", SaveState);
         SMBOOL("gui", "stock_emojis", ShowStockEmojis);
         SMBOOL("gui", "unreads", Unreads);
+        SMBOOL("gui", "hide_to_tray", HideToTray);
         SMINT("http", "concurrent", CacheHTTPConcurrency);
         SMSTR("http", "user_agent", UserAgent);
         SMSTR("style", "expandercolor", ChannelsExpanderColor);

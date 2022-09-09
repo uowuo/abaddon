@@ -248,11 +248,25 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
 
     ActionReloadCSS();
+    if (m_settings.GetSettings().HideToTray) {
+        m_tray = Gtk::StatusIcon::create("discord");
+        m_tray->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_click));
+        m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
+    }
+    m_tray_menu = Gtk::make_managed<Gtk::Menu>();
+    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit", false);
 
+    m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
+
+    m_tray_menu->append(*m_tray_exit);
+    m_tray_menu->show_all();
+
+    m_main_window->signal_hide().connect(sigc::mem_fun(*this, &Abaddon::on_window_hide));
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
     m_main_window->UpdateMenus();
 
+    m_gtk_app->hold();
     m_main_window->show();
 
     RunFirstTimeDiscordStartup();
@@ -935,6 +949,21 @@ ImageManager &Abaddon::GetImageManager() {
 
 EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
+}
+
+void Abaddon::on_tray_click() {
+    m_main_window->set_visible(!m_main_window->is_visible());
+}
+void Abaddon::on_tray_menu_click() {
+    m_gtk_app->quit();
+}
+void Abaddon::on_tray_popup_menu(int button, int activate_time) {
+    m_tray->popup_menu_at_position(*m_tray_menu, button, activate_time);
+}
+void Abaddon::on_window_hide() {
+    if (!m_settings.GetSettings().HideToTray) {
+        m_gtk_app->quit();
+    }
 }
 
 int main(int argc, char **argv) {
