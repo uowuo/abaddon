@@ -655,13 +655,19 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                 const auto role = discord.GetRole(role_id);
                 if (role.has_value()) {
                     const auto author = discord.GetUser(author_id);
-                    return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetEscapedString() + "</span></b>";
+                    if (author.has_value()) {
+                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetEscapedString() + "</span></b>";
+                    }
                 }
             }
         }
 
         const auto author = discord.GetUser(author_id);
-        return author->GetEscapedBoldString<false>();
+        if (author.has_value()) {
+            return author->GetEscapedBoldString<false>();
+        }
+
+        return "<b>Unknown User</b>";
     };
 
     // if the message wasnt fetched from store it might have an un-fetched reference
@@ -673,15 +679,15 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
     }
 
     if (data.Interaction.has_value()) {
-        const auto user = *discord.GetUser(data.Interaction->User.ID);
-
         if (data.GuildID.has_value()) {
-            lbl->set_markup(get_author_markup(user.ID, *data.GuildID) +
+            lbl->set_markup(get_author_markup(data.Interaction->User.ID, *data.GuildID) +
                             " used <span color='#697ec4'>/" +
                             Glib::Markup::escape_text(data.Interaction->Name) +
                             "</span>");
+        } else if (const auto user = discord.GetUser(data.Interaction->User.ID); user.has_value()) {
+            lbl->set_markup(user->GetEscapedBoldString<false>());
         } else {
-            lbl->set_markup(user.GetEscapedBoldString<false>());
+            lbl->set_markup("<b>Unknown User</b>");
         }
     } else if (referenced_message.has_value()) {
         if (referenced_message.value() == nullptr) {
