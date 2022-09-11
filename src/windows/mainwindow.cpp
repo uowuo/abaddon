@@ -1,6 +1,8 @@
 #include "mainwindow.hpp"
 #include "abaddon.hpp"
 
+#include "components/memberlist.hpp" // TMP!!!!
+
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
@@ -20,7 +22,6 @@ MainWindow::MainWindow()
     m_main_box.add(m_content_box);
     m_main_box.show();
 
-    auto *member_list = m_members.GetRoot();
     auto *chat = m_chat.GetRoot();
 
     chat->set_vexpand(true);
@@ -37,8 +38,8 @@ MainWindow::MainWindow()
     m_channel_list.set_size_request(-1, -1);
     m_channel_list.show();
 
-    member_list->set_vexpand(true);
-    member_list->show();
+    m_members.set_vexpand(true);
+    m_members.show();
 
     m_friends.set_vexpand(true);
     m_friends.set_hexpand(true);
@@ -63,11 +64,11 @@ MainWindow::MainWindow()
     m_channel_list.UsePanedHack(m_chan_content_paned);
 
     m_content_members_paned.pack1(m_content_stack);
-    m_content_members_paned.pack2(*member_list);
+    m_content_members_paned.pack2(m_members);
     m_content_members_paned.child_property_shrink(m_content_stack) = true;
     m_content_members_paned.child_property_resize(m_content_stack) = true;
-    m_content_members_paned.child_property_shrink(*member_list) = true;
-    m_content_members_paned.child_property_resize(*member_list) = true;
+    m_content_members_paned.child_property_shrink(m_members) = true;
+    m_content_members_paned.child_property_resize(m_members) = true;
     int w, h;
     get_default_size(w, h); // :s
     m_content_members_paned.set_position(w - m_chan_content_paned.get_position() - 150);
