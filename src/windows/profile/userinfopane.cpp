@@ -41,13 +41,13 @@ ConnectionItem::ConnectionItem(const ConnectionData &conn)
     m_box.add(m_name);
     if (!url.empty()) {
         auto cb = [url](GdkEventButton *event) -> bool {
-            if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+            if (event->type == GDK_BUTTON_RELEASE && event->button == GDK_BUTTON_PRIMARY) {
                 LaunchBrowser(url);
                 return true;
             }
             return false;
         };
-        signal_button_press_event().connect(sigc::track_obj(cb, *this));
+        signal_button_release_event().connect(sigc::track_obj(cb, *this));
         AddPointerCursor(*this);
     }
     m_overlay.add(m_box);
