@@ -2497,9 +2497,11 @@ void DiscordClient::StoreMessageData(Message &msg) {
     if (msg.Member.has_value())
         m_store.SetGuildMember(*msg.GuildID, msg.Author.ID, *msg.Member);
 
-    if (msg.Interaction.has_value() && msg.Interaction->Member.has_value()) {
+    if (msg.Interaction.has_value()) {
         m_store.SetUser(msg.Interaction->User.ID, msg.Interaction->User);
-        m_store.SetGuildMember(*msg.GuildID, msg.Interaction->User.ID, *msg.Interaction->Member);
+        if (msg.Interaction->Member.has_value()) {
+            m_store.SetGuildMember(*msg.GuildID, msg.Interaction->User.ID, *msg.Interaction->Member);
+        }
     }
 
     m_store.EndTransaction();

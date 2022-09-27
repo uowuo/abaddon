@@ -83,6 +83,7 @@ private:
     Gtk::MenuItem m_menu_view_go_back;
     Gtk::MenuItem m_menu_view_go_forward;
 #endif
+
     void OnViewSubmenuPopup();
 
 public:
