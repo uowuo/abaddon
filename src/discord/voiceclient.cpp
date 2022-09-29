@@ -1,5 +1,5 @@
 #ifdef WITH_VOICE
-    // clang-format off
+// clang-format off
 #include "voiceclient.hpp"
 #include "json.hpp"
 #include <sodium.h>
@@ -186,6 +186,7 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 
 void DiscordVoiceClient::Start() {
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
+    m_heartbeat_waiter.revive();
 }
 
 void DiscordVoiceClient::Stop() {
@@ -195,6 +196,7 @@ void DiscordVoiceClient::Stop() {
         m_heartbeat_waiter.kill();
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
         m_connected = false;
+        m_signal_disconnected.emit();
     }
 }
 
@@ -235,6 +237,9 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
         case VoiceGatewayOp::SessionDescription: {
             HandleGatewaySessionDescription(msg);
         } break;
+        case VoiceGatewayOp::Speaking: {
+            HandleGatewaySpeaking(msg);
+        } break;
         default: break;
     }
 }
@@ -273,7 +278,7 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     VoiceSpeakingMessage msg;
     msg.Delay = 0;
     msg.SSRC = m_ssrc;
-    msg.Speaking = VoiceSpeakingMessage::Microphone;
+    msg.Speaking = VoiceSpeakingType::Microphone;
     m_ws.Send(msg);
 
     m_secret_key = d.SecretKey;
@@ -286,6 +291,12 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.Run();
     m_connected = true;
+    m_signal_connected.emit();
+}
+
+void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
+    VoiceSpeakingData data = m.Data;
+    m_signal_speaking.emit(data);
 }
 
 void DiscordVoiceClient::Identify() {
@@ -365,6 +376,18 @@ void DiscordVoiceClient::HeartbeatThread() {
     }
 }
 
+DiscordVoiceClient::type_signal_disconnected DiscordVoiceClient::signal_connected() {
+    return m_signal_connected;
+}
+
+DiscordVoiceClient::type_signal_disconnected DiscordVoiceClient::signal_disconnected() {
+    return m_signal_disconnected;
+}
+
+DiscordVoiceClient::type_signal_speaking DiscordVoiceClient::signal_speaking() {
+    return m_signal_speaking;
+}
+
 void from_json(const nlohmann::json &j, VoiceGatewayMessage &m) {
     JS_D("op", m.Opcode);
     m.Data = j.at("d");
@@ -430,5 +453,11 @@ void to_json(nlohmann::json &j, const VoiceSpeakingMessage &m) {
     j["d"]["speaking"] = m.Speaking;
     j["d"]["delay"] = m.Delay;
     j["d"]["ssrc"] = m.SSRC;
+}
+
+void from_json(const nlohmann::json &j, VoiceSpeakingData &m) {
+    JS_D("user_id", m.UserID);
+    JS_D("ssrc", m.SSRC);
+    JS_D("speaking", m.Speaking);
 }
 #endif

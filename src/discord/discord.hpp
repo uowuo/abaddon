@@ -339,6 +339,15 @@ private:
     DiscordVoiceClient m_voice;
 
     Snowflake m_voice_channel_id;
+    // todo sql i guess
+    std::unordered_map<Snowflake, Snowflake> m_voice_state_user_channel;
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
+
+    void SetVoiceState(Snowflake user_id, Snowflake channel_id);
+    void ClearVoiceState(Snowflake user_id);
+
+    void OnVoiceConnected();
+    void OnVoiceDisconnected();
 #endif
 
     mutable std::mutex m_msg_mutex;
@@ -413,6 +422,10 @@ public:
     typedef sigc::signal<void> type_signal_connected;
     typedef sigc::signal<void, std::string, float> type_signal_message_progress;
 
+    using type_signal_voice_connected = sigc::signal<void()>;
+    using type_signal_voice_disconnected = sigc::signal<void()>;
+    using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
+
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_message_create signal_message_create();
     type_signal_message_delete signal_message_delete();
@@ -466,6 +479,10 @@ public:
     type_signal_disconnected signal_disconnected();
     type_signal_connected signal_connected();
     type_signal_message_progress signal_message_progress();
+
+    type_signal_voice_connected signal_voice_connected();
+    type_signal_voice_disconnected signal_voice_disconnected();
+    type_signal_voice_speaking signal_voice_speaking();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -521,4 +538,8 @@ protected:
     type_signal_disconnected m_signal_disconnected;
     type_signal_connected m_signal_connected;
     type_signal_message_progress m_signal_message_progress;
+
+    type_signal_voice_connected m_signal_voice_connected;
+    type_signal_voice_disconnected m_signal_voice_disconnected;
+    type_signal_voice_speaking m_signal_voice_speaking;
 };

@@ -233,6 +233,11 @@ void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m) {
     JS_D("friends", m.Friends);
 }
 
+void from_json(const nlohmann::json &j, SupplementalGuildEntry &m) {
+    JS_D("id", m.ID);
+    JS_D("voice_states", m.VoiceStates);
+}
+
 void from_json(const nlohmann::json &j, ReadySupplementalData &m) {
     JS_D("merged_presences", m.MergedPresences);
 }
@@ -658,14 +663,24 @@ void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
     // j["d"]["preferred_region"] = m.PreferredRegion;
 }
 
-void from_json(const nlohmann::json &j, VoiceStateUpdateData &m) {
-    JS_ON("user_id", m.UserID);
-    JS_ON("session_id", m.SessionID);
-}
-
 void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
     JS_D("token", m.Token);
     JS_D("guild_id", m.GuildID);
     JS_D("endpoint", m.Endpoint);
 }
 #endif
+
+void from_json(const nlohmann::json &j, VoiceState &m) {
+    JS_O("guild_id", m.GuildID);
+    JS_N("channel_id", m.ChannelID);
+    JS_D("deaf", m.IsDeafened);
+    JS_D("mute", m.IsMuted);
+    JS_D("self_deaf", m.IsSelfDeafened);
+    JS_D("self_mute", m.IsSelfMuted);
+    JS_D("self_video", m.IsSelfVideo);
+    JS_O("self_stream", m.IsSelfStream);
+    JS_D("suppress", m.IsSuppressed);
+    JS_D("user_id", m.UserID);
+    JS_N("member", m.Member);
+    JS_D("session_id", m.SessionID);
+}

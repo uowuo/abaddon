@@ -354,8 +354,18 @@ struct SupplementalMergedPresencesData {
     friend void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m);
 };
 
+struct VoiceState;
+struct SupplementalGuildEntry {
+    // std::vector<?> EmbeddedActivities;
+    Snowflake ID;
+    std::vector<VoiceState> VoiceStates;
+
+    friend void from_json(const nlohmann::json &j, SupplementalGuildEntry &m);
+};
+
 struct ReadySupplementalData {
     SupplementalMergedPresencesData MergedPresences;
+    std::vector<SupplementalGuildEntry> Guilds;
 
     friend void from_json(const nlohmann::json &j, ReadySupplementalData &m);
 };
@@ -879,13 +889,6 @@ struct VoiceStateUpdateMessage {
     friend void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m);
 };
 
-struct VoiceStateUpdateData {
-    Snowflake UserID;
-    std::string SessionID;
-
-    friend void from_json(const nlohmann::json &j, VoiceStateUpdateData &m);
-};
-
 struct VoiceServerUpdateData {
     std::string Token;
     Snowflake GuildID;
@@ -894,3 +897,20 @@ struct VoiceServerUpdateData {
     friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
 };
 #endif
+
+struct VoiceState {
+    std::optional<Snowflake> ChannelID;
+    bool IsDeafened;
+    bool IsMuted;
+    std::optional<Snowflake> GuildID;
+    std::optional<GuildMember> Member;
+    bool IsSelfDeafened;
+    bool IsSelfMuted;
+    bool IsSelfVideo;
+    bool IsSelfStream = false;
+    std::string SessionID;
+    bool IsSuppressed;
+    Snowflake UserID;
+
+    friend void from_json(const nlohmann::json &j, VoiceState &m);
+};

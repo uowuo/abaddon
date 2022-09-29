@@ -107,8 +107,28 @@ AudioManager::AudioManager() {
 AudioManager::~AudioManager() {
     ma_device_uninit(&m_device);
     ma_device_uninit(&m_capture_device);
-    for (auto &[ssrc, pair] : m_sources) {
-        opus_decoder_destroy(pair.second);
+    RemoveAllSSRCs();
+}
+
+void AudioManager::AddSSRC(uint32_t ssrc) {
+    int error;
+    auto *decoder = opus_decoder_create(48000, 2, &error);
+    m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
+}
+
+void AudioManager::RemoveSSRC(uint32_t ssrc) {
+    if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
+        opus_decoder_destroy(it->second.second);
+        m_sources.erase(it);
+    }
+}
+
+void AudioManager::RemoveAllSSRCs() {
+    puts("remove all ssrc");
+    for (auto it = m_sources.begin(); it != m_sources.end();) {
+        opus_decoder_destroy(it->second.second);
+        m_sources.erase(it);
+        it++;
     }
 }
 
@@ -120,18 +140,15 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
-    if (m_sources.find(ssrc) == m_sources.end()) {
-        int err;
-        auto *decoder = opus_decoder_create(48000, 2, &err);
-        m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
-    }
-    int decoded = opus_decode(m_sources.at(ssrc).second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
-    if (decoded <= 0) {
-    } else {
-        m_mutex.lock();
-        auto &buf = m_sources.at(ssrc).first;
-        buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
-        m_mutex.unlock();
+    if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
+        int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
+        if (decoded <= 0) {
+        } else {
+            m_mutex.lock();
+            auto &buf = it->second.first;
+            buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
+            m_mutex.unlock();
+        }
     }
 }
 

@@ -50,6 +50,16 @@ Abaddon::Abaddon()
     m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
+
+#ifdef WITH_VOICE
+    m_discord.signal_voice_connected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceConnected));
+    m_discord.signal_voice_disconnected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceDisconnected));
+    m_discord.signal_voice_speaking().connect([this](const VoiceSpeakingData &m) {
+        printf("%llu has ssrc %u\n", (uint64_t)m.UserID, m.SSRC);
+        m_audio->AddSSRC(m.SSRC);
+    });
+#endif
+
     m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
         if (!accessible)
             m_channels_requested.erase(id);
@@ -405,6 +415,15 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
             m_main_window->GetChatWindow()->SetTopic("");
     }
 }
+
+#ifdef WITH_VOICE
+void Abaddon::OnVoiceConnected() {
+}
+
+void Abaddon::OnVoiceDisconnected() {
+    m_audio->RemoveAllSSRCs();
+}
+#endif
 
 SettingsManager::Settings &Abaddon::GetSettings() {
     return m_settings.GetSettings();

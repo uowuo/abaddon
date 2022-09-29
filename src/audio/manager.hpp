@@ -18,6 +18,10 @@ public:
     AudioManager();
     ~AudioManager();
 
+    void AddSSRC(uint32_t ssrc);
+    void RemoveSSRC(uint32_t ssrc);
+    void RemoveAllSSRCs();
+
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
 

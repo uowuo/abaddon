@@ -1,6 +1,6 @@
 #pragma once
 #ifdef WITH_VOICE
-// clang-format off
+    // clang-format off
 #include "snowflake.hpp"
 #include "waiter.hpp"
 #include "websocket.hpp"
@@ -8,6 +8,7 @@
 #include <queue>
 #include <string>
 #include <glibmm/dispatcher.h>
+#include <sigc++/sigc++.h>
 // clang-format on
 
 enum class VoiceGatewayCloseCode : uint16_t {
@@ -110,18 +111,26 @@ struct VoiceSessionDescriptionData {
     friend void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m);
 };
 
-struct VoiceSpeakingMessage {
-    enum {
-        Microphone = 1 << 0,
-        Soundshare = 1 << 1,
-        Priority = 1 << 2,
-    };
+enum class VoiceSpeakingType {
+    Microphone = 1 << 0,
+    Soundshare = 1 << 1,
+    Priority = 1 << 2,
+};
 
-    int Speaking;
+struct VoiceSpeakingMessage {
+    VoiceSpeakingType Speaking;
     int Delay;
     uint32_t SSRC;
 
     friend void to_json(nlohmann::json &j, const VoiceSpeakingMessage &m);
+};
+
+struct VoiceSpeakingData {
+    Snowflake UserID;
+    uint32_t SSRC;
+    VoiceSpeakingType Speaking;
+
+    friend void from_json(const nlohmann::json &j, VoiceSpeakingData &m);
 };
 
 class UDPSocket {
@@ -188,6 +197,7 @@ private:
     void HandleGatewayHello(const VoiceGatewayMessage &m);
     void HandleGatewayReady(const VoiceGatewayMessage &m);
     void HandleGatewaySessionDescription(const VoiceGatewayMessage &m);
+    void HandleGatewaySpeaking(const VoiceGatewayMessage &m);
 
     void Identify();
     void Discovery();
@@ -228,5 +238,17 @@ private:
     std::array<uint8_t, 1275> m_opus_buffer;
 
     std::atomic<bool> m_connected = false;
+
+    using type_signal_connected = sigc::signal<void()>;
+    using type_signal_disconnected = sigc::signal<void()>;
+    using type_signal_speaking = sigc::signal<void(VoiceSpeakingData)>;
+    type_signal_connected m_signal_connected;
+    type_signal_disconnected m_signal_disconnected;
+    type_signal_speaking m_signal_speaking;
+
+public:
+    type_signal_connected signal_connected();
+    type_signal_disconnected signal_disconnected();
+    type_signal_speaking signal_speaking();
 };
 #endif

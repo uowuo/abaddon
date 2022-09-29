@@ -89,6 +89,11 @@ public:
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
     void DiscordOnThreadUpdate(const ThreadUpdateData &data);
 
+#ifdef WITH_VOICE
+    void OnVoiceConnected();
+    void OnVoiceDisconnected();
+#endif
+
     SettingsManager::Settings &GetSettings();
 
     Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
