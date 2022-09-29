@@ -1,6 +1,7 @@
 #pragma once
 #ifdef WITH_VOICE
 // clang-format off
+
 #include <array>
 #include <atomic>
 #include <deque>
@@ -24,6 +25,9 @@ public:
 
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
+
+    void SetCapture(bool capture);
+    void SetPlayback(bool playback);
 
     [[nodiscard]] bool OK() const;
 
@@ -50,6 +54,9 @@ private:
     OpusEncoder *m_encoder;
 
     uint8_t *m_opus_buffer = nullptr;
+
+    std::atomic<bool> m_should_capture = true;
+    std::atomic<bool> m_should_playback = true;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

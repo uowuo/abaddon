@@ -18,6 +18,7 @@
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
+#include "windows/voicewindow.hpp"
 #include "startup.hpp"
 
 #ifdef WITH_LIBHANDY
@@ -418,6 +419,25 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
+    auto *wnd = new VoiceWindow;
+
+    wnd->signal_mute().connect([this](bool is_mute) {
+        m_discord.SetVoiceMuted(is_mute);
+        m_audio->SetCapture(!is_mute);
+    });
+
+    wnd->signal_deafen().connect([this](bool is_deaf) {
+        m_discord.SetVoiceDeafened(is_deaf);
+        m_audio->SetPlayback(!is_deaf);
+    });
+
+    wnd->show();
+    wnd->signal_hide().connect([this, wnd]() {
+        m_discord.DisconnectFromVoice();
+        delete wnd;
+        delete m_user_menu;
+        SetupUserMenu();
+    });
 }
 
 void Abaddon::OnVoiceDisconnected() {

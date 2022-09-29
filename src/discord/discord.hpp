@@ -186,6 +186,9 @@ public:
     void DisconnectFromVoice();
     [[nodiscard]] bool IsConnectedToVoice() const noexcept;
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
+
+    void SetVoiceMuted(bool is_mute);
+    void SetVoiceDeafened(bool is_deaf);
 #endif
 
     void SetReferringChannel(Snowflake id);
@@ -338,10 +341,15 @@ private:
 #ifdef WITH_VOICE
     DiscordVoiceClient m_voice;
 
+    bool m_mute_requested = false;
+    bool m_deaf_requested = false;
+
     Snowflake m_voice_channel_id;
     // todo sql i guess
     std::unordered_map<Snowflake, Snowflake> m_voice_state_user_channel;
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
+
+    void SendVoiceStateUpdate();
 
     void SetVoiceState(Snowflake user_id, Snowflake channel_id);
     void ClearVoiceState(Snowflake user_id);
@@ -422,9 +430,11 @@ public:
     typedef sigc::signal<void> type_signal_connected;
     typedef sigc::signal<void, std::string, float> type_signal_message_progress;
 
+#ifdef WITH_VOICE
     using type_signal_voice_connected = sigc::signal<void()>;
     using type_signal_voice_disconnected = sigc::signal<void()>;
     using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
+#endif
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_message_create signal_message_create();
@@ -480,9 +490,11 @@ public:
     type_signal_connected signal_connected();
     type_signal_message_progress signal_message_progress();
 
+#ifdef WITH_VOICE
     type_signal_voice_connected signal_voice_connected();
     type_signal_voice_disconnected signal_voice_disconnected();
     type_signal_voice_speaking signal_voice_speaking();
+#endif
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -539,7 +551,9 @@ protected:
     type_signal_connected m_signal_connected;
     type_signal_message_progress m_signal_message_progress;
 
+#ifdef WITH_VOICE
     type_signal_voice_connected m_signal_voice_connected;
     type_signal_voice_disconnected m_signal_voice_disconnected;
     type_signal_voice_speaking m_signal_voice_speaking;
+#endif
 };

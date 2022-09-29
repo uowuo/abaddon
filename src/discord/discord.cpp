@@ -1202,6 +1202,16 @@ bool DiscordClient::IsConnectedToVoice() const noexcept {
 Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
     return m_voice_channel_id;
 }
+
+void DiscordClient::SetVoiceMuted(bool is_mute) {
+    m_mute_requested = is_mute;
+    SendVoiceStateUpdate();
+}
+
+void DiscordClient::SetVoiceDeafened(bool is_deaf) {
+    m_deaf_requested = is_deaf;
+    SendVoiceStateUpdate();
+}
 #endif
 
 void DiscordClient::SetReferringChannel(Snowflake id) {
@@ -2625,6 +2635,21 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
 }
 
 #ifdef WITH_VOICE
+void DiscordClient::SendVoiceStateUpdate() {
+    VoiceStateUpdateMessage msg;
+    msg.ChannelID = m_voice_channel_id;
+    const auto channel = GetChannel(m_voice_channel_id);
+    if (channel.has_value() && channel->GuildID.has_value()) {
+        msg.GuildID = *channel->GuildID;
+    }
+
+    msg.SelfMute = m_mute_requested;
+    msg.SelfDeaf = m_deaf_requested;
+    msg.SelfVideo = false;
+
+    m_websocket.Send(msg);
+}
+
 void DiscordClient::SetVoiceState(Snowflake user_id, Snowflake channel_id) {
     m_voice_state_user_channel[user_id] = channel_id;
     m_voice_state_channel_users[channel_id].insert(user_id);
@@ -2904,6 +2929,7 @@ DiscordClient::type_signal_message_send_fail DiscordClient::signal_message_send_
     return m_signal_message_send_fail;
 }
 
+#ifdef WITH_VOICE
 DiscordClient::type_signal_voice_connected DiscordClient::signal_voice_connected() {
     return m_signal_voice_connected;
 }
@@ -2915,3 +2941,4 @@ DiscordClient::type_signal_voice_disconnected DiscordClient::signal_voice_discon
 DiscordClient::type_signal_voice_speaking DiscordClient::signal_voice_speaking() {
     return m_signal_voice_speaking;
 }
+#endif

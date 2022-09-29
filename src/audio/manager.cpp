@@ -137,6 +137,8 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
 }
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
+    if (!m_should_playback) return;
+
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
@@ -152,8 +154,16 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     }
 }
 
+void AudioManager::SetCapture(bool capture) {
+    m_should_capture = capture;
+}
+
+void AudioManager::SetPlayback(bool playback) {
+    m_should_playback = playback;
+}
+
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
-    if (m_opus_buffer == nullptr) return;
+    if (m_opus_buffer == nullptr || !m_should_capture) return;
 
     int payload_len = opus_encode(m_encoder, pcm, 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
     if (payload_len < 0) {
