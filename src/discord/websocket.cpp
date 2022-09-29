@@ -1,7 +1,16 @@
 #include "websocket.hpp"
 #include <utility>
 
-Websocket::Websocket() = default;
+Websocket::Websocket()
+    : m_close_code(ix::WebSocketCloseConstants::kNormalClosureCode) {
+    m_open_dispatcher.connect([this]() {
+        m_signal_open.emit();
+    });
+
+    m_close_dispatcher.connect([this]() {
+        m_signal_close.emit(m_close_code);
+    });
+}
 
 void Websocket::StartConnection(const std::string &url) {
     m_websocket.disableAutomaticReconnection();
@@ -44,9 +53,11 @@ void Websocket::Send(const nlohmann::json &j) {
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
         case ix::WebSocketMessageType::Open: {
-            m_signal_open.emit();
+            m_open_dispatcher.emit();
         } break;
         case ix::WebSocketMessageType::Close: {
+            m_close_code = msg->closeInfo.code;
+            m_close_dispatcher.emit();
             m_signal_close.emit(msg->closeInfo.code);
         } break;
         case ix::WebSocketMessageType::Message: {

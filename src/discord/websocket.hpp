@@ -3,6 +3,7 @@
 #include <ixwebsocket/IXWebSocket.h>
 #include <string>
 #include <functional>
+#include <glibmm.h>
 #include <nlohmann/json.hpp>
 #include <sigc++/sigc++.h>
 
@@ -42,4 +43,8 @@ private:
     type_signal_message m_signal_message;
 
     bool m_print_messages = true;
+
+    Glib::Dispatcher m_open_dispatcher;
+    Glib::Dispatcher m_close_dispatcher;
+    std::atomic<uint16_t> m_close_code;
 };
