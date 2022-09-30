@@ -188,6 +188,7 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 void DiscordVoiceClient::Start() {
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
     m_heartbeat_waiter.revive();
+    m_keepalive_waiter.revive();
 }
 
 void DiscordVoiceClient::Stop() {
@@ -196,6 +197,8 @@ void DiscordVoiceClient::Stop() {
         m_udp.Stop();
         m_heartbeat_waiter.kill();
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_keepalive_waiter.kill();
+        if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
         m_connected = false;
         m_signal_disconnected.emit();
     }
@@ -271,6 +274,7 @@ void DiscordVoiceClient::HandleGatewayReady(const VoiceGatewayMessage &m) {
     printf("connect to %s:%u ssrc %u\n", m_ip.c_str(), m_port, m_ssrc);
 
     m_udp.Connect(m_ip, m_port);
+    m_keepalive_thread = std::thread(&DiscordVoiceClient::KeepaliveThread, this);
 
     Discovery();
 }
@@ -382,6 +386,18 @@ void DiscordVoiceClient::HeartbeatThread() {
         VoiceHeartbeatMessage msg;
         msg.Nonce = static_cast<uint64_t>(ms);
         m_ws.Send(msg);
+    }
+}
+
+void DiscordVoiceClient::KeepaliveThread() {
+    while (true) {
+        if (!m_keepalive_waiter.wait_for(std::chrono::seconds(10)))
+            break;
+
+        if (IsConnected()) {
+            const static uint8_t KEEPALIVE[] = { 0x13, 0x37 };
+            m_udp.Send(KEEPALIVE, sizeof(KEEPALIVE));
+        }
     }
 }
 

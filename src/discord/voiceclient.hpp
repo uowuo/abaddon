@@ -5,8 +5,8 @@
 #include "snowflake.hpp"
 #include "waiter.hpp"
 #include "websocket.hpp"
-#include <optional>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <string>
 #include <glibmm/dispatcher.h>
@@ -211,6 +211,7 @@ private:
     void OnUDPData(std::vector<uint8_t> data);
 
     void HeartbeatThread();
+    void KeepaliveThread();
 
     std::string m_session_id;
     std::string m_endpoint;
@@ -241,6 +242,9 @@ private:
     int m_heartbeat_msec;
     Waiter m_heartbeat_waiter;
     std::thread m_heartbeat_thread;
+
+    Waiter m_keepalive_waiter;
+    std::thread m_keepalive_thread;
 
     std::array<uint8_t, 1275> m_opus_buffer;
 
