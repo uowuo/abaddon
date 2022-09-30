@@ -126,11 +126,10 @@ void AudioManager::RemoveSSRC(uint32_t ssrc) {
 
 void AudioManager::RemoveAllSSRCs() {
     puts("remove all ssrc");
-    for (auto it = m_sources.begin(); it != m_sources.end();) {
-        opus_decoder_destroy(it->second.second);
-        m_sources.erase(it);
-        it++;
+    for (auto &[ssrc, pair] : m_sources) {
+        opus_decoder_destroy(pair.second);
     }
+    m_sources.clear();
 }
 
 void AudioManager::SetOpusBuffer(uint8_t *ptr) {
