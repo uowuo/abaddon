@@ -1,6 +1,11 @@
+#ifdef WITH_VOICE
+
+// clang-format off
+
 #include "voicewindow.hpp"
 #include "components/lazyimage.hpp"
 #include "abaddon.hpp"
+// clang-format on
 
 class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
 public:
@@ -100,3 +105,4 @@ VoiceWindow::type_signal_deafen VoiceWindow::signal_deafen() {
 VoiceWindow::type_signal_mute_user_cs VoiceWindow::signal_mute_user_cs() {
     return m_signal_mute_user_cs;
 }
+#endif

@@ -1,10 +1,14 @@
 #pragma once
+#ifdef WITH_VOICE
+// clang-format off
+
 #include "discord/snowflake.hpp"
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/window.h>
 #include <unordered_set>
+// clang-format on
 
 class VoiceWindow : public Gtk::Window {
 public:
@@ -40,3 +44,4 @@ private:
     type_signal_deafen m_signal_deafen;
     type_signal_mute_user_cs m_signal_mute_user_cs;
 };
+#endif
