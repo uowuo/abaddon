@@ -1203,6 +1203,14 @@ Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
     return m_voice_channel_id;
 }
 
+std::unordered_set<Snowflake> DiscordClient::GetUsersInVoiceChannel(Snowflake channel_id) {
+    return m_voice_state_channel_users[channel_id];
+}
+
+std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
+    return m_voice.GetSSRCOfUser(id);
+}
+
 void DiscordClient::SetVoiceMuted(bool is_mute) {
     m_mute_requested = is_mute;
     SendVoiceStateUpdate();

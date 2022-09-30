@@ -44,7 +44,7 @@ has to be separate to allow main.css to override certain things
     background: @secondary_color;
 }
 
-.app-popup list {
+.app-window list, .app-popup list {
     background: @secondary_color;
 }
 

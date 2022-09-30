@@ -1,14 +1,17 @@
 #pragma once
 #ifdef WITH_VOICE
-    // clang-format off
+// clang-format off
+
 #include "snowflake.hpp"
 #include "waiter.hpp"
 #include "websocket.hpp"
+#include <optional>
 #include <mutex>
 #include <queue>
 #include <string>
 #include <glibmm/dispatcher.h>
 #include <sigc++/sigc++.h>
+#include <unordered_map>
 // clang-format on
 
 enum class VoiceGatewayCloseCode : uint16_t {
@@ -190,6 +193,8 @@ public:
     void SetServerID(Snowflake id);
     void SetUserID(Snowflake id);
 
+    [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
+
     [[nodiscard]] bool IsConnected() const noexcept;
 
 private:
@@ -217,6 +222,8 @@ private:
     std::string m_ip;
     uint16_t m_port;
     uint32_t m_ssrc;
+
+    std::unordered_map<Snowflake, uint32_t> m_ssrc_map;
 
     std::array<uint8_t, 32> m_secret_key;
 

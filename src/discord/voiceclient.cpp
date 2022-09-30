@@ -1,5 +1,6 @@
 #ifdef WITH_VOICE
 // clang-format off
+
 #include "voiceclient.hpp"
 #include "json.hpp"
 #include <sodium.h>
@@ -220,6 +221,13 @@ void DiscordVoiceClient::SetUserID(Snowflake id) {
     m_user_id = id;
 }
 
+std::optional<uint32_t> DiscordVoiceClient::GetSSRCOfUser(Snowflake id) const {
+    if (const auto it = m_ssrc_map.find(id); it != m_ssrc_map.end()) {
+        return it->second;
+    }
+    return {};
+}
+
 bool DiscordVoiceClient::IsConnected() const noexcept {
     return m_connected;
 }
@@ -296,6 +304,7 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
 
 void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
     VoiceSpeakingData data = m.Data;
+    m_ssrc_map[data.UserID] = data.SSRC;
     m_signal_speaking.emit(data);
 }
 

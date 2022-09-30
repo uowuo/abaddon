@@ -419,7 +419,7 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
-    auto *wnd = new VoiceWindow;
+    auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
 
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
@@ -429,6 +429,12 @@ void Abaddon::OnVoiceConnected() {
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
         m_audio->SetPlayback(!is_deaf);
+    });
+
+    wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
+        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
+            m_audio->SetMuteSSRC(*ssrc, is_mute);
+        }
     });
 
     wnd->show();

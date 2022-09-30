@@ -1,5 +1,6 @@
 #ifdef WITH_VOICE
-    // clang-format off
+// clang-format off
+
 #ifdef _WIN32
     #include <winsock2.h>
 #endif
@@ -138,6 +139,10 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     if (!m_should_playback) return;
+    {
+        std::lock_guard<std::mutex> _(m_muted_ssrc_mutex);
+        if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
+    }
 
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
@@ -160,6 +165,15 @@ void AudioManager::SetCapture(bool capture) {
 
 void AudioManager::SetPlayback(bool playback) {
     m_should_playback = playback;
+}
+
+void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
+    std::lock_guard<std::mutex> _(m_muted_ssrc_mutex);
+    if (mute) {
+        m_muted_ssrcs.insert(ssrc);
+    } else {
+        m_muted_ssrcs.erase(ssrc);
+    }
 }
 
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {

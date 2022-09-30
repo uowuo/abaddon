@@ -8,6 +8,7 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <miniaudio.h>
 #include <opus.h>
@@ -28,6 +29,8 @@ public:
 
     void SetCapture(bool capture);
     void SetPlayback(bool playback);
+
+    void SetMuteSSRC(uint32_t ssrc, bool mute);
 
     [[nodiscard]] bool OK() const;
 
@@ -57,6 +60,10 @@ private:
 
     std::atomic<bool> m_should_capture = true;
     std::atomic<bool> m_should_playback = true;
+
+    std::unordered_set<uint32_t> m_muted_ssrcs;
+
+    mutable std::mutex m_muted_ssrc_mutex;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

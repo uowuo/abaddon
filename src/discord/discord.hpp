@@ -186,6 +186,8 @@ public:
     void DisconnectFromVoice();
     [[nodiscard]] bool IsConnectedToVoice() const noexcept;
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
+    [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
+    [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
 
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);

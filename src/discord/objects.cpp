@@ -240,6 +240,7 @@ void from_json(const nlohmann::json &j, SupplementalGuildEntry &m) {
 
 void from_json(const nlohmann::json &j, ReadySupplementalData &m) {
     JS_D("merged_presences", m.MergedPresences);
+    JS_D("guilds", m.Guilds);
 }
 
 void to_json(nlohmann::json &j, const IdentifyProperties &m) {
@@ -681,6 +682,6 @@ void from_json(const nlohmann::json &j, VoiceState &m) {
     JS_O("self_stream", m.IsSelfStream);
     JS_D("suppress", m.IsSuppressed);
     JS_D("user_id", m.UserID);
-    JS_N("member", m.Member);
+    JS_ON("member", m.Member);
     JS_D("session_id", m.SessionID);
 }
