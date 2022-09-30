@@ -235,10 +235,6 @@ private:
     std::queue<std::string> m_message_queue;
     std::mutex m_dispatch_mutex;
 
-    Glib::Dispatcher m_udp_dispatcher;
-    std::queue<std::vector<uint8_t>> m_udp_message_queue;
-    std::mutex m_udp_dispatch_mutex;
-
     int m_heartbeat_msec;
     Waiter m_heartbeat_waiter;
     std::thread m_heartbeat_thread;

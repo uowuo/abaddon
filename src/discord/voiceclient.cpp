@@ -141,9 +141,7 @@ DiscordVoiceClient::DiscordVoiceClient() {
     });
 
     m_udp.signal_data().connect([this](const std::vector<uint8_t> &data) {
-        std::lock_guard<std::mutex> _(m_udp_dispatch_mutex);
-        m_udp_message_queue.push(data);
-        m_udp_dispatcher.emit();
+        OnUDPData(data);
     });
 
     m_dispatcher.connect([this]() {
@@ -156,18 +154,6 @@ DiscordVoiceClient::DiscordVoiceClient() {
         m_message_queue.pop();
         m_dispatch_mutex.unlock();
         OnGatewayMessage(msg);
-    });
-
-    m_udp_dispatcher.connect([this]() {
-        m_udp_dispatch_mutex.lock();
-        if (m_udp_message_queue.empty()) {
-            m_udp_dispatch_mutex.unlock();
-            return;
-        }
-        auto data = std::move(m_udp_message_queue.front());
-        m_udp_message_queue.pop();
-        m_udp_dispatch_mutex.unlock();
-        OnUDPData(data);
     });
 
     Glib::signal_idle().connect_once([this]() {

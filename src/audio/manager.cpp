@@ -112,12 +112,16 @@ AudioManager::~AudioManager() {
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
+    std::lock_guard<std::mutex> _(m_mutex);
     int error;
-    auto *decoder = opus_decoder_create(48000, 2, &error);
-    m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
+    if (m_sources.find(ssrc) == m_sources.end()) {
+        auto *decoder = opus_decoder_create(48000, 2, &error);
+        m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
+    }
 }
 
 void AudioManager::RemoveSSRC(uint32_t ssrc) {
+    std::lock_guard<std::mutex> _(m_mutex);
     if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
         opus_decoder_destroy(it->second.second);
         m_sources.erase(it);
@@ -126,6 +130,7 @@ void AudioManager::RemoveSSRC(uint32_t ssrc) {
 
 void AudioManager::RemoveAllSSRCs() {
     puts("remove all ssrc");
+    std::lock_guard<std::mutex> _(m_mutex);
     for (auto &[ssrc, pair] : m_sources) {
         opus_decoder_destroy(pair.second);
     }
@@ -146,14 +151,14 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
+
+    std::lock_guard<std::mutex> _(m_mutex);
     if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
         int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
         if (decoded <= 0) {
         } else {
-            m_mutex.lock();
             auto &buf = it->second.first;
             buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
-            m_mutex.unlock();
         }
     }
 }
