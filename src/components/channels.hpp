@@ -135,6 +135,10 @@ protected:
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
     Gtk::MenuItem m_menu_dm_toggle_mute;
+#ifdef WITH_VOICE
+    Gtk::MenuItem m_menu_dm_join_voice;
+    Gtk::MenuItem m_menu_dm_disconnect_voice;
+#endif
 
 #ifdef WITH_LIBHANDY
     Gtk::MenuItem m_menu_dm_open_tab;

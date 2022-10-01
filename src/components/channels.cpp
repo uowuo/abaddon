@@ -27,6 +27,10 @@ ChannelList::ChannelList()
 #endif
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
+#ifdef WITH_VOICE
+    , m_menu_dm_join_voice("Join _Voice", true)
+    , m_menu_dm_disconnect_voice("_Disconnect Voice", true)
+#endif
     , m_menu_thread_copy_id("_Copy ID", true)
     , m_menu_thread_leave("_Leave", true)
     , m_menu_thread_archive("_Archive", true)
@@ -215,6 +219,17 @@ ChannelList::ChannelList()
 #endif
     m_menu_dm.append(m_menu_dm_toggle_mute);
     m_menu_dm.append(m_menu_dm_close);
+#ifdef WITH_VOICE
+    m_menu_dm_join_voice.signal_activate().connect([this]() {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        m_signal_action_join_voice_channel.emit(id);
+    });
+    m_menu_dm_disconnect_voice.signal_activate().connect([this]() {
+        m_signal_action_disconnect_voice.emit();
+    });
+    m_menu_dm.append(m_menu_dm_join_voice);
+    m_menu_dm.append(m_menu_dm_disconnect_voice);
+#endif
     m_menu_dm.append(m_menu_dm_copy_id);
     m_menu_dm.show_all();
 
@@ -1010,10 +1025,21 @@ void ChannelList::OnDMSubmenuPopup() {
     auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
-    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(id))
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.IsChannelMuted(id))
         m_menu_dm_toggle_mute.set_label("Unmute");
     else
         m_menu_dm_toggle_mute.set_label("Mute");
+
+#ifdef WITH_VOICE
+    if (discord.IsConnectedToVoice()) {
+        m_menu_dm_join_voice.set_sensitive(false);
+        m_menu_dm_disconnect_voice.set_sensitive(discord.GetVoiceChannelID() == id);
+    } else {
+        m_menu_dm_join_voice.set_sensitive(true);
+        m_menu_dm_disconnect_voice.set_sensitive(false);
+    }
+#endif
 }
 
 void ChannelList::OnThreadSubmenuPopup() {

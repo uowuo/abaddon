@@ -666,13 +666,14 @@ void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m) {
 
 void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
     JS_D("token", m.Token);
-    JS_D("guild_id", m.GuildID);
     JS_D("endpoint", m.Endpoint);
+    JS_ON("guild_id", m.GuildID);
+    JS_ON("channel_id", m.ChannelID);
 }
 #endif
 
 void from_json(const nlohmann::json &j, VoiceState &m) {
-    JS_O("guild_id", m.GuildID);
+    JS_ON("guild_id", m.GuildID);
     JS_N("channel_id", m.ChannelID);
     JS_D("deaf", m.IsDeafened);
     JS_D("mute", m.IsMuted);

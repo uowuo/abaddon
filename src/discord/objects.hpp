@@ -891,8 +891,9 @@ struct VoiceStateUpdateMessage {
 
 struct VoiceServerUpdateData {
     std::string Token;
-    Snowflake GuildID;
     std::string Endpoint;
+    std::optional<Snowflake> GuildID;
+    std::optional<Snowflake> ChannelID;
 
     friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
 };

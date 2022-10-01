@@ -1180,10 +1180,11 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
 #ifdef WITH_VOICE
 void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     auto channel = GetChannel(channel_id);
-    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+    if (!channel.has_value()) return;
     m_voice_channel_id = channel_id;
     VoiceStateUpdateMessage m;
-    m.GuildID = *channel->GuildID;
+    if (channel->GuildID.has_value())
+        m.GuildID = channel->GuildID;
     m.ChannelID = channel_id;
     m.PreferredRegion = "newark";
     m_websocket.Send(m);
@@ -2179,7 +2180,13 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     printf("token: %s\n", data.Token.c_str());
     m_voice.SetEndpoint(data.Endpoint);
     m_voice.SetToken(data.Token);
-    m_voice.SetServerID(data.GuildID);
+    if (data.GuildID.has_value()) {
+        m_voice.SetServerID(*data.GuildID);
+    } else if (data.ChannelID.has_value()) {
+        m_voice.SetServerID(*data.ChannelID);
+    } else {
+        puts("no guild or channel id in voice server?");
+    }
     m_voice.SetUserID(m_user_data.ID);
     m_voice.Start();
 }
