@@ -162,6 +162,7 @@ private:
 
 #ifdef WITH_VOICE
     std::unique_ptr<AudioManager> m_audio;
+    Gtk::Window *m_voice_window = nullptr;
 #endif
 
     mutable std::mutex m_mutex;

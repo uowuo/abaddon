@@ -420,6 +420,7 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
     auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
+    m_voice_window = wnd;
 
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
@@ -440,6 +441,7 @@ void Abaddon::OnVoiceConnected() {
     wnd->show();
     wnd->signal_hide().connect([this, wnd]() {
         m_discord.DisconnectFromVoice();
+        m_voice_window = nullptr;
         delete wnd;
         delete m_user_menu;
         SetupUserMenu();
@@ -448,6 +450,9 @@ void Abaddon::OnVoiceConnected() {
 
 void Abaddon::OnVoiceDisconnected() {
     m_audio->RemoveAllSSRCs();
+    if (m_voice_window != nullptr) {
+        m_voice_window->close();
+    }
 }
 #endif
 
