@@ -132,6 +132,7 @@ DiscordVoiceClient::DiscordVoiceClient() {
 
     m_ws.signal_close().connect([this](uint16_t code) {
         printf("vws close %u\n", code);
+        Stop();
     });
 
     m_ws.signal_message().connect([this](const std::string &str) {
@@ -175,16 +176,18 @@ void DiscordVoiceClient::Start() {
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
     m_heartbeat_waiter.revive();
     m_keepalive_waiter.revive();
+    m_connected = true;
+    m_signal_connected.emit();
 }
 
 void DiscordVoiceClient::Stop() {
+    m_ws.Stop();
+    m_udp.Stop();
+    m_heartbeat_waiter.kill();
+    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+    m_keepalive_waiter.kill();
+    if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
     if (m_connected) {
-        m_ws.Stop();
-        m_udp.Stop();
-        m_heartbeat_waiter.kill();
-        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
-        m_keepalive_waiter.kill();
-        if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
         m_connected = false;
         m_signal_disconnected.emit();
     }
@@ -288,8 +291,6 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.Run();
-    m_connected = true;
-    m_signal_connected.emit();
 }
 
 void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {

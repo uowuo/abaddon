@@ -8,6 +8,7 @@ Websocket::Websocket()
     });
 
     m_close_dispatcher.connect([this]() {
+        Stop();
         m_signal_close.emit(m_close_code);
     });
 }
@@ -58,7 +59,6 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
         case ix::WebSocketMessageType::Close: {
             m_close_code = msg->closeInfo.code;
             m_close_dispatcher.emit();
-            m_signal_close.emit(msg->closeInfo.code);
         } break;
         case ix::WebSocketMessageType::Message: {
             m_signal_message.emit(msg->str);
