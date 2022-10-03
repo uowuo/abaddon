@@ -58,7 +58,7 @@ ChannelList::ChannelList()
             }
         }
 
-        if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
+        if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread || type == RenderType::VoiceChannel) {
             const auto id = static_cast<Snowflake>(row[m_columns.m_id]);
             m_signal_action_channel_item_select.emit(id);
             Abaddon::Get().GetDiscordClient().MarkChannelAsRead(id, [](...) {});
@@ -784,7 +784,7 @@ bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const
             m_last_selected = m_model->get_path(row);
 
     auto type = (*m_model->get_iter(path))[m_columns.m_type];
-    return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread;
+    return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread || type == RenderType::VoiceChannel;
 }
 
 void ChannelList::AddPrivateChannels() {
