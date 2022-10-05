@@ -438,6 +438,12 @@ void Abaddon::OnVoiceConnected() {
         }
     });
 
+    wnd->signal_user_volume_changed().connect([this](Snowflake id, double volume) {
+        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
+            m_audio->SetVolumeSSRC(*ssrc, volume);
+        }
+    });
+
     wnd->show();
     wnd->signal_hide().connect([this, wnd]() {
         m_discord.DisconnectFromVoice();

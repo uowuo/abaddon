@@ -28,13 +28,18 @@ void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uin
     AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
     if (mgr == nullptr) return;
     std::lock_guard<std::mutex> _(mgr->m_mutex);
+    std::lock_guard<std::mutex> _2(mgr->m_volume_ssrc_mutex);
 
     auto *pOutputF32 = static_cast<float *>(pOutput);
     for (auto &[ssrc, pair] : mgr->m_sources) {
+        double volume = 1.0;
+        if (const auto vol_it = mgr->m_volume_ssrc.find(ssrc); vol_it != mgr->m_volume_ssrc.end()) {
+            volume = vol_it->second;
+        }
         auto &buf = pair.first;
         const size_t n = std::min(static_cast<size_t>(buf.size()), static_cast<size_t>(frameCount * 2ULL));
         for (size_t i = 0; i < n; i++) {
-            pOutputF32[i] += buf[i] / 32768.F;
+            pOutputF32[i] += volume * buf[i] / 32768.F;
         }
         buf.erase(buf.begin(), buf.begin() + n);
     }
@@ -178,6 +183,13 @@ void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
     } else {
         m_muted_ssrcs.erase(ssrc);
     }
+}
+
+void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
+    std::lock_guard<std::mutex> _(m_volume_ssrc_mutex);
+    volume *= 0.01;
+    constexpr const double E = 2.71828182845904523536;
+    m_volume_ssrc[ssrc] = (std::exp(volume) - 1) / (E - 1);
 }
 
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {

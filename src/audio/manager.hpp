@@ -31,6 +31,7 @@ public:
     void SetPlayback(bool playback);
 
     void SetMuteSSRC(uint32_t ssrc, bool mute);
+    void SetVolumeSSRC(uint32_t ssrc, double volume);
 
     [[nodiscard]] bool OK() const;
 
@@ -62,8 +63,10 @@ private:
     std::atomic<bool> m_should_playback = true;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
+    std::unordered_map<uint32_t, double> m_volume_ssrc;
 
     mutable std::mutex m_muted_ssrc_mutex;
+    mutable std::mutex m_volume_ssrc_mutex;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

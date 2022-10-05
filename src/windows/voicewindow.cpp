@@ -10,16 +10,26 @@
 class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
 public:
     VoiceWindowUserListEntry(Snowflake id)
-        : m_main(Gtk::ORIENTATION_HORIZONTAL)
+        : m_main(Gtk::ORIENTATION_VERTICAL)
+        , m_horz(Gtk::ORIENTATION_HORIZONTAL)
         , m_avatar(32, 32)
         , m_mute("Mute") {
         m_name.set_halign(Gtk::ALIGN_START);
         m_name.set_hexpand(true);
         m_mute.set_halign(Gtk::ALIGN_END);
 
-        m_main.add(m_avatar);
-        m_main.add(m_name);
-        m_main.add(m_mute);
+        m_volume.set_range(0.0, 200.0);
+        m_volume.set_value_pos(Gtk::POS_LEFT);
+        m_volume.set_value(100.0);
+        m_volume.signal_value_changed().connect([this]() {
+            m_signal_volume.emit(m_volume.get_value());
+        });
+
+        m_horz.add(m_avatar);
+        m_horz.add(m_name);
+        m_horz.add(m_mute);
+        m_main.add(m_horz);
+        m_main.add(m_volume);
         add(m_main);
         show_all_children();
 
@@ -38,18 +48,26 @@ public:
 
 private:
     Gtk::Box m_main;
+    Gtk::Box m_horz;
     LazyImage m_avatar;
     Gtk::Label m_name;
     Gtk::CheckButton m_mute;
+    Gtk::Scale m_volume;
 
 public:
     using type_signal_mute_cs = sigc::signal<void(bool)>;
+    using type_signal_volume = sigc::signal<void(double)>;
     type_signal_mute_cs signal_mute_cs() {
         return m_signal_mute_cs;
     }
 
+    type_signal_volume signal_volume() {
+        return m_signal_volume;
+    }
+
 private:
     type_signal_mute_cs m_signal_mute_cs;
+    type_signal_volume m_signal_volume;
 };
 
 VoiceWindow::VoiceWindow(Snowflake channel_id)
@@ -82,6 +100,9 @@ void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
         row->signal_mute_cs().connect([this, id](bool is_muted) {
             m_signal_mute_user_cs.emit(id, is_muted);
         });
+        row->signal_volume().connect([this, id](double volume) {
+            m_signal_user_volume_changed.emit(id, volume);
+        });
         m_user_list.add(*row);
     }
 }
@@ -104,5 +125,9 @@ VoiceWindow::type_signal_deafen VoiceWindow::signal_deafen() {
 
 VoiceWindow::type_signal_mute_user_cs VoiceWindow::signal_mute_user_cs() {
     return m_signal_mute_user_cs;
+}
+
+VoiceWindow::type_signal_user_volume_changed VoiceWindow::signal_user_volume_changed() {
+    return m_signal_user_volume_changed;
 }
 #endif
