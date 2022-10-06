@@ -28,7 +28,6 @@ void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uin
     AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
     if (mgr == nullptr) return;
     std::lock_guard<std::mutex> _(mgr->m_mutex);
-    std::lock_guard<std::mutex> _2(mgr->m_volume_ssrc_mutex);
 
     auto *pOutputF32 = static_cast<float *>(pOutput);
     for (auto &[ssrc, pair] : mgr->m_sources) {
@@ -148,16 +147,13 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     if (!m_should_playback) return;
-    {
-        std::lock_guard<std::mutex> _(m_muted_ssrc_mutex);
-        if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
-    }
+
+    std::lock_guard<std::mutex> _(m_mutex);
+    if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
 
     size_t payload_size = 0;
     const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
-
-    std::lock_guard<std::mutex> _(m_mutex);
     if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
         int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
         if (decoded <= 0) {
@@ -177,7 +173,7 @@ void AudioManager::SetPlayback(bool playback) {
 }
 
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
-    std::lock_guard<std::mutex> _(m_muted_ssrc_mutex);
+    std::lock_guard<std::mutex> _(m_mutex);
     if (mute) {
         m_muted_ssrcs.insert(ssrc);
     } else {
@@ -186,7 +182,7 @@ void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
 }
 
 void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
-    std::lock_guard<std::mutex> _(m_volume_ssrc_mutex);
+    std::lock_guard<std::mutex> _(m_mutex);
     volume *= 0.01;
     constexpr const double E = 2.71828182845904523536;
     m_volume_ssrc[ssrc] = (std::exp(volume) - 1) / (E - 1);

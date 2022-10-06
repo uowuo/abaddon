@@ -65,9 +65,6 @@ private:
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
 
-    mutable std::mutex m_muted_ssrc_mutex;
-    mutable std::mutex m_volume_ssrc_mutex;
-
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;
     type_signal_opus_packet signal_opus_packet();
