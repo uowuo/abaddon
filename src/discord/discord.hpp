@@ -113,7 +113,6 @@ public:
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
     void SendThreadLazyLoad(Snowflake id);
-    void JoinGuild(const std::string &code);
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
