@@ -86,10 +86,15 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
 
+    m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    m_scroll.set_hexpand(true);
+    m_scroll.set_vexpand(true);
+
+    m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_main.add(m_controls);
-    m_main.add(m_user_list);
+    m_main.add(m_scroll);
     add(m_main);
     show_all_children();
 }

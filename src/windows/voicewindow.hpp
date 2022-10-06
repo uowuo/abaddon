@@ -6,6 +6,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
 #include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/window.h>
 #include <unordered_set>
 // clang-format on
@@ -26,6 +27,7 @@ private:
     Gtk::CheckButton m_mute;
     Gtk::CheckButton m_deafen;
 
+    Gtk::ScrolledWindow m_scroll;
     Gtk::ListBox m_user_list;
 
     Snowflake m_channel_id;
