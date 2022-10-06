@@ -444,6 +444,8 @@ void Abaddon::OnVoiceConnected() {
         }
     });
 
+    wnd->set_position(Gtk::WIN_POS_CENTER);
+
     wnd->show();
     wnd->signal_hide().connect([this, wnd]() {
         m_discord.DisconnectFromVoice();
