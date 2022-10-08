@@ -37,6 +37,7 @@ public:
         const auto user = discord.GetUser(id);
         if (user.has_value()) {
             m_name.set_text(user->Username);
+            m_avatar.SetURL(user->GetAvatarURL("png", "32"));
         } else {
             m_name.set_text("Unknown user");
         }
