@@ -7,7 +7,6 @@
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
-#include "dialogs/joinguild.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
@@ -251,7 +250,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
-    m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
@@ -765,15 +763,6 @@ void Abaddon::ActionSetToken() {
         GetSettings().DiscordToken = m_discord_token;
     }
     m_main_window->UpdateMenus();
-}
-
-void Abaddon::ActionJoinGuildDialog() {
-    JoinGuildDialog dlg(*m_main_window);
-    auto response = dlg.run();
-    if (response == Gtk::RESPONSE_OK) {
-        auto code = dlg.GetCode();
-        m_discord.JoinGuild(code);
-    }
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {

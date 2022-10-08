@@ -63,7 +63,6 @@ private:
     Gtk::MenuItem m_menu_discord_connect;
     Gtk::MenuItem m_menu_discord_disconnect;
     Gtk::MenuItem m_menu_discord_set_token;
-    Gtk::MenuItem m_menu_discord_join_guild;
     Gtk::MenuItem m_menu_discord_set_status;
     Gtk::MenuItem m_menu_discord_add_recipient; // move me somewhere else some day
     void OnDiscordSubmenuPopup();
@@ -91,7 +90,6 @@ public:
     typedef sigc::signal<void> type_signal_action_disconnect;
     typedef sigc::signal<void> type_signal_action_set_token;
     typedef sigc::signal<void> type_signal_action_reload_css;
-    typedef sigc::signal<void> type_signal_action_join_guild;
     typedef sigc::signal<void> type_signal_action_set_status;
     // this should probably be removed
     typedef sigc::signal<void, Snowflake> type_signal_action_add_recipient; // channel id
@@ -102,7 +100,6 @@ public:
     type_signal_action_disconnect signal_action_disconnect();
     type_signal_action_set_token signal_action_set_token();
     type_signal_action_reload_css signal_action_reload_css();
-    type_signal_action_join_guild signal_action_join_guild();
     type_signal_action_set_status signal_action_set_status();
     type_signal_action_add_recipient signal_action_add_recipient();
     type_signal_action_view_pins signal_action_view_pins();
@@ -113,7 +110,6 @@ private:
     type_signal_action_disconnect m_signal_action_disconnect;
     type_signal_action_set_token m_signal_action_set_token;
     type_signal_action_reload_css m_signal_action_reload_css;
-    type_signal_action_join_guild m_signal_action_join_guild;
     type_signal_action_set_status m_signal_action_set_status;
     type_signal_action_add_recipient m_signal_action_add_recipient;
     type_signal_action_view_pins m_signal_action_view_pins;

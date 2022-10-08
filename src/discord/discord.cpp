@@ -581,10 +581,6 @@ void DiscordClient::SendThreadLazyLoad(Snowflake id) {
     m_websocket.Send(msg);
 }
 
-void DiscordClient::JoinGuild(const std::string &code) {
-    m_http.MakePOST("/invites/" + code, "{}", [](auto) {});
-}
-
 void DiscordClient::LeaveGuild(Snowflake id) {
     m_http.MakeDELETE("/users/@me/guilds/" + std::to_string(id), [](auto) {});
 }
