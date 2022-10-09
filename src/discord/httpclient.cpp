@@ -143,7 +143,7 @@ void HTTPClient::AddHeaders(http::request &r) {
         r.set_header(name, val);
     }
     curl_easy_setopt(r.get_curl(), CURLOPT_COOKIE, m_cookie.c_str());
-    curl_easy_setopt(r.get_curl(), CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
+    curl_easy_setopt(r.get_curl(), CURLOPT_ACCEPT_ENCODING, "");
 }
 
 void HTTPClient::OnResponse(const http::response_type &r, const std::function<void(http::response_type r)> &cb) {
