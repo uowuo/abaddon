@@ -1208,6 +1208,13 @@ std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
     return m_voice.GetSSRCOfUser(id);
 }
 
+std::optional<Snowflake> DiscordClient::GetVoiceState(Snowflake user_id) const {
+    if (const auto it = m_voice_state_user_channel.find(user_id); it != m_voice_state_user_channel.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 void DiscordClient::SetVoiceMuted(bool is_mute) {
     m_mute_requested = is_mute;
     SendVoiceStateUpdate();
@@ -2164,9 +2171,17 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         m_voice.SetSessionID(data.SessionID);
     }
     if (data.ChannelID.has_value()) {
+        const auto old_state = GetVoiceState(data.UserID);
         SetVoiceState(data.UserID, *data.ChannelID);
+        if (old_state.has_value() && *old_state != *data.ChannelID) {
+            m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
+        }
     } else {
+        const auto old_state = GetVoiceState(data.UserID);
         ClearVoiceState(data.UserID);
+        if (old_state.has_value()) {
+            m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
+        }
     }
 }
 
@@ -2951,5 +2966,9 @@ DiscordClient::type_signal_voice_disconnected DiscordClient::signal_voice_discon
 
 DiscordClient::type_signal_voice_speaking DiscordClient::signal_voice_speaking() {
     return m_signal_voice_speaking;
+}
+
+DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
+    return m_signal_voice_user_disconnect;
 }
 #endif

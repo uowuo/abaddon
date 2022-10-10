@@ -187,6 +187,7 @@ public:
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
     [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
+    [[nodiscard]] std::optional<Snowflake> GetVoiceState(Snowflake user_id) const;
 
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);
@@ -435,6 +436,7 @@ public:
     using type_signal_voice_connected = sigc::signal<void()>;
     using type_signal_voice_disconnected = sigc::signal<void()>;
     using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
+    using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
 #endif
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -495,6 +497,7 @@ public:
     type_signal_voice_connected signal_voice_connected();
     type_signal_voice_disconnected signal_voice_disconnected();
     type_signal_voice_speaking signal_voice_speaking();
+    type_signal_voice_user_disconnect signal_voice_user_disconnect();
 #endif
 
 protected:
@@ -556,5 +559,6 @@ protected:
     type_signal_voice_connected m_signal_voice_connected;
     type_signal_voice_disconnected m_signal_voice_disconnected;
     type_signal_voice_speaking m_signal_voice_speaking;
+    type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
 #endif
 };

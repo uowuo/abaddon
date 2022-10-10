@@ -84,6 +84,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto &discord = Abaddon::Get().GetDiscordClient();
     SetUsers(discord.GetUsersInVoiceChannel(m_channel_id));
 
+    discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
+
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
 
@@ -103,6 +105,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
     for (auto id : user_ids) {
         auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
+        m_rows[id] = row;
         row->signal_mute_cs().connect([this, id](bool is_muted) {
             m_signal_mute_user_cs.emit(id, is_muted);
         });
@@ -119,6 +122,15 @@ void VoiceWindow::OnMuteChanged() {
 
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
+}
+
+void VoiceWindow::OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id) {
+    if (m_channel_id == from_channel_id) {
+        if (auto it = m_rows.find(user_id); it != m_rows.end()) {
+            delete it->second;
+            m_rows.erase(it);
+        }
+    }
 }
 
 VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {

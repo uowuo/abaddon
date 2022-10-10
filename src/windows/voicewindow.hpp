@@ -18,6 +18,8 @@ public:
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
+    void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
+
     void OnMuteChanged();
     void OnDeafenChanged();
 
@@ -31,6 +33,8 @@ private:
     Gtk::ListBox m_user_list;
 
     Snowflake m_channel_id;
+
+    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_rows;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;
