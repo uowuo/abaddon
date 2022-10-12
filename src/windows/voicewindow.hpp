@@ -18,6 +18,9 @@ public:
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
+    Gtk::ListBoxRow *CreateRow(Snowflake id);
+
+    void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
 
     void OnMuteChanged();

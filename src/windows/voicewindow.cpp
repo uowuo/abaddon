@@ -85,6 +85,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     SetUsers(discord.GetUsersInVoiceChannel(m_channel_id));
 
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
+    discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
@@ -104,16 +105,21 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
     for (auto id : user_ids) {
-        auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
-        m_rows[id] = row;
-        row->signal_mute_cs().connect([this, id](bool is_muted) {
-            m_signal_mute_user_cs.emit(id, is_muted);
-        });
-        row->signal_volume().connect([this, id](double volume) {
-            m_signal_user_volume_changed.emit(id, volume);
-        });
-        m_user_list.add(*row);
+        m_user_list.add(*CreateRow(id));
     }
+}
+
+Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
+    auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
+    m_rows[id] = row;
+    row->signal_mute_cs().connect([this, id](bool is_muted) {
+        m_signal_mute_user_cs.emit(id, is_muted);
+    });
+    row->signal_volume().connect([this, id](double volume) {
+        m_signal_user_volume_changed.emit(id, volume);
+    });
+    row->show_all();
+    return row;
 }
 
 void VoiceWindow::OnMuteChanged() {
@@ -122,6 +128,14 @@ void VoiceWindow::OnMuteChanged() {
 
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
+}
+
+void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
+    if (m_channel_id == to_channel_id) {
+        if (auto it = m_rows.find(user_id); it == m_rows.end()) {
+            m_user_list.add(*CreateRow(user_id));
+        }
+    }
 }
 
 void VoiceWindow::OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id) {

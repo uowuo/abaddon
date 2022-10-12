@@ -2176,6 +2176,7 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         if (old_state.has_value() && *old_state != *data.ChannelID) {
             m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
         }
+        m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
     } else {
         const auto old_state = GetVoiceState(data.UserID);
         ClearVoiceState(data.UserID);
@@ -2970,5 +2971,9 @@ DiscordClient::type_signal_voice_speaking DiscordClient::signal_voice_speaking()
 
 DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
     return m_signal_voice_user_disconnect;
+}
+
+DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
+    return m_signal_voice_user_connect;
 }
 #endif

@@ -437,6 +437,7 @@ public:
     using type_signal_voice_disconnected = sigc::signal<void()>;
     using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
     using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
+    using type_signal_voice_user_connect = sigc::signal<void(Snowflake, Snowflake)>;
 #endif
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -498,6 +499,7 @@ public:
     type_signal_voice_disconnected signal_voice_disconnected();
     type_signal_voice_speaking signal_voice_speaking();
     type_signal_voice_user_disconnect signal_voice_user_disconnect();
+    type_signal_voice_user_connect signal_voice_user_connect();
 #endif
 
 protected:
@@ -560,5 +562,6 @@ protected:
     type_signal_voice_disconnected m_signal_voice_disconnected;
     type_signal_voice_speaking m_signal_voice_speaking;
     type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
+    type_signal_voice_user_connect m_signal_voice_user_connect;
 #endif
 };
