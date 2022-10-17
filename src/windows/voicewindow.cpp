@@ -5,6 +5,7 @@
 #include "voicewindow.hpp"
 #include "components/lazyimage.hpp"
 #include "abaddon.hpp"
+#include "audio/manager.hpp"
 // clang-format on
 
 class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
@@ -30,6 +31,7 @@ public:
         m_horz.add(m_mute);
         m_main.add(m_horz);
         m_main.add(m_volume);
+        m_main.add(m_meter);
         add(m_main);
         show_all_children();
 
@@ -47,6 +49,10 @@ public:
         });
     }
 
+    void SetVolumeMeter(double frac) {
+        m_meter.set_fraction(frac);
+    }
+
 private:
     Gtk::Box m_main;
     Gtk::Box m_horz;
@@ -54,6 +60,7 @@ private:
     Gtk::Label m_name;
     Gtk::CheckButton m_mute;
     Gtk::Scale m_volume;
+    Gtk::ProgressBar m_meter;
 
 public:
     using type_signal_mute_cs = sigc::signal<void(bool)>;
@@ -98,9 +105,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_main.add(m_controls);
+    m_main.add(m_capture_volume);
     m_main.add(m_scroll);
     add(m_main);
     show_all_children();
+
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
@@ -128,6 +138,17 @@ void VoiceWindow::OnMuteChanged() {
 
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
+}
+
+bool VoiceWindow::UpdateVoiceMeters() {
+    m_capture_volume.set_fraction(Abaddon::Get().GetAudio().GetCaptureVolumeLevel());
+    for (auto [id, row] : m_rows) {
+        const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
+        if (ssrc.has_value()) {
+            row->SetVolumeMeter(Abaddon::Get().GetAudio().GetSSRCVolumeLevel(*ssrc));
+        }
+    }
+    return true;
 }
 
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {

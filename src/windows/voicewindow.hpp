@@ -6,11 +6,13 @@
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
 #include <gtkmm/listbox.h>
+#include <gtkmm/progressbar.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/window.h>
 #include <unordered_set>
 // clang-format on
 
+class VoiceWindowUserListEntry;
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
@@ -26,6 +28,8 @@ private:
     void OnMuteChanged();
     void OnDeafenChanged();
 
+    bool UpdateVoiceMeters();
+
     Gtk::Box m_main;
     Gtk::Box m_controls;
 
@@ -35,9 +39,11 @@ private:
     Gtk::ScrolledWindow m_scroll;
     Gtk::ListBox m_user_list;
 
+    Gtk::ProgressBar m_capture_volume;
+
     Snowflake m_channel_id;
 
-    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_rows;
+    std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;

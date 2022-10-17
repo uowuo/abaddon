@@ -35,8 +35,17 @@ public:
 
     [[nodiscard]] bool OK() const;
 
+    [[nodiscard]] double GetCaptureVolumeLevel() const noexcept;
+    [[nodiscard]] double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
+
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
+
+    void UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames);
+    void UpdateCaptureVolume(const int16_t *pcm, ma_uint32 frames);
+    std::atomic<int> m_capture_peak_meter = 0;
+
+    bool DecayVolumeMeters();
 
     friend void data_callback(ma_device *, void *, const void *, ma_uint32);
     friend void capture_data_callback(ma_device *, void *, const void *, ma_uint32);
@@ -52,7 +61,7 @@ private:
     ma_device m_capture_device;
     ma_device_config m_capture_config;
 
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 
     OpusEncoder *m_encoder;
@@ -64,6 +73,9 @@ private:
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
+
+    mutable std::mutex m_vol_mtx;
+    std::unordered_map<uint32_t, double> m_volumes;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

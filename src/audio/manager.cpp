@@ -7,6 +7,7 @@
 
 #include "manager.hpp"
 #include <array>
+#include <glibmm/main.h>
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 #include <opus.h>
@@ -107,6 +108,8 @@ AudioManager::AudioManager() {
     char device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
     ma_device_get_name(&m_capture_device, ma_device_type_capture, device_name, sizeof(device_name), nullptr);
     printf("using %s for capture\n", device_name);
+
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }
 
 AudioManager::~AudioManager() {
@@ -158,6 +161,7 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
         int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
         if (decoded <= 0) {
         } else {
+            UpdateReceiveVolume(ssrc, pcm.data(), decoded);
             auto &buf = it->second.first;
             buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
         }
@@ -191,6 +195,8 @@ void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     if (m_opus_buffer == nullptr || !m_should_capture) return;
 
+    UpdateCaptureVolume(pcm, frames);
+
     int payload_len = opus_encode(m_encoder, pcm, 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
     if (payload_len < 0) {
         printf("encoding error: %d\n", payload_len);
@@ -199,8 +205,51 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     }
 }
 
+void AudioManager::UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames) {
+    std::lock_guard<std::mutex> _(m_vol_mtx);
+
+    auto &meter = m_volumes[ssrc];
+    for (int i = 0; i < frames * 2; i += 2) {
+        const int amp = std::abs(pcm[i]);
+        meter = std::max(meter, std::abs(amp) / 32768.0);
+    }
+}
+
+void AudioManager::UpdateCaptureVolume(const int16_t *pcm, ma_uint32 frames) {
+    for (ma_uint32 i = 0; i < frames * 2; i += 2) {
+        const int amp = std::abs(pcm[i]);
+        m_capture_peak_meter = std::max(m_capture_peak_meter.load(std::memory_order_relaxed), amp);
+    }
+}
+
+bool AudioManager::DecayVolumeMeters() {
+    m_capture_peak_meter -= 300;
+    if (m_capture_peak_meter < 0) m_capture_peak_meter = 0;
+
+    std::lock_guard<std::mutex> _(m_vol_mtx);
+
+    for (auto &[ssrc, meter] : m_volumes) {
+        meter -= 0.01;
+        if (meter < 0.0) meter = 0.0;
+    }
+
+    return true;
+}
+
 bool AudioManager::OK() const {
     return m_ok;
+}
+
+double AudioManager::GetCaptureVolumeLevel() const noexcept {
+    return m_capture_peak_meter / 32768.0;
+}
+
+double AudioManager::GetSSRCVolumeLevel(uint32_t ssrc) const noexcept {
+    std::lock_guard<std::mutex> _(m_vol_mtx);
+    if (const auto it = m_volumes.find(ssrc); it != m_volumes.end()) {
+        return it->second;
+    }
+    return 0.0;
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
