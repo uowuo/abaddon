@@ -2,6 +2,7 @@
 #ifdef WITH_VOICE
 // clang-format off
 
+#include "components/volumemeter.hpp"
 #include "discord/snowflake.hpp"
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
@@ -40,7 +41,7 @@ private:
     Gtk::ScrolledWindow m_scroll;
     Gtk::ListBox m_user_list;
 
-    Gtk::ProgressBar m_capture_volume;
+    VolumeMeter m_capture_volume;
     Gtk::Scale m_capture_gate;
 
     Snowflake m_channel_id;

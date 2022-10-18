@@ -1,12 +1,12 @@
 #pragma once
-#include <gtkmm.h>
-#include "discord/snowflake.hpp"
-#include "discord/activity.hpp"
+#include <gtkmm/widget.h>
 
-class StatusIndicator : public Gtk::Widget {
+class VolumeMeter : public Gtk::Widget {
 public:
-    StatusIndicator(Snowflake user_id);
-    ~StatusIndicator() override = default;
+    VolumeMeter();
+
+    void SetVolume(double fraction);
+    void SetTick(double fraction);
 
 protected:
     Gtk::SizeRequestMode get_request_mode_vfunc() const override;
@@ -21,10 +21,9 @@ protected:
     void on_unrealize() override;
     bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
 
+private:
     Glib::RefPtr<Gdk::Window> m_window;
 
-    void CheckStatus();
-
-    Snowflake m_id;
-    PresenceStatus m_status;
+    double m_fraction = 0.0;
+    double m_tick = 0.0;
 };

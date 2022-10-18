@@ -105,7 +105,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_gate.set_value_pos(Gtk::POS_LEFT);
     m_capture_gate.set_value(0.0);
     m_capture_gate.signal_value_changed().connect([this]() {
-        m_signal_gate.emit(m_capture_gate.get_value());
+        // todo this should probably emit 0-1 i dont think the mgr should be responsible for scaling down
+        const double val = m_capture_gate.get_value();
+        m_signal_gate.emit(val);
+        m_capture_volume.SetTick(val / 100.0);
     });
 
     m_scroll.add(m_user_list);
@@ -149,7 +152,7 @@ void VoiceWindow::OnDeafenChanged() {
 }
 
 bool VoiceWindow::UpdateVoiceMeters() {
-    m_capture_volume.set_fraction(Abaddon::Get().GetAudio().GetCaptureVolumeLevel());
+    m_capture_volume.SetVolume(Abaddon::Get().GetAudio().GetCaptureVolumeLevel());
     for (auto [id, row] : m_rows) {
         const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
         if (ssrc.has_value()) {
