@@ -229,7 +229,7 @@ void AudioManager::UpdateCaptureVolume(const int16_t *pcm, ma_uint32 frames) {
 }
 
 bool AudioManager::DecayVolumeMeters() {
-    m_capture_peak_meter -= 300;
+    m_capture_peak_meter -= 600;
     if (m_capture_peak_meter < 0) m_capture_peak_meter = 0;
 
     std::lock_guard<std::mutex> _(m_vol_mtx);
