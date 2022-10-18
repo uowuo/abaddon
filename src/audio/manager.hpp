@@ -30,6 +30,8 @@ public:
     void SetCapture(bool capture);
     void SetPlayback(bool playback);
 
+    void SetCaptureGate(double gate);
+
     void SetMuteSSRC(uint32_t ssrc, bool mute);
     void SetVolumeSSRC(uint32_t ssrc, double volume);
 
@@ -70,6 +72,8 @@ private:
 
     std::atomic<bool> m_should_capture = true;
     std::atomic<bool> m_should_playback = true;
+
+    std::atomic<double> m_capture_gate = 0.0;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;

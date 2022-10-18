@@ -101,11 +101,19 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_scroll.set_hexpand(true);
     m_scroll.set_vexpand(true);
 
+    m_capture_gate.set_range(0.0, 100.0);
+    m_capture_gate.set_value_pos(Gtk::POS_LEFT);
+    m_capture_gate.set_value(0.0);
+    m_capture_gate.signal_value_changed().connect([this]() {
+        m_signal_gate.emit(m_capture_gate.get_value());
+    });
+
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_main.add(m_controls);
     m_main.add(m_capture_volume);
+    m_main.add(m_capture_gate);
     m_main.add(m_scroll);
     add(m_main);
     show_all_children();
@@ -174,6 +182,10 @@ VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {
 
 VoiceWindow::type_signal_deafen VoiceWindow::signal_deafen() {
     return m_signal_deafen;
+}
+
+VoiceWindow::type_signal_gate VoiceWindow::signal_gate() {
+    return m_signal_gate;
 }
 
 VoiceWindow::type_signal_mute_user_cs VoiceWindow::signal_mute_user_cs() {

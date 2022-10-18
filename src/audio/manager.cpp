@@ -176,6 +176,10 @@ void AudioManager::SetPlayback(bool playback) {
     m_should_playback = playback;
 }
 
+void AudioManager::SetCaptureGate(double gate) {
+    m_capture_gate = gate * 0.01;
+}
+
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
     std::lock_guard<std::mutex> _(m_mutex);
     if (mute) {
@@ -196,6 +200,8 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     if (m_opus_buffer == nullptr || !m_should_capture) return;
 
     UpdateCaptureVolume(pcm, frames);
+
+    if (m_capture_peak_meter / 32768.0 < m_capture_gate) return;
 
     int payload_len = opus_encode(m_encoder, pcm, 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
     if (payload_len < 0) {
