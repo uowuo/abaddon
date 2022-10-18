@@ -68,8 +68,11 @@ the result of fundamental issues with Discord's thread implementation.
 
 #### Linux:
 
-1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`,
-   and [nlohmann-json](https://github.com/nlohmann/json)
+1. Install dependencies
+    * On Ubuntu 20.04 (Focal) and newer:
+      ```Shell
+      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev
+      ```
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
