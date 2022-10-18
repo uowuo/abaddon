@@ -2166,10 +2166,19 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
 #ifdef WITH_VOICE
 void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     VoiceState data = msg.Data;
+
     if (data.UserID == m_user_data.ID) {
         printf("voice session id: %s\n", data.SessionID.c_str());
         m_voice.SetSessionID(data.SessionID);
+    } else {
+        if (data.GuildID.has_value() && data.Member.has_value()) {
+            if (data.Member->User.has_value()) {
+                m_store.SetUser(data.UserID, *data.Member->User);
+            }
+            m_store.SetGuildMember(*data.GuildID, data.UserID, *data.Member);
+        }
     }
+
     if (data.ChannelID.has_value()) {
         const auto old_state = GetVoiceState(data.UserID);
         SetVoiceState(data.UserID, *data.ChannelID);
