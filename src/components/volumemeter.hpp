@@ -7,6 +7,7 @@ public:
 
     void SetVolume(double fraction);
     void SetTick(double fraction);
+    void SetShowTick(bool show);
 
 protected:
     Gtk::SizeRequestMode get_request_mode_vfunc() const override;
@@ -26,4 +27,5 @@ private:
 
     double m_fraction = 0.0;
     double m_tick = 0.0;
+    bool m_show_tick = false;
 };

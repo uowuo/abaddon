@@ -17,6 +17,10 @@ void VolumeMeter::SetTick(double fraction) {
     queue_draw();
 }
 
+void VolumeMeter::SetShowTick(bool show) {
+    m_show_tick = show;
+}
+
 Gtk::SizeRequestMode VolumeMeter::get_request_mode_vfunc() const {
     return Gtk::Widget::get_request_mode_vfunc();
 }
@@ -109,11 +113,13 @@ bool VolumeMeter::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     cr->rectangle(0.0, 0.0, draw_low, height);
     cr->fill();
 
-    const double tick_base = width * m_tick;
+    if (m_show_tick) {
+        const double tick_base = width * m_tick;
 
-    cr->set_source_rgb(0.8, 0.8, 0.8);
-    cr->rectangle(tick_base, 0, 4, height);
-    cr->fill();
+        cr->set_source_rgb(0.8, 0.8, 0.8);
+        cr->rectangle(tick_base, 0, 4, height);
+        cr->fill();
+    }
 
     return true;
 }

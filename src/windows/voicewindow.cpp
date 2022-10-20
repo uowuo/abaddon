@@ -50,7 +50,7 @@ public:
     }
 
     void SetVolumeMeter(double frac) {
-        m_meter.set_fraction(frac);
+        m_meter.SetVolume(frac);
     }
 
 private:
@@ -60,7 +60,7 @@ private:
     Gtk::Label m_name;
     Gtk::CheckButton m_mute;
     Gtk::Scale m_volume;
-    Gtk::ProgressBar m_meter;
+    VolumeMeter m_meter;
 
 public:
     using type_signal_mute_cs = sigc::signal<void(bool)>;
@@ -100,6 +100,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_scroll.set_hexpand(true);
     m_scroll.set_vexpand(true);
+
+    m_capture_volume.SetShowTick(true);
 
     m_capture_gate.set_range(0.0, 100.0);
     m_capture_gate.set_value_pos(Gtk::POS_LEFT);
