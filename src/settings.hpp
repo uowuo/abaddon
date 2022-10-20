@@ -27,7 +27,7 @@ public:
         bool ShowStockEmojis { true };
 #endif
         bool Unreads { true };
-
+        bool AltMenu { false };
         bool HideToTray { false };
 
         // [http]
