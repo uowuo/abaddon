@@ -43,6 +43,7 @@ private:
 
     VolumeMeter m_capture_volume;
     Gtk::Scale m_capture_gate;
+    Gtk::Scale m_capture_gain;
 
     Snowflake m_channel_id;
 
@@ -52,12 +53,14 @@ public:
     using type_signal_mute = sigc::signal<void(bool)>;
     using type_signal_deafen = sigc::signal<void(bool)>;
     using type_signal_gate = sigc::signal<void(double)>;
+    using type_signal_gain = sigc::signal<void(double)>;
     using type_signal_mute_user_cs = sigc::signal<void(Snowflake, bool)>;
     using type_signal_user_volume_changed = sigc::signal<void(Snowflake, double)>;
 
     type_signal_mute signal_mute();
     type_signal_deafen signal_deafen();
     type_signal_gate signal_gate();
+    type_signal_gain signal_gain();
     type_signal_mute_user_cs signal_mute_user_cs();
     type_signal_user_volume_changed signal_user_volume_changed();
 
@@ -65,6 +68,7 @@ private:
     type_signal_mute m_signal_mute;
     type_signal_deafen m_signal_deafen;
     type_signal_gate m_signal_gate;
+    type_signal_gain m_signal_gain;
     type_signal_mute_user_cs m_signal_mute_user_cs;
     type_signal_user_volume_changed m_signal_user_volume_changed;
 };

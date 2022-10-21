@@ -434,6 +434,10 @@ void Abaddon::OnVoiceConnected() {
         m_audio->SetCaptureGate(gate);
     });
 
+    wnd->signal_gain().connect([this](double gain) {
+        m_audio->SetCaptureGain(gain);
+    });
+
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
         if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
             m_audio->SetMuteSSRC(*ssrc, is_mute);

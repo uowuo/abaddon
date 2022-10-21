@@ -180,6 +180,10 @@ void AudioManager::SetCaptureGate(double gate) {
     m_capture_gate = gate * 0.01;
 }
 
+void AudioManager::SetCaptureGain(double gain) {
+    m_capture_gain = gain;
+}
+
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
     std::lock_guard<std::mutex> _(m_mutex);
     if (mute) {
@@ -199,11 +203,19 @@ void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     if (m_opus_buffer == nullptr || !m_should_capture) return;
 
-    UpdateCaptureVolume(pcm, frames);
+    const double gain = m_capture_gain;
+    // i have a suspicion i can cast the const away... but i wont
+    std::vector<int16_t> new_pcm(pcm, pcm + frames * 2);
+    for (auto &val : new_pcm) {
+        const int32_t unclamped = static_cast<int32_t>(val * gain);
+        val = std::clamp(unclamped, INT16_MIN, INT16_MAX);
+    }
+
+    UpdateCaptureVolume(new_pcm.data(), frames);
 
     if (m_capture_peak_meter / 32768.0 < m_capture_gate) return;
 
-    int payload_len = opus_encode(m_encoder, pcm, 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
+    int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
     if (payload_len < 0) {
         printf("encoding error: %d\n", payload_len);
     } else {
