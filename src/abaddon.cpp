@@ -495,6 +495,11 @@ void Abaddon::RunFirstTimeDiscordStartup() {
             confirm.SetAcceptOnly(true);
             confirm.run();
         }
+
+        // autoconnect
+        if (cookie.has_value() && build_number.has_value() && GetSettings().Autoconnect && !GetDiscordToken().empty()) {
+            ActionConnect();
+        }
     });
 }
 

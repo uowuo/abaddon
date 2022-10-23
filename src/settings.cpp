@@ -39,6 +39,7 @@ void SettingsManager::ReadSettings() {
     SMSTR("discord", "token", DiscordToken);
     SMBOOL("discord", "memory_db", UseMemoryDB);
     SMBOOL("discord", "prefetch", Prefetch);
+    SMBOOL("discord", "autoconnect", Autoconnect);
     SMSTR("gui", "css", MainCSS);
     SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
     SMBOOL("gui", "animations", ShowAnimations);
@@ -94,6 +95,7 @@ void SettingsManager::Close() {
         SMSTR("discord", "token", DiscordToken);
         SMBOOL("discord", "memory_db", UseMemoryDB);
         SMBOOL("discord", "prefetch", Prefetch);
+        SMBOOL("discord", "autoconnect", Autoconnect);
         SMSTR("gui", "css", MainCSS);
         SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
         SMBOOL("gui", "animations", ShowAnimations);

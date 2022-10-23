@@ -12,6 +12,7 @@ public:
         std::string DiscordToken;
         bool UseMemoryDB { false };
         bool Prefetch { false };
+        bool Autoconnect { false };
 
         // [gui]
         std::string MainCSS { "main.css" };
