@@ -24,6 +24,7 @@ public:
     void UpdateChatReactionAdd(Snowflake id, const Glib::ustring &param);
     void UpdateChatReactionRemove(Snowflake id, const Glib::ustring &param);
     void UpdateMenus();
+    void ToggleMenuVisibility();
 
 #ifdef WITH_LIBHANDY
     void GoBack();

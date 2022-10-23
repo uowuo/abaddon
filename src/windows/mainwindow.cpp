@@ -158,6 +158,10 @@ void MainWindow::UpdateMenus() {
     OnViewSubmenuPopup();
 }
 
+void MainWindow::ToggleMenuVisibility() {
+    m_menu_bar.set_visible(!m_menu_bar.get_visible());
+}
+
 #ifdef WITH_LIBHANDY
 void MainWindow::GoBack() {
     m_chat.GoBack();
@@ -279,7 +283,25 @@ void MainWindow::SetupMenu() {
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
     m_menu_bar.append(m_menu_view);
-    m_menu_bar.show_all();
+
+    if (Abaddon::Get().GetSettings().AltMenu) {
+        auto set_hide_cb = [this](Gtk::Menu &menu) {
+            for (auto *child : menu.get_children()) {
+                auto *item = dynamic_cast<Gtk::MenuItem *>(child);
+                if (item != nullptr) {
+                    item->signal_activate().connect([this]() {
+                        m_menu_bar.hide();
+                    });
+                }
+            }
+        };
+        set_hide_cb(m_menu_discord_sub);
+        set_hide_cb(m_menu_file_sub);
+        set_hide_cb(m_menu_view_sub);
+        m_menu_bar.show_all_children();
+    } else {
+        m_menu_bar.show_all();
+    }
 
     m_menu_discord_connect.signal_activate().connect([this] {
         m_signal_action_connect.emit();
