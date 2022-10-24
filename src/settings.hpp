@@ -12,6 +12,7 @@ public:
         std::string DiscordToken;
         bool UseMemoryDB { false };
         bool Prefetch { false };
+        bool Autoconnect { false };
 
         // [gui]
         std::string MainCSS { "main.css" };
@@ -27,7 +28,7 @@ public:
         bool ShowStockEmojis { true };
 #endif
         bool Unreads { true };
-
+        bool AltMenu { false };
         bool HideToTray { false };
 
         // [http]
