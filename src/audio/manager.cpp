@@ -98,13 +98,6 @@ AudioManager::AudioManager() {
         return;
     }
 
-    if (ma_device_start(&m_capture_device) != MA_SUCCESS) {
-        puts("failed to start capture");
-        ma_device_uninit(&m_capture_device);
-        m_ok = false;
-        return;
-    }
-
     char device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
     ma_device_get_name(&m_capture_device, ma_device_type_capture, device_name, sizeof(device_name), nullptr);
     printf("using %s for capture\n", device_name);
@@ -165,6 +158,18 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
             auto &buf = it->second.first;
             buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
         }
+    }
+}
+
+void AudioManager::StartCaptureDevice() {
+    if (ma_device_start(&m_capture_device) != MA_SUCCESS) {
+        puts("failed to start capture");
+    }
+}
+
+void AudioManager::StopCaptureDevice() {
+    if (ma_device_stop(&m_capture_device) != MA_SUCCESS) {
+        puts("failed to stop capture");
     }
 }
 

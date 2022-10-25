@@ -27,6 +27,9 @@ public:
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
 
+    void StartCaptureDevice();
+    void StopCaptureDevice();
+
     void SetCapture(bool capture);
     void SetPlayback(bool playback);
 
