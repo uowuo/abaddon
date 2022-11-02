@@ -3,6 +3,7 @@
 #include <future>
 #include <memory>
 
+//uwu
 DiscordStartupDialog::DiscordStartupDialog(Gtk::Window &window)
     : Gtk::MessageDialog(window, "", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_NONE, true) {
     m_dispatcher.connect(sigc::mem_fun(*this, &DiscordStartupDialog::DispatchCallback));
