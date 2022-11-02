@@ -3,6 +3,7 @@
 #include <cstring>
 #include <filesystem>
 
+//uwu
 void LaunchBrowser(const Glib::ustring &url) {
     GError *err = nullptr;
     if (!gtk_show_uri_on_window(nullptr, url.c_str(), GDK_CURRENT_TIME, &err))
