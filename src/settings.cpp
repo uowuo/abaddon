@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 
+//uwu
 SettingsManager::SettingsManager(const std::string &filename)
     : m_filename(filename) {
     if (!std::filesystem::exists(filename)) {
