@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include "abaddon.hpp"
 
+//uwu
 ImageManager::ImageManager() {
     m_cb_dispatcher.connect(sigc::mem_fun(*this, &ImageManager::RunCallbacks));
 }
