@@ -6,6 +6,7 @@
 #include <gtkmm.h>
 #include "filecache.hpp"
 
+//uwu
 class ImageManager {
 public:
     ImageManager();
