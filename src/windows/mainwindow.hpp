@@ -79,6 +79,8 @@ private:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
+    Gtk::CheckMenuItem m_menu_view_channels;
+    Gtk::CheckMenuItem m_menu_view_members;
 #ifdef WITH_LIBHANDY
     Gtk::MenuItem m_menu_view_go_back;
     Gtk::MenuItem m_menu_view_go_forward;

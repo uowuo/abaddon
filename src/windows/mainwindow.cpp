@@ -265,6 +265,12 @@ void MainWindow::SetupMenu() {
     m_menu_view_threads.set_label("Threads");
     m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_label("Channels");
+    m_menu_view_channels.add_accelerator("activate", m_accels, GDK_KEY_L, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_active(true);
+    m_menu_view_members.set_label("Members");
+    m_menu_view_members.add_accelerator("activate", m_accels, GDK_KEY_M, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_members.set_active(true);
 #ifdef WITH_LIBHANDY
     m_menu_view_go_back.set_label("Go Back");
     m_menu_view_go_forward.set_label("Go Forward");
@@ -275,6 +281,8 @@ void MainWindow::SetupMenu() {
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
+    m_menu_view_sub.append(m_menu_view_channels);
+    m_menu_view_sub.append(m_menu_view_members);
 #ifdef WITH_LIBHANDY
     m_menu_view_sub.append(m_menu_view_go_back);
     m_menu_view_sub.append(m_menu_view_go_forward);
@@ -352,6 +360,14 @@ void MainWindow::SetupMenu() {
         if (channel.has_value() && channel->GuildID.has_value()) {
             discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
         }
+    });
+
+    m_menu_view_channels.signal_activate().connect([this]() {
+        m_channel_list.set_visible(m_menu_view_channels.get_active());
+    });
+
+    m_menu_view_members.signal_activate().connect([this]() {
+        m_members.GetRoot()->set_visible(m_menu_view_members.get_active());
     });
 
 #ifdef WITH_LIBHANDY
