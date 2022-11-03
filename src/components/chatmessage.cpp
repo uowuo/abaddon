@@ -150,8 +150,8 @@ void ChatMessageItemContainer::UpdateAttributes() {
 
 void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, const std::string &url) {
     // clang-format off
-    widget->signal_button_press_event().connect([url](GdkEventButton *event) -> bool {
-        if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
+    widget->signal_button_release_event().connect([url](GdkEventButton *event) -> bool {
+        if (event->type == GDK_BUTTON_RELEASE && event->button == GDK_BUTTON_PRIMARY) {
             LaunchBrowser(url);
             return true;
         }
@@ -357,8 +357,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         if (embed.URL.has_value()) {
             AddPointerCursor(*title_ev);
             auto url = *embed.URL;
-            title_ev->signal_button_press_event().connect([url = std::move(url)](GdkEventButton *event) -> bool {
-                if (event->button == GDK_BUTTON_PRIMARY) {
+            title_ev->signal_button_release_event().connect([url = std::move(url)](GdkEventButton *event) -> bool {
+                if (event->type == GDK_BUTTON_RELEASE && event->button == GDK_BUTTON_PRIMARY) {
                     LaunchBrowser(url);
                     return true;
                 }

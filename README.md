@@ -25,13 +25,15 @@ Current features:
 * Thread support<sup>3</sup>
 * Animated avatars, server icons, emojis (can be turned off)
 
-1 - Abaddon tries its best (though is not perfect) to make Discord think it's a legitimate web client. Some of the things done to do this
+1 - Abaddon tries its best (though is not perfect) to make Discord think it's a legitimate web client. Some of the
+things done to do this
 include: using a browser user agent, sending the same IDENTIFY message that the official web client does, using API v9
 endpoints in all cases, and not using endpoints the web client does not normally use. There are still a few smaller
 inconsistencies, however. For example the web client sends lots of telemetry via the `/science` endpoint (uBlock origin
 stops this) as well as in the headers of all requests.<br>
 
-**See [here](#the-spam-filter)** for things you might want to avoid if you are worried about being caught in the spam filter.
+**See [here](#the-spam-filter)** for things you might want to avoid if you are worried about being caught in the spam
+filter.
 
 2 - Unicode emojis are substituted manually as opposed to rendered by GTK on non-Windows platforms. This can be changed
 with the `stock_emojis` setting as shown at the bottom of this README. A CBDT-based font using Twemoji is provided to
@@ -68,8 +70,11 @@ the result of fundamental issues with Discord's thread implementation.
 
 #### Linux:
 
-1. Install dependencies: `libgtkmm-3.0-dev`, `libcurl4-gnutls-dev`,
-   and [nlohmann-json](https://github.com/nlohmann/json)
+1. Install dependencies
+    * On Ubuntu 20.04 (Focal) and newer:
+      ```Shell
+      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev
+      ```
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
@@ -96,7 +101,12 @@ no `abaddon.ini` in the working directory
 
 #### The Spam Filter
 
-Discord likes disabling accounts/forcing them to reset their passwords if they think the user is a spam bot or potentially had their account compromised. While the official client still often gets users caught in the spam filter, third party clients tend to upset the spam filter more often. If you get caught by it, you can usually [appeal](https://support.discord.com/hc/en-us/requests/new?ticket_form_id=360000029731) it and get it restored. Here are some things you might want to do with the official client instead if you are particularly afraid of evoking the spam filter's wrath:
+Discord likes disabling accounts/forcing them to reset their passwords if they think the user is a spam bot or
+potentially had their account compromised. While the official client still often gets users caught in the spam filter,
+third party clients tend to upset the spam filter more often. If you get caught by it, you can
+usually [appeal](https://support.discord.com/hc/en-us/requests/new?ticket_form_id=360000029731) it and get it restored.
+Here are some things you might want to do with the official client instead if you are particularly afraid of evoking the
+spam filter's wrath:
 
 * Joining or leaving servers (usually main cause of getting caught)
 * Frequently disconnecting and reconnecting
@@ -249,6 +259,9 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
   over
 * owner_crown (true or false, default true) - show a crown next to the owner
 * unreads (true or false, default true) - show unread indicators and mention badges
+* save_state (true or false, default true) - save the state of the gui (active channels, tabs, expanded channels)
+* alt_menu (true or false, default false) - keep the menu hidden unless revealed with alt key
+* hide_to_tray (true or false, default false) - hide abaddon to the system tray on window close
 
 #### style
 

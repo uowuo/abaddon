@@ -56,10 +56,9 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
             guild_icon_url = guild.GetIconURL("gif", "512");
         else
             guild_icon_url = guild.GetIconURL("png", "512");
-        m_guild_icon_ev.signal_button_press_event().connect([guild_icon_url](GdkEventButton *event) -> bool {
-            if (event->type == GDK_BUTTON_PRESS)
-                if (event->button == GDK_BUTTON_PRIMARY)
-                    LaunchBrowser(guild_icon_url);
+        m_guild_icon_ev.signal_button_release_event().connect([guild_icon_url](GdkEventButton *event) -> bool {
+            if (event->type == GDK_BUTTON_RELEASE && event->button == GDK_BUTTON_PRIMARY)
+                LaunchBrowser(guild_icon_url);
 
             return false;
         });

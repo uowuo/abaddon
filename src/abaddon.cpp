@@ -6,7 +6,6 @@
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
-#include "dialogs/joinguild.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
@@ -69,14 +68,13 @@ Abaddon &Abaddon::Get() {
     return instance;
 }
 
-#ifdef WITH_LIBHANDY
-    #ifdef _WIN32
+#ifdef _WIN32
 constexpr static guint BUTTON_BACK = 4;
 constexpr static guint BUTTON_FORWARD = 5;
-    #else
+#else
 constexpr static guint BUTTON_BACK = 8;
 constexpr static guint BUTTON_FORWARD = 9;
-    #endif
+#endif
 
 static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
     if (event->type != GDK_BUTTON_PRESS) return false;
@@ -86,6 +84,7 @@ static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
     auto *window = gtk_widget_get_toplevel(widget);
     if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false; // is this the right way???
 
+#ifdef WITH_LIBHANDY
     switch (event->button.button) {
         case BUTTON_BACK:
             main_window->GoBack();
@@ -94,6 +93,7 @@ static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
             main_window->GoForward();
             break;
     }
+#endif
 
     return false;
 }
@@ -109,6 +109,15 @@ static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
     const bool ctrl = (event->key.state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK;
     const bool shft = (event->key.state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
 
+    constexpr static guint EXCLUDE_STATES = GDK_CONTROL_MASK | GDK_SHIFT_MASK;
+
+    if (!(event->key.state & EXCLUDE_STATES) && event->key.keyval == GDK_KEY_Alt_L) {
+        if (Abaddon::Get().GetSettings().AltMenu) {
+            main_window->ToggleMenuVisibility();
+        }
+    }
+
+#ifdef WITH_LIBHANDY
     if (ctrl) {
         switch (event->key.keyval) {
             case GDK_KEY_Tab:
@@ -135,6 +144,7 @@ static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
                 return true;
         }
     }
+#endif
 
     return false;
 }
@@ -144,7 +154,6 @@ static void MainEventHandler(GdkEvent *event, void *main_window) {
     if (HandleKeyEvents(event, static_cast<MainWindow *>(main_window))) return;
     gtk_main_do_event(event);
 }
-#endif
 
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
@@ -229,7 +238,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
-    m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
@@ -487,6 +495,11 @@ void Abaddon::RunFirstTimeDiscordStartup() {
             confirm.SetAcceptOnly(true);
             confirm.run();
         }
+
+        // autoconnect
+        if (cookie.has_value() && build_number.has_value() && GetSettings().Autoconnect && !GetDiscordToken().empty()) {
+            ActionConnect();
+        }
     });
 }
 
@@ -691,15 +704,6 @@ void Abaddon::ActionSetToken() {
         GetSettings().DiscordToken = m_discord_token;
     }
     m_main_window->UpdateMenus();
-}
-
-void Abaddon::ActionJoinGuildDialog() {
-    JoinGuildDialog dlg(*m_main_window);
-    auto response = dlg.run();
-    if (response == Gtk::RESPONSE_OK) {
-        auto code = dlg.GetCode();
-        m_discord.JoinGuild(code);
-    }
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
