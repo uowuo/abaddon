@@ -4,6 +4,8 @@
 #include "voiceclient.hpp"
 #include "json.hpp"
 #include <sodium.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/bin_to_hex.h>
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 
@@ -127,11 +129,11 @@ DiscordVoiceClient::DiscordVoiceClient() {
     sodium_init();
 
     m_ws.signal_open().connect([this]() {
-        puts("vws open");
+        spdlog::get("voice")->info("Websocket open");
     });
 
     m_ws.signal_close().connect([this](uint16_t code) {
-        printf("vws close %u\n", code);
+        spdlog::get("voice")->info("Websocket closed with code {}", code);
         Stop();
     });
 
@@ -258,9 +260,9 @@ void DiscordVoiceClient::HandleGatewayReady(const VoiceGatewayMessage &m) {
     m_port = d.Port;
     m_ssrc = d.SSRC;
     if (std::find(d.Modes.begin(), d.Modes.end(), "xsalsa20_poly1305") == d.Modes.end()) {
-        puts("xsalsa20_poly1305 not in encryption modes");
+        spdlog::get("voice")->error("xsalsa20_poly1305 not in encryption modes");
     }
-    printf("connect to %s:%u ssrc %u\n", m_ip.c_str(), m_port, m_ssrc);
+    spdlog::get("voice")->info("connect to {}:{} ssrc {}", m_ip, m_port, m_ssrc);
 
     m_udp.Connect(m_ip, m_port);
     m_keepalive_thread = std::thread(&DiscordVoiceClient::KeepaliveThread, this);
@@ -270,11 +272,7 @@ void DiscordVoiceClient::HandleGatewayReady(const VoiceGatewayMessage &m) {
 
 void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessage &m) {
     VoiceSessionDescriptionData d = m.Data;
-    printf("receiving with %s secret key: ", d.Mode.c_str());
-    for (auto b : d.SecretKey) {
-        printf("%02X", b);
-    }
-    printf("\n");
+    spdlog::get("voice")->debug("receiving with {}, secret key: {:ns}", d.Mode, spdlog::to_hex(std::begin(d.SecretKey), std::end(d.SecretKey)));
 
     VoiceSpeakingMessage msg;
     msg.Delay = 0;
@@ -330,10 +328,10 @@ void DiscordVoiceClient::Discovery() {
     if (response.size() >= 74 && response[0] == 0x00 && response[1] == 0x02) {
         const char *our_ip = reinterpret_cast<const char *>(&response[8]);
         uint16_t our_port = (response[73] << 8) | response[74];
-        printf("we are %s:%u\n", our_ip, our_port);
+        spdlog::get("voice")->debug("IP address discovered: {}:{}\n", our_ip, our_port);
         SelectProtocol(our_ip, our_port);
     } else {
-        puts("received non-discovery packet after discovery");
+        spdlog::get("voice")->error("Received non-discovery packet after discovery");
     }
 }
 
@@ -355,7 +353,7 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     static std::array<uint8_t, 24> nonce = {};
     std::memcpy(nonce.data(), data.data(), 12);
     if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
-        puts("decrypt fail");
+        // spdlog::get("voice")->trace("UDP payload decryption failure");
     } else {
         Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
     }

@@ -90,6 +90,9 @@ if (Fontconfig_FOUND)
     target_link_libraries(abaddon Fontconfig::Fontconfig)
 endif ()
 
+find_package(spdlog REQUIRED)
+target_link_libraries(abaddon spdlog::spdlog)
+
 target_link_libraries(abaddon ${SQLite3_LIBRARIES})
 target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})

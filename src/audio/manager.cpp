@@ -8,6 +8,7 @@
 #include "manager.hpp"
 #include <array>
 #include <glibmm/main.h>
+#include <spdlog/spdlog.h>
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 #include <opus.h>
@@ -58,11 +59,19 @@ AudioManager::AudioManager() {
     int err;
     m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
     if (err != OPUS_OK) {
-        printf("failed to initialize opus encoder: %d\n", err);
+        spdlog::get("audio")->error("failed to initialize opus encoder: {}", err);
         m_ok = false;
         return;
     }
     opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(64000));
+
+    if (ma_context_init(nullptr, 0, nullptr, &m_context) != MA_SUCCESS) {
+        spdlog::get("audio")->error("failed to initialize context");
+        m_ok = false;
+        return;
+    }
+
+    Enumerate();
 
     m_device_config = ma_device_config_init(ma_device_type_playback);
     m_device_config.playback.format = ma_format_f32;
@@ -72,13 +81,13 @@ AudioManager::AudioManager() {
     m_device_config.pUserData = this;
 
     if (ma_device_init(nullptr, &m_device_config, &m_device) != MA_SUCCESS) {
-        puts("open playback fail");
+        spdlog::get("audio")->error("failed to initialize playback device");
         m_ok = false;
         return;
     }
 
     if (ma_device_start(&m_device) != MA_SUCCESS) {
-        puts("failed to start playback");
+        spdlog::get("audio")->error("failed to start playback");
         ma_device_uninit(&m_device);
         m_ok = false;
         return;
@@ -93,14 +102,14 @@ AudioManager::AudioManager() {
     m_capture_config.pUserData = this;
 
     if (ma_device_init(nullptr, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
-        puts("open capture fail");
+        spdlog::get("audio")->error("failed to initialize capture device");
         m_ok = false;
         return;
     }
 
     char device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
     ma_device_get_name(&m_capture_device, ma_device_type_capture, device_name, sizeof(device_name), nullptr);
-    printf("using %s for capture\n", device_name);
+    spdlog::get("audio")->info("using {} as capture device", device_name);
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }
@@ -108,6 +117,7 @@ AudioManager::AudioManager() {
 AudioManager::~AudioManager() {
     ma_device_uninit(&m_device);
     ma_device_uninit(&m_capture_device);
+    ma_context_uninit(&m_context);
     RemoveAllSSRCs();
 }
 
@@ -129,7 +139,7 @@ void AudioManager::RemoveSSRC(uint32_t ssrc) {
 }
 
 void AudioManager::RemoveAllSSRCs() {
-    puts("remove all ssrc");
+    spdlog::get("audio")->info("removing all ssrc");
     std::lock_guard<std::mutex> _(m_mutex);
     for (auto &[ssrc, pair] : m_sources) {
         opus_decoder_destroy(pair.second);
@@ -163,13 +173,45 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
 
 void AudioManager::StartCaptureDevice() {
     if (ma_device_start(&m_capture_device) != MA_SUCCESS) {
-        puts("failed to start capture");
+        spdlog::get("audio")->error("Failed to start capture device");
     }
 }
 
 void AudioManager::StopCaptureDevice() {
     if (ma_device_stop(&m_capture_device) != MA_SUCCESS) {
-        puts("failed to stop capture");
+        spdlog::get("audio")->error("Failed to stop capture device");
+    }
+}
+
+void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
+    spdlog::get("audio")->debug("Setting new playback device");
+
+    const auto device_id = m_devices.GetDeviceIDFromModel(iter);
+    if (!device_id) {
+        spdlog::get("audio")->error("Requested ID from iterator is invalid");
+        return;
+    }
+
+    m_playback_id = *device_id;
+
+    ma_device_uninit(&m_device);
+
+    m_device_config = ma_device_config_init(ma_device_type_playback);
+    m_device_config.playback.format = ma_format_f32;
+    m_device_config.playback.channels = 2;
+    m_device_config.playback.pDeviceID = &m_playback_id;
+    m_device_config.sampleRate = 48000;
+    m_device_config.dataCallback = data_callback;
+    m_device_config.pUserData = this;
+
+    if (ma_device_init(&m_context, &m_device_config, &m_device) != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to initialize new device");
+        return;
+    }
+
+    if (ma_device_start(&m_device) != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to start new device");
+        return;
     }
 }
 
@@ -205,6 +247,29 @@ void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
     m_volume_ssrc[ssrc] = (std::exp(volume) - 1) / (E - 1);
 }
 
+void AudioManager::Enumerate() {
+    ma_device_info *pPlaybackDeviceInfo;
+    ma_uint32 playbackDeviceCount;
+    ma_device_info *pCaptureDeviceInfo;
+    ma_uint32 captureDeviceCount;
+
+    spdlog::get("audio")->debug("Enumerating devices");
+
+    if (ma_context_get_devices(
+            &m_context,
+            &pPlaybackDeviceInfo,
+            &playbackDeviceCount,
+            &pCaptureDeviceInfo,
+            &captureDeviceCount) != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to enumerate devices");
+        return;
+    }
+
+    spdlog::get("audio")->debug("Found {} playback devices and {} capture devices", playbackDeviceCount, captureDeviceCount);
+
+    m_devices.SetDevices(pPlaybackDeviceInfo, playbackDeviceCount, pCaptureDeviceInfo, captureDeviceCount);
+}
+
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     if (m_opus_buffer == nullptr || !m_should_capture) return;
 
@@ -222,7 +287,7 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
 
     int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
     if (payload_len < 0) {
-        printf("encoding error: %d\n", payload_len);
+        spdlog::get("audio")->error("encoding error: {}", payload_len);
     } else {
         m_signal_opus_packet.emit(payload_len);
     }
@@ -273,6 +338,10 @@ double AudioManager::GetSSRCVolumeLevel(uint32_t ssrc) const noexcept {
         return it->second;
     }
     return 0.0;
+}
+
+AudioDevices &AudioManager::GetDevices() {
+    return m_devices;
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {

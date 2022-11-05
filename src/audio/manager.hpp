@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <deque>
+#include <gtkmm/treemodel.h>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -13,6 +14,7 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <sigc++/sigc++.h>
+#include "devices.hpp"
 // clang-format on
 
 class AudioManager {
@@ -30,6 +32,8 @@ public:
     void StartCaptureDevice();
     void StopCaptureDevice();
 
+    void SetPlaybackDevice(const Gtk::TreeModel::iterator &iter);
+
     void SetCapture(bool capture);
     void SetPlayback(bool playback);
 
@@ -39,10 +43,14 @@ public:
     void SetMuteSSRC(uint32_t ssrc, bool mute);
     void SetVolumeSSRC(uint32_t ssrc, double volume);
 
+    void Enumerate();
+
     [[nodiscard]] bool OK() const;
 
     [[nodiscard]] double GetCaptureVolumeLevel() const noexcept;
     [[nodiscard]] double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
+
+    [[nodiscard]] AudioDevices &GetDevices();
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
@@ -63,9 +71,12 @@ private:
     // playback
     ma_device m_device;
     ma_device_config m_device_config;
+    ma_device_id m_playback_id;
     // capture
     ma_device m_capture_device;
     ma_device_config m_capture_config;
+
+    ma_context m_context;
 
     mutable std::mutex m_mutex;
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
@@ -85,6 +96,8 @@ private:
 
     mutable std::mutex m_vol_mtx;
     std::unordered_map<uint32_t, double> m_volumes;
+
+    AudioDevices m_devices;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

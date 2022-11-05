@@ -1,5 +1,8 @@
 #include <gtkmm.h>
 #include <memory>
+#include <spdlog/spdlog.h>
+#include <spdlog/cfg/env.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #include <algorithm>
 #include "platform.hpp"
@@ -1098,6 +1101,11 @@ int main(int argc, char **argv) {
     if (buf[0] != '1')
         SetEnvironmentVariableA("GTK_CSD", "0");
 #endif
+
+    spdlog::cfg::load_env_levels();
+    auto log_audio = spdlog::stdout_color_mt("audio");
+    auto log_voice = spdlog::stdout_color_mt("voice");
+
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();
 }

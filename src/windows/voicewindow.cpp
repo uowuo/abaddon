@@ -121,6 +121,17 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         m_signal_gain.emit(val / 100.0);
     });
 
+    auto *renderer = Gtk::make_managed<Gtk::CellRendererText>();
+    m_playback_combo.set_valign(Gtk::ALIGN_END);
+    m_playback_combo.set_hexpand(true);
+    m_playback_combo.set_halign(Gtk::ALIGN_FILL);
+    m_playback_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetPlaybackDeviceModel());
+    m_playback_combo.pack_start(*renderer);
+    m_playback_combo.add_attribute(*renderer, "text", 0);
+    m_playback_combo.signal_changed().connect([this]() {
+        Abaddon::Get().GetAudio().SetPlaybackDevice(m_playback_combo.get_active());
+    });
+
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
@@ -129,6 +140,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.add(m_capture_gate);
     m_main.add(m_capture_gain);
     m_main.add(m_scroll);
+    m_main.add(m_playback_combo);
     add(m_main);
     show_all_children();
 

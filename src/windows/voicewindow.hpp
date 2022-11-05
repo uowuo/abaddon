@@ -6,6 +6,7 @@
 #include "discord/snowflake.hpp"
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
+#include <gtkmm/combobox.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/progressbar.h>
 #include <gtkmm/scale.h>
@@ -44,6 +45,8 @@ private:
     VolumeMeter m_capture_volume;
     Gtk::Scale m_capture_gate;
     Gtk::Scale m_capture_gain;
+
+    Gtk::ComboBox m_playback_combo;
 
     Snowflake m_channel_id;
 
