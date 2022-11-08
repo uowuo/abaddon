@@ -37,6 +37,7 @@ jobs:
             mingw-w64-x86_64-curl
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-gtkmm3
+            mingw-w64-x86_64-spdlog
           if_false: >-
             git
             make
@@ -51,6 +52,7 @@ jobs:
             mingw-w64-x86_64-libhandy
             mingw-w64-x86_64-opus
             mingw-w64-x86_64-libsodium
+            mingw-w64-x86_64-spdlog
 
       - name: Setup MSYS2 (2)
         uses: msys2/setup-msys2@v2
@@ -133,6 +135,7 @@ jobs:
           brew install jpeg
           brew install opus
           brew install libsodium
+          brew install spdlog
 
       - name: Build
         uses: lukka/run-cmake@v3
@@ -184,6 +187,7 @@ jobs:
           sudo apt-get install libcurl4-gnutls-dev
           sudo apt-get install libopus-dev
           sudo apt-get install libsodium-dev
+          sudo apt-get install libspdlog-dev
 
       - name: Build
         uses: lukka/run-cmake@v3
