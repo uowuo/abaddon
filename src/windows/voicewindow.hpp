@@ -47,6 +47,7 @@ private:
     Gtk::Scale m_capture_gain;
 
     Gtk::ComboBox m_playback_combo;
+    Gtk::ComboBox m_capture_combo;
 
     Snowflake m_channel_id;
 

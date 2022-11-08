@@ -1105,6 +1105,7 @@ int main(int argc, char **argv) {
     spdlog::cfg::load_env_levels();
     auto log_audio = spdlog::stdout_color_mt("audio");
     auto log_voice = spdlog::stdout_color_mt("voice");
+    auto log_discord = spdlog::stdout_color_mt("discord");
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();

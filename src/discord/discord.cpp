@@ -1,6 +1,7 @@
 #include "abaddon.hpp"
 #include "discord.hpp"
 #include "util.hpp"
+#include <spdlog/spdlog.h>
 #include <cinttypes>
 #include <utility>
 
@@ -2168,7 +2169,7 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     VoiceState data = msg.Data;
 
     if (data.UserID == m_user_data.ID) {
-        printf("voice session id: %s\n", data.SessionID.c_str());
+        spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
     } else {
         if (data.GuildID.has_value() && data.Member.has_value()) {
@@ -2197,8 +2198,8 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     VoiceServerUpdateData data = msg.Data;
-    printf("endpoint: %s\n", data.Endpoint.c_str());
-    printf("token: %s\n", data.Token.c_str());
+    spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
+    spdlog::get("discord")->debug("Voice token: {}", data.Token);
     m_voice.SetEndpoint(data.Endpoint);
     m_voice.SetToken(data.Token);
     if (data.GuildID.has_value()) {
@@ -2206,7 +2207,7 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     } else if (data.ChannelID.has_value()) {
         m_voice.SetServerID(*data.ChannelID);
     } else {
-        puts("no guild or channel id in voice server?");
+        spdlog::get("discord")->error("No guild or channel ID in voice server?");
     }
     m_voice.SetUserID(m_user_data.ID);
     m_voice.Start();

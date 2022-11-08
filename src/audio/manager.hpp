@@ -33,6 +33,7 @@ public:
     void StopCaptureDevice();
 
     void SetPlaybackDevice(const Gtk::TreeModel::iterator &iter);
+    void SetCaptureDevice(const Gtk::TreeModel::iterator &iter);
 
     void SetCapture(bool capture);
     void SetPlayback(bool playback);
@@ -75,6 +76,7 @@ private:
     // capture
     ma_device m_capture_device;
     ma_device_config m_capture_config;
+    ma_device_id m_capture_id;
 
     ma_context m_context;
 

@@ -186,7 +186,7 @@ void AudioManager::StopCaptureDevice() {
 void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
     spdlog::get("audio")->debug("Setting new playback device");
 
-    const auto device_id = m_devices.GetDeviceIDFromModel(iter);
+    const auto device_id = m_devices.GetPlaybackDeviceIDFromModel(iter);
     if (!device_id) {
         spdlog::get("audio")->error("Requested ID from iterator is invalid");
         return;
@@ -210,6 +210,40 @@ void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
     }
 
     if (ma_device_start(&m_device) != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to start new device");
+        return;
+    }
+}
+
+void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
+    spdlog::get("audio")->debug("Setting new capture device");
+
+    const auto device_id = m_devices.GetCaptureDeviceIDFromModel(iter);
+    if (!device_id) {
+        spdlog::get("audio")->error("Requested ID from iterator is invalid");
+        return;
+    }
+
+    m_capture_id = *device_id;
+
+    ma_device_uninit(&m_capture_device);
+
+    m_capture_config = ma_device_config_init(ma_device_type_capture);
+    m_capture_config.capture.format = ma_format_s16;
+    m_capture_config.capture.channels = 2;
+    m_capture_config.capture.pDeviceID = &m_capture_id;
+    m_capture_config.sampleRate = 48000;
+    m_capture_config.periodSizeInFrames = 480;
+    m_capture_config.dataCallback = capture_data_callback;
+    m_capture_config.pUserData = this;
+
+    if (ma_device_init(&m_context, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to initialize new device");
+        return;
+    }
+
+    // technically this should probably try and check old state but if you are in the window to change it then you are connected
+    if (ma_device_start(&m_capture_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("Failed to start new device");
         return;
     }
