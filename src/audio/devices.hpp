@@ -1,8 +1,13 @@
 #pragma once
+#ifdef WITH_VOICE
+
+// clang-format off
 
 #include <gtkmm/liststore.h>
 #include <miniaudio.h>
 #include <optional>
+
+// clang-format on
 
 class AudioDevices {
 public:
@@ -24,3 +29,4 @@ private:
     PlaybackColumns m_playback_columns;
     Glib::RefPtr<Gtk::ListStore> m_playback;
 };
+#endif

@@ -1,4 +1,10 @@
+#ifdef WITH_VOICE
+
+// clang-format off
+
 #include "devices.hpp"
+
+// clang-format on
 
 AudioDevices::AudioDevices()
     : m_playback(Gtk::ListStore::create(m_playback_columns)) {
@@ -31,3 +37,4 @@ AudioDevices::PlaybackColumns::PlaybackColumns() {
     add(Name);
     add(DeviceID);
 }
+#endif
