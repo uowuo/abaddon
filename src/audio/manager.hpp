@@ -70,8 +70,8 @@ private:
     bool m_ok;
 
     // playback
-    ma_device m_device;
-    ma_device_config m_device_config;
+    ma_device m_playback_device;
+    ma_device_config m_playback_config;
     ma_device_id m_playback_id;
     // capture
     ma_device m_capture_device;

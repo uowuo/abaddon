@@ -71,24 +71,31 @@ AudioManager::AudioManager() {
         return;
     }
 
+    spdlog::get("audio")->info("Audio backend: {}", ma_get_backend_name(m_context.backend));
+
     Enumerate();
 
-    m_device_config = ma_device_config_init(ma_device_type_playback);
-    m_device_config.playback.format = ma_format_f32;
-    m_device_config.playback.channels = 2;
-    m_device_config.sampleRate = 48000;
-    m_device_config.dataCallback = data_callback;
-    m_device_config.pUserData = this;
+    m_playback_config = ma_device_config_init(ma_device_type_playback);
+    m_playback_config.playback.format = ma_format_f32;
+    m_playback_config.playback.channels = 2;
+    m_playback_config.sampleRate = 48000;
+    m_playback_config.dataCallback = data_callback;
+    m_playback_config.pUserData = this;
 
-    if (ma_device_init(nullptr, &m_device_config, &m_device) != MA_SUCCESS) {
+    if (const auto playback_id = m_devices.GetDefaultPlayback(); playback_id.has_value()) {
+        m_playback_id = *playback_id;
+        m_playback_config.playback.pDeviceID = &m_playback_id;
+    }
+
+    if (ma_device_init(&m_context, &m_playback_config, &m_playback_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("failed to initialize playback device");
         m_ok = false;
         return;
     }
 
-    if (ma_device_start(&m_device) != MA_SUCCESS) {
+    if (ma_device_start(&m_playback_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("failed to start playback");
-        ma_device_uninit(&m_device);
+        ma_device_uninit(&m_playback_device);
         m_ok = false;
         return;
     }
@@ -101,21 +108,30 @@ AudioManager::AudioManager() {
     m_capture_config.dataCallback = capture_data_callback;
     m_capture_config.pUserData = this;
 
-    if (ma_device_init(nullptr, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
+    if (const auto capture_id = m_devices.GetDefaultCapture(); capture_id.has_value()) {
+        m_capture_id = *capture_id;
+        m_capture_config.capture.pDeviceID = &m_capture_id;
+    }
+
+    if (ma_device_init(&m_context, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("failed to initialize capture device");
         m_ok = false;
         return;
     }
 
-    char device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
-    ma_device_get_name(&m_capture_device, ma_device_type_capture, device_name, sizeof(device_name), nullptr);
-    spdlog::get("audio")->info("using {} as capture device", device_name);
+    char playback_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
+    ma_device_get_name(&m_playback_device, ma_device_type_playback, playback_device_name, sizeof(playback_device_name), nullptr);
+    spdlog::get("audio")->info("using {} as playback device", playback_device_name);
+
+    char capture_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
+    ma_device_get_name(&m_capture_device, ma_device_type_capture, capture_device_name, sizeof(capture_device_name), nullptr);
+    spdlog::get("audio")->info("using {} as capture device", capture_device_name);
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }
 
 AudioManager::~AudioManager() {
-    ma_device_uninit(&m_device);
+    ma_device_uninit(&m_playback_device);
     ma_device_uninit(&m_capture_device);
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
@@ -192,24 +208,26 @@ void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
         return;
     }
 
+    m_devices.SetActivePlaybackDevice(iter);
+
     m_playback_id = *device_id;
 
-    ma_device_uninit(&m_device);
+    ma_device_uninit(&m_playback_device);
 
-    m_device_config = ma_device_config_init(ma_device_type_playback);
-    m_device_config.playback.format = ma_format_f32;
-    m_device_config.playback.channels = 2;
-    m_device_config.playback.pDeviceID = &m_playback_id;
-    m_device_config.sampleRate = 48000;
-    m_device_config.dataCallback = data_callback;
-    m_device_config.pUserData = this;
+    m_playback_config = ma_device_config_init(ma_device_type_playback);
+    m_playback_config.playback.format = ma_format_f32;
+    m_playback_config.playback.channels = 2;
+    m_playback_config.playback.pDeviceID = &m_playback_id;
+    m_playback_config.sampleRate = 48000;
+    m_playback_config.dataCallback = data_callback;
+    m_playback_config.pUserData = this;
 
-    if (ma_device_init(&m_context, &m_device_config, &m_device) != MA_SUCCESS) {
+    if (ma_device_init(&m_context, &m_playback_config, &m_playback_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("Failed to initialize new device");
         return;
     }
 
-    if (ma_device_start(&m_device) != MA_SUCCESS) {
+    if (ma_device_start(&m_playback_device) != MA_SUCCESS) {
         spdlog::get("audio")->error("Failed to start new device");
         return;
     }
@@ -223,6 +241,8 @@ void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
         spdlog::get("audio")->error("Requested ID from iterator is invalid");
         return;
     }
+
+    m_devices.SetActiveCaptureDevice(iter);
 
     m_capture_id = *device_id;
 
