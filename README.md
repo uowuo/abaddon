@@ -135,6 +135,7 @@ spam filter's wrath:
 
 #### CSS selectors
 
+```css
 .app-window - Applied to all windows. This means the main window and all popups  
 .app-popup - Additional class for `.app-window`s when the window is not the main window
 
@@ -219,6 +220,7 @@ Used in profile popup:
 .profile-stack - Container for profile info that can be switched between  
 .profile-badges - Container for badges  
 .profile-badge
+```
 
 ### Settings
 
