@@ -92,7 +92,7 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 - Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now),
   requires gtkmm3. built on Ubuntu 18.04 + gcc9
 
-⚠️ If you use Windows, make sure to start from the `bin` directory
+> **Warning**: If you use Windows, make sure to start from the `bin` directory
 
 On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/usr/share/abaddon`
 
