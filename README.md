@@ -236,32 +236,32 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 * `gateway` (string) - override url for Discord gateway. must be json format and use zlib stream compression
 * `api_base` (string) - override base url for Discord API
-* `memory_db` (true or false, default false) - if true, Discord data will be kept in memory as opposed to on disk
+* `memory_db` (true or false, `default: false`) - if true, Discord data will be kept in memory as opposed to on disk
 * `token` (string) - Discord token used to login, this can be set from the menu
-* `prefetch` (true or false, default false) - if true, new messages will cause the avatar and image attachments to be
+* `prefetch` (true or false, `default: false`) - if true, new messages will cause the avatar and image attachments to be
   automatically downloaded
 
 #### http
 
 * `user_agent` (string) - sets the user-agent to use in HTTP requests to the Discord API (not including media/images)
-* `concurrent` (int, default 20) - how many images can be concurrently retrieved
+* `concurrent` (int, `default: 20`) - how many images can be concurrently retrieved
 
 #### gui
 
-* `member_list_discriminator` (true or false, default true) - show user discriminators in the member list
-* `stock_emojis` (true or false, default true) - allow abaddon to substitute unicode emojis with images from emojis.bin,
+* `member_list_discriminator` (true or false, `default: true`) - show user discriminators in the member list
+* `stock_emojis` (true or false, `default: true`) - allow abaddon to substitute unicode emojis with images from emojis.bin,
   must be false to allow GTK to render emojis itself
-* `custom_emojis` (true or false, default true) - download and use custom Discord emojis
+* `custom_emojis` (true or false, `default: true`) - download and use custom Discord emojis
 * `css` (string) - path to the main CSS file
-* `animations` (true or false, default true) - use animated images where available (e.g. server icons, emojis, avatars).
+* `animations` (true or false, `default: true`) - use animated images where available (e.g. server icons, emojis, avatars).
   false means static images will be used
-* `animated_guild_hover_only` (true or false, default true) - only animate guild icons when the guild is being hovered
+* `animated_guild_hover_only` (true or false, `default: true`) - only animate guild icons when the guild is being hovered
   over
-* `owner_crown` (true or false, default true) - show a crown next to the owner
-* `unreads` (true or false, default true) - show unread indicators and mention badges
-* `save_state` (true or false, default true) - save the state of the gui (active channels, tabs, expanded channels)
-* `alt_menu` (true or false, default false) - keep the menu hidden unless revealed with alt key
-* `hide_to_tray` (true or false, default false) - hide abaddon to the system tray on window close
+* `owner_crown` (true or false, `default: true`) - show a crown next to the owner
+* `unreads` (true or false, `default: true`) - show unread indicators and mention badges
+* `save_state` (true or false, `default: true`) - save the state of the gui (active channels, tabs, expanded channels)
+* `alt_menu` (true or false, `default: false`) - keep the menu hidden unless revealed with alt key
+* `hide_to_tray` (true or false, `default: false`) - hide abaddon to the system tray on window close
 
 #### style
 
