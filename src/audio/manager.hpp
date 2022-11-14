@@ -44,6 +44,13 @@ public:
     void SetMuteSSRC(uint32_t ssrc, bool mute);
     void SetVolumeSSRC(uint32_t ssrc, double volume);
 
+    void SetEncodingApplication(int application);
+    [[nodiscard]] int GetEncodingApplication();
+    void SetSignalHint(int signal);
+    [[nodiscard]] int GetSignalHint();
+    void SetBitrate(int bitrate);
+    [[nodiscard]] int GetBitrate();
+
     void Enumerate();
 
     [[nodiscard]] bool OK() const;
@@ -81,6 +88,8 @@ private:
     ma_context m_context;
 
     mutable std::mutex m_mutex;
+    mutable std::mutex m_enc_mutex;
+
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 
     OpusEncoder *m_encoder;

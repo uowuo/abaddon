@@ -6,6 +6,7 @@
 #include "components/lazyimage.hpp"
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
+#include "voicesettingswindow.hpp"
 // clang-format on
 
 class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
@@ -83,7 +84,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_controls(Gtk::ORIENTATION_HORIZONTAL)
     , m_mute("Mute")
     , m_deafen("Deafen")
-    , m_channel_id(channel_id) {
+    , m_channel_id(channel_id)
+    , m_menu_view("View")
+    , m_menu_view_settings("More _Settings", true) {
     get_style_context()->add_class("app-window");
 
     set_default_size(300, 300);
@@ -145,9 +148,18 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         Abaddon::Get().GetAudio().SetCaptureDevice(m_capture_combo.get_active());
     });
 
+    m_menu_bar.append(m_menu_view);
+    m_menu_view.set_submenu(m_menu_view_sub);
+    m_menu_view_sub.append(m_menu_view_settings);
+    m_menu_view_settings.signal_activate().connect([this]() {
+        auto *window = new VoiceSettingsWindow;
+        window->show();
+    });
+
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
+    m_main.add(m_menu_bar);
     m_main.add(m_controls);
     m_main.add(m_capture_volume);
     m_main.add(m_capture_gate);

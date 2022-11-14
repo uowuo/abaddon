@@ -301,6 +301,66 @@ void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
     m_volume_ssrc[ssrc] = (std::exp(volume) - 1) / (E - 1);
 }
 
+void AudioManager::SetEncodingApplication(int application) {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    int prev_bitrate = 64000;
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_BITRATE(&prev_bitrate)); err != OPUS_OK) {
+        spdlog::get("audio")->error("Failed to get old bitrate when reinitializing: {}", err);
+    }
+    opus_encoder_destroy(m_encoder);
+    int err = 0;
+    m_encoder = opus_encoder_create(48000, 2, application, &err);
+    if (err != OPUS_OK) {
+        spdlog::get("audio")->critical("opus_encoder_create failed: {}", err);
+        return;
+    }
+
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(prev_bitrate)); err != OPUS_OK) {
+        spdlog::get("audio")->error("Failed to set bitrate when reinitializing: {}", err);
+    }
+}
+
+int AudioManager::GetEncodingApplication() {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    int temp = OPUS_APPLICATION_VOIP;
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_APPLICATION(&temp)); err != OPUS_OK) {
+        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_APPLICATION) failed: {}", err);
+    }
+    return temp;
+}
+
+void AudioManager::SetSignalHint(int signal) {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_SIGNAL(signal)); err != OPUS_OK) {
+        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_SET_SIGNAL) failed: {}", err);
+    }
+}
+
+int AudioManager::GetSignalHint() {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    int temp = OPUS_AUTO;
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_SIGNAL(&temp)); err != OPUS_OK) {
+        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_SIGNAL) failed: {}", err);
+    }
+    return temp;
+}
+
+void AudioManager::SetBitrate(int bitrate) {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(bitrate)); err != OPUS_OK) {
+        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_SET_BITRATE) failed: {}", err);
+    }
+}
+
+int AudioManager::GetBitrate() {
+    std::lock_guard<std::mutex> _(m_enc_mutex);
+    int temp = 64000;
+    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_BITRATE(&temp)); err != OPUS_OK) {
+        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_BITRATE) failed: {}", err);
+    }
+    return temp;
+}
+
 void AudioManager::Enumerate() {
     ma_device_info *pPlaybackDeviceInfo;
     ma_uint32 playbackDeviceCount;
@@ -339,7 +399,9 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
 
     if (m_capture_peak_meter / 32768.0 < m_capture_gate) return;
 
+    m_enc_mutex.lock();
     int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
+    m_enc_mutex.unlock();
     if (payload_len < 0) {
         spdlog::get("audio")->error("encoding error: {}", payload_len);
     } else {

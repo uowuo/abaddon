@@ -8,6 +8,7 @@
 #include <gtkmm/checkbutton.h>
 #include <gtkmm/combobox.h>
 #include <gtkmm/listbox.h>
+#include <gtkmm/menubar.h>
 #include <gtkmm/progressbar.h>
 #include <gtkmm/scale.h>
 #include <gtkmm/scrolledwindow.h>
@@ -52,6 +53,11 @@ private:
     Snowflake m_channel_id;
 
     std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
+
+    Gtk::MenuBar m_menu_bar;
+    Gtk::MenuItem m_menu_view;
+    Gtk::Menu m_menu_view_sub;
+    Gtk::MenuItem m_menu_view_settings;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;
