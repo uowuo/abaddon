@@ -9,7 +9,8 @@ using namespace std::string_literals;
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)
-    , m_store(mem_store) {
+    , m_store(mem_store)
+    , m_websocket("gateway-ws") {
     m_msg_dispatch.connect(sigc::mem_fun(*this, &DiscordClient::MessageDispatch));
     auto dispatch_cb = [this]() {
         m_generic_mutex.lock();
@@ -2171,6 +2172,11 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     if (data.UserID == m_user_data.ID) {
         spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
+
+        // channel_id = null means disconnect. stop cuz out of order maybe
+        if (!data.ChannelID.has_value()) {
+            m_voice.Stop();
+        }
     } else {
         if (data.GuildID.has_value() && data.Member.has_value()) {
             if (data.Member->User.has_value()) {
@@ -2504,9 +2510,8 @@ void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identi
 void DiscordClient::HandleSocketOpen() {
 }
 
-void DiscordClient::HandleSocketClose(uint16_t code) {
-    printf("got socket close code: %d\n", code);
-    auto close_code = static_cast<GatewayCloseCode>(code);
+void DiscordClient::HandleSocketClose(const ix::WebSocketCloseInfo &info) {
+    auto close_code = static_cast<GatewayCloseCode>(info.code);
     auto cb = [this, close_code]() {
         m_heartbeat_waiter.kill();
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();

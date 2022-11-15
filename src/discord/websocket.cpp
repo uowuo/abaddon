@@ -1,19 +1,25 @@
 #include "websocket.hpp"
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <utility>
 
-Websocket::Websocket()
-    : m_close_code(ix::WebSocketCloseConstants::kNormalClosureCode) {
+Websocket::Websocket(const std::string &id)
+    : m_close_info { 1000, "Normal", false } {
+    if (m_log = spdlog::get(id); !m_log) {
+        m_log = spdlog::stdout_color_mt(id);
+    }
+
     m_open_dispatcher.connect([this]() {
         m_signal_open.emit();
     });
 
     m_close_dispatcher.connect([this]() {
         Stop();
-        m_signal_close.emit(m_close_code);
+        m_signal_close.emit(m_close_info);
     });
 }
 
 void Websocket::StartConnection(const std::string &url) {
+    m_log->debug("Starting connection to {}", url);
     m_websocket.disableAutomaticReconnection();
     m_websocket.setUrl(url);
     m_websocket.setOnMessageCallback([this](auto &&msg) { OnMessage(std::forward<decltype(msg)>(msg)); });
@@ -34,16 +40,18 @@ void Websocket::SetPrintMessages(bool show) noexcept {
 }
 
 void Websocket::Stop() {
+    m_log->debug("Stopping with default close code");
     Stop(ix::WebSocketCloseConstants::kNormalClosureCode);
 }
 
 void Websocket::Stop(uint16_t code) {
+    m_log->debug("Stopping with close code {}", code);
     m_websocket.stop(code);
 }
 
 void Websocket::Send(const std::string &str) {
     if (m_print_messages)
-        printf("sending %s\n", str.c_str());
+        m_log->trace("Send: {}", str);
     m_websocket.sendText(str);
 }
 
@@ -54,10 +62,12 @@ void Websocket::Send(const nlohmann::json &j) {
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
         case ix::WebSocketMessageType::Open: {
+            m_log->debug("Received open frame, dispatching");
             m_open_dispatcher.emit();
         } break;
         case ix::WebSocketMessageType::Close: {
-            m_close_code = msg->closeInfo.code;
+            m_log->debug("Received close frame, dispatching. {} ({}){}", msg->closeInfo.code, msg->closeInfo.reason, msg->closeInfo.remote ? " Remote" : "");
+            m_close_info = msg->closeInfo;
             m_close_dispatcher.emit();
         } break;
         case ix::WebSocketMessageType::Message: {

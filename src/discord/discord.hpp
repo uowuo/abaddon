@@ -289,7 +289,7 @@ private:
     void SetSuperPropertiesFromIdentity(const IdentifyMessage &identity);
 
     void HandleSocketOpen();
-    void HandleSocketClose(uint16_t code);
+    void HandleSocketClose(const ix::WebSocketCloseInfo &info);
 
     static bool CheckCode(const http::response_type &r);
     static bool CheckCode(const http::response_type &r, int expected);

@@ -15,6 +15,7 @@
 // clang-format on
 
 enum class VoiceGatewayCloseCode : uint16_t {
+    Normal = 4000,
     UnknownOpcode = 4001,
     InvalidPayload = 4002,
     NotAuthenticated = 4003,
@@ -228,7 +229,10 @@ private:
 
     std::array<uint8_t, 32> m_secret_key;
 
-    Websocket m_ws;
+    // this is a unique_ptr because Websocket/ixwebsocket seems to have some strange behavior
+    // and quite frankly i do not feel like figuring out what is wrong
+    // so using a unique_ptr will just let me nuke the whole thing and make a new one
+    std::unique_ptr<Websocket> m_ws;
     UDPSocket m_udp;
 
     Glib::Dispatcher m_dispatcher;
@@ -245,6 +249,24 @@ private:
     std::array<uint8_t, 1275> m_opus_buffer;
 
     std::atomic<bool> m_connected = false;
+
+    enum class State {
+        Opening,
+        Opened,
+        ClosingByClient,
+        ClosedByClient,
+        ClosingByServer,
+        ClosedByServer,
+    };
+
+    void SetState(State state);
+
+    [[nodiscard]] bool IsOpening() const noexcept;
+    [[nodiscard]] bool IsOpened() const noexcept;
+    [[nodiscard]] bool IsClosing() const noexcept;
+    [[nodiscard]] bool IsClosed() const noexcept;
+
+    std::atomic<State> m_state;
 
     using type_signal_connected = sigc::signal<void()>;
     using type_signal_disconnected = sigc::signal<void()>;

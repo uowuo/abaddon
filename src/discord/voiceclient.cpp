@@ -126,18 +126,26 @@ UDPSocket::type_signal_data UDPSocket::signal_data() {
 }
 
 DiscordVoiceClient::DiscordVoiceClient() {
-    sodium_init();
+    if (sodium_init() == -1) {
+        spdlog::get("voice")->critical("sodium_init() failed");
+    }
 
-    m_ws.signal_open().connect([this]() {
+    m_ws = std::make_unique<Websocket>("voice-ws");
+
+    m_ws->signal_open().connect([this]() {
         spdlog::get("voice")->info("Websocket open");
+        SetState(State::Opened);
     });
 
-    m_ws.signal_close().connect([this](uint16_t code) {
-        spdlog::get("voice")->info("Websocket closed with code {}", code);
+    m_ws->signal_close().connect([this](const ix::WebSocketCloseInfo &info) {
+        if (info.remote) {
+            SetState(State::ClosingByServer);
+        }
         Stop();
     });
 
-    m_ws.signal_message().connect([this](const std::string &str) {
+    m_ws->signal_message().connect([this](const std::string &str) {
+        spdlog::get("voice-ws")->trace("Recv: {}", str);
         std::lock_guard<std::mutex> _(m_dispatch_mutex);
         m_message_queue.push(str);
         m_dispatcher.emit();
@@ -175,7 +183,8 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 }
 
 void DiscordVoiceClient::Start() {
-    m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
+    SetState(State::Opening);
+    m_ws->StartConnection("wss://" + m_endpoint + "/?v=7");
     m_heartbeat_waiter.revive();
     m_keepalive_waiter.revive();
     m_connected = true;
@@ -183,15 +192,29 @@ void DiscordVoiceClient::Start() {
 }
 
 void DiscordVoiceClient::Stop() {
-    m_ws.Stop();
-    m_udp.Stop();
-    m_heartbeat_waiter.kill();
-    if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
-    m_keepalive_waiter.kill();
-    if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
-    if (m_connected) {
-        m_connected = false;
-        m_signal_disconnected.emit();
+    if (IsOpening() || IsOpened()) {
+        spdlog::get("voice")->debug("Requested voice client stop");
+        SetState(State::ClosingByClient);
+        m_ws->Stop();
+    } else if (IsClosing()) {
+        spdlog::get("voice")->debug("Completing stop in closing");
+        if (m_state == State::ClosingByClient) {
+            SetState(State::ClosedByClient);
+        } else if (m_state == State::ClosingByServer) {
+            SetState(State::ClosedByServer);
+        }
+        m_ws->Stop();
+        m_udp.Stop();
+        m_heartbeat_waiter.kill();
+        if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
+        m_keepalive_waiter.kill();
+        if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
+        if (m_connected) {
+            m_connected = false;
+            m_signal_disconnected.emit();
+        }
+    } else {
+        spdlog::get("voice")->debug("Stop called, but already stopped");
     }
 }
 
@@ -228,7 +251,6 @@ bool DiscordVoiceClient::IsConnected() const noexcept {
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
     VoiceGatewayMessage msg = nlohmann::json::parse(str);
-    puts(msg.Data.dump(4).c_str());
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello: {
             HandleGatewayHello(msg);
@@ -278,7 +300,7 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     msg.Delay = 0;
     msg.SSRC = m_ssrc;
     msg.Speaking = VoiceSpeakingType::Microphone;
-    m_ws.Send(msg);
+    m_ws->Send(msg);
 
     m_secret_key = d.SecretKey;
     m_udp.SetSSRC(m_ssrc);
@@ -304,7 +326,7 @@ void DiscordVoiceClient::Identify() {
     msg.SessionID = m_session_id;
     msg.Token = m_token;
     msg.Video = true;
-    m_ws.Send(msg);
+    m_ws->Send(msg);
 }
 
 void DiscordVoiceClient::Discovery() {
@@ -341,7 +363,7 @@ void DiscordVoiceClient::SelectProtocol(std::string_view ip, uint16_t port) {
     msg.Address = ip;
     msg.Port = port;
     msg.Protocol = "udp";
-    m_ws.Send(msg);
+    m_ws->Send(msg);
 }
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
@@ -370,7 +392,7 @@ void DiscordVoiceClient::HeartbeatThread() {
 
         VoiceHeartbeatMessage msg;
         msg.Nonce = static_cast<uint64_t>(ms);
-        m_ws.Send(msg);
+        m_ws->Send(msg);
     }
 }
 
@@ -384,6 +406,47 @@ void DiscordVoiceClient::KeepaliveThread() {
             m_udp.Send(KEEPALIVE, sizeof(KEEPALIVE));
         }
     }
+}
+
+void DiscordVoiceClient::SetState(State state) {
+    m_state = state;
+
+    switch (state) {
+        case State::Opening:
+            spdlog::get("voice")->debug("WS state: Opening");
+            break;
+        case State::Opened:
+            spdlog::get("voice")->debug("WS state: Opened");
+            break;
+        case State::ClosingByClient:
+            spdlog::get("voice")->debug("WS state: Closing (Client)");
+            break;
+        case State::ClosingByServer:
+            spdlog::get("voice")->debug("WS state: Closing (Server)");
+            break;
+        case State::ClosedByClient:
+            spdlog::get("voice")->debug("WS state: Closed (Client)");
+            break;
+        case State::ClosedByServer:
+            spdlog::get("voice")->debug("WS state: Closed (Server)");
+            break;
+    }
+}
+
+bool DiscordVoiceClient::IsOpening() const noexcept {
+    return m_state == State::Opening;
+}
+
+bool DiscordVoiceClient::IsOpened() const noexcept {
+    return m_state == State::Opened;
+}
+
+bool DiscordVoiceClient::IsClosing() const noexcept {
+    return m_state == State::ClosingByClient || m_state == State::ClosingByServer;
+}
+
+bool DiscordVoiceClient::IsClosed() const noexcept {
+    return m_state == State::ClosedByClient || m_state == State::ClosedByServer;
 }
 
 DiscordVoiceClient::type_signal_disconnected DiscordVoiceClient::signal_connected() {
