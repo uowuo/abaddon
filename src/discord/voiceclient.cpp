@@ -130,27 +130,6 @@ DiscordVoiceClient::DiscordVoiceClient() {
         spdlog::get("voice")->critical("sodium_init() failed");
     }
 
-    m_ws = std::make_unique<Websocket>("voice-ws");
-
-    m_ws->signal_open().connect([this]() {
-        spdlog::get("voice")->info("Websocket open");
-        SetState(State::Opened);
-    });
-
-    m_ws->signal_close().connect([this](const ix::WebSocketCloseInfo &info) {
-        if (info.remote) {
-            SetState(State::ClosingByServer);
-        }
-        Stop();
-    });
-
-    m_ws->signal_message().connect([this](const std::string &str) {
-        spdlog::get("voice-ws")->trace("Recv: {}", str);
-        std::lock_guard<std::mutex> _(m_dispatch_mutex);
-        m_message_queue.push(str);
-        m_dispatcher.emit();
-    });
-
     m_udp.signal_data().connect([this](const std::vector<uint8_t> &data) {
         OnUDPData(data);
     });
@@ -183,6 +162,27 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 }
 
 void DiscordVoiceClient::Start() {
+    m_ws = std::make_unique<Websocket>("voice-ws");
+
+    m_ws->signal_open().connect([this]() {
+        spdlog::get("voice")->info("Websocket open");
+        SetState(State::Opened);
+    });
+
+    m_ws->signal_close().connect([this](const ix::WebSocketCloseInfo &info) {
+        if (info.remote) {
+            SetState(State::ClosingByServer);
+        }
+        Stop();
+    });
+
+    m_ws->signal_message().connect([this](const std::string &str) {
+        spdlog::get("voice-ws")->trace("Recv: {}", str);
+        std::lock_guard<std::mutex> _(m_dispatch_mutex);
+        m_message_queue.push(str);
+        m_dispatcher.emit();
+    });
+
     SetState(State::Opening);
     m_ws->StartConnection("wss://" + m_endpoint + "/?v=7");
     m_heartbeat_waiter.revive();
