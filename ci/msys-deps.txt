@@ -14,7 +14,7 @@
 /bin/libdeflate.dll
 /bin/libepoxy-0.dll
 /bin/libexpat-1.dll
-/bin/libffi-7.dll
+/bin/libffi-8.dll
 /bin/libfontconfig-1.dll
 /bin/libfreetype-6.dll
 /bin/libfribidi-0.dll
@@ -42,7 +42,7 @@
 /bin/libpangoft2-1.0-0.dll
 /bin/libpangomm-1.4-1.dll
 /bin/libpangowin32-1.0-0.dll
-/bin/libpcre-1.dll
+/bin/libpcre2-8-0.dll
 /bin/libpixman-1-0.dll
 /bin/libpng16-16.dll
 /bin/libpsl-5.dll
@@ -56,3 +56,4 @@
 /bin/libwinpthread-1.dll
 /bin/libzstd.dll
 /bin/zlib1.dll
+/../usr/bin/msys-2.0.dll

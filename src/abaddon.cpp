@@ -6,7 +6,6 @@
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
-#include "dialogs/joinguild.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
@@ -17,6 +16,7 @@
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
+#include "startup.hpp"
 
 #ifdef WITH_LIBHANDY
     #include <handy.h>
@@ -68,14 +68,13 @@ Abaddon &Abaddon::Get() {
     return instance;
 }
 
-#ifdef WITH_LIBHANDY
-    #ifdef _WIN32
+#ifdef _WIN32
 constexpr static guint BUTTON_BACK = 4;
 constexpr static guint BUTTON_FORWARD = 5;
-    #else
+#else
 constexpr static guint BUTTON_BACK = 8;
 constexpr static guint BUTTON_FORWARD = 9;
-    #endif
+#endif
 
 static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
     if (event->type != GDK_BUTTON_PRESS) return false;
@@ -85,6 +84,7 @@ static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
     auto *window = gtk_widget_get_toplevel(widget);
     if (static_cast<void *>(window) != static_cast<void *>(main_window->gobj())) return false; // is this the right way???
 
+#ifdef WITH_LIBHANDY
     switch (event->button.button) {
         case BUTTON_BACK:
             main_window->GoBack();
@@ -93,6 +93,7 @@ static bool HandleButtonEvents(GdkEvent *event, MainWindow *main_window) {
             main_window->GoForward();
             break;
     }
+#endif
 
     return false;
 }
@@ -108,6 +109,15 @@ static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
     const bool ctrl = (event->key.state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK;
     const bool shft = (event->key.state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
 
+    constexpr static guint EXCLUDE_STATES = GDK_CONTROL_MASK | GDK_SHIFT_MASK;
+
+    if (!(event->key.state & EXCLUDE_STATES) && event->key.keyval == GDK_KEY_Alt_L) {
+        if (Abaddon::Get().GetSettings().AltMenu) {
+            main_window->ToggleMenuVisibility();
+        }
+    }
+
+#ifdef WITH_LIBHANDY
     if (ctrl) {
         switch (event->key.keyval) {
             case GDK_KEY_Tab:
@@ -134,6 +144,7 @@ static bool HandleKeyEvents(GdkEvent *event, MainWindow *main_window) {
                 return true;
         }
     }
+#endif
 
     return false;
 }
@@ -143,7 +154,6 @@ static void MainEventHandler(GdkEvent *event, void *main_window) {
     if (HandleKeyEvents(event, static_cast<MainWindow *>(main_window))) return;
     gtk_main_do_event(event);
 }
-#endif
 
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
@@ -228,7 +238,6 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
-    m_main_window->signal_action_join_guild().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinGuildDialog));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
     m_main_window->signal_action_view_pins().connect(sigc::mem_fun(*this, &Abaddon::ActionViewPins));
@@ -247,12 +256,29 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
 
     ActionReloadCSS();
+    if (m_settings.GetSettings().HideToTray) {
+        m_tray = Gtk::StatusIcon::create("discord");
+        m_tray->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_click));
+        m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
+    }
+    m_tray_menu = Gtk::make_managed<Gtk::Menu>();
+    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit", false);
 
+    m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
+
+    m_tray_menu->append(*m_tray_exit);
+    m_tray_menu->show_all();
+
+    m_main_window->signal_hide().connect(sigc::mem_fun(*this, &Abaddon::on_window_hide));
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
 
     m_main_window->UpdateMenus();
 
+    m_gtk_app->hold();
     m_main_window->show();
+
+    RunFirstTimeDiscordStartup();
+
     return m_gtk_app->run(*m_main_window);
 }
 
@@ -390,6 +416,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
 
     for (const auto child : m_user_menu_roles_submenu->get_children())
         delete child;
+
     if (guild.has_value() && user.has_value()) {
         const auto roles = user->GetSortedRoles();
         m_user_menu_roles->set_visible(!roles.empty());
@@ -412,7 +439,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     if (me == id) {
         m_user_menu_ban->set_visible(false);
         m_user_menu_kick->set_visible(false);
-        m_user_menu_open_dm->set_visible(false);
+        m_user_menu_open_dm->set_sensitive(false);
     } else {
         const bool has_kick = m_discord.HasGuildPermission(me, guild_id, Permission::KICK_MEMBERS);
         const bool has_ban = m_discord.HasGuildPermission(me, guild_id, Permission::BAN_MEMBERS);
@@ -420,7 +447,7 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
 
         m_user_menu_kick->set_visible(has_kick && can_manage);
         m_user_menu_ban->set_visible(has_ban && can_manage);
-        m_user_menu_open_dm->set_visible(true);
+        m_user_menu_open_dm->set_sensitive(m_discord.FindDM(id).has_value());
     }
 
     m_user_menu_remove_recipient->hide();
@@ -432,6 +459,48 @@ void Abaddon::ShowUserMenu(const GdkEvent *event, Snowflake id, Snowflake guild_
     }
 
     m_user_menu->popup_at_pointer(event);
+}
+
+void Abaddon::RunFirstTimeDiscordStartup() {
+    DiscordStartupDialog dlg(*m_main_window);
+    dlg.set_position(Gtk::WIN_POS_CENTER);
+
+    std::optional<std::string> cookie;
+    std::optional<uint32_t> build_number;
+
+    dlg.signal_response().connect([&](int response) {
+        if (response == Gtk::RESPONSE_OK) {
+            cookie = dlg.GetCookie();
+            build_number = dlg.GetBuildNumber();
+        }
+    });
+
+    dlg.run();
+
+    Glib::signal_idle().connect_once([this, cookie, build_number]() {
+        if (cookie.has_value()) {
+            m_discord.SetCookie(*cookie);
+        } else {
+            ConfirmDialog confirm(*m_main_window);
+            confirm.SetConfirmText("Cookies could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetAcceptOnly(true);
+            confirm.run();
+        }
+
+        if (build_number.has_value()) {
+            m_discord.SetBuildNumber(*build_number);
+        } else {
+            ConfirmDialog confirm(*m_main_window);
+            confirm.SetConfirmText("Build number could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetAcceptOnly(true);
+            confirm.run();
+        }
+
+        // autoconnect
+        if (cookie.has_value() && build_number.has_value() && GetSettings().Autoconnect && !GetDiscordToken().empty()) {
+            ActionConnect();
+        }
+    });
 }
 
 void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
@@ -468,7 +537,7 @@ void Abaddon::SetupUserMenu() {
     m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
     m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
     m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Open DM"));
+    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Go to DM"));
     m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
     m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
     m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
@@ -579,18 +648,9 @@ void Abaddon::on_user_menu_copy_id() {
 
 void Abaddon::on_user_menu_open_dm() {
     const auto existing = m_discord.FindDM(m_shown_user_menu_id);
-    if (existing.has_value())
+    if (existing.has_value()) {
         ActionChannelOpened(*existing);
-    else
-        m_discord.CreateDM(m_shown_user_menu_id, [this](DiscordError code, Snowflake channel_id) {
-            if (code == DiscordError::NONE) {
-                // give the gateway a little window to send CHANNEL_CREATE
-                auto cb = [this, channel_id] {
-                    ActionChannelOpened(channel_id);
-                };
-                Glib::signal_timeout().connect_once(sigc::track_obj(cb, *this), 200);
-            }
-        });
+    }
 }
 
 void Abaddon::on_user_menu_remove_recipient() {
@@ -646,22 +706,18 @@ void Abaddon::ActionSetToken() {
     m_main_window->UpdateMenus();
 }
 
-void Abaddon::ActionJoinGuildDialog() {
-    JoinGuildDialog dlg(*m_main_window);
-    auto response = dlg.run();
-    if (response == Gtk::RESPONSE_OK) {
-        auto code = dlg.GetCode();
-        m_discord.JoinGuild(code);
-    }
-}
-
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
-    if (!id.IsValid() || id == m_main_window->GetChatActiveChannel()) return;
+    if (!id.IsValid()) {
+        m_discord.SetReferringChannel(Snowflake::Invalid);
+        return;
+    }
+    if (id == m_main_window->GetChatActiveChannel()) return;
 
     m_main_window->GetChatWindow()->SetTopic("");
 
     const auto channel = m_discord.GetChannel(id);
     if (!channel.has_value()) {
+        m_discord.SetReferringChannel(Snowflake::Invalid);
         m_main_window->UpdateChatActiveChannel(Snowflake::Invalid, false);
         m_main_window->UpdateChatWindowContents();
         return;
@@ -710,6 +766,7 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     }
 
     m_main_window->UpdateMenus();
+    m_discord.SetReferringChannel(id);
 }
 
 void Abaddon::ActionChatLoadHistory(Snowflake id) {
@@ -896,6 +953,21 @@ ImageManager &Abaddon::GetImageManager() {
 
 EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
+}
+
+void Abaddon::on_tray_click() {
+    m_main_window->set_visible(!m_main_window->is_visible());
+}
+void Abaddon::on_tray_menu_click() {
+    m_gtk_app->quit();
+}
+void Abaddon::on_tray_popup_menu(int button, int activate_time) {
+    m_tray->popup_menu_at_position(*m_tray_menu, button, activate_time);
+}
+void Abaddon::on_window_hide() {
+    if (!m_settings.GetSettings().HideToTray) {
+        m_gtk_app->quit();
+    }
 }
 
 int main(int argc, char **argv) {

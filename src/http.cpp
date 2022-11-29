@@ -2,6 +2,8 @@
 
 #include <utility>
 
+// #define USE_LOCAL_PROXY
+
 namespace http {
 request::request(EMethod method, std::string url)
     : m_url(std::move(url)) {
@@ -34,7 +36,6 @@ request::request(request &&other) noexcept
     , m_url(std::exchange(other.m_url, ""))
     , m_method(std::exchange(other.m_method, nullptr))
     , m_header_list(std::exchange(other.m_header_list, nullptr))
-    , m_error_buf(other.m_error_buf)
     , m_form(std::exchange(other.m_form, nullptr))
     , m_read_streams(std::move(other.m_read_streams))
     , m_progress_callback(std::move(other.m_progress_callback)) {
@@ -98,6 +99,10 @@ void request::set_user_agent(const std::string &data) {
     curl_easy_setopt(m_curl, CURLOPT_USERAGENT, data.c_str());
 }
 
+CURL *request::get_curl() {
+    return m_curl;
+}
+
 void request::make_form() {
     m_form = curl_mime_init(m_curl);
 }
@@ -143,14 +148,16 @@ response request::execute() {
     detail::check_init();
 
     std::string str;
+#ifdef USE_LOCAL_PROXY
+    set_proxy("http://127.0.0.1:8888");
+    set_verify_ssl(false);
+#endif
     curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, m_method);
     curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());
     curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, detail::curl_write_data_callback);
     curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &str);
-    curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, m_error_buf);
-    m_error_buf[0] = '\0';
     if (m_header_list != nullptr)
         curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, m_header_list);
     if (m_form != nullptr)
@@ -160,7 +167,6 @@ response request::execute() {
     if (result != CURLE_OK) {
         auto response = detail::make_response(m_url, EStatusCode::ClientErrorCURLPerform);
         response.error_string = curl_easy_strerror(result);
-        response.error_string += " " + std::string(m_error_buf.data());
         return response;
     }
 

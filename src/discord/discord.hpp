@@ -113,13 +113,11 @@ public:
     void EditMessage(Snowflake channel_id, Snowflake id, std::string content);
     void SendLazyLoad(Snowflake id);
     void SendThreadLazyLoad(Snowflake id);
-    void JoinGuild(const std::string &code);
     void LeaveGuild(Snowflake id);
     void KickUser(Snowflake user_id, Snowflake guild_id);
     void BanUser(Snowflake user_id, Snowflake guild_id); // todo: reason, delete messages
     void UpdateStatus(PresenceStatus status, bool is_afk);
     void UpdateStatus(PresenceStatus status, bool is_afk, const ActivityData &obj);
-    void CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback);
     void CloseDM(Snowflake channel_id);
     std::optional<Snowflake> FindDM(Snowflake user_id); // wont find group dms
     void AddReaction(Snowflake id, Glib::ustring param);
@@ -205,6 +203,11 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+    void SetReferringChannel(Snowflake id);
+
+    void SetBuildNumber(uint32_t build_number);
+    void SetCookie(std::string_view cookie);
+
     void UpdateToken(const std::string &token);
     void SetUserAgent(const std::string &agent);
 
@@ -286,6 +289,9 @@ private:
     void SendIdentify();
     void SendResume();
 
+    void SetHeaders();
+    void SetSuperPropertiesFromIdentity(const IdentifyMessage &identity);
+
     void HandleSocketOpen();
     void HandleSocketClose(uint16_t code);
 
@@ -298,6 +304,8 @@ private:
     void HandleReadyGuildSettings(const ReadyEventData &data);
 
     std::string m_token;
+
+    uint32_t m_build_number = 142000;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;

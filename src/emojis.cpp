@@ -2,6 +2,22 @@
 #include <sstream>
 #include <utility>
 
+#ifdef ABADDON_IS_BIG_ENDIAN
+/* Allows processing emojis.bin correctly on big-endian systems. */
+int emojis_int32_correct_endian(int little_endian_in) {
+    /* this does the same thing as __bswap_32() but can be done without
+       non-standard headers. */
+    return ((little_endian_in >> 24) & 0xff) |      // move byte 3 to byte 0
+           ((little_endian_in << 8) & 0xff0000) |   // move byte 1 to byte 2
+           ((little_endian_in >> 8) & 0xff00) |     // move byte 2 to byte 1
+           ((little_endian_in << 24) & 0xff000000); // byte 0 to byte 3
+}
+#else
+int emojis_int32_correct_endian(int little_endian_in) {
+    return little_endian_in;
+}
+#endif
+
 EmojiResource::EmojiResource(std::string filepath)
     : m_filepath(std::move(filepath)) {}
 
@@ -11,18 +27,22 @@ bool EmojiResource::Load() {
 
     int index_offset;
     std::fread(&index_offset, 4, 1, m_fp);
+    index_offset = emojis_int32_correct_endian(index_offset);
     std::fseek(m_fp, index_offset, SEEK_SET);
 
     int emojis_count;
     std::fread(&emojis_count, 4, 1, m_fp);
+    emojis_count = emojis_int32_correct_endian(emojis_count);
     for (int i = 0; i < emojis_count; i++) {
         std::vector<std::string> shortcodes;
 
         int shortcodes_count;
         std::fread(&shortcodes_count, 4, 1, m_fp);
+        shortcodes_count = emojis_int32_correct_endian(shortcodes_count);
         for (int j = 0; j < shortcodes_count; j++) {
             int shortcode_length;
             std::fread(&shortcode_length, 4, 1, m_fp);
+            shortcode_length = emojis_int32_correct_endian(shortcode_length);
             std::string shortcode(shortcode_length, '\0');
             std::fread(shortcode.data(), shortcode_length, 1, m_fp);
             shortcodes.push_back(std::move(shortcode));
@@ -30,13 +50,16 @@ bool EmojiResource::Load() {
 
         int surrogates_count;
         std::fread(&surrogates_count, 4, 1, m_fp);
+        surrogates_count = emojis_int32_correct_endian(surrogates_count);
         std::string surrogates(surrogates_count, '\0');
         std::fread(surrogates.data(), surrogates_count, 1, m_fp);
         m_patterns.emplace_back(surrogates);
 
         int data_size, data_offset;
         std::fread(&data_size, 4, 1, m_fp);
+        data_size = emojis_int32_correct_endian(data_size);
         std::fread(&data_offset, 4, 1, m_fp);
+        data_offset = emojis_int32_correct_endian(data_offset);
         m_index[surrogates] = { data_offset, data_size };
 
         for (const auto &shortcode : shortcodes)

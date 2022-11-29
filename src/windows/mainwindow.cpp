@@ -158,6 +158,10 @@ void MainWindow::UpdateMenus() {
     OnViewSubmenuPopup();
 }
 
+void MainWindow::ToggleMenuVisibility() {
+    m_menu_bar.set_visible(!m_menu_bar.get_visible());
+}
+
 #ifdef WITH_LIBHANDY
 void MainWindow::GoBack() {
     m_chat.GoBack();
@@ -195,7 +199,6 @@ void MainWindow::OnDiscordSubmenuPopup() {
     std::string token = Abaddon::Get().GetDiscordToken();
     m_menu_discord_connect.set_sensitive(!token.empty() && !discord_active);
     m_menu_discord_disconnect.set_sensitive(discord_active);
-    m_menu_discord_join_guild.set_sensitive(discord_active);
     m_menu_discord_set_token.set_sensitive(!discord_active);
     m_menu_discord_set_status.set_sensitive(discord_active);
 }
@@ -238,15 +241,12 @@ void MainWindow::SetupMenu() {
     m_menu_discord_disconnect.set_label("Disconnect");
     m_menu_discord_disconnect.set_sensitive(false);
     m_menu_discord_set_token.set_label("Set Token");
-    m_menu_discord_join_guild.set_label("Accept Invite");
-    m_menu_discord_join_guild.set_sensitive(false);
     m_menu_discord_set_status.set_label("Set Status");
     m_menu_discord_set_status.set_sensitive(false);
     m_menu_discord_add_recipient.set_label("Add user to DM");
     m_menu_discord_sub.append(m_menu_discord_connect);
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
-    m_menu_discord_sub.append(m_menu_discord_join_guild);
     m_menu_discord_sub.append(m_menu_discord_set_status);
     m_menu_discord_sub.append(m_menu_discord_add_recipient);
     m_menu_discord.set_submenu(m_menu_discord_sub);
@@ -265,6 +265,12 @@ void MainWindow::SetupMenu() {
     m_menu_view_threads.set_label("Threads");
     m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_label("Channels");
+    m_menu_view_channels.add_accelerator("activate", m_accels, GDK_KEY_L, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_active(true);
+    m_menu_view_members.set_label("Members");
+    m_menu_view_members.add_accelerator("activate", m_accels, GDK_KEY_M, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_members.set_active(true);
 #ifdef WITH_LIBHANDY
     m_menu_view_go_back.set_label("Go Back");
     m_menu_view_go_forward.set_label("Go Forward");
@@ -275,6 +281,8 @@ void MainWindow::SetupMenu() {
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
+    m_menu_view_sub.append(m_menu_view_channels);
+    m_menu_view_sub.append(m_menu_view_members);
 #ifdef WITH_LIBHANDY
     m_menu_view_sub.append(m_menu_view_go_back);
     m_menu_view_sub.append(m_menu_view_go_forward);
@@ -283,7 +291,25 @@ void MainWindow::SetupMenu() {
     m_menu_bar.append(m_menu_file);
     m_menu_bar.append(m_menu_discord);
     m_menu_bar.append(m_menu_view);
-    m_menu_bar.show_all();
+
+    if (Abaddon::Get().GetSettings().AltMenu) {
+        auto set_hide_cb = [this](Gtk::Menu &menu) {
+            for (auto *child : menu.get_children()) {
+                auto *item = dynamic_cast<Gtk::MenuItem *>(child);
+                if (item != nullptr) {
+                    item->signal_activate().connect([this]() {
+                        m_menu_bar.hide();
+                    });
+                }
+            }
+        };
+        set_hide_cb(m_menu_discord_sub);
+        set_hide_cb(m_menu_file_sub);
+        set_hide_cb(m_menu_view_sub);
+        m_menu_bar.show_all_children();
+    } else {
+        m_menu_bar.show_all();
+    }
 
     m_menu_discord_connect.signal_activate().connect([this] {
         m_signal_action_connect.emit();
@@ -295,10 +321,6 @@ void MainWindow::SetupMenu() {
 
     m_menu_discord_set_token.signal_activate().connect([this] {
         m_signal_action_set_token.emit();
-    });
-
-    m_menu_discord_join_guild.signal_activate().connect([this] {
-        m_signal_action_join_guild.emit();
     });
 
     m_menu_file_reload_css.signal_activate().connect([this] {
@@ -338,6 +360,14 @@ void MainWindow::SetupMenu() {
         if (channel.has_value() && channel->GuildID.has_value()) {
             discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
         }
+    });
+
+    m_menu_view_channels.signal_activate().connect([this]() {
+        m_channel_list.set_visible(m_menu_view_channels.get_active());
+    });
+
+    m_menu_view_members.signal_activate().connect([this]() {
+        m_members.GetRoot()->set_visible(m_menu_view_members.get_active());
     });
 
 #ifdef WITH_LIBHANDY
@@ -381,10 +411,6 @@ MainWindow::type_signal_action_set_token MainWindow::signal_action_set_token() {
 
 MainWindow::type_signal_action_reload_css MainWindow::signal_action_reload_css() {
     return m_signal_action_reload_css;
-}
-
-MainWindow::type_signal_action_join_guild MainWindow::signal_action_join_guild() {
-    return m_signal_action_join_guild;
 }
 
 MainWindow::type_signal_action_set_status MainWindow::signal_action_set_status() {

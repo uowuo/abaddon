@@ -176,11 +176,10 @@ bool ChatInputTextContainer::GetChildPosition(Gtk::Widget *child, Gdk::Rectangle
     Gtk::Requisition min, req;
     child->get_preferred_size(min, req);
 
-    // yummy hardcoded values
-    pos.set_x(5);
+    // let css move it around
+    pos.set_x(0);
+    pos.set_y(0);
     pos.set_width(std::max(min.width, std::min(main_alloc.get_width(), req.width)));
-
-    pos.set_y(12);
     pos.set_height(std::max(min.height, std::min(main_alloc.get_height(), req.height)));
 
     return true;

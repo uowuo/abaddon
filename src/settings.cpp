@@ -47,6 +47,7 @@ void SettingsManager::ReadSettings() {
     SMSTR("discord", "gateway", GatewayURL);
     SMBOOL("discord", "memory_db", UseMemoryDB);
     SMBOOL("discord", "prefetch", Prefetch);
+    SMBOOL("discord", "autoconnect", Autoconnect);
     SMSTR("gui", "css", MainCSS);
     SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
     SMBOOL("gui", "animations", ShowAnimations);
@@ -56,6 +57,8 @@ void SettingsManager::ReadSettings() {
     SMBOOL("gui", "save_state", SaveState);
     SMBOOL("gui", "stock_emojis", ShowStockEmojis);
     SMBOOL("gui", "unreads", Unreads);
+    SMBOOL("gui", "alt_menu", AltMenu);
+    SMBOOL("gui", "hide_to_tray", HideToTray);
     SMINT("http", "concurrent", CacheHTTPConcurrency);
     SMSTR("http", "user_agent", UserAgent);
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
@@ -125,6 +128,7 @@ void SettingsManager::Close() {
         SMSTR("discord", "gateway", GatewayURL);
         SMBOOL("discord", "memory_db", UseMemoryDB);
         SMBOOL("discord", "prefetch", Prefetch);
+        SMBOOL("discord", "autoconnect", Autoconnect);
         SMSTR("gui", "css", MainCSS);
         SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
         SMBOOL("gui", "animations", ShowAnimations);
@@ -134,6 +138,8 @@ void SettingsManager::Close() {
         SMBOOL("gui", "save_state", SaveState);
         SMBOOL("gui", "stock_emojis", ShowStockEmojis);
         SMBOOL("gui", "unreads", Unreads);
+        SMBOOL("gui", "alt_menu", AltMenu);
+        SMBOOL("gui", "hide_to_tray", HideToTray);
         SMINT("http", "concurrent", CacheHTTPConcurrency);
         SMSTR("http", "user_agent", UserAgent);
         SMSTR("style", "expandercolor", ChannelsExpanderColor);

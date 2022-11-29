@@ -122,6 +122,8 @@ struct request {
 
     response execute();
 
+    CURL *get_curl();
+
 private:
     void prepare();
 
@@ -129,7 +131,6 @@ private:
     std::string m_url;
     const char *m_method;
     curl_slist *m_header_list = nullptr;
-    std::array<char, CURL_ERROR_SIZE> m_error_buf = { 0 };
     curl_mime *m_form = nullptr;
     std::function<void(curl_off_t, curl_off_t)> m_progress_callback;
 

@@ -30,6 +30,7 @@ void DiscordClient::Start() {
     if (m_client_started) return;
 
     m_http.SetBase(GetAPIURL());
+    SetHeaders();
 
     std::memset(&m_zstream, 0, sizeof(m_zstream));
     inflateInit2(&m_zstream, MAX_WBITS + 32);
@@ -572,10 +573,6 @@ void DiscordClient::SendThreadLazyLoad(Snowflake id) {
     m_websocket.Send(msg);
 }
 
-void DiscordClient::JoinGuild(const std::string &code) {
-    m_http.MakePOST("/invites/" + code, "{}", [](auto) {});
-}
-
 void DiscordClient::LeaveGuild(Snowflake id) {
     m_http.MakeDELETE("/users/@me/guilds/" + std::to_string(id), [](auto) {});
 }
@@ -608,19 +605,6 @@ void DiscordClient::UpdateStatus(PresenceStatus status, bool is_afk, const Activ
     m_websocket.Send(nlohmann::json(msg));
     m_user_to_status[m_user_data.ID] = status;
     m_signal_presence_update.emit(GetUserData(), status);
-}
-
-void DiscordClient::CreateDM(Snowflake user_id, const sigc::slot<void(DiscordError code, Snowflake channel_id)> &callback) {
-    CreateDMObject obj;
-    obj.Recipients.push_back(user_id);
-    m_http.MakePOST("/users/@me/channels", nlohmann::json(obj).dump(), [callback](const http::response &response) {
-        if (!CheckCode(response)) {
-            callback(DiscordError::NONE, Snowflake::Invalid);
-            return;
-        }
-        auto channel = nlohmann::json::parse(response.text).get<ChannelData>();
-        callback(GetCodeFromResponse(response), channel.ID);
-    });
 }
 
 void DiscordClient::CloseDM(Snowflake channel_id) {
@@ -1179,6 +1163,33 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
         else
             callback(GetCodeFromResponse(response));
     });
+}
+
+void DiscordClient::SetReferringChannel(Snowflake id) {
+    if (!id.IsValid()) {
+        m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+    } else {
+        const auto channel = GetChannel(id);
+        if (channel.has_value()) {
+            if (channel->IsDM()) {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me/" + std::to_string(id));
+            } else if (channel->GuildID.has_value()) {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/" + std::to_string(*channel->GuildID) + "/" + std::to_string(id));
+            } else {
+                m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+            }
+        } else {
+            m_http.SetPersistentHeader("Referer", "https://discord.com/channels/@me");
+        }
+    }
+}
+
+void DiscordClient::SetBuildNumber(uint32_t build_number) {
+    m_build_number = build_number;
+}
+
+void DiscordClient::SetCookie(std::string_view cookie) {
+    m_http.SetCookie(cookie);
 }
 
 void DiscordClient::UpdateToken(const std::string &token) {
@@ -2294,7 +2305,7 @@ void DiscordClient::HeartbeatThread() {
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
     msg.Token = m_token;
-    msg.Capabilities = 125; // no idea what this is
+    msg.Capabilities = 509; // no idea what this is
     msg.Properties.OS = "Windows";
     msg.Properties.Browser = "Chrome";
     msg.Properties.Device = "";
@@ -2307,7 +2318,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.ReferrerCurrent = "";
     msg.Properties.ReferringDomainCurrent = "";
     msg.Properties.ReleaseChannel = "stable";
-    msg.Properties.ClientBuildNumber = 105691;
+    msg.Properties.ClientBuildNumber = m_build_number;
     msg.Properties.ClientEventSource = "";
     msg.Presence.Status = "online";
     msg.Presence.Since = 0;
@@ -2316,6 +2327,7 @@ void DiscordClient::SendIdentify() {
     msg.ClientState.HighestLastMessageID = "0";
     msg.ClientState.ReadStateVersion = 0;
     msg.ClientState.UserGuildSettingsVersion = -1;
+    SetSuperPropertiesFromIdentity(msg);
     const bool b = m_websocket.GetPrintMessages();
     m_websocket.SetPrintMessages(false);
     m_websocket.Send(msg);
@@ -2328,6 +2340,36 @@ void DiscordClient::SendResume() {
     msg.SessionID = m_session_id;
     msg.Token = m_token;
     m_websocket.Send(msg);
+}
+
+void DiscordClient::SetHeaders() {
+    m_http.SetPersistentHeader("Sec-Fetch-Dest", "empty");
+    m_http.SetPersistentHeader("Sec-Fetch-Mode", "cors");
+    m_http.SetPersistentHeader("Sec-Fetch-Site", "same-origin");
+    m_http.SetPersistentHeader("X-Debug-Options", "bugReporterEnabled");
+    m_http.SetPersistentHeader("Accept-Language", "en-US,en;q=0.9");
+
+    SetReferringChannel(Snowflake::Invalid);
+}
+
+void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identity) {
+    nlohmann::ordered_json j;
+    j["os"] = identity.Properties.OS;
+    j["browser"] = identity.Properties.Browser;
+    j["device"] = identity.Properties.Device;
+    j["system_locale"] = identity.Properties.SystemLocale;
+    j["browser_user_agent"] = identity.Properties.BrowserUserAgent;
+    j["browser_version"] = identity.Properties.BrowserVersion;
+    j["os_version"] = identity.Properties.OSVersion;
+    j["referrer"] = identity.Properties.Referrer;
+    j["referring_domain"] = identity.Properties.ReferringDomain;
+    j["referrer_current"] = identity.Properties.ReferrerCurrent;
+    j["referring_domain_current"] = identity.Properties.ReferringDomainCurrent;
+    j["release_channel"] = identity.Properties.ReleaseChannel;
+    j["client_build_number"] = identity.Properties.ClientBuildNumber;
+    j["client_event_source"] = nullptr; // probably will never be non-null ("") anyways
+    m_http.SetPersistentHeader("X-Super-Properties", Glib::Base64::encode(j.dump()));
+    m_http.SetPersistentHeader("X-Discord-Locale", identity.Properties.SystemLocale);
 }
 
 void DiscordClient::HandleSocketOpen() {
@@ -2395,9 +2437,11 @@ void DiscordClient::StoreMessageData(Message &msg) {
     if (msg.Member.has_value())
         m_store.SetGuildMember(*msg.GuildID, msg.Author.ID, *msg.Member);
 
-    if (msg.Interaction.has_value() && msg.Interaction->Member.has_value()) {
+    if (msg.Interaction.has_value()) {
         m_store.SetUser(msg.Interaction->User.ID, msg.Interaction->User);
-        m_store.SetGuildMember(*msg.GuildID, msg.Interaction->User.ID, *msg.Interaction->Member);
+        if (msg.Interaction->Member.has_value()) {
+            m_store.SetGuildMember(*msg.GuildID, msg.Interaction->User.ID, *msg.Interaction->Member);
+        }
     }
 
     m_store.EndTransaction();
