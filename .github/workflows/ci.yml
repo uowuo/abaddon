@@ -160,7 +160,7 @@ jobs:
           cd deps
           git clone https://github.com/nlohmann/json
           cd json
-          git checkout db78ac1d7716f56fc9f1b030b715f872f93964e4
+          git checkout bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d
           mkdir build
           cd build
           cmake ..
