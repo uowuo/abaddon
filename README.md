@@ -135,101 +135,101 @@ spam filter's wrath:
 
 #### CSS selectors
 
-**`.app-window`** - Applied to all windows. This means the main window and all popups   
+**`.app-window`** - Applied to all windows. This means the main window and all popups
 **`.app-popup`** - Additional class for `.app-window`s when the window is not the main window
 
 **`.channel-list`** - Container of the channel list
 
-**`.messages`** - Container of user messages  
-**`.message-container`** - The container which holds a user's messages  
-**`.message-container-author`** - The author label for a message container  
-**`.message-container-timestamp`** - The timestamp label for a message container  
-**`.message-container-avatar`** - Avatar for a user in a message  
-**`.message-container-extra`** - Label containing BOT/Webhook  
-**`.message-text`** - The text of a user message  
-**`.pending`** - Extra class of .message-text for messages pending to be sent  
-**`.failed`** - Extra class of .message-text for messages that failed to be sent   
-**`.message-attachment-box`** - Contains attachment info  
-**`.message-reply`** - Container for the replied-to message in a reply (these elements will also have .message-text set)  
-**`.message-input`** - Applied to the chat input container  
-**`.replying`** - Extra class for chat input container when a reply is currently being created  
-**`.reaction-box`** - Contains a reaction image and the count  
-**`.reacted`** - Additional class for reaction-box when the user has reacted with a particular reaction  
+**`.messages`** - Container of user messages
+**`.message-container`** - The container which holds a user's messages
+**`.message-container-author`** - The author label for a message container
+**`.message-container-timestamp`** - The timestamp label for a message container
+**`.message-container-avatar`** - Avatar for a user in a message
+**`.message-container-extra`** - Label containing BOT/Webhook
+**`.message-text`** - The text of a user message
+**`.pending`** - Extra class of .message-text for messages pending to be sent
+**`.failed`** - Extra class of .message-text for messages that failed to be sent
+**`.message-attachment-box`** - Contains attachment info
+**`.message-reply`** - Container for the replied-to message in a reply (these elements will also have .message-text set)
+**`.message-input`** - Applied to the chat input container
+**`.replying`** - Extra class for chat input container when a reply is currently being created
+**`.reaction-box`** - Contains a reaction image and the count
+**`.reacted`** - Additional class for reaction-box when the user has reacted with a particular reaction
 **`.reaction-count`** - Contains the count for reaction
 
-**`.completer`** - Container for the message completer  
-**`.completer-entry`** - Container for a single entry in the completer  
-**`.completer-entry-label`** - Contains the label for an entry in the completer  
+**`.completer`** - Container for the message completer
+**`.completer-entry`** - Container for a single entry in the completer
+**`.completer-entry-label`** - Contains the label for an entry in the completer
 **`.completer-entry-image`** - Contains the image for an entry in the completer
 
-**`.embed`** - Container for a message embed  
-**`.embed-author`** - The author of an embed  
-**`.embed-title`** - The title of an embed  
-**`.embed-description`** - The description of an embed  
-**`.embed-field-title`** - The title of an embed field  
-**`.embed-field-value`** - The value of an embed field  
+**`.embed`** - Container for a message embed
+**`.embed-author`** - The author of an embed
+**`.embed-title`** - The title of an embed
+**`.embed-description`** - The description of an embed
+**`.embed-field-title`** - The title of an embed field
+**`.embed-field-value`** - The value of an embed field
 **`.embed-footer`** - The footer of an embed
 
-**`.members`** - Container of the member list  
-**`.members-row`** - All rows within the members container  
-**`.members-row-label`** - All labels in the members container  
-**`.members-row-member`** - Rows containing a member  
-**`.members-row-role`** - Rows containing a role  
+**`.members`** - Container of the member list
+**`.members-row`** - All rows within the members container
+**`.members-row-label`** - All labels in the members container
+**`.members-row-member`** - Rows containing a member
+**`.members-row-role`** - Rows containing a role
 **`.members-row-avatar`** - Contains the avatar for a row in the member list
 
-**`.status-indicator`** - The status indicator  
-**`.online`** - Applied to status indicators when the associated user is online  
-**`.idle`** - Applied to status indicators when the associated user is away  
-**`.dnd`** - Applied to status indicators when the associated user is on do not disturb  
+**`.status-indicator`** - The status indicator
+**`.online`** - Applied to status indicators when the associated user is online
+**`.idle`** - Applied to status indicators when the associated user is away
+**`.dnd`** - Applied to status indicators when the associated user is on do not disturb
 **`.offline`** - Applied to status indicators when the associated user is offline
 
 **`.typing-indicator`** - The typing indicator (also used for replies)
 
-Used in reorderable list implementation:  
+Used in reorderable list implementation:
 **`.drag-icon`** **`.drag-hover-top`** **`.drag-hover-bottom`**
 
-Used in guild settings popup:  
-**`.guild-settings-window`**  
-**`.guild-members-pane-list`** - Container for list of members in the members pane  
-**`.guild-members-pane-info`** - Container for member info  
+Used in guild settings popup:
+**`.guild-settings-window`**
+**`.guild-members-pane-list`** - Container for list of members in the members pane
+**`.guild-members-pane-info`** - Container for member info
 **`.guild-roles-pane-list`** - Container for list of roles in the roles pane
 
-Used in profile popup:  
-**`.mutual-friend-item`** - Applied to every item in the mutual friends list  
-**`.mutual-friend-item-name`** - Name in mutual friend item  
-**`.mutual-friend-item-avatar`** - Avatar in mutual friend item   
-**`.mutual-guild-item`** - Applied to every item in the mutual guilds list  
-**`.mutual-guild-item-name`** - Name in mutual guild item  
-**`.mutual-guild-item-icon`** - Icon in mutual guild item  
-**`.mutual-guild-item-nick`** - User nickname in mutual guild item  
-**`.profile-connection`** - Applied to every item in the user connections list  
-**`.profile-connection-label`** - Label in profile connection item  
-**`.profile-connection-check`** - Checkmark in verified profile connection items  
-**`.profile-connections`** - Container for profile connections  
-**`.profile-notes`** - Container for notes in profile window  
-**`.profile-notes-label`** - Label that says "NOTE"  
-**`.profile-notes-text`** - Actual note text  
-**`.profile-info-pane`** - Applied to container for info section of profile popup  
-**`.profile-info-created`** - Label for creation date of profile  
-**`.user-profile-window`**  
-**`.profile-main-container`** - Inner container for profile  
-**`.profile-avatar`**  
-**`.profile-username`**  
-**`.profile-switcher`** - Buttons used to switch viewed section of profile  
-**`.profile-stack`** - Container for profile info that can be switched between  
-**`.profile-badges`** - Container for badges  
+Used in profile popup:
+**`.mutual-friend-item`** - Applied to every item in the mutual friends list
+**`.mutual-friend-item-name`** - Name in mutual friend item
+**`.mutual-friend-item-avatar`** - Avatar in mutual friend item
+**`.mutual-guild-item`** - Applied to every item in the mutual guilds list
+**`.mutual-guild-item-name`** - Name in mutual guild item
+**`.mutual-guild-item-icon`** - Icon in mutual guild item
+**`.mutual-guild-item-nick`** - User nickname in mutual guild item
+**`.profile-connection`** - Applied to every item in the user connections list
+**`.profile-connection-label`** - Label in profile connection item
+**`.profile-connection-check`** - Checkmark in verified profile connection items
+**`.profile-connections`** - Container for profile connections
+**`.profile-notes`** - Container for notes in profile window
+**`.profile-notes-label`** - Label that says "NOTE"
+**`.profile-notes-text`** - Actual note text
+**`.profile-info-pane`** - Applied to container for info section of profile popup
+**`.profile-info-created`** - Label for creation date of profile
+**`.user-profile-window`**
+**`.profile-main-container`** - Inner container for profile
+**`.profile-avatar`**
+**`.profile-username`**
+**`.profile-switcher`** - Buttons used to switch viewed section of profile
+**`.profile-stack`** - Container for profile info that can be switched between
+**`.profile-badges`** - Container for badges
 **`.profile-badge`**
 
 ### Settings
 
-Settings are configured (for now) by editing abaddon.ini  
+Settings are configured (for now) by editing abaddon.ini
 The format is similar to the standard Windows ini format **except**:
 
 * `#` is used to begin comments as opposed to `;`
 * Section and key names are case-sensitive
 
-You should edit these while the client is closed even though there's an option to reload while running  
-This listing is organized by section.  
+You should edit these while the client is closed even though there's an option to reload while running
+This listing is organized by section.
 For example, memory_db would be set by adding `memory_db = true` under the line `[discord]`
 
 #### discord
@@ -240,6 +240,7 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 * **`token`** (string) - Discord token used to login, this can be set from the menu
 * **`prefetch`** (true or false, `default: false`) - if true, new messages will cause the avatar and image attachments to be
   automatically downloaded
+* **`autoconnect`** (true or false, `default: false`) - autoconnect to discord
 
 #### http
 
