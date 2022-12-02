@@ -237,47 +237,53 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### discord
 
-* **`gateway`** (string) - override url for Discord gateway. must be json format and use zlib stream compression
-* **`api_base`** (string) - override base url for Discord API
-* **`memory_db`** (true or false, `default: false`) - if true, Discord data will be kept in memory as opposed to on disk
-* **`token`** (string) - Discord token used to login, this can be set from the menu
-* **`prefetch`** (true or false, `default: false`) - if true, new messages will cause the avatar and image attachments to be
-  automatically downloaded
-* **`autoconnect`** (true or false, `default: false`) - autoconnect to discord
+| Setting     | Type        | Default     | Description |
+| ----------- | ----------- | ----------- | ----------- |
+| `gateway` | string | | override url for Discord gateway. must be json format and use zlib stream compression |
+| `api_base` | string | | override base url for Discord API |
+| `memory_db` | boolean | false | if true, Discord data will be kept in memory as opposed to on disk |
+| `token` | string | |  Discord token used to login, this can be set from the menu |
+| `prefetch` | boolean | false | if true, new messages will cause the avatar and image attachments to be automatically downloaded |
+| `autoconnect` | boolean | false | autoconnect to discord |
 
 #### http
 
-* **`user_agent`** (string) - sets the user-agent to use in HTTP requests to the Discord API (not including media/images)
-* **`concurrent`** (int, `default: 20`) - how many images can be concurrently retrieved
+| Setting     | Type        | Default     | Description |
+| ----------- | ----------- | ----------- | ----------- |
+| `user_agent` | string | | sets the user-agent to use in HTTP requests to the Discord API (not including media/images) |
+| `concurrent` | int | 20 | how many images can be concurrently retrieved |
 
 #### gui
 
-* **`member_list_discriminator`** (true or false, `default: true`) - show user discriminators in the member list
-* **`stock_emojis`** (true or false, `default: true`) - allow abaddon to substitute unicode emojis with images from emojis.bin,
-  must be false to allow GTK to render emojis itself
-* **`custom_emojis`** (true or false, `default: true`) - download and use custom Discord emojis
-* **`css`** (string) - path to the main CSS file
-* **`animations`** (true or false, `default: true`) - use animated images where available (e.g. server icons, emojis, avatars).
-  false means static images will be used
-* **`animated_guild_hover_only`** (true or false, `default: true`) - only animate guild icons when the guild is being hovered
-  over
-* **`owner_crown`** (true or false, `default: true`) - show a crown next to the owner
-* **`unreads`** (true or false, `default: true`) - show unread indicators and mention badges
-* **`save_state`** (true or false, `default: true`) - save the state of the gui (active channels, tabs, expanded channels)
-* **`alt_menu`** (true or false, `default: false`) - keep the menu hidden unless revealed with alt key
-* **`hide_to_tray`** (true or false, `default: false`) - hide abaddon to the system tray on window close
+| Setting     | Type        | Default     | Description |
+| ----------- | ----------- | ----------- | ----------- |
+| `member_list_discriminator` | boolean | true | show user discriminators in the member list |
+| `stock_emojis` | boolean | true | allow abaddon to substitute unicode emojis with images from emojis.bin, must be false to allow GTK to render emojis itself |
+| `custom_emojis` | boolean | true | download and use custom Discord emojis |
+| `css` | string | | path to the main CSS file |
+| `animations` | boolean | true | use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used |
+| `animated_guild_hover_only` | boolean | true | only animate guild icons when the guild is being hovered over |
+| `owner_crown` | boolean | true | show a crown next to the owner |
+| `unreads` | boolean | true | show unread indicators and mention badges |
+| `save_state` | boolean | true | save the state of the gui (active channels, tabs, expanded channels) |
+| `alt_menu` | boolean | false | keep the menu hidden unless revealed with alt key |
+| `hide_to_tray` | boolean | false | hide abaddon to the system tray on window close |
 
 #### style
 
-* **`linkcolor`** (string) - color to use for links in messages
-* **`expandercolor`** (string) - color to use for the expander in the channel list
-* **`nsfwchannelcolor`** (string) - color to use for NSFW channels in the channel list
-* **`channelcolor`** (string) - color to use for SFW channels in the channel list
-* **`mentionbadgecolor`** (string) - background color for mention badges
-* **`mentionbadgetextcolor`** (string) - color to use for number displayed on mention badges
-* **`unreadcolor`** (string) - color to use for the unread indicator
+| Setting     | Type        | Default     | Description |
+| ----------- | ----------- | ----------- | ----------- |
+| `linkcolor` | string | | color to use for links in messages |
+| `expandercolor` | string | | color to use for the expander in the channel list |
+| `nsfwchannelcolor` | string | | color to use for NSFW channels in the channel list |
+| `channelcolor` | string | | color to use for SFW channels in the channel list |
+| `mentionbadgecolor` | string | | background color for mention badges |
+| `mentionbadgetextcolor` | string | | color to use for number displayed on mention badges |
+| `unreadcolor` | string | | color to use for the unread indicator |
 
 ### Environment variables
 
-* **`ABADDON_NO_FC`** (Windows only) - don't use custom font config
-* **`ABADDON_CONFIG`** - change path of configuration file to use. relative to cwd or can be absolute
+| variable    | Description |
+| ----------- | ----------- |
+| `ABADDON_NO_FC` | (Windows only) don't use custom font config |
+| `ABADDON_CONFIG` | change path of configuration file to use. relative to cwd or can be absolute |
