@@ -75,6 +75,10 @@ the result of fundamental issues with Discord's thread implementation.
       ```Shell
       $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev
       ```
+    * On Arch Linux
+      ```Shell
+      $ sudo pacman -S gcc cmake gtkmm3 libcurl-gnutls lib32-sqlite lib32-openssl nlohmann-json
+      ```
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
