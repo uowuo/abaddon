@@ -189,39 +189,41 @@ Used in reorderable list implementation:
 
 Used in guild settings popup:
 
-| Selector                                            | Description                                       |
-|-----------------------------------------------------|---------------------------------------------------|
-| `.guild-settings-window` `.guild-members-pane-list` | Container for list of members in the members pane |
-| `.guild-members-pane-info`                          | Container for member info                         |
-| `.guild-roles-pane-list`                            | Container for list of roles in the roles pane     |
+| Selector                   | Description                                       |
+|----------------------------|---------------------------------------------------|
+| `.guild-settings-window`   | Container for list of members in the members pane |
+| `.guild-members-pane-list` |                                                   |
+| `.guild-members-pane-info` | Container for member info                         |
+| `.guild-roles-pane-list`   | Container for list of roles in the roles pane     |
 
 Used in profile popup:
 
-| Selector                           | Description                                             |
-|------------------------------------|---------------------------------------------------------|
-| `.mutual-friend-item`              | Applied to every item in the mutual friends list        |
-| `.mutual-friend-item-name`         | Name in mutual friend item                              |
-| `.mutual-friend-item-avatar`       | Avatar in mutual friend item                            |
-| `.mutual-guild-item`               | Applied to every item in the mutual guilds list         |
-| `.mutual-guild-item-name`          | Name in mutual guild item                               |
-| `.mutual-guild-item-icon`          | Icon in mutual guild item                               |
-| `.mutual-guild-item-nick`          | User nickname in mutual guild item                      |
-| `.profile-connection`              | Applied to every item in the user connections list      |
-| `.profile-connection-label`        | Label in profile connection item                        |
-| `.profile-connection-check`        | Checkmark in verified profile connection items          |
-| `.profile-connections`             | Container for profile connections                       |
-| `.profile-notes`                   | Container for notes in profile window                   |
-| `.profile-notes-label`             | Label that says "NOTE"                                  |
-| `.profile-notes-text`              | Actual note text                                        |
-| `.profile-info-pane`               | Applied to container for info section of profile popup  |
-| `.profile-info-created`            | Label for creation date of profile                      |
-| `.user-profile-window`             |                                                         |
-| `.profile-main-container`          | Inner container for profile                             |
-| `.profile-avatar`                  |                                                         |
-| `.profile-username`                |                                                         |
-| `.profile-switcher`                | Buttons used to switch viewed section of profile        |
-| `.profile-stack`                   | Container for profile info that can be switched between |
-| `.profile-badges` `.profile-badge` | Container for badges                                    |
+| Selector                     | Description                                             |
+|------------------------------|---------------------------------------------------------|
+| `.mutual-friend-item`        | Applied to every item in the mutual friends list        |
+| `.mutual-friend-item-name`   | Name in mutual friend item                              |
+| `.mutual-friend-item-avatar` | Avatar in mutual friend item                            |
+| `.mutual-guild-item`         | Applied to every item in the mutual guilds list         |
+| `.mutual-guild-item-name`    | Name in mutual guild item                               |
+| `.mutual-guild-item-icon`    | Icon in mutual guild item                               |
+| `.mutual-guild-item-nick`    | User nickname in mutual guild item                      |
+| `.profile-connection`        | Applied to every item in the user connections list      |
+| `.profile-connection-label`  | Label in profile connection item                        |
+| `.profile-connection-check`  | Checkmark in verified profile connection items          |
+| `.profile-connections`       | Container for profile connections                       |
+| `.profile-notes`             | Container for notes in profile window                   |
+| `.profile-notes-label`       | Label that says "NOTE"                                  |
+| `.profile-notes-text`        | Actual note text                                        |
+| `.profile-info-pane`         | Applied to container for info section of profile popup  |
+| `.profile-info-created`      | Label for creation date of profile                      |
+| `.user-profile-window`       |                                                         |
+| `.profile-main-container`    | Inner container for profile                             |
+| `.profile-avatar`            |                                                         |
+| `.profile-username`          |                                                         |
+| `.profile-switcher`          | Buttons used to switch viewed section of profile        |
+| `.profile-stack`             | Container for profile info that can be switched between |
+| `.profile-badges`            | Container for badges                                    |
+| `.profile-badge`             |                                                         |
 
 ### Settings
 
