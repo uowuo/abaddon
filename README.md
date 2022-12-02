@@ -226,13 +226,14 @@ Used in profile popup:
 
 ### Settings
 
-Settings are configured (for now) by editing abaddon.ini
+Settings are configured (for now) by editing `abaddon.ini`.
 The format is similar to the standard Windows ini format **except**:
 
 * `#` is used to begin comments as opposed to `;`
 * Section and key names are case-sensitive
 
-You should edit these while the client is closed even though there's an option to reload while running
+> **Warning**: You should edit these while the client is closed, even though there's an option to reload while running.
+
 This listing is organized by section.
 For example, memory_db would be set by adding `memory_db = true` under the line `[discord]`
 
