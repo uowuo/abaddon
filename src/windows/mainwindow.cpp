@@ -368,7 +368,7 @@ void MainWindow::SetupMenu() {
     });
 
     m_menu_view_members.signal_activate().connect([this]() {
-        m_members.GetRoot()->set_visible(m_menu_view_members.get_active());
+        m_members.set_visible(m_menu_view_members.get_active());
     });
 
 #ifdef WITH_LIBHANDY
