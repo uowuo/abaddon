@@ -1033,6 +1033,22 @@ RoleData Store::GetRoleBound(std::unique_ptr<Statement> &s) {
     return r;
 }
 
+UserData Store::GetUserBound(Statement *s) const {
+    UserData r;
+
+    s->Get(0, r.ID);
+    s->Get(1, r.Username);
+    s->Get(2, r.Discriminator);
+    s->Get(3, r.Avatar);
+    s->Get(4, r.IsBot);
+    s->Get(5, r.IsSystem);
+    s->Get(6, r.IsMFAEnabled);
+    s->Get(7, r.PremiumType);
+    s->Get(8, r.PublicFlags);
+
+    return r;
+}
+
 std::optional<UserData> Store::GetUser(Snowflake id) const {
     auto &s = m_stmt_get_user;
     s->Bind(1, id);
@@ -1043,17 +1059,7 @@ std::optional<UserData> Store::GetUser(Snowflake id) const {
         return {};
     }
 
-    UserData r;
-
-    r.ID = id;
-    s->Get(1, r.Username);
-    s->Get(2, r.Discriminator);
-    s->Get(3, r.Avatar);
-    s->Get(4, r.IsBot);
-    s->Get(5, r.IsSystem);
-    s->Get(6, r.IsMFAEnabled);
-    s->Get(7, r.PremiumType);
-    s->Get(8, r.PublicFlags);
+    auto r = GetUserBound(s.get());
 
     s->Reset();
 

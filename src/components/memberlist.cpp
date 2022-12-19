@@ -70,12 +70,12 @@ void MemberList::UpdateMemberList() {
         return;
     }
 
-    std::set<Snowflake> ids;
+    std::vector<UserData> users;
     if (channel->IsThread()) {
-        auto x = discord.GetUsersInThread(m_chan_id);
-        ids = { x.begin(), x.end() };
+        // auto x = discord.GetUsersInThread(m_chan_id);
+        // ids = { x.begin(), x.end() };
     } else {
-        ids = discord.GetUsersInGuild(m_guild_id);
+        users = discord.GetUserDataInGuildBulk(m_guild_id);
     }
 
     std::map<int, RoleData> pos_to_role;
@@ -83,23 +83,22 @@ void MemberList::UpdateMemberList() {
     // std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
 
-    for (const auto &id : ids) {
-        auto user = discord.GetUser(id);
-        if (!user.has_value() || user->IsDeleted())
+    for (const auto &user : users) {
+        if (user.IsDeleted())
             continue;
 
-        auto pos_role_id = discord.GetMemberHoistedRole(m_guild_id, id); // role for positioning
+        auto pos_role_id = discord.GetMemberHoistedRole(m_guild_id, user.ID); // role for positioning
         // auto col_role_id = discord.GetMemberHoistedRole(m_guild_id, id, true); // role for color
         auto pos_role = discord.GetRole(pos_role_id);
         // auto col_role = discord.GetRole(col_role_id);
 
         if (!pos_role.has_value()) {
-            roleless_users.push_back(id);
+            roleless_users.push_back(user.ID);
             continue;
         }
 
         pos_to_role[pos_role->Position] = *pos_role;
-        pos_to_users[pos_role->Position].push_back(std::move(*user));
+        pos_to_users[pos_role->Position].push_back(user);
         // if (col_role.has_value())
         //    user_to_color[id] = col_role->Color;
     }

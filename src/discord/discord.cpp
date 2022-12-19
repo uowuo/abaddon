@@ -262,6 +262,12 @@ std::set<Snowflake> DiscordClient::GetUsersInGuild(Snowflake id) const {
     return {};
 }
 
+std::vector<UserData> DiscordClient::GetUserDataInGuildBulk(Snowflake id) {
+    const auto ids = GetUsersInGuild(id);
+    std::vector<Snowflake> test;
+    return m_store.GetUserDataBulk(ids.begin(), ids.end());
+}
+
 std::set<Snowflake> DiscordClient::GetChannelsInGuild(Snowflake id) const {
     auto it = m_guild_to_channels.find(id);
     if (it != m_guild_to_channels.end())

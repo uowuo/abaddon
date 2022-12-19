@@ -39,6 +39,36 @@ public:
     std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     std::vector<BanData> GetBans(Snowflake guild_id) const;
 
+    template<typename Iter>
+    std::vector<UserData> GetUserDataBulk(Iter start, Iter end) {
+        std::string query = "SELECT * FROM users WHERE id IN (";
+        for (Iter it = start; it != end; it++) {
+            query += "?,";
+        }
+        query.pop_back();
+        query += ")";
+
+        Statement stmt(m_db, query.c_str());
+        if (!stmt.OK()) {
+            printf("failed to prepare GetUserDataBulk: %s\n", m_db.ErrStr());
+        }
+
+        int i = 0;
+        for (Iter it = start; it != end; it++) {
+            i++;
+            if (stmt.Bind(i, *it) != SQLITE_OK) {
+                printf("failed to bind GetUserDataBulk: %s\n", m_db.ErrStr());
+            }
+        }
+
+        std::vector<UserData> r;
+        while (stmt.FetchOne()) {
+            r.push_back(GetUserBound(&stmt));
+        }
+
+        return r;
+    }
+
     std::vector<Message> GetLastMessages(Snowflake id, size_t num) const;
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit) const;
     std::vector<Message> GetPinnedMessages(Snowflake channel_id) const;
@@ -240,6 +270,7 @@ private:
 
     Message GetMessageBound(std::unique_ptr<Statement> &stmt) const;
     static RoleData GetRoleBound(std::unique_ptr<Statement> &stmt);
+    UserData GetUserBound(Statement *stmt) const;
 
     void SetMessageInteractionPair(Snowflake message_id, const MessageInteractionData &interaction);
 

@@ -76,6 +76,7 @@ public:
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
+    std::vector<UserData> GetUserDataInGuildBulk(Snowflake id);
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
     std::vector<Snowflake> GetUsersInThread(Snowflake id) const;
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const;
