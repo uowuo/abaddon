@@ -72,7 +72,8 @@ protected:
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
 
-    Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
+    Gtk::TreeModel::iterator AddFolder(const UserSettingsGuildFoldersEntry &folder);
+    Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
 

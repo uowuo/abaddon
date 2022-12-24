@@ -60,6 +60,7 @@ public:
     std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit = 50) const;
     std::set<Snowflake> GetPrivateChannels() const;
+    const UserSettings &GetUserSettings() const;
 
     EPremiumType GetSelfPremiumType() const;
 

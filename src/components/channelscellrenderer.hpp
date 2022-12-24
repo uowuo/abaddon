@@ -6,6 +6,7 @@
 #include "discord/snowflake.hpp"
 
 enum class RenderType : uint8_t {
+    Folder,
     Guild,
     Category,
     TextChannel,
@@ -38,6 +39,17 @@ protected:
                       const Gdk::Rectangle &background_area,
                       const Gdk::Rectangle &cell_area,
                       Gtk::CellRendererState flags) override;
+
+    // guild functions
+    void get_preferred_width_vfunc_folder(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_folder(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_folder(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_folder(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_folder(const Cairo::RefPtr<Cairo::Context> &cr,
+                             Gtk::Widget &widget,
+                             const Gdk::Rectangle &background_area,
+                             const Gdk::Rectangle &cell_area,
+                             Gtk::CellRendererState flags);
 
     // guild functions
     void get_preferred_width_vfunc_guild(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;

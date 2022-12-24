@@ -2292,6 +2292,10 @@ std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
     return {};
 }
 
+const UserSettings &DiscordClient::GetUserSettings() const {
+    return m_user_settings;
+}
+
 EPremiumType DiscordClient::GetSelfPremiumType() const {
     const auto &data = GetUserData();
     if (data.PremiumType.has_value())

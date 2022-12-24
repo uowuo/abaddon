@@ -262,7 +262,42 @@ void ChannelList::UpdateListing() {
 
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    const auto guild_ids = discord.GetUserSortedGuilds();
+    /*
+    guild_folders looks something like this
+     "guild_folders": [
+        {
+           "color": null,
+           "guild_ids": [
+               "8009060___________"
+           ],
+           "id": null,
+           "name": null
+        },
+        {
+           "color": null,
+           "guild_ids": [
+               "99615594__________",
+               "86132141__________",
+               "35450138__________",
+               "83714048__________"
+           ],
+           "id": 2853066769,
+           "name": null
+        }
+    ]
+
+     so if id != null then its a folder (they can have single entries)
+    */
+
+    int sort_value = 0;
+
+    const auto folders = discord.GetUserSettings().GuildFolders;
+    for (const auto &group : folders) {
+        auto iter = AddFolder(group);
+        (*iter)[m_columns.m_sort] = sort_value++;
+    }
+
+    /*
     int sortnum = 0;
     for (const auto &guild_id : guild_ids) {
         const auto guild = discord.GetGuild(guild_id);
@@ -271,6 +306,7 @@ void ChannelList::UpdateListing() {
         auto iter = AddGuild(*guild);
         (*iter)[m_columns.m_sort] = sortnum++;
     }
+    */
 
     m_updating_listing = false;
 
@@ -278,7 +314,7 @@ void ChannelList::UpdateListing() {
 }
 
 void ChannelList::UpdateNewGuild(const GuildData &guild) {
-    AddGuild(guild);
+    AddGuild(guild, m_model->children());
     // update sort order
     int sortnum = 0;
     for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
@@ -405,6 +441,8 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
     // get the threads in the guild
     std::vector<Snowflake> threads;
     auto guild_iter = GetIteratorForGuildFromID(data.GuildID);
+    if (!guild_iter) return;
+
     std::queue<Gtk::TreeModel::iterator> queue;
     queue.push(guild_iter);
 
@@ -546,11 +584,45 @@ ExpansionStateRoot ChannelList::GetExpansionState() const {
     return r;
 }
 
-Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
+Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
+    if (!folder.ID.has_value()) {
+        // just a guild
+        if (!folder.GuildIDs.empty()) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(folder.GuildIDs[0]);
+            if (guild.has_value()) {
+                return AddGuild(*guild, m_model->children());
+            }
+        }
+    } else {
+        auto folder_row = *m_model->append();
+        folder_row[m_columns.m_type] = RenderType::Folder;
+        folder_row[m_columns.m_id] = *folder.ID;
+        if (folder.Name.has_value()) {
+            folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
+        } else {
+            folder_row[m_columns.m_name] = "Folder";
+        }
+
+        int sort_value = 0;
+        for (const auto &guild_id : folder.GuildIDs) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(guild_id);
+            if (guild.has_value()) {
+                auto guild_row = AddGuild(*guild, folder_row->children());
+                (*guild_row)[m_columns.m_sort] = sort_value++;
+            }
+        }
+
+        return folder_row;
+    }
+
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto guild_row = *m_model->append();
+    auto guild_row = *m_model->append(root);
     guild_row[m_columns.m_type] = RenderType::Guild;
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
@@ -679,8 +751,15 @@ void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
 
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     for (const auto &child : m_model->children()) {
-        if (child[m_columns.m_id] == id)
+        if (child[m_columns.m_type] == RenderType::Guild && child[m_columns.m_id] == id) {
             return child;
+        } else if (child[m_columns.m_type] == RenderType::Folder) {
+            for (const auto &folder_child : child->children()) {
+                if (folder_child[m_columns.m_id] == id) {
+                    return folder_child;
+                }
+            }
+        }
     }
     return {};
 }
