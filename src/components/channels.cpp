@@ -89,6 +89,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
+    column->add_attribute(renderer->property_color(), m_columns.m_color);
     m_view.append_column(*column);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
@@ -292,27 +293,29 @@ void ChannelList::UpdateListing() {
     int sort_value = 0;
 
     const auto folders = discord.GetUserSettings().GuildFolders;
-    for (const auto &group : folders) {
-        auto iter = AddFolder(group);
-        (*iter)[m_columns.m_sort] = sort_value++;
-    }
+    if (folders.empty()) {
+        // fallback if no organization has occurred (guild_folders will be empty)
+        const auto guild_ids = discord.GetUserSortedGuilds();
+        for (const auto &guild_id : guild_ids) {
+            const auto guild = discord.GetGuild(guild_id);
+            if (!guild.has_value()) continue;
 
-    /*
-    int sortnum = 0;
-    for (const auto &guild_id : guild_ids) {
-        const auto guild = discord.GetGuild(guild_id);
-        if (!guild.has_value()) continue;
-
-        auto iter = AddGuild(*guild);
-        (*iter)[m_columns.m_sort] = sortnum++;
+            auto iter = AddGuild(*guild, m_model->children());
+            (*iter)[m_columns.m_sort] = sort_value++;
+        }
+    } else {
+        for (const auto &group : folders) {
+            auto iter = AddFolder(group);
+            (*iter)[m_columns.m_sort] = sort_value++;
+        }
     }
-    */
 
     m_updating_listing = false;
 
     AddPrivateChannels();
 }
 
+// TODO update for folders
 void ChannelList::UpdateNewGuild(const GuildData &guild) {
     AddGuild(guild, m_model->children());
     // update sort order
@@ -601,6 +604,9 @@ Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEn
             folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
         } else {
             folder_row[m_columns.m_name] = "Folder";
+        }
+        if (folder.Color.has_value()) {
+            folder_row[m_columns.m_color] = IntToRGBA(*folder.Color);
         }
 
         int sort_value = 0;
@@ -973,6 +979,7 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
     M(m_sort);
     M(m_nsfw);
     M(m_expanded);
+    M(m_color);
 #undef M
 
     // recursively move children
@@ -1085,4 +1092,5 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_sort);
     add(m_nsfw);
     add(m_expanded);
+    add(m_color);
 }

@@ -18,7 +18,8 @@ CellRendererChannels::CellRendererChannels()
     , m_property_pixbuf(*this, "pixbuf")
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
     , m_property_expanded(*this, "expanded")
-    , m_property_nsfw(*this, "nsfw") {
+    , m_property_nsfw(*this, "nsfw")
+    , m_property_color(*this, "color") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -53,6 +54,10 @@ Glib::PropertyProxy<bool> CellRendererChannels::property_expanded() {
 
 Glib::PropertyProxy<bool> CellRendererChannels::property_nsfw() {
     return m_property_nsfw.get_proxy();
+}
+
+Glib::PropertyProxy<std::optional<Gdk::RGBA>> CellRendererChannels::property_color() {
+    return m_property_color.get_proxy();
 }
 
 void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -204,7 +209,11 @@ void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Contex
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
     static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-    m_renderer_text.property_foreground_rgba() = color;
+    if (m_property_color.get_value().has_value()) {
+        m_renderer_text.property_foreground_rgba() = *m_property_color.get_value();
+    } else {
+        m_renderer_text.property_foreground_rgba() = color;
+    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
 }

@@ -61,6 +61,7 @@ protected:
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::PixbufAnimation>> m_icon_anim;
         Gtk::TreeModelColumn<int64_t> m_sort;
         Gtk::TreeModelColumn<bool> m_nsfw;
+        Gtk::TreeModelColumn<std::optional<Gdk::RGBA>> m_color; // for folders right now
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
         // because otherwise it doesnt count as an "expander" (property_is_expander)
         // so this solution will have to do which i hate but the alternative is adding invisible children

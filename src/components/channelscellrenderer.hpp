@@ -28,6 +28,7 @@ public:
     Glib::PropertyProxy<Glib::RefPtr<Gdk::PixbufAnimation>> property_icon_animation();
     Glib::PropertyProxy<bool> property_expanded();
     Glib::PropertyProxy<bool> property_nsfw();
+    Glib::PropertyProxy<std::optional<Gdk::RGBA>> property_color();
 
 protected:
     void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
@@ -130,6 +131,7 @@ private:
     Glib::Property<Glib::RefPtr<Gdk::PixbufAnimation>> m_property_pixbuf_animation; // guild
     Glib::Property<bool> m_property_expanded;                                       // category
     Glib::Property<bool> m_property_nsfw;                                           // channel
+    Glib::Property<std::optional<Gdk::RGBA>> m_property_color;                      // folder
 
     // same pitfalls as in https://github.com/uowuo/abaddon/blob/60404783bd4ce9be26233fe66fc3a74475d9eaa3/components/cellrendererpixbufanimation.hpp#L32-L39
     // this will manifest though since guild icons can change
