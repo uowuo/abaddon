@@ -154,7 +154,9 @@ DiscordVoiceClient::DiscordVoiceClient()
         auto &audio = Abaddon::Get().GetAudio();
         audio.SetOpusBuffer(m_opus_buffer.data());
         audio.signal_opus_packet().connect([this](int payload_size) {
-            // SendEncrypted if udp is connected
+            if (IsConnected()) {
+                m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
+            }
         });
     });
 }
@@ -307,6 +309,8 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     m_udp.SetSecretKey(m_secret_key);
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.Run();
+
+    SetState(State::Connected);
 }
 
 void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
