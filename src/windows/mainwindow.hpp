@@ -3,6 +3,7 @@
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
+#include "components/voiceinfobox.hpp"
 #include <gtkmm.h>
 
 class MainWindow : public Gtk::Window {
@@ -53,6 +54,9 @@ private:
     ChatWindow m_chat;
     MemberList m_members;
     FriendsList m_friends;
+    VoiceInfoBox m_voice_info;
+
+    Gtk::Box m_left_pane;
 
     Gtk::Stack m_content_stack;
 

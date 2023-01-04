@@ -423,6 +423,7 @@ void DiscordVoiceClient::KeepaliveThread() {
 void DiscordVoiceClient::SetState(State state) {
     m_log->debug("Changing state to {}", GetStateName(state));
     m_state = state;
+    m_signal_state_update.emit(state);
 }
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
@@ -462,6 +463,10 @@ DiscordVoiceClient::type_signal_disconnected DiscordVoiceClient::signal_disconne
 
 DiscordVoiceClient::type_signal_speaking DiscordVoiceClient::signal_speaking() {
     return m_signal_speaking;
+}
+
+DiscordVoiceClient::type_signal_state_update DiscordVoiceClient::signal_state_update() {
+    return m_signal_state_update;
 }
 
 void from_json(const nlohmann::json &j, VoiceGatewayMessage &m) {

@@ -201,7 +201,6 @@ public:
     [[nodiscard]] bool IsConnected() const noexcept;
     [[nodiscard]] bool IsConnecting() const noexcept;
 
-private:
     enum class State {
         ConnectingToWebsocket,
         EstablishingConnection,
@@ -209,6 +208,8 @@ private:
         DisconnectedByClient,
         DisconnectedByServer,
     };
+
+private:
     static const char *GetStateName(State state);
 
     void OnGatewayMessage(const std::string &msg);
@@ -272,13 +273,16 @@ private:
     using type_signal_connected = sigc::signal<void()>;
     using type_signal_disconnected = sigc::signal<void()>;
     using type_signal_speaking = sigc::signal<void(VoiceSpeakingData)>;
+    using type_signal_state_update = sigc::signal<void(State)>;
     type_signal_connected m_signal_connected;
     type_signal_disconnected m_signal_disconnected;
     type_signal_speaking m_signal_speaking;
+    type_signal_state_update m_signal_state_update;
 
 public:
     type_signal_connected signal_connected();
     type_signal_disconnected signal_disconnected();
     type_signal_speaking signal_speaking();
+    type_signal_state_update signal_state_update();
 };
 #endif

@@ -31,6 +31,9 @@ DiscordClient::DiscordClient(bool mem_store)
     m_voice.signal_speaking().connect([this](const VoiceSpeakingData &data) {
         m_signal_voice_speaking.emit(data);
     });
+    m_voice.signal_state_update().connect([this](DiscordVoiceClient::State state) {
+        m_signal_voice_client_state_update.emit(state);
+    });
 #endif
 
     LoadEventMap();
@@ -1186,12 +1189,14 @@ void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     m.ChannelID = channel_id;
     m.PreferredRegion = "newark";
     m_websocket.Send(m);
+    m_signal_voice_requested_connect.emit(channel_id);
 }
 
 void DiscordClient::DisconnectFromVoice() {
     m_voice.Stop();
     VoiceStateUpdateMessage m;
     m_websocket.Send(m);
+    m_signal_voice_requested_disconnect.emit();
 }
 
 bool DiscordClient::IsVoiceConnected() const noexcept {
@@ -2994,5 +2999,17 @@ DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_use
 
 DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
     return m_signal_voice_user_connect;
+}
+
+DiscordClient::type_signal_voice_requested_connect DiscordClient::signal_voice_requested_connect() {
+    return m_signal_voice_requested_connect;
+}
+
+DiscordClient::type_signal_voice_requested_disconnect DiscordClient::signal_voice_requested_disconnect() {
+    return m_signal_voice_requested_disconnect;
+}
+
+DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice_client_state_update() {
+    return m_signal_voice_client_state_update;
 }
 #endif

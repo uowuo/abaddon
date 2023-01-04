@@ -360,3 +360,21 @@
     background-color: #dd3300;
     margin-left: 1px;
 }
+
+.voice-info {
+    background-color: #0B0B0B;
+    padding: 5px;
+    border: 1px solid #202020;
+}
+
+.voice-info-disconnect-image {
+    color: #DDDDDD;
+}
+
+.voice-info-status {
+    font-weight: bold;
+}
+
+.voice-info-location {
+
+}

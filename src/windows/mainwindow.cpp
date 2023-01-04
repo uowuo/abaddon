@@ -6,6 +6,7 @@ MainWindow::MainWindow()
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)
     , m_chan_content_paned(Gtk::ORIENTATION_HORIZONTAL)
     , m_content_members_paned(Gtk::ORIENTATION_HORIZONTAL)
+    , m_left_pane(Gtk::ORIENTATION_VERTICAL)
     , m_accels(Gtk::AccelGroup::create()) {
     set_default_size(1200, 800);
     get_style_context()->add_class("app-window");
@@ -51,12 +52,18 @@ MainWindow::MainWindow()
     m_content_stack.set_visible_child("chat");
     m_content_stack.show();
 
-    m_chan_content_paned.pack1(m_channel_list);
+    m_voice_info.show();
+
+    m_left_pane.add(m_channel_list);
+    m_left_pane.add(m_voice_info);
+    m_left_pane.show();
+
+    m_chan_content_paned.pack1(m_left_pane);
     m_chan_content_paned.pack2(m_content_members_paned);
     m_chan_content_paned.child_property_shrink(m_content_members_paned) = true;
     m_chan_content_paned.child_property_resize(m_content_members_paned) = true;
-    m_chan_content_paned.child_property_shrink(m_channel_list) = true;
-    m_chan_content_paned.child_property_resize(m_channel_list) = true;
+    m_chan_content_paned.child_property_shrink(m_left_pane) = true;
+    m_chan_content_paned.child_property_resize(m_left_pane) = true;
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
     m_content_box.add(m_chan_content_paned);
