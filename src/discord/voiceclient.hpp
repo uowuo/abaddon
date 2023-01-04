@@ -239,6 +239,8 @@ private:
     Snowflake m_channel_id;
     Snowflake m_user_id;
 
+    std::unordered_map<Snowflake, uint32_t> m_ssrc_map;
+
     std::array<uint8_t, 32> m_secret_key;
 
     std::string m_ip;

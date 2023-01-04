@@ -210,6 +210,9 @@ void DiscordVoiceClient::SetUserID(Snowflake id) {
 }
 
 std::optional<uint32_t> DiscordVoiceClient::GetSSRCOfUser(Snowflake id) const {
+    if (const auto it = m_ssrc_map.find(id); it != m_ssrc_map.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
@@ -308,7 +311,7 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
 
 void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
     VoiceSpeakingData d = m.Data;
-    // ssrc map
+    m_ssrc_map[d.UserID] = d.SSRC;
     m_signal_speaking.emit(d);
 }
 
