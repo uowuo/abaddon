@@ -1194,8 +1194,12 @@ void DiscordClient::DisconnectFromVoice() {
     m_websocket.Send(m);
 }
 
-bool DiscordClient::IsConnectedToVoice() const noexcept {
+bool DiscordClient::IsVoiceConnected() const noexcept {
     return m_voice.IsConnected();
+}
+
+bool DiscordClient::IsVoiceConnecting() const noexcept {
+    return m_voice.IsConnecting();
 }
 
 Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
@@ -2174,7 +2178,7 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         m_voice.SetSessionID(data.SessionID);
 
         // channel_id = null means disconnect. stop cuz out of order maybe
-        if (!data.ChannelID.has_value()) {
+        if (!data.ChannelID.has_value() && (m_voice.IsConnected() || m_voice.IsConnecting())) {
             m_voice.Stop();
         }
     } else {

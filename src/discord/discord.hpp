@@ -183,7 +183,9 @@ public:
 #ifdef WITH_VOICE
     void ConnectToVoice(Snowflake channel_id);
     void DisconnectFromVoice();
-    [[nodiscard]] bool IsConnectedToVoice() const noexcept;
+    // Is fully connected
+    [[nodiscard]] bool IsVoiceConnected() const noexcept;
+    [[nodiscard]] bool IsVoiceConnecting() const noexcept;
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
     [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;

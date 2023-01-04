@@ -26,7 +26,7 @@ public:
 private:
     void OnMessage(const ix::WebSocketMessagePtr &msg);
 
-    ix::WebSocket m_websocket;
+    std::unique_ptr<ix::WebSocket> m_websocket;
     std::string m_agent;
 
 public:

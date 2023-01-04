@@ -1019,7 +1019,7 @@ void ChannelList::OnVoiceChannelSubmenuPopup() {
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     auto &discord = Abaddon::Get().GetDiscordClient();
-    if (discord.IsConnectedToVoice()) {
+    if (discord.IsVoiceConnected() || discord.IsVoiceConnecting()) {
         m_menu_voice_channel_join.set_sensitive(false);
         m_menu_voice_channel_disconnect.set_sensitive(discord.GetVoiceChannelID() == id);
     } else {
@@ -1040,7 +1040,7 @@ void ChannelList::OnDMSubmenuPopup() {
         m_menu_dm_toggle_mute.set_label("Mute");
 
 #ifdef WITH_VOICE
-    if (discord.IsConnectedToVoice()) {
+    if (discord.IsVoiceConnected() || discord.IsVoiceConnecting()) {
         m_menu_dm_join_voice.set_sensitive(false);
         m_menu_dm_disconnect_voice.set_sensitive(discord.GetVoiceChannelID() == id);
     } else {

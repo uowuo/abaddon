@@ -20,11 +20,14 @@ Websocket::Websocket(const std::string &id)
 
 void Websocket::StartConnection(const std::string &url) {
     m_log->debug("Starting connection to {}", url);
-    m_websocket.disableAutomaticReconnection();
-    m_websocket.setUrl(url);
-    m_websocket.setOnMessageCallback([this](auto &&msg) { OnMessage(std::forward<decltype(msg)>(msg)); });
-    m_websocket.setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent } }); // idk if this actually works
-    m_websocket.start();
+
+    m_websocket = std::make_unique<ix::WebSocket>();
+
+    m_websocket->disableAutomaticReconnection();
+    m_websocket->setUrl(url);
+    m_websocket->setOnMessageCallback([this](auto &&msg) { OnMessage(std::forward<decltype(msg)>(msg)); });
+    m_websocket->setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent } }); // idk if this actually works
+    m_websocket->start();
 }
 
 void Websocket::SetUserAgent(std::string agent) {
@@ -46,13 +49,13 @@ void Websocket::Stop() {
 
 void Websocket::Stop(uint16_t code) {
     m_log->debug("Stopping with close code {}", code);
-    m_websocket.stop(code);
+    m_websocket->   stop(code);
 }
 
 void Websocket::Send(const std::string &str) {
     if (m_print_messages)
         m_log->trace("Send: {}", str);
-    m_websocket.sendText(str);
+    m_websocket->sendText(str);
 }
 
 void Websocket::Send(const nlohmann::json &j) {

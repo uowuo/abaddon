@@ -11,6 +11,7 @@
 #include <string>
 #include <glibmm/dispatcher.h>
 #include <sigc++/sigc++.h>
+#include <spdlog/logger.h>
 #include <unordered_map>
 // clang-format on
 
@@ -196,10 +197,21 @@ public:
 
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
 
+    // Is a websocket and udp connection fully established
     [[nodiscard]] bool IsConnected() const noexcept;
+    [[nodiscard]] bool IsConnecting() const noexcept;
 
 private:
-    void OnGatewayMessage(const std::string &str);
+    enum class State {
+        ConnectingToWebsocket,
+        EstablishingConnection,
+        Connected,
+        DisconnectedByClient,
+        DisconnectedByServer,
+    };
+    static const char *GetStateName(State state);
+
+    void OnGatewayMessage(const std::string &msg);
     void HandleGatewayHello(const VoiceGatewayMessage &m);
     void HandleGatewayReady(const VoiceGatewayMessage &m);
     void HandleGatewaySessionDescription(const VoiceGatewayMessage &m);
@@ -207,12 +219,18 @@ private:
 
     void Identify();
     void Discovery();
-    void SelectProtocol(std::string_view ip, uint16_t port);
+    void SelectProtocol(const char *ip, uint16_t port);
 
-    void OnUDPData(std::vector<uint8_t> data);
+    void OnWebsocketOpen();
+    void OnWebsocketClose(const ix::WebSocketCloseInfo &info);
+    void OnWebsocketMessage(const std::string &str);
 
     void HeartbeatThread();
     void KeepaliveThread();
+
+    void SetState(State state);
+
+    void OnUDPData(std::vector<uint8_t> data);
 
     std::string m_session_id;
     std::string m_endpoint;
@@ -221,23 +239,11 @@ private:
     Snowflake m_channel_id;
     Snowflake m_user_id;
 
+    std::array<uint8_t, 32> m_secret_key;
+
     std::string m_ip;
     uint16_t m_port;
     uint32_t m_ssrc;
-
-    std::unordered_map<Snowflake, uint32_t> m_ssrc_map;
-
-    std::array<uint8_t, 32> m_secret_key;
-
-    // this is a unique_ptr because Websocket/ixwebsocket seems to have some strange behavior
-    // and quite frankly i do not feel like figuring out what is wrong
-    // so using a unique_ptr will just let me nuke the whole thing and make a new one
-    std::unique_ptr<Websocket> m_ws;
-    UDPSocket m_udp;
-
-    Glib::Dispatcher m_dispatcher;
-    std::queue<std::string> m_message_queue;
-    std::mutex m_dispatch_mutex;
 
     int m_heartbeat_msec;
     Waiter m_heartbeat_waiter;
@@ -246,25 +252,18 @@ private:
     Waiter m_keepalive_waiter;
     std::thread m_keepalive_thread;
 
+    Websocket m_ws;
+    UDPSocket m_udp;
+
+    Glib::Dispatcher m_dispatcher;
+    std::queue<std::string> m_dispatch_queue;
+    std::mutex m_dispatch_mutex;
+
+    void OnDispatch();
+
     std::array<uint8_t, 1275> m_opus_buffer;
 
-    std::atomic<bool> m_connected = false;
-
-    enum class State {
-        Opening,
-        Opened,
-        ClosingByClient,
-        ClosedByClient,
-        ClosingByServer,
-        ClosedByServer,
-    };
-
-    void SetState(State state);
-
-    [[nodiscard]] bool IsOpening() const noexcept;
-    [[nodiscard]] bool IsOpened() const noexcept;
-    [[nodiscard]] bool IsClosing() const noexcept;
-    [[nodiscard]] bool IsClosed() const noexcept;
+    std::shared_ptr<spdlog::logger> m_log;
 
     std::atomic<State> m_state;
 
