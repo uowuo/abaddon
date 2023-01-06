@@ -651,13 +651,30 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             m_tmp_channel_map[thread.ID] = CreateThreadRow(row.children(), thread);
     };
 
+    auto add_voice_participants = [this, &discord](const ChannelData &channel, const Gtk::TreeNodeChildren &root) {
+        for (auto user_id : discord.GetUsersInVoiceChannel(channel.ID)) {
+            const auto user = discord.GetUser(user_id);
+
+            auto user_row = *m_model->append(root);
+            user_row[m_columns.m_type] = RenderType::VoiceParticipant;
+            user_row[m_columns.m_id] = user_id;
+            if (user.has_value()) {
+                user_row[m_columns.m_name] = user->GetEscapedName();
+            } else {
+                user_row[m_columns.m_name] = "<i>Unknown</i>";
+            }
+        }
+    };
+
     for (const auto &channel : orphan_channels) {
         auto channel_row = *m_model->append(guild_row.children());
         if (IsTextChannel(channel.Type))
             channel_row[m_columns.m_type] = RenderType::TextChannel;
 #ifdef WITH_VOICE
-        else
+        else {
             channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+            add_voice_participants(channel, channel_row->children());
+        }
 #endif
         channel_row[m_columns.m_id] = channel.ID;
         channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
@@ -684,8 +701,10 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             if (IsTextChannel(channel.Type))
                 channel_row[m_columns.m_type] = RenderType::TextChannel;
 #ifdef WITH_VOICE
-            else
+            else {
                 channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+                add_voice_participants(channel, channel_row->children());
+            }
 #endif
             channel_row[m_columns.m_id] = channel.ID;
             channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);

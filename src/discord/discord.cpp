@@ -2254,6 +2254,8 @@ void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
         }
     }
 #endif
+
+    m_signal_gateway_ready_supplemental.emit();
 }
 
 void DiscordClient::HandleGatewayReconnect(const GatewayMessage &msg) {
@@ -2774,6 +2776,10 @@ void DiscordClient::LoadEventMap() {
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
     return m_signal_gateway_ready;
+}
+
+DiscordClient::type_signal_gateway_ready_supplemental DiscordClient::signal_gateway_ready_supplemental() {
+    return m_signal_gateway_ready_supplemental;
 }
 
 DiscordClient::type_signal_message_create DiscordClient::signal_message_create() {

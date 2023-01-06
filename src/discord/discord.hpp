@@ -379,6 +379,7 @@ private:
     // signals
 public:
     typedef sigc::signal<void> type_signal_gateway_ready;
+    typedef sigc::signal<void> type_signal_gateway_ready_supplemental;
     typedef sigc::signal<void, Message> type_signal_message_create;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_delete;
     typedef sigc::signal<void, Snowflake, Snowflake> type_signal_message_update;
@@ -446,6 +447,7 @@ public:
 #endif
 
     type_signal_gateway_ready signal_gateway_ready();
+    type_signal_gateway_ready_supplemental signal_gateway_ready_supplemental();
     type_signal_message_create signal_message_create();
     type_signal_message_delete signal_message_delete();
     type_signal_message_update signal_message_update();
@@ -512,6 +514,7 @@ public:
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
+    type_signal_gateway_ready_supplemental m_signal_gateway_ready_supplemental;
     type_signal_message_create m_signal_message_create;
     type_signal_message_delete m_signal_message_delete;
     type_signal_message_update m_signal_message_update;

@@ -41,7 +41,8 @@ Abaddon::Abaddon()
     std::string ua = GetSettings().UserAgent;
     m_discord.SetUserAgent(ua);
 
-    m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
+    // todo rename funcs
+    m_discord.signal_gateway_ready_supplemental().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
     m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));

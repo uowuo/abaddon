@@ -11,8 +11,10 @@ enum class RenderType : uint8_t {
     TextChannel,
     Thread,
 
+// TODO: maybe enable anyways but without ability to join if no voice support
 #ifdef WITH_VOICE
     VoiceChannel,
+    VoiceParticipant,
 #endif
 
     DMHeader,
@@ -98,6 +100,17 @@ protected:
                                     const Gdk::Rectangle &background_area,
                                     const Gdk::Rectangle &cell_area,
                                     Gtk::CellRendererState flags);
+
+    // voice channel
+    void get_preferred_width_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_voice_participant(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_voice_participant(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_voice_participant(const Cairo::RefPtr<Cairo::Context> &cr,
+                                        Gtk::Widget &widget,
+                                        const Gdk::Rectangle &background_area,
+                                        const Gdk::Rectangle &cell_area,
+                                        Gtk::CellRendererState flags);
 #endif
 
     // dm header
