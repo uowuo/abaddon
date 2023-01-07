@@ -48,6 +48,9 @@ protected:
     void OnThreadUpdate(const ThreadUpdateData &data);
     void OnThreadListSync(const ThreadListSyncData &data);
 
+    void OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id);
+    void OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id);
+
     Gtk::TreeView m_view;
 
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {
@@ -80,7 +83,8 @@ protected:
 
     // separation necessary because a channel and guild can share the same id
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
-    Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForRowFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForRowFromIDOfType(Snowflake id, RenderType type);
 
     bool IsTextChannel(ChannelType type);
 

@@ -287,6 +287,11 @@ ChannelList::ChannelList()
     discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelUnmute));
     discord.signal_guild_muted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildMute));
     discord.signal_guild_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildUnmute));
+
+#if WITH_VOICE
+    discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserConnect));
+    discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserDisconnect));
+#endif
 }
 
 void ChannelList::UsePanedHack(Gtk::Paned &paned) {
@@ -337,13 +342,13 @@ void ChannelList::UpdateRemoveGuild(Snowflake id) {
 }
 
 void ChannelList::UpdateRemoveChannel(Snowflake id) {
-    auto iter = GetIteratorForChannelFromID(id);
+    auto iter = GetIteratorForRowFromID(id);
     if (!iter) return;
     m_model->erase(iter);
 }
 
 void ChannelList::UpdateChannel(Snowflake id) {
-    auto iter = GetIteratorForChannelFromID(id);
+    auto iter = GetIteratorForRowFromID(id);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!iter || !channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
@@ -358,7 +363,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
     // check if the parent has changed
     Gtk::TreeModel::iterator new_parent;
     if (channel->ParentID.has_value())
-        new_parent = GetIteratorForChannelFromID(*channel->ParentID);
+        new_parent = GetIteratorForRowFromID(*channel->ParentID);
     else if (channel->GuildID.has_value())
         new_parent = GetIteratorForGuildFromID(*channel->GuildID);
 
@@ -375,7 +380,7 @@ void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
     bool orphan;
     if (channel.ParentID.has_value()) {
         orphan = false;
-        auto iter = GetIteratorForChannelFromID(*channel.ParentID);
+        auto iter = GetIteratorForRowFromID(*channel.ParentID);
         channel_row = *m_model->append(iter->children());
     } else {
         orphan = true;
@@ -417,10 +422,10 @@ void ChannelList::UpdateGuild(Snowflake id) {
 }
 
 void ChannelList::OnThreadJoined(Snowflake id) {
-    if (GetIteratorForChannelFromID(id)) return;
+    if (GetIteratorForRowFromID(id)) return;
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!channel.has_value()) return;
-    const auto parent = GetIteratorForChannelFromID(*channel->ParentID);
+    const auto parent = GetIteratorForRowFromID(*channel->ParentID);
     if (parent)
         CreateThreadRow(parent->children(), *channel);
 }
@@ -435,7 +440,7 @@ void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
 
 // todo probably make the row stick around if its selected until the selection changes
 void ChannelList::OnThreadUpdate(const ThreadUpdateData &data) {
-    auto iter = GetIteratorForChannelFromID(data.Thread.ID);
+    auto iter = GetIteratorForRowFromID(data.Thread.ID);
     if (iter)
         (*iter)[m_columns.m_name] = "- " + Glib::Markup::escape_text(*data.Thread.Name);
 
@@ -462,7 +467,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
     // delete all threads not present in the synced data
     for (auto thread_id : threads) {
         if (std::find_if(data.Threads.begin(), data.Threads.end(), [thread_id](const auto &x) { return x.ID == thread_id; }) == data.Threads.end()) {
-            auto iter = GetIteratorForChannelFromID(thread_id);
+            auto iter = GetIteratorForRowFromID(thread_id);
             m_model->erase(iter);
         }
     }
@@ -470,25 +475,36 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
     // delete all archived threads
     for (auto thread : data.Threads) {
         if (thread.ThreadMetadata->IsArchived) {
-            if (auto iter = GetIteratorForChannelFromID(thread.ID))
+            if (auto iter = GetIteratorForRowFromID(thread.ID))
                 m_model->erase(iter);
         }
     }
 }
 
+#ifdef WITH_VOICE
+void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
+}
+
+void ChannelList::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
+    if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
+        m_model->erase(iter);
+    }
+}
+#endif
+
 void ChannelList::DeleteThreadRow(Snowflake id) {
-    auto iter = GetIteratorForChannelFromID(id);
+    auto iter = GetIteratorForRowFromID(id);
     if (iter)
         m_model->erase(iter);
 }
 
 void ChannelList::OnChannelMute(Snowflake id) {
-    if (auto iter = GetIteratorForChannelFromID(id))
+    if (auto iter = GetIteratorForRowFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 void ChannelList::OnChannelUnmute(Snowflake id) {
-    if (auto iter = GetIteratorForChannelFromID(id))
+    if (auto iter = GetIteratorForRowFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
@@ -519,7 +535,7 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
         m_temporary_thread_row = {};
     }
 
-    const auto channel_iter = GetIteratorForChannelFromID(id);
+    const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
         if (expand_to) {
             m_view.expand_to_path(m_model->get_path(channel_iter));
@@ -529,7 +545,7 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
         m_view.get_selection()->unselect_all();
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
         if (!channel.has_value() || !channel->IsThread()) return;
-        auto parent_iter = GetIteratorForChannelFromID(*channel->ParentID);
+        auto parent_iter = GetIteratorForRowFromID(*channel->ParentID);
         if (!parent_iter) return;
         m_temporary_thread_row = CreateThreadRow(parent_iter->children(), *channel);
         m_view.get_selection()->select(m_temporary_thread_row);
@@ -745,7 +761,7 @@ Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildre
 }
 
 void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
-    auto iter = GetIteratorForChannelFromID(channel.ID);
+    auto iter = GetIteratorForRowFromID(channel.ID);
     if (!iter) return;
 
     (*iter)[m_columns.m_sort] = *channel.Position;
@@ -760,7 +776,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     return {};
 }
 
-Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) {
+Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromID(Snowflake id) {
     std::queue<Gtk::TreeModel::iterator> queue;
     for (const auto &child : m_model->children())
         for (const auto &child2 : child.children())
@@ -769,6 +785,23 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) 
     while (!queue.empty()) {
         auto item = queue.front();
         if ((*item)[m_columns.m_id] == id) return item;
+        for (const auto &child : item->children())
+            queue.push(child);
+        queue.pop();
+    }
+
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromIDOfType(Snowflake id, RenderType type) {
+    std::queue<Gtk::TreeModel::iterator> queue;
+    for (const auto &child : m_model->children())
+        for (const auto &child2 : child.children())
+            queue.push(child2);
+
+    while (!queue.empty()) {
+        auto item = queue.front();
+        if ((*item)[m_columns.m_type] == type && (*item)[m_columns.m_id] == id) return item;
         for (const auto &child : item->children())
             queue.push(child);
         queue.pop();
@@ -895,7 +928,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
 void ChannelList::OnMessageAck(const MessageAckData &data) {
     // trick renderer into redrawing
     m_model->row_changed(Gtk::TreeModel::Path("0"), m_model->get_iter("0")); // 0 is always path for dm header
-    auto iter = GetIteratorForChannelFromID(data.ChannelID);
+    auto iter = GetIteratorForRowFromID(data.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(data.ChannelID);
     if (channel.has_value() && channel->GuildID.has_value()) {
@@ -905,7 +938,7 @@ void ChannelList::OnMessageAck(const MessageAckData &data) {
 }
 
 void ChannelList::OnMessageCreate(const Message &msg) {
-    auto iter = GetIteratorForChannelFromID(msg.ChannelID);
+    auto iter = GetIteratorForRowFromID(msg.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter); // redraw
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
     if (!channel.has_value()) return;
