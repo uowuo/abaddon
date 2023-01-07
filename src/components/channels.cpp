@@ -483,6 +483,19 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
 
 #ifdef WITH_VOICE
 void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
+    auto parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::VoiceChannel);
+    if (!parent_iter) return;
+    const auto user = Abaddon::Get().GetDiscordClient().GetUser(user_id);
+    if (!user.has_value()) return;
+
+    auto user_row = *m_model->append(parent_iter->children());
+    user_row[m_columns.m_type] = RenderType::VoiceParticipant;
+    user_row[m_columns.m_id] = user_id;
+    if (user.has_value()) {
+        user_row[m_columns.m_name] = user->GetEscapedName();
+    } else {
+        user_row[m_columns.m_name] = "<i>Unknown</i>";
+    }
 }
 
 void ChannelList::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
