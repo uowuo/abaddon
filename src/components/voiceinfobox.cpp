@@ -70,6 +70,15 @@ VoiceInfoBox::VoiceInfoBox()
         m_status.set_label(label);
     });
 
+    AddPointerCursor(m_status_ev);
+    m_status_ev.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
+        if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_PRIMARY) {
+            Abaddon::Get().ShowVoiceWindow();
+            return true;
+        }
+        return false;
+    });
+
     m_status.set_ellipsize(Pango::ELLIPSIZE_END);
     m_location.set_ellipsize(Pango::ELLIPSIZE_END);
 
@@ -79,7 +88,8 @@ VoiceInfoBox::VoiceInfoBox()
     m_disconnect_img.set_hexpand(true);
     m_disconnect_img.set_halign(Gtk::ALIGN_END);
 
-    m_left.add(m_status);
+    m_status_ev.add(m_status);
+    m_left.add(m_status_ev);
     m_left.add(m_location);
 
     add(m_left);

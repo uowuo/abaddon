@@ -432,6 +432,19 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
     m_audio->StartCaptureDevice();
+    ShowVoiceWindow();
+}
+
+void Abaddon::OnVoiceDisconnected() {
+    m_audio->StopCaptureDevice();
+    m_audio->RemoveAllSSRCs();
+    if (m_voice_window != nullptr) {
+        m_voice_window->close();
+    }
+}
+
+void Abaddon::ShowVoiceWindow() {
+    if (m_voice_window != nullptr) return;
 
     auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
     m_voice_window = wnd;
@@ -470,20 +483,11 @@ void Abaddon::OnVoiceConnected() {
 
     wnd->show();
     wnd->signal_hide().connect([this, wnd]() {
-        m_discord.DisconnectFromVoice();
         m_voice_window = nullptr;
         delete wnd;
         delete m_user_menu;
         SetupUserMenu();
     });
-}
-
-void Abaddon::OnVoiceDisconnected() {
-    m_audio->StopCaptureDevice();
-    m_audio->RemoveAllSSRCs();
-    if (m_voice_window != nullptr) {
-        m_voice_window->close();
-    }
 }
 #endif
 

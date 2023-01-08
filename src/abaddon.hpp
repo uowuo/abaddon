@@ -92,6 +92,8 @@ public:
 #ifdef WITH_VOICE
     void OnVoiceConnected();
     void OnVoiceDisconnected();
+
+    void ShowVoiceWindow();
 #endif
 
     SettingsManager::Settings &GetSettings();
