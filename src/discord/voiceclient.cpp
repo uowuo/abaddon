@@ -167,6 +167,7 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 
 void DiscordVoiceClient::Start() {
     SetState(State::ConnectingToWebsocket);
+    m_ssrc_map.clear();
     m_heartbeat_waiter.revive();
     m_keepalive_waiter.revive();
     m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
@@ -187,6 +188,8 @@ void DiscordVoiceClient::Stop() {
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
     m_keepalive_waiter.kill();
     if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
+
+    m_ssrc_map.clear();
 
     m_signal_disconnected.emit();
 }
@@ -209,6 +212,20 @@ void DiscordVoiceClient::SetServerID(Snowflake id) {
 
 void DiscordVoiceClient::SetUserID(Snowflake id) {
     m_user_id = id;
+}
+
+void DiscordVoiceClient::SetUserVolume(Snowflake id, float volume) {
+    m_user_volumes[id] = volume;
+    if (const auto ssrc = GetSSRCOfUser(id); ssrc.has_value()) {
+        Abaddon::Get().GetAudio().SetVolumeSSRC(*ssrc, volume);
+    }
+}
+
+[[nodiscard]] float DiscordVoiceClient::GetUserVolume(Snowflake id) const {
+    if (const auto it = m_user_volumes.find(id); it != m_user_volumes.end()) {
+        return it->second;
+    }
+    return 1.0f;
 }
 
 std::optional<uint32_t> DiscordVoiceClient::GetSSRCOfUser(Snowflake id) const {
@@ -315,6 +332,14 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
 
 void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
     VoiceSpeakingData d = m.Data;
+
+    // set volume if already set but ssrc just found
+    if (const auto iter = m_user_volumes.find(d.UserID); iter != m_user_volumes.end()) {
+        if (m_ssrc_map.find(d.UserID) == m_ssrc_map.end()) {
+            Abaddon::Get().GetAudio().SetVolumeSSRC(d.SSRC, iter->second);
+        }
+    }
+
     m_ssrc_map[d.UserID] = d.SSRC;
     m_signal_speaking.emit(d);
 }

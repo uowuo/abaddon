@@ -474,9 +474,8 @@ void Abaddon::ShowVoiceWindow() {
     });
 
     wnd->signal_user_volume_changed().connect([this](Snowflake id, double volume) {
-        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
-            m_audio->SetVolumeSSRC(*ssrc, volume);
-        }
+        auto &vc = m_discord.GetVoiceClient();
+        vc.SetUserVolume(id, volume);
     });
 
     wnd->set_position(Gtk::WIN_POS_CENTER);

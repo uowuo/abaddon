@@ -191,6 +191,8 @@ public:
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
     [[nodiscard]] std::optional<Snowflake> GetVoiceState(Snowflake user_id) const;
 
+    DiscordVoiceClient &GetVoiceClient();
+
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);
 #endif

@@ -278,11 +278,19 @@ void AudioManager::SetPlayback(bool playback) {
 }
 
 void AudioManager::SetCaptureGate(double gate) {
-    m_capture_gate = gate * 0.01;
+    m_capture_gate = gate;
 }
 
 void AudioManager::SetCaptureGain(double gain) {
     m_capture_gain = gain;
+}
+
+double AudioManager::GetCaptureGate() const noexcept {
+    return m_capture_gate;
+}
+
+double AudioManager::GetCaptureGain() const noexcept {
+    return m_capture_gain;
 }
 
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
@@ -296,9 +304,15 @@ void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
 
 void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
     std::lock_guard<std::mutex> _(m_mutex);
-    volume *= 0.01;
-    constexpr const double E = 2.71828182845904523536;
-    m_volume_ssrc[ssrc] = (std::exp(volume) - 1) / (E - 1);
+    m_volume_ssrc[ssrc] = volume;
+}
+
+double AudioManager::GetVolumeSSRC(uint32_t ssrc) const {
+    std::lock_guard<std::mutex> _(m_mutex);
+    if (const auto iter = m_volume_ssrc.find(ssrc); iter != m_volume_ssrc.end()) {
+        return iter->second;
+    }
+    return 1.0;
 }
 
 void AudioManager::SetEncodingApplication(int application) {
@@ -463,4 +477,5 @@ AudioDevices &AudioManager::GetDevices() {
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
     return m_signal_opus_packet;
 }
+
 #endif

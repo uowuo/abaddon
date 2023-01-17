@@ -1226,6 +1226,10 @@ std::optional<Snowflake> DiscordClient::GetVoiceState(Snowflake user_id) const {
     return std::nullopt;
 }
 
+DiscordVoiceClient &DiscordClient::GetVoiceClient() {
+    return m_voice;
+}
+
 void DiscordClient::SetVoiceMuted(bool is_mute) {
     m_mute_requested = is_mute;
     SendVoiceStateUpdate();

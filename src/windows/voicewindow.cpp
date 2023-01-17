@@ -24,7 +24,7 @@ public:
         m_volume.set_value_pos(Gtk::POS_LEFT);
         m_volume.set_value(100.0);
         m_volume.signal_value_changed().connect([this]() {
-            m_signal_volume.emit(m_volume.get_value());
+            m_signal_volume.emit(m_volume.get_value() * 0.01);
         });
 
         m_horz.add(m_avatar);
@@ -52,6 +52,10 @@ public:
 
     void SetVolumeMeter(double frac) {
         m_meter.SetVolume(frac);
+    }
+
+    void RestoreGain(double frac) {
+        m_volume.set_value(frac * 100.0);
     }
 
 private:
@@ -92,6 +96,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     set_default_size(300, 300);
 
     auto &discord = Abaddon::Get().GetDiscordClient();
+    auto &audio = Abaddon::Get().GetAudio();
+
     SetUsers(discord.GetUsersInVoiceChannel(m_channel_id));
 
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
@@ -108,17 +114,16 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_capture_gate.set_range(0.0, 100.0);
     m_capture_gate.set_value_pos(Gtk::POS_LEFT);
-    m_capture_gate.set_value(0.0);
+    m_capture_gate.set_value(audio.GetCaptureGate() * 100.0);
     m_capture_gate.signal_value_changed().connect([this]() {
-        // todo this should probably emit 0-1 i dont think the mgr should be responsible for scaling down
-        const double val = m_capture_gate.get_value();
+        const double val = m_capture_gate.get_value() * 0.01;
         m_signal_gate.emit(val);
-        m_capture_volume.SetTick(val / 100.0);
+        m_capture_volume.SetTick(val);
     });
 
     m_capture_gain.set_range(0.0, 200.0);
     m_capture_gain.set_value_pos(Gtk::POS_LEFT);
-    m_capture_gain.set_value(100.0);
+    m_capture_gain.set_value(audio.GetCaptureGain() * 100.0);
     m_capture_gain.signal_value_changed().connect([this]() {
         const double val = m_capture_gain.get_value();
         m_signal_gain.emit(val / 100.0);
@@ -174,7 +179,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
+    const auto me = Abaddon::Get().GetDiscordClient().GetUserData().ID;
     for (auto id : user_ids) {
+        if (id == me) continue;
         m_user_list.add(*CreateRow(id));
     }
 }
@@ -182,6 +189,8 @@ void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
 Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
     auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
     m_rows[id] = row;
+    auto &vc = Abaddon::Get().GetDiscordClient().GetVoiceClient();
+    row->RestoreGain(vc.GetUserVolume(id));
     row->signal_mute_cs().connect([this, id](bool is_muted) {
         m_signal_mute_user_cs.emit(id, is_muted);
     });

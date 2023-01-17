@@ -195,6 +195,9 @@ public:
     void SetServerID(Snowflake id);
     void SetUserID(Snowflake id);
 
+    // todo serialize
+    void SetUserVolume(Snowflake id, float volume);
+    [[nodiscard]] float GetUserVolume(Snowflake id) const;
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
 
     // Is a websocket and udp connection fully established
@@ -241,6 +244,7 @@ private:
     Snowflake m_user_id;
 
     std::unordered_map<Snowflake, uint32_t> m_ssrc_map;
+    std::unordered_map<Snowflake, float> m_user_volumes;
 
     std::array<uint8_t, 32> m_secret_key;
 
