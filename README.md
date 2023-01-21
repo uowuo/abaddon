@@ -79,6 +79,10 @@ the result of fundamental issues with Discord's thread implementation.
       ```Shell
       $ sudo pacman -S gcc cmake gtkmm3 libcurl-gnutls lib32-sqlite lib32-openssl nlohmann-json libhandy
       ```
+    * On Fedora Linux:
+      ```Shell
+      $ sudo dnf install g++ cmake gtkmm3.0-devel libcurl-devel sqlite-devel openssl-devel json-devel libsecret-devel libhandy-devel
+      ```
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
