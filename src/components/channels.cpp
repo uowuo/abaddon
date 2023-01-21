@@ -759,13 +759,9 @@ void ChannelList::AddPrivateChannels() {
         auto row = *iter;
         row[m_columns.m_type] = RenderType::DM;
         row[m_columns.m_id] = dm_id;
+        row[m_columns.m_name] = Glib::Markup::escape_text(dm->GetDisplayName());
         row[m_columns.m_sort] = static_cast<int64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
         row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
-
-        if (dm->Type == ChannelType::DM && top_recipient.has_value())
-            row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
-        else if (dm->Type == ChannelType::GROUP_DM)
-            row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
 
         if (dm->HasIcon()) {
             const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
@@ -796,13 +792,9 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     auto row = *iter;
     row[m_columns.m_type] = RenderType::DM;
     row[m_columns.m_id] = dm.ID;
+    row[m_columns.m_name] = Glib::Markup::escape_text(dm.GetDisplayName());
     row[m_columns.m_sort] = static_cast<int64_t>(-(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID));
     row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
-
-    if (dm.Type == ChannelType::DM && top_recipient.has_value())
-        row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
-    else if (dm.Type == ChannelType::GROUP_DM)
-        row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
 
     if (top_recipient.has_value()) {
         const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
