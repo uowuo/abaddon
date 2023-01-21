@@ -473,6 +473,40 @@ std::vector<BanData> Store::GetBans(Snowflake guild_id) const {
     return ret;
 }
 
+Snowflake Store::GetGuildOwner(Snowflake guild_id) const {
+    auto &s = m_stmt_get_guild_owner;
+
+    s->Bind(1, guild_id);
+    if (s->FetchOne()) {
+        Snowflake ret;
+        s->Get(0, ret);
+        s->Reset();
+        return ret;
+    }
+
+    s->Reset();
+
+    return Snowflake::Invalid;
+}
+
+std::vector<Snowflake> Store::GetMemberRoles(Snowflake guild_id, Snowflake user_id) const {
+    std::vector<Snowflake> ret;
+
+    auto &s = m_stmt_get_member_roles;
+
+    s->Bind(1, user_id);
+    s->Bind(2, guild_id);
+
+    while (s->FetchOne()) {
+        auto &f = ret.emplace_back();
+        s->Get(0, f);
+    }
+
+    s->Reset();
+
+    return ret;
+}
+
 std::vector<Message> Store::GetLastMessages(Snowflake id, size_t num) const {
     auto &s = m_stmt_get_last_msgs;
     std::vector<Message> msgs;
@@ -2195,6 +2229,14 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_clr_role->OK()) {
         fprintf(stderr, "failed to prepare clear role statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_guild_owner = std::make_unique<Statement>(m_db, R"(
+        SELECT owner_id FROM guilds WHERE id = ?
+    )");
+    if (!m_stmt_get_guild_owner->OK()) {
+        fprintf(stderr, "failed to prepare get guild owner statement: %s\n", m_db.ErrStr());
         return false;
     }
 
