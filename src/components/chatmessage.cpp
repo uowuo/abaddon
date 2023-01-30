@@ -1,7 +1,5 @@
-#include "abaddon.hpp"
 #include "chatmessage.hpp"
 #include "lazyimage.hpp"
-#include "util.hpp"
 #include <unordered_map>
 
 constexpr static int EmojiSize = 24; // settings eventually

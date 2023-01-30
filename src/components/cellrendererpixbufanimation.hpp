@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <unordered_map>
 
 // handles both static and animated

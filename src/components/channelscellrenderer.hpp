@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm/cellrenderertext.h>
 #include <gdkmm/pixbufanimation.h>
 #include <glibmm/property.h>
 #include <map>

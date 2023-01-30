@@ -1,7 +1,5 @@
 #pragma once
 #include <glibmm/dispatcher.h>
-#include <gtkmm/messagedialog.h>
-#include <gtkmm/window.h>
 #include <optional>
 
 // fetch cookies, build number async

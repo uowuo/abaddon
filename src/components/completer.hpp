@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <functional>
 #include "lazyimage.hpp"
 #include "discord/snowflake.hpp"

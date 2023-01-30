@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <string>
 
 class EditMessageDialog : public Gtk::Dialog {

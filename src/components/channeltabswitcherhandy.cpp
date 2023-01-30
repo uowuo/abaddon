@@ -1,7 +1,6 @@
 #ifdef WITH_LIBHANDY
 
     #include "channeltabswitcherhandy.hpp"
-    #include "abaddon.hpp"
 
 void selected_page_notify_cb(HdyTabView *view, GParamSpec *pspec, ChannelTabSwitcherHandy *switcher) {
     auto *page = hdy_tab_view_get_selected_page(view);

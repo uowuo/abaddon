@@ -1,4 +1,3 @@
-#include "abaddon.hpp"
 #include "channel.hpp"
 
 void from_json(const nlohmann::json &j, ThreadMetadataData &m) {

@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include "discord/discord.hpp"
 
 class ChatMessageItemContainer : public Gtk::EventBox {

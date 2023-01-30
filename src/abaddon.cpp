@@ -1,4 +1,3 @@
-#include <gtkmm.h>
 #include <memory>
 #include <string>
 #include <algorithm>
@@ -11,7 +10,6 @@
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
 #include "dialogs/textinput.hpp"
-#include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"

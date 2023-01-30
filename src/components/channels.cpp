@@ -1,8 +1,6 @@
-#include "abaddon.hpp"
 #include "channels.hpp"
 #include "imgmanager.hpp"
 #include "statusindicator.hpp"
-#include "util.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>

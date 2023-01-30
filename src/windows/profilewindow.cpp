@@ -1,5 +1,4 @@
 #include "profilewindow.hpp"
-#include "abaddon.hpp"
 
 ProfileWindow::ProfileWindow(Snowflake user_id)
     : ID(user_id)

@@ -1,6 +1,4 @@
-#include "abaddon.hpp"
 #include "discord.hpp"
-#include "util.hpp"
 #include <cinttypes>
 #include <utility>
 

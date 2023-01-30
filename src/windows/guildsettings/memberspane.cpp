@@ -1,5 +1,4 @@
 #include "memberspane.hpp"
-#include "abaddon.hpp"
 
 GuildSettingsMembersPane::GuildSettingsMembersPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)

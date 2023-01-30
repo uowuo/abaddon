@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <string>
 
 class TokenDialog : public Gtk::Dialog {

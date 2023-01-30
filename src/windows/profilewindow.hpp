@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include "discord/snowflake.hpp"
 #include "profile/userinfopane.hpp"
 #include "profile/mutualguildspane.hpp"

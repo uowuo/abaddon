@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include "discord/chatsubmitparams.hpp"
 #include "discord/permissions.hpp"
 

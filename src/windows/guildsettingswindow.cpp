@@ -1,5 +1,4 @@
 #include "guildsettingswindow.hpp"
-#include "abaddon.hpp"
 
 GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
     : m_main(Gtk::ORIENTATION_VERTICAL)

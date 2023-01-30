@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include "discord/objects.hpp"
 
 class ActiveThreadsList : public Gtk::ScrolledWindow {

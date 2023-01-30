@@ -3,7 +3,6 @@
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
-#include <gtkmm.h>
 
 class MainWindow : public Gtk::Window {
 public:

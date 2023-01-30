@@ -1,5 +1,4 @@
 #include "banspane.hpp"
-#include "abaddon.hpp"
 
 // gtk_list_store_set_value: assertion 'column >= 0 && column < priv->n_columns' failed
 // dont care to figure out why this happens cuz it doesnt seem to break anything

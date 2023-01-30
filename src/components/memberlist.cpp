@@ -1,6 +1,4 @@
 #include "memberlist.hpp"
-#include "abaddon.hpp"
-#include "util.hpp"
 #include "lazyimage.hpp"
 #include "statusindicator.hpp"
 

@@ -1,5 +1,4 @@
 #include "progressbar.hpp"
-#include "abaddon.hpp"
 
 MessageUploadProgressBar::MessageUploadProgressBar() {
     get_style_context()->add_class("message-progress");

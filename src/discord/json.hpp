@@ -1,24 +1,24 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <optional>
-#include "util.hpp"
+#include "misc/is_optional.hpp"
 
 namespace detail { // more or less because idk what to name this stuff
 template<typename T>
-inline void json_direct(const ::nlohmann::json &j, const char *key, T &val) {
-    if constexpr (::util::is_optional<T>::value)
+inline void json_direct(const nlohmann::json &j, const char *key, T &val) {
+    if constexpr (is_optional<T>::value)
         val = j.at(key).get<typename T::value_type>();
     else
         j.at(key).get_to(val);
 }
 
 template<typename T>
-inline void json_optional(const ::nlohmann::json &j, const char *key, T &val) {
-    if constexpr (::util::is_optional<T>::value) {
+inline void json_optional(const nlohmann::json &j, const char *key, T &val) {
+    if constexpr (is_optional<T>::value) {
         if (j.contains(key))
             val = j.at(key).get<typename T::value_type>();
         else
-            val = ::std::nullopt;
+            val = std::nullopt;
     } else {
         if (j.contains(key))
             j.at(key).get_to(val);
@@ -26,13 +26,13 @@ inline void json_optional(const ::nlohmann::json &j, const char *key, T &val) {
 }
 
 template<typename T>
-inline void json_nullable(const ::nlohmann::json &j, const char *key, T &val) {
-    if constexpr (::util::is_optional<T>::value) {
+inline void json_nullable(const nlohmann::json &j, const char *key, T &val) {
+    if constexpr (is_optional<T>::value) {
         const auto &at = j.at(key);
         if (!at.is_null())
             val = at.get<typename T::value_type>();
         else
-            val = ::std::nullopt;
+            val = std::nullopt;
     } else {
         const auto &at = j.at(key);
         if (!at.is_null())
@@ -41,16 +41,16 @@ inline void json_nullable(const ::nlohmann::json &j, const char *key, T &val) {
 }
 
 template<typename T>
-inline void json_optional_nullable(const ::nlohmann::json &j, const char *key, T &val) {
-    if constexpr (::util::is_optional<T>::value) {
+inline void json_optional_nullable(const nlohmann::json &j, const char *key, T &val) {
+    if constexpr (is_optional<T>::value) {
         if (j.contains(key)) {
             const auto &at = j.at(key);
             if (!at.is_null())
                 val = at.get<typename T::value_type>();
             else
-                val = ::std::nullopt;
+                val = std::nullopt;
         } else {
-            val = ::std::nullopt;
+            val = std::nullopt;
         }
     } else {
         if (j.contains(key)) {
@@ -62,14 +62,14 @@ inline void json_optional_nullable(const ::nlohmann::json &j, const char *key, T
 }
 
 template<typename T>
-inline void json_update_optional_nullable(const ::nlohmann::json &j, const char *key, T &val) {
-    if constexpr (::util::is_optional<T>::value) {
+inline void json_update_optional_nullable(const nlohmann::json &j, const char *key, T &val) {
+    if constexpr (is_optional<T>::value) {
         if (j.contains(key)) {
             const auto &at = j.at(key);
             if (!at.is_null())
                 val = at.get<typename T::value_type>();
             else
-                val = ::std::nullopt;
+                val = std::nullopt;
         }
     } else {
         if (j.contains(key)) {
@@ -83,8 +83,8 @@ inline void json_update_optional_nullable(const ::nlohmann::json &j, const char 
 }
 
 template<typename T, typename U>
-inline void json_update_optional_nullable_default(const ::nlohmann::json &j, const char *key, T &val, const U &fallback) {
-    if constexpr (::util::is_optional<T>::value) {
+inline void json_update_optional_nullable_default(const nlohmann::json &j, const char *key, T &val, const U &fallback) {
+    if constexpr (is_optional<T>::value) {
         if (j.contains(key)) {
             const auto &at = j.at(key);
             if (at.is_null())

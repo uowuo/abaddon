@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <functional>
 #include <queue>
-#include <gtkmm.h>
 #include "filecache.hpp"
 
 class ImageManager {

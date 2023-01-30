@@ -1,5 +1,4 @@
 #include "emojispane.hpp"
-#include "abaddon.hpp"
 #include "components/cellrendererpixbufanimation.hpp"
 
 GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)

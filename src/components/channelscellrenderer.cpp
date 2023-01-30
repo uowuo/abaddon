@@ -1,6 +1,4 @@
-#include "abaddon.hpp"
 #include "channelscellrenderer.hpp"
-#include <gtkmm.h>
 
 constexpr static int MentionsRightPad = 7;
 #ifndef M_PI

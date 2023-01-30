@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 
 class ConfirmDialog : public Gtk::Dialog {
 public:

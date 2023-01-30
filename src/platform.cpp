@@ -1,5 +1,4 @@
 #include "platform.hpp"
-#include "util.hpp"
 #include <config.h>
 #include <filesystem>
 #include <fstream>
