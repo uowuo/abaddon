@@ -89,6 +89,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
+    column->add_attribute(renderer->property_color(), m_columns.m_color);
     m_view.append_column(*column);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
@@ -262,14 +263,51 @@ void ChannelList::UpdateListing() {
 
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    const auto guild_ids = discord.GetUserSortedGuilds();
-    int sortnum = 0;
-    for (const auto &guild_id : guild_ids) {
-        const auto guild = discord.GetGuild(guild_id);
-        if (!guild.has_value()) continue;
+    /*
+    guild_folders looks something like this
+     "guild_folders": [
+        {
+           "color": null,
+           "guild_ids": [
+               "8009060___________"
+           ],
+           "id": null,
+           "name": null
+        },
+        {
+           "color": null,
+           "guild_ids": [
+               "99615594__________",
+               "86132141__________",
+               "35450138__________",
+               "83714048__________"
+           ],
+           "id": 2853066769,
+           "name": null
+        }
+    ]
 
-        auto iter = AddGuild(*guild);
-        (*iter)[m_columns.m_sort] = sortnum++;
+     so if id != null then its a folder (they can have single entries)
+    */
+
+    int sort_value = 0;
+
+    const auto folders = discord.GetUserSettings().GuildFolders;
+    if (folders.empty()) {
+        // fallback if no organization has occurred (guild_folders will be empty)
+        const auto guild_ids = discord.GetUserSortedGuilds();
+        for (const auto &guild_id : guild_ids) {
+            const auto guild = discord.GetGuild(guild_id);
+            if (!guild.has_value()) continue;
+
+            auto iter = AddGuild(*guild, m_model->children());
+            (*iter)[m_columns.m_sort] = sort_value++;
+        }
+    } else {
+        for (const auto &group : folders) {
+            auto iter = AddFolder(group);
+            (*iter)[m_columns.m_sort] = sort_value++;
+        }
     }
 
     m_updating_listing = false;
@@ -277,8 +315,9 @@ void ChannelList::UpdateListing() {
     AddPrivateChannels();
 }
 
+// TODO update for folders
 void ChannelList::UpdateNewGuild(const GuildData &guild) {
-    AddGuild(guild);
+    AddGuild(guild, m_model->children());
     // update sort order
     int sortnum = 0;
     for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
@@ -405,6 +444,8 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
     // get the threads in the guild
     std::vector<Snowflake> threads;
     auto guild_iter = GetIteratorForGuildFromID(data.GuildID);
+    if (!guild_iter) return;
+
     std::queue<Gtk::TreeModel::iterator> queue;
     queue.push(guild_iter);
 
@@ -546,11 +587,48 @@ ExpansionStateRoot ChannelList::GetExpansionState() const {
     return r;
 }
 
-Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
+Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
+    if (!folder.ID.has_value()) {
+        // just a guild
+        if (!folder.GuildIDs.empty()) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(folder.GuildIDs[0]);
+            if (guild.has_value()) {
+                return AddGuild(*guild, m_model->children());
+            }
+        }
+    } else {
+        auto folder_row = *m_model->append();
+        folder_row[m_columns.m_type] = RenderType::Folder;
+        folder_row[m_columns.m_id] = *folder.ID;
+        if (folder.Name.has_value()) {
+            folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
+        } else {
+            folder_row[m_columns.m_name] = "Folder";
+        }
+        if (folder.Color.has_value()) {
+            folder_row[m_columns.m_color] = IntToRGBA(*folder.Color);
+        }
+
+        int sort_value = 0;
+        for (const auto &guild_id : folder.GuildIDs) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(guild_id);
+            if (guild.has_value()) {
+                auto guild_row = AddGuild(*guild, folder_row->children());
+                (*guild_row)[m_columns.m_sort] = sort_value++;
+            }
+        }
+
+        return folder_row;
+    }
+
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto guild_row = *m_model->append();
+    auto guild_row = *m_model->append(root);
     guild_row[m_columns.m_type] = RenderType::Guild;
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
@@ -679,8 +757,15 @@ void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
 
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     for (const auto &child : m_model->children()) {
-        if (child[m_columns.m_id] == id)
+        if (child[m_columns.m_type] == RenderType::Guild && child[m_columns.m_id] == id) {
             return child;
+        } else if (child[m_columns.m_type] == RenderType::Folder) {
+            for (const auto &folder_child : child->children()) {
+                if (folder_child[m_columns.m_id] == id) {
+                    return folder_child;
+                }
+            }
+        }
     }
     return {};
 }
@@ -886,6 +971,7 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
     M(m_sort);
     M(m_nsfw);
     M(m_expanded);
+    M(m_color);
 #undef M
 
     // recursively move children
@@ -998,4 +1084,5 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_sort);
     add(m_nsfw);
     add(m_expanded);
+    add(m_color);
 }
