@@ -64,11 +64,11 @@ jobs:
 
       - name: Setup Artifact
         run: |
-          mkdir -p build/artifactdir/bin build/artifactdir/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
+          mkdir -p build/artifactdir/bin build/artifactdir/etc/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
           cd build
           cp *.exe artifactdir/bin
           cd ..
-          cp /mingw64/etc/ssl/certs/ca-bundle.crt build/artifactdir/ssl/certs
+          cp /mingw64/etc/ssl/certs/ca-bundle.crt build/artifactdir/etc/ssl/certs
           cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
           cp -r res/css res/res res/fonts build/artifactdir/bin
           cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas

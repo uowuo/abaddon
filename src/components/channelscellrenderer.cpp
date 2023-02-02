@@ -16,7 +16,8 @@ CellRendererChannels::CellRendererChannels()
     , m_property_pixbuf(*this, "pixbuf")
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
     , m_property_expanded(*this, "expanded")
-    , m_property_nsfw(*this, "nsfw") {
+    , m_property_nsfw(*this, "nsfw")
+    , m_property_color(*this, "color") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -53,8 +54,14 @@ Glib::PropertyProxy<bool> CellRendererChannels::property_nsfw() {
     return m_property_nsfw.get_proxy();
 }
 
+Glib::PropertyProxy<std::optional<Gdk::RGBA>> CellRendererChannels::property_color() {
+    return m_property_color.get_proxy();
+}
+
 void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
     switch (m_property_type.get_value()) {
+        case RenderType::Folder:
+            return get_preferred_width_vfunc_folder(widget, minimum_width, natural_width);
         case RenderType::Guild:
             return get_preferred_width_vfunc_guild(widget, minimum_width, natural_width);
         case RenderType::Category:
@@ -72,6 +79,8 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
 
 void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
     switch (m_property_type.get_value()) {
+        case RenderType::Folder:
+            return get_preferred_width_for_height_vfunc_folder(widget, height, minimum_width, natural_width);
         case RenderType::Guild:
             return get_preferred_width_for_height_vfunc_guild(widget, height, minimum_width, natural_width);
         case RenderType::Category:
@@ -89,6 +98,8 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
 
 void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
     switch (m_property_type.get_value()) {
+        case RenderType::Folder:
+            return get_preferred_height_vfunc_folder(widget, minimum_height, natural_height);
         case RenderType::Guild:
             return get_preferred_height_vfunc_guild(widget, minimum_height, natural_height);
         case RenderType::Category:
@@ -106,6 +117,8 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
 
 void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
     switch (m_property_type.get_value()) {
+        case RenderType::Folder:
+            return get_preferred_height_for_width_vfunc_folder(widget, width, minimum_height, natural_height);
         case RenderType::Guild:
             return get_preferred_height_for_width_vfunc_guild(widget, width, minimum_height, natural_height);
         case RenderType::Category:
@@ -123,6 +136,8 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
 
 void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
     switch (m_property_type.get_value()) {
+        case RenderType::Folder:
+            return render_vfunc_folder(cr, widget, background_area, cell_area, flags);
         case RenderType::Guild:
             return render_vfunc_guild(cr, widget, background_area, cell_area, flags);
         case RenderType::Category:
@@ -136,6 +151,69 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
         case RenderType::DM:
             return render_vfunc_dm(cr, widget, background_area, cell_area, flags);
     }
+}
+
+// folder functions
+
+void CellRendererChannels::get_preferred_width_vfunc_folder(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_folder(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_folder(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_folder(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    constexpr static int len = 5;
+    int x1, y1, x2, y2, x3, y3;
+    if (property_expanded()) {
+        x1 = background_area.get_x() + 7;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + 7 + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + 7;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + 7 + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + 7;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
+
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    const int text_x = background_area.get_x() + 22;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - text_natural.height / 2;
+    const int text_w = text_natural.width;
+    const int text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
+    if (m_property_color.get_value().has_value()) {
+        m_renderer_text.property_foreground_rgba() = *m_property_color.get_value();
+    } else {
+        m_renderer_text.property_foreground_rgba() = color;
+    }
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set() = false;
 }
 
 // guild functions

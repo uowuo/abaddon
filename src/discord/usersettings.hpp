@@ -1,13 +1,14 @@
 #pragma once
 #include "json.hpp"
 #include "snowflake.hpp"
+#include <optional>
 #include <string>
 
 struct UserSettingsGuildFoldersEntry {
-    int Color = -1; // null
+    std::optional<int> Color;
     std::vector<Snowflake> GuildIDs;
-    Snowflake ID;     // null (this can be a snowflake as a string or an int that isnt a snowflake lol)
-    std::string Name; // null
+    std::optional<Snowflake> ID; // (this can be a snowflake as a string or an int that isnt a snowflake lol)
+    std::optional<std::string> Name;
 
     friend void from_json(const nlohmann::json &j, UserSettingsGuildFoldersEntry &m);
 };

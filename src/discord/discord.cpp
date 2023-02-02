@@ -1200,6 +1200,10 @@ void DiscordClient::SetUserAgent(const std::string &agent) {
     m_websocket.SetUserAgent(agent);
 }
 
+void DiscordClient::SetDumpReady(bool dump) {
+    m_dump_ready = dump;
+}
+
 bool DiscordClient::IsChannelMuted(Snowflake id) const noexcept {
     return m_muted_channels.find(id) != m_muted_channels.end();
 }
@@ -1562,6 +1566,17 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 
 void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_ready_received = true;
+
+    if (m_dump_ready) {
+        const auto name = "./payload_ready-" + Glib::DateTime::create_now_utc().format("%Y-%m-%d_%H-%M-%S") + ".json";
+        auto *fp = std::fopen(name.c_str(), "wb");
+        if (fp != nullptr) {
+            const auto contents = msg.Data.dump(4);
+            std::fwrite(contents.data(), contents.size(), 1, fp);
+            std::fclose(fp);
+        }
+    }
+
     ReadyEventData data = msg.Data;
     for (auto &g : data.Guilds)
         ProcessNewGuild(g);
@@ -2271,6 +2286,10 @@ std::set<Snowflake> DiscordClient::GetPrivateChannels() const {
     if (const auto iter = m_guild_to_channels.find(Snowflake::Invalid); iter != m_guild_to_channels.end())
         return iter->second;
     return {};
+}
+
+const UserSettings &DiscordClient::GetUserSettings() const {
+    return m_user_settings;
 }
 
 EPremiumType DiscordClient::GetSelfPremiumType() const {

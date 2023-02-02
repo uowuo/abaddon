@@ -254,8 +254,10 @@ void MainWindow::SetupMenu() {
     m_menu_file.set_submenu(m_menu_file_sub);
     m_menu_file_reload_css.set_label("Reload CSS");
     m_menu_file_clear_cache.set_label("Clear file cache");
+    m_menu_file_dump_ready.set_label("Dump ready message");
     m_menu_file_sub.append(m_menu_file_reload_css);
     m_menu_file_sub.append(m_menu_file_clear_cache);
+    m_menu_file_sub.append(m_menu_file_dump_ready);
 
     m_menu_view.set_label("View");
     m_menu_view.set_submenu(m_menu_view_sub);
@@ -332,6 +334,10 @@ void MainWindow::SetupMenu() {
 
     m_menu_file_clear_cache.signal_activate().connect([] {
         Abaddon::Get().GetImageManager().ClearCache();
+    });
+
+    m_menu_file_dump_ready.signal_toggled().connect([this]() {
+        Abaddon::Get().GetDiscordClient().SetDumpReady(m_menu_file_dump_ready.get_active());
     });
 
     m_menu_discord_add_recipient.signal_activate().connect([this] {

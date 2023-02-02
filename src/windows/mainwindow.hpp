@@ -71,6 +71,7 @@ private:
     Gtk::Menu m_menu_file_sub;
     Gtk::MenuItem m_menu_file_reload_css;
     Gtk::MenuItem m_menu_file_clear_cache;
+    Gtk::CheckMenuItem m_menu_file_dump_ready;
 
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
