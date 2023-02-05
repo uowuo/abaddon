@@ -4,6 +4,11 @@
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
+#include <gtkmm/paned.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treemodel.h>
+#include <gtkmm/treestore.h>
+#include <gtkmm/treeview.h>
 #include <sigc++/sigc++.h>
 #include "discord/discord.hpp"
 #include "state.hpp"
@@ -80,6 +85,7 @@ protected:
     void UpdateChannelCategory(const ChannelData &channel);
 
     // separation necessary because a channel and guild can share the same id
+    Gtk::TreeModel::iterator GetIteratorForTopLevelFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
 
@@ -155,7 +161,8 @@ protected:
 
     // (GetIteratorForChannelFromID is rather slow)
     // only temporary since i dont want to worry about maintaining this map
-    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_channel_map;
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_row_map;
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_guild_row_map;
 
 public:
     using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;
