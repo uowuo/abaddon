@@ -57,10 +57,20 @@ jobs:
           update: true
           install: ${{ steps.setupmsys.outputs.value }}
 
-      - name: Build
-        run: |
-          cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
-          cmake --build build
+      - name: Build (1)
+        uses: haya14busa/action-cond@v1
+        id: build
+        with:
+          cond: ${{ matrix.mindeps == true }}
+          if_true: |
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF
+            cmake --build build
+          if_false: |
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake --build build
+
+      - name: Build (2)
+        run: ${{ steps.build.outputs.value }}
 
       - name: Setup Artifact
         run: |
@@ -119,6 +129,7 @@ jobs:
           brew install gtkmm3
           brew install nlohmann-json
           brew install jpeg
+          brew install libhandy
 
       - name: Build
         uses: lukka/run-cmake@v3
@@ -168,6 +179,7 @@ jobs:
           sudo make install
           sudo apt-get install libgtkmm-3.0-dev
           sudo apt-get install libcurl4-gnutls-dev
+          sudo apt-get install libhandy-1-dev
 
       - name: Build
         uses: lukka/run-cmake@v3
