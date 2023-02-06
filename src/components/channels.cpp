@@ -799,7 +799,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForChannelFromID(Snowflake id) 
 
     while (!queue.empty()) {
         auto item = queue.front();
-        if ((*item)[m_columns.m_id] == id) return item;
+        if ((*item)[m_columns.m_id] == id && (*item)[m_columns.m_type] != RenderType::Guild) return item;
         for (const auto &child : item->children())
             queue.push(child);
         queue.pop();
