@@ -299,12 +299,12 @@ void ChannelList::UpdateListing() {
             if (!guild.has_value()) continue;
 
             auto iter = AddGuild(*guild, m_model->children());
-            (*iter)[m_columns.m_sort] = sort_value++;
+            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
         }
     } else {
         for (const auto &group : folders) {
             auto iter = AddFolder(group);
-            (*iter)[m_columns.m_sort] = sort_value++;
+            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
         }
     }
 
