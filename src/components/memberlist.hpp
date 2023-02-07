@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <mutex>
 #include <unordered_map>
 #include <optional>

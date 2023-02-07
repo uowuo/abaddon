@@ -37,6 +37,7 @@ public:
     std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit = 50) const;
     std::set<Snowflake> GetPrivateChannels() const;
+    const UserSettings &GetUserSettings() const;
 
     EPremiumType GetSelfPremiumType() const;
 
@@ -205,6 +206,8 @@ public:
     void UpdateToken(const std::string &token);
     void SetUserAgent(const std::string &agent);
 
+    void SetDumpReady(bool dump);
+
     bool IsChannelMuted(Snowflake id) const noexcept;
     bool IsGuildMuted(Snowflake id) const noexcept;
     int GetUnreadStateForChannel(Snowflake id) const noexcept;
@@ -222,6 +225,8 @@ private:
     std::vector<uint8_t> m_compressed_buf;
     std::vector<uint8_t> m_decompress_buf;
     z_stream m_zstream;
+
+    bool m_dump_ready = false;
 
     static std::string GetAPIURL();
     static std::string GetGatewayURL();

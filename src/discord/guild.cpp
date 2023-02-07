@@ -1,5 +1,4 @@
 #include "guild.hpp"
-#include "abaddon.hpp"
 
 void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("id", m.ID);

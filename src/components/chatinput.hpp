@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include "discord/chatsubmitparams.hpp"
 #include "discord/permissions.hpp"
 
@@ -84,15 +83,18 @@ public:
     using type_signal_submit = sigc::signal<bool, Glib::ustring>;
     using type_signal_escape = sigc::signal<void>;
     using type_signal_image_paste = sigc::signal<void, Glib::RefPtr<Gdk::Pixbuf>>;
+    using type_signal_key_press_proxy = sigc::signal<bool, GdkEventKey *>;
 
     type_signal_submit signal_submit();
     type_signal_escape signal_escape();
     type_signal_image_paste signal_image_paste();
+    type_signal_key_press_proxy signal_key_press_proxy();
 
 private:
     type_signal_submit m_signal_submit;
     type_signal_escape m_signal_escape;
     type_signal_image_paste m_signal_image_paste;
+    type_signal_key_press_proxy m_signal_key_press_proxy;
 };
 
 // file upload, text

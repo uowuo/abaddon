@@ -1,8 +1,6 @@
 #include <unordered_set>
 #include <utility>
 #include "completer.hpp"
-#include "abaddon.hpp"
-#include "util.hpp"
 
 constexpr const int CompleterHeight = 150;
 constexpr const int MaxCompleterEntries = 30;

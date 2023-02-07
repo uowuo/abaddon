@@ -8,7 +8,7 @@
 /bin/libcairo-2.dll
 /bin/libcairo-gobject-2.dll
 /bin/libcairomm-1.0-1.dll
-/bin/libcrypto-1_1-x64.dll
+/bin/libcrypto-3-x64.dll
 /bin/libcurl-4.dll
 /bin/libdatrie-1.dll
 /bin/libdeflate.dll
@@ -50,7 +50,7 @@
 /bin/libspdlog.dll
 /bin/libsqlite3-0.dll
 /bin/libssh2-1.dll
-/bin/libssl-1_1-x64.dll
+/bin/libssl-3-x64.dll
 /bin/libstdc++-6.dll
 /bin/libthai-0.dll
 /bin/libunistring-2.dll

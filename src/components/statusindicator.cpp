@@ -1,5 +1,4 @@
 #include "statusindicator.hpp"
-#include "abaddon.hpp"
 
 static const constexpr int Diameter = 8;
 

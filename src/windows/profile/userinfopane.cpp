@@ -1,6 +1,5 @@
 #include "userinfopane.hpp"
 #include <unordered_set>
-#include "abaddon.hpp"
 
 ConnectionItem::ConnectionItem(const ConnectionData &conn)
     : m_box(Gtk::ORIENTATION_HORIZONTAL)

@@ -1,10 +1,14 @@
 #pragma once
-#include <gtkmm.h>
 #include <string>
 #include <queue>
 #include <mutex>
 #include <unordered_set>
 #include <unordered_map>
+#include <gtkmm/paned.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treemodel.h>
+#include <gtkmm/treestore.h>
+#include <gtkmm/treeview.h>
 #include <sigc++/sigc++.h>
 #include "discord/discord.hpp"
 #include "state.hpp"
@@ -64,6 +68,7 @@ protected:
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::PixbufAnimation>> m_icon_anim;
         Gtk::TreeModelColumn<int64_t> m_sort;
         Gtk::TreeModelColumn<bool> m_nsfw;
+        Gtk::TreeModelColumn<std::optional<Gdk::RGBA>> m_color; // for folders right now
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
         // because otherwise it doesnt count as an "expander" (property_is_expander)
         // so this solution will have to do which i hate but the alternative is adding invisible children
@@ -75,13 +80,15 @@ protected:
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
 
-    Gtk::TreeModel::iterator AddGuild(const GuildData &guild);
+    Gtk::TreeModel::iterator AddFolder(const UserSettingsGuildFoldersEntry &folder);
+    Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
 
     void UpdateChannelCategory(const ChannelData &channel);
 
     // separation necessary because a channel and guild can share the same id
+    Gtk::TreeModel::iterator GetIteratorForTopLevelFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForRowFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForRowFromIDOfType(Snowflake id, RenderType type);
@@ -172,7 +179,8 @@ protected:
 
     // (GetIteratorForChannelFromID is rather slow)
     // only temporary since i dont want to worry about maintaining this map
-    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_channel_map;
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_row_map;
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_guild_row_map;
 
 public:
     using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;

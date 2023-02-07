@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <unordered_map>
 #include <vector>
-#include <gtkmm.h>
 
 // shoutout to gtk for only supporting .svg's sometimes
 

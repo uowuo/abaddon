@@ -1,5 +1,4 @@
 #include "user.hpp"
-#include "abaddon.hpp"
 
 bool UserData::IsABot() const noexcept {
     return IsBot.has_value() && *IsBot;

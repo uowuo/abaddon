@@ -1,8 +1,6 @@
-#include "abaddon.hpp"
 #include "channels.hpp"
 #include "imgmanager.hpp"
 #include "statusindicator.hpp"
-#include "util.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -105,6 +103,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
+    column->add_attribute(renderer->property_color(), m_columns.m_color);
     m_view.append_column(*column);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
@@ -309,14 +308,51 @@ void ChannelList::UpdateListing() {
 
     auto &discord = Abaddon::Get().GetDiscordClient();
 
-    const auto guild_ids = discord.GetUserSortedGuilds();
-    int sortnum = 0;
-    for (const auto &guild_id : guild_ids) {
-        const auto guild = discord.GetGuild(guild_id);
-        if (!guild.has_value()) continue;
+    /*
+    guild_folders looks something like this
+     "guild_folders": [
+        {
+           "color": null,
+           "guild_ids": [
+               "8009060___________"
+           ],
+           "id": null,
+           "name": null
+        },
+        {
+           "color": null,
+           "guild_ids": [
+               "99615594__________",
+               "86132141__________",
+               "35450138__________",
+               "83714048__________"
+           ],
+           "id": 2853066769,
+           "name": null
+        }
+    ]
 
-        auto iter = AddGuild(*guild);
-        (*iter)[m_columns.m_sort] = sortnum++;
+     so if id != null then its a folder (they can have single entries)
+    */
+
+    int sort_value = 0;
+
+    const auto folders = discord.GetUserSettings().GuildFolders;
+    if (folders.empty()) {
+        // fallback if no organization has occurred (guild_folders will be empty)
+        const auto guild_ids = discord.GetUserSortedGuilds();
+        for (const auto &guild_id : guild_ids) {
+            const auto guild = discord.GetGuild(guild_id);
+            if (!guild.has_value()) continue;
+
+            auto iter = AddGuild(*guild, m_model->children());
+            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
+        }
+    } else {
+        for (const auto &group : folders) {
+            auto iter = AddFolder(group);
+            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
+        }
     }
 
     m_updating_listing = false;
@@ -324,8 +360,9 @@ void ChannelList::UpdateListing() {
     AddPrivateChannels();
 }
 
+// TODO update for folders
 void ChannelList::UpdateNewGuild(const GuildData &guild) {
-    AddGuild(guild);
+    AddGuild(guild, m_model->children());
     // update sort order
     int sortnum = 0;
     for (const auto guild_id : Abaddon::Get().GetDiscordClient().GetUserSortedGuilds()) {
@@ -452,6 +489,8 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
     // get the threads in the guild
     std::vector<Snowflake> threads;
     auto guild_iter = GetIteratorForGuildFromID(data.GuildID);
+    if (!guild_iter) return;
+
     std::queue<Gtk::TreeModel::iterator> queue;
     queue.push(guild_iter);
 
@@ -567,22 +606,27 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
 
 void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
     auto recurse = [this](auto &self, const ExpansionStateRoot &root) -> void {
-        // and these are only channels
         for (const auto &[id, state] : root.Children) {
-            if (const auto iter = m_tmp_channel_map.find(id); iter != m_tmp_channel_map.end()) {
+            Gtk::TreeModel::iterator row_iter;
+            if (const auto map_iter = m_tmp_row_map.find(id); map_iter != m_tmp_row_map.end()) {
+                row_iter = map_iter->second;
+            } else if (const auto map_iter = m_tmp_guild_row_map.find(id); map_iter != m_tmp_guild_row_map.end()) {
+                row_iter = map_iter->second;
+            }
+
+            if (row_iter) {
                 if (state.IsExpanded)
-                    m_view.expand_row(m_model->get_path(iter->second), false);
+                    m_view.expand_row(m_model->get_path(row_iter), false);
                 else
-                    m_view.collapse_row(m_model->get_path(iter->second));
+                    m_view.collapse_row(m_model->get_path(row_iter));
             }
 
             self(self, state.Children);
         }
     };
 
-    // top level is guild
     for (const auto &[id, state] : root.Children) {
-        if (const auto iter = GetIteratorForGuildFromID(id)) {
+        if (const auto iter = GetIteratorForTopLevelFromID(id)) {
             if (state.IsExpanded)
                 m_view.expand_row(m_model->get_path(iter), false);
             else
@@ -592,7 +636,7 @@ void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
         recurse(recurse, state.Children);
     }
 
-    m_tmp_channel_map.clear();
+    m_tmp_row_map.clear();
 }
 
 ExpansionStateRoot ChannelList::GetExpansionState() const {
@@ -617,15 +661,54 @@ ExpansionStateRoot ChannelList::GetExpansionState() const {
     return r;
 }
 
-Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
+Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
+    if (!folder.ID.has_value()) {
+        // just a guild
+        if (!folder.GuildIDs.empty()) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(folder.GuildIDs[0]);
+            if (guild.has_value()) {
+                return AddGuild(*guild, m_model->children());
+            }
+        }
+    } else {
+        auto folder_row = *m_model->append();
+        folder_row[m_columns.m_type] = RenderType::Folder;
+        folder_row[m_columns.m_id] = *folder.ID;
+        m_tmp_row_map[*folder.ID] = folder_row;
+        if (folder.Name.has_value()) {
+            folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
+        } else {
+            folder_row[m_columns.m_name] = "Folder";
+        }
+        if (folder.Color.has_value()) {
+            folder_row[m_columns.m_color] = IntToRGBA(*folder.Color);
+        }
+
+        int sort_value = 0;
+        for (const auto &guild_id : folder.GuildIDs) {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(guild_id);
+            if (guild.has_value()) {
+                auto guild_row = AddGuild(*guild, folder_row->children());
+                (*guild_row)[m_columns.m_sort] = sort_value++;
+            }
+        }
+
+        return folder_row;
+    }
+
+    return {};
+}
+
+Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();
 
-    auto guild_row = *m_model->append();
+    auto guild_row = *m_model->append(root);
     guild_row[m_columns.m_type] = RenderType::Guild;
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
     guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
+    m_tmp_guild_row_map[guild.ID] = guild_row;
 
     if (Abaddon::Get().GetSettings().ShowAnimations && guild.HasAnimatedIcon()) {
         const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -677,7 +760,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         if (it == threads.end()) return;
 
         for (const auto &thread : it->second)
-            m_tmp_channel_map[thread.ID] = CreateThreadRow(row.children(), thread);
+            m_tmp_row_map[thread.ID] = CreateThreadRow(row.children(), thread);
     };
 
     auto add_voice_participants = [this, &discord](const ChannelData &channel, const Gtk::TreeNodeChildren &root) {
@@ -710,7 +793,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
         add_threads(channel, channel_row);
-        m_tmp_channel_map[channel.ID] = channel_row;
+        m_tmp_row_map[channel.ID] = channel_row;
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -722,7 +805,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
         cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
         cat_row[m_columns.m_sort] = *category->Position;
         cat_row[m_columns.m_expanded] = true;
-        m_tmp_channel_map[category_id] = cat_row;
+        m_tmp_row_map[category_id] = cat_row;
         // m_view.expand_row wont work because it might not have channels
 
         for (const auto &channel : channels) {
@@ -740,7 +823,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild) {
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
             add_threads(channel, channel_row);
-            m_tmp_channel_map[channel.ID] = channel_row;
+            m_tmp_row_map[channel.ID] = channel_row;
         }
     }
 
@@ -781,10 +864,33 @@ void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
     (*iter)[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
 }
 
+// todo this all needs refactoring for shooore
+Gtk::TreeModel::iterator ChannelList::GetIteratorForTopLevelFromID(Snowflake id) {
+    for (const auto &child : m_model->children()) {
+        if ((child[m_columns.m_type] == RenderType::Guild || child[m_columns.m_type] == RenderType::Folder) && child[m_columns.m_id] == id) {
+            return child;
+        } else if (child[m_columns.m_type] == RenderType::Folder) {
+            for (const auto &folder_child : child->children()) {
+                if (folder_child[m_columns.m_id] == id) {
+                    return folder_child;
+                }
+            }
+        }
+    }
+    return {};
+}
+
 Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     for (const auto &child : m_model->children()) {
-        if (child[m_columns.m_id] == id)
+        if (child[m_columns.m_type] == RenderType::Guild && child[m_columns.m_id] == id) {
             return child;
+        } else if (child[m_columns.m_type] == RenderType::Folder) {
+            for (const auto &folder_child : child->children()) {
+                if (folder_child[m_columns.m_id] == id) {
+                    return folder_child;
+                }
+            }
+        }
     }
     return {};
 }
@@ -797,7 +903,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromID(Snowflake id) {
 
     while (!queue.empty()) {
         auto item = queue.front();
-        if ((*item)[m_columns.m_id] == id) return item;
+        if ((*item)[m_columns.m_id] == id && (*item)[m_columns.m_type] != RenderType::Guild) return item;
         for (const auto &child : item->children())
             queue.push(child);
         queue.pop();
@@ -884,13 +990,9 @@ void ChannelList::AddPrivateChannels() {
         auto row = *iter;
         row[m_columns.m_type] = RenderType::DM;
         row[m_columns.m_id] = dm_id;
+        row[m_columns.m_name] = Glib::Markup::escape_text(dm->GetDisplayName());
         row[m_columns.m_sort] = static_cast<int64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
         row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
-
-        if (dm->Type == ChannelType::DM && top_recipient.has_value())
-            row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
-        else if (dm->Type == ChannelType::GROUP_DM)
-            row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
 
         if (dm->HasIcon()) {
             const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
@@ -921,13 +1023,9 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     auto row = *iter;
     row[m_columns.m_type] = RenderType::DM;
     row[m_columns.m_id] = dm.ID;
+    row[m_columns.m_name] = Glib::Markup::escape_text(dm.GetDisplayName());
     row[m_columns.m_sort] = static_cast<int64_t>(-(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID));
     row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
-
-    if (dm.Type == ChannelType::DM && top_recipient.has_value())
-        row[m_columns.m_name] = Glib::Markup::escape_text(top_recipient->Username);
-    else if (dm.Type == ChannelType::GROUP_DM)
-        row[m_columns.m_name] = std::to_string(recipients.size()) + " members";
 
     if (top_recipient.has_value()) {
         const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
@@ -1025,6 +1123,7 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
     M(m_sort);
     M(m_nsfw);
     M(m_expanded);
+    M(m_color);
 #undef M
 
     // recursively move children
@@ -1174,4 +1273,5 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_sort);
     add(m_nsfw);
     add(m_expanded);
+    add(m_color);
 }

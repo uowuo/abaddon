@@ -9,6 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
 option(ENABLE_VOICE "Enable voice suppport" ON)
+option(USE_KEYCHAIN "Store the token in the keychain (default)" ON)
 
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
@@ -56,6 +57,8 @@ target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
+target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
+
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 ((CMAKE_SYSTEM_NAME STREQUAL "Linux") OR (CMAKE_CXX_COMPILER_VERSION LESS 9))))
@@ -100,14 +103,19 @@ target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
 
 if (USE_LIBHANDY)
-    find_package(libhandy)
-    if (NOT libhandy_FOUND)
-        message("libhandy could not be found. features requiring it have been disabled")
-        set(USE_LIBHANDY OFF)
-    else ()
-        target_include_directories(abaddon PUBLIC ${libhandy_INCLUDE_DIRS})
-        target_link_libraries(abaddon ${libhandy_LIBRARIES})
-        target_compile_definitions(abaddon PRIVATE WITH_LIBHANDY)
+    find_package(libhandy REQUIRED)
+    target_include_directories(abaddon PUBLIC ${libhandy_INCLUDE_DIRS})
+    target_link_libraries(abaddon ${libhandy_LIBRARIES})
+    target_compile_definitions(abaddon PRIVATE WITH_LIBHANDY)
+endif ()
+
+if (USE_KEYCHAIN)
+    find_package(keychain QUIET)
+    if (NOT keychain_FOUND)
+        message("keychain was not found and will be included as a submodule")
+        add_subdirectory(subprojects/keychain)
+        target_link_libraries(abaddon keychain)
+        target_compile_definitions(abaddon PRIVATE WITH_KEYCHAIN)
     endif ()
 endif ()
 

@@ -1,5 +1,4 @@
 #include "chatwindow.hpp"
-#include "abaddon.hpp"
 #include "chatinputindicator.hpp"
 #include "ratelimitindicator.hpp"
 #include "chatinput.hpp"

@@ -1,12 +1,10 @@
 #include "chatlist.hpp"
-#include "abaddon.hpp"
 #include "chatmessage.hpp"
 #include "constants.hpp"
 
 ChatList::ChatList() {
     m_list.get_style_context()->add_class("messages");
 
-    set_can_focus(false);
     set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
 
     get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &ChatList::OnVAdjustmentValueChanged));

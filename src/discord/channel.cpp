@@ -1,4 +1,3 @@
-#include "abaddon.hpp"
 #include "channel.hpp"
 
 void from_json(const nlohmann::json &j, ThreadMetadataData &m) {
@@ -84,6 +83,10 @@ bool ChannelData::IsCategory() const noexcept {
     return Type == ChannelType::GUILD_CATEGORY;
 }
 
+bool ChannelData::IsText() const noexcept {
+    return Type == ChannelType::GUILD_TEXT || Type == ChannelType::GUILD_NEWS;
+}
+
 bool ChannelData::HasIcon() const noexcept {
     return Icon.has_value();
 }
@@ -102,15 +105,14 @@ std::string ChannelData::GetIconURL() const {
 
 std::string ChannelData::GetDisplayName() const {
     if (Name.has_value()) {
-        return "#" + *Name;
+        if (IsDM()) {
+            return *Name;
+        } else {
+            return "#" + *Name;
+        }
     } else {
-        const auto recipients = GetDMRecipients();
-        if (Type == ChannelType::DM && !recipients.empty())
-            return recipients[0].Username;
-        else if (Type == ChannelType::GROUP_DM)
-            return std::to_string(recipients.size()) + " members";
+        return GetRecipientsDisplay();
     }
-    return "Unknown";
 }
 
 std::vector<Snowflake> ChannelData::GetChildIDs() const {
@@ -139,6 +141,25 @@ std::vector<UserData> ChannelData::GetDMRecipients() const {
 
     return {};
 }
-bool ChannelData::IsText() const noexcept {
-    return Type == ChannelType::GUILD_TEXT || Type == ChannelType::GUILD_NEWS;
+
+std::string ChannelData::GetRecipientsDisplay() const {
+    const auto self_id = Abaddon::Get().GetDiscordClient().GetUserData().ID;
+    const auto recipients = GetDMRecipients();
+
+    if (Type == ChannelType::DM && !recipients.empty()) {
+        return recipients[0].Username;
+    }
+
+    Glib::ustring r;
+    for (size_t i = 0; i < recipients.size(); i++) {
+        const auto &recipient = recipients[i];
+        r += recipient.Username;
+        if (i < recipients.size() - 1) {
+            r += ", ";
+        }
+    }
+
+    if (r.empty()) r = "Unnamed";
+
+    return r;
 }

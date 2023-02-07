@@ -106,4 +106,5 @@ struct ChannelData {
     [[nodiscard]] std::vector<Snowflake> GetChildIDs() const;
     [[nodiscard]] std::optional<PermissionOverwrite> GetOverwrite(Snowflake id) const;
     [[nodiscard]] std::vector<UserData> GetDMRecipients() const;
+    [[nodiscard]] std::string GetRecipientsDisplay() const;
 };

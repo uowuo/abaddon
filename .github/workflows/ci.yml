@@ -63,26 +63,26 @@ jobs:
 
       - name: Build (1)
         uses: haya14busa/action-cond@v1
-        id: buildcmd
+        id: build
         with:
           cond: ${{ matrix.mindeps == true }}
           if_true: |
-            cmake -GNinja -Bbuild -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF
             cmake --build build
           if_false: |
             cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
             cmake --build build
 
-      - name: Build (2)
-        run: ${{ steps.buildcmd.outputs.value }}
+      - name: Build (2) }}
+        run: ${{ steps.build.outputs.value }}
 
       - name: Setup Artifact
         run: |
-          mkdir -p build/artifactdir/bin build/artifactdir/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
+          mkdir -p build/artifactdir/bin build/artifactdir/etc/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
           cd build
           cp *.exe artifactdir/bin
           cd ..
-          cp /mingw64/ssl/certs/ca-bundle.crt build/artifactdir/ssl/certs
+          cp /mingw64/etc/ssl/certs/ca-bundle.crt build/artifactdir/etc/ssl/certs
           cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
           cp -r res/css res/res res/fonts build/artifactdir/bin
           cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas

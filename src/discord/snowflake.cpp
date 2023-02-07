@@ -1,5 +1,4 @@
 #include "snowflake.hpp"
-#include "util.hpp"
 #include <chrono>
 #include <ctime>
 #include <iomanip>

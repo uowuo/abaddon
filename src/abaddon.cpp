@@ -1,4 +1,3 @@
-#include <gtkmm.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
@@ -15,7 +14,6 @@
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
 #include "dialogs/textinput.hpp"
-#include "abaddon.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
@@ -817,19 +815,7 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
 
     const bool can_access = channel->IsDM() || m_discord.HasChannelPermission(m_discord.GetUserData().ID, id, Permission::VIEW_CHANNEL);
 
-    if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS)
-        m_main_window->set_title(std::string(APP_TITLE) + " - #" + *channel->Name);
-    else {
-        std::string display;
-        const auto recipients = channel->GetDMRecipients();
-        if (recipients.size() > 1)
-            display = std::to_string(recipients.size()) + " users";
-        else if (recipients.size() == 1)
-            display = recipients[0].Username;
-        else
-            display = "Empty group";
-        m_main_window->set_title(std::string(APP_TITLE) + " - " + display);
-    }
+    m_main_window->set_title(std::string(APP_TITLE) + " - " + channel->GetDisplayName());
     m_main_window->UpdateChatActiveChannel(id, expand_to);
     if (m_channels_requested.find(id) == m_channels_requested.end()) {
         // dont fire requests we know will fail

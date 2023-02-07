@@ -1,7 +1,5 @@
-#include "abaddon.hpp"
 #include "chatmessage.hpp"
 #include "lazyimage.hpp"
-#include "util.hpp"
 #include <unordered_map>
 
 constexpr static int EmojiSize = 24; // settings eventually
@@ -166,7 +164,8 @@ Gtk::TextView *ChatMessageItemContainer::CreateTextComponent(const Message &data
     if (data.IsPending)
         tv->get_style_context()->add_class("pending");
     tv->get_style_context()->add_class("message-text");
-    tv->set_can_focus(false);
+    tv->set_can_focus(true);
+    tv->set_cursor_visible(false);
     tv->set_editable(false);
     tv->set_wrap_mode(Gtk::WRAP_WORD_CHAR);
     tv->set_halign(Gtk::ALIGN_FILL);
@@ -335,6 +334,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
             author_lbl->set_hexpand(false);
             author_lbl->set_text(*embed.Author->Name);
             author_lbl->get_style_context()->add_class("embed-author");
+            author_lbl->set_selectable(true);
             author_box->add(*author_lbl);
         }
     }
@@ -351,6 +351,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         title_label->set_line_wrap(true);
         title_label->set_line_wrap_mode(Pango::WRAP_WORD_CHAR);
         title_label->set_max_width_chars(50);
+        title_label->set_selectable(true);
         title_ev->add(*title_label);
         content->pack_start(*title_ev);
 
@@ -380,6 +381,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
             desc_label->set_halign(Gtk::ALIGN_START);
             desc_label->set_hexpand(false);
             desc_label->get_style_context()->add_class("embed-description");
+            desc_label->set_selectable(true);
             content->pack_start(*desc_label);
         }
     }
@@ -422,6 +424,8 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
             field_box->pack_start(*field_val);
             field_lbl->get_style_context()->add_class("embed-field-title");
             field_val->get_style_context()->add_class("embed-field-value");
+            field_lbl->set_selectable(true);
+            field_val->set_selectable(true);
             flow->insert(*field_box, -1);
         }
     }
@@ -445,6 +449,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
         footer_lbl->set_hexpand(false);
         footer_lbl->set_text(embed.Footer->Text);
         footer_lbl->get_style_context()->add_class("embed-footer");
+        footer_lbl->set_selectable(true);
         content->pack_start(*footer_lbl);
     }
 
@@ -1169,8 +1174,6 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
 
     m_meta_box.set_hexpand(true);
     m_meta_box.set_can_focus(false);
-
-    m_content_box.set_can_focus(false);
 
     const auto on_enter_cb = [this](const GdkEventCrossing *event) -> bool {
         if (m_anim_avatar)

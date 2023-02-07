@@ -1,6 +1,4 @@
 #pragma once
-#include <gtkmm/dialog.h>
-#include <gtkmm/entry.h>
 
 class TextInputDialog : public Gtk::Dialog {
 public:

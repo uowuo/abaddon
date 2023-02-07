@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
-#include "snowflake.hpp"
 #include "json.hpp"
-#include "util.hpp"
+#include "misc/bitwise.hpp"
+#include "snowflake.hpp"
 
 constexpr static uint64_t PERMISSION_MAX_BIT = 36;
 enum class Permission : uint64_t {
@@ -46,6 +46,7 @@ enum class Permission : uint64_t {
 
     ALL = 0x1FFFFFFFFFULL,
 };
+
 template<>
 struct Bitwise<Permission> {
     static const bool enable = true;

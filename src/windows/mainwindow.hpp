@@ -3,8 +3,11 @@
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
+<<<<<<< HEAD
 #include "components/voiceinfobox.hpp"
 #include <gtkmm.h>
+=======
+>>>>>>> master
 
 class MainWindow : public Gtk::Window {
 public:
@@ -76,6 +79,7 @@ private:
     Gtk::Menu m_menu_file_sub;
     Gtk::MenuItem m_menu_file_reload_css;
     Gtk::MenuItem m_menu_file_clear_cache;
+    Gtk::CheckMenuItem m_menu_file_dump_ready;
 
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
@@ -83,6 +87,8 @@ private:
     Gtk::MenuItem m_menu_view_pins;
     Gtk::MenuItem m_menu_view_threads;
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
+    Gtk::CheckMenuItem m_menu_view_channels;
+    Gtk::CheckMenuItem m_menu_view_members;
 #ifdef WITH_LIBHANDY
     Gtk::MenuItem m_menu_view_go_back;
     Gtk::MenuItem m_menu_view_go_forward;

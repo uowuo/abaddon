@@ -1,8 +1,6 @@
 #include "imgmanager.hpp"
 
 #include <utility>
-#include "util.hpp"
-#include "abaddon.hpp"
 
 ImageManager::ImageManager() {
     m_cb_dispatcher.connect(sigc::mem_fun(*this, &ImageManager::RunCallbacks));

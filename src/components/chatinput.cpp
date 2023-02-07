@@ -1,5 +1,4 @@
 #include "chatinput.hpp"
-#include "abaddon.hpp"
 #include "constants.hpp"
 #include <filesystem>
 
@@ -12,7 +11,10 @@ ChatInputText::ChatInputText() {
 
     // hack
     auto cb = [this](GdkEventKey *e) -> bool {
-        return event(reinterpret_cast<GdkEvent *>(e));
+        // we cant use Widget::event here specifically or else for some reason
+        // it prevents the default binding set from activating sometimes
+        // specifically event() will return true (why) preventing default handler from running
+        return m_signal_key_press_proxy.emit(e);
     };
     m_textview.signal_key_press_event().connect(cb, false);
     m_textview.set_hexpand(false);
@@ -91,12 +93,16 @@ ChatInputText::type_signal_image_paste ChatInputText::signal_image_paste() {
     return m_signal_image_paste;
 }
 
+ChatInputText::type_signal_key_press_proxy ChatInputText::signal_key_press_proxy() {
+    return m_signal_key_press_proxy;
+}
+
 ChatInputTextContainer::ChatInputTextContainer() {
     // triple hack !!!
     auto cb = [this](GdkEventKey *e) -> bool {
         return event(reinterpret_cast<GdkEvent *>(e));
     };
-    m_input.signal_key_press_event().connect(cb, false);
+    m_input.signal_key_press_proxy().connect(cb);
 
     m_upload_img.property_icon_name() = "document-send-symbolic";
     m_upload_img.property_icon_size() = Gtk::ICON_SIZE_LARGE_TOOLBAR;

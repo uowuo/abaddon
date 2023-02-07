@@ -13,17 +13,26 @@
 #include <condition_variable>
 #include <optional>
 #include <type_traits>
-#include <gtkmm.h>
+
+#include <sigc++/slot.h>
+
+namespace Glib {
+class ustring;
+}
+
+namespace Gdk {
+class RGBA;
+}
+
+namespace Gtk {
+class Widget;
+class Menu;
+class ListBox;
+} // namespace Gtk
 
 #define NOOP_CALLBACK [](...) {}
 
 namespace util {
-template<typename T>
-struct is_optional : ::std::false_type {};
-
-template<typename T>
-struct is_optional<::std::optional<T>> : ::std::true_type {};
-
 bool IsFolder(std::string_view path);
 
 bool IsFile(std::string_view path);
@@ -43,42 +52,6 @@ std::vector<uint8_t> ReadWholeFile(const std::string &path);
 std::string HumanReadableBytes(uint64_t bytes);
 std::string FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
 void AddPointerCursor(Gtk::Widget &widget);
-
-template<typename T>
-struct Bitwise {
-    static const bool enable = false;
-};
-
-template<typename T>
-typename std::enable_if<Bitwise<T>::enable, T>::type operator|(T a, T b) {
-    using x = typename std::underlying_type<T>::type;
-    return static_cast<T>(static_cast<x>(a) | static_cast<x>(b));
-}
-
-template<typename T>
-typename std::enable_if<Bitwise<T>::enable, T>::type operator|=(T &a, T b) {
-    using x = typename std::underlying_type<T>::type;
-    a = static_cast<T>(static_cast<x>(a) | static_cast<x>(b));
-    return a;
-}
-
-template<typename T>
-typename std::enable_if<Bitwise<T>::enable, T>::type operator&(T a, T b) {
-    using x = typename std::underlying_type<T>::type;
-    return static_cast<T>(static_cast<x>(a) & static_cast<x>(b));
-}
-
-template<typename T>
-typename std::enable_if<Bitwise<T>::enable, T>::type operator&=(T &a, T b) {
-    using x = typename std::underlying_type<T>::type;
-    a = static_cast<T>(static_cast<x>(a) & static_cast<x>(b));
-    return a;
-}
-
-template<typename T>
-typename std::enable_if<Bitwise<T>::enable, T>::type operator~(T a) {
-    return static_cast<T>(~static_cast<typename std::underlying_type<T>::type>(a));
-}
 
 template<typename T>
 inline void AlphabeticalSort(T start, T end, std::function<std::string(const typename std::iterator_traits<T>::value_type &)> get_string) {

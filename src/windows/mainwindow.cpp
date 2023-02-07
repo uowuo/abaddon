@@ -1,5 +1,4 @@
 #include "mainwindow.hpp"
-#include "abaddon.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
@@ -262,8 +261,10 @@ void MainWindow::SetupMenu() {
     m_menu_file.set_submenu(m_menu_file_sub);
     m_menu_file_reload_css.set_label("Reload CSS");
     m_menu_file_clear_cache.set_label("Clear file cache");
+    m_menu_file_dump_ready.set_label("Dump ready message");
     m_menu_file_sub.append(m_menu_file_reload_css);
     m_menu_file_sub.append(m_menu_file_clear_cache);
+    m_menu_file_sub.append(m_menu_file_dump_ready);
 
     m_menu_view.set_label("View");
     m_menu_view.set_submenu(m_menu_view_sub);
@@ -272,6 +273,12 @@ void MainWindow::SetupMenu() {
     m_menu_view_threads.set_label("Threads");
     m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_label("Channels");
+    m_menu_view_channels.add_accelerator("activate", m_accels, GDK_KEY_L, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_channels.set_active(true);
+    m_menu_view_members.set_label("Members");
+    m_menu_view_members.add_accelerator("activate", m_accels, GDK_KEY_M, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
+    m_menu_view_members.set_active(true);
 #ifdef WITH_LIBHANDY
     m_menu_view_go_back.set_label("Go Back");
     m_menu_view_go_forward.set_label("Go Forward");
@@ -282,6 +289,8 @@ void MainWindow::SetupMenu() {
     m_menu_view_sub.append(m_menu_view_pins);
     m_menu_view_sub.append(m_menu_view_threads);
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
+    m_menu_view_sub.append(m_menu_view_channels);
+    m_menu_view_sub.append(m_menu_view_members);
 #ifdef WITH_LIBHANDY
     m_menu_view_sub.append(m_menu_view_go_back);
     m_menu_view_sub.append(m_menu_view_go_forward);
@@ -334,6 +343,10 @@ void MainWindow::SetupMenu() {
         Abaddon::Get().GetImageManager().ClearCache();
     });
 
+    m_menu_file_dump_ready.signal_toggled().connect([this]() {
+        Abaddon::Get().GetDiscordClient().SetDumpReady(m_menu_file_dump_ready.get_active());
+    });
+
     m_menu_discord_add_recipient.signal_activate().connect([this] {
         m_signal_action_add_recipient.emit(GetChatActiveChannel());
     });
@@ -359,6 +372,14 @@ void MainWindow::SetupMenu() {
         if (channel.has_value() && channel->GuildID.has_value()) {
             discord.MarkGuildAsRead(*channel->GuildID, NOOP_CALLBACK);
         }
+    });
+
+    m_menu_view_channels.signal_activate().connect([this]() {
+        m_channel_list.set_visible(m_menu_view_channels.get_active());
+    });
+
+    m_menu_view_members.signal_activate().connect([this]() {
+        m_members.GetRoot()->set_visible(m_menu_view_members.get_active());
     });
 
 #ifdef WITH_LIBHANDY

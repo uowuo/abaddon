@@ -1,5 +1,4 @@
 #pragma once
-#include <gtkmm.h>
 #include <map>
 #include <vector>
 #include "discord/message.hpp"

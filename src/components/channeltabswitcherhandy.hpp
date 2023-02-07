@@ -1,8 +1,7 @@
 #pragma once
 // perhaps this should be conditionally included within cmakelists?
 #ifdef WITH_LIBHANDY
-    #include <gtkmm/box.h>
-    #include <unordered_map>
+        #include <unordered_map>
     #include <handy.h>
     #include "discord/snowflake.hpp"
     #include "state.hpp"

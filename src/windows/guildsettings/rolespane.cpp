@@ -1,5 +1,4 @@
 #include "rolespane.hpp"
-#include "abaddon.hpp"
 
 GuildSettingsRolesPane::GuildSettingsRolesPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
