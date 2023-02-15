@@ -3,11 +3,11 @@
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
-<<<<<<< HEAD
 #include "components/voiceinfobox.hpp"
-#include <gtkmm.h>
-=======
->>>>>>> master
+#include <gtkmm/window.h>
+#include <gtkmm/stack.h>
+#include <gtkmm/menubar.h>
+#include <gtkmm/checkmenuitem.h>
 
 class MainWindow : public Gtk::Window {
 public:

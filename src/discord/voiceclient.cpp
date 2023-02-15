@@ -18,7 +18,7 @@
 // clang-format on
 
 UDPSocket::UDPSocket()
-    : m_socket(INVALID_SOCKET) {
+    : m_socket(-1) {
 }
 
 UDPSocket::~UDPSocket() {
