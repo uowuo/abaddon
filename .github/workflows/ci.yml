@@ -74,27 +74,28 @@ jobs:
 
       - name: Setup Artifact
         run: |
-          mkdir -p build/artifactdir/bin build/artifactdir/etc/ssl/certs build/artifactdir/lib build/artifactdir/share/glib-2.0/schemas
+          artifact_dir=build/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
+          mkdir -p ${artifact_dir}/bin ${artifact_dir}/etc/ssl/certs ${artifact_dir}/lib ${artifact_dir}/share/glib-2.0/schemas
           cd build
-          cp *.exe artifactdir/bin
+          cp *.exe ../${artifact_dir}/bin
           cd ..
-          cp /mingw64/etc/ssl/certs/ca-bundle.crt build/artifactdir/etc/ssl/certs
-          cp -r /mingw64/lib/gdk-pixbuf-2.0 build/artifactdir/lib
-          cp -r res/css res/res res/fonts build/artifactdir/bin
-          cp /mingw64/share/glib-2.0/schemas/gschemas.compiled build/artifactdir/share/glib-2.0/schemas
-          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% build/artifactdir/bin || :
-          cp /usr/bin/msys-ffi-8.dll build/artifactdir/bin/libffi-8.dll
-          mkdir -p build/artifactdir/share/icons/Adwaita
-          cd build/artifactdir/share/icons/Adwaita
+          cp /mingw64/etc/ssl/certs/ca-bundle.crt ${artifact_dir}/etc/ssl/certs
+          cp -r /mingw64/lib/gdk-pixbuf-2.0 ${artifact_dir}/lib
+          cp -r res/css res/res res/fonts ${artifact_dir}/bin
+          cp /mingw64/share/glib-2.0/schemas/gschemas.compiled ${artifact_dir}/share/glib-2.0/schemas
+          cat "ci/msys-deps.txt" | sed 's/\r$//' | xargs -I % cp /mingw64% ${artifact_dir}/bin || :
+          cp /usr/bin/msys-ffi-8.dll ${artifact_dir}/bin/libffi-8.dll
+          mkdir -p ${artifact_dir}/share/icons/Adwaita
+          cd ${artifact_dir}/share/icons/Adwaita
           mkdir -p 16x16/actions 24x24/actions 32x32/actions 48x48/actions 64x64/actions 96x96/actions scalable/actions
           cd ../../../../../
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/16x16/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/24x24/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/32x32/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/48x48/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/48x48/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/64x64/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/actions/%.symbolic.png build/artifactdir/share/icons/Adwaita/96x96/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/actions/%.svg build/artifactdir/share/icons/Adwaita/scalable/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/32x32/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/48x48/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/48x48/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/64x64/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/96x96/actions || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/actions/%.svg ${artifact_dir}/share/icons/Adwaita/scalable/actions || :
 
       - name: Upload build (1)
         uses: haya14busa/action-cond@v1
@@ -140,16 +141,17 @@ jobs:
 
       - name: Setup artifact files
         run: |
-          mkdir "${{ runner.workspace }}/artifactdir"
-          cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
-          cp -r "${{ github.workspace }}/res/css" "${{ runner.workspace }}/artifactdir/css"
-          cp -r "${{ github.workspace }}/res/res" "${{ runner.workspace }}/artifactdir/res"
+          artifact_dir=build/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
+          mkdir -p "${artifact_dir}"
+          cp "${{runner.workspace}}/build/abaddon" "${artifact_dir}/abaddon"
+          cp -r "${{ github.workspace }}/res/css" "${artifact_dir}/css"
+          cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
         uses: actions/upload-artifact@v2
         with:
           name: build-macos-${{ matrix.buildtype }}
-          path: ${{ runner.workspace }}/artifactdir
+          path: build/artifactdir
 
   linux:
     name: linux-${{ matrix.buildtype }}
@@ -194,10 +196,11 @@ jobs:
 
       - name: Setup artifact files
         run: |
-          mkdir "${{ runner.workspace }}/artifactdir"
-          cp "${{runner.workspace}}/build/abaddon" "${{ runner.workspace }}/artifactdir/abaddon"
-          cp -r "${{ github.workspace }}/res/css" "${{ runner.workspace }}/artifactdir/css"
-          cp -r "${{ github.workspace }}/res/res" "${{ runner.workspace }}/artifactdir/res"
+          artifact_dir=${{ runner.workspace }}/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
+          mkdir -p "${artifact_dir}"
+          cp "${{runner.workspace}}/build/abaddon" "${artifact_dir}/abaddon"
+          cp -r "${{ github.workspace }}/res/css" "${artifact_dir}/css"
+          cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
         uses: actions/upload-artifact@v2
