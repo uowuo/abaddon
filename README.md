@@ -73,7 +73,7 @@ the result of fundamental issues with Discord's thread implementation.
 1. Install dependencies
     * On Ubuntu 20.04 (Focal) and newer:
       ```Shell
-      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev
+      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev
       ```
     * On Arch Linux
       ```Shell
@@ -102,10 +102,18 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 
 > **Warning**: If you use Windows, make sure to start from the `bin` directory
 
-On Linux, `css` and `res` can also be loaded from `~/.local/share/abaddon` or `/usr/share/abaddon`
+#### Resources
+
+The two folders within the `res` folder (`res/res` and `res/css`) are necessary. Windows also uses the `fonts` folder.
+You can put them directly next to the executable. On Linux, `css` and `res` can also be loaded from
+`~/.local/share/abaddon` or `/usr/share/abaddon`
 
 `abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is
 no `abaddon.ini` in the working directory
+
+#### How do I get my token?
+
+Follow [these](https://github.com/Tyrrrz/DiscordChatExporter/issues/76#issuecomment-410067054) instructions.
 
 #### The Spam Filter
 
@@ -189,6 +197,7 @@ spam filter's wrath:
 | `.typing-indicator`            | The typing indicator (also used for replies)                                                      |
 
 Used in reorderable list implementation:
+
 | Selector             |
 |----------------------|
 | `.drag-icon`         |
