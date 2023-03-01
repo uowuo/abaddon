@@ -12,6 +12,8 @@ void Notifications::CheckMessage(const Message &message) {
     if (discord.IsChannelMuted(message.ChannelID)) return;
     // ignore if focused and message's channel is active
     if (Abaddon::Get().IsMainWindowActive() && Abaddon::Get().GetActiveChannelID() == message.ChannelID) return;
+    // ignore if its our own message
+    if (message.Author.ID == Abaddon::Get().GetDiscordClient().GetUserData().ID) return;
     // notify messages in DMs
     const auto channel = discord.GetChannel(message.ChannelID);
     if (channel->IsDM()) {
