@@ -265,6 +265,7 @@ bool Message::IsEdited() const {
 }
 
 bool Message::DoesMention(Snowflake id) const noexcept {
+    if (DoesMentionEveryone) return true;
     return std::any_of(Mentions.begin(), Mentions.end(), [id](const UserData &user) {
         return user.ID == id;
     });
