@@ -15,6 +15,7 @@
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
 #include "startup.hpp"
+#include "notifications/notifications.hpp"
 
 #ifdef WITH_LIBHANDY
     #include <handy.h>
@@ -272,6 +273,14 @@ int Abaddon::StartGTK() {
 
     m_main_window->UpdateMenus();
 
+    auto action_go_to_channel = Gio::SimpleAction::create("go-to-channel", Glib::VariantType("s"));
+    action_go_to_channel->signal_activate().connect([this](const Glib::VariantBase &param) {
+        const auto id_str = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring>>(param);
+        const Snowflake id = id_str.get();
+        ActionChannelOpened(id, false);
+    });
+    m_gtk_app->add_action(action_go_to_channel);
+
     m_gtk_app->hold();
     m_main_window->show();
 
@@ -329,6 +338,7 @@ void Abaddon::DiscordOnReady() {
 
 void Abaddon::DiscordOnMessageCreate(const Message &message) {
     m_main_window->UpdateChatNewMessage(message);
+    m_notifications.CheckMessage(message);
 }
 
 void Abaddon::DiscordOnMessageDelete(Snowflake id, Snowflake channel_id) {
@@ -680,6 +690,10 @@ std::string Abaddon::GetResPath(const std::string &path) {
 
 std::string Abaddon::GetStateCachePath(const std::string &path) {
     return GetStateCachePath() + path;
+}
+
+Glib::RefPtr<Gtk::Application> Abaddon::GetApp() {
+    return m_gtk_app;
 }
 
 void Abaddon::ActionConnect() {

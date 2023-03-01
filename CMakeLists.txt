@@ -48,6 +48,8 @@ file(GLOB_RECURSE ABADDON_SOURCES
         "src/*.cpp"
         )
 
+list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_gio\\.cpp$")
+
 add_executable(abaddon ${ABADDON_SOURCES})
 target_include_directories(abaddon PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
@@ -62,6 +64,10 @@ if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 ((CMAKE_SYSTEM_NAME STREQUAL "Linux") OR (CMAKE_CXX_COMPILER_VERSION LESS 9))))
     target_link_libraries(abaddon stdc++fs)
+endif ()
+
+if (NOT WIN32)
+    target_sources(abaddon PRIVATE src/notifications/notifier_gio.cpp)
 endif ()
 
 if (IXWebSocket_LIBRARIES)

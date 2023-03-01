@@ -3,11 +3,15 @@
 #include <mutex>
 #include <string>
 #include <unordered_set>
+#include <gtkmm/application.h>
+#include <gtkmm/cssprovider.h>
+#include <gtkmm/statusicon.h>
 #include "discord/discord.hpp"
 #include "windows/mainwindow.hpp"
 #include "settings.hpp"
 #include "imgmanager.hpp"
 #include "emojis.hpp"
+#include "notifications/notifications.hpp"
 
 #define APP_TITLE "Abaddon"
 
@@ -92,6 +96,8 @@ public:
     static std::string GetResPath(const std::string &path);
     static std::string GetStateCachePath(const std::string &path);
 
+    [[nodiscard]] Glib::RefPtr<Gtk::Application> GetApp();
+
 protected:
     void RunFirstTimeDiscordStartup();
 
@@ -149,4 +155,6 @@ private:
     Glib::RefPtr<Gtk::CssProvider> m_css_low_provider; // registered with a lower priority to allow better customization
     Glib::RefPtr<Gtk::StatusIcon> m_tray;
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
+
+    Notifications m_notifications;
 };
