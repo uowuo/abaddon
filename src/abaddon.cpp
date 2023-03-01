@@ -696,6 +696,14 @@ Glib::RefPtr<Gtk::Application> Abaddon::GetApp() {
     return m_gtk_app;
 }
 
+bool Abaddon::IsMainWindowActive() {
+    return m_main_window->has_toplevel_focus();
+}
+
+Snowflake Abaddon::GetActiveChannelID() const noexcept {
+    return m_main_window->GetChatActiveChannel();
+}
+
 void Abaddon::ActionConnect() {
     if (!m_discord.IsStarted())
         StartDiscord();

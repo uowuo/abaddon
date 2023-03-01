@@ -97,6 +97,8 @@ public:
     static std::string GetStateCachePath(const std::string &path);
 
     [[nodiscard]] Glib::RefPtr<Gtk::Application> GetApp();
+    [[nodiscard]] bool IsMainWindowActive();
+    [[nodiscard]] Snowflake GetActiveChannelID() const noexcept;
 
 protected:
     void RunFirstTimeDiscordStartup();
