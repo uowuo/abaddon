@@ -81,6 +81,18 @@ const UserData &DiscordClient::GetUserData() const {
     return m_user_data;
 }
 
+const UserGuildSettingsData &DiscordClient::GetUserGuildSettings() const {
+    return m_user_guild_settings;
+}
+
+std::optional<UserGuildSettingsEntry> DiscordClient::GetSettingsForGuild(Snowflake id) const {
+    for (const auto &entry : m_user_guild_settings.Entries) {
+        if (entry.GuildID == id) return entry;
+    }
+
+    return std::nullopt;
+}
+
 std::vector<Snowflake> DiscordClient::GetUserSortedGuilds() const {
     // sort order is unfolder'd guilds sorted by id descending, then guilds in folders in array order
     // todo: make sure folder'd guilds are sorted properly
@@ -1617,6 +1629,8 @@ void DiscordClient::HandleGatewayReady(const GatewayMessage &msg) {
     m_session_id = data.SessionID;
     m_user_data = data.SelfUser;
     m_user_settings = data.Settings;
+    m_user_guild_settings = data.GuildSettings;
+    // TODO handle update
 
     HandleReadyReadState(data);
     HandleReadyGuildSettings(data);
@@ -1632,7 +1646,7 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     m_last_message_id[data.ChannelID] = data.ID;
     if (data.Author.ID != GetUserData().ID)
         m_unread[data.ChannelID];
-    if (data.DoesMention(GetUserData().ID)) {
+    if (data.DoesMentionEveryoneOrUser(GetUserData().ID)) {
         m_unread[data.ChannelID]++;
     }
     m_signal_message_create.emit(data);
@@ -2034,6 +2048,7 @@ void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg) {
     UserGuildSettingsUpdateData data = msg.Data;
+
     const bool for_dms = !data.Settings.GuildID.IsValid();
 
     const auto channels = for_dms ? GetPrivateChannels() : GetChannelsInGuild(data.Settings.GuildID);

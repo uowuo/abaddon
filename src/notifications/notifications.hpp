@@ -10,7 +10,8 @@ public:
     void CheckMessage(const Message &message);
 
 private:
-    void NotifyMessage(const Message &message);
+    void NotifyMessageDM(const Message &message);
+    void NotifyMessageGuild(const Message &message);
 
     [[nodiscard]] bool IsDND() const;
 

@@ -272,10 +272,16 @@ struct ReadStateData {
     friend void from_json(const nlohmann::json &j, ReadStateData &m);
 };
 
+enum class NotificationLevel {
+    ALL_MESSAGES = 0,
+    ONLY_MENTIONS = 1,
+    NO_MESSAGES = 2,
+};
+
 struct UserGuildSettingsChannelOverride {
     bool Muted;
     MuteConfigData MuteConfig;
-    int MessageNotifications;
+    NotificationLevel MessageNotifications;
     bool Collapsed;
     Snowflake ChannelID;
 
@@ -290,13 +296,15 @@ struct UserGuildSettingsEntry {
     bool Muted;
     MuteConfigData MuteConfig;
     bool MobilePush;
-    int MessageNotifications;
+    NotificationLevel MessageNotifications;
     bool HideMutedChannels;
     Snowflake GuildID;
     std::vector<UserGuildSettingsChannelOverride> ChannelOverrides;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsEntry &m);
     friend void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m);
+
+    std::optional<UserGuildSettingsChannelOverride> GetOverride(Snowflake channel_id) const;
 };
 
 struct UserGuildSettingsData {
