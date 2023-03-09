@@ -276,6 +276,7 @@ enum class NotificationLevel {
     ALL_MESSAGES = 0,
     ONLY_MENTIONS = 1,
     NO_MESSAGES = 2,
+    USE_UPPER = 3, // actually called "NULL"
 };
 
 struct UserGuildSettingsChannelOverride {

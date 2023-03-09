@@ -44,14 +44,29 @@ bool CheckGuildMessage(const Message &message) {
 
     const auto channel_settings = guild_settings->GetOverride(message.ChannelID);
 
-    // if there are guild settings but no channel settings then fallback to category or guild
-
+    // 🥴
     NotificationLevel level;
     if (channel_settings.has_value()) {
-        level = channel_settings->MessageNotifications;
+        if (channel_settings->MessageNotifications == NotificationLevel::USE_UPPER) {
+            if (category_settings.has_value()) {
+                if (category_settings->MessageNotifications == NotificationLevel::USE_UPPER) {
+                    level = guild_settings->MessageNotifications;
+                } else {
+                    level = category_settings->MessageNotifications;
+                }
+            } else {
+                level = guild_settings->MessageNotifications;
+            }
+        } else {
+            level = channel_settings->MessageNotifications;
+        }
     } else {
         if (category_settings.has_value()) {
-            level = category_settings->MessageNotifications;
+            if (category_settings->MessageNotifications == NotificationLevel::USE_UPPER) {
+                level = guild_settings->MessageNotifications;
+            } else {
+                level = category_settings->MessageNotifications;
+            }
         } else {
             level = guild_settings->MessageNotifications;
         }
