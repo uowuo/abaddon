@@ -11,7 +11,7 @@ public:
     Notifier();
     ~Notifier();
 
-    void Notify(const Glib::ustring &title, const Glib::ustring &text, const Glib::ustring &default_action);
+    void Notify(const Glib::ustring &title, const Glib::ustring &text, const Glib::ustring &default_action, const std::string &icon_path);
 
 private:
 #ifdef WITH_MINIAUDIO

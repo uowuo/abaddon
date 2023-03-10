@@ -110,7 +110,10 @@ void Notifications::NotifyMessageDM(const Message &message) {
     default_action += std::to_string(message.ChannelID);
     const auto title = message.Author.Username;
     const auto body = message.Content;
-    m_notifier.Notify(title, body, default_action);
+
+    Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
+        m_notifier.Notify(title, body, default_action, path);
+    });
 }
 
 void Notifications::NotifyMessageGuild(const Message &message) {
@@ -131,7 +134,9 @@ void Notifications::NotifyMessageGuild(const Message &message) {
         }
     }
     const auto body = message.Content;
-    m_notifier.Notify(title, body, default_action);
+    Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
+        m_notifier.Notify(title, body, default_action, path);
+    });
 }
 
 bool Notifications::IsDND() const {

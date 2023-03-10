@@ -18,6 +18,7 @@ public:
     void LoadAnimationFromURL(const std::string &url, int w, int h, const callback_anim_type &cb);
     void Prefetch(const std::string &url);
     Glib::RefPtr<Gdk::Pixbuf> GetPlaceholder(int size);
+    Cache &GetCache();
 
 private:
     static Glib::RefPtr<Gdk::Pixbuf> ReadFileToPixbuf(std::string path);
