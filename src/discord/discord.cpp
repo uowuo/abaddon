@@ -86,8 +86,8 @@ const UserGuildSettingsData &DiscordClient::GetUserGuildSettings() const {
 }
 
 std::optional<UserGuildSettingsEntry> DiscordClient::GetSettingsForGuild(Snowflake id) const {
-    for (const auto &entry : m_user_guild_settings.Entries) {
-        if (entry.GuildID == id) return entry;
+    if (const auto it = m_user_guild_settings.Entries.find(id); it != m_user_guild_settings.Entries.end()) {
+        return it->second;
     }
 
     return std::nullopt;
@@ -2049,6 +2049,8 @@ void DiscordClient::HandleGatewayMessageAck(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg) {
     UserGuildSettingsUpdateData data = msg.Data;
 
+    m_user_guild_settings.Entries[data.Settings.GuildID] = data.Settings;
+
     const bool for_dms = !data.Settings.GuildID.IsValid();
 
     const auto channels = for_dms ? GetPrivateChannels() : GetChannelsInGuild(data.Settings.GuildID);
@@ -2543,7 +2545,7 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
     }
 
     const auto now = Snowflake::FromNow();
-    for (const auto &entry : data.GuildSettings.Entries) {
+    for (const auto &[guild_id, entry] : data.GuildSettings.Entries) {
         // even if muted is true a guild/channel can be unmuted if the current time passes mute_config.end_time
         if (entry.Muted) {
             if (entry.MuteConfig.EndTime.has_value()) {

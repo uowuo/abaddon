@@ -210,7 +210,15 @@ std::optional<UserGuildSettingsChannelOverride> UserGuildSettingsEntry::GetOverr
 void from_json(const nlohmann::json &j, UserGuildSettingsData &m) {
     JS_D("version", m.Version);
     JS_D("partial", m.IsPartial);
-    JS_D("entries", m.Entries);
+
+    {
+        std::vector<UserGuildSettingsEntry> entries;
+        JS_D("entries", entries);
+
+        for (const auto &entry : entries) {
+            m.Entries[entry.GuildID] = entry;
+        }
+    }
 }
 
 void from_json(const nlohmann::json &j, ReadyEventData &m) {

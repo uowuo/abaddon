@@ -311,7 +311,7 @@ struct UserGuildSettingsEntry {
 struct UserGuildSettingsData {
     int Version;
     bool IsPartial;
-    std::vector<UserGuildSettingsEntry> Entries;
+    std::map<Snowflake, UserGuildSettingsEntry> Entries;
 
     friend void from_json(const nlohmann::json &j, UserGuildSettingsData &m);
 };
