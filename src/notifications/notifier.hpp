@@ -14,7 +14,7 @@ public:
     void Notify(const Glib::ustring &title, const Glib::ustring &text, const Glib::ustring &default_action, const std::string &icon_path);
 
 private:
-#ifdef WITH_MINIAUDIO
+#ifdef ENABLE_NOTIFICATION_SOUNDS
     ma_engine m_engine;
 #endif
 };
