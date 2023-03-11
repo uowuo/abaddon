@@ -5,7 +5,7 @@
 #include <miniaudio.h>
 
 Notifier::Notifier() {
-#ifdef WITH_MINIAUDIO
+#ifdef ENABLE_NOTIFICATION_SOUNDS
     if (ma_engine_init(nullptr, &m_engine) != MA_SUCCESS) {
         printf("failed to initialize miniaudio engine\n");
     }
@@ -13,7 +13,7 @@ Notifier::Notifier() {
 }
 
 Notifier::~Notifier() {
-#ifdef WITH_MINIAUDIO
+#ifdef ENABLE_NOTIFICATION_SOUNDS
     ma_engine_uninit(&m_engine);
 #endif
 }
@@ -34,7 +34,7 @@ void Notifier::Notify(const Glib::ustring &title, const Glib::ustring &text, con
     g_object_unref(icon);
     g_object_unref(file);
 
-#ifdef WITH_MINIAUDIO
+#ifdef ENABLE_NOTIFICATION_SOUNDS
     ma_engine_play_sound(&m_engine, Abaddon::Get().GetResPath("/sound/message.mp3").c_str(), nullptr);
 #endif
 }

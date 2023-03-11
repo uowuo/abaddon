@@ -2,8 +2,8 @@
 #include <glibmm/ustring.h>
 #include <gdkmm/pixbuf.h>
 
-#ifdef WITH_MINIAUDIO
-#include <miniaudio.h>
+#ifdef ENABLE_NOTIFICATION_SOUNDS
+    #include <miniaudio.h>
 #endif
 
 class Notifier {

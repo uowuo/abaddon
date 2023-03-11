@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
 option(USE_KEYCHAIN "Store the token in the keychain (default)" ON)
-option(USE_MINIAUDIO "Enable features that require miniaudio (default)" ON)
+option(ENABLE_NOTIFICATION_SOUNDS "Enable notification sounds (default)" ON)
 
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
@@ -125,7 +125,13 @@ if (USE_KEYCHAIN)
     endif ()
 endif ()
 
+if (${ENABLE_NOTIFICATION_SOUNDS})
+    set(USE_MINIAUDIO TRUE)
+    target_compile_definitions(abaddon PRIVATE ENABLE_NOTIFICATION_SOUNDS)
+else ()
+    set(USE_MINIAUDIO FALSE)
+endif ()
+
 if (USE_MINIAUDIO)
     target_include_directories(abaddon PUBLIC subprojects/miniaudio)
-    target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()
