@@ -763,6 +763,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
             m_tmp_row_map[thread.ID] = CreateThreadRow(row.children(), thread);
     };
 
+#ifdef WITH_VOICE
     auto add_voice_participants = [this, &discord](const ChannelData &channel, const Gtk::TreeNodeChildren &root) {
         for (auto user_id : discord.GetUsersInVoiceChannel(channel.ID)) {
             const auto user = discord.GetUser(user_id);
@@ -777,6 +778,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
             }
         }
     };
+#endif
 
     for (const auto &channel : orphan_channels) {
         auto channel_row = *m_model->append(guild_row.children());

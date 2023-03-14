@@ -73,7 +73,7 @@ jobs:
             cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
             cmake --build build
 
-      - name: Build (2) }}
+      - name: Build (2)
         run: ${{ steps.build.outputs.value }}
 
       - name: Setup Artifact
