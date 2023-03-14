@@ -57,7 +57,10 @@ private:
     ChatWindow m_chat;
     MemberList m_members;
     FriendsList m_friends;
+
+#ifdef WITH_VOICE
     VoiceInfoBox m_voice_info;
+#endif
 
     Gtk::Box m_left_pane;
 

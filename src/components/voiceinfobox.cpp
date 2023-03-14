@@ -1,6 +1,8 @@
-#include "voiceinfobox.hpp"
-#include "abaddon.hpp"
-#include "util.hpp"
+#ifdef WITH_VOICE
+
+    #include "voiceinfobox.hpp"
+    #include "abaddon.hpp"
+    #include "util.hpp"
 
 VoiceInfoBox::VoiceInfoBox()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
@@ -97,3 +99,5 @@ VoiceInfoBox::VoiceInfoBox()
 
     show_all_children();
 }
+
+#endif

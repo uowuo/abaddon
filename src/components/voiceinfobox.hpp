@@ -1,9 +1,11 @@
 #pragma once
 
-#include <gtkmm/box.h>
-#include <gtkmm/eventbox.h>
-#include <gtkmm/image.h>
-#include <gtkmm/label.h>
+#ifdef WITH_VOICE
+
+    #include <gtkmm/box.h>
+    #include <gtkmm/eventbox.h>
+    #include <gtkmm/image.h>
+    #include <gtkmm/label.h>
 
 class VoiceInfoBox : public Gtk::Box {
 public:
@@ -18,3 +20,5 @@ private:
     Gtk::EventBox m_disconnect_ev;
     Gtk::Image m_disconnect_img;
 };
+
+#endif
