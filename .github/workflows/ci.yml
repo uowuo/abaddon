@@ -92,7 +92,7 @@ jobs:
           mkdir -p ${artifact_dir}/share/icons/Adwaita
           cd ${artifact_dir}/share/icons/Adwaita
           mkdir -p 16x16/actions 24x24/actions 32x32/actions 48x48/actions 64x64/actions 96x96/actions scalable/actions
-          cd ../../../../../
+          cd ${GITHUB_WORKSPACE}
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/actions || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/actions || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/32x32/actions || :
