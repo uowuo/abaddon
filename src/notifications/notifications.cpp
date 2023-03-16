@@ -28,7 +28,7 @@ bool CheckGuildMessage(const Message &message) {
             }
         }
         return false;
-    } else if (guild_settings->Muted) {
+    } else if (discord.IsGuildMuted(*message.GuildID)) {
         // if there are guild settings and the guild is muted then dont notify
         return false;
     }
@@ -38,7 +38,7 @@ bool CheckGuildMessage(const Message &message) {
     std::optional<UserGuildSettingsChannelOverride> category_settings;
     if (channel.has_value() && channel->ParentID.has_value()) {
         category_settings = guild_settings->GetOverride(*channel->ParentID);
-        if (category_settings.has_value() && category_settings->Muted) {
+        if (discord.IsChannelMuted(*channel->ParentID)) {
             return false;
         }
     }
