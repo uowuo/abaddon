@@ -1,4 +1,5 @@
 #include "notifications.hpp"
+#include "misc/chatutil.hpp"
 #include "discord/message.hpp"
 
 Notifications::Notifications() {
@@ -104,12 +105,22 @@ void Notifications::CheckMessage(const Message &message) {
     }
 }
 
+Glib::ustring Sanitize(const Message &message) {
+    auto buf = Gtk::TextBuffer::create();
+    Gtk::TextBuffer::iterator begin, end;
+    buf->get_bounds(begin, end);
+    buf->insert(end, message.Content);
+    ChatUtil::CleanupEmojis(buf);
+    ChatUtil::HandleUserMentions(buf, message.ChannelID, true);
+    return Glib::Markup::escape_text(buf->get_text());
+}
+
 void Notifications::NotifyMessageDM(const Message &message) {
     Glib::ustring default_action = "app.go-to-channel";
     default_action += "::";
     default_action += std::to_string(message.ChannelID);
     const auto title = message.Author.Username;
-    const auto body = message.Content;
+    const auto body = Sanitize(message);
 
     Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
         m_notifier.Notify(title, body, default_action, path);
@@ -133,7 +144,7 @@ void Notifications::NotifyMessageGuild(const Message &message) {
             title += " (#" + *channel->Name + ")";
         }
     }
-    const auto body = message.Content;
+    const auto body = Sanitize(message);
     Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
         m_notifier.Notify(title, body, default_action, path);
     });
