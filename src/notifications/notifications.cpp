@@ -99,9 +99,20 @@ void Notifications::CheckMessage(const Message &message) {
     // notify messages in DMs
     const auto channel = discord.GetChannel(message.ChannelID);
     if (channel->IsDM()) {
+        m_chan_notifications[message.ChannelID].push_back(message.ID);
         NotifyMessageDM(message);
     } else if (CheckGuildMessage(message)) {
+        m_chan_notifications[message.ChannelID].push_back(message.ID);
         NotifyMessageGuild(message);
+    }
+}
+
+void Notifications::WithdrawChannel(Snowflake channel_id) {
+    if (auto it = m_chan_notifications.find(channel_id); it != m_chan_notifications.end()) {
+        for (const auto notification_id : it->second) {
+            m_notifier.Withdraw(std::to_string(notification_id));
+        }
+        it->second.clear();
     }
 }
 
@@ -123,7 +134,7 @@ void Notifications::NotifyMessageDM(const Message &message) {
     const auto body = Sanitize(message);
 
     Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
-        m_notifier.Notify(title, body, default_action, path);
+        m_notifier.Notify(std::to_string(message.ID), title, body, default_action, path);
     });
 }
 
@@ -146,7 +157,7 @@ void Notifications::NotifyMessageGuild(const Message &message) {
     }
     const auto body = Sanitize(message);
     Abaddon::Get().GetImageManager().GetCache().GetFileFromURL(message.Author.GetAvatarURL("png", "64"), [=](const std::string &path) {
-        m_notifier.Notify(title, body, default_action, path);
+        m_notifier.Notify(std::to_string(message.ID), title, body, default_action, path);
     });
 }
 

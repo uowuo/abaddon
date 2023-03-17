@@ -1,5 +1,7 @@
 #pragma once
 #include "notifier.hpp"
+#include <map>
+#include <vector>
 
 class Message;
 
@@ -8,6 +10,7 @@ public:
     Notifications();
 
     void CheckMessage(const Message &message);
+    void WithdrawChannel(Snowflake channel_id);
 
 private:
     void NotifyMessageDM(const Message &message);
@@ -16,4 +19,5 @@ private:
     [[nodiscard]] bool IsDND() const;
 
     Notifier m_notifier;
+    std::map<Snowflake, std::vector<Snowflake>> m_chan_notifications;
 };

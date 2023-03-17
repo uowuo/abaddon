@@ -733,6 +733,8 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     }
     if (id == m_main_window->GetChatActiveChannel()) return;
 
+    m_notifications.WithdrawChannel(id);
+
     m_main_window->GetChatWindow()->SetTopic("");
 
     const auto channel = m_discord.GetChannel(id);
