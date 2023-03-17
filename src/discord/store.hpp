@@ -299,6 +299,8 @@ private:
     STMT(get_emoji_roles);
     STMT(set_mention);
     STMT(get_mentions);
+    STMT(set_role_mention);
+    STMT(get_role_mentions);
     STMT(set_attachment);
     STMT(get_attachments);
     STMT(set_recipient);

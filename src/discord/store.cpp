@@ -346,6 +346,15 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         s->Reset();
     }
 
+    for (const auto &r : message.MentionRoles) {
+        auto &s = m_stmt_set_role_mention;
+        s->Bind(1, id);
+        s->Bind(2, r);
+        if (!s->Insert())
+            fprintf(stderr, "message role mention insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(r), m_db.ErrStr());
+        s->Reset();
+    }
+
     for (const auto &a : message.Attachments) {
         auto &s = m_stmt_set_attachment;
         s->Bind(1, id);
@@ -988,6 +997,17 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     }
 
     {
+        auto &s = m_stmt_get_role_mentions;
+        s->Bind(1, r.ID);
+        while (s->FetchOne()) {
+            Snowflake id;
+            s->Get(0, id);
+            r.MentionRoles.push_back(id);
+        }
+        s->Reset();
+    }
+
+    {
         auto &s = m_stmt_get_reactions;
         s->Bind(1, r.ID);
         std::map<size_t, ReactionData> tmp;
@@ -1437,6 +1457,14 @@ bool Store::CreateTables() {
         )
     )";
 
+    const char *create_mention_roles = R"(
+        CREATE TABLE IF NOT EXISTS mention_roles (
+            message INTEGER NOT NULL,
+            role INTEGER NOT NULL,
+            PRIMARY KEY(message, role)
+        )
+    )";
+
     const char *create_attachments = R"(
         CREATE TABLE IF NOT EXISTS attachments (
             message INTEGER NOT NULL,
@@ -1553,6 +1581,11 @@ bool Store::CreateTables() {
 
     if (m_db.Execute(create_mentions) != SQLITE_OK) {
         fprintf(stderr, "failed to create mentions table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_mention_roles) != SQLITE_OK) {
+        fprintf(stderr, "failed to create role mentions table: %s\n", m_db.ErrStr());
         return false;
     }
 
@@ -2116,6 +2149,24 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_mentions->OK()) {
         fprintf(stderr, "failed to prepare get mentions statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_role_mention = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO mention_roles VALUES (
+            ?, ?
+        )
+    )");
+    if (!m_stmt_set_role_mention->OK()) {
+        fprintf(stderr, "failed to prepare set role mention statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_role_mentions = std::make_unique<Statement>(m_db, R"(
+        SELECT role FROM mention_roles WHERE message = ?
+    )");
+    if (!m_stmt_get_role_mentions->OK()) {
+        fprintf(stderr, "failed to prepare get role mentions statement: %s\n", m_db.ErrStr());
         return false;
     }
 

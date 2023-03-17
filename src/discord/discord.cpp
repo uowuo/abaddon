@@ -1646,7 +1646,7 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
     m_last_message_id[data.ChannelID] = data.ID;
     if (data.Author.ID != GetUserData().ID)
         m_unread[data.ChannelID];
-    if (data.DoesMentionEveryoneOrUser(GetUserData().ID)) {
+    if (data.DoesMention(GetUserData().ID)) {
         m_unread[data.ChannelID]++;
     }
     m_signal_message_create.emit(data);

@@ -197,7 +197,7 @@ void from_json(const nlohmann::json &j, Message &m) {
     JS_D("tts", m.IsTTS);
     JS_D("mention_everyone", m.DoesMentionEveryone);
     JS_D("mentions", m.Mentions);
-    // JS_D("mention_roles", m.MentionRoles);
+    JS_D("mention_roles", m.MentionRoles);
     // JS_O("mention_channels", m.MentionChannels);
     JS_D("attachments", m.Attachments);
     JS_D("embeds", m.Embeds);
@@ -235,6 +235,7 @@ void Message::from_json_edited(const nlohmann::json &j) {
     JS_O("tts", IsTTS);
     JS_O("mention_everyone", DoesMentionEveryone);
     JS_O("mentions", Mentions);
+    JS_O("mention_roles", MentionRoles);
     JS_O("embeds", Embeds);
     JS_O("nonce", Nonce);
     JS_O("pinned", IsPinned);
@@ -269,4 +270,12 @@ bool Message::DoesMentionEveryoneOrUser(Snowflake id) const noexcept {
     return std::any_of(Mentions.begin(), Mentions.end(), [id](const UserData &user) {
         return user.ID == id;
     });
+}
+
+bool Message::DoesMention(Snowflake id) const noexcept {
+    if (DoesMentionEveryoneOrUser(id)) return true;
+    if (!GuildID.has_value()) return false; // nothing left to check
+    const auto member = Abaddon::Get().GetDiscordClient().GetMember(id, *GuildID);
+    if (!member.has_value()) return false;
+    return std::find_first_of(MentionRoles.begin(), MentionRoles.end(), member->Roles.begin(), member->Roles.end()) != MentionRoles.end();
 }

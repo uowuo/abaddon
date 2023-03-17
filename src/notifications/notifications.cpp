@@ -22,7 +22,7 @@ bool CheckGuildMessage(const Message &message) {
                 case DefaultNotificationLevel::ALL_MESSAGES:
                     return true;
                 case DefaultNotificationLevel::ONLY_MENTIONS:
-                    return message.DoesMentionEveryoneOrUser(discord.GetUserData().ID);
+                    return message.DoesMention(discord.GetUserData().ID);
                 default:
                     return false;
             }
@@ -78,7 +78,7 @@ bool CheckGuildMessage(const Message &message) {
         case NotificationLevel::ALL_MESSAGES:
             return true;
         case NotificationLevel::ONLY_MENTIONS:
-            return message.DoesMentionEveryoneOrUser(discord.GetUserData().ID);
+            return message.DoesMention(discord.GetUserData().ID);
         case NotificationLevel::NO_MESSAGES:
             return false;
         default:
