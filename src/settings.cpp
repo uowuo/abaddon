@@ -68,6 +68,8 @@ void SettingsManager::ReadSettings() {
     SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
     SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
     SMSTR("style", "unreadcolor", UnreadIndicatorColor);
+    SMBOOL("notifications", "enabled", NotificationsEnabled);
+    SMBOOL("notifications", "playsound", NotificationsPlaySound);
 
 #ifdef WITH_KEYCHAIN
     keychain::Error error {};
@@ -149,6 +151,8 @@ void SettingsManager::Close() {
         SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
         SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
         SMSTR("style", "unreadcolor", UnreadIndicatorColor);
+        SMBOOL("notifications", "enabled", NotificationsEnabled);
+        SMBOOL("notifications", "playsound", NotificationsPlaySound);
 
 #ifdef WITH_KEYCHAIN
         keychain::Error error {};

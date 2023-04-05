@@ -35,7 +35,9 @@ void Notifier::Notify(const Glib::ustring &id, const Glib::ustring &title, const
     g_object_unref(file);
 
 #ifdef ENABLE_NOTIFICATION_SOUNDS
-    ma_engine_play_sound(&m_engine, Abaddon::Get().GetResPath("/sound/message.mp3").c_str(), nullptr);
+    if (Abaddon::Get().GetSettings().NotificationsPlaySound) {
+        ma_engine_play_sound(&m_engine, Abaddon::Get().GetResPath("/sound/message.mp3").c_str(), nullptr);
+    }
 #endif
 }
 
