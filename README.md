@@ -83,7 +83,7 @@ the result of fundamental issues with Discord's thread implementation.
       ```Shell
       $ sudo dnf install g++ cmake gtkmm3.0-devel libcurl-devel sqlite-devel openssl-devel json-devel libsecret-devel libhandy-devel
       ```
-      > **Note:** On older versions of fedora you might need to install gtkmm30-devel.x86_64 instead of gtkmm3.0-devel 
+      > **Note:** On older versions of fedora you might need to install gtkmm30-devel instead of gtkmm3.0-devel. Use `dnf search gtkmm3` to see available packages.
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
