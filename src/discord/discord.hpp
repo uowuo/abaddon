@@ -56,6 +56,8 @@ public:
 
     std::unordered_set<Snowflake> GetGuilds() const;
     const UserData &GetUserData() const;
+    const UserGuildSettingsData &GetUserGuildSettings() const;
+    std::optional<UserGuildSettingsEntry> GetSettingsForGuild(Snowflake id) const;
     std::vector<Snowflake> GetUserSortedGuilds() const;
     std::vector<Message> GetMessagesForChannel(Snowflake id, size_t limit = 50) const;
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit = 50) const;
@@ -328,6 +330,7 @@ private:
 
     UserData m_user_data;
     UserSettings m_user_settings;
+    UserGuildSettingsData m_user_guild_settings;
 
     Store m_store;
     HTTPClient m_http;

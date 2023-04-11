@@ -29,16 +29,7 @@ protected:
     Gtk::Widget *CreateReactionsComponent(const Message &data);
     Gtk::Widget *CreateReplyComponent(const Message &data);
 
-    static Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf);
-
     static bool IsEmbedImageOnly(const EmbedData &data);
-
-    static void HandleRoleMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
-    void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf) const;
-    static void HandleStockEmojis(Gtk::TextView &tv);
-    static void HandleCustomEmojis(Gtk::TextView &tv);
-    static void HandleEmojis(Gtk::TextView &tv);
-    static void CleanupEmojis(const Glib::RefPtr<Gtk::TextBuffer> &buf);
 
     void HandleChannelMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf);
     void HandleChannelMentions(Gtk::TextView *tv);
