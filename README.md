@@ -14,6 +14,7 @@ Current features:
 * Identifies to Discord as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
 * Set status
 * Unread and mention indicators
+* Notifications (non-Windows)
 * Start new DMs and group DMs
 * View user profiles (notes, mutual servers, mutual friends)
 * Kick, ban, and unban members
@@ -134,15 +135,17 @@ spam filter's wrath:
 
 * [gtkmm](https://www.gtkmm.org/en/)
 * [JSON for Modern C++](https://github.com/nlohmann/json)
-* [IXWebSocket](https://github.com/machinezone/IXWebSocket)
+* [IXWebSocket](https://github.com/machinezone/IXWebSocket) (provided as submodule)
 * [libcurl](https://curl.se/)
 * [zlib](https://zlib.net/)
 * [SQLite3](https://www.sqlite.org/index.html)
 * [libhandy](https://gnome.pages.gitlab.gnome.org/libhandy/) (optional)
+* [keychain](https://github.com/hrantzsch/keychain) (optional, provided as submodule)
+* [miniaudio](https://miniaud.io/) (optional, provided as submodule)
 
 ### TODO:
 
-* Voice support
+* Voice support (in progress)
 * User activities
 * More server management stuff
 * A bunch of other stuff
@@ -300,6 +303,13 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `mentionbadgecolor`     | string | background color for mention badges                 |
 | `mentionbadgetextcolor` | string | color to use for number displayed on mention badges |
 | `unreadcolor`           | string | color to use for the unread indicator               |
+
+#### notifications
+
+| Setting     | Type    | Default                  | Description                                                                   |
+|-------------|---------|--------------------------|-------------------------------------------------------------------------------|
+| `enabled`   | boolean | true (if not on Windows) | Enable desktop notifications                                                  |
+| `playsound` | boolean | true                     | Enable notification sounds. Requires ENABLE_NOTIFICATION_SOUNDS=TRUE in CMake |
 
 ### Environment variables
 

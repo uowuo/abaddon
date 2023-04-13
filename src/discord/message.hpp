@@ -183,7 +183,7 @@ struct Message {
     bool IsTTS;
     bool DoesMentionEveryone;
     std::vector<UserData> Mentions; // full user accessible
-    // std::vector<RoleData> MentionRoles;
+    std::vector<Snowflake> MentionRoles;
     // std::optional<std::vector<ChannelMentionData>> MentionChannels;
     std::vector<AttachmentData> Attachments;
     std::vector<EmbedData> Embeds;
@@ -212,6 +212,7 @@ struct Message {
     [[nodiscard]] bool IsDeleted() const;
     [[nodiscard]] bool IsEdited() const;
 
+    [[nodiscard]] bool DoesMentionEveryoneOrUser(Snowflake id) const noexcept;
     [[nodiscard]] bool DoesMention(Snowflake id) const noexcept;
 
 private:

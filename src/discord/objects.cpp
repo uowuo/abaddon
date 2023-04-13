@@ -199,10 +199,26 @@ void to_json(nlohmann::json &j, const UserGuildSettingsEntry &m) {
     j["version"] = m.Version;
 }
 
+std::optional<UserGuildSettingsChannelOverride> UserGuildSettingsEntry::GetOverride(Snowflake channel_id) const {
+    for (const auto &override : ChannelOverrides) {
+        if (override.ChannelID == channel_id) return override;
+    }
+
+    return std::nullopt;
+}
+
 void from_json(const nlohmann::json &j, UserGuildSettingsData &m) {
     JS_D("version", m.Version);
     JS_D("partial", m.IsPartial);
-    JS_D("entries", m.Entries);
+
+    {
+        std::vector<UserGuildSettingsEntry> entries;
+        JS_D("entries", entries);
+
+        for (const auto &entry : entries) {
+            m.Entries[entry.GuildID] = entry;
+        }
+    }
 }
 
 void from_json(const nlohmann::json &j, ReadyEventData &m) {

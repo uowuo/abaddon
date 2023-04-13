@@ -101,3 +101,7 @@ Glib::RefPtr<Gdk::Pixbuf> ImageManager::GetPlaceholder(int size) {
         return Glib::RefPtr<Gdk::Pixbuf>(nullptr);
     }
 }
+
+Cache &ImageManager::GetCache() {
+    return m_cache;
+}
