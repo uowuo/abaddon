@@ -3,7 +3,7 @@
 	url = https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer
 [submodule "subprojects/ixwebsocket"]
 	path = subprojects/ixwebsocket
-	url = https://github.com/ouwou/ixwebsocket
+	url = https://github.com/machinezone/ixwebsocket
 [submodule "subprojects/miniaudio"]
 	path = subprojects/miniaudio
 	url = https://github.com/mackron/miniaudio
