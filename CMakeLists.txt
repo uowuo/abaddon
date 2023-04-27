@@ -107,6 +107,7 @@ target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
+target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
 if (USE_LIBHANDY)
     find_package(libhandy REQUIRED)
