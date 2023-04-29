@@ -291,21 +291,31 @@ void ChannelList::UpdateListing() {
     int sort_value = 0;
 
     const auto folders = discord.GetUserSettings().GuildFolders;
-    if (folders.empty()) {
-        // fallback if no organization has occurred (guild_folders will be empty)
-        const auto guild_ids = discord.GetUserSortedGuilds();
-        for (const auto &guild_id : guild_ids) {
-            const auto guild = discord.GetGuild(guild_id);
-            if (!guild.has_value()) continue;
+    const auto guild_ids = discord.GetUserSortedGuilds();
 
-            auto iter = AddGuild(*guild, m_model->children());
-            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
+    // user_settings.guild_folders may not contain every guild the user is in
+    // this seems to be the case if you organize your guilds and join a server without further organization
+    // so add guilds not present in guild_folders by descending id order first
+
+    std::set<Snowflake> foldered_guilds;
+    for (const auto &group : folders) {
+        foldered_guilds.insert(group.GuildIDs.begin(), group.GuildIDs.end());
+    }
+
+    for (auto iter = guild_ids.rbegin(); iter != guild_ids.rend(); iter++) {
+        if (foldered_guilds.find(*iter) == foldered_guilds.end()) {
+            const auto guild = discord.GetGuild(*iter);
+            if (!guild.has_value()) continue;
+            auto tree_iter = AddGuild(*guild, m_model->children());
+            if (tree_iter) (*tree_iter)[m_columns.m_sort] = sort_value++;
         }
-    } else {
-        for (const auto &group : folders) {
-            auto iter = AddFolder(group);
-            if (iter) (*iter)[m_columns.m_sort] = sort_value++;
-        }
+    }
+
+    // then whatever is in folders
+
+    for (const auto &group : folders) {
+        auto iter = AddFolder(group);
+        if (iter) (*iter)[m_columns.m_sort] = sort_value++;
     }
 
     m_updating_listing = false;
