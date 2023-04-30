@@ -9,7 +9,6 @@
 #include <array>
 #include <glibmm/main.h>
 #include <spdlog/spdlog.h>
-#define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 #include <opus.h>
 #include <cstring>
