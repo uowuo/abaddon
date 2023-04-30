@@ -111,6 +111,12 @@ target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
+target_link_libraries(abaddon ${CMAKE_DL_LIBS})
+
+include(CheckAtomic)
+if (NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+    target_link_libraries(abaddon atomic)
+endif ()
 
 if (USE_LIBHANDY)
     find_package(libhandy REQUIRED)
