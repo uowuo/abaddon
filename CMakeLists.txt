@@ -159,4 +159,5 @@ endif ()
 
 if (USE_MINIAUDIO)
     target_include_directories(abaddon PUBLIC subprojects/miniaudio)
+    target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()
