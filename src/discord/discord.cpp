@@ -2207,7 +2207,42 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
 }
 
 #ifdef WITH_VOICE
+
+/*
+ * When you connect to a voice channel:
+ * C->S: VOICE_STATE_UPDATE
+ * S->C: VOICE_STATE_UPDATE
+ * S->C: VOICE_SERVER_UPDATE
+ *
+ * A new websocket is opened to the ws specified by VOICE_SERVER_UPDATE then:
+ * S->C: HELLO
+ * C->S: IDENTIFY
+ * S->C: READY
+ * C->U: discover
+ * U->C: discover result
+ * C->S: SELECT_PROTOCOL
+ * S->C: SESSION_DESCRIPTION
+ * Done!!!
+ *
+ * When you get disconnected (no particular order):
+ * S->C: 4014 Disconnected (Server to voice gateway)
+ * S->C: VOICE_STATE_UPDATE (Server to main gateway)
+ *
+ * When you get moved:
+ * S->C: VOICE_STATE_UPDATE
+ * S->C: VOICE_SERVER_UPDATE (usually)
+ * S->C: 4014 Disconnected (Server to voice gateway)
+ *
+ * Key thing: 4014 Disconnected can come before or after or in between main gateway messages
+ *
+ * Region change:
+ * Same thing but close code 4000
+ *
+ */
+
 void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
+
     VoiceState data = msg.Data;
 
     if (data.UserID == m_user_data.ID) {
@@ -2217,6 +2252,9 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         // channel_id = null means disconnect. stop cuz out of order maybe
         if (!data.ChannelID.has_value() && (m_voice.IsConnected() || m_voice.IsConnecting())) {
             m_voice.Stop();
+        } else if (data.ChannelID.has_value()) {
+            m_voice_channel_id = *data.ChannelID;
+            m_signal_voice_channel_changed.emit(m_voice_channel_id);
         }
     } else {
         if (data.GuildID.has_value() && data.Member.has_value()) {
@@ -2245,6 +2283,8 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
 }
 
 void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
+
     VoiceServerUpdateData data = msg.Data;
     spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
     spdlog::get("discord")->debug("Voice token: {}", data.Token);
@@ -3054,5 +3094,9 @@ DiscordClient::type_signal_voice_requested_disconnect DiscordClient::signal_voic
 
 DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice_client_state_update() {
     return m_signal_voice_client_state_update;
+}
+
+DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
+    return m_signal_voice_channel_changed;
 }
 #endif

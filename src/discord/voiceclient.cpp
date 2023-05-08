@@ -166,6 +166,10 @@ DiscordVoiceClient::~DiscordVoiceClient() {
 }
 
 void DiscordVoiceClient::Start() {
+    if (IsConnected() || IsConnecting()) {
+        Stop();
+    }
+
     SetState(State::ConnectingToWebsocket);
     m_ssrc_map.clear();
     m_heartbeat_waiter.revive();

@@ -49,7 +49,12 @@ void Websocket::Stop() {
 
 void Websocket::Stop(uint16_t code) {
     m_log->debug("Stopping with close code {}", code);
-    m_websocket->   stop(code);
+    m_websocket->stop(code);
+    m_log->trace("Socket::stop complete");
+    while (Gtk::Main::events_pending()) {
+        Gtk::Main::iteration();
+    }
+    m_log->trace("No events pending");
 }
 
 void Websocket::Send(const std::string &str) {

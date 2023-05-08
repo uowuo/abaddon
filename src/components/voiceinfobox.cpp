@@ -29,20 +29,7 @@ VoiceInfoBox::VoiceInfoBox()
 
     Abaddon::Get().GetDiscordClient().signal_voice_requested_connect().connect([this](Snowflake channel_id) {
         show();
-
-        if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(channel_id); channel.has_value() && channel->Name.has_value()) {
-            if (channel->GuildID.has_value()) {
-                if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*channel->GuildID); guild.has_value()) {
-                    m_location.set_label(*channel->Name + " / " + guild->Name);
-                    return;
-                }
-            }
-
-            m_location.set_label(*channel->Name);
-            return;
-        }
-
-        m_location.set_label("Unknown");
+        UpdateLocation();
     });
 
     Abaddon::Get().GetDiscordClient().signal_voice_requested_disconnect().connect([this]() {
@@ -72,6 +59,10 @@ VoiceInfoBox::VoiceInfoBox()
         m_status.set_label(label);
     });
 
+    Abaddon::Get().GetDiscordClient().signal_voice_channel_changed().connect([this](Snowflake channel_id) {
+        UpdateLocation();
+    });
+
     AddPointerCursor(m_status_ev);
     m_status_ev.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_PRIMARY) {
@@ -98,6 +89,26 @@ VoiceInfoBox::VoiceInfoBox()
     add(m_disconnect_ev);
 
     show_all_children();
+}
+
+void VoiceInfoBox::UpdateLocation() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+
+    const auto channel_id = discord.GetVoiceChannelID();
+
+    if (const auto channel = discord.GetChannel(channel_id); channel.has_value() && channel->Name.has_value()) {
+        if (channel->GuildID.has_value()) {
+            if (const auto guild = discord.GetGuild(*channel->GuildID); guild.has_value()) {
+                m_location.set_label(*channel->Name + " / " + guild->Name);
+                return;
+            }
+        }
+
+        m_location.set_label(*channel->Name);
+        return;
+    }
+
+    m_location.set_label("Unknown");
 }
 
 #endif

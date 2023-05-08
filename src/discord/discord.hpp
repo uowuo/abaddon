@@ -454,6 +454,7 @@ public:
     using type_signal_voice_requested_connect = sigc::signal<void(Snowflake)>;
     using type_signal_voice_requested_disconnect = sigc::signal<void()>;
     using type_signal_voice_client_state_update = sigc::signal<void(DiscordVoiceClient::State)>;
+    using type_signal_voice_channel_changed = sigc::signal<void(Snowflake)>;
 #endif
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -520,6 +521,7 @@ public:
     type_signal_voice_requested_connect signal_voice_requested_connect();
     type_signal_voice_requested_disconnect signal_voice_requested_disconnect();
     type_signal_voice_client_state_update signal_voice_client_state_update();
+    type_signal_voice_channel_changed signal_voice_channel_changed();
 #endif
 
 protected:
@@ -587,5 +589,6 @@ protected:
     type_signal_voice_requested_connect m_signal_voice_requested_connect;
     type_signal_voice_requested_disconnect m_signal_voice_requested_disconnect;
     type_signal_voice_client_state_update m_signal_voice_client_state_update;
+    type_signal_voice_channel_changed m_signal_voice_channel_changed;
 #endif
 };

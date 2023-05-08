@@ -12,6 +12,8 @@ public:
     VoiceInfoBox();
 
 private:
+    void UpdateLocation();
+
     Gtk::Box m_left;
     Gtk::EventBox m_status_ev;
     Gtk::Label m_status;
