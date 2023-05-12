@@ -70,7 +70,7 @@ jobs:
             cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF
             cmake --build build
           if_false: |
-            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DCMAKE_CXX_FLAGS="-Wl,--default-image-base-low"
             cmake --build build
 
       - name: Build (2)
