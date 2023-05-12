@@ -96,15 +96,15 @@ void VoiceInfoBox::UpdateLocation() {
 
     const auto channel_id = discord.GetVoiceChannelID();
 
-    if (const auto channel = discord.GetChannel(channel_id); channel.has_value() && channel->Name.has_value()) {
-        if (channel->GuildID.has_value()) {
+    if (const auto channel = discord.GetChannel(channel_id); channel.has_value()) {
+        if (channel->Name.has_value() && channel->GuildID.has_value()) {
             if (const auto guild = discord.GetGuild(*channel->GuildID); guild.has_value()) {
                 m_location.set_label(*channel->Name + " / " + guild->Name);
                 return;
             }
         }
 
-        m_location.set_label(*channel->Name);
+        m_location.set_label(channel->GetDisplayName());
         return;
     }
 
