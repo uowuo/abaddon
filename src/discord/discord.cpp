@@ -2270,9 +2270,8 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         SetVoiceState(data.UserID, *data.ChannelID);
         if (old_state.has_value() && *old_state != *data.ChannelID) {
             m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
-        } else if (!old_state.has_value()) {
-            m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
         }
+        m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
     } else {
         const auto old_state = GetVoiceState(data.UserID);
         ClearVoiceState(data.UserID);
@@ -2781,11 +2780,13 @@ void DiscordClient::SendVoiceStateUpdate() {
 }
 
 void DiscordClient::SetVoiceState(Snowflake user_id, Snowflake channel_id) {
+    spdlog::get("discord")->debug("SetVoiceState: {} -> {}", user_id, channel_id);
     m_voice_state_user_channel[user_id] = channel_id;
     m_voice_state_channel_users[channel_id].insert(user_id);
 }
 
 void DiscordClient::ClearVoiceState(Snowflake user_id) {
+    spdlog::get("discord")->debug("ClearVoiceState: {}", user_id);
     if (const auto it = m_voice_state_user_channel.find(user_id); it != m_voice_state_user_channel.end()) {
         m_voice_state_channel_users[it->second].erase(user_id);
         // invalidated
