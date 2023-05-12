@@ -78,8 +78,9 @@ VoiceInfoBox::VoiceInfoBox()
     m_disconnect_ev.add(m_disconnect_img);
     m_disconnect_img.property_icon_name() = "call-stop-symbolic";
     m_disconnect_img.property_icon_size() = 5;
-    m_disconnect_img.set_hexpand(true);
     m_disconnect_img.set_halign(Gtk::ALIGN_END);
+
+    m_status_ev.set_hexpand(true);
 
     m_status_ev.add(m_status);
     m_left.add(m_status_ev);
