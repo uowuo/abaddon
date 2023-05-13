@@ -2270,8 +2270,10 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         SetVoiceState(data.UserID, *data.ChannelID);
         if (old_state.has_value() && *old_state != *data.ChannelID) {
             m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
+            m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
+        } else if (!old_state.has_value()) {
+            m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
         }
-        m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
     } else {
         const auto old_state = GetVoiceState(data.UserID);
         ClearVoiceState(data.UserID);
