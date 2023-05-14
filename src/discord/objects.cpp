@@ -536,7 +536,7 @@ void from_json(const nlohmann::json &j, VerificationFieldObject &m) {
 }
 
 void from_json(const nlohmann::json &j, VerificationGateInfoObject &m) {
-    JS_O("description", m.Description);
+    JS_ON("description", m.Description);
     JS_O("form_fields", m.VerificationFields);
     JS_O("version", m.Version);
     JS_O("enabled", m.Enabled);
