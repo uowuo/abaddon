@@ -129,6 +129,9 @@ protected:
     void SaveState();
     void LoadState();
 
+    void AttachCSSMonitor();
+    Glib::RefPtr<Gio::FileMonitor> m_main_css_monitor;
+
     Snowflake m_shown_user_menu_id;
     Snowflake m_shown_user_menu_guild_id;
 

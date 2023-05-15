@@ -286,6 +286,8 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
 
     ActionReloadCSS();
+    AttachCSSMonitor();
+
     if (m_settings.GetSettings().HideToTray) {
         m_tray = Gtk::StatusIcon::create("discord");
         m_tray->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_click));
@@ -717,6 +719,15 @@ void Abaddon::LoadState() {
     } catch (const std::exception &e) {
         printf("failed to load application state: %s\n", e.what());
     }
+}
+
+void Abaddon::AttachCSSMonitor() {
+    const auto path = GetCSSPath("/" + GetSettings().MainCSS);
+    const auto file = Gio::File::create_for_path(path);
+    m_main_css_monitor = file->monitor_file();
+    m_main_css_monitor->signal_changed().connect([this](const auto &file, const auto &other_file, Gio::FileMonitorEvent event) {
+        ActionReloadCSS();
+    });
 }
 
 void Abaddon::ManageHeapWindow(Gtk::Window *window) {
