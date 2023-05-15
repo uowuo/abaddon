@@ -626,18 +626,58 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_channel(Gt
 }
 
 void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    // channel name text
     Gtk::Requisition minimum_size, natural_size;
     m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
 
-    const int text_x = background_area.get_x() + 21;
+    const int text_x = background_area.get_x() + 35;
     const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
     const int text_w = natural_size.width;
     const int text_h = natural_size.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
-    m_renderer_text.property_foreground_rgba() = Gdk::RGBA("#0f0");
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+
+    // speaker character
+    Pango::FontDescription font;
+    font.set_family("sans 14");
+
+    auto layout = widget.create_pango_layout("\U0001F50A");
+    layout->set_font_description(font);
+    layout->set_alignment(Pango::ALIGN_LEFT);
+    cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
+    int width, height;
+    layout->get_pixel_size(width, height);
+    cr->move_to(
+        background_area.get_x() + 1,
+        cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0);
+    layout->show_in_cairo_context(cr);
+
+    // expander
+    constexpr static int len = 5;
+    constexpr static int offset = 24;
+    int x1, y1, x2, y2, x3, y3;
+    if (property_expanded()) {
+        x1 = background_area.get_x() + offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + offset + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + offset + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + offset + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + offset;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
 }
 
 // voice participant
@@ -659,18 +699,40 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_participan
 }
 
 void CellRendererChannels::render_vfunc_voice_participant(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    Gtk::Requisition minimum_size, natural_size;
-    m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
 
-    const int text_x = background_area.get_x() + 27;
-    const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
-    const int text_w = natural_size.width;
-    const int text_h = natural_size.height;
+    Gtk::Requisition minimum, natural;
+    get_preferred_size(widget, minimum, natural);
+
+    int pixbuf_w = 0;
+    int pixbuf_h = 0;
+
+    if (auto pixbuf = m_property_pixbuf.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    }
+
+    const double icon_w = pixbuf_w;
+    const double icon_h = pixbuf_h;
+    const double icon_x = background_area.get_x() + 28;
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
-    m_renderer_text.property_foreground_rgba() = Gdk::RGBA("#f00");
+    m_renderer_text.property_scale() = Pango::SCALE_SMALL;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+    m_renderer_text.property_scale_set() = false;
+
+    if (auto pixbuf = m_property_pixbuf.get_value()) {
+        Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    }
 }
 
 #endif

@@ -16,6 +16,7 @@
 
 constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
+constexpr static int VoiceParticipantIconSize = 18;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
 class ChannelList : public Gtk::ScrolledWindow {
@@ -84,6 +85,7 @@ protected:
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
+    Gtk::TreeModel::iterator CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent);
 
     void UpdateChannelCategory(const ChannelData &channel);
 

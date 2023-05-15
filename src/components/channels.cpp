@@ -42,11 +42,7 @@ ChannelList::ChannelList()
         const auto type = row[m_columns.m_type];
         // text channels should not be allowed to be collapsed
         // maybe they should be but it seems a little difficult to handle expansion to permit this
-#ifdef WITH_VOICE
-        if (type != RenderType::TextChannel && type != RenderType::VoiceChannel) {
-#else
         if (type != RenderType::TextChannel) {
-#endif
             if (row[m_columns.m_expanded]) {
                 m_view.collapse_row(path);
                 row[m_columns.m_expanded] = false;
@@ -56,11 +52,7 @@ ChannelList::ChannelList()
             }
         }
 
-#ifdef WITH_VOICE
-        if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread || type == RenderType::VoiceChannel) {
-#else
         if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread) {
-#endif
             const auto id = static_cast<Snowflake>(row[m_columns.m_id]);
             m_signal_action_channel_item_select.emit(id);
             Abaddon::Get().GetDiscordClient().MarkChannelAsRead(id, [](...) {});
@@ -537,14 +529,7 @@ void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
     const auto user = Abaddon::Get().GetDiscordClient().GetUser(user_id);
     if (!user.has_value()) return;
 
-    auto user_row = *m_model->append(parent_iter->children());
-    user_row[m_columns.m_type] = RenderType::VoiceParticipant;
-    user_row[m_columns.m_id] = user_id;
-    if (user.has_value()) {
-        user_row[m_columns.m_name] = user->GetEscapedName();
-    } else {
-        user_row[m_columns.m_name] = "<i>Unknown</i>";
-    }
+    CreateVoiceParticipantRow(*user, parent_iter->children());
 }
 
 void ChannelList::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
@@ -776,15 +761,8 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
 #ifdef WITH_VOICE
     auto add_voice_participants = [this, &discord](const ChannelData &channel, const Gtk::TreeNodeChildren &root) {
         for (auto user_id : discord.GetUsersInVoiceChannel(channel.ID)) {
-            const auto user = discord.GetUser(user_id);
-
-            auto user_row = *m_model->append(root);
-            user_row[m_columns.m_type] = RenderType::VoiceParticipant;
-            user_row[m_columns.m_id] = user_id;
-            if (user.has_value()) {
-                user_row[m_columns.m_name] = user->GetEscapedName();
-            } else {
-                user_row[m_columns.m_name] = "<i>Unknown</i>";
+            if (const auto user = discord.GetUser(user_id); user.has_value()) {
+                CreateVoiceParticipantRow(*user, root);
             }
         }
     };
@@ -792,16 +770,18 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
 
     for (const auto &channel : orphan_channels) {
         auto channel_row = *m_model->append(guild_row.children());
-        if (IsTextChannel(channel.Type))
+        if (IsTextChannel(channel.Type)) {
             channel_row[m_columns.m_type] = RenderType::TextChannel;
+            channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+        }
 #ifdef WITH_VOICE
         else {
             channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+            channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
             add_voice_participants(channel, channel_row->children());
         }
 #endif
         channel_row[m_columns.m_id] = channel.ID;
-        channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
         add_threads(channel, channel_row);
@@ -822,16 +802,18 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
 
         for (const auto &channel : channels) {
             auto channel_row = *m_model->append(cat_row.children());
-            if (IsTextChannel(channel.Type))
+            if (IsTextChannel(channel.Type)) {
                 channel_row[m_columns.m_type] = RenderType::TextChannel;
+                channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+            }
 #ifdef WITH_VOICE
             else {
                 channel_row[m_columns.m_type] = RenderType::VoiceChannel;
+                channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
                 add_voice_participants(channel, channel_row->children());
             }
 #endif
             channel_row[m_columns.m_id] = channel.ID;
-            channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
             add_threads(channel, channel_row);
@@ -866,6 +848,23 @@ Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildre
     thread_row[m_columns.m_nsfw] = false;
 
     return thread_iter;
+}
+
+Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent) {
+    auto row = *m_model->append(parent);
+    row[m_columns.m_type] = RenderType::VoiceParticipant;
+    row[m_columns.m_id] = user.ID;
+    row[m_columns.m_name] = user.GetEscapedName();
+
+    auto &img = Abaddon::Get().GetImageManager();
+    row[m_columns.m_icon] = img.GetPlaceholder(VoiceParticipantIconSize);
+    const auto cb = [this, user_id = user.ID](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+        auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant);
+        if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(VoiceParticipantIconSize, VoiceParticipantIconSize, Gdk::INTERP_BILINEAR);
+    };
+    img.LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+
+    return row;
 }
 
 void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
@@ -971,11 +970,7 @@ bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const
             m_last_selected = m_model->get_path(row);
 
     auto type = (*m_model->get_iter(path))[m_columns.m_type];
-#ifdef WITH_VOICE
-    return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread || type == RenderType::VoiceChannel;
-#else
     return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread;
-#endif
 }
 
 void ChannelList::AddPrivateChannels() {
