@@ -2457,6 +2457,13 @@ void DiscordClient::HandleGatewayGuildMemberListUpdate(const GatewayMessage &msg
 
 void DiscordClient::HandleGatewayGuildCreate(const GatewayMessage &msg) {
     GuildData data = msg.Data;
+
+    // TODO: figure out why this is even happening... maybe?
+    // ignore guild if already stored
+    if (m_store.GetGuild(data.ID).has_value()) {
+        return;
+    }
+
     ProcessNewGuild(data);
 
     m_signal_guild_create.emit(data);
