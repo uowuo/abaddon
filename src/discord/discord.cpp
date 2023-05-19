@@ -2305,7 +2305,8 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
-    for (const auto &p : data.MergedPresences.Friends) {
+
+    const auto handle_presence = [this](const MergedPresence &p) {
         const auto user = GetUser(p.UserID);
         if (!user.has_value()) return; // should be sent in READY's `users`
         const auto s = p.Presence.Status;
@@ -2318,6 +2319,15 @@ void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
         else if (s == "dnd")
             m_user_to_status[p.UserID] = PresenceStatus::DND;
         m_signal_presence_update.emit(*user, m_user_to_status.at(p.UserID));
+    };
+
+    for (const auto &p : data.MergedPresences.Friends) {
+        handle_presence(p);
+    }
+    for (const auto &g : data.MergedPresences.Guilds) {
+        for (const auto &p : g) {
+            handle_presence(p);
+        }
     }
 #ifdef WITH_VOICE
     for (const auto &g : data.Guilds) {
