@@ -85,7 +85,10 @@ protected:
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
+
+#ifdef WITH_VOICE
     Gtk::TreeModel::iterator CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent);
+#endif
 
     void UpdateChannelCategory(const ChannelData &channel);
 

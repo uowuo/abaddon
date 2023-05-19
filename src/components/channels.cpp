@@ -850,6 +850,7 @@ Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildre
     return thread_iter;
 }
 
+#ifdef WITH_VOICE
 Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent) {
     auto row = *m_model->append(parent);
     row[m_columns.m_type] = RenderType::VoiceParticipant;
@@ -866,6 +867,7 @@ Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &
 
     return row;
 }
+#endif
 
 void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
     auto iter = GetIteratorForRowFromID(channel.ID);
