@@ -5,6 +5,7 @@
 #include "objects.hpp"
 #include "store.hpp"
 #include "voiceclient.hpp"
+#include "voicestateflags.hpp"
 #include "websocket.hpp"
 #include <sigc++/sigc++.h>
 #include <nlohmann/json.hpp>
@@ -192,7 +193,7 @@ public:
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
     [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
-    [[nodiscard]] std::optional<Snowflake> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] std::optional<std::pair<Snowflake, VoiceStateFlags>> GetVoiceState(Snowflake user_id) const;
 
     DiscordVoiceClient &GetVoiceClient();
 
@@ -360,12 +361,12 @@ private:
 
     Snowflake m_voice_channel_id;
     // todo sql i guess
-    std::unordered_map<Snowflake, Snowflake> m_voice_state_user_channel;
+    std::unordered_map<Snowflake, std::pair<Snowflake, VoiceStateFlags>> m_voice_states;
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     void SendVoiceStateUpdate();
 
-    void SetVoiceState(Snowflake user_id, Snowflake channel_id);
+    void SetVoiceState(Snowflake user_id, const VoiceState &state);
     void ClearVoiceState(Snowflake user_id);
 
     void OnVoiceConnected();
@@ -455,6 +456,7 @@ public:
     using type_signal_voice_requested_disconnect = sigc::signal<void()>;
     using type_signal_voice_client_state_update = sigc::signal<void(DiscordVoiceClient::State)>;
     using type_signal_voice_channel_changed = sigc::signal<void(Snowflake)>;
+    using type_signal_voice_state_set = sigc::signal<void(Snowflake, Snowflake, VoiceStateFlags)>;
 #endif
 
     type_signal_gateway_ready signal_gateway_ready();
@@ -522,6 +524,7 @@ public:
     type_signal_voice_requested_disconnect signal_voice_requested_disconnect();
     type_signal_voice_client_state_update signal_voice_client_state_update();
     type_signal_voice_channel_changed signal_voice_channel_changed();
+    type_signal_voice_state_set signal_voice_state_set();
 #endif
 
 protected:
@@ -590,5 +593,6 @@ protected:
     type_signal_voice_requested_disconnect m_signal_voice_requested_disconnect;
     type_signal_voice_client_state_update m_signal_voice_client_state_update;
     type_signal_voice_channel_changed m_signal_voice_channel_changed;
+    type_signal_voice_state_set m_signal_voice_state_set;
 #endif
 };

@@ -378,3 +378,7 @@
 .voice-info-location {
 
 }
+
+.voice-state-server {
+    color: red;
+}

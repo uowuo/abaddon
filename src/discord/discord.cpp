@@ -1227,8 +1227,8 @@ std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
     return m_voice.GetSSRCOfUser(id);
 }
 
-std::optional<Snowflake> DiscordClient::GetVoiceState(Snowflake user_id) const {
-    if (const auto it = m_voice_state_user_channel.find(user_id); it != m_voice_state_user_channel.end()) {
+std::optional<std::pair<Snowflake, VoiceStateFlags>> DiscordClient::GetVoiceState(Snowflake user_id) const {
+    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
         return it->second;
     }
     return std::nullopt;
@@ -2267,9 +2267,9 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
 
     if (data.ChannelID.has_value()) {
         const auto old_state = GetVoiceState(data.UserID);
-        SetVoiceState(data.UserID, *data.ChannelID);
-        if (old_state.has_value() && *old_state != *data.ChannelID) {
-            m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
+        SetVoiceState(data.UserID, data);
+        if (old_state.has_value() && old_state->first != *data.ChannelID) {
+            m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
             m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
         } else if (!old_state.has_value()) {
             m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
@@ -2278,7 +2278,7 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
         const auto old_state = GetVoiceState(data.UserID);
         ClearVoiceState(data.UserID);
         if (old_state.has_value()) {
-            m_signal_voice_user_disconnect.emit(data.UserID, *old_state);
+            m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
         }
     }
 }
@@ -2333,7 +2333,7 @@ void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     for (const auto &g : data.Guilds) {
         for (const auto &s : g.VoiceStates) {
             if (s.ChannelID.has_value()) {
-                SetVoiceState(s.UserID, *s.ChannelID);
+                SetVoiceState(s.UserID, s);
             }
         }
     }
@@ -2798,18 +2798,33 @@ void DiscordClient::SendVoiceStateUpdate() {
     m_websocket.Send(msg);
 }
 
-void DiscordClient::SetVoiceState(Snowflake user_id, Snowflake channel_id) {
-    spdlog::get("discord")->debug("SetVoiceState: {} -> {}", user_id, channel_id);
-    m_voice_state_user_channel[user_id] = channel_id;
-    m_voice_state_channel_users[channel_id].insert(user_id);
+void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
+    if (!state.ChannelID.has_value()) {
+        spdlog::get("discord")->error("SetVoiceState called with missing channel ID");
+        return;
+    }
+    spdlog::get("discord")->debug("SetVoiceState: {} -> {}", user_id, *state.ChannelID);
+
+    auto flags = VoiceStateFlags::Clear;
+    if (state.IsSelfMuted) flags |= VoiceStateFlags::SelfMute;
+    if (state.IsSelfDeafened) flags |= VoiceStateFlags::SelfDeaf;
+    if (state.IsMuted) flags |= VoiceStateFlags::Mute;
+    if (state.IsDeafened) flags |= VoiceStateFlags::Deaf;
+    if (state.IsSelfStream) flags |= VoiceStateFlags::SelfStream;
+    if (state.IsSelfVideo) flags |= VoiceStateFlags::SelfVideo;
+
+    m_voice_states[user_id] = std::make_pair(*state.ChannelID, flags);
+    m_voice_state_channel_users[*state.ChannelID].insert(user_id);
+
+    m_signal_voice_state_set.emit(user_id, *state.ChannelID, flags);
 }
 
 void DiscordClient::ClearVoiceState(Snowflake user_id) {
     spdlog::get("discord")->debug("ClearVoiceState: {}", user_id);
-    if (const auto it = m_voice_state_user_channel.find(user_id); it != m_voice_state_user_channel.end()) {
-        m_voice_state_channel_users[it->second].erase(user_id);
+    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
+        m_voice_state_channel_users[it->second.first].erase(user_id);
         // invalidated
-        m_voice_state_user_channel.erase(user_id);
+        m_voice_states.erase(user_id);
     }
 }
 
@@ -3118,5 +3133,9 @@ DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice
 
 DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
     return m_signal_voice_channel_changed;
+}
+
+DiscordClient::type_signal_voice_state_set DiscordClient::signal_voice_state_set() {
+    return m_signal_voice_state_set;
 }
 #endif

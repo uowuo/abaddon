@@ -17,7 +17,8 @@ CellRendererChannels::CellRendererChannels()
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
     , m_property_expanded(*this, "expanded")
     , m_property_nsfw(*this, "nsfw")
-    , m_property_color(*this, "color") {
+    , m_property_color(*this, "color")
+    , m_property_voice_state(*this, "voice-state") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -56,6 +57,10 @@ Glib::PropertyProxy<bool> CellRendererChannels::property_nsfw() {
 
 Glib::PropertyProxy<std::optional<Gdk::RGBA>> CellRendererChannels::property_color() {
     return m_property_color.get_proxy();
+}
+
+Glib::PropertyProxy<VoiceStateFlags> CellRendererChannels::property_voice_state() {
+    return m_property_voice_state.get_proxy();
 }
 
 void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -732,6 +737,51 @@ void CellRendererChannels::render_vfunc_voice_participant(const Cairo::RefPtr<Ca
         Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
         cr->rectangle(icon_x, icon_y, icon_w, icon_h);
         cr->fill();
+    }
+
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
+
+        const static std::array<std::pair<VoiceStateFlags, Glib::ustring>, 3> icon_order = { {
+            { VoiceStateFlags::SelfMute | VoiceStateFlags::Mute, "microphone-disabled-symbolic" },
+            { VoiceStateFlags::SelfDeaf | VoiceStateFlags::Deaf, "audio-volume-muted-symbolic" },
+            { VoiceStateFlags::SelfVideo, "camera-web-symbolic" },
+        } };
+
+        constexpr static int IconSize = 18;
+        constexpr static int IconPad = 2;
+
+        const VoiceStateFlags voice_flags = m_property_voice_state.get_value();
+
+        int offset = 0;
+        for (auto iter = icon_order.rbegin(); iter != icon_order.rend(); iter++) {
+            const auto &[flag, icon] = *iter;
+            if ((voice_flags & flag) == VoiceStateFlags::Clear) continue;
+
+            const double icon_w = 18;
+            const double icon_h = 18;
+            const double icon_x = background_area.get_x() + edge - icon_w + offset;
+            const double icon_y = background_area.get_y() + background_area.get_height() / 2 - icon_h / 2;
+            Gdk::Rectangle icon_cell_area(icon_x, icon_y, icon_w, icon_h);
+
+            offset -= (IconSize + IconPad);
+
+            const bool is_server_mute = (voice_flags & VoiceStateFlags::Mute) == VoiceStateFlags::Mute;
+            const bool is_server_deaf = (voice_flags & VoiceStateFlags::Deaf) == VoiceStateFlags::Deaf;
+            auto context = widget.get_style_context();
+            if (is_server_mute || is_server_deaf) {
+                context->context_save();
+                context->add_class("voice-state-server");
+            }
+
+            m_renderer_pixbuf.property_icon_name() = icon;
+            m_renderer_pixbuf.render(cr, widget, background_area, icon_cell_area, flags);
+
+            if (is_server_mute || is_server_deaf) {
+                context->context_restore();
+            }
+        }
     }
 }
 

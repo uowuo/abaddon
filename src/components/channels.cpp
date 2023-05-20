@@ -96,6 +96,7 @@ ChannelList::ChannelList()
     column->add_attribute(renderer->property_expanded(), m_columns.m_expanded);
     column->add_attribute(renderer->property_nsfw(), m_columns.m_nsfw);
     column->add_attribute(renderer->property_color(), m_columns.m_color);
+    column->add_attribute(renderer->property_voice_state(), m_columns.m_voice_flags);
     m_view.append_column(*column);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
@@ -282,6 +283,7 @@ ChannelList::ChannelList()
 #if WITH_VOICE
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserConnect));
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserDisconnect));
+    discord.signal_voice_state_set().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceStateSet));
 #endif
 }
 
@@ -535,6 +537,12 @@ void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
 void ChannelList::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
     if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
         m_model->erase(iter);
+    }
+}
+
+void ChannelList::OnVoiceStateSet(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
+    if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
+        (*iter)[m_columns.m_voice_flags] = flags;
     }
 }
 #endif
@@ -856,6 +864,11 @@ Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &
     row[m_columns.m_type] = RenderType::VoiceParticipant;
     row[m_columns.m_id] = user.ID;
     row[m_columns.m_name] = user.GetEscapedName();
+
+    const auto voice_state = Abaddon::Get().GetDiscordClient().GetVoiceState(user.ID);
+    if (voice_state.has_value()) {
+        row[m_columns.m_voice_flags] = voice_state->second;
+    }
 
     auto &img = Abaddon::Get().GetImageManager();
     row[m_columns.m_icon] = img.GetPlaceholder(VoiceParticipantIconSize);
@@ -1283,4 +1296,5 @@ ChannelList::ModelColumns::ModelColumns() {
     add(m_nsfw);
     add(m_expanded);
     add(m_color);
+    add(m_voice_flags);
 }
