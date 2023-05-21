@@ -103,6 +103,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
 
+    if (const auto self_state = discord.GetVoiceState(discord.GetUserData().ID); self_state.has_value()) {
+        m_mute.set_active((self_state->second & VoiceStateFlags::SelfMute) == VoiceStateFlags::SelfMute);
+        m_deafen.set_active((self_state->second & VoiceStateFlags::SelfDeaf) == VoiceStateFlags::SelfDeaf);
+    }
+
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
 
