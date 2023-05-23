@@ -51,10 +51,6 @@ MainWindow::MainWindow()
     m_content_stack.set_visible_child("chat");
     m_content_stack.show();
 
-#ifdef WITH_VOICE
-    m_voice_info.show();
-#endif
-
     m_left_pane.add(m_channel_list);
 #ifdef WITH_VOICE
     m_left_pane.add(m_voice_info);
