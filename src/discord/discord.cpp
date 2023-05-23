@@ -1806,21 +1806,31 @@ void DiscordClient::HandleGatewayGuildRoleDelete(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayMessageReactionAdd(const GatewayMessage &msg) {
     MessageReactionAddObject data = msg.Data;
 
+    if (data.Emoji.ID.IsValid() && !m_store.GetEmoji(data.Emoji.ID).has_value()) {
+        m_store.SetEmoji(data.Emoji.ID, data.Emoji);
+    }
+
     m_store.AddReaction(data, data.UserID == GetUserData().ID);
-    if (data.Emoji.ID.IsValid())
+    if (data.Emoji.ID.IsValid()) {
         m_signal_reaction_add.emit(data.MessageID, std::to_string(data.Emoji.ID));
-    else
+    } else {
         m_signal_reaction_add.emit(data.MessageID, data.Emoji.Name);
+    }
 }
 
 void DiscordClient::HandleGatewayMessageReactionRemove(const GatewayMessage &msg) {
     MessageReactionRemoveObject data = msg.Data;
 
+    if (data.Emoji.ID.IsValid() && !m_store.GetEmoji(data.Emoji.ID).has_value()) {
+        m_store.SetEmoji(data.Emoji.ID, data.Emoji);
+    }
+
     m_store.RemoveReaction(data, data.UserID == GetUserData().ID);
-    if (data.Emoji.ID.IsValid())
+    if (data.Emoji.ID.IsValid()) {
         m_signal_reaction_remove.emit(data.MessageID, std::to_string(data.Emoji.ID));
-    else
+    } else {
         m_signal_reaction_remove.emit(data.MessageID, data.Emoji.Name);
+    }
 }
 
 // todo: update channel list item and member list
