@@ -14,6 +14,8 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <sigc++/sigc++.h>
+#include <rnnoise.h>
+
 #include "devices.hpp"
 // clang-format on
 
@@ -112,6 +114,8 @@ private:
     std::unordered_map<uint32_t, double> m_volumes;
 
     AudioDevices m_devices;
+
+    DenoiseState *m_rnnoise;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

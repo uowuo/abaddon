@@ -13,3 +13,6 @@
 [submodule "subprojects/miniaudio"]
 	path = subprojects/miniaudio
 	url = https://github.com/mackron/miniaudio
+[submodule "subprojects/rnnoise"]
+	path = subprojects/rnnoise
+	url = https://github.com/xiph/rnnoise

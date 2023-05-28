@@ -55,6 +55,9 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
 AudioManager::AudioManager() {
     m_ok = true;
 
+    m_rnnoise = rnnoise_create(nullptr);
+    spdlog::get("audio")->info("RNNoise expects {} frames", rnnoise_get_frame_size());
+
     int err;
     m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
     if (err != OPUS_OK) {
@@ -134,6 +137,7 @@ AudioManager::~AudioManager() {
     ma_device_uninit(&m_capture_device);
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
+    rnnoise_destroy(m_rnnoise);
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
@@ -410,7 +414,14 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
 
     UpdateCaptureVolume(new_pcm.data(), frames);
 
-    if (m_capture_peak_meter / 32768.0 < m_capture_gate) return;
+    static float idc[480];
+    static float rnnoise_input[480];
+    // take left channel
+    for (int i = 0; i < 480; i++) {
+        rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
+    }
+    float prob = rnnoise_process_frame(m_rnnoise, idc, rnnoise_input);
+    if (prob < m_capture_gate) return;
 
     m_enc_mutex.lock();
     int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
