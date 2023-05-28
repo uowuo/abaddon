@@ -341,8 +341,8 @@ void Abaddon::StartDiscord() {
 }
 
 void Abaddon::StopDiscord() {
-    if (m_discord.Stop())
-        SaveState();
+    if (m_discord.IsStarted()) SaveState();
+    m_discord.Stop();
     m_main_window->UpdateMenus();
 }
 
