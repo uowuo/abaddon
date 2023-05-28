@@ -63,6 +63,8 @@ public:
 
     [[nodiscard]] AudioDevices &GetDevices();
 
+    [[nodiscard]] uint32_t GetRTPTimestamp() const noexcept;
+
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
@@ -112,6 +114,8 @@ private:
     std::unordered_map<uint32_t, double> m_volumes;
 
     AudioDevices m_devices;
+
+    std::atomic<uint32_t> m_rtp_timestamp = 0;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;
