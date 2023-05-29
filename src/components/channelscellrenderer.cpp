@@ -17,7 +17,8 @@ CellRendererChannels::CellRendererChannels()
     , m_property_pixbuf_animation(*this, "pixbuf-animation")
     , m_property_expanded(*this, "expanded")
     , m_property_nsfw(*this, "nsfw")
-    , m_property_color(*this, "color") {
+    , m_property_color(*this, "color")
+    , m_property_voice_state(*this, "voice-state") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -58,6 +59,10 @@ Glib::PropertyProxy<std::optional<Gdk::RGBA>> CellRendererChannels::property_col
     return m_property_color.get_proxy();
 }
 
+Glib::PropertyProxy<VoiceStateFlags> CellRendererChannels::property_voice_state() {
+    return m_property_voice_state.get_proxy();
+}
+
 void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
     switch (m_property_type.get_value()) {
         case RenderType::Folder:
@@ -70,6 +75,12 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
+#ifdef WITH_VOICE
+        case RenderType::VoiceChannel:
+            return get_preferred_width_vfunc_voice_channel(widget, minimum_width, natural_width);
+        case RenderType::VoiceParticipant:
+            return get_preferred_width_vfunc_voice_participant(widget, minimum_width, natural_width);
+#endif
         case RenderType::DMHeader:
             return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
         case RenderType::DM:
@@ -89,6 +100,12 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_for_height_vfunc_thread(widget, height, minimum_width, natural_width);
+#ifdef WITH_VOICE
+        case RenderType::VoiceChannel:
+            return get_preferred_width_for_height_vfunc_voice_channel(widget, height, minimum_width, natural_width);
+        case RenderType::VoiceParticipant:
+            return get_preferred_width_for_height_vfunc_voice_participant(widget, height, minimum_width, natural_width);
+#endif
         case RenderType::DMHeader:
             return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
         case RenderType::DM:
@@ -108,6 +125,12 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
+#ifdef WITH_VOICE
+        case RenderType::VoiceChannel:
+            return get_preferred_height_vfunc_voice_channel(widget, minimum_height, natural_height);
+        case RenderType::VoiceParticipant:
+            return get_preferred_height_vfunc_voice_participant(widget, minimum_height, natural_height);
+#endif
         case RenderType::DMHeader:
             return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
         case RenderType::DM:
@@ -127,6 +150,12 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_for_width_vfunc_thread(widget, width, minimum_height, natural_height);
+#ifdef WITH_VOICE
+        case RenderType::VoiceChannel:
+            return get_preferred_height_for_width_vfunc_voice_channel(widget, width, minimum_height, natural_height);
+        case RenderType::VoiceParticipant:
+            return get_preferred_height_for_width_vfunc_voice_participant(widget, width, minimum_height, natural_height);
+#endif
         case RenderType::DMHeader:
             return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
         case RenderType::DM:
@@ -146,6 +175,12 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
         case RenderType::Thread:
             return render_vfunc_thread(cr, widget, background_area, cell_area, flags);
+#ifdef WITH_VOICE
+        case RenderType::VoiceChannel:
+            return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags);
+        case RenderType::VoiceParticipant:
+            return render_vfunc_voice_participant(cr, widget, background_area, cell_area, flags);
+#endif
         case RenderType::DMHeader:
             return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
         case RenderType::DM:
@@ -574,6 +609,183 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
         unread_render_mentions(cr, widget, unread_state, edge, cell_area);
     }
 }
+
+#ifdef WITH_VOICE
+
+// voice channel
+
+void CellRendererChannels::get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_voice_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    // channel name text
+    Gtk::Requisition minimum_size, natural_size;
+    m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
+
+    const int text_x = background_area.get_x() + 35;
+    const int text_y = background_area.get_y() + background_area.get_height() / 2 - natural_size.height / 2;
+    const int text_w = natural_size.width;
+    const int text_h = natural_size.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+
+    // speaker character
+    Pango::FontDescription font;
+    font.set_family("sans 14");
+
+    auto layout = widget.create_pango_layout("\U0001F50A");
+    layout->set_font_description(font);
+    layout->set_alignment(Pango::ALIGN_LEFT);
+    cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
+    int width, height;
+    layout->get_pixel_size(width, height);
+    cr->move_to(
+        background_area.get_x() + 1,
+        cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0);
+    layout->show_in_cairo_context(cr);
+
+    // expander
+    constexpr static int len = 5;
+    constexpr static int offset = 24;
+    int x1, y1, x2, y2, x3, y3;
+    if (property_expanded()) {
+        x1 = background_area.get_x() + offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + offset + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + offset + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + offset + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + offset;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
+}
+
+// voice participant
+
+void CellRendererChannels::get_preferred_width_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width(widget, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_width_for_height_vfunc_voice_participant(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const {
+    m_renderer_text.get_preferred_width_for_height(widget, height, minimum_width, natural_width);
+}
+
+void CellRendererChannels::get_preferred_height_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height(widget, minimum_height, natural_height);
+}
+
+void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_participant(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
+    m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
+}
+
+void CellRendererChannels::render_vfunc_voice_participant(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    Gtk::Requisition text_minimum, text_natural;
+    m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
+
+    Gtk::Requisition minimum, natural;
+    get_preferred_size(widget, minimum, natural);
+
+    int pixbuf_w = 0;
+    int pixbuf_h = 0;
+
+    if (auto pixbuf = m_property_pixbuf.get_value()) {
+        pixbuf_w = pixbuf->get_width();
+        pixbuf_h = pixbuf->get_height();
+    }
+
+    const double icon_w = pixbuf_w;
+    const double icon_h = pixbuf_h;
+    const double icon_x = background_area.get_x() + 28;
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
+    m_renderer_text.property_scale() = Pango::SCALE_SMALL;
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_scale_set() = false;
+
+    if (auto pixbuf = m_property_pixbuf.get_value()) {
+        Gdk::Cairo::set_source_pixbuf(cr, pixbuf, icon_x, icon_y);
+        cr->rectangle(icon_x, icon_y, icon_w, icon_h);
+        cr->fill();
+    }
+
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), background_area.get_width());
+
+        const static std::array<std::pair<VoiceStateFlags, Glib::ustring>, 3> icon_order = { {
+            { VoiceStateFlags::SelfMute | VoiceStateFlags::Mute, "microphone-disabled-symbolic" },
+            { VoiceStateFlags::SelfDeaf | VoiceStateFlags::Deaf, "audio-volume-muted-symbolic" },
+            { VoiceStateFlags::SelfVideo, "camera-web-symbolic" },
+        } };
+
+        constexpr static int IconSize = 18;
+        constexpr static int IconPad = 2;
+
+        const VoiceStateFlags voice_flags = m_property_voice_state.get_value();
+
+        int offset = 0;
+        for (auto iter = icon_order.rbegin(); iter != icon_order.rend(); iter++) {
+            const auto &[flag, icon] = *iter;
+            if ((voice_flags & flag) == VoiceStateFlags::Clear) continue;
+
+            const double icon_w = 18;
+            const double icon_h = 18;
+            const double icon_x = background_area.get_x() + edge - icon_w + offset;
+            const double icon_y = background_area.get_y() + background_area.get_height() / 2 - icon_h / 2;
+            Gdk::Rectangle icon_cell_area(icon_x, icon_y, icon_w, icon_h);
+
+            offset -= (IconSize + IconPad);
+
+            const bool is_server_mute = (voice_flags & VoiceStateFlags::Mute) == VoiceStateFlags::Mute;
+            const bool is_server_deaf = (voice_flags & VoiceStateFlags::Deaf) == VoiceStateFlags::Deaf;
+            auto context = widget.get_style_context();
+            if (is_server_mute || is_server_deaf) {
+                context->context_save();
+                context->add_class("voice-state-server");
+            }
+
+            m_renderer_pixbuf.property_icon_name() = icon;
+            m_renderer_pixbuf.render(cr, widget, background_area, icon_cell_area, flags);
+
+            if (is_server_mute || is_server_deaf) {
+                context->context_restore();
+            }
+        }
+    }
+}
+
+#endif
 
 // dm header
 

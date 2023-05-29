@@ -9,6 +9,7 @@ Alternative Discord client made in C++ with GTK
 Current features:
 
 * Not Electron
+* Voice support
 * Handles most types of chat messages including embeds, images, and replies
 * Completely styleable/customizable with CSS (if you have a system GTK theme it won't really use it though)
 * Identifies to Discord as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
@@ -56,6 +57,9 @@ the result of fundamental issues with Discord's thread implementation.
     * mingw-w64-x86_64-zlib
     * mingw-w64-x86_64-gtkmm3
     * mingw-w64-x86_64-libhandy
+    * mingw-w64-x86_64-opus
+    * mingw-w64-x86_64-libsodium
+    * mingw-w64-x86_64-spdlog
 2. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
@@ -64,7 +68,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Mac:
 
 1. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
-2. `brew install gtkmm3 nlohmann-json libhandy`
+2. `brew install gtkmm3 nlohmann-json libhandy opus libsodium spdlog`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
@@ -74,17 +78,18 @@ the result of fundamental issues with Discord's thread implementation.
 1. Install dependencies
     * On Ubuntu 20.04 (Focal) and newer:
       ```Shell
-      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev
+      $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev libopus-dev libsodium-dev libspdlog-dev
       ```
     * On Arch Linux
       ```Shell
-      $ sudo pacman -S gcc cmake gtkmm3 libcurl-gnutls lib32-sqlite lib32-openssl nlohmann-json libhandy
+      $ sudo pacman -S gcc cmake gtkmm3 libcurl-gnutls lib32-sqlite lib32-openssl nlohmann-json libhandy opus libsodium spdlog
       ```
     * On Fedora Linux:
       ```Shell
-      $ sudo dnf install g++ cmake gtkmm3.0-devel libcurl-devel sqlite-devel openssl-devel json-devel libsecret-devel libhandy-devel
+      $ sudo dnf install g++ cmake gtkmm3.0-devel libcurl-devel sqlite-devel openssl-devel json-devel libsecret-devel libhandy-devel opus-devel libsodium-devel spdlog-devel
       ```
-      > **Note:** On older versions of fedora you might need to install gtkmm30-devel instead of gtkmm3.0-devel. Use `dnf search gtkmm3` to see available packages.
+      > **Note:** On older versions of fedora you might need to install gtkmm30-devel instead of gtkmm3.0-devel.
+      Use `dnf search gtkmm3` to see available packages.
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
@@ -140,16 +145,18 @@ spam filter's wrath:
 * [libcurl](https://curl.se/)
 * [zlib](https://zlib.net/)
 * [SQLite3](https://www.sqlite.org/index.html)
+* [spdlog](https://github.com/gabime/spdlog)
 * [libhandy](https://gnome.pages.gitlab.gnome.org/libhandy/) (optional)
 * [keychain](https://github.com/hrantzsch/keychain) (optional, provided as submodule)
-* [miniaudio](https://miniaud.io/) (optional, provided as submodule)
+* [miniaudio](https://miniaud.io/) (optional, provided as submodule, required for voice)
+* [libopus](https://opus-codec.org/) (optional, required for voice)
+* [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 
 ### TODO:
 
-* Voice support (in progress)
 * User activities
 * More server management stuff
-* A bunch of other stuff
+* A bunch of other stuff probably
 
 ### Styling
 

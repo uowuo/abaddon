@@ -1,6 +1,6 @@
 name: Abaddon CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   msys2:
@@ -8,8 +8,8 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
-        mindeps: [false]
+        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
+        mindeps: [ false ]
         include:
           - buildtype: RelWithDebInfo
             mindeps: true
@@ -37,6 +37,7 @@ jobs:
             mingw-w64-x86_64-curl
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-gtkmm3
+            mingw-w64-x86_64-spdlog
           if_false: >-
             git
             make
@@ -49,6 +50,9 @@ jobs:
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-gtkmm3
             mingw-w64-x86_64-libhandy
+            mingw-w64-x86_64-opus
+            mingw-w64-x86_64-libsodium
+            mingw-w64-x86_64-spdlog
 
       - name: Setup MSYS2 (2)
         uses: msys2/setup-msys2@v2
@@ -63,10 +67,10 @@ jobs:
         with:
           cond: ${{ matrix.mindeps == true }}
           if_true: |
-            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF
             cmake --build build
           if_false: |
-            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DCMAKE_CXX_FLAGS="-Wl,--default-image-base-low"
             cmake --build build
 
       - name: Build (2)
@@ -88,14 +92,18 @@ jobs:
           mkdir -p ${artifact_dir}/share/icons/Adwaita
           cd ${artifact_dir}/share/icons/Adwaita
           mkdir -p 16x16/actions 24x24/actions 32x32/actions 48x48/actions 64x64/actions 96x96/actions scalable/actions
-          cd ../../../../../
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/32x32/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/48x48/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/48x48/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/64x64/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/actions/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/96x96/actions || :
-          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/actions/%.svg ${artifact_dir}/share/icons/Adwaita/scalable/actions || :
+          mkdir -p 16x16/devices 24x24/devices 32x32/devices 48x48/devices 64x64/devices 96x96/devices scalable/devices
+          mkdir -p 16x16/status 24x24/status 32x32/status 48x48/status 64x64/status 96x96/status scalable/status
+          cd ${GITHUB_WORKSPACE}
+          cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/icon-theme.cache ${artifact_dir}/share/icons/Adwaita/icon-theme.cache
+          cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/index.theme ${artifact_dir}/share/icons/Adwaita/index.theme
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/32x32/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/32x32/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/48x48/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/48x48/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/64x64/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/96x96/%.symbolic.png || :
+          cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/%.svg ${artifact_dir}/share/icons/Adwaita/scalable/%.svg || :
 
       - name: Upload build (1)
         uses: haya14busa/action-cond@v1
@@ -116,7 +124,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        buildtype: [Debug, RelWithDebInfo]
+        buildtype: [ Debug, RelWithDebInfo ]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -131,6 +139,9 @@ jobs:
           brew install gtkmm3
           brew install nlohmann-json
           brew install jpeg
+          brew install opus
+          brew install libsodium
+          brew install spdlog
           brew install libhandy
 
       - name: Build
@@ -155,10 +166,10 @@ jobs:
 
   linux:
     name: linux-${{ matrix.buildtype }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -182,6 +193,9 @@ jobs:
           sudo make install
           sudo apt-get install libgtkmm-3.0-dev
           sudo apt-get install libcurl4-gnutls-dev
+          sudo apt-get install libopus-dev
+          sudo apt-get install libsodium-dev
+          sudo apt-get install libspdlog-dev
           sudo apt-get install libhandy-1-dev
 
       - name: Build

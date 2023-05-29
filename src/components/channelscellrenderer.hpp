@@ -3,6 +3,8 @@
 #include <glibmm/property.h>
 #include <map>
 #include "discord/snowflake.hpp"
+#include "discord/voicestateflags.hpp"
+#include "misc/bitwise.hpp"
 
 enum class RenderType : uint8_t {
     Folder,
@@ -10,6 +12,12 @@ enum class RenderType : uint8_t {
     Category,
     TextChannel,
     Thread,
+
+// TODO: maybe enable anyways but without ability to join if no voice support
+#ifdef WITH_VOICE
+    VoiceChannel,
+    VoiceParticipant,
+#endif
 
     DMHeader,
     DM,
@@ -28,6 +36,7 @@ public:
     Glib::PropertyProxy<bool> property_expanded();
     Glib::PropertyProxy<bool> property_nsfw();
     Glib::PropertyProxy<std::optional<Gdk::RGBA>> property_color();
+    Glib::PropertyProxy<VoiceStateFlags> property_voice_state();
 
 protected:
     void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
@@ -95,6 +104,30 @@ protected:
                              const Gdk::Rectangle &cell_area,
                              Gtk::CellRendererState flags);
 
+#ifdef WITH_VOICE
+    // voice channel
+    void get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_voice_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_voice_channel(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr,
+                                    Gtk::Widget &widget,
+                                    const Gdk::Rectangle &background_area,
+                                    const Gdk::Rectangle &cell_area,
+                                    Gtk::CellRendererState flags);
+
+    // voice participant
+    void get_preferred_width_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
+    void get_preferred_width_for_height_vfunc_voice_participant(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
+    void get_preferred_height_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_height, int &natural_height) const;
+    void get_preferred_height_for_width_vfunc_voice_participant(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const;
+    void render_vfunc_voice_participant(const Cairo::RefPtr<Cairo::Context> &cr,
+                                        Gtk::Widget &widget,
+                                        const Gdk::Rectangle &background_area,
+                                        const Gdk::Rectangle &cell_area,
+                                        Gtk::CellRendererState flags);
+#endif
+
     // dm header
     void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
     void get_preferred_width_for_height_vfunc_dmheader(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
@@ -122,6 +155,7 @@ protected:
 
 private:
     Gtk::CellRendererText m_renderer_text;
+    Gtk::CellRendererPixbuf m_renderer_pixbuf;
 
     Glib::Property<RenderType> m_property_type;    // all
     Glib::Property<Glib::ustring> m_property_name; // all
@@ -131,6 +165,7 @@ private:
     Glib::Property<bool> m_property_expanded;                                       // category
     Glib::Property<bool> m_property_nsfw;                                           // channel
     Glib::Property<std::optional<Gdk::RGBA>> m_property_color;                      // folder
+    Glib::Property<VoiceStateFlags> m_property_voice_state;
 
     // same pitfalls as in https://github.com/uowuo/abaddon/blob/60404783bd4ce9be26233fe66fc3a74475d9eaa3/components/cellrendererpixbufanimation.hpp#L32-L39
     // this will manifest though since guild icons can change

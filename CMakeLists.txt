@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
+option(ENABLE_VOICE "Enable voice suppport" ON)
 option(USE_KEYCHAIN "Store the token in the keychain (default)" ON)
 option(ENABLE_NOTIFICATION_SOUNDS "Enable notification sounds (default)" ON)
 
@@ -102,6 +103,9 @@ if (Fontconfig_FOUND)
     target_link_libraries(abaddon Fontconfig::Fontconfig)
 endif ()
 
+find_package(spdlog REQUIRED)
+target_link_libraries(abaddon spdlog::spdlog)
+
 target_link_libraries(abaddon ${SQLite3_LIBRARIES})
 target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${CURL_LIBRARIES})
@@ -131,13 +135,29 @@ if (USE_KEYCHAIN)
     endif ()
 endif ()
 
+set(USE_MINIAUDIO FALSE)
+
+if (ENABLE_VOICE)
+    target_compile_definitions(abaddon PRIVATE WITH_VOICE)
+
+    find_package(PkgConfig)
+
+    set(USE_MINIAUDIO TRUE)
+    pkg_check_modules(Opus REQUIRED IMPORTED_TARGET opus)
+    target_link_libraries(abaddon PkgConfig::Opus)
+
+    pkg_check_modules(libsodium REQUIRED IMPORTED_TARGET libsodium)
+    target_link_libraries(abaddon PkgConfig::libsodium)
+
+    target_link_libraries(abaddon ${CMAKE_DL_LIBS})
+endif ()
+
 if (${ENABLE_NOTIFICATION_SOUNDS})
     set(USE_MINIAUDIO TRUE)
     target_compile_definitions(abaddon PRIVATE ENABLE_NOTIFICATION_SOUNDS)
-else ()
-    set(USE_MINIAUDIO FALSE)
 endif ()
 
 if (USE_MINIAUDIO)
     target_include_directories(abaddon PUBLIC subprojects/miniaudio)
+    target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()

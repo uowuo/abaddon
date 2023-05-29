@@ -1,7 +1,11 @@
 #include <memory>
+#include <spdlog/spdlog.h>
+#include <spdlog/cfg/env.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #include <algorithm>
 #include "platform.hpp"
+#include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/editmessage.hpp"
@@ -14,6 +18,7 @@
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
+#include "windows/voicewindow.hpp"
 #include "startup.hpp"
 #include "notifications/notifications.hpp"
 
@@ -35,7 +40,8 @@ Abaddon::Abaddon()
     std::string ua = GetSettings().UserAgent;
     m_discord.SetUserAgent(ua);
 
-    m_discord.signal_gateway_ready().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
+    // todo rename funcs
+    m_discord.signal_gateway_ready_supplemental().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnReady));
     m_discord.signal_message_create().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageCreate));
     m_discord.signal_message_delete().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageDelete));
     m_discord.signal_message_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageUpdate));
@@ -47,6 +53,16 @@ Abaddon::Abaddon()
     m_discord.signal_thread_update().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnThreadUpdate));
     m_discord.signal_message_sent().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnMessageSent));
     m_discord.signal_disconnected().connect(sigc::mem_fun(*this, &Abaddon::DiscordOnDisconnect));
+
+#ifdef WITH_VOICE
+    m_discord.signal_voice_connected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceConnected));
+    m_discord.signal_voice_disconnected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceDisconnected));
+    m_discord.signal_voice_speaking().connect([this](const VoiceSpeakingData &m) {
+        spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
+        m_audio->AddSSRC(m.SSRC);
+    });
+#endif
+
     m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
         if (!accessible)
             m_channels_requested.erase(id);
@@ -227,6 +243,16 @@ int Abaddon::StartGTK() {
         return 1;
     }
 
+#ifdef WITH_VOICE
+    m_audio = std::make_unique<AudioManager>();
+    if (!m_audio->OK()) {
+        Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        dlg.set_position(Gtk::WIN_POS_CENTER);
+        dlg.run();
+        return 1;
+    }
+#endif
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
@@ -245,6 +271,11 @@ int Abaddon::StartGTK() {
     m_main_window->GetChannelList()->signal_action_channel_item_select().connect(sigc::bind(sigc::mem_fun(*this, &Abaddon::ActionChannelOpened), true));
     m_main_window->GetChannelList()->signal_action_guild_leave().connect(sigc::mem_fun(*this, &Abaddon::ActionLeaveGuild));
     m_main_window->GetChannelList()->signal_action_guild_settings().connect(sigc::mem_fun(*this, &Abaddon::ActionGuildSettings));
+
+#ifdef WITH_VOICE
+    m_main_window->GetChannelList()->signal_action_join_voice_channel().connect(sigc::mem_fun(*this, &Abaddon::ActionJoinVoiceChannel));
+    m_main_window->GetChannelList()->signal_action_disconnect_voice().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnectVoice));
+#endif
 
     m_main_window->GetChatWindow()->signal_action_message_edit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatEditMessage));
     m_main_window->GetChatWindow()->signal_action_chat_submit().connect(sigc::mem_fun(*this, &Abaddon::ActionChatInputSubmit));
@@ -310,8 +341,8 @@ void Abaddon::StartDiscord() {
 }
 
 void Abaddon::StopDiscord() {
-    if (m_discord.Stop())
-        SaveState();
+    if (m_discord.IsStarted()) SaveState();
+    m_discord.Stop();
     m_main_window->UpdateMenus();
 }
 
@@ -407,6 +438,67 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
             m_main_window->GetChatWindow()->SetTopic("");
     }
 }
+
+#ifdef WITH_VOICE
+void Abaddon::OnVoiceConnected() {
+    m_audio->StartCaptureDevice();
+    ShowVoiceWindow();
+}
+
+void Abaddon::OnVoiceDisconnected() {
+    m_audio->StopCaptureDevice();
+    m_audio->RemoveAllSSRCs();
+    if (m_voice_window != nullptr) {
+        m_voice_window->close();
+    }
+}
+
+void Abaddon::ShowVoiceWindow() {
+    if (m_voice_window != nullptr) return;
+
+    auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
+    m_voice_window = wnd;
+
+    wnd->signal_mute().connect([this](bool is_mute) {
+        m_discord.SetVoiceMuted(is_mute);
+        m_audio->SetCapture(!is_mute);
+    });
+
+    wnd->signal_deafen().connect([this](bool is_deaf) {
+        m_discord.SetVoiceDeafened(is_deaf);
+        m_audio->SetPlayback(!is_deaf);
+    });
+
+    wnd->signal_gate().connect([this](double gate) {
+        m_audio->SetCaptureGate(gate);
+    });
+
+    wnd->signal_gain().connect([this](double gain) {
+        m_audio->SetCaptureGain(gain);
+    });
+
+    wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
+        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
+            m_audio->SetMuteSSRC(*ssrc, is_mute);
+        }
+    });
+
+    wnd->signal_user_volume_changed().connect([this](Snowflake id, double volume) {
+        auto &vc = m_discord.GetVoiceClient();
+        vc.SetUserVolume(id, volume);
+    });
+
+    wnd->set_position(Gtk::WIN_POS_CENTER);
+
+    wnd->show();
+    wnd->signal_hide().connect([this, wnd]() {
+        m_voice_window = nullptr;
+        delete wnd;
+        delete m_user_menu;
+        SetupUserMenu();
+    });
+}
+#endif
 
 SettingsManager::Settings &Abaddon::GetSettings() {
     return m_settings.GetSettings();
@@ -937,6 +1029,16 @@ void Abaddon::ActionViewThreads(Snowflake channel_id) {
     window->show();
 }
 
+#ifdef WITH_VOICE
+void Abaddon::ActionJoinVoiceChannel(Snowflake channel_id) {
+    m_discord.ConnectToVoice(channel_id);
+}
+
+void Abaddon::ActionDisconnectVoice() {
+    m_discord.DisconnectFromVoice();
+}
+#endif
+
 std::optional<Glib::ustring> Abaddon::ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window *window) {
     TextInputDialog dlg(prompt, title, placeholder, window != nullptr ? *window : *m_main_window);
     const auto code = dlg.run();
@@ -976,15 +1078,24 @@ EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
 }
 
+#ifdef WITH_VOICE
+AudioManager &Abaddon::GetAudio() {
+    return *m_audio;
+}
+#endif
+
 void Abaddon::on_tray_click() {
     m_main_window->set_visible(!m_main_window->is_visible());
 }
+
 void Abaddon::on_tray_menu_click() {
     m_gtk_app->quit();
 }
+
 void Abaddon::on_tray_popup_menu(int button, int activate_time) {
     m_tray->popup_menu_at_position(*m_tray_menu, button, activate_time);
 }
+
 void Abaddon::on_window_hide() {
     if (!m_settings.GetSettings().HideToTray) {
         m_gtk_app->quit();
@@ -1015,6 +1126,12 @@ int main(int argc, char **argv) {
     if (buf[0] != '1')
         SetEnvironmentVariableA("GTK_CSD", "0");
 #endif
+
+    spdlog::cfg::load_env_levels();
+    auto log_audio = spdlog::stdout_color_mt("audio");
+    auto log_voice = spdlog::stdout_color_mt("voice");
+    auto log_discord = spdlog::stdout_color_mt("discord");
+
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();
 }

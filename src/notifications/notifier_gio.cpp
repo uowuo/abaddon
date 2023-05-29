@@ -1,9 +1,6 @@
 #include "notifier.hpp"
 #include <giomm/notification.h>
 
-#define MINIAUDIO_IMPLEMENTATION
-#include <miniaudio.h>
-
 Notifier::Notifier() {
 #ifdef ENABLE_NOTIFICATION_SOUNDS
     if (ma_engine_init(nullptr, &m_engine) != MA_SUCCESS) {

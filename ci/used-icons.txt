@@ -1,1 +1,5 @@
-document-send-symbolic
+actions/document-send-symbolic
+actions/call-stop-symbolic
+status/microphone-disabled-symbolic
+status/audio-volume-muted-symbolic
+devices/camera-web-symbolic

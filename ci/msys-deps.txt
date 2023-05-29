@@ -15,6 +15,7 @@
 /bin/libepoxy-0.dll
 /bin/libexpat-1.dll
 /bin/libffi-8.dll
+/bin/libfmt.dll
 /bin/libfontconfig-1.dll
 /bin/libfreetype-6.dll
 /bin/libfribidi-0.dll
@@ -37,6 +38,7 @@
 /bin/libidn2-0.dll
 /bin/libintl-8.dll
 /bin/libnghttp2-14.dll
+/bin/libopus-0.dll
 /bin/libpango-1.0-0.dll
 /bin/libpangocairo-1.0-0.dll
 /bin/libpangoft2-1.0-0.dll
@@ -47,6 +49,8 @@
 /bin/libpng16-16.dll
 /bin/libpsl-5.dll
 /bin/libsigc-2.0-0.dll
+/bin/libsodium-23.dll
+/bin/libspdlog.dll
 /bin/libsqlite3-0.dll
 /bin/libssh2-1.dll
 /bin/libssl-3-x64.dll

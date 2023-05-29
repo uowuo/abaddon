@@ -100,6 +100,8 @@ enum class GatewayEvent : int {
     MESSAGE_ACK,
     USER_GUILD_SETTINGS_UPDATE,
     GUILD_MEMBERS_CHUNK,
+    VOICE_STATE_UPDATE,
+    VOICE_SERVER_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -361,8 +363,18 @@ struct SupplementalMergedPresencesData {
     friend void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m);
 };
 
+struct VoiceState;
+struct SupplementalGuildEntry {
+    // std::vector<?> EmbeddedActivities;
+    Snowflake ID;
+    std::vector<VoiceState> VoiceStates;
+
+    friend void from_json(const nlohmann::json &j, SupplementalGuildEntry &m);
+};
+
 struct ReadySupplementalData {
     SupplementalMergedPresencesData MergedPresences;
+    std::vector<SupplementalGuildEntry> Guilds;
 
     friend void from_json(const nlohmann::json &j, ReadySupplementalData &m);
 };
@@ -872,4 +884,43 @@ struct GuildMembersChunkData {
     std::vector<GuildMember> Members;
 
     friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
+};
+
+#ifdef WITH_VOICE
+struct VoiceStateUpdateMessage {
+    std::optional<Snowflake> GuildID;
+    std::optional<Snowflake> ChannelID;
+    bool SelfMute = false;
+    bool SelfDeaf = false;
+    bool SelfVideo = false;
+    std::string PreferredRegion;
+
+    friend void to_json(nlohmann::json &j, const VoiceStateUpdateMessage &m);
+};
+
+struct VoiceServerUpdateData {
+    std::string Token;
+    std::string Endpoint;
+    std::optional<Snowflake> GuildID;
+    std::optional<Snowflake> ChannelID;
+
+    friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
+};
+#endif
+
+struct VoiceState {
+    std::optional<Snowflake> ChannelID;
+    bool IsDeafened;
+    bool IsMuted;
+    std::optional<Snowflake> GuildID;
+    std::optional<GuildMember> Member;
+    bool IsSelfDeafened;
+    bool IsSelfMuted;
+    bool IsSelfVideo;
+    bool IsSelfStream = false;
+    std::string SessionID;
+    bool IsSuppressed;
+    Snowflake UserID;
+
+    friend void from_json(const nlohmann::json &j, VoiceState &m);
 };

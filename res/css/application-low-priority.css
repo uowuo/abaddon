@@ -44,7 +44,7 @@ has to be separate to allow main.css to override certain things
     background: @secondary_color;
 }
 
-.app-popup list {
+.app-window list, .app-popup list {
     background: @secondary_color;
 }
 
@@ -86,4 +86,12 @@ has to be separate to allow main.css to override certain things
 
 .app-window colorswatch {
     box-shadow: 0 1px rgba(0, 0, 0, 0);
+}
+
+.app-window scale {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    color: @text_color;
 }

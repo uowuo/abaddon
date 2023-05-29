@@ -16,6 +16,7 @@
 
 constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
+constexpr static int VoiceParticipantIconSize = 18;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
 class ChannelList : public Gtk::ScrolledWindow {
@@ -52,6 +53,10 @@ protected:
     void OnThreadUpdate(const ThreadUpdateData &data);
     void OnThreadListSync(const ThreadListSyncData &data);
 
+    void OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id);
+    void OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id);
+    void OnVoiceStateSet(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags);
+
     Gtk::TreeView m_view;
 
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {
@@ -66,6 +71,7 @@ protected:
         Gtk::TreeModelColumn<int64_t> m_sort;
         Gtk::TreeModelColumn<bool> m_nsfw;
         Gtk::TreeModelColumn<std::optional<Gdk::RGBA>> m_color; // for folders right now
+        Gtk::TreeModelColumn<VoiceStateFlags> m_voice_flags;
         // Gtk::CellRenderer's property_is_expanded only works how i want it to if it has children
         // because otherwise it doesnt count as an "expander" (property_is_expander)
         // so this solution will have to do which i hate but the alternative is adding invisible children
@@ -82,12 +88,17 @@ protected:
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
 
+#ifdef WITH_VOICE
+    Gtk::TreeModel::iterator CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent);
+#endif
+
     void UpdateChannelCategory(const ChannelData &channel);
 
     // separation necessary because a channel and guild can share the same id
     Gtk::TreeModel::iterator GetIteratorForTopLevelFromID(Snowflake id);
     Gtk::TreeModel::iterator GetIteratorForGuildFromID(Snowflake id);
-    Gtk::TreeModel::iterator GetIteratorForChannelFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForRowFromID(Snowflake id);
+    Gtk::TreeModel::iterator GetIteratorForRowFromIDOfType(Snowflake id, RenderType type);
 
     bool IsTextChannel(ChannelType type);
 
@@ -132,10 +143,20 @@ protected:
     Gtk::MenuItem m_menu_channel_open_tab;
 #endif
 
+#ifdef WITH_VOICE
+    Gtk::Menu m_menu_voice_channel;
+    Gtk::MenuItem m_menu_voice_channel_join;
+    Gtk::MenuItem m_menu_voice_channel_disconnect;
+#endif
+
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
     Gtk::MenuItem m_menu_dm_close;
     Gtk::MenuItem m_menu_dm_toggle_mute;
+#ifdef WITH_VOICE
+    Gtk::MenuItem m_menu_dm_join_voice;
+    Gtk::MenuItem m_menu_dm_disconnect_voice;
+#endif
 
 #ifdef WITH_LIBHANDY
     Gtk::MenuItem m_menu_dm_open_tab;
@@ -154,6 +175,10 @@ protected:
     void OnChannelSubmenuPopup();
     void OnDMSubmenuPopup();
     void OnThreadSubmenuPopup();
+
+#ifdef WITH_VOICE
+    void OnVoiceChannelSubmenuPopup();
+#endif
 
     bool m_updating_listing = false;
 
@@ -174,6 +199,14 @@ public:
     type_signal_action_open_new_tab signal_action_open_new_tab();
 #endif
 
+#ifdef WITH_VOICE
+    using type_signal_action_join_voice_channel = sigc::signal<void, Snowflake>;
+    using type_signal_action_disconnect_voice = sigc::signal<void>;
+
+    type_signal_action_join_voice_channel signal_action_join_voice_channel();
+    type_signal_action_disconnect_voice signal_action_disconnect_voice();
+#endif
+
     type_signal_action_channel_item_select signal_action_channel_item_select();
     type_signal_action_guild_leave signal_action_guild_leave();
     type_signal_action_guild_settings signal_action_guild_settings();
@@ -185,5 +218,10 @@ private:
 
 #ifdef WITH_LIBHANDY
     type_signal_action_open_new_tab m_signal_action_open_new_tab;
+#endif
+
+#ifdef WITH_VOICE
+    type_signal_action_join_voice_channel m_signal_action_join_voice_channel;
+    type_signal_action_disconnect_voice m_signal_action_disconnect_voice;
 #endif
 };

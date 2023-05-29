@@ -15,6 +15,8 @@
 
 #define APP_TITLE "Abaddon"
 
+class AudioManager;
+
 class Abaddon {
 private:
     Abaddon();
@@ -55,6 +57,11 @@ public:
     void ActionViewPins(Snowflake channel_id);
     void ActionViewThreads(Snowflake channel_id);
 
+#ifdef WITH_VOICE
+    void ActionJoinVoiceChannel(Snowflake channel_id);
+    void ActionDisconnectVoice();
+#endif
+
     std::optional<Glib::ustring> ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder = "", Gtk::Window *window = nullptr);
     bool ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window = nullptr);
 
@@ -62,6 +69,10 @@ public:
 
     ImageManager &GetImageManager();
     EmojiResource &GetEmojis();
+
+#ifdef WITH_VOICE
+    AudioManager &GetAudio();
+#endif
 
     std::string GetDiscordToken() const;
     bool IsDiscordActive() const;
@@ -80,6 +91,13 @@ public:
     void DiscordOnMessageSent(const Message &data);
     void DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_code);
     void DiscordOnThreadUpdate(const ThreadUpdateData &data);
+
+#ifdef WITH_VOICE
+    void OnVoiceConnected();
+    void OnVoiceDisconnected();
+
+    void ShowVoiceWindow();
+#endif
 
     SettingsManager::Settings &GetSettings();
 
@@ -153,6 +171,11 @@ private:
 
     ImageManager m_img_mgr;
     EmojiResource m_emojis;
+
+#ifdef WITH_VOICE
+    std::unique_ptr<AudioManager> m_audio;
+    Gtk::Window *m_voice_window = nullptr;
+#endif
 
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
