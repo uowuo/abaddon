@@ -58,7 +58,7 @@ Abaddon::Abaddon()
     m_discord.signal_voice_connected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceConnected));
     m_discord.signal_voice_disconnected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceDisconnected));
     m_discord.signal_voice_speaking().connect([this](const VoiceSpeakingData &m) {
-        printf("%llu has ssrc %u\n", (uint64_t)m.UserID, m.SSRC);
+        spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
         m_audio->AddSSRC(m.SSRC);
     });
 #endif
