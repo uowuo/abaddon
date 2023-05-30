@@ -383,7 +383,7 @@ void DiscordVoiceClient::Discovery() {
         const auto response = m_udp.Receive();
         if (response.size() >= 74 && response[0] == 0x00 && response[1] == 0x02) {
             const char *ip = reinterpret_cast<const char *>(response.data() + 8);
-            uint16_t port = (response[73] << 8) | response[74];
+            uint16_t port = (response[72] << 8) | response[73];
             m_log->info("Discovered IP and port: {}:{}", ip, port);
             SelectProtocol(ip, port);
             break;
