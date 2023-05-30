@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <glibmm/ustring.h>
 #include <fmt/core.h>
+#include <fmt/ostream.h>
 
 struct Snowflake {
     Snowflake();
