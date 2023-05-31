@@ -59,7 +59,7 @@ Abaddon::Abaddon()
     m_discord.signal_voice_disconnected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceDisconnected));
     m_discord.signal_voice_speaking().connect([this](const VoiceSpeakingData &m) {
         spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
-        m_audio->AddSSRC(m.SSRC);
+        m_audio.AddSSRC(m.SSRC);
     });
 #endif
 
@@ -244,8 +244,7 @@ int Abaddon::StartGTK() {
     }
 
 #ifdef WITH_VOICE
-    m_audio = std::make_unique<AudioManager>();
-    if (!m_audio->OK()) {
+    if (!m_audio.OK()) {
         Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
@@ -441,13 +440,13 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
-    m_audio->StartCaptureDevice();
+    m_audio.StartCaptureDevice();
     ShowVoiceWindow();
 }
 
 void Abaddon::OnVoiceDisconnected() {
-    m_audio->StopCaptureDevice();
-    m_audio->RemoveAllSSRCs();
+    m_audio.StopCaptureDevice();
+    m_audio.RemoveAllSSRCs();
     if (m_voice_window != nullptr) {
         m_voice_window->close();
     }
@@ -461,25 +460,25 @@ void Abaddon::ShowVoiceWindow() {
 
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
-        m_audio->SetCapture(!is_mute);
+        m_audio.SetCapture(!is_mute);
     });
 
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
-        m_audio->SetPlayback(!is_deaf);
+        m_audio.SetPlayback(!is_deaf);
     });
 
     wnd->signal_gate().connect([this](double gate) {
-        m_audio->SetCaptureGate(gate);
+        m_audio.SetCaptureGate(gate);
     });
 
     wnd->signal_gain().connect([this](double gain) {
-        m_audio->SetCaptureGain(gain);
+        m_audio.SetCaptureGain(gain);
     });
 
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
         if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
-            m_audio->SetMuteSSRC(*ssrc, is_mute);
+            m_audio.SetMuteSSRC(*ssrc, is_mute);
         }
     });
 
@@ -1080,7 +1079,7 @@ EmojiResource &Abaddon::GetEmojis() {
 
 #ifdef WITH_VOICE
 AudioManager &Abaddon::GetAudio() {
-    return *m_audio;
+    return m_audio;
 }
 #endif
 
