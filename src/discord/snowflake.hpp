@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <glibmm/ustring.h>
-#include <fmt/core.h>
-#include <fmt/ostream.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/fmt/ostr.h>
 
 struct Snowflake {
     Snowflake();
