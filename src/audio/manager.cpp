@@ -50,6 +50,15 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
     if (mgr == nullptr) return;
 
     mgr->OnCapturedPCM(static_cast<const int16_t *>(pInput), frameCount);
+
+    /*
+     * You can simply increment it by 480 in UDPSocket::SendEncrypted but this is wrong
+     * The timestamp is supposed to be strictly linear eg. if there's discontinuous
+     * transmission for 1 second then the timestamp should be 48000 greater than the
+     * last packet. So it's incremented here because this is fired 100x per second
+     * and is always called in sync with UDPSocket::SendEncrypted
+     */
+    mgr->m_rtp_timestamp += 480;
 }
 
 AudioManager::AudioManager() {
@@ -482,6 +491,10 @@ double AudioManager::GetSSRCVolumeLevel(uint32_t ssrc) const noexcept {
 
 AudioDevices &AudioManager::GetDevices() {
     return m_devices;
+}
+
+uint32_t AudioManager::GetRTPTimestamp() const noexcept {
+    return m_rtp_timestamp;
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {

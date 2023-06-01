@@ -2813,7 +2813,6 @@ void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
         spdlog::get("discord")->error("SetVoiceState called with missing channel ID");
         return;
     }
-    spdlog::get("discord")->debug("SetVoiceState: {} -> {}", user_id, *state.ChannelID);
 
     auto flags = VoiceStateFlags::Clear;
     if (state.IsSelfMuted) flags |= VoiceStateFlags::SelfMute;

@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <glibmm/ustring.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/fmt/ostr.h>
 
 struct Snowflake {
     Snowflake();
@@ -37,6 +39,13 @@ private:
     friend struct std::hash<Snowflake>;
     friend struct std::less<Snowflake>;
     unsigned long long m_num;
+};
+
+template<>
+struct fmt::formatter<Snowflake> : fmt::formatter<std::string> {
+    auto format(Snowflake id, format_context &ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "[id: {}]", static_cast<uint64_t>(id));
+    }
 };
 
 namespace std {

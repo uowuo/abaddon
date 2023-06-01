@@ -171,7 +171,6 @@ private:
     uint32_t m_ssrc;
 
     uint16_t m_sequence = 0;
-    uint32_t m_timestamp = 0;
 
 public:
     using type_signal_data = sigc::signal<void, std::vector<uint8_t>>;

@@ -49,17 +49,18 @@ void UDPSocket::SetSSRC(uint32_t ssrc) {
 
 void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
     m_sequence++;
-    m_timestamp += 480; // this is important
+
+    const uint32_t timestamp = Abaddon::Get().GetAudio().GetRTPTimestamp();
 
     std::vector<uint8_t> rtp(12 + len + crypto_secretbox_MACBYTES, 0);
     rtp[0] = 0x80; // ver 2
     rtp[1] = 0x78; // payload type 0x78
     rtp[2] = (m_sequence >> 8) & 0xFF;
     rtp[3] = (m_sequence >> 0) & 0xFF;
-    rtp[4] = (m_timestamp >> 24) & 0xFF;
-    rtp[5] = (m_timestamp >> 16) & 0xFF;
-    rtp[6] = (m_timestamp >> 8) & 0xFF;
-    rtp[7] = (m_timestamp >> 0) & 0xFF;
+    rtp[4] = (timestamp >> 24) & 0xFF;
+    rtp[5] = (timestamp >> 16) & 0xFF;
+    rtp[6] = (timestamp >> 8) & 0xFF;
+    rtp[7] = (timestamp >> 0) & 0xFF;
     rtp[8] = (m_ssrc >> 24) & 0xFF;
     rtp[9] = (m_ssrc >> 16) & 0xFF;
     rtp[10] = (m_ssrc >> 8) & 0xFF;
@@ -382,7 +383,7 @@ void DiscordVoiceClient::Discovery() {
         const auto response = m_udp.Receive();
         if (response.size() >= 74 && response[0] == 0x00 && response[1] == 0x02) {
             const char *ip = reinterpret_cast<const char *>(response.data() + 8);
-            uint16_t port = (response[73] << 8) | response[74];
+            uint16_t port = (response[72] << 8) | response[73];
             m_log->info("Discovered IP and port: {}:{}", ip, port);
             SelectProtocol(ip, port);
             break;

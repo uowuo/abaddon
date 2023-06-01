@@ -12,6 +12,7 @@
 #include "imgmanager.hpp"
 #include "emojis.hpp"
 #include "notifications/notifications.hpp"
+#include "audio/manager.hpp"
 
 #define APP_TITLE "Abaddon"
 
@@ -173,7 +174,7 @@ private:
     EmojiResource m_emojis;
 
 #ifdef WITH_VOICE
-    std::unique_ptr<AudioManager> m_audio;
+    AudioManager m_audio;
     Gtk::Window *m_voice_window = nullptr;
 #endif
 
