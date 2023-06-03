@@ -1011,6 +1011,7 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     add(m_main_box);
 
     set_margin_bottom(8);
+    set_focus_on_click(false);
 
     show_all();
 
