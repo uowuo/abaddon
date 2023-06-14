@@ -64,7 +64,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
         img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(cb, *this));
     }
 
-    m_displayname.set_markup(user.GetEscapedName());
+    m_displayname.set_markup(user.GetDisplayNameEscaped());
     m_username.set_label(user.GetUsername());
 
     m_switcher.set_stack(m_stack);

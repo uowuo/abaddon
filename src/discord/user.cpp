@@ -81,7 +81,7 @@ std::string UserData::GetMention() const {
     return "<@" + std::to_string(ID) + ">";
 }
 
-std::string UserData::GetName() const {
+std::string UserData::GetDisplayName() const {
     if (IsPomelo() && GlobalName.has_value()) {
         return *GlobalName;
     }
@@ -97,19 +97,19 @@ std::string UserData::GetUsername() const {
     return Username + "#" + Discriminator;
 }
 
-std::string UserData::GetEscapedName() const {
-    return Glib::Markup::escape_text(GetName());
+std::string UserData::GetDisplayNameEscaped() const {
+    return Glib::Markup::escape_text(GetDisplayName());
 }
 
-std::string UserData::GetEscapedBoldName() const {
-    return "<b>" + Glib::Markup::escape_text(GetName()) + "</b>";
+std::string UserData::GetDisplayNameEscapedBold() const {
+    return "<b>" + Glib::Markup::escape_text(GetDisplayName()) + "</b>";
 }
 
-std::string UserData::GetEscapedString() const {
+std::string UserData::GetUsernameEscaped() const {
     if (IsPomelo()) {
-        return GetEscapedName();
+        return GetDisplayNameEscaped();
     }
-    return Glib::Markup::escape_text(GetName()) + "#" + Discriminator;
+    return Glib::Markup::escape_text(GetDisplayName()) + "#" + Discriminator;
 }
 
 void from_json(const nlohmann::json &j, UserData &m) {

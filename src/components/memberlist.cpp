@@ -40,7 +40,7 @@ MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, cons
     // todo remove after migration complete
     std::string display;
     if (data.IsPomelo()) {
-        display = data.GetName();
+        display = data.GetDisplayName();
     } else {
         display = data.Username;
         if (Abaddon::Get().GetSettings().ShowMemberListDiscriminators) {

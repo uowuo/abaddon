@@ -265,7 +265,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
         img->SetURL(data.GetAvatarURL("png", "32"));
     }
 
-    namelbl->set_markup(data.GetEscapedBoldName());
+    namelbl->set_markup(data.GetDisplayNameEscapedBold());
 
     UpdatePresenceLabel();
 

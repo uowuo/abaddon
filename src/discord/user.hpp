@@ -79,16 +79,22 @@ struct UserData {
     [[nodiscard]] std::string GetDefaultAvatarURL() const;
     [[nodiscard]] Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
     [[nodiscard]] std::string GetMention() const;
-    [[nodiscard]] std::string GetName() const;
+    [[nodiscard]] std::string GetDisplayName() const;
+    [[nodiscard]] std::string GetDisplayNameEscaped() const;
+    [[nodiscard]] std::string GetDisplayNameEscapedBold() const;
     [[nodiscard]] std::string GetUsername() const;
-    [[nodiscard]] std::string GetEscapedName() const;
-    [[nodiscard]] std::string GetEscapedBoldName() const;
-    [[nodiscard]] std::string GetEscapedString() const;
+    [[nodiscard]] std::string GetUsernameEscaped() const;
     template<bool with_at>
-    [[nodiscard]] inline std::string GetEscapedBoldString() const {
-        if constexpr (with_at)
-            return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
-        else
-            return "<b>" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
+    [[nodiscard]] inline std::string GetUsernameEscapedBold() const {
+        // stupid microoptimization (nanooptimization) that shouldnt exist
+        if constexpr (with_at) {
+            std::string r = "<b>@" + Glib::Markup::escape_text(Username) + "</b>";
+            if (!IsPomelo()) r += "#" + Discriminator;
+            return r;
+        } else {
+            std::string r = "<b>" + Glib::Markup::escape_text(Username) + "</b>";
+            if (!IsPomelo()) r += "#" + Discriminator;
+            return r;
+        }
     }
 };

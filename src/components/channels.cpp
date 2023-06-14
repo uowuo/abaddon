@@ -863,7 +863,7 @@ Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &
     auto row = *m_model->append(parent);
     row[m_columns.m_type] = RenderType::VoiceParticipant;
     row[m_columns.m_id] = user.ID;
-    row[m_columns.m_name] = user.GetEscapedName();
+    row[m_columns.m_name] = user.GetDisplayNameEscaped();
 
     const auto voice_state = Abaddon::Get().GetDiscordClient().GetVoiceState(user.ID);
     if (voice_state.has_value()) {
