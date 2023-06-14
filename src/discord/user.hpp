@@ -80,6 +80,7 @@ struct UserData {
     [[nodiscard]] Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
     [[nodiscard]] std::string GetMention() const;
     [[nodiscard]] std::string GetName() const;
+    [[nodiscard]] std::string GetUsername() const;
     [[nodiscard]] std::string GetEscapedName() const;
     [[nodiscard]] std::string GetEscapedBoldName() const;
     [[nodiscard]] std::string GetEscapedString() const;

@@ -89,6 +89,14 @@ std::string UserData::GetName() const {
     return Username;
 }
 
+std::string UserData::GetUsername() const {
+    if (IsPomelo()) {
+        return Username;
+    }
+
+    return Username + "#" + Discriminator;
+}
+
 std::string UserData::GetEscapedName() const {
     return Glib::Markup::escape_text(GetName());
 }

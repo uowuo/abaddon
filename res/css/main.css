@@ -237,6 +237,10 @@
     font-size: 20px;
 }
 
+.profile-username-nondisplay {
+	margin-left: 10px;
+}
+
 .profile-badge {
     margin-right: 10px;
 }
