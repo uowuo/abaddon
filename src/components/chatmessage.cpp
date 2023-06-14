@@ -656,7 +656,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                 if (role.has_value()) {
                     const auto author = discord.GetUser(author_id);
                     if (author.has_value()) {
-                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetDisplayNameEscaped() + "</span></b>";
+                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetDisplayNameEscaped(guild_id) + "</span></b>";
                     }
                 }
             }
@@ -664,7 +664,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
         const auto author = discord.GetUser(author_id);
         if (author.has_value()) {
-            return author->GetDisplayNameEscapedBold();
+            return author->GetDisplayNameEscapedBold(guild_id);
         }
 
         return "<b>Unknown User</b>";

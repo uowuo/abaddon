@@ -89,12 +89,28 @@ std::string UserData::GetDisplayName() const {
     return Username;
 }
 
+std::string UserData::GetDisplayName(Snowflake guild_id) const {
+    const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
+    if (member.has_value() && !member->Nickname.empty()) {
+        return member->Nickname;
+    }
+    return GetDisplayName();
+}
+
 std::string UserData::GetDisplayNameEscaped() const {
     return Glib::Markup::escape_text(GetDisplayName());
 }
 
+std::string UserData::GetDisplayNameEscaped(Snowflake guild_id) const {
+    return Glib::Markup::escape_text(GetDisplayName(guild_id));
+}
+
 std::string UserData::GetDisplayNameEscapedBold() const {
     return "<b>" + Glib::Markup::escape_text(GetDisplayName()) + "</b>";
+}
+
+std::string UserData::GetDisplayNameEscapedBold(Snowflake guild_id) const {
+    return "<b>" + Glib::Markup::escape_text(GetDisplayName(guild_id)) + "</b>";
 }
 
 std::string UserData::GetUsername() const {
