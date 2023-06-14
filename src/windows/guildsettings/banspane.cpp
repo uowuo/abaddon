@@ -72,7 +72,7 @@ void GuildSettingsBansPane::OnGuildBanFetch(const BanData &ban) {
     auto row = *m_model->append();
     row[m_columns.m_col_id] = ban.User.ID;
     if (user.has_value())
-        row[m_columns.m_col_user] = user->Username + "#" + user->Discriminator;
+        row[m_columns.m_col_user] = user->GetUsername();
     else
         row[m_columns.m_col_user] = "<@" + std::to_string(ban.User.ID) + ">";
 
@@ -84,7 +84,7 @@ void GuildSettingsBansPane::OnGuildBansFetch(const std::vector<BanData> &bans) {
         const auto user = Abaddon::Get().GetDiscordClient().GetUser(ban.User.ID);
         auto row = *m_model->append();
         row[m_columns.m_col_id] = user->ID;
-        row[m_columns.m_col_user] = user->Username + "#" + user->Discriminator;
+        row[m_columns.m_col_user] = user->GetUsername();
         row[m_columns.m_col_reason] = ban.Reason;
     }
 }
@@ -148,7 +148,7 @@ void GuildSettingsBansPane::OnBanAdd(Snowflake guild_id, Snowflake user_id) {
         auto user = *discord.GetUser(user_id);
         auto row = *m_model->append();
         row[m_columns.m_col_id] = user_id;
-        row[m_columns.m_col_user] = user.Username + "#" + user.Discriminator;
+        row[m_columns.m_col_user] = user.GetUsername();
         row[m_columns.m_col_reason] = "";
     }
 }

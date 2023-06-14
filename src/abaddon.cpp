@@ -952,7 +952,7 @@ void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to kick " + user->Username + "#" + user->Discriminator + "?");
+        dlg.SetConfirmText("Are you sure you want to kick " + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.KickUser(user_id, guild_id);
@@ -962,7 +962,7 @@ void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to ban " + user->Username + "#" + user->Discriminator + "?");
+        dlg.SetConfirmText("Are you sure you want to ban " + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.BanUser(user_id, guild_id);

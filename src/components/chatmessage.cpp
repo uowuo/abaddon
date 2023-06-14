@@ -221,16 +221,16 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             if (data->Mentions.empty()) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
-            b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> added <span color='#eeeeee'>" + added.Username + "</span></span></i>");
+            b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> added <span color='#eeeeee'>" + added.GetUsername() + "</span></span></i>");
         } break;
         case MessageType::RECIPIENT_REMOVE: {
             if (data->Mentions.empty()) break;
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
             if (adder->ID == added.ID)
-                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> left</span></i>");
+                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> left</span></i>");
             else
-                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->Username + "</span> removed <span color='#eeeeee'>" + added.Username + "</span></span></i>");
+                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> removed <span color='#eeeeee'>" + added.GetUsername() + "</span></span></i>");
         } break;
         case MessageType::CHANNEL_NAME_CHANGE: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
