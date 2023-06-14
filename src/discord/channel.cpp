@@ -147,13 +147,13 @@ std::string ChannelData::GetRecipientsDisplay() const {
     const auto recipients = GetDMRecipients();
 
     if (Type == ChannelType::DM && !recipients.empty()) {
-        return recipients[0].Username;
+        return recipients[0].GetDisplayName();
     }
 
     Glib::ustring r;
     for (size_t i = 0; i < recipients.size(); i++) {
         const auto &recipient = recipients[i];
-        r += recipient.Username;
+        r += recipient.GetDisplayName();
         if (i < recipients.size() - 1) {
             r += ", ";
         }
