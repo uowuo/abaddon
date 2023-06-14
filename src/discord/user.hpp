@@ -81,6 +81,7 @@ struct UserData {
     [[nodiscard]] std::string GetMention() const;
     [[nodiscard]] std::string GetDisplayName() const;
     [[nodiscard]] std::string GetDisplayName(Snowflake guild_id) const;
+    [[nodiscard]] std::string GetDisplayName(const std::optional<Snowflake> &guild_id) const;
     [[nodiscard]] std::string GetDisplayNameEscaped() const;
     [[nodiscard]] std::string GetDisplayNameEscaped(Snowflake guild_id) const;
     [[nodiscard]] std::string GetDisplayNameEscapedBold() const;

@@ -23,5 +23,6 @@ private:
     Glib::ustring m_custom_markup;
 
     Snowflake m_active_channel;
+    std::optional<Snowflake> m_active_guild;
     std::unordered_map<Snowflake, std::unordered_map<Snowflake, sigc::connection>> m_typers; // channel id -> [user id -> connection]
 };

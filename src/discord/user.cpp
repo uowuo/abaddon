@@ -97,6 +97,13 @@ std::string UserData::GetDisplayName(Snowflake guild_id) const {
     return GetDisplayName();
 }
 
+std::string UserData::GetDisplayName(const std::optional<Snowflake> &guild_id) const {
+    if (guild_id.has_value()) {
+        return GetDisplayName(*guild_id);
+    }
+    return GetDisplayName();
+}
+
 std::string UserData::GetDisplayNameEscaped() const {
     return Glib::Markup::escape_text(GetDisplayName());
 }
