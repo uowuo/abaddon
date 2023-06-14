@@ -150,9 +150,9 @@ void GuildSettingsMembersListItem::UpdateColor() {
     const auto user = *discord.GetUser(UserID);
     if (auto color_id = discord.GetMemberHoistedRole(GuildID, UserID, true); color_id.IsValid()) {
         auto role = *discord.GetRole(color_id);
-        m_name.set_markup("<span color='#" + IntToCSSColor(role.Color) + "'>" + user.GetUsernameEscapedBold<false>() + "</span>");
+        m_name.set_markup("<span color='#" + IntToCSSColor(role.Color) + "'>" + user.GetUsernameEscapedBold() + "</span>");
     } else
-        m_name.set_markup(user.GetUsernameEscapedBold<false>());
+        m_name.set_markup(user.GetUsernameEscapedBold());
 }
 
 GuildSettingsMembersPaneInfo::GuildSettingsMembersPaneInfo(Snowflake guild_id)

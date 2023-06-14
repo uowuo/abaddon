@@ -38,7 +38,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         Glib::ustring user_markup = "<b>Unknown User</b>";
         if (entry.UserID.has_value()) {
             if (auto user = discord.GetUser(*entry.UserID); user.has_value())
-                user_markup = discord.GetUser(*entry.UserID)->GetUsernameEscapedBold<false>();
+                user_markup = discord.GetUser(*entry.UserID)->GetUsernameEscapedBold();
         }
 
         // spaghetti moment

@@ -89,14 +89,6 @@ std::string UserData::GetDisplayName() const {
     return Username;
 }
 
-std::string UserData::GetUsername() const {
-    if (IsPomelo()) {
-        return Username;
-    }
-
-    return Username + "#" + Discriminator;
-}
-
 std::string UserData::GetDisplayNameEscaped() const {
     return Glib::Markup::escape_text(GetDisplayName());
 }
@@ -105,11 +97,34 @@ std::string UserData::GetDisplayNameEscapedBold() const {
     return "<b>" + Glib::Markup::escape_text(GetDisplayName()) + "</b>";
 }
 
+std::string UserData::GetUsername() const {
+    if (IsPomelo()) {
+        return Username;
+    }
+
+    return Username + "#" + Discriminator;
+}
+
 std::string UserData::GetUsernameEscaped() const {
     if (IsPomelo()) {
-        return GetDisplayNameEscaped();
+        return Glib::Markup::escape_text(Username);
     }
-    return Glib::Markup::escape_text(GetDisplayName()) + "#" + Discriminator;
+
+    return Glib::Markup::escape_text(Username) + "#" + Discriminator;
+}
+
+std::string UserData::GetUsernameEscapedBold() const {
+    if (IsPomelo()) {
+        return "<b>" + Glib::Markup::escape_text(Username) + "</b>";
+    }
+    return "<b>" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
+}
+
+std::string UserData::GetUsernameEscapedBoldAt() const {
+    if (IsPomelo()) {
+        return "<b>@" + Glib::Markup::escape_text(Username) + "</b>";
+    }
+    return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
 }
 
 void from_json(const nlohmann::json &j, UserData &m) {

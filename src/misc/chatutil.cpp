@@ -76,15 +76,15 @@ void HandleUserMentions(const Glib::RefPtr<Gtk::TextBuffer> &buf, Snowflake chan
             if (plain) {
                 replacement = "@" + user->GetUsername();
             } else {
-                replacement = user->GetUsernameEscapedBold<true>();
+                replacement = user->GetUsernameEscapedBoldAt();
             }
         } else {
             const auto role_id = user->GetHoistedRole(*channel->GuildID, true);
             const auto role = discord.GetRole(role_id);
             if (!role.has_value())
-                replacement = user->GetUsernameEscapedBold<true>();
+                replacement = user->GetUsernameEscapedBoldAt();
             else
-                replacement = "<span color=\"#" + IntToCSSColor(role->Color) + "\">" + user->GetUsernameEscapedBold<true>() + "</span>";
+                replacement = "<span color=\"#" + IntToCSSColor(role->Color) + "\">" + user->GetUsernameEscapedBoldAt() + "</span>";
         }
 
         // regex returns byte positions and theres no straightforward way in the c++ bindings to deal with that :(

@@ -84,17 +84,6 @@ struct UserData {
     [[nodiscard]] std::string GetDisplayNameEscapedBold() const;
     [[nodiscard]] std::string GetUsername() const;
     [[nodiscard]] std::string GetUsernameEscaped() const;
-    template<bool with_at>
-    [[nodiscard]] inline std::string GetUsernameEscapedBold() const {
-        // stupid microoptimization (nanooptimization) that shouldnt exist
-        if constexpr (with_at) {
-            std::string r = "<b>@" + Glib::Markup::escape_text(Username) + "</b>";
-            if (!IsPomelo()) r += "#" + Discriminator;
-            return r;
-        } else {
-            std::string r = "<b>" + Glib::Markup::escape_text(Username) + "</b>";
-            if (!IsPomelo()) r += "#" + Discriminator;
-            return r;
-        }
-    }
+    [[nodiscard]] std::string GetUsernameEscapedBold() const;
+    [[nodiscard]] std::string GetUsernameEscapedBoldAt() const;
 };
