@@ -656,7 +656,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                 if (role.has_value()) {
                     const auto author = discord.GetUser(author_id);
                     if (author.has_value()) {
-                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetUsernameEscaped() + "</span></b>";
+                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetDisplayNameEscaped() + "</span></b>";
                     }
                 }
             }
@@ -664,7 +664,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
         const auto author = discord.GetUser(author_id);
         if (author.has_value()) {
-            return author->GetUsernameEscapedBold<false>();
+            return author->GetDisplayNameEscapedBold();
         }
 
         return "<b>Unknown User</b>";
@@ -685,7 +685,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                             Glib::Markup::escape_text(data.Interaction->Name) +
                             "</span>");
         } else if (const auto user = discord.GetUser(data.Interaction->User.ID); user.has_value()) {
-            lbl->set_markup(user->GetUsernameEscapedBold<false>());
+            lbl->set_markup(user->GetDisplayNameEscapedBold());
         } else {
             lbl->set_markup("<b>Unknown User</b>");
         }
