@@ -1016,30 +1016,13 @@ void ChannelList::AddPrivateChannels() {
         row[m_columns.m_sort] = static_cast<int64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
         row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
 
-        if (dm->HasIcon()) {
-            const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                if (iter)
-                    (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(dm->GetIconURL(), sigc::track_obj(cb, *this));
-        } else if (top_recipient.has_value()) {
-            const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-                if (iter)
-                    (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
-            };
-            img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
-        }
+        SetDMChannelIcon(iter, *dm);
     }
 }
 
 void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     auto header_row = m_model->get_iter(m_dm_header);
     auto &img = Abaddon::Get().GetImageManager();
-
-    std::optional<UserData> top_recipient;
-    const auto recipients = dm.GetDMRecipients();
-    if (!recipients.empty())
-        top_recipient = recipients[0];
 
     auto iter = m_model->append(header_row->children());
     auto row = *iter;
@@ -1049,12 +1032,63 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     row[m_columns.m_sort] = static_cast<int64_t>(-(dm.LastMessageID.has_value() ? *dm.LastMessageID : dm.ID));
     row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
 
-    if (top_recipient.has_value()) {
+    SetDMChannelIcon(iter, dm);
+}
+
+void ChannelList::SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm) {
+    auto &img = Abaddon::Get().GetImageManager();
+
+    std::optional<UserData> top_recipient;
+    const auto recipients = dm.GetDMRecipients();
+    if (!recipients.empty())
+        top_recipient = recipients[0];
+
+    if (dm.HasIcon()) {
+        const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL(dm.GetIconURL(), sigc::track_obj(cb, *this));
+    } else if (dm.Type == ChannelType::DM && top_recipient.has_value()) {
         const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
             if (iter)
                 (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
         };
         img.LoadFromURL(top_recipient->GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
+    } else { // GROUP_DM
+        std::string hash;
+        switch (dm.ID.GetUnixMilliseconds() % 8) {
+            case 0:
+                hash = "ee9275c5a437f7dc7f9430ba95f12ebd";
+                break;
+            case 1:
+                hash = "9baf45aac2a0ec2e2dab288333acb9d9";
+                break;
+            case 2:
+                hash = "7ba11ffb1900fa2b088cb31324242047";
+                break;
+            case 3:
+                hash = "f90fca70610c4898bc57b58bce92f587";
+                break;
+            case 4:
+                hash = "e2779af34b8d9126b77420e5f09213ce";
+                break;
+            case 5:
+                hash = "c6851bd0b03f1cca5a8c1e720ea6ea17";
+                break;
+            case 6:
+                hash = "f7e38ac976a2a696161c923502a8345b";
+                break;
+            case 7:
+            default:
+                hash = "3cb840d03313467838d658bbec801fcd";
+                break;
+        }
+        const auto cb = [this, iter](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            if (iter)
+                (*iter)[m_columns.m_icon] = pb->scale_simple(DMIconSize, DMIconSize, Gdk::INTERP_BILINEAR);
+        };
+        img.LoadFromURL("https://discord.com/assets/" + hash + ".png", sigc::track_obj(cb, *this));
     }
 }
 

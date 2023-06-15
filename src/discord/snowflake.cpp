@@ -60,6 +60,10 @@ Glib::ustring Snowflake::GetLocalTimestamp() const {
     return tmp.data();
 }
 
+uint64_t Snowflake::GetUnixMilliseconds() const noexcept {
+    return (m_num >> 22) + DiscordEpochSeconds * 1000;
+}
+
 void from_json(const nlohmann::json &j, Snowflake &s) {
     if (j.is_string()) {
         std::string tmp;

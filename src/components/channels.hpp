@@ -114,6 +114,7 @@ protected:
 
     void AddPrivateChannels();
     void UpdateCreateDMChannel(const ChannelData &channel);
+    void SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm);
 
     void OnMessageAck(const MessageAckData &data);
 
