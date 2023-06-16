@@ -42,7 +42,7 @@ ChannelList::ChannelList()
         const auto type = row[m_columns.m_type];
         // text channels should not be allowed to be collapsed
         // maybe they should be but it seems a little difficult to handle expansion to permit this
-        if (type != RenderType::TextChannel) {
+        if (type != RenderType::TextChannel && type != RenderType::DM) {
             if (row[m_columns.m_expanded]) {
                 m_view.collapse_row(path);
                 row[m_columns.m_expanded] = false;
@@ -527,6 +527,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
 #ifdef WITH_VOICE
 void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
     auto parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::VoiceChannel);
+    if (!parent_iter) parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::DM);
     if (!parent_iter) return;
     const auto user = Abaddon::Get().GetDiscordClient().GetUser(user_id);
     if (!user.has_value()) return;
@@ -1015,6 +1016,15 @@ void ChannelList::AddPrivateChannels() {
         row[m_columns.m_name] = Glib::Markup::escape_text(dm->GetDisplayName());
         row[m_columns.m_sort] = static_cast<int64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
         row[m_columns.m_icon] = img.GetPlaceholder(DMIconSize);
+        row[m_columns.m_expanded] = true;
+
+#ifdef WITH_VOICE
+        for (auto user_id : discord.GetUsersInVoiceChannel(dm_id)) {
+            if (const auto user = discord.GetUser(user_id); user.has_value()) {
+                CreateVoiceParticipantRow(*user, row->children());
+            }
+        }
+#endif
 
         SetDMChannelIcon(iter, *dm);
     }

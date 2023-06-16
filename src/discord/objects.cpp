@@ -686,6 +686,11 @@ void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
     JS_ON("guild_id", m.GuildID);
     JS_ON("channel_id", m.ChannelID);
 }
+
+void from_json(const nlohmann::json &j, CallCreateData &m) {
+    JS_D("channel_id", m.ChannelID);
+    JS_D("voice_states", m.VoiceStates);
+}
 #endif
 
 void from_json(const nlohmann::json &j, VoiceState &m) {

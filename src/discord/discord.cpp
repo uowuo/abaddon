@@ -1579,6 +1579,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::VOICE_SERVER_UPDATE: {
                         HandleGatewayVoiceServerUpdate(m);
                     } break;
+                    case GatewayEvent::CALL_CREATE: {
+                        HandleGatewayCallCreate(m);
+                    } break;
 #endif
                 }
             } break;
@@ -2253,8 +2256,39 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
 
-    VoiceState data = msg.Data;
+    CheckVoiceState(msg.Data);
+}
 
+void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
+
+    VoiceServerUpdateData data = msg.Data;
+    spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
+    spdlog::get("discord")->debug("Voice token: {}", data.Token);
+    m_voice.SetEndpoint(data.Endpoint);
+    m_voice.SetToken(data.Token);
+    if (data.GuildID.has_value()) {
+        m_voice.SetServerID(*data.GuildID);
+    } else if (data.ChannelID.has_value()) {
+        m_voice.SetServerID(*data.ChannelID);
+    } else {
+        spdlog::get("discord")->error("No guild or channel ID in voice server?");
+    }
+    m_voice.SetUserID(m_user_data.ID);
+    m_voice.Start();
+}
+
+void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
+    CallCreateData data = msg.Data;
+
+    spdlog::get("discord")->debug("CALL_CREATE: {}", data.ChannelID);
+
+    for (const auto &state : data.VoiceStates) {
+        CheckVoiceState(state);
+    }
+}
+
+void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.UserID == m_user_data.ID) {
         spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
@@ -2291,25 +2325,6 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
             m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
         }
     }
-}
-
-void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
-    spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
-
-    VoiceServerUpdateData data = msg.Data;
-    spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
-    spdlog::get("discord")->debug("Voice token: {}", data.Token);
-    m_voice.SetEndpoint(data.Endpoint);
-    m_voice.SetToken(data.Token);
-    if (data.GuildID.has_value()) {
-        m_voice.SetServerID(*data.GuildID);
-    } else if (data.ChannelID.has_value()) {
-        m_voice.SetServerID(*data.ChannelID);
-    } else {
-        spdlog::get("discord")->error("No guild or channel ID in voice server?");
-    }
-    m_voice.SetUserID(m_user_data.ID);
-    m_voice.Start();
 }
 #endif
 
@@ -2556,7 +2571,7 @@ void DiscordClient::HeartbeatThread() {
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
     msg.Token = m_token;
-    msg.Capabilities = 509; // no idea what this is
+    msg.Capabilities = 4605; // bit 12 is necessary for CALL_CREATE... apparently? need to get this in sync with official client
     msg.Properties.OS = "Windows";
     msg.Properties.Browser = "Chrome";
     msg.Properties.Device = "";
@@ -2575,9 +2590,6 @@ void DiscordClient::SendIdentify() {
     msg.Presence.Since = 0;
     msg.Presence.IsAFK = false;
     msg.DoesSupportCompression = false;
-    msg.ClientState.HighestLastMessageID = "0";
-    msg.ClientState.ReadStateVersion = 0;
-    msg.ClientState.UserGuildSettingsVersion = -1;
     SetSuperPropertiesFromIdentity(msg);
     const bool b = m_websocket.GetPrintMessages();
     m_websocket.SetPrintMessages(false);
@@ -2893,6 +2905,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
     m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
     m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
+    m_event_map["CALL_CREATE"] = GatewayEvent::CALL_CREATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
