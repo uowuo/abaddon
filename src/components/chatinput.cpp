@@ -41,9 +41,15 @@ bool ChatInputText::ProcessKeyPress(GdkEventKey *event) {
         return true;
     }
 
+#ifdef __APPLE__
+    if ((event->state & GDK_MOD2_MASK) && event->keyval == GDK_KEY_v) {
+        return CheckHandleClipboardPaste();
+    }
+#else
     if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_v) {
         return CheckHandleClipboardPaste();
     }
+#endif
 
     if (event->keyval == GDK_KEY_Return) {
         if (event->state & GDK_SHIFT_MASK)
