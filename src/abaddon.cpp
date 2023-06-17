@@ -252,6 +252,12 @@ int Abaddon::StartGTK() {
     }
 #endif
 
+#ifdef _WIN32
+    if (m_settings.GetSettings().HideConsole) {
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+    }
+#endif
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
