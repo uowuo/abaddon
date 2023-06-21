@@ -103,8 +103,13 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_info.SetProfile(data);
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
-    for (auto child : m_badges.get_children())
+    if (data.LegacyUsername.has_value()) {
+        m_username.set_tooltip_text("Originally known as " + *data.LegacyUsername);
+    }
+
+    for (auto child : m_badges.get_children()) {
         delete child;
+    }
 
     if (!data.User.PublicFlags.has_value()) return;
     const auto x = *data.User.PublicFlags;

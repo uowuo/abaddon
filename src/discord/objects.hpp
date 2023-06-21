@@ -617,6 +617,7 @@ struct UserProfileData {
     std::vector<MutualGuildData> MutualGuilds;
     std::optional<std::string> PremiumGuildSince; // null
     std::optional<std::string> PremiumSince;      // null
+    std::optional<std::string> LegacyUsername;    // null
     UserData User;
 
     friend void from_json(const nlohmann::json &j, UserProfileData &m);

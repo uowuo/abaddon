@@ -463,6 +463,7 @@ void from_json(const nlohmann::json &j, UserProfileData &m) {
     JS_D("mutual_guilds", m.MutualGuilds);
     JS_ON("premium_guild_since", m.PremiumGuildSince);
     JS_ON("premium_since", m.PremiumSince);
+    JS_ON("legacy_username", m.LegacyUsername);
     JS_D("user", m.User);
 }
 
