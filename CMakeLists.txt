@@ -150,6 +150,13 @@ if (ENABLE_VOICE)
     target_link_libraries(abaddon PkgConfig::libsodium)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
+
+    if(APPLE)
+	    target_link_libraries(abaddon "-framework CoreFoundation")
+	    target_link_libraries(abaddon "-framework CoreAudio")
+	    target_link_libraries(abaddon "-framework AudioToolbox")
+    endif()
+    
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})
