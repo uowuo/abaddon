@@ -163,6 +163,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_menu_view_sub.append(m_menu_view_settings);
     m_menu_view_settings.signal_activate().connect([this]() {
         auto *window = new VoiceSettingsWindow;
+        const auto cb = [this](double gain) {
+            m_capture_gain.set_value(gain * 100.0);
+            m_signal_gain.emit(gain);
+        };
+        window->signal_gain().connect(sigc::track_obj(cb, *this));
         window->show();
     });
 

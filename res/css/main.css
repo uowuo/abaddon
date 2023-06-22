@@ -382,3 +382,8 @@
 .voice-state-server {
     color: red;
 }
+
+spinbutton {
+    color: @text_color;
+    margin-top: 10px;
+}

@@ -110,9 +110,17 @@ VoiceSettingsWindow::VoiceSettingsWindow()
         }
     });
 
+    m_gain.set_increments(1.0, 5.0);
+    m_gain.set_range(0.0, 6969696969.0);
+    m_gain.set_value(Abaddon::Get().GetAudio().GetCaptureGain() * 100.0);
+    m_gain.signal_value_changed().connect([this]() {
+        m_signal_gain.emit(m_gain.get_value() / 100.0);
+    });
+
     m_main.add(m_encoding_mode);
     m_main.add(m_signal);
     m_main.add(m_bitrate);
+    m_main.add(m_gain);
     add(m_main);
     show_all_children();
 
@@ -120,6 +128,10 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     signal_hide().connect([this]() {
         delete this;
     });
+}
+
+VoiceSettingsWindow::type_signal_gain VoiceSettingsWindow::signal_gain() {
+    return m_signal_gain;
 }
 
 #endif
