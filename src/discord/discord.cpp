@@ -461,8 +461,13 @@ void DiscordClient::SendChatMessageNoAttachments(const ChatSubmitParams &params,
     CreateMessageObject obj;
     obj.Content = params.Message;
     obj.Nonce = nonce;
-    if (params.InReplyToID.IsValid())
+    if (params.Silent) {
+        obj.Flags |= MessageFlags::SUPPRESS_NOTIFICATIONS;
+    }
+
+    if (params.InReplyToID.IsValid()) {
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
+    }
 
     m_http.MakePOST("/channels/" + std::to_string(params.ChannelID) + "/messages",
                     nlohmann::json(obj).dump(),
@@ -494,8 +499,13 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
     CreateMessageObject obj;
     obj.Content = params.Message;
     obj.Nonce = nonce;
-    if (params.InReplyToID.IsValid())
+    if (params.Silent) {
+        obj.Flags |= MessageFlags::SUPPRESS_NOTIFICATIONS;
+    }
+
+    if (params.InReplyToID.IsValid()) {
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
+    }
 
     auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
     m_progress_cb_timer.start();
@@ -545,10 +555,11 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
 }
 
 void DiscordClient::SendChatMessage(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
-    if (params.Attachments.empty())
+    if (params.Attachments.empty()) {
         SendChatMessageNoAttachments(params, callback);
-    else
+    } else {
         SendChatMessageAttachments(params, callback);
+    }
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {

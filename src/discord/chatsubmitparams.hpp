@@ -17,6 +17,7 @@ struct ChatSubmitParams {
         std::string Filename;
     };
 
+    bool Silent = false;
     Snowflake ChannelID;
     Snowflake InReplyToID;
     Glib::ustring Message;

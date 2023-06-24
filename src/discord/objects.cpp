@@ -308,6 +308,7 @@ void to_json(nlohmann::json &j, const HeartbeatMessage &m) {
 
 void to_json(nlohmann::json &j, const CreateMessageObject &m) {
     j["content"] = m.Content;
+    j["flags"] = m.Flags;
     JS_IF("message_reference", m.MessageReference);
     JS_IF("nonce", m.Nonce);
 }

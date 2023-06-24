@@ -920,8 +920,14 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
 }
 
 void Abaddon::ActionChatInputSubmit(ChatSubmitParams data) {
-    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug")
+    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug") {
         data.Message = data.Message.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
+    }
+
+    if (data.Message.substr(0, 8) == "@silent " || (data.Message.substr(0, 7) == "@silent" && !data.Attachments.empty())) {
+        data.Silent = true;
+        data.Message = data.Message.substr(7);
+    }
 
     if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, data.ChannelID, Permission::VIEW_CHANNEL)) return;
 

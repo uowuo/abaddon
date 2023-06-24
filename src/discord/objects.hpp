@@ -428,6 +428,7 @@ struct HeartbeatMessage : GatewayMessage {
 
 struct CreateMessageObject {
     std::string Content;
+    MessageFlags Flags = MessageFlags::NONE;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
 
