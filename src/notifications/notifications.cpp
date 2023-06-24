@@ -88,6 +88,8 @@ bool CheckGuildMessage(const Message &message) {
 
 void Notifications::CheckMessage(const Message &message) {
     if (!Abaddon::Get().GetSettings().NotificationsEnabled) return;
+    // ignore if silent message
+    if (message.Flags.has_value() && ((*message.Flags & MessageFlags::SUPPRESS_NOTIFICATIONS) == MessageFlags::SUPPRESS_NOTIFICATIONS)) return;
     // ignore if our status is do not disturb
     if (IsDND()) return;
     auto &discord = Abaddon::Get().GetDiscordClient();
