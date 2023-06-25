@@ -38,7 +38,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         Glib::ustring user_markup = "<b>Unknown User</b>";
         if (entry.UserID.has_value()) {
             if (auto user = discord.GetUser(*entry.UserID); user.has_value())
-                user_markup = discord.GetUser(*entry.UserID)->GetEscapedBoldString<false>();
+                user_markup = discord.GetUser(*entry.UserID)->GetUsernameEscapedBold();
         }
 
         // spaghetti moment
@@ -177,7 +177,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " kicked <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_PRUNE: {
@@ -193,21 +193,21 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " banned <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_BAN_REMOVE: {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " removed the ban for <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
             } break;
             case AuditLogActionType::MEMBER_UPDATE: {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " updated <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
@@ -227,7 +227,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " updated roles for <b>" +
-                         target_user->GetEscapedString() + "</b>";
+                         target_user->GetUsernameEscaped() + "</b>";
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "$remove" && change.NewValue.has_value()) {
@@ -262,7 +262,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " added <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b> to the server";
             } break;
             case AuditLogActionType::ROLE_CREATE: {
@@ -450,14 +450,14 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " pinned a message by <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
             } break;
             case AuditLogActionType::MESSAGE_UNPIN: {
                 const auto target_user = discord.GetUser(entry.TargetID);
                 markup = user_markup +
                          " unpinned a message by <b>" +
-                         target_user->GetEscapedString() +
+                         target_user->GetUsernameEscaped() +
                          "</b>";
             } break;
             case AuditLogActionType::STAGE_INSTANCE_CREATE: {

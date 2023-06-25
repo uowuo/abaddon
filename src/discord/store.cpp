@@ -438,6 +438,7 @@ void Store::SetUser(Snowflake id, const UserData &user) {
     s->Bind(7, user.IsMFAEnabled);
     s->Bind(8, user.PremiumType);
     s->Bind(9, user.PublicFlags);
+    s->Bind(10, user.GlobalName);
 
     if (!s->Insert())
         fprintf(stderr, "user insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(id), m_db.ErrStr());
@@ -1109,6 +1110,7 @@ std::optional<UserData> Store::GetUser(Snowflake id) const {
     s->Get(6, r.IsMFAEnabled);
     s->Get(7, r.PremiumType);
     s->Get(8, r.PublicFlags);
+    s->Get(9, r.GlobalName);
 
     s->Reset();
 
@@ -1233,7 +1235,8 @@ bool Store::CreateTables() {
             system BOOL,
             mfa BOOL,
             premium INTEGER,
-            pubflags INTEGER
+            pubflags INTEGER,
+            global_name TEXT
         )
     )";
 
@@ -1797,7 +1800,7 @@ bool Store::CreateStatements() {
 
     m_stmt_set_user = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO users VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )");
     if (!m_stmt_set_user->OK()) {

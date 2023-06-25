@@ -37,9 +37,17 @@ MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, cons
     m_label->set_single_line_mode(true);
     m_label->set_ellipsize(Pango::ELLIPSIZE_END);
 
-    std::string display = data.Username;
-    if (Abaddon::Get().GetSettings().ShowMemberListDiscriminators)
-        display += "#" + data.Discriminator;
+    // todo remove after migration complete
+    std::string display;
+    if (data.IsPomelo()) {
+        display = data.GetDisplayName(guild.has_value() ? guild->ID : Snowflake::Invalid);
+    } else {
+        display = data.Username;
+        if (Abaddon::Get().GetSettings().ShowMemberListDiscriminators) {
+            display += "#" + data.Discriminator;
+        }
+    }
+
     if (guild.has_value()) {
         if (const auto col_id = data.GetHoistedRole(guild->ID, true); col_id.IsValid()) {
             auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;

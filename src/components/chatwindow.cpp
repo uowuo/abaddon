@@ -301,7 +301,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     m_is_replying = true;
     m_input->StartReplying();
     if (author.has_value())
-        m_input_indicator->SetCustomMarkup("Replying to " + author->GetEscapedBoldString<false>());
+        m_input_indicator->SetCustomMarkup("Replying to " + author->GetUsernameEscapedBold());
     else
         m_input_indicator->SetCustomMarkup("Replying...");
 }

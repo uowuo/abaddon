@@ -51,7 +51,7 @@ void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {
     auto row = *m_model->append();
     row[m_columns.m_col_code] = invite.Code;
     if (invite.Inviter.has_value())
-        row[m_columns.m_col_inviter] = invite.Inviter->Username + "#" + invite.Inviter->Discriminator;
+        row[m_columns.m_col_inviter] = invite.Inviter->GetUsername();
 
     if (invite.MaxAge.has_value()) {
         if (*invite.MaxAge == 0)

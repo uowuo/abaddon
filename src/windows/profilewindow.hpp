@@ -16,9 +16,11 @@ private:
     Gtk::Box m_main;
     Gtk::Box m_upper;
     Gtk::Box m_badges;
+    Gtk::Box m_name_box;
     Gtk::ScrolledWindow m_badges_scroll;
     Gtk::EventBox m_avatar_ev;
     Gtk::Image m_avatar;
+    Gtk::Label m_displayname;
     Gtk::Label m_username;
     Gtk::ScrolledWindow m_scroll;
     Gtk::Stack m_stack;
