@@ -170,7 +170,7 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_ON("phone", m.Phone);
     JS_ON("bio", m.Bio);
     JS_ON("banner", m.BannerHash);
-    JS_N("global_name", m.GlobalName);
+    JS_ON("global_name", m.GlobalName);
 }
 
 void to_json(nlohmann::json &j, const UserData &m) {
