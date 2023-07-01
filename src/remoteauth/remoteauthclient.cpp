@@ -3,77 +3,6 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/bin_to_hex.h>
 
-struct RemoteAuthGatewayMessage {
-    std::string Opcode;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthGatewayMessage &m) {
-        j.at("op").get_to(m.Opcode);
-    }
-};
-
-struct RemoteAuthHelloMessage {
-    int TimeoutMS;
-    int HeartbeatInterval;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthHelloMessage &m) {
-        j.at("timeout_ms").get_to(m.TimeoutMS);
-        j.at("heartbeat_interval").get_to(m.HeartbeatInterval);
-    }
-};
-
-struct RemoteAuthHeartbeatMessage {
-    friend void to_json(nlohmann::json &j, const RemoteAuthHeartbeatMessage &m) {
-        j["op"] = "heartbeat";
-    }
-};
-
-struct RemoteAuthInitMessage {
-    std::string EncodedPublicKey;
-
-    friend void to_json(nlohmann::json &j, const RemoteAuthInitMessage &m) {
-        j["op"] = "init";
-        j["encoded_public_key"] = m.EncodedPublicKey;
-    }
-};
-
-struct RemoteAuthNonceProofMessage {
-    std::string EncryptedNonce;
-    std::string Nonce;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthNonceProofMessage &m) {
-        j.at("encrypted_nonce").get_to(m.EncryptedNonce);
-    }
-
-    friend void to_json(nlohmann::json &j, const RemoteAuthNonceProofMessage &m) {
-        j["op"] = "nonce_proof";
-        j["nonce"] = m.Nonce;
-    }
-};
-
-struct RemoteAuthFingerprintMessage {
-    std::string Fingerprint;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthFingerprintMessage &m) {
-        j.at("fingerprint").get_to(m.Fingerprint);
-    }
-};
-
-struct RemoteAuthPendingTicketMessage {
-    std::string EncryptedUserPayload;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthPendingTicketMessage &m) {
-        j.at("encrypted_user_payload").get_to(m.EncryptedUserPayload);
-    }
-};
-
-struct RemoteAuthPendingLoginMessage {
-    std::string Ticket;
-
-    friend void from_json(const nlohmann::json &j, RemoteAuthPendingLoginMessage &m) {
-        j.at("ticket").get_to(m.Ticket);
-    }
-};
-
 RemoteAuthClient::RemoteAuthClient()
     : m_ws("remote-auth-ws")
     , m_log(spdlog::get("remote-auth")) {
@@ -116,35 +45,35 @@ bool RemoteAuthClient::IsConnected() const noexcept {
 
 void RemoteAuthClient::OnGatewayMessage(const std::string &str) {
     auto j = nlohmann::json::parse(str);
-    RemoteAuthGatewayMessage msg = j;
-    if (msg.Opcode == "hello") {
+    const auto opcode = j.at("op").get<std::string>();
+    if (opcode == "hello") {
         HandleGatewayHello(j);
-    } else if (msg.Opcode == "nonce_proof") {
+    } else if (opcode == "nonce_proof") {
         HandleGatewayNonceProof(j);
-    } else if (msg.Opcode == "pending_remote_init") {
+    } else if (opcode == "pending_remote_init") {
         HandleGatewayPendingRemoteInit(j);
-    } else if (msg.Opcode == "pending_ticket") {
+    } else if (opcode == "pending_ticket") {
         HandleGatewayPendingTicket(j);
-    } else if (msg.Opcode == "pending_login") {
+    } else if (opcode == "pending_login") {
         HandleGatewayPendingLogin(j);
     }
 }
 
 void RemoteAuthClient::HandleGatewayHello(const nlohmann::json &j) {
-    RemoteAuthHelloMessage msg = j;
-    m_log->debug("Timeout: {}, Heartbeat: {}", msg.TimeoutMS, msg.HeartbeatInterval);
+    const auto timeout_ms = j.at("timeout_ms").get<int>();
+    const auto heartbeat_interval = j.at("heartbeat_interval").get<int>();
+    m_log->debug("Timeout: {}, Heartbeat: {}", timeout_ms, heartbeat_interval);
 
-    m_heartbeat_msec = msg.HeartbeatInterval;
+    m_heartbeat_msec = heartbeat_interval;
     m_heartbeat_thread = std::thread(&RemoteAuthClient::HeartbeatThread, this);
 
     Init();
 }
 
 void RemoteAuthClient::HandleGatewayNonceProof(const nlohmann::json &j) {
-    RemoteAuthNonceProofMessage msg = j;
     m_log->debug("Received encrypted nonce");
 
-    const auto encrypted_nonce = Glib::Base64::decode(msg.EncryptedNonce);
+    const auto encrypted_nonce = Glib::Base64::decode(j.at("encrypted_nonce").get<std::string>());
     const auto proof = Decrypt(reinterpret_cast<const unsigned char *>(encrypted_nonce.data()), encrypted_nonce.size());
     auto proof_encoded = Glib::Base64::encode(std::string(proof.begin(), proof.end()));
 
@@ -152,31 +81,27 @@ void RemoteAuthClient::HandleGatewayNonceProof(const nlohmann::json &j) {
     std::replace(proof_encoded.begin(), proof_encoded.end(), '+', '-');
     proof_encoded.erase(std::remove(proof_encoded.begin(), proof_encoded.end(), '='), proof_encoded.end());
 
-    RemoteAuthNonceProofMessage reply;
-    reply.Nonce = proof_encoded;
+    nlohmann::json reply;
+    reply["op"] = "nonce_proof";
+    reply["nonce"] = proof_encoded;
     m_ws.Send(reply);
 }
 
 void RemoteAuthClient::HandleGatewayPendingRemoteInit(const nlohmann::json &j) {
-    RemoteAuthFingerprintMessage msg = j;
     m_log->debug("Received fingerprint");
 
-    m_signal_fingerprint.emit(msg.Fingerprint);
+    m_signal_fingerprint.emit(j.at("fingerprint").get<std::string>());
 }
 
 void RemoteAuthClient::HandleGatewayPendingTicket(const nlohmann::json &j) {
-    RemoteAuthPendingTicketMessage msg = j;
-
-    const auto encrypted_payload = Glib::Base64::decode(msg.EncryptedUserPayload);
+    const auto encrypted_payload = Glib::Base64::decode(j.at("encrypted_user_payload").get<std::string>());
     const auto payload = Decrypt(reinterpret_cast<const unsigned char *>(encrypted_payload.data()), encrypted_payload.size());
 
     m_log->trace("User payload: {}", std::string(payload.begin(), payload.end()));
 }
 
 void RemoteAuthClient::HandleGatewayPendingLogin(const nlohmann::json &j) {
-    RemoteAuthPendingLoginMessage msg = j;
-
-    Abaddon::Get().GetDiscordClient().RemoteAuthLogin(msg.Ticket, sigc::mem_fun(*this, &RemoteAuthClient::OnRemoteAuthLoginResponse));
+    Abaddon::Get().GetDiscordClient().RemoteAuthLogin(j.at("ticket").get<std::string>(), sigc::mem_fun(*this, &RemoteAuthClient::OnRemoteAuthLoginResponse));
 }
 
 void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err) {
@@ -191,16 +116,17 @@ void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string
 }
 
 void RemoteAuthClient::Init() {
-    RemoteAuthInitMessage msg;
-
     GenerateKey();
-    msg.EncodedPublicKey = GetEncodedPublicKey();
-    if (msg.EncodedPublicKey.empty()) {
+    const auto key = GetEncodedPublicKey();
+    if (key.empty()) {
         m_log->error("Something went wrong");
         // todo disconnect
         return;
     }
 
+    nlohmann::json msg;
+    msg["op"] = "init";
+    msg["encoded_public_key"] = key;
     m_ws.Send(msg);
 }
 
@@ -328,7 +254,9 @@ void RemoteAuthClient::HeartbeatThread() {
     while (true) {
         if (!m_heartbeat_waiter.wait_for(std::chrono::milliseconds(m_heartbeat_msec))) break;
 
-        m_ws.Send(RemoteAuthHeartbeatMessage());
+        nlohmann::json hb;
+        hb["op"] = "hearbeat";
+        m_ws.Send(hb);
     }
 }
 
