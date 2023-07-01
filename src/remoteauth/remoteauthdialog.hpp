@@ -18,6 +18,7 @@ private:
     RemoteAuthClient m_ra;
 
     void OnFingerprint(const std::string &fingerprint);
+    void OnToken(const std::string &token);
 
     std::string m_token;
 };

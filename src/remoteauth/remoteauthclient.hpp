@@ -22,6 +22,9 @@ private:
     void HandleGatewayNonceProof(const nlohmann::json &j);
     void HandleGatewayPendingRemoteInit(const nlohmann::json &j);
     void HandleGatewayPendingTicket(const nlohmann::json &j);
+    void HandleGatewayPendingLogin(const nlohmann::json &j);
+
+    void OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err);
 
     void Init();
 
@@ -57,8 +60,11 @@ private:
 
 public:
     using type_signal_fingerprint = sigc::signal<void(std::string)>;
+    using type_signal_token = sigc::signal<void(std::string)>;
     type_signal_fingerprint signal_fingerprint();
+    type_signal_token signal_token();
 
 private:
     type_signal_fingerprint m_signal_fingerprint;
+    type_signal_token m_signal_token;
 };

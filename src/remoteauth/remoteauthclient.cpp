@@ -1,4 +1,5 @@
 #include "remoteauthclient.hpp"
+#include "http.hpp"
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/bin_to_hex.h>
 
@@ -65,6 +66,14 @@ struct RemoteAuthPendingTicketMessage {
     }
 };
 
+struct RemoteAuthPendingLoginMessage {
+    std::string Ticket;
+
+    friend void from_json(const nlohmann::json &j, RemoteAuthPendingLoginMessage &m) {
+        j.at("ticket").get_to(m.Ticket);
+    }
+};
+
 RemoteAuthClient::RemoteAuthClient()
     : m_ws("remote-auth-ws")
     , m_log(spdlog::get("remote-auth")) {
@@ -116,6 +125,8 @@ void RemoteAuthClient::OnGatewayMessage(const std::string &str) {
         HandleGatewayPendingRemoteInit(j);
     } else if (msg.Opcode == "pending_ticket") {
         HandleGatewayPendingTicket(j);
+    } else if (msg.Opcode == "pending_login") {
+        HandleGatewayPendingLogin(j);
     }
 }
 
@@ -160,6 +171,23 @@ void RemoteAuthClient::HandleGatewayPendingTicket(const nlohmann::json &j) {
     const auto payload = Decrypt(reinterpret_cast<const unsigned char *>(encrypted_payload.data()), encrypted_payload.size());
 
     m_log->trace("User payload: {}", std::string(payload.begin(), payload.end()));
+}
+
+void RemoteAuthClient::HandleGatewayPendingLogin(const nlohmann::json &j) {
+    RemoteAuthPendingLoginMessage msg = j;
+
+    Abaddon::Get().GetDiscordClient().RemoteAuthLogin(msg.Ticket, sigc::mem_fun(*this, &RemoteAuthClient::OnRemoteAuthLoginResponse));
+}
+
+void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err) {
+    if (!encrypted_token.has_value()) {
+        m_log->error("Remote auth login failed: {}", static_cast<int>(err));
+        return;
+    }
+
+    const auto encrypted = Glib::Base64::decode(*encrypted_token);
+    const auto token = Decrypt(reinterpret_cast<const unsigned char *>(encrypted.data()), encrypted.size());
+    m_signal_token.emit(std::string(token.begin(), token.end()));
 }
 
 void RemoteAuthClient::Init() {
@@ -318,4 +346,8 @@ void RemoteAuthClient::OnDispatch() {
 
 RemoteAuthClient::type_signal_fingerprint RemoteAuthClient::signal_fingerprint() {
     return m_signal_fingerprint;
+}
+
+RemoteAuthClient::type_signal_token RemoteAuthClient::signal_token() {
+    return m_signal_token;
 }

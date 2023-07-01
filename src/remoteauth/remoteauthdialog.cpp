@@ -24,6 +24,7 @@ RemoteAuthDialog::RemoteAuthDialog(Gtk::Window &parent)
     m_bbox.set_layout(Gtk::BUTTONBOX_END);
 
     m_ra.signal_fingerprint().connect(sigc::mem_fun(*this, &RemoteAuthDialog::OnFingerprint));
+    m_ra.signal_token().connect(sigc::mem_fun(*this, &RemoteAuthDialog::OnToken));
 
     m_ra.Start();
 
@@ -76,4 +77,10 @@ void RemoteAuthDialog::OnFingerprint(const std::string &fingerprint) {
 
 std::string RemoteAuthDialog::GetToken() {
     return m_token;
+}
+
+void RemoteAuthDialog::OnToken(const std::string &token) {
+    m_token = token;
+    m_ra.Stop();
+    response(Gtk::RESPONSE_OK);
 }

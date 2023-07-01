@@ -841,9 +841,12 @@ void Abaddon::ActionLoginQR() {
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK) {
         m_discord_token = dlg.GetToken();
+        m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
+        GetSettings().DiscordToken = m_discord_token;
     }
     m_main_window->UpdateMenus();
+    ActionConnect();
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
