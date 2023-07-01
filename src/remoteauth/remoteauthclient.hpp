@@ -59,12 +59,24 @@ private:
     EVP_PKEY_ptr m_pkey;
 
 public:
+    using type_signal_hello = sigc::signal<void()>;
     using type_signal_fingerprint = sigc::signal<void(std::string)>;
+    using type_signal_pending_ticket = sigc::signal<void(Snowflake, std::string, std::string, std::string)>;
+    using type_signal_pending_login = sigc::signal<void()>;
     using type_signal_token = sigc::signal<void(std::string)>;
+    using type_signal_error = sigc::signal<void(std::string)>;
+    type_signal_hello signal_hello();
     type_signal_fingerprint signal_fingerprint();
+    type_signal_pending_ticket signal_pending_ticket();
+    type_signal_pending_login signal_pending_login();
     type_signal_token signal_token();
+    type_signal_error signal_error();
 
 private:
+    type_signal_hello m_signal_hello;
     type_signal_fingerprint m_signal_fingerprint;
+    type_signal_pending_ticket m_signal_pending_ticket;
+    type_signal_pending_login m_signal_pending_login;
     type_signal_token m_signal_token;
+    type_signal_error m_signal_error;
 };

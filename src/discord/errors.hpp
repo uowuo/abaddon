@@ -11,6 +11,7 @@ enum class DiscordError {
     RELATIONSHIP_ALREADY_FRIENDS = 80007,
 
     NONE = -1,
+    CAPTCHA_REQUIRED = -2,
 };
 
 constexpr const char *GetDiscordErrorDisplayString(DiscordError error) {

@@ -68,6 +68,8 @@ void RemoteAuthClient::HandleGatewayHello(const nlohmann::json &j) {
     m_heartbeat_thread = std::thread(&RemoteAuthClient::HeartbeatThread, this);
 
     Init();
+
+    m_signal_hello.emit();
 }
 
 void RemoteAuthClient::HandleGatewayNonceProof(const nlohmann::json &j) {
@@ -98,15 +100,35 @@ void RemoteAuthClient::HandleGatewayPendingTicket(const nlohmann::json &j) {
     const auto payload = Decrypt(reinterpret_cast<const unsigned char *>(encrypted_payload.data()), encrypted_payload.size());
 
     m_log->trace("User payload: {}", std::string(payload.begin(), payload.end()));
+
+    const std::vector<Glib::ustring> user_info = Glib::Regex::split_simple(":", std::string(payload.begin(), payload.end()));
+    Snowflake user_id;
+    std::string discriminator;
+    std::string avatar_hash;
+    std::string username;
+    if (user_info.size() >= 4) {
+        user_id = Snowflake(user_info[0]);
+        discriminator = user_info[1];
+        avatar_hash = user_info[2];
+        username = user_info[3];
+    }
+
+    m_signal_pending_ticket.emit(user_id, discriminator, avatar_hash, username);
 }
 
 void RemoteAuthClient::HandleGatewayPendingLogin(const nlohmann::json &j) {
     Abaddon::Get().GetDiscordClient().RemoteAuthLogin(j.at("ticket").get<std::string>(), sigc::mem_fun(*this, &RemoteAuthClient::OnRemoteAuthLoginResponse));
+    m_signal_pending_login.emit();
 }
 
 void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err) {
     if (!encrypted_token.has_value()) {
         m_log->error("Remote auth login failed: {}", static_cast<int>(err));
+        if (err == DiscordError::CAPTCHA_REQUIRED) {
+            m_signal_error.emit("Discord is requiring a captcha. You must use a web browser to log in.");
+        } else {
+            m_signal_error.emit("An error occurred. Try again.");
+        }
         return;
     }
 
@@ -272,10 +294,26 @@ void RemoteAuthClient::OnDispatch() {
     OnGatewayMessage(msg);
 }
 
+RemoteAuthClient::type_signal_hello RemoteAuthClient::signal_hello() {
+    return m_signal_hello;
+}
+
 RemoteAuthClient::type_signal_fingerprint RemoteAuthClient::signal_fingerprint() {
     return m_signal_fingerprint;
 }
 
+RemoteAuthClient::type_signal_pending_ticket RemoteAuthClient::signal_pending_ticket() {
+    return m_signal_pending_ticket;
+}
+
+RemoteAuthClient::type_signal_pending_login RemoteAuthClient::signal_pending_login() {
+    return m_signal_pending_login;
+}
+
 RemoteAuthClient::type_signal_token RemoteAuthClient::signal_token() {
     return m_signal_token;
+}
+
+RemoteAuthClient::type_signal_error RemoteAuthClient::signal_error() {
+    return m_signal_error;
 }

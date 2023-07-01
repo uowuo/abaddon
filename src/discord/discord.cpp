@@ -1206,6 +1206,13 @@ void DiscordClient::RemoteAuthLogin(const std::string &ticket, const sigc::slot<
         if (CheckCode(r)) {
             callback(nlohmann::json::parse(r.text).at("encrypted_token").get<std::string>(), DiscordError::NONE);
         } else {
+            try {
+                const auto j = nlohmann::json::parse(r.text);
+                if (j.contains("captcha_service")) {
+                    callback(std::nullopt, DiscordError::CAPTCHA_REQUIRED);
+                    return;
+                }
+            } catch (...) {}
             callback(std::nullopt, GetCodeFromResponse(r));
         }
     });
