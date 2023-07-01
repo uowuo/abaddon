@@ -844,9 +844,9 @@ void Abaddon::ActionLoginQR() {
         m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
         GetSettings().DiscordToken = m_discord_token;
+        ActionConnect();
     }
     m_main_window->UpdateMenus();
-    ActionConnect();
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
