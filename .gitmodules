@@ -13,3 +13,6 @@
 [submodule "subprojects/miniaudio"]
 	path = subprojects/miniaudio
 	url = https://github.com/mackron/miniaudio
+[submodule "subprojects/qrcodegen"]
+	path = subprojects/qrcodegen
+	url = https://github.com/nayuki/QR-Code-generator

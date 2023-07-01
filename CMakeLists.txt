@@ -61,6 +61,12 @@ target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
+add_library(qrcodegen subprojects/qrcodegen/cpp/qrcodegen.hpp subprojects/qrcodegen/cpp/qrcodegen.cpp)
+target_include_directories(qrcodegen PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/subprojects/qrcodegen/cpp")
+target_link_libraries(abaddon qrcodegen)
+
+target_include_directories(abaddon PUBLIC "subprojects/qrcodegen/cpp")
+
 target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
@@ -151,12 +157,12 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
-    if(APPLE)
-	    target_link_libraries(abaddon "-framework CoreFoundation")
-	    target_link_libraries(abaddon "-framework CoreAudio")
-	    target_link_libraries(abaddon "-framework AudioToolbox")
-    endif()
-    
+    if (APPLE)
+        target_link_libraries(abaddon "-framework CoreFoundation")
+        target_link_libraries(abaddon "-framework CoreAudio")
+        target_link_libraries(abaddon "-framework AudioToolbox")
+    endif ()
+
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})

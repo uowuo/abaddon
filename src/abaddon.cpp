@@ -21,6 +21,7 @@
 #include "windows/voicewindow.hpp"
 #include "startup.hpp"
 #include "notifications/notifications.hpp"
+#include "remoteauth/remoteauthdialog.hpp"
 
 #ifdef WITH_LIBHANDY
     #include <handy.h>
@@ -267,6 +268,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
+    m_main_window->signal_action_login_qr().connect(sigc::mem_fun(*this, &Abaddon::ActionLoginQR));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
@@ -834,6 +836,16 @@ void Abaddon::ActionSetToken() {
     m_main_window->UpdateMenus();
 }
 
+void Abaddon::ActionLoginQR() {
+    RemoteAuthDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK) {
+        m_discord_token = dlg.GetToken();
+        m_main_window->UpdateComponents();
+    }
+    m_main_window->UpdateMenus();
+}
+
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     if (!id.IsValid()) {
         m_discord.SetReferringChannel(Snowflake::Invalid);
@@ -1142,6 +1154,7 @@ int main(int argc, char **argv) {
     auto log_audio = spdlog::stdout_color_mt("audio");
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");
+    auto log_ra = spdlog::stdout_color_mt("remote-auth");
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();
