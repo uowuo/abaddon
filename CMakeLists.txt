@@ -165,6 +165,11 @@ if (${ENABLE_NOTIFICATION_SOUNDS})
 endif ()
 
 if (USE_MINIAUDIO)
-    target_include_directories(abaddon PUBLIC subprojects/miniaudio)
+    find_path(MINIAUDIO_INCLUDE_DIR
+              NAMES miniaudio.h
+              HINTS subprojects
+              PATH_SUFFIXES miniaudio
+              REQUIRED)
+    target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()
