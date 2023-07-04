@@ -1320,6 +1320,7 @@ int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
 int DiscordClient::GetUnreadChannelsCountForCategory(Snowflake id) const noexcept {
     int result = 0;
     for (Snowflake channel_id : m_store.GetChannelIDsWithParentID(id)) {
+        if (IsChannelMuted(channel_id)) continue;
         const auto iter = m_unread.find(channel_id);
         if (iter == m_unread.end()) continue;
         result += 1;
