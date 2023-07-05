@@ -1102,15 +1102,25 @@ void ChannelList::SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm) {
     }
 }
 
+void ChannelList::RedrawUnreadIndicatorsForChannel(const ChannelData &channel) {
+    if (channel.GuildID.has_value()) {
+        auto iter = GetIteratorForGuildFromID(*channel.GuildID);
+        if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    }
+    if (channel.ParentID.has_value()) {
+        auto iter = GetIteratorForRowFromIDOfType(*channel.ParentID, RenderType::Category);
+        if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    }
+}
+
 void ChannelList::OnMessageAck(const MessageAckData &data) {
     // trick renderer into redrawing
     m_model->row_changed(Gtk::TreeModel::Path("0"), m_model->get_iter("0")); // 0 is always path for dm header
     auto iter = GetIteratorForRowFromID(data.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(data.ChannelID);
-    if (channel.has_value() && channel->GuildID.has_value()) {
-        iter = GetIteratorForGuildFromID(*channel->GuildID);
-        if (iter) m_model->row_changed(m_model->get_path(iter), iter);
+    if (channel.has_value()) {
+        RedrawUnreadIndicatorsForChannel(*channel);
     }
 }
 
@@ -1123,9 +1133,7 @@ void ChannelList::OnMessageCreate(const Message &msg) {
         if (iter)
             (*iter)[m_columns.m_sort] = static_cast<int64_t>(-msg.ID);
     }
-    if (channel->GuildID.has_value())
-        if ((iter = GetIteratorForGuildFromID(*channel->GuildID)))
-            m_model->row_changed(m_model->get_path(iter), iter);
+    RedrawUnreadIndicatorsForChannel(*channel);
 }
 
 bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {

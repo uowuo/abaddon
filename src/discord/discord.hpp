@@ -214,6 +214,7 @@ public:
     bool IsChannelMuted(Snowflake id) const noexcept;
     bool IsGuildMuted(Snowflake id) const noexcept;
     int GetUnreadStateForChannel(Snowflake id) const noexcept;
+    int GetUnreadChannelsCountForCategory(Snowflake id) const noexcept;
     bool GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept;
     int GetUnreadDMsCount() const;
 
