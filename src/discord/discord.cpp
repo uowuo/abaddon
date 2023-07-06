@@ -1826,9 +1826,12 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
     const auto id = msg.Data.at("id").get<Snowflake>();
     const auto channel = GetChannel(id);
-    auto it = m_guild_to_channels.find(*channel->GuildID);
-    if (it != m_guild_to_channels.end())
-        it->second.erase(id);
+    if (channel.has_value() && channel->GuildID.has_value()) {
+        auto it = m_guild_to_channels.find(*channel->GuildID);
+        if (it != m_guild_to_channels.end()) {
+            it->second.erase(id);
+        }
+    }
     m_store.ClearChannel(id);
     m_signal_channel_delete.emit(id);
     m_signal_channel_accessibility_changed.emit(id, false);
