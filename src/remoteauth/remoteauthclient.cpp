@@ -277,7 +277,7 @@ void RemoteAuthClient::HeartbeatThread() {
         if (!m_heartbeat_waiter.wait_for(std::chrono::milliseconds(m_heartbeat_msec))) break;
 
         nlohmann::json hb;
-        hb["op"] = "hearbeat";
+        hb["op"] = "heartbeat";
         m_ws.Send(hb);
     }
 }
