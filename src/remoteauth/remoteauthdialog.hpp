@@ -1,6 +1,13 @@
 #pragma once
+
+#ifdef WITH_QRLOGIN
+
+// clang-format off
+
 #include <gtkmm/dialog.h>
 #include "remoteauthclient.hpp"
+
+// clang-format on
 
 class RemoteAuthDialog : public Gtk::Dialog {
 public:
@@ -27,3 +34,5 @@ private:
 
     std::string m_token;
 };
+
+#endif

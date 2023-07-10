@@ -1,7 +1,13 @@
+#ifdef WITH_QRLOGIN
+
+// clang-format off
+
 #include "remoteauthclient.hpp"
 #include "http.hpp"
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/bin_to_hex.h>
+
+// clang-format on
 
 RemoteAuthClient::RemoteAuthClient()
     : m_ws("remote-auth-ws")
@@ -341,3 +347,5 @@ RemoteAuthClient::type_signal_token RemoteAuthClient::signal_token() {
 RemoteAuthClient::type_signal_error RemoteAuthClient::signal_error() {
     return m_signal_error;
 }
+
+#endif

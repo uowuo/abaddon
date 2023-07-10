@@ -1,5 +1,11 @@
+#ifdef WITH_QRLOGIN
+
+// clang-format off
+
 #include "remoteauthdialog.hpp"
 #include <qrcodegen.hpp>
+
+// clang-format on
 
 RemoteAuthDialog::RemoteAuthDialog(Gtk::Window &parent)
     : Gtk::Dialog("Login with QR Code", parent, true)
@@ -122,3 +128,5 @@ void RemoteAuthDialog::OnError(const std::string &error) {
     Abaddon::Get().ShowConfirm(error, dynamic_cast<Gtk::Window *>(get_toplevel()));
     response(Gtk::RESPONSE_CANCEL);
 }
+
+#endif

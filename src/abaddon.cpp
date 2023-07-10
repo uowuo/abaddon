@@ -837,6 +837,7 @@ void Abaddon::ActionSetToken() {
 }
 
 void Abaddon::ActionLoginQR() {
+#ifdef WITH_QRLOGIN
     RemoteAuthDialog dlg(*m_main_window);
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK) {
@@ -847,6 +848,7 @@ void Abaddon::ActionLoginQR() {
         ActionConnect();
     }
     m_main_window->UpdateMenus();
+#endif
 }
 
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {

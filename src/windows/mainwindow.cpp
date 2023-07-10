@@ -206,7 +206,9 @@ void MainWindow::OnDiscordSubmenuPopup() {
     m_menu_discord_connect.set_sensitive(!token.empty() && !discord_active);
     m_menu_discord_disconnect.set_sensitive(discord_active);
     m_menu_discord_set_token.set_sensitive(!discord_active);
+#ifdef WITH_QRLOGIN
     m_menu_discord_login_qr.set_sensitive(!discord_active);
+#endif
     m_menu_discord_set_status.set_sensitive(discord_active);
 }
 
@@ -249,6 +251,10 @@ void MainWindow::SetupMenu() {
     m_menu_discord_disconnect.set_sensitive(false);
     m_menu_discord_set_token.set_label("Set Token");
     m_menu_discord_login_qr.set_label("Login with QR Code");
+#ifndef WITH_QRLOGIN
+    m_menu_discord_login_qr.set_sensitive(false);
+    m_menu_discord_login_qr.set_tooltip_text("Not compiled with support");
+#endif
     m_menu_discord_set_status.set_label("Set Status");
     m_menu_discord_set_status.set_sensitive(false);
     m_menu_discord_add_recipient.set_label("Add user to DM");

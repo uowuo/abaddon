@@ -1,10 +1,17 @@
 #pragma once
+
+#ifdef WITH_QRLOGIN
+
+// clang-format off
+
 #include <string>
 #include <queue>
 #include <spdlog/logger.h>
 #include "ssl.hpp"
 #include "discord/waiter.hpp"
 #include "discord/websocket.hpp"
+
+// clang-format on
 
 class RemoteAuthClient {
 public:
@@ -84,3 +91,5 @@ private:
     type_signal_token m_signal_token;
     type_signal_error m_signal_error;
 };
+
+#endif
