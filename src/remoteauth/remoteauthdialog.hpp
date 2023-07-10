@@ -20,7 +20,7 @@ private:
 
     void OnHello();
     void OnFingerprint(const std::string &fingerprint);
-    void OnPendingTicket(Snowflake user_id, std::string discriminator, std::string avatar_hash, std::string username);
+    void OnPendingTicket(Snowflake user_id, const std::string &discriminator, const std::string &avatar_hash, const std::string &username);
     void OnPendingLogin();
     void OnToken(const std::string &token);
     void OnError(const std::string &error);

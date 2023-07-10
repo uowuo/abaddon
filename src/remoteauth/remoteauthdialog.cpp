@@ -91,7 +91,7 @@ void RemoteAuthDialog::OnFingerprint(const std::string &fingerprint) {
     m_image.property_pixbuf() = pb;
 }
 
-void RemoteAuthDialog::OnPendingTicket(Snowflake user_id, std::string discriminator, std::string avatar_hash, std::string username) {
+void RemoteAuthDialog::OnPendingTicket(Snowflake user_id, const std::string &discriminator, const std::string &avatar_hash, const std::string &username) {
     Glib::ustring name = username;
     if (discriminator != "0") {
         name += "#" + discriminator;
@@ -119,6 +119,6 @@ void RemoteAuthDialog::OnToken(const std::string &token) {
 
 void RemoteAuthDialog::OnError(const std::string &error) {
     m_ra.Stop();
-    Abaddon::Get().ShowConfirm(error, dynamic_cast<Gtk::Window*>(get_toplevel()));
+    Abaddon::Get().ShowConfirm(error, dynamic_cast<Gtk::Window *>(get_toplevel()));
     response(Gtk::RESPONSE_CANCEL);
 }

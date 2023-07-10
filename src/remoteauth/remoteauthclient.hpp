@@ -49,6 +49,9 @@ private:
 
     void OnDispatch();
 
+    bool OnTimeout();
+    sigc::connection m_timeout_conn;
+
     Websocket m_ws;
     bool m_connected = false;
 

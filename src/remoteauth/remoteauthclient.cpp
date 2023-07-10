@@ -34,6 +34,7 @@ void RemoteAuthClient::Stop() {
     }
 
     m_connected = false;
+    if (m_timeout_conn) m_timeout_conn.disconnect();
     m_ws.Stop(1000);
     m_heartbeat_waiter.kill();
     if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();
@@ -44,6 +45,7 @@ bool RemoteAuthClient::IsConnected() const noexcept {
 }
 
 void RemoteAuthClient::OnGatewayMessage(const std::string &str) {
+    m_log->trace(str);
     auto j = nlohmann::json::parse(str);
     const auto opcode = j.at("op").get<std::string>();
     if (opcode == "hello") {
@@ -66,6 +68,8 @@ void RemoteAuthClient::HandleGatewayHello(const nlohmann::json &j) {
 
     m_heartbeat_msec = heartbeat_interval;
     m_heartbeat_thread = std::thread(&RemoteAuthClient::HeartbeatThread, this);
+
+    m_timeout_conn = Glib::signal_timeout().connect(sigc::mem_fun(*this, &RemoteAuthClient::OnTimeout), timeout_ms);
 
     Init();
 
@@ -292,6 +296,13 @@ void RemoteAuthClient::OnDispatch() {
     m_dispatch_queue.pop();
     m_dispatch_mutex.unlock();
     OnGatewayMessage(msg);
+}
+
+bool RemoteAuthClient::OnTimeout() {
+    m_log->trace("Socket timeout");
+    Stop();
+    Start();
+    return false; // disconnect
 }
 
 RemoteAuthClient::type_signal_hello RemoteAuthClient::signal_hello() {
