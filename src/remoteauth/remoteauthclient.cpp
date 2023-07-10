@@ -264,8 +264,14 @@ void RemoteAuthClient::OnWebsocketOpen() {
 void RemoteAuthClient::OnWebsocketClose(const ix::WebSocketCloseInfo &info) {
     if (info.remote) {
         m_log->debug("Websocket closed (remote): {} ({})", info.code, info.reason);
+        if (m_connected) {
+            m_signal_error.emit("Error. Websocket closed (remote): " + std::to_string(info.code) + " (" + info.reason + ")");
+        }
     } else {
         m_log->debug("Websocket closed (local): {} ({})", info.code, info.reason);
+        if (m_connected) {
+            m_signal_error.emit("Error. Websocket closed (local): " + std::to_string(info.code) + " (" + info.reason + ")");
+        }
     }
 }
 
