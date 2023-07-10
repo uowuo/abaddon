@@ -58,6 +58,8 @@ void RemoteAuthClient::OnGatewayMessage(const std::string &str) {
         HandleGatewayPendingTicket(j);
     } else if (opcode == "pending_login") {
         HandleGatewayPendingLogin(j);
+    } else if (opcode == "cancel") {
+        HandleGatewayCancel(j);
     }
 }
 
@@ -123,6 +125,11 @@ void RemoteAuthClient::HandleGatewayPendingTicket(const nlohmann::json &j) {
 void RemoteAuthClient::HandleGatewayPendingLogin(const nlohmann::json &j) {
     Abaddon::Get().GetDiscordClient().RemoteAuthLogin(j.at("ticket").get<std::string>(), sigc::mem_fun(*this, &RemoteAuthClient::OnRemoteAuthLoginResponse));
     m_signal_pending_login.emit();
+}
+
+void RemoteAuthClient::HandleGatewayCancel(const nlohmann::json &j) {
+    Stop();
+    Start();
 }
 
 void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err) {

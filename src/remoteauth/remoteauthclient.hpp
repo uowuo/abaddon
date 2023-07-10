@@ -23,6 +23,7 @@ private:
     void HandleGatewayPendingRemoteInit(const nlohmann::json &j);
     void HandleGatewayPendingTicket(const nlohmann::json &j);
     void HandleGatewayPendingLogin(const nlohmann::json &j);
+    void HandleGatewayCancel(const nlohmann::json &j);
 
     void OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err);
 
