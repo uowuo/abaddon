@@ -67,7 +67,7 @@ jobs:
         with:
           cond: ${{ matrix.mindeps == true }}
           if_true: |
-            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF -DENABLE_QRCODE_LOGIN=OFF
             cmake --build build
           if_false: |
             cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DCMAKE_CXX_FLAGS="-Wl,--default-image-base-low"
