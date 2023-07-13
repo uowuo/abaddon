@@ -206,6 +206,9 @@ void MainWindow::OnDiscordSubmenuPopup() {
     m_menu_discord_connect.set_sensitive(!token.empty() && !discord_active);
     m_menu_discord_disconnect.set_sensitive(discord_active);
     m_menu_discord_set_token.set_sensitive(!discord_active);
+#ifdef WITH_QRLOGIN
+    m_menu_discord_login_qr.set_sensitive(!discord_active);
+#endif
     m_menu_discord_set_status.set_sensitive(discord_active);
 }
 
@@ -247,12 +250,18 @@ void MainWindow::SetupMenu() {
     m_menu_discord_disconnect.set_label("Disconnect");
     m_menu_discord_disconnect.set_sensitive(false);
     m_menu_discord_set_token.set_label("Set Token");
+    m_menu_discord_login_qr.set_label("Login with QR Code");
+#ifndef WITH_QRLOGIN
+    m_menu_discord_login_qr.set_sensitive(false);
+    m_menu_discord_login_qr.set_tooltip_text("Not compiled with support");
+#endif
     m_menu_discord_set_status.set_label("Set Status");
     m_menu_discord_set_status.set_sensitive(false);
     m_menu_discord_add_recipient.set_label("Add user to DM");
     m_menu_discord_sub.append(m_menu_discord_connect);
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
+    m_menu_discord_sub.append(m_menu_discord_login_qr);
     m_menu_discord_sub.append(m_menu_discord_set_status);
     m_menu_discord_sub.append(m_menu_discord_add_recipient);
     m_menu_discord.set_submenu(m_menu_discord_sub);
@@ -329,6 +338,10 @@ void MainWindow::SetupMenu() {
 
     m_menu_discord_set_token.signal_activate().connect([this] {
         m_signal_action_set_token.emit();
+    });
+
+    m_menu_discord_login_qr.signal_activate().connect([this] {
+        m_signal_action_login_qr.emit();
     });
 
     m_menu_file_reload_css.signal_activate().connect([this] {
@@ -419,6 +432,10 @@ MainWindow::type_signal_action_disconnect MainWindow::signal_action_disconnect()
 
 MainWindow::type_signal_action_set_token MainWindow::signal_action_set_token() {
     return m_signal_action_set_token;
+}
+
+MainWindow::type_signal_action_login_qr MainWindow::signal_action_login_qr() {
+    return m_signal_action_login_qr;
 }
 
 MainWindow::type_signal_action_reload_css MainWindow::signal_action_reload_css() {

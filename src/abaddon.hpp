@@ -41,6 +41,7 @@ public:
     void ActionConnect();
     void ActionDisconnect();
     void ActionSetToken();
+    void ActionLoginQR();
     void ActionJoinGuildDialog();
     void ActionChannelOpened(Snowflake id, bool expand_to = true);
     void ActionChatInputSubmit(ChatSubmitParams data);

@@ -184,6 +184,8 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+    void RemoteAuthLogin(const std::string &ticket, const sigc::slot<void(std::optional<std::string>, DiscordError code)> &callback);
+
 #ifdef WITH_VOICE
     void ConnectToVoice(Snowflake channel_id);
     void DisconnectFromVoice();

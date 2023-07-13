@@ -1197,6 +1197,27 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
     });
 }
 
+void DiscordClient::RemoteAuthLogin(const std::string &ticket, const sigc::slot<void(std::optional<std::string>, DiscordError code)> &callback) {
+    http::request req(http::REQUEST_POST, "https://discord.com/api/v9/users/@me/remote-auth/login");
+    req.set_header("Content-Type", "application/json");
+    req.set_user_agent(Abaddon::Get().GetSettings().UserAgent);
+    req.set_body("{\"ticket\":\"" + ticket + "\"}");
+    m_http.Execute(std::move(req), [this, callback](const http::response_type &r) {
+        if (CheckCode(r)) {
+            callback(nlohmann::json::parse(r.text).at("encrypted_token").get<std::string>(), DiscordError::NONE);
+        } else {
+            try {
+                const auto j = nlohmann::json::parse(r.text);
+                if (j.contains("captcha_service")) {
+                    callback(std::nullopt, DiscordError::CAPTCHA_REQUIRED);
+                    return;
+                }
+            } catch (...) {}
+            callback(std::nullopt, GetCodeFromResponse(r));
+        }
+    });
+}
+
 #ifdef WITH_VOICE
 void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     auto channel = GetChannel(channel_id);
