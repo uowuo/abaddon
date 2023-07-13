@@ -674,8 +674,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
     std::optional<std::shared_ptr<Message>> referenced_message = data.ReferencedMessage;
     if (data.MessageReference.has_value() && data.MessageReference->MessageID.has_value() && !referenced_message.has_value()) {
         auto refd = discord.GetMessage(*data.MessageReference->MessageID);
-        if (refd.has_value())
+        if (refd.has_value()) {
             referenced_message = std::make_shared<Message>(std::move(*refd));
+        }
     }
 
     if (data.Interaction.has_value()) {

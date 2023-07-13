@@ -559,8 +559,9 @@ std::vector<Message> Store::GetMessagesBefore(Snowflake channel_id, Snowflake me
     for (auto &msg : msgs) {
         if (msg.MessageReference.has_value() && msg.MessageReference->MessageID.has_value()) {
             auto ref = GetMessage(*msg.MessageReference->MessageID);
-            if (ref.has_value())
+            if (ref.has_value()) {
                 msg.ReferencedMessage = std::make_shared<Message>(std::move(*ref));
+            }
         }
     }
 
@@ -2060,26 +2061,22 @@ bool Store::CreateStatements() {
                    message_interactions.name,
                    message_interactions.type,
                    message_interactions.user_id,
-                   attachments.id,
-                   attachments.filename,
-                   attachments.size,
-                   attachments.url,
-                   attachments.proxy,
-                   attachments.height,
-                   attachments.width,
-                   message_references.message
+                   message_references.message,
+                   message_references.channel,
+                   message_references.guild,
+                   COUNT(attachments.id)
             FROM messages
             LEFT OUTER JOIN
                 message_interactions
                     ON messages.id = message_interactions.message_id
             LEFT OUTER JOIN
-                attachments
-                    ON messages.id = attachments.message
-            LEFT OUTER JOIN
                 message_references
                     ON messages.id = message_references.id
+            LEFT OUTER JOIN
+                attachments
+                    ON messages.id = attachments.message
             WHERE channel_id = ? AND pending = 0 AND messages.id < ? ORDER BY id DESC LIMIT ?
-        ) ORDER BY id ASC
+        ) WHERE id IS NOT NULL ORDER BY id ASC
     )");
     if (!m_stmt_get_messages_before->OK()) {
         fprintf(stderr, "failed to prepare get messages before statement: %s\n", m_db.ErrStr());
@@ -2087,32 +2084,28 @@ bool Store::CreateStatements() {
     }
 
     m_stmt_get_pins = std::make_unique<Statement>(m_db, R"(
-        SELECT messages.*,
-               message_interactions.interaction_id,
-               message_interactions.name,
-               message_interactions.type,
-               message_interactions.user_id,
-               attachments.id,
-               attachments.filename,
-               attachments.size,
-               attachments.url,
-               attachments.proxy,
-               attachments.height,
-               attachments.width,
-               message_references.message,
-               message_references.channel,
-               message_references.guild
-        FROM messages
-        LEFT OUTER JOIN
-            message_interactions
-                ON messages.id = message_interactions.message_id
-        LEFT OUTER JOIN
-            attachments
-                ON messages.id = attachments.message
-        LEFT OUTER JOIN
-            message_references
-                ON messages.id = message_references.id
-        WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
+        SELECT * FROM (
+            SELECT messages.*,
+                   message_interactions.interaction_id,
+                   message_interactions.name,
+                   message_interactions.type,
+                   message_interactions.user_id,
+                   message_references.message,
+                   message_references.channel,
+                   message_references.guild,
+                   COUNT(attachments.id)
+            FROM messages
+            LEFT OUTER JOIN
+                message_interactions
+                    ON messages.id = message_interactions.message_id
+            LEFT OUTER JOIN
+                message_references
+                    ON messages.id = message_references.id
+            LEFT OUTER JOIN
+                attachments
+                    ON messages.id = attachments.message
+            WHERE channel_id = ? AND pinned = 1 ORDER BY id ASC
+        ) WHERE id IS NOT NULL
     )");
     if (!m_stmt_get_pins->OK()) {
         fprintf(stderr, "failed to prepare get pins statement: %s\n", m_db.ErrStr());
