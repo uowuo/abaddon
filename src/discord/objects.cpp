@@ -251,7 +251,7 @@ void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m) {
 
 void from_json(const nlohmann::json &j, SupplementalGuildEntry &m) {
     JS_D("id", m.ID);
-    JS_D("voice_states", m.VoiceStates);
+    JS_ON("voice_states", m.VoiceStates);
 }
 
 void from_json(const nlohmann::json &j, ReadySupplementalData &m) {
@@ -691,7 +691,7 @@ void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
 
 void from_json(const nlohmann::json &j, CallCreateData &m) {
     JS_D("channel_id", m.ChannelID);
-    JS_D("voice_states", m.VoiceStates);
+    JS_ON("voice_states", m.VoiceStates);
 }
 #endif
 
