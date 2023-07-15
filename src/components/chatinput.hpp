@@ -139,6 +139,9 @@ public:
     void StartReplying();
     void StopReplying();
 
+    void StartEditing(const Message &message);
+    void StopEditing();
+
 private:
     bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);
     bool CanAttachFiles();

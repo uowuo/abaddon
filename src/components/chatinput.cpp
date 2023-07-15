@@ -565,6 +565,16 @@ void ChatInput::StopReplying() {
     m_input.Get().get_style_context()->remove_class("replying");
 }
 
+void ChatInput::StartEditing(const Message &message) {
+    m_input.Get().grab_focus();
+    m_input.Get().get_style_context()->add_class("editing");
+    GetBuffer()->set_text(message.Content);
+}
+
+void ChatInput::StopEditing() {
+    m_input.Get().get_style_context()->remove_class("editing");
+}
+
 bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
     try {
         const auto read_stream = file->read();

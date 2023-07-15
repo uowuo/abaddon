@@ -253,6 +253,23 @@ void ChatList::ActuallyRemoveMessage(Snowflake id) {
         RemoveMessageAndHeader(it->second);
 }
 
+std::optional<Snowflake> ChatList::GetLastSentMessage() {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto self_id = discord.GetUserData().ID;
+
+    std::map<Snowflake, Gtk::Widget *> ordered(m_id_to_widget.begin(), m_id_to_widget.end());
+
+    for (auto it = ordered.crbegin(); it != ordered.crend(); it++) {
+        const auto *widget = dynamic_cast<ChatMessageItemContainer*>(it->second);
+        if (widget == nullptr) continue;
+        const auto msg = discord.GetMessage(widget->ID);
+        if (!msg.has_value()) continue;
+        if (msg->Author.ID == self_id) return msg->ID;
+    }
+
+    return std::nullopt;
+}
+
 void ChatList::SetupMenu() {
     m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
     m_menu_copy_id->signal_activate().connect([this] {
