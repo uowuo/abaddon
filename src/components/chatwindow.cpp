@@ -287,7 +287,7 @@ bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
 
 bool ChatWindow::ProcessKeyEvent(GdkEventKey *e) {
     if (e->type != GDK_KEY_PRESS) return false;
-    if (e->keyval == GDK_KEY_Up) {
+    if (e->keyval == GDK_KEY_Up && !(e->state & GDK_SHIFT_MASK) && m_input->IsEmpty()) {
         const auto edit_id = m_chat->GetLastSentMessage();
         if (edit_id.has_value()) {
             StartEditing(*edit_id);

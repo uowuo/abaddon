@@ -143,6 +143,8 @@ public:
     void StartEditing(const Message &message);
     void StopEditing();
 
+    bool IsEmpty();
+
 private:
     bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);
     bool CanAttachFiles();

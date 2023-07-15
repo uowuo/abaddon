@@ -579,6 +579,10 @@ void ChatInput::StopEditing() {
     m_input.Get().get_style_context()->remove_class("editing");
 }
 
+bool ChatInput::IsEmpty() {
+    return GetBuffer()->get_char_count() == 0;
+}
+
 bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
     try {
         const auto read_stream = file->read();
