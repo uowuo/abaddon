@@ -155,6 +155,8 @@ private:
 
     Snowflake m_active_channel;
 
+    bool m_is_editing = false;
+
 public:
     using type_signal_submit = sigc::signal<bool, ChatSubmitParams>;
     using type_signal_escape = sigc::signal<void>;
