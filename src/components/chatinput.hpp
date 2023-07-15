@@ -129,6 +129,7 @@ public:
     ChatInput();
 
     void InsertText(const Glib::ustring &text);
+    void Clear();
     Glib::RefPtr<Gtk::TextBuffer> GetBuffer();
     bool ProcessKeyPress(GdkEventKey *event);
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);

@@ -349,6 +349,7 @@ void ChatWindow::StopEditing() {
     m_is_editing = false;
     m_editing_id = Snowflake::Invalid;
     m_input->StopEditing();
+    m_input->Clear();
     m_input_indicator->ClearCustom();
 }
 

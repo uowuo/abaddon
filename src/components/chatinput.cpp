@@ -497,6 +497,10 @@ void ChatInput::InsertText(const Glib::ustring &text) {
     m_input.Get().InsertText(text);
 }
 
+void ChatInput::Clear() {
+    GetBuffer()->set_text("");
+}
+
 Glib::RefPtr<Gtk::TextBuffer> ChatInput::GetBuffer() {
     return m_input.Get().GetBuffer();
 }
