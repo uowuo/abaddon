@@ -168,6 +168,10 @@ void MainWindow::ToggleMenuVisibility() {
     m_menu_bar.set_visible(!m_menu_bar.get_visible());
 }
 
+void MainWindow::EditMessage(Snowflake message_id) {
+    m_chat.StartEditing(message_id);
+}
+
 #ifdef WITH_LIBHANDY
 void MainWindow::GoBack() {
     m_chat.GoBack();

@@ -129,6 +129,7 @@ public:
     ChatInput();
 
     void InsertText(const Glib::ustring &text);
+    void Clear();
     Glib::RefPtr<Gtk::TextBuffer> GetBuffer();
     bool ProcessKeyPress(GdkEventKey *event);
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);
@@ -139,6 +140,11 @@ public:
     void StartReplying();
     void StopReplying();
 
+    void StartEditing(const Message &message);
+    void StopEditing();
+
+    bool IsEmpty();
+
 private:
     bool AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file);
     bool CanAttachFiles();
@@ -148,6 +154,8 @@ private:
     ChatInputTextContainer m_input;
 
     Snowflake m_active_channel;
+
+    bool m_is_editing = false;
 
 public:
     using type_signal_submit = sigc::signal<bool, ChatSubmitParams>;

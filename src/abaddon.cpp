@@ -8,7 +8,6 @@
 #include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
-#include "dialogs/editmessage.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
@@ -948,19 +947,15 @@ void Abaddon::ActionChatInputSubmit(ChatSubmitParams data) {
 
     if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, data.ChannelID, Permission::VIEW_CHANNEL)) return;
 
-    m_discord.SendChatMessage(data, NOOP_CALLBACK);
+    if (data.EditingID.IsValid()) {
+        m_discord.EditMessage(data.ChannelID, data.EditingID, data.Message);
+    } else {
+        m_discord.SendChatMessage(data, NOOP_CALLBACK);
+    }
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
-    const auto msg = m_discord.GetMessage(id);
-    if (!msg.has_value()) return;
-    EditMessageDialog dlg(*m_main_window);
-    dlg.SetContent(msg->Content);
-    auto response = dlg.run();
-    if (response == Gtk::RESPONSE_OK) {
-        auto new_content = dlg.GetContent();
-        m_discord.EditMessage(channel_id, id, new_content);
-    }
+    m_main_window->EditMessage(id);
 }
 
 void Abaddon::ActionInsertMention(Snowflake id) {
@@ -1156,6 +1151,7 @@ int main(int argc, char **argv) {
 #endif
 
     spdlog::cfg::load_env_levels();
+    auto log_ui = spdlog::stdout_color_mt("ui");
     auto log_audio = spdlog::stdout_color_mt("audio");
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");

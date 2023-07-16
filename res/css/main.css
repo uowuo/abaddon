@@ -114,6 +114,10 @@
     border: 1px solid #026FB9;
 }
 
+.message-input.editing {
+    border: 1px solid #b9026f;
+}
+
 .message-input.bad-input {
     border: 1px solid #dd3300;
 }
