@@ -139,7 +139,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_playback_combo.set_hexpand(true);
     m_playback_combo.set_halign(Gtk::ALIGN_FILL);
     m_playback_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetPlaybackDeviceModel());
-    m_playback_combo.set_active(Abaddon::Get().GetAudio().GetDevices().GetActivePlaybackDevice());
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActivePlaybackDevice()) {
+        m_playback_combo.set_active(iter);
+    }
     m_playback_combo.pack_start(*playback_renderer);
     m_playback_combo.add_attribute(*playback_renderer, "text", 0);
     m_playback_combo.signal_changed().connect([this]() {
@@ -151,7 +153,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_combo.set_hexpand(true);
     m_capture_combo.set_halign(Gtk::ALIGN_FILL);
     m_capture_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetCaptureDeviceModel());
-    m_capture_combo.set_active(Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice());
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice()) {
+        m_capture_combo.set_active(iter);
+    }
     m_capture_combo.pack_start(*capture_renderer);
     m_capture_combo.add_attribute(*capture_renderer, "text", 0);
     m_capture_combo.signal_changed().connect([this]() {
