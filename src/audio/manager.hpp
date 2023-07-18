@@ -67,6 +67,13 @@ public:
 
     uint32_t GetRTPTimestamp() const noexcept;
 
+    enum class VADMethod {
+        Gate,
+        RNNoise,
+    };
+
+    void SetVADMethod(VADMethod method);
+
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
@@ -75,6 +82,12 @@ private:
     std::atomic<int> m_capture_peak_meter = 0;
 
     bool DecayVolumeMeters();
+
+    bool CheckVADVoiceGate();
+    bool CheckVADRNNoise(const int16_t *pcm);
+
+    void RNNoiseInitialize();
+    void RNNoiseUninitialize();
 
     friend void data_callback(ma_device *, void *, const void *, ma_uint32);
     friend void capture_data_callback(ma_device *, void *, const void *, ma_uint32);
@@ -108,6 +121,7 @@ private:
 
     std::atomic<double> m_capture_gate = 0.0;
     std::atomic<double> m_capture_gain = 1.0;
+    std::atomic<double> m_prob_threshold = 0.5;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
@@ -117,6 +131,7 @@ private:
 
     AudioDevices m_devices;
 
+    VADMethod m_vad_method;
     DenoiseState *m_rnnoise;
     std::atomic<uint32_t> m_rtp_timestamp = 0;
 

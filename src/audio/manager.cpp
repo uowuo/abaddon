@@ -64,9 +64,6 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
 AudioManager::AudioManager() {
     m_ok = true;
 
-    m_rnnoise = rnnoise_create(nullptr);
-    spdlog::get("audio")->info("RNNoise expects {} frames", rnnoise_get_frame_size());
-
     int err;
     m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
     if (err != OPUS_OK) {
@@ -85,6 +82,7 @@ AudioManager::AudioManager() {
     spdlog::get("audio")->info("Audio backend: {}", ma_get_backend_name(m_context.backend));
 
     Enumerate();
+    SetVADMethod(VADMethod::RNNoise);
 
     m_playback_config = ma_device_config_init(ma_device_type_playback);
     m_playback_config.playback.format = ma_format_f32;
@@ -146,7 +144,7 @@ AudioManager::~AudioManager() {
     ma_device_uninit(&m_capture_device);
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
-    rnnoise_destroy(m_rnnoise);
+    RNNoiseUninitialize();
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
@@ -423,14 +421,14 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
 
     UpdateCaptureVolume(new_pcm.data(), frames);
 
-    static float idc[480];
-    static float rnnoise_input[480];
-    // take left channel
-    for (int i = 0; i < 480; i++) {
-        rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
+    switch (m_vad_method) {
+        case VADMethod::Gate:
+            if (!CheckVADVoiceGate()) return;
+            break;
+        case VADMethod::RNNoise:
+            if (!CheckVADRNNoise(pcm)) return;
+            break;
     }
-    float prob = rnnoise_process_frame(m_rnnoise, idc, rnnoise_input);
-    if (prob < m_capture_gate) return;
 
     m_enc_mutex.lock();
     int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
@@ -473,6 +471,39 @@ bool AudioManager::DecayVolumeMeters() {
     return true;
 }
 
+bool AudioManager::CheckVADVoiceGate() {
+    return m_capture_peak_meter / 32768.0 > m_capture_gate;
+}
+
+bool AudioManager::CheckVADRNNoise(const int16_t *pcm) {
+    static float denoised[480];
+    static float rnnoise_input[480];
+    // take left channel
+    for (size_t i = 0; i < 480; i++) {
+        rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
+    }
+    float vad_prob = rnnoise_process_frame(m_rnnoise, denoised, rnnoise_input);
+    return vad_prob > m_prob_threshold;
+}
+
+void AudioManager::RNNoiseInitialize() {
+    spdlog::get("audio")->debug("Initializing RNNoise");
+    RNNoiseUninitialize();
+    m_rnnoise = rnnoise_create(nullptr);
+    const auto expected = rnnoise_get_frame_size();
+    if (expected != 480) {
+        spdlog::get("audio")->warn("RNNoise expects a frame count other than 480");
+    }
+}
+
+void AudioManager::RNNoiseUninitialize() {
+    spdlog::get("audio")->debug("Uninitializing RNNoise");
+    if (m_rnnoise != nullptr) {
+        rnnoise_destroy(m_rnnoise);
+        m_rnnoise = nullptr;
+    }
+}
+
 bool AudioManager::OK() const {
     return m_ok;
 }
@@ -495,6 +526,16 @@ AudioDevices &AudioManager::GetDevices() {
 
 uint32_t AudioManager::GetRTPTimestamp() const noexcept {
     return m_rtp_timestamp;
+}
+
+void AudioManager::SetVADMethod(VADMethod method) {
+    m_vad_method = method;
+
+    if (method == VADMethod::RNNoise) {
+        RNNoiseInitialize();
+    } else {
+        RNNoiseUninitialize();
+    }
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {

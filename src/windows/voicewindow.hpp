@@ -47,6 +47,7 @@ private:
     Gtk::Scale m_capture_gate;
     Gtk::Scale m_capture_gain;
 
+    Gtk::ComboBoxText m_vad_combo;
     Gtk::ComboBox m_playback_combo;
     Gtk::ComboBox m_capture_combo;
 

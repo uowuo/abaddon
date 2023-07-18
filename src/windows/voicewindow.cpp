@@ -134,6 +134,21 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         m_signal_gain.emit(val / 100.0);
     });
 
+    m_vad_combo.set_valign(Gtk::ALIGN_END);
+    m_vad_combo.set_hexpand(true);
+    m_vad_combo.set_halign(Gtk::ALIGN_FILL);
+    m_vad_combo.append("gate", "Gate");
+    m_vad_combo.append("rnnoise", "RNNoise");
+    m_vad_combo.set_active_id("rnnoise");
+    m_vad_combo.signal_changed().connect([this]() {
+        const auto id = m_vad_combo.get_active_id();
+        if (id == "gate") {
+            Abaddon::Get().GetAudio().SetVADMethod(AudioManager::VADMethod::Gate);
+        } else if (id == "rnnoise") {
+            Abaddon::Get().GetAudio().SetVADMethod(AudioManager::VADMethod::RNNoise);
+        }
+    });
+
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
     m_playback_combo.set_valign(Gtk::ALIGN_END);
     m_playback_combo.set_hexpand(true);
@@ -184,6 +199,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.add(m_capture_gate);
     m_main.add(m_capture_gain);
     m_main.add(m_scroll);
+    m_main.add(m_vad_combo);
     m_main.add(m_playback_combo);
     m_main.add(m_capture_combo);
     add(m_main);
