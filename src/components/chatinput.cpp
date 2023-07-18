@@ -41,9 +41,15 @@ bool ChatInputText::ProcessKeyPress(GdkEventKey *event) {
         return true;
     }
 
+#ifdef __APPLE__
+    if ((event->state & GDK_MOD2_MASK) && event->keyval == GDK_KEY_v) {
+        return CheckHandleClipboardPaste();
+    }
+#else
     if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_v) {
         return CheckHandleClipboardPaste();
     }
+#endif
 
     if (event->keyval == GDK_KEY_Return) {
         if (event->state & GDK_SHIFT_MASK)
@@ -491,6 +497,10 @@ void ChatInput::InsertText(const Glib::ustring &text) {
     m_input.Get().InsertText(text);
 }
 
+void ChatInput::Clear() {
+    GetBuffer()->set_text("");
+}
+
 Glib::RefPtr<Gtk::TextBuffer> ChatInput::GetBuffer() {
     return m_input.Get().GetBuffer();
 }
@@ -559,6 +569,24 @@ void ChatInput::StopReplying() {
     m_input.Get().get_style_context()->remove_class("replying");
 }
 
+void ChatInput::StartEditing(const Message &message) {
+    m_is_editing = true;
+    m_input.Get().grab_focus();
+    m_input.Get().get_style_context()->add_class("editing");
+    GetBuffer()->set_text(message.Content);
+    m_attachments.Clear();
+    m_attachments_revealer.set_reveal_child(false);
+}
+
+void ChatInput::StopEditing() {
+    m_is_editing = false;
+    m_input.Get().get_style_context()->remove_class("editing");
+}
+
+bool ChatInput::IsEmpty() {
+    return GetBuffer()->get_char_count() == 0;
+}
+
 bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
     try {
         const auto read_stream = file->read();
@@ -571,7 +599,7 @@ bool ChatInput::AddFileAsImageAttachment(const Glib::RefPtr<Gio::File> &file) {
 }
 
 bool ChatInput::CanAttachFiles() {
-    return Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES | Permission::SEND_MESSAGES);
+    return !m_is_editing && Abaddon::Get().GetDiscordClient().HasSelfChannelPermission(m_active_channel, Permission::ATTACH_FILES | Permission::SEND_MESSAGES);
 }
 
 ChatInput::type_signal_submit ChatInput::signal_submit() {

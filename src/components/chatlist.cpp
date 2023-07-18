@@ -133,10 +133,9 @@ void ChatList::ProcessNewMessage(const Message &data, bool prepend) {
                     m_menu_delete_message->set_sensitive(false);
                     m_menu_edit_message->set_sensitive(false);
                 } else {
-                    const bool can_edit = client.GetUserData().ID == data->Author.ID;
-                    const bool can_delete = can_edit || has_manage;
+                    const bool can_delete = (client.GetUserData().ID == data->Author.ID) || has_manage;
                     m_menu_delete_message->set_sensitive(can_delete);
-                    m_menu_edit_message->set_sensitive(can_edit);
+                    m_menu_edit_message->set_sensitive(data->IsEditable());
                 }
 
                 m_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
@@ -251,6 +250,25 @@ void ChatList::ActuallyRemoveMessage(Snowflake id) {
     auto it = m_id_to_widget.find(id);
     if (it != m_id_to_widget.end())
         RemoveMessageAndHeader(it->second);
+}
+
+std::optional<Snowflake> ChatList::GetLastSentEditableMessage() {
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto self_id = discord.GetUserData().ID;
+
+    std::map<Snowflake, Gtk::Widget *> ordered(m_id_to_widget.begin(), m_id_to_widget.end());
+
+    for (auto it = ordered.crbegin(); it != ordered.crend(); it++) {
+        const auto *widget = dynamic_cast<ChatMessageItemContainer *>(it->second);
+        if (widget == nullptr) continue;
+        const auto msg = discord.GetMessage(widget->ID);
+        if (!msg.has_value()) continue;
+        if (msg->Author.ID != self_id) continue;
+        if (!msg->IsEditable()) continue;
+        return msg->ID;
+    }
+
+    return std::nullopt;
 }
 
 void ChatList::SetupMenu() {

@@ -96,19 +96,23 @@ AudioManager::AudioManager() {
     if (const auto playback_id = m_devices.GetDefaultPlayback(); playback_id.has_value()) {
         m_playback_id = *playback_id;
         m_playback_config.playback.pDeviceID = &m_playback_id;
-    }
 
-    if (ma_device_init(&m_context, &m_playback_config, &m_playback_device) != MA_SUCCESS) {
-        spdlog::get("audio")->error("failed to initialize playback device");
-        m_ok = false;
-        return;
-    }
+        if (ma_device_init(&m_context, &m_playback_config, &m_playback_device) != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to initialize playback device");
+            m_ok = false;
+            return;
+        }
 
-    if (ma_device_start(&m_playback_device) != MA_SUCCESS) {
-        spdlog::get("audio")->error("failed to start playback");
-        ma_device_uninit(&m_playback_device);
-        m_ok = false;
-        return;
+        if (ma_device_start(&m_playback_device) != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to start playback");
+            ma_device_uninit(&m_playback_device);
+            m_ok = false;
+            return;
+        }
+
+        char playback_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
+        ma_device_get_name(&m_playback_device, ma_device_type_playback, playback_device_name, sizeof(playback_device_name), nullptr);
+        spdlog::get("audio")->info("using {} as playback device", playback_device_name);
     }
 
     m_capture_config = ma_device_config_init(ma_device_type_capture);
@@ -122,21 +126,17 @@ AudioManager::AudioManager() {
     if (const auto capture_id = m_devices.GetDefaultCapture(); capture_id.has_value()) {
         m_capture_id = *capture_id;
         m_capture_config.capture.pDeviceID = &m_capture_id;
+
+        if (ma_device_init(&m_context, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to initialize capture device");
+            m_ok = false;
+            return;
+        }
+
+        char capture_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
+        ma_device_get_name(&m_capture_device, ma_device_type_capture, capture_device_name, sizeof(capture_device_name), nullptr);
+        spdlog::get("audio")->info("using {} as capture device", capture_device_name);
     }
-
-    if (ma_device_init(&m_context, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
-        spdlog::get("audio")->error("failed to initialize capture device");
-        m_ok = false;
-        return;
-    }
-
-    char playback_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
-    ma_device_get_name(&m_playback_device, ma_device_type_playback, playback_device_name, sizeof(playback_device_name), nullptr);
-    spdlog::get("audio")->info("using {} as playback device", playback_device_name);
-
-    char capture_device_name[MA_MAX_DEVICE_NAME_LENGTH + 1];
-    ma_device_get_name(&m_capture_device, ma_device_type_capture, capture_device_name, sizeof(capture_device_name), nullptr);
-    spdlog::get("audio")->info("using {} as capture device", capture_device_name);
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }

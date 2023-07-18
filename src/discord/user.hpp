@@ -25,6 +25,11 @@ struct UserData {
         VerifiedBot = 1 << 16,
         EarlyVerifiedBotDeveloper = 1 << 17,
         CertifiedModerator = 1 << 18,
+        BotHTTPInteractions = 1 << 19,
+        Spammer = 1 << 20,
+        DisablePremium = 1 << 21,
+        ActiveDeveloper = 1 << 22,
+        Quarantined = 1ULL << 44,
 
         MaxFlag_PlusOne,
         MaxFlag = MaxFlag_PlusOne - 1,
@@ -37,6 +42,7 @@ struct UserData {
     std::string Username;
     std::string Discriminator;
     std::string Avatar; // null
+    std::optional<std::string> GlobalName;
     std::optional<bool> IsBot;
     std::optional<bool> IsSystem;
     std::optional<bool> IsMFAEnabled;
@@ -60,6 +66,7 @@ struct UserData {
     friend void to_json(nlohmann::json &j, const UserData &m);
     void update_from_json(const nlohmann::json &j);
 
+    [[nodiscard]] bool IsPomelo() const noexcept;
     [[nodiscard]] bool IsABot() const noexcept;
     [[nodiscard]] bool IsDeleted() const;
     [[nodiscard]] bool HasAvatar() const;
@@ -72,14 +79,15 @@ struct UserData {
     [[nodiscard]] std::string GetDefaultAvatarURL() const;
     [[nodiscard]] Snowflake GetHoistedRole(Snowflake guild_id, bool with_color = false) const;
     [[nodiscard]] std::string GetMention() const;
-    [[nodiscard]] std::string GetEscapedName() const;
-    [[nodiscard]] std::string GetEscapedBoldName() const;
-    [[nodiscard]] std::string GetEscapedString() const;
-    template<bool with_at>
-    [[nodiscard]] inline std::string GetEscapedBoldString() const {
-        if constexpr (with_at)
-            return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
-        else
-            return "<b>" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
-    }
+    [[nodiscard]] std::string GetDisplayName() const;
+    [[nodiscard]] std::string GetDisplayName(Snowflake guild_id) const;
+    [[nodiscard]] std::string GetDisplayName(const std::optional<Snowflake> &guild_id) const;
+    [[nodiscard]] std::string GetDisplayNameEscaped() const;
+    [[nodiscard]] std::string GetDisplayNameEscaped(Snowflake guild_id) const;
+    [[nodiscard]] std::string GetDisplayNameEscapedBold() const;
+    [[nodiscard]] std::string GetDisplayNameEscapedBold(Snowflake guild_id) const;
+    [[nodiscard]] std::string GetUsername() const;
+    [[nodiscard]] std::string GetUsernameEscaped() const;
+    [[nodiscard]] std::string GetUsernameEscapedBold() const;
+    [[nodiscard]] std::string GetUsernameEscapedBoldAt() const;
 };

@@ -18,8 +18,14 @@ public:
     Gtk::ComboBoxText m_encoding_mode;
     Gtk::ComboBoxText m_signal;
     Gtk::Scale m_bitrate;
+    Gtk::SpinButton m_gain;
 
 private:
+    using type_signal_gain = sigc::signal<void(double)>;
+    type_signal_gain m_signal_gain;
+
+public:
+    type_signal_gain signal_gain();
 };
 
 #endif

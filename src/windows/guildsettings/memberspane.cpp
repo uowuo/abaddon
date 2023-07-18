@@ -103,7 +103,7 @@ GuildSettingsMembersListItem::GuildSettingsMembersListItem(const GuildData &guil
     else
         m_avatar.SetURL(member.User->GetAvatarURL("png", "32"));
 
-    DisplayTerm = member.User->Username + "#" + member.User->Discriminator;
+    DisplayTerm = member.User->GetUsername();
 
     const auto member_update_cb = [this](Snowflake guild_id, Snowflake user_id) {
         if (user_id == UserID)
@@ -150,9 +150,9 @@ void GuildSettingsMembersListItem::UpdateColor() {
     const auto user = *discord.GetUser(UserID);
     if (auto color_id = discord.GetMemberHoistedRole(GuildID, UserID, true); color_id.IsValid()) {
         auto role = *discord.GetRole(color_id);
-        m_name.set_markup("<span color='#" + IntToCSSColor(role.Color) + "'>" + user.GetEscapedBoldString<false>() + "</span>");
+        m_name.set_markup("<span color='#" + IntToCSSColor(role.Color) + "'>" + user.GetUsernameEscapedBold() + "</span>");
     } else
-        m_name.set_markup(user.GetEscapedBoldString<false>());
+        m_name.set_markup(user.GetUsernameEscapedBold());
 }
 
 GuildSettingsMembersPaneInfo::GuildSettingsMembersPaneInfo(Snowflake guild_id)

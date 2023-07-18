@@ -114,10 +114,12 @@ protected:
 
     void AddPrivateChannels();
     void UpdateCreateDMChannel(const ChannelData &channel);
+    void SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm);
 
+    void RedrawUnreadIndicatorsForChannel(const ChannelData& channel);
     void OnMessageAck(const MessageAckData &data);
-
     void OnMessageCreate(const Message &msg);
+
     Gtk::TreeModel::Path m_path_for_menu;
 
     // cant be recovered through selection

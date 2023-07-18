@@ -12,6 +12,7 @@ option(ENABLE_VOICE "Enable voice suppport" ON)
 option(USE_KEYCHAIN "Store the token in the keychain (default)" ON)
 option(ENABLE_NOTIFICATION_SOUNDS "Enable notification sounds (default)" ON)
 option(ENABLE_RNNOISE "Enable RNNoise for voice activity detection (default)" ON)
+option(ENABLE_QRCODE_LOGIN "Enable QR code login (default)" ON)
 
 find_package(nlohmann_json REQUIRED)
 find_package(CURL)
@@ -61,6 +62,15 @@ target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
+
+if (ENABLE_QRCODE_LOGIN)
+    add_library(qrcodegen subprojects/qrcodegen/cpp/qrcodegen.hpp subprojects/qrcodegen/cpp/qrcodegen.cpp)
+    target_include_directories(qrcodegen PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/subprojects/qrcodegen/cpp")
+    target_link_libraries(abaddon qrcodegen)
+
+    target_include_directories(abaddon PUBLIC "subprojects/qrcodegen/cpp")
+    target_compile_definitions(abaddon PRIVATE WITH_QRLOGIN)
+endif ()
 
 target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
 
@@ -180,6 +190,12 @@ if (ENABLE_VOICE)
             target_link_libraries(abaddon rnnoise)
         endif ()
     endif ()
+
+    if (APPLE)
+        target_link_libraries(abaddon "-framework CoreFoundation")
+        target_link_libraries(abaddon "-framework CoreAudio")
+        target_link_libraries(abaddon "-framework AudioToolbox")
+    endif ()
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})
@@ -188,6 +204,11 @@ if (${ENABLE_NOTIFICATION_SOUNDS})
 endif ()
 
 if (USE_MINIAUDIO)
-    target_include_directories(abaddon PUBLIC subprojects/miniaudio)
+    find_path(MINIAUDIO_INCLUDE_DIR
+              NAMES miniaudio.h
+              HINTS subprojects
+              PATH_SUFFIXES miniaudio
+              REQUIRED)
+    target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()

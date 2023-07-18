@@ -8,7 +8,6 @@
 #include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
-#include "dialogs/editmessage.hpp"
 #include "dialogs/confirm.hpp"
 #include "dialogs/setstatus.hpp"
 #include "dialogs/friendpicker.hpp"
@@ -21,6 +20,7 @@
 #include "windows/voicewindow.hpp"
 #include "startup.hpp"
 #include "notifications/notifications.hpp"
+#include "remoteauth/remoteauthdialog.hpp"
 
 #ifdef WITH_LIBHANDY
     #include <handy.h>
@@ -252,6 +252,12 @@ int Abaddon::StartGTK() {
     }
 #endif
 
+#ifdef _WIN32
+    if (m_settings.GetSettings().HideConsole) {
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+    }
+#endif
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
@@ -261,6 +267,7 @@ int Abaddon::StartGTK() {
     m_main_window->signal_action_connect().connect(sigc::mem_fun(*this, &Abaddon::ActionConnect));
     m_main_window->signal_action_disconnect().connect(sigc::mem_fun(*this, &Abaddon::ActionDisconnect));
     m_main_window->signal_action_set_token().connect(sigc::mem_fun(*this, &Abaddon::ActionSetToken));
+    m_main_window->signal_action_login_qr().connect(sigc::mem_fun(*this, &Abaddon::ActionLoginQR));
     m_main_window->signal_action_reload_css().connect(sigc::mem_fun(*this, &Abaddon::ActionReloadCSS));
     m_main_window->signal_action_set_status().connect(sigc::mem_fun(*this, &Abaddon::ActionSetStatus));
     m_main_window->signal_action_add_recipient().connect(sigc::mem_fun(*this, &Abaddon::ActionAddRecipient));
@@ -828,6 +835,21 @@ void Abaddon::ActionSetToken() {
     m_main_window->UpdateMenus();
 }
 
+void Abaddon::ActionLoginQR() {
+#ifdef WITH_QRLOGIN
+    RemoteAuthDialog dlg(*m_main_window);
+    auto response = dlg.run();
+    if (response == Gtk::RESPONSE_OK) {
+        m_discord_token = dlg.GetToken();
+        m_discord.UpdateToken(m_discord_token);
+        m_main_window->UpdateComponents();
+        GetSettings().DiscordToken = m_discord_token;
+        ActionConnect();
+    }
+    m_main_window->UpdateMenus();
+#endif
+}
+
 void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
     if (!id.IsValid()) {
         m_discord.SetReferringChannel(Snowflake::Invalid);
@@ -914,24 +936,26 @@ void Abaddon::ActionChatLoadHistory(Snowflake id) {
 }
 
 void Abaddon::ActionChatInputSubmit(ChatSubmitParams data) {
-    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug")
+    if (data.Message.substr(0, 7) == "/shrug " || data.Message == "/shrug") {
         data.Message = data.Message.substr(6) + "\xC2\xAF\x5C\x5F\x28\xE3\x83\x84\x29\x5F\x2F\xC2\xAF"; // this is important
+    }
+
+    if (data.Message.substr(0, 8) == "@silent " || (data.Message.substr(0, 7) == "@silent" && !data.Attachments.empty())) {
+        data.Silent = true;
+        data.Message = data.Message.substr(7);
+    }
 
     if (!m_discord.HasChannelPermission(m_discord.GetUserData().ID, data.ChannelID, Permission::VIEW_CHANNEL)) return;
 
-    m_discord.SendChatMessage(data, NOOP_CALLBACK);
+    if (data.EditingID.IsValid()) {
+        m_discord.EditMessage(data.ChannelID, data.EditingID, data.Message);
+    } else {
+        m_discord.SendChatMessage(data, NOOP_CALLBACK);
+    }
 }
 
 void Abaddon::ActionChatEditMessage(Snowflake channel_id, Snowflake id) {
-    const auto msg = m_discord.GetMessage(id);
-    if (!msg.has_value()) return;
-    EditMessageDialog dlg(*m_main_window);
-    dlg.SetContent(msg->Content);
-    auto response = dlg.run();
-    if (response == Gtk::RESPONSE_OK) {
-        auto new_content = dlg.GetContent();
-        m_discord.EditMessage(channel_id, id, new_content);
-    }
+    m_main_window->EditMessage(id);
 }
 
 void Abaddon::ActionInsertMention(Snowflake id) {
@@ -952,7 +976,7 @@ void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to kick " + user->Username + "#" + user->Discriminator + "?");
+        dlg.SetConfirmText("Are you sure you want to kick " + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.KickUser(user_id, guild_id);
@@ -962,7 +986,7 @@ void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to ban " + user->Username + "#" + user->Discriminator + "?");
+        dlg.SetConfirmText("Are you sure you want to ban " + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.BanUser(user_id, guild_id);
@@ -1127,9 +1151,11 @@ int main(int argc, char **argv) {
 #endif
 
     spdlog::cfg::load_env_levels();
+    auto log_ui = spdlog::stdout_color_mt("ui");
     auto log_audio = spdlog::stdout_color_mt("audio");
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");
+    auto log_ra = spdlog::stdout_color_mt("remote-auth");
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();

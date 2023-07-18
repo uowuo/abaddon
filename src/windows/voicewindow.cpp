@@ -39,7 +39,7 @@ public:
         auto &discord = Abaddon::Get().GetDiscordClient();
         const auto user = discord.GetUser(id);
         if (user.has_value()) {
-            m_name.set_text(user->Username);
+            m_name.set_text(user->GetUsername());
             m_avatar.SetURL(user->GetAvatarURL("png", "32"));
         } else {
             m_name.set_text("Unknown user");
@@ -139,7 +139,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_playback_combo.set_hexpand(true);
     m_playback_combo.set_halign(Gtk::ALIGN_FILL);
     m_playback_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetPlaybackDeviceModel());
-    m_playback_combo.set_active(Abaddon::Get().GetAudio().GetDevices().GetActivePlaybackDevice());
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActivePlaybackDevice()) {
+        m_playback_combo.set_active(iter);
+    }
     m_playback_combo.pack_start(*playback_renderer);
     m_playback_combo.add_attribute(*playback_renderer, "text", 0);
     m_playback_combo.signal_changed().connect([this]() {
@@ -151,7 +153,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_combo.set_hexpand(true);
     m_capture_combo.set_halign(Gtk::ALIGN_FILL);
     m_capture_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetCaptureDeviceModel());
-    m_capture_combo.set_active(Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice());
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice()) {
+        m_capture_combo.set_active(iter);
+    }
     m_capture_combo.pack_start(*capture_renderer);
     m_capture_combo.add_attribute(*capture_renderer, "text", 0);
     m_capture_combo.signal_changed().connect([this]() {
@@ -163,6 +167,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_menu_view_sub.append(m_menu_view_settings);
     m_menu_view_settings.signal_activate().connect([this]() {
         auto *window = new VoiceSettingsWindow;
+        const auto cb = [this](double gain) {
+            m_capture_gain.set_value(gain * 100.0);
+            m_signal_gain.emit(gain);
+        };
+        window->signal_gain().connect(sigc::track_obj(cb, *this));
         window->show();
     });
 

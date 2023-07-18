@@ -17,8 +17,10 @@ struct ChatSubmitParams {
         std::string Filename;
     };
 
+    bool Silent = false;
     Snowflake ChannelID;
     Snowflake InReplyToID;
+    Snowflake EditingID;
     Glib::ustring Message;
     std::vector<Attachment> Attachments;
 };

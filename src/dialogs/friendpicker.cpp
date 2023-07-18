@@ -62,7 +62,7 @@ FriendPickerDialogItem::FriendPickerDialogItem(Snowflake user_id)
     , m_layout(Gtk::ORIENTATION_HORIZONTAL) {
     auto user = *Abaddon::Get().GetDiscordClient().GetUser(user_id);
 
-    m_name.set_markup(user.GetEscapedBoldString<false>());
+    m_name.set_markup(user.GetUsernameEscapedBold());
     m_name.set_single_line_mode(true);
 
     m_avatar.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(32);

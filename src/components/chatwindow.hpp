@@ -37,6 +37,9 @@ public:
     void SetTopic(const std::string &text);
     void AddAttachment(const Glib::RefPtr<Gio::File> &file);
 
+    void StartEditing(Snowflake message_id);
+    void StopEditing();
+
 #ifdef WITH_LIBHANDY
     void OpenNewTab(Snowflake id);
     TabsState GetTabsState();
@@ -55,10 +58,14 @@ protected:
     void StartReplying(Snowflake message_id);
     void StopReplying();
 
+    bool m_is_editing = false;
+    Snowflake m_editing_id;
+
     Snowflake m_active_channel;
 
     bool OnInputSubmit(ChatSubmitParams data);
 
+    bool ProcessKeyEvent(GdkEventKey *e);
     bool OnKeyPressEvent(GdkEventKey *e);
     void OnScrollEdgeOvershot(Gtk::PositionType pos);
 

@@ -265,6 +265,10 @@ bool Message::IsEdited() const {
     return m_edited;
 }
 
+bool Message::IsEditable() const noexcept {
+    return (Abaddon::Get().GetDiscordClient().GetUserData().ID == Author.ID) && !IsDeleted() && !IsPending && (Type == MessageType::DEFAULT || Type == MessageType::INLINE_REPLY);
+}
+
 bool Message::DoesMentionEveryoneOrUser(Snowflake id) const noexcept {
     if (DoesMentionEveryone) return true;
     return std::any_of(Mentions.begin(), Mentions.end(), [id](const UserData &user) {

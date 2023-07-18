@@ -1,5 +1,9 @@
 #include "user.hpp"
 
+bool UserData::IsPomelo() const noexcept {
+    return Discriminator.size() == 1 && Discriminator[0] == '0';
+}
+
 bool UserData::IsABot() const noexcept {
     return IsBot.has_value() && *IsBot;
 }
@@ -18,49 +22,54 @@ bool UserData::HasAnimatedAvatar() const noexcept {
 
 bool UserData::HasAnimatedAvatar(Snowflake guild_id) const {
     const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
-    if (member.has_value() && member->Avatar.has_value() && member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_')
+    if (member.has_value() && member->Avatar.has_value() && member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_') {
         return true;
-    else if (member.has_value() && !member->Avatar.has_value())
+    } else if (member.has_value() && !member->Avatar.has_value()) {
         return HasAnimatedAvatar();
+    }
     return false;
 }
 
 bool UserData::HasAnimatedAvatar(const std::optional<Snowflake> &guild_id) const {
-    if (guild_id.has_value())
+    if (guild_id.has_value()) {
         return HasAnimatedAvatar(*guild_id);
-    else
-        return HasAnimatedAvatar();
+    }
+
+    return HasAnimatedAvatar();
 }
 
 std::string UserData::GetAvatarURL(Snowflake guild_id, const std::string &ext, std::string size) const {
     const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
     if (member.has_value() && member->Avatar.has_value()) {
-        if (ext == "gif" && !(member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_'))
+        if (ext == "gif" && !(member->Avatar.value()[0] == 'a' && member->Avatar.value()[1] == '_')) {
             return GetAvatarURL(ext, size);
+        }
         return "https://cdn.discordapp.com/guilds/" +
                std::to_string(guild_id) + "/users/" + std::to_string(ID) +
                "/avatars/" + *member->Avatar + "." +
                ext + "?" + "size=" + size;
-    } else {
-        return GetAvatarURL(ext, size);
     }
+    return GetAvatarURL(ext, size);
 }
 
 std::string UserData::GetAvatarURL(const std::optional<Snowflake> &guild_id, const std::string &ext, std::string size) const {
-    if (guild_id.has_value())
+    if (guild_id.has_value()) {
         return GetAvatarURL(*guild_id, ext, size);
-    else
-        return GetAvatarURL(ext, size);
+    }
+    return GetAvatarURL(ext, size);
 }
 
 std::string UserData::GetAvatarURL(const std::string &ext, std::string size) const {
-    if (HasAvatar())
+    if (HasAvatar()) {
         return "https://cdn.discordapp.com/avatars/" + std::to_string(ID) + "/" + Avatar + "." + ext + "?size=" + size;
-    else
-        return GetDefaultAvatarURL();
+    }
+    return GetDefaultAvatarURL();
 }
 
 std::string UserData::GetDefaultAvatarURL() const {
+    if (IsPomelo()) {
+        return "https://cdn.discordapp.com/embed/avatars/" + std::to_string((static_cast<uint64_t>(ID) >> 22) % 6) + ".png";
+    }
     return "https://cdn.discordapp.com/embed/avatars/" + std::to_string(std::stoul(Discriminator) % 5) + ".png"; // size isn't respected by the cdn
 }
 
@@ -72,16 +81,73 @@ std::string UserData::GetMention() const {
     return "<@" + std::to_string(ID) + ">";
 }
 
-std::string UserData::GetEscapedName() const {
-    return Glib::Markup::escape_text(Username);
+std::string UserData::GetDisplayName() const {
+    if (IsPomelo() && GlobalName.has_value()) {
+        return *GlobalName;
+    }
+
+    return Username;
 }
 
-std::string UserData::GetEscapedBoldName() const {
-    return "<b>" + Glib::Markup::escape_text(Username) + "</b>";
+std::string UserData::GetDisplayName(Snowflake guild_id) const {
+    const auto member = Abaddon::Get().GetDiscordClient().GetMember(ID, guild_id);
+    if (member.has_value() && !member->Nickname.empty()) {
+        return member->Nickname;
+    }
+    return GetDisplayName();
 }
 
-std::string UserData::GetEscapedString() const {
+std::string UserData::GetDisplayName(const std::optional<Snowflake> &guild_id) const {
+    if (guild_id.has_value()) {
+        return GetDisplayName(*guild_id);
+    }
+    return GetDisplayName();
+}
+
+std::string UserData::GetDisplayNameEscaped() const {
+    return Glib::Markup::escape_text(GetDisplayName());
+}
+
+std::string UserData::GetDisplayNameEscaped(Snowflake guild_id) const {
+    return Glib::Markup::escape_text(GetDisplayName(guild_id));
+}
+
+std::string UserData::GetDisplayNameEscapedBold() const {
+    return "<b>" + Glib::Markup::escape_text(GetDisplayName()) + "</b>";
+}
+
+std::string UserData::GetDisplayNameEscapedBold(Snowflake guild_id) const {
+    return "<b>" + Glib::Markup::escape_text(GetDisplayName(guild_id)) + "</b>";
+}
+
+std::string UserData::GetUsername() const {
+    if (IsPomelo()) {
+        return Username;
+    }
+
+    return Username + "#" + Discriminator;
+}
+
+std::string UserData::GetUsernameEscaped() const {
+    if (IsPomelo()) {
+        return Glib::Markup::escape_text(Username);
+    }
+
     return Glib::Markup::escape_text(Username) + "#" + Discriminator;
+}
+
+std::string UserData::GetUsernameEscapedBold() const {
+    if (IsPomelo()) {
+        return "<b>" + Glib::Markup::escape_text(Username) + "</b>";
+    }
+    return "<b>" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
+}
+
+std::string UserData::GetUsernameEscapedBoldAt() const {
+    if (IsPomelo()) {
+        return "<b>@" + Glib::Markup::escape_text(Username) + "</b>";
+    }
+    return "<b>@" + Glib::Markup::escape_text(Username) + "</b>#" + Discriminator;
 }
 
 void from_json(const nlohmann::json &j, UserData &m) {
@@ -104,6 +170,7 @@ void from_json(const nlohmann::json &j, UserData &m) {
     JS_ON("phone", m.Phone);
     JS_ON("bio", m.Bio);
     JS_ON("banner", m.BannerHash);
+    JS_ON("global_name", m.GlobalName);
 }
 
 void to_json(nlohmann::json &j, const UserData &m) {
@@ -127,6 +194,7 @@ void to_json(nlohmann::json &j, const UserData &m) {
     JS_IF("mobile", m.IsMobile);
     JS_IF("nsfw_allowed", m.IsNSFWAllowed);
     JS_IF("phone", m.Phone);
+    JS_IF("global_name", m.GlobalName);
 }
 
 void UserData::update_from_json(const nlohmann::json &j) {
@@ -146,6 +214,7 @@ void UserData::update_from_json(const nlohmann::json &j) {
     JS_RD("mobile", IsMobile);
     JS_RD("nsfw_allowed", IsNSFWAllowed);
     JS_RD("phone", Phone);
+    JS_RD("global_name", GlobalName);
 }
 
 const char *UserData::GetFlagName(uint64_t flag) {

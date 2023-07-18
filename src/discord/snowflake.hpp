@@ -16,6 +16,7 @@ struct Snowflake {
 
     [[nodiscard]] bool IsValid() const;
     [[nodiscard]] Glib::ustring GetLocalTimestamp() const;
+    [[nodiscard]] uint64_t GetUnixMilliseconds() const noexcept;
 
     bool operator==(const Snowflake &s) const noexcept {
         return m_num == s.m_num;

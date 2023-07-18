@@ -5,6 +5,7 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     , m_main(Gtk::ORIENTATION_VERTICAL)
     , m_upper(Gtk::ORIENTATION_HORIZONTAL)
     , m_badges(Gtk::ORIENTATION_HORIZONTAL)
+    , m_name_box(Gtk::ORIENTATION_VERTICAL)
     , m_pane_info(user_id)
     , m_pane_guilds(user_id)
     , m_pane_friends(user_id) {
@@ -15,14 +16,15 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
 
     set_name("user-profile");
     set_default_size(450, 375);
-    set_title(user.Username + "#" + user.Discriminator);
+    set_title(user.GetUsername());
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
     get_style_context()->add_class("user-profile-window");
     m_main.get_style_context()->add_class("profile-main-container");
     m_avatar.get_style_context()->add_class("profile-avatar");
-    m_username.get_style_context()->add_class("profile-username");
+    m_displayname.get_style_context()->add_class("profile-username");
+    m_username.get_style_context()->add_class("profile-username-nondisplay");
     m_switcher.get_style_context()->add_class("profile-switcher");
     m_stack.get_style_context()->add_class("profile-stack");
     m_badges.get_style_context()->add_class("profile-badges");
@@ -31,8 +33,8 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     m_scroll.set_vexpand(true);
     m_scroll.set_propagate_natural_height(true);
 
-    if (user.HasAvatar())
-        AddPointerCursor(m_avatar_ev);
+    if (user.HasAvatar()) AddPointerCursor(m_avatar_ev);
+
     m_avatar_ev.signal_button_release_event().connect([user](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_RELEASE && event->button == GDK_BUTTON_PRIMARY) {
             if (user.HasAnimatedAvatar())
@@ -62,7 +64,8 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
         img.LoadFromURL(user.GetAvatarURL("png", "64"), sigc::track_obj(cb, *this));
     }
 
-    m_username.set_markup(user.GetEscapedString());
+    m_displayname.set_markup(user.GetDisplayNameEscaped());
+    m_username.set_label(user.GetUsername());
 
     m_switcher.set_stack(m_stack);
     m_switcher.set_halign(Gtk::ALIGN_START);
@@ -79,10 +82,13 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
 
     m_upper.set_halign(Gtk::ALIGN_START);
     m_avatar.set_halign(Gtk::ALIGN_START);
+    m_displayname.set_halign(Gtk::ALIGN_START);
     m_username.set_halign(Gtk::ALIGN_START);
     m_avatar_ev.add(m_avatar);
     m_upper.add(m_avatar_ev);
-    m_upper.add(m_username);
+    m_upper.add(m_name_box);
+    m_name_box.add(m_displayname);
+    m_name_box.add(m_username);
     m_badges_scroll.add(m_badges);
     m_upper.add(m_badges_scroll);
     m_main.add(m_upper);
@@ -97,8 +103,13 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_info.SetProfile(data);
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
-    for (auto child : m_badges.get_children())
+    if (data.LegacyUsername.has_value()) {
+        m_username.set_tooltip_text("Originally known as " + *data.LegacyUsername);
+    }
+
+    for (auto child : m_badges.get_children()) {
         delete child;
+    }
 
     if (!data.User.PublicFlags.has_value()) return;
     const auto x = *data.User.PublicFlags;

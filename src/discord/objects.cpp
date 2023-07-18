@@ -251,7 +251,7 @@ void from_json(const nlohmann::json &j, SupplementalMergedPresencesData &m) {
 
 void from_json(const nlohmann::json &j, SupplementalGuildEntry &m) {
     JS_D("id", m.ID);
-    JS_D("voice_states", m.VoiceStates);
+    JS_ON("voice_states", m.VoiceStates);
 }
 
 void from_json(const nlohmann::json &j, ReadySupplementalData &m) {
@@ -308,6 +308,7 @@ void to_json(nlohmann::json &j, const HeartbeatMessage &m) {
 
 void to_json(nlohmann::json &j, const CreateMessageObject &m) {
     j["content"] = m.Content;
+    j["flags"] = m.Flags;
     JS_IF("message_reference", m.MessageReference);
     JS_IF("nonce", m.Nonce);
 }
@@ -463,6 +464,7 @@ void from_json(const nlohmann::json &j, UserProfileData &m) {
     JS_D("mutual_guilds", m.MutualGuilds);
     JS_ON("premium_guild_since", m.PremiumGuildSince);
     JS_ON("premium_since", m.PremiumSince);
+    JS_ON("legacy_username", m.LegacyUsername);
     JS_D("user", m.User);
 }
 
@@ -685,6 +687,11 @@ void from_json(const nlohmann::json &j, VoiceServerUpdateData &m) {
     JS_D("endpoint", m.Endpoint);
     JS_ON("guild_id", m.GuildID);
     JS_ON("channel_id", m.ChannelID);
+}
+
+void from_json(const nlohmann::json &j, CallCreateData &m) {
+    JS_D("channel_id", m.ChannelID);
+    JS_ON("voice_states", m.VoiceStates);
 }
 #endif
 

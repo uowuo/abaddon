@@ -70,6 +70,7 @@ void SettingsManager::ReadSettings() {
     SMSTR("style", "unreadcolor", UnreadIndicatorColor);
     SMBOOL("notifications", "enabled", NotificationsEnabled);
     SMBOOL("notifications", "playsound", NotificationsPlaySound);
+    SMBOOL("windows", "hideconsole", HideConsole);
 
 #ifdef WITH_KEYCHAIN
     keychain::Error error {};
@@ -153,6 +154,7 @@ void SettingsManager::Close() {
         SMSTR("style", "unreadcolor", UnreadIndicatorColor);
         SMBOOL("notifications", "enabled", NotificationsEnabled);
         SMBOOL("notifications", "playsound", NotificationsPlaySound);
+        SMBOOL("windows", "hideconsole", HideConsole);
 
 #ifdef WITH_KEYCHAIN
         keychain::Error error {};

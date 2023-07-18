@@ -117,16 +117,16 @@ void FriendsList::OnActionRemove(Snowflake id) {
         Glib::ustring str;
         switch (*discord.GetRelationship(id)) {
             case RelationshipType::Blocked:
-                str = "Are you sure you want to unblock " + user->Username + "#" + user->Discriminator + "?";
+                str = "Are you sure you want to unblock " + user->GetUsername() + "?";
                 break;
             case RelationshipType::Friend:
-                str = "Are you sure you want to remove " + user->Username + "#" + user->Discriminator + "?";
+                str = "Are you sure you want to remove " + user->GetUsername() + "?";
                 break;
             case RelationshipType::PendingIncoming:
-                str = "Are you sure you want to ignore " + user->Username + "#" + user->Discriminator + "?";
+                str = "Are you sure you want to ignore " + user->GetUsername() + "?";
                 break;
             case RelationshipType::PendingOutgoing:
-                str = "Are you sure you want to cancel your request to " + user->Username + "#" + user->Discriminator + "?";
+                str = "Are you sure you want to cancel your request to " + user->GetUsername() + "?";
                 break;
             default:
                 break;
@@ -244,7 +244,7 @@ bool FriendsListAddComponent::OnKeyPress(GdkEventKey *e) {
 FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData &data)
     : ID(data.ID)
     , Type(type)
-    , Name(data.Username + "#" + data.Discriminator)
+    , Name(data.GetUsername())
     , Status(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID))
     , m_accept("Accept") {
     auto *ev = Gtk::manage(new Gtk::EventBox);
@@ -265,7 +265,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
         img->SetURL(data.GetAvatarURL("png", "32"));
     }
 
-    namelbl->set_markup(data.GetEscapedBoldName());
+    namelbl->set_markup(data.GetDisplayNameEscapedBold());
 
     UpdatePresenceLabel();
 

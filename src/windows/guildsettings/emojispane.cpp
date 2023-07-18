@@ -119,7 +119,7 @@ void GuildSettingsEmojisPane::AddEmojiRow(const EmojiData &emoji) {
     row[m_columns.m_col_pixbuf] = img.GetPlaceholder(32);
     row[m_columns.m_col_name] = emoji.Name;
     if (emoji.Creator.has_value())
-        row[m_columns.m_col_creator] = emoji.Creator->Username + "#" + emoji.Creator->Discriminator;
+        row[m_columns.m_col_creator] = emoji.Creator->GetUsername();
     if (emoji.IsAnimated.has_value())
         row[m_columns.m_col_animated] = *emoji.IsAnimated ? "Yes" : "No";
     else

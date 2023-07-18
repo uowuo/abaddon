@@ -117,12 +117,13 @@ void Completer::CompleteMentions(const Glib::ustring &term) {
         if (id == me) continue;
         const auto author = discord.GetUser(id);
         if (!author.has_value()) continue;
+        // todo improve the predicate here
         if (!StringContainsCaseless(author->Username, term)) continue;
         if (i++ > 15) break;
 
         auto entry = CreateEntry(author->GetMention());
 
-        entry->SetText(author->Username + "#" + author->Discriminator);
+        entry->SetText(author->GetUsername());
 
         if (channel_id.IsValid()) {
             const auto chan = discord.GetChannel(channel_id);

@@ -461,8 +461,13 @@ void DiscordClient::SendChatMessageNoAttachments(const ChatSubmitParams &params,
     CreateMessageObject obj;
     obj.Content = params.Message;
     obj.Nonce = nonce;
-    if (params.InReplyToID.IsValid())
+    if (params.Silent) {
+        obj.Flags |= MessageFlags::SUPPRESS_NOTIFICATIONS;
+    }
+
+    if (params.InReplyToID.IsValid()) {
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
+    }
 
     m_http.MakePOST("/channels/" + std::to_string(params.ChannelID) + "/messages",
                     nlohmann::json(obj).dump(),
@@ -494,8 +499,13 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
     CreateMessageObject obj;
     obj.Content = params.Message;
     obj.Nonce = nonce;
-    if (params.InReplyToID.IsValid())
+    if (params.Silent) {
+        obj.Flags |= MessageFlags::SUPPRESS_NOTIFICATIONS;
+    }
+
+    if (params.InReplyToID.IsValid()) {
         obj.MessageReference.emplace().MessageID = params.InReplyToID;
+    }
 
     auto req = m_http.CreateRequest(http::REQUEST_POST, "/channels/" + std::to_string(params.ChannelID) + "/messages");
     m_progress_cb_timer.start();
@@ -545,10 +555,11 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
 }
 
 void DiscordClient::SendChatMessage(const ChatSubmitParams &params, const sigc::slot<void(DiscordError)> &callback) {
-    if (params.Attachments.empty())
+    if (params.Attachments.empty()) {
         SendChatMessageNoAttachments(params, callback);
-    else
+    } else {
         SendChatMessageAttachments(params, callback);
+    }
 }
 
 void DiscordClient::DeleteMessage(Snowflake channel_id, Snowflake id) {
@@ -1186,6 +1197,27 @@ void DiscordClient::AcceptVerificationGate(Snowflake guild_id, VerificationGateI
     });
 }
 
+void DiscordClient::RemoteAuthLogin(const std::string &ticket, const sigc::slot<void(std::optional<std::string>, DiscordError code)> &callback) {
+    http::request req(http::REQUEST_POST, "https://discord.com/api/v9/users/@me/remote-auth/login");
+    req.set_header("Content-Type", "application/json");
+    req.set_user_agent(Abaddon::Get().GetSettings().UserAgent);
+    req.set_body("{\"ticket\":\"" + ticket + "\"}");
+    m_http.Execute(std::move(req), [this, callback](const http::response_type &r) {
+        if (CheckCode(r)) {
+            callback(nlohmann::json::parse(r.text).at("encrypted_token").get<std::string>(), DiscordError::NONE);
+        } else {
+            try {
+                const auto j = nlohmann::json::parse(r.text);
+                if (j.contains("captcha_service")) {
+                    callback(std::nullopt, DiscordError::CAPTCHA_REQUIRED);
+                    return;
+                }
+            } catch (...) {}
+            callback(std::nullopt, GetCodeFromResponse(r));
+        }
+    });
+}
+
 #ifdef WITH_VOICE
 void DiscordClient::ConnectToVoice(Snowflake channel_id) {
     auto channel = GetChannel(channel_id);
@@ -1304,6 +1336,17 @@ int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
     const auto iter = m_unread.find(id);
     if (iter == m_unread.end()) return -1; // todo: no magic number (who am i kidding ill never change this)
     return iter->second;
+}
+
+int DiscordClient::GetUnreadChannelsCountForCategory(Snowflake id) const noexcept {
+    int result = 0;
+    for (Snowflake channel_id : m_store.GetChannelIDsWithParentID(id)) {
+        if (IsChannelMuted(channel_id)) continue;
+        const auto iter = m_unread.find(channel_id);
+        if (iter == m_unread.end()) continue;
+        result += 1;
+    }
+    return result;
 }
 
 bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept {
@@ -1579,6 +1622,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::VOICE_SERVER_UPDATE: {
                         HandleGatewayVoiceServerUpdate(m);
                     } break;
+                    case GatewayEvent::CALL_CREATE: {
+                        HandleGatewayCallCreate(m);
+                    } break;
 #endif
                 }
             } break;
@@ -1801,9 +1847,12 @@ void DiscordClient::HandleGatewayPresenceUpdate(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayChannelDelete(const GatewayMessage &msg) {
     const auto id = msg.Data.at("id").get<Snowflake>();
     const auto channel = GetChannel(id);
-    auto it = m_guild_to_channels.find(*channel->GuildID);
-    if (it != m_guild_to_channels.end())
-        it->second.erase(id);
+    if (channel.has_value() && channel->GuildID.has_value()) {
+        auto it = m_guild_to_channels.find(*channel->GuildID);
+        if (it != m_guild_to_channels.end()) {
+            it->second.erase(id);
+        }
+    }
     m_store.ClearChannel(id);
     m_signal_channel_delete.emit(id);
     m_signal_channel_accessibility_changed.emit(id, false);
@@ -2253,8 +2302,39 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
 void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
     spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
 
-    VoiceState data = msg.Data;
+    CheckVoiceState(msg.Data);
+}
 
+void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
+
+    VoiceServerUpdateData data = msg.Data;
+    spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
+    spdlog::get("discord")->debug("Voice token: {}", data.Token);
+    m_voice.SetEndpoint(data.Endpoint);
+    m_voice.SetToken(data.Token);
+    if (data.GuildID.has_value()) {
+        m_voice.SetServerID(*data.GuildID);
+    } else if (data.ChannelID.has_value()) {
+        m_voice.SetServerID(*data.ChannelID);
+    } else {
+        spdlog::get("discord")->error("No guild or channel ID in voice server?");
+    }
+    m_voice.SetUserID(m_user_data.ID);
+    m_voice.Start();
+}
+
+void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
+    CallCreateData data = msg.Data;
+
+    spdlog::get("discord")->debug("CALL_CREATE: {}", data.ChannelID);
+
+    for (const auto &state : data.VoiceStates) {
+        CheckVoiceState(state);
+    }
+}
+
+void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.UserID == m_user_data.ID) {
         spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
@@ -2291,25 +2371,6 @@ void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
             m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
         }
     }
-}
-
-void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
-    spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
-
-    VoiceServerUpdateData data = msg.Data;
-    spdlog::get("discord")->debug("Voice server endpoint: {}", data.Endpoint);
-    spdlog::get("discord")->debug("Voice token: {}", data.Token);
-    m_voice.SetEndpoint(data.Endpoint);
-    m_voice.SetToken(data.Token);
-    if (data.GuildID.has_value()) {
-        m_voice.SetServerID(*data.GuildID);
-    } else if (data.ChannelID.has_value()) {
-        m_voice.SetServerID(*data.ChannelID);
-    } else {
-        spdlog::get("discord")->error("No guild or channel ID in voice server?");
-    }
-    m_voice.SetUserID(m_user_data.ID);
-    m_voice.Start();
 }
 #endif
 
@@ -2556,7 +2617,7 @@ void DiscordClient::HeartbeatThread() {
 void DiscordClient::SendIdentify() {
     IdentifyMessage msg;
     msg.Token = m_token;
-    msg.Capabilities = 509; // no idea what this is
+    msg.Capabilities = 4605; // bit 12 is necessary for CALL_CREATE... apparently? need to get this in sync with official client
     msg.Properties.OS = "Windows";
     msg.Properties.Browser = "Chrome";
     msg.Properties.Device = "";
@@ -2575,9 +2636,6 @@ void DiscordClient::SendIdentify() {
     msg.Presence.Since = 0;
     msg.Presence.IsAFK = false;
     msg.DoesSupportCompression = false;
-    msg.ClientState.HighestLastMessageID = "0";
-    msg.ClientState.ReadStateVersion = 0;
-    msg.ClientState.UserGuildSettingsVersion = -1;
     SetSuperPropertiesFromIdentity(msg);
     const bool b = m_websocket.GetPrintMessages();
     m_websocket.SetPrintMessages(false);
@@ -2893,6 +2951,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["GUILD_MEMBERS_CHUNK"] = GatewayEvent::GUILD_MEMBERS_CHUNK;
     m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
     m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
+    m_event_map["CALL_CREATE"] = GatewayEvent::CALL_CREATE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

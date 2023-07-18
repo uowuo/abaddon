@@ -22,7 +22,7 @@ MutualFriendItem::MutualFriendItem(const UserData &user)
         img.LoadFromURL(user.GetAvatarURL("png", "32"), sigc::track_obj(cb, *this));
     }
 
-    m_name.set_markup(user.GetEscapedBoldString<false>());
+    m_name.set_markup(user.GetUsernameEscapedBold());
 
     m_name.set_valign(Gtk::ALIGN_CENTER);
     add(m_avatar);

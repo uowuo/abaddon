@@ -52,6 +52,9 @@ public:
         bool NotificationsEnabled { true };
 #endif
         bool NotificationsPlaySound { true };
+
+        // [windows]
+        bool HideConsole { false };
     };
 
     SettingsManager(const std::string &filename);

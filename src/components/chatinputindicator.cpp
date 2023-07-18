@@ -54,6 +54,12 @@ void ChatInputIndicator::AddUser(Snowflake channel_id, const UserData &user, int
 
 void ChatInputIndicator::SetActiveChannel(Snowflake id) {
     m_active_channel = id;
+    const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
+    if (channel.has_value()) {
+        m_active_guild = channel->GuildID;
+    } else {
+        m_active_guild = std::nullopt;
+    }
     ComputeTypingString();
 }
 
@@ -105,14 +111,14 @@ void ChatInputIndicator::ComputeTypingString() {
     if (typers.empty()) {
         SetTypingString("");
     } else if (typers.size() == 1) {
-        SetTypingString(typers[0].Username + " is typing...");
+        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " is typing...");
     } else if (typers.size() == 2) {
-        SetTypingString(typers[0].Username + " and " + typers[1].Username + " are typing...");
+        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " and " + typers[1].GetDisplayName(m_active_guild) + " are typing...");
     } else if (typers.size() > 2 && typers.size() <= MaxUsersInIndicator) {
         Glib::ustring str;
         for (size_t i = 0; i < typers.size() - 1; i++)
-            str += typers[i].Username + ", ";
-        SetTypingString(str + "and " + typers[typers.size() - 1].Username + " are typing...");
+            str += typers[i].GetDisplayName(m_active_guild) + ", ";
+        SetTypingString(str + "and " + typers[typers.size() - 1].GetDisplayName(m_active_guild) + " are typing...");
     } else { // size() > MaxUsersInIndicator
         SetTypingString("Several people are typing...");
     }

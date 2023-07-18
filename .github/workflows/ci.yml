@@ -67,7 +67,7 @@ jobs:
         with:
           cond: ${{ matrix.mindeps == true }}
           if_true: |
-            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF
+            cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DUSE_LIBHANDY=OFF -DENABLE_VOICE=OFF -DENABLE_NOTIFICATION_SOUNDS=OFF -DENABLE_QRCODE_LOGIN=OFF
             cmake --build build
           if_false: |
             cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DCMAKE_CXX_FLAGS="-Wl,--default-image-base-low"
@@ -95,7 +95,6 @@ jobs:
           mkdir -p 16x16/devices 24x24/devices 32x32/devices 48x48/devices 64x64/devices 96x96/devices scalable/devices
           mkdir -p 16x16/status 24x24/status 32x32/status 48x48/status 64x64/status 96x96/status scalable/status
           cd ${GITHUB_WORKSPACE}
-          cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/icon-theme.cache ${artifact_dir}/share/icons/Adwaita/icon-theme.cache
           cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/index.theme ${artifact_dir}/share/icons/Adwaita/index.theme
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/%.symbolic.png || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/%.symbolic.png || :
@@ -104,6 +103,8 @@ jobs:
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/64x64/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/64x64/%.symbolic.png || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/96x96/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/96x96/%.symbolic.png || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/scalable/%.svg ${artifact_dir}/share/icons/Adwaita/scalable/%.svg || :
+          cd ${artifact_dir}/share/icons/Adwaita
+          gtk-update-icon-cache .
 
       - name: Upload build (1)
         uses: haya14busa/action-cond@v1

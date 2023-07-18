@@ -23,6 +23,7 @@ public:
     void SetSeparateAll(bool separate);
     void SetUsePinnedMenu();                  // i think i need a better way to do menus
     void ActuallyRemoveMessage(Snowflake id); // perhaps not the best method name
+    std::optional<Snowflake> GetLastSentEditableMessage();
 
 private:
     void SetupMenu();

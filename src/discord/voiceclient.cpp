@@ -112,8 +112,8 @@ void UDPSocket::ReadThread() {
         sockaddr_in from;
         socklen_t addrlen = sizeof(from);
 
-        tv.tv_sec = 0;
-        tv.tv_usec = 1000000;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
         fd_set read_fds;
         FD_ZERO(&read_fds);

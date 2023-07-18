@@ -50,8 +50,8 @@ ChatWindow::ChatWindow() {
 
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
     m_input->signal_escape().connect([this]() {
-        if (m_is_replying)
-            StopReplying();
+        if (m_is_replying) StopReplying();
+        if (m_is_editing) StopEditing();
     });
     m_input->signal_key_press_event().connect(sigc::mem_fun(*this, &ChatWindow::OnKeyPressEvent), false);
     m_input->show();
@@ -132,8 +132,8 @@ void ChatWindow::SetActiveChannel(Snowflake id) {
     m_input->SetActiveChannel(id);
     m_input_indicator->SetActiveChannel(id);
     m_rate_limit_indicator->SetActiveChannel(id);
-    if (m_is_replying)
-        StopReplying();
+    if (m_is_replying) StopReplying();
+    if (m_is_editing) StopEditing();
 
 #ifdef WITH_LIBHANDY
     m_tab_switcher->ReplaceActiveTab(id);
@@ -274,13 +274,29 @@ bool ChatWindow::OnInputSubmit(ChatSubmitParams data) {
 
     data.ChannelID = m_active_channel;
     data.InReplyToID = m_replying_to;
+    data.EditingID = m_editing_id;
 
     if (m_active_channel.IsValid())
         m_signal_action_chat_submit.emit(data); // m_replying_to is checked for invalid in the handler
-    if (m_is_replying)
-        StopReplying();
+
+    if (m_is_replying) StopReplying();
+    if (m_is_editing) StopEditing();
 
     return true;
+}
+
+bool ChatWindow::ProcessKeyEvent(GdkEventKey *e) {
+    if (e->type != GDK_KEY_PRESS) return false;
+    if (e->keyval == GDK_KEY_Up && !(e->state & GDK_SHIFT_MASK) && m_input->IsEmpty()) {
+        const auto edit_id = m_chat->GetLastSentEditableMessage();
+        if (edit_id.has_value()) {
+            StartEditing(*edit_id);
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 bool ChatWindow::OnKeyPressEvent(GdkEventKey *e) {
@@ -288,6 +304,9 @@ bool ChatWindow::OnKeyPressEvent(GdkEventKey *e) {
         return true;
 
     if (m_input->ProcessKeyPress(e))
+        return true;
+
+    if (ProcessKeyEvent(e))
         return true;
 
     return false;
@@ -300,16 +319,37 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     m_replying_to = message_id;
     m_is_replying = true;
     m_input->StartReplying();
-    if (author.has_value())
-        m_input_indicator->SetCustomMarkup("Replying to " + author->GetEscapedBoldString<false>());
-    else
+    if (author.has_value()) {
+        m_input_indicator->SetCustomMarkup("Replying to " + author->GetUsernameEscapedBold());
+    } else {
         m_input_indicator->SetCustomMarkup("Replying...");
+    }
 }
 
 void ChatWindow::StopReplying() {
     m_is_replying = false;
     m_replying_to = Snowflake::Invalid;
     m_input->StopReplying();
+    m_input_indicator->ClearCustom();
+}
+
+void ChatWindow::StartEditing(Snowflake message_id) {
+    const auto message = Abaddon::Get().GetDiscordClient().GetMessage(message_id);
+    if (!message.has_value()) {
+        spdlog::get("ui")->warn("ChatWindow::StartEditing message is nullopt");
+        return;
+    }
+    m_is_editing = true;
+    m_editing_id = message_id;
+    m_input->StartEditing(*message);
+    m_input_indicator->SetCustomMarkup("Editing...");
+}
+
+void ChatWindow::StopEditing() {
+    m_is_editing = false;
+    m_editing_id = Snowflake::Invalid;
+    m_input->StopEditing();
+    m_input->Clear();
     m_input_indicator->ClearCustom();
 }
 

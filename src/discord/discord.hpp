@@ -184,6 +184,8 @@ public:
     void GetVerificationGateInfo(Snowflake guild_id, const sigc::slot<void(std::optional<VerificationGateInfoObject>)> &callback);
     void AcceptVerificationGate(Snowflake guild_id, VerificationGateInfoObject info, const sigc::slot<void(DiscordError code)> &callback);
 
+    void RemoteAuthLogin(const std::string &ticket, const sigc::slot<void(std::optional<std::string>, DiscordError code)> &callback);
+
 #ifdef WITH_VOICE
     void ConnectToVoice(Snowflake channel_id);
     void DisconnectFromVoice();
@@ -214,6 +216,7 @@ public:
     bool IsChannelMuted(Snowflake id) const noexcept;
     bool IsGuildMuted(Snowflake id) const noexcept;
     int GetUnreadStateForChannel(Snowflake id) const noexcept;
+    int GetUnreadChannelsCountForCategory(Snowflake id) const noexcept;
     bool GetUnreadStateForGuild(Snowflake id, int &total_mentions) const noexcept;
     int GetUnreadDMsCount() const;
 
@@ -291,6 +294,9 @@ private:
 #ifdef WITH_VOICE
     void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
+    void HandleGatewayCallCreate(const GatewayMessage &msg);
+
+    void CheckVoiceState(const VoiceState &data);
 #endif
 
     void HeartbeatThread();

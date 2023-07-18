@@ -26,7 +26,7 @@ void Websocket::StartConnection(const std::string &url) {
     m_websocket->disableAutomaticReconnection();
     m_websocket->setUrl(url);
     m_websocket->setOnMessageCallback([this](auto &&msg) { OnMessage(std::forward<decltype(msg)>(msg)); });
-    m_websocket->setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent } }); // idk if this actually works
+    m_websocket->setExtraHeaders(ix::WebSocketHttpHeaders { { "User-Agent", m_agent }, { "Origin", "https://discord.com" } }); // idk if this actually works
     m_websocket->start();
 }
 
@@ -80,6 +80,9 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
         } break;
         case ix::WebSocketMessageType::Message: {
             m_signal_message.emit(msg->str);
+        } break;
+        case ix::WebSocketMessageType::Error: {
+            m_log->error("Websocket error: Status: {} Reason: {}", msg->errorInfo.http_status, msg->errorInfo.reason);
         } break;
         default:
             break;

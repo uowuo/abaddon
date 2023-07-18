@@ -102,6 +102,7 @@ enum class GatewayEvent : int {
     GUILD_MEMBERS_CHUNK,
     VOICE_STATE_UPDATE,
     VOICE_SERVER_UPDATE,
+    CALL_CREATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -427,6 +428,7 @@ struct HeartbeatMessage : GatewayMessage {
 
 struct CreateMessageObject {
     std::string Content;
+    MessageFlags Flags = MessageFlags::NONE;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
 
@@ -617,6 +619,7 @@ struct UserProfileData {
     std::vector<MutualGuildData> MutualGuilds;
     std::optional<std::string> PremiumGuildSince; // null
     std::optional<std::string> PremiumSince;      // null
+    std::optional<std::string> LegacyUsername;    // null
     UserData User;
 
     friend void from_json(const nlohmann::json &j, UserProfileData &m);
@@ -886,6 +889,23 @@ struct GuildMembersChunkData {
     friend void from_json(const nlohmann::json &j, GuildMembersChunkData &m);
 };
 
+struct VoiceState {
+    std::optional<Snowflake> ChannelID;
+    bool IsDeafened;
+    bool IsMuted;
+    std::optional<Snowflake> GuildID;
+    std::optional<GuildMember> Member;
+    bool IsSelfDeafened;
+    bool IsSelfMuted;
+    bool IsSelfVideo;
+    bool IsSelfStream = false;
+    std::string SessionID;
+    bool IsSuppressed;
+    Snowflake UserID;
+
+    friend void from_json(const nlohmann::json &j, VoiceState &m);
+};
+
 #ifdef WITH_VOICE
 struct VoiceStateUpdateMessage {
     std::optional<Snowflake> GuildID;
@@ -906,21 +926,15 @@ struct VoiceServerUpdateData {
 
     friend void from_json(const nlohmann::json &j, VoiceServerUpdateData &m);
 };
-#endif
 
-struct VoiceState {
-    std::optional<Snowflake> ChannelID;
-    bool IsDeafened;
-    bool IsMuted;
-    std::optional<Snowflake> GuildID;
-    std::optional<GuildMember> Member;
-    bool IsSelfDeafened;
-    bool IsSelfMuted;
-    bool IsSelfVideo;
-    bool IsSelfStream = false;
-    std::string SessionID;
-    bool IsSuppressed;
-    Snowflake UserID;
+struct CallCreateData {
+    Snowflake ChannelID;
+    std::vector<VoiceState> VoiceStates;
+    // Snowflake MessageID;
+    // std::string Region;
+    // std::vector<?> Ringing;
+    // std::vector<?> EmbeddedActivities;
 
-    friend void from_json(const nlohmann::json &j, VoiceState &m);
+    friend void from_json(const nlohmann::json &j, CallCreateData &m);
 };
+#endif
