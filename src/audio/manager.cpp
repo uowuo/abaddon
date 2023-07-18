@@ -508,8 +508,8 @@ void AudioManager::RNNoiseInitialize() {
 }
 
 void AudioManager::RNNoiseUninitialize() {
-    spdlog::get("audio")->debug("Uninitializing RNNoise");
     if (m_rnnoise != nullptr) {
+        spdlog::get("audio")->debug("Uninitializing RNNoise");
         rnnoise_destroy(m_rnnoise);
         m_rnnoise = nullptr;
     }
