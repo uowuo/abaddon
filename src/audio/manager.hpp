@@ -14,7 +14,10 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <sigc++/sigc++.h>
+
+#ifdef WITH_RNNOISE
 #include <rnnoise.h>
+#endif
 
 #include "devices.hpp"
 // clang-format on
@@ -84,10 +87,13 @@ private:
     bool DecayVolumeMeters();
 
     bool CheckVADVoiceGate();
+
+#ifdef WITH_RNNOISE
     bool CheckVADRNNoise(const int16_t *pcm);
 
     void RNNoiseInitialize();
     void RNNoiseUninitialize();
+#endif
 
     friend void data_callback(ma_device *, void *, const void *, ma_uint32);
     friend void capture_data_callback(ma_device *, void *, const void *, ma_uint32);
@@ -132,7 +138,9 @@ private:
     AudioDevices m_devices;
 
     VADMethod m_vad_method;
+#ifdef WITH_RNNOISE
     DenoiseState *m_rnnoise;
+#endif
     std::atomic<uint32_t> m_rtp_timestamp = 0;
 
 public:

@@ -163,6 +163,8 @@ if (ENABLE_VOICE)
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
     if (ENABLE_RNNOISE)
+        target_compile_definitions(abaddon PRIVATE WITH_RNNOISE)
+
         find_package(rnnoise QUIET)
         if (NOT rnnoise_FOUND)
             message("rnnoise was not found and will be included as a submodule")

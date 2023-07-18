@@ -82,7 +82,12 @@ AudioManager::AudioManager() {
     spdlog::get("audio")->info("Audio backend: {}", ma_get_backend_name(m_context.backend));
 
     Enumerate();
+
+#ifdef WITH_RNNOISE
     SetVADMethod(VADMethod::RNNoise);
+#else
+    SetVADMethod(VADMethod::Gate);
+#endif
 
     m_playback_config = ma_device_config_init(ma_device_type_playback);
     m_playback_config.playback.format = ma_format_f32;
@@ -144,7 +149,10 @@ AudioManager::~AudioManager() {
     ma_device_uninit(&m_capture_device);
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
+
+#ifdef WITH_RNNOISE
     RNNoiseUninitialize();
+#endif
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
@@ -425,9 +433,11 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
         case VADMethod::Gate:
             if (!CheckVADVoiceGate()) return;
             break;
+#ifdef WITH_RNNOISE
         case VADMethod::RNNoise:
             if (!CheckVADRNNoise(pcm)) return;
             break;
+#endif
     }
 
     m_enc_mutex.lock();
@@ -475,6 +485,7 @@ bool AudioManager::CheckVADVoiceGate() {
     return m_capture_peak_meter / 32768.0 > m_capture_gate;
 }
 
+#ifdef WITH_RNNOISE
 bool AudioManager::CheckVADRNNoise(const int16_t *pcm) {
     static float denoised[480];
     static float rnnoise_input[480];
@@ -503,6 +514,7 @@ void AudioManager::RNNoiseUninitialize() {
         m_rnnoise = nullptr;
     }
 }
+#endif
 
 bool AudioManager::OK() const {
     return m_ok;
@@ -531,11 +543,13 @@ uint32_t AudioManager::GetRTPTimestamp() const noexcept {
 void AudioManager::SetVADMethod(VADMethod method) {
     m_vad_method = method;
 
+#ifdef WITH_RNNOISE
     if (method == VADMethod::RNNoise) {
         RNNoiseInitialize();
     } else {
         RNNoiseUninitialize();
     }
+#endif
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
