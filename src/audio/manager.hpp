@@ -42,30 +42,30 @@ public:
 
     void SetCaptureGate(double gate);
     void SetCaptureGain(double gain);
-    [[nodiscard]] double GetCaptureGate() const noexcept;
-    [[nodiscard]] double GetCaptureGain() const noexcept;
+    double GetCaptureGate() const noexcept;
+    double GetCaptureGain() const noexcept;
 
     void SetMuteSSRC(uint32_t ssrc, bool mute);
     void SetVolumeSSRC(uint32_t ssrc, double volume);
-    [[nodiscard]] double GetVolumeSSRC(uint32_t ssrc) const;
+    double GetVolumeSSRC(uint32_t ssrc) const;
 
     void SetEncodingApplication(int application);
-    [[nodiscard]] int GetEncodingApplication();
+    int GetEncodingApplication();
     void SetSignalHint(int signal);
-    [[nodiscard]] int GetSignalHint();
+    int GetSignalHint();
     void SetBitrate(int bitrate);
-    [[nodiscard]] int GetBitrate();
+    int GetBitrate();
 
     void Enumerate();
 
-    [[nodiscard]] bool OK() const;
+    bool OK() const;
 
-    [[nodiscard]] double GetCaptureVolumeLevel() const noexcept;
-    [[nodiscard]] double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
+    double GetCaptureVolumeLevel() const noexcept;
+    double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
 
-    [[nodiscard]] AudioDevices &GetDevices();
+    AudioDevices &GetDevices();
 
-    [[nodiscard]] uint32_t GetRTPTimestamp() const noexcept;
+    uint32_t GetRTPTimestamp() const noexcept;
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
