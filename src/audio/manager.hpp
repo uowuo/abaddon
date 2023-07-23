@@ -78,7 +78,9 @@ public:
     void SetVADMethod(const std::string &method);
     void SetVADMethod(VADMethod method);
     VADMethod GetVADMethod() const;
+
     float GetCurrentVADProbability() const;
+    double GetRNNProbThreshold() const;
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);

@@ -34,6 +34,8 @@ private:
 
     bool UpdateVoiceMeters();
 
+    void UpdateVADParamValue();
+
     Gtk::Box m_main;
     Gtk::Box m_controls;
 

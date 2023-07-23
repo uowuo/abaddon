@@ -119,7 +119,6 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_vad_param.set_range(0.0, 100.0);
     m_vad_param.set_value_pos(Gtk::POS_LEFT);
-    m_vad_param.set_value(audio.GetCaptureGate() * 100.0);
     m_vad_param.signal_value_changed().connect([this]() {
         const double val = m_vad_param.get_value() * 0.01;
         switch (Abaddon::Get().GetAudio().GetVADMethod()) {
@@ -133,6 +132,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 #endif
         };
     });
+    UpdateVADParamValue();
 
     m_capture_gain.set_range(0.0, 200.0);
     m_capture_gain.set_value_pos(Gtk::POS_LEFT);
@@ -161,9 +161,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 #endif
     }
     m_vad_combo.signal_changed().connect([this]() {
+        auto &audio = Abaddon::Get().GetAudio();
         const auto id = m_vad_combo.get_active_id();
-        Abaddon::Get().GetAudio().SetVADMethod(id);
+
+        audio.SetVADMethod(id);
         Abaddon::Get().GetSettings().VAD = id;
+        UpdateVADParamValue();
     });
 
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
@@ -276,6 +279,20 @@ bool VoiceWindow::UpdateVoiceMeters() {
         }
     }
     return true;
+}
+
+void VoiceWindow::UpdateVADParamValue() {
+    auto &audio = Abaddon::Get().GetAudio();
+    switch (audio.GetVADMethod()) {
+        case AudioManager::VADMethod::Gate:
+            m_vad_param.set_value(audio.GetCaptureGate() * 100.0);
+            break;
+#ifdef WITH_RNNOISE
+        case AudioManager::VADMethod::RNNoise:
+            m_vad_param.set_value(audio.GetRNNProbThreshold() * 100.0);
+            break;
+#endif
+    }
 }
 
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {

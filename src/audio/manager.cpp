@@ -572,6 +572,10 @@ float AudioManager::GetCurrentVADProbability() const {
     return m_vad_prob;
 }
 
+double AudioManager::GetRNNProbThreshold() const {
+    return m_prob_threshold;
+}
+
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
     return m_signal_opus_packet;
 }
