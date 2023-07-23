@@ -137,6 +137,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_combo.set_valign(Gtk::ALIGN_END);
     m_vad_combo.set_hexpand(true);
     m_vad_combo.set_halign(Gtk::ALIGN_FILL);
+    m_vad_combo.set_tooltip_text(
+        "Voice Activation Detection method\n"
+        "Gate - Simple volume threshold. Slider changes threshold\n"
+        "RNNoise - Heavier on CPU. Slider changes probability threshold");
     m_vad_combo.append("gate", "Gate");
 #ifdef WITH_RNNOISE
     m_vad_combo.append("rnnoise", "RNNoise");
