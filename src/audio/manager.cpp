@@ -487,8 +487,8 @@ bool AudioManager::CheckVADRNNoise(const int16_t *pcm) {
     for (size_t i = 0; i < 480; i++) {
         rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
     }
-    float vad_prob = rnnoise_process_frame(m_rnnoise, denoised, rnnoise_input);
-    return vad_prob > m_prob_threshold;
+    m_vad_prob = rnnoise_process_frame(m_rnnoise, denoised, rnnoise_input);
+    return m_vad_prob > m_prob_threshold;
 }
 
 void AudioManager::RNNoiseInitialize() {
@@ -562,6 +562,14 @@ void AudioManager::SetVADMethod(VADMethod method) {
         RNNoiseUninitialize();
     }
 #endif
+}
+
+AudioManager::VADMethod AudioManager::GetVADMethod() const {
+    return m_vad_method;
+}
+
+float AudioManager::GetCurrentVADProbability() const {
+    return m_vad_prob;
 }
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {

@@ -43,8 +43,12 @@ private:
     Gtk::ScrolledWindow m_scroll;
     Gtk::ListBox m_user_list;
 
-    VolumeMeter m_capture_volume;
-    Gtk::Scale m_capture_gate;
+    // Shows volume for gate VAD method
+    // Shows probability for RNNoise VAD method
+    VolumeMeter m_vad_value;
+    // Volume threshold for gate VAD method
+    // VAD probability threshold for RNNoise VAD method
+    Gtk::Scale m_vad_param;
     Gtk::Scale m_capture_gain;
 
     Gtk::ComboBoxText m_vad_combo;

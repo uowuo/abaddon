@@ -115,15 +115,23 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_scroll.set_hexpand(true);
     m_scroll.set_vexpand(true);
 
-    m_capture_volume.SetShowTick(true);
+    m_vad_value.SetShowTick(true);
 
-    m_capture_gate.set_range(0.0, 100.0);
-    m_capture_gate.set_value_pos(Gtk::POS_LEFT);
-    m_capture_gate.set_value(audio.GetCaptureGate() * 100.0);
-    m_capture_gate.signal_value_changed().connect([this]() {
-        const double val = m_capture_gate.get_value() * 0.01;
-        m_signal_gate.emit(val);
-        m_capture_volume.SetTick(val);
+    m_vad_param.set_range(0.0, 100.0);
+    m_vad_param.set_value_pos(Gtk::POS_LEFT);
+    m_vad_param.set_value(audio.GetCaptureGate() * 100.0);
+    m_vad_param.signal_value_changed().connect([this]() {
+        const double val = m_vad_param.get_value() * 0.01;
+        switch (Abaddon::Get().GetAudio().GetVADMethod()) {
+            case AudioManager::VADMethod::Gate:
+                m_signal_gate.emit(val);
+                m_vad_value.SetTick(val);
+                break;
+#ifdef WITH_RNNOISE
+            case AudioManager::VADMethod::RNNoise:
+                break;
+#endif
+        };
     });
 
     m_capture_gain.set_range(0.0, 200.0);
@@ -204,8 +212,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_deafen);
     m_main.add(m_menu_bar);
     m_main.add(m_controls);
-    m_main.add(m_capture_volume);
-    m_main.add(m_capture_gate);
+    m_main.add(m_vad_value);
+    m_main.add(m_vad_param);
     m_main.add(m_capture_gain);
     m_main.add(m_scroll);
     m_main.add(m_vad_combo);
@@ -249,11 +257,22 @@ void VoiceWindow::OnDeafenChanged() {
 }
 
 bool VoiceWindow::UpdateVoiceMeters() {
-    m_capture_volume.SetVolume(Abaddon::Get().GetAudio().GetCaptureVolumeLevel());
+    auto &audio = Abaddon::Get().GetAudio();
+    switch (audio.GetVADMethod()) {
+        case AudioManager::VADMethod::Gate:
+            m_vad_value.SetVolume(audio.GetCaptureVolumeLevel());
+            break;
+#ifdef WITH_RNNOISE
+        case AudioManager::VADMethod::RNNoise:
+            m_vad_value.SetVolume(audio.GetCurrentVADProbability());
+            break;
+#endif
+    }
+
     for (auto [id, row] : m_rows) {
         const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
         if (ssrc.has_value()) {
-            row->SetVolumeMeter(Abaddon::Get().GetAudio().GetSSRCVolumeLevel(*ssrc));
+            row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
         }
     }
     return true;

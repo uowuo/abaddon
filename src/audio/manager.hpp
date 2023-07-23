@@ -77,6 +77,8 @@ public:
 
     void SetVADMethod(const std::string &method);
     void SetVADMethod(VADMethod method);
+    VADMethod GetVADMethod() const;
+    float GetCurrentVADProbability() const;
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
@@ -129,6 +131,7 @@ private:
     std::atomic<double> m_capture_gate = 0.0;
     std::atomic<double> m_capture_gain = 1.0;
     std::atomic<double> m_prob_threshold = 0.5;
+    std::atomic<float> m_vad_prob = 0.0;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
