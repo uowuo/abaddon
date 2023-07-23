@@ -83,12 +83,6 @@ AudioManager::AudioManager() {
 
     Enumerate();
 
-#ifdef WITH_RNNOISE
-    SetVADMethod(VADMethod::RNNoise);
-#else
-    SetVADMethod(VADMethod::Gate);
-#endif
-
     m_playback_config = ma_device_config_init(ma_device_type_playback);
     m_playback_config.playback.format = ma_format_f32;
     m_playback_config.playback.channels = 2;
@@ -540,7 +534,25 @@ uint32_t AudioManager::GetRTPTimestamp() const noexcept {
     return m_rtp_timestamp;
 }
 
+void AudioManager::SetVADMethod(const std::string &method) {
+    spdlog::get("audio")->debug("Setting VAD method to {}", method);
+    if (method == "gate") {
+        SetVADMethod(VADMethod::Gate);
+    } else if (method == "rnnoise") {
+#ifdef WITH_RNNOISE
+        SetVADMethod(VADMethod::RNNoise);
+#else
+        SetVADMethod(VADMethod::Gate);
+        spdlog::get("audio")->error("Tried to set RNNoise VAD method with support disabled");
+#endif
+    } else {
+        SetVADMethod(VADMethod::Gate);
+        spdlog::get("audio")->error("Tried to set unknown VAD method {}", method);
+    }
+}
+
 void AudioManager::SetVADMethod(VADMethod method) {
+    spdlog::get("audio")->debug("Setting VAD method to enum {}", static_cast<int>(method));
     m_vad_method = method;
 
 #ifdef WITH_RNNOISE

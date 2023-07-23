@@ -140,17 +140,18 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_combo.append("gate", "Gate");
 #ifdef WITH_RNNOISE
     m_vad_combo.append("rnnoise", "RNNoise");
-    m_vad_combo.set_active_id("rnnoise");
-#else
-    m_vad_combo.set_active_id("gate");
 #endif
+    if (!m_vad_combo.set_active_id(Abaddon::Get().GetSettings().VAD)) {
+#ifdef WITH_RNNOISE
+        m_vad_combo.set_active_id("rnnoise");
+#else
+        m_vad_combo.set_active_id("gate");
+#endif
+    }
     m_vad_combo.signal_changed().connect([this]() {
         const auto id = m_vad_combo.get_active_id();
-        if (id == "gate") {
-            Abaddon::Get().GetAudio().SetVADMethod(AudioManager::VADMethod::Gate);
-        } else if (id == "rnnoise") {
-            Abaddon::Get().GetAudio().SetVADMethod(AudioManager::VADMethod::RNNoise);
-        }
+        Abaddon::Get().GetAudio().SetVADMethod(id);
+        Abaddon::Get().GetSettings().VAD = id;
     });
 
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();

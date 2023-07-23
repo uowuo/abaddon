@@ -75,6 +75,7 @@ public:
         RNNoise,
     };
 
+    void SetVADMethod(const std::string &method);
     void SetVADMethod(VADMethod method);
 
 private:

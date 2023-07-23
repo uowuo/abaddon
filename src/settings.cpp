@@ -4,7 +4,7 @@
 #include <glibmm/miscutils.h>
 
 #ifdef WITH_KEYCHAIN
-    #include <keychain/keychain.h>
+#include <keychain/keychain.h>
 #endif
 
 const std::string KeychainPackage = "com.github.uowuo.abaddon";
@@ -70,6 +70,7 @@ void SettingsManager::ReadSettings() {
     SMSTR("style", "unreadcolor", UnreadIndicatorColor);
     SMBOOL("notifications", "enabled", NotificationsEnabled);
     SMBOOL("notifications", "playsound", NotificationsPlaySound);
+    SMSTR("voice", "vad", VAD);
     SMBOOL("windows", "hideconsole", HideConsole);
 
 #ifdef WITH_KEYCHAIN
@@ -154,6 +155,7 @@ void SettingsManager::Close() {
         SMSTR("style", "unreadcolor", UnreadIndicatorColor);
         SMBOOL("notifications", "enabled", NotificationsEnabled);
         SMBOOL("notifications", "playsound", NotificationsPlaySound);
+        SMSTR("voice", "vad", VAD);
         SMBOOL("windows", "hideconsole", HideConsole);
 
 #ifdef WITH_KEYCHAIN

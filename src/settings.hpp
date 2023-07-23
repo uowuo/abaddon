@@ -53,6 +53,13 @@ public:
 #endif
         bool NotificationsPlaySound { true };
 
+        // [voice]
+#ifdef WITH_RNNOISE
+        std::string VAD { "rnnoise" };
+#else
+        std::string VAD { "gate" };
+#endif
+
         // [windows]
         bool HideConsole { false };
     };

@@ -23,11 +23,11 @@
 #include "remoteauth/remoteauthdialog.hpp"
 
 #ifdef WITH_LIBHANDY
-    #include <handy.h>
+#include <handy.h>
 #endif
 
 #ifdef _WIN32
-    #pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "crypt32.lib")
 #endif
 
 Abaddon::Abaddon()
@@ -67,7 +67,7 @@ Abaddon::Abaddon()
         if (!accessible)
             m_channels_requested.erase(id);
     });
-    if (GetSettings().Prefetch)
+    if (GetSettings().Prefetch) {
         m_discord.signal_message_create().connect([this](const Message &message) {
             if (message.Author.HasAvatar())
                 m_img_mgr.Prefetch(message.Author.GetAvatarURL());
@@ -76,6 +76,9 @@ Abaddon::Abaddon()
                     m_img_mgr.Prefetch(attachment.ProxyURL);
             }
         });
+    }
+
+    m_audio.SetVADMethod(GetSettings().VAD);
 }
 
 Abaddon &Abaddon::Get() {
