@@ -120,10 +120,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_param.set_range(0.0, 100.0);
     m_vad_param.set_value_pos(Gtk::POS_LEFT);
     m_vad_param.signal_value_changed().connect([this]() {
+        auto &audio = Abaddon::Get().GetAudio();
         const double val = m_vad_param.get_value() * 0.01;
-        switch (Abaddon::Get().GetAudio().GetVADMethod()) {
+        switch (audio.GetVADMethod()) {
             case AudioManager::VADMethod::Gate:
-                m_signal_gate.emit(val);
+                audio.SetCaptureGate(val);
                 m_vad_value.SetTick(val);
                 break;
 #ifdef WITH_RNNOISE
@@ -138,8 +139,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_gain.set_value_pos(Gtk::POS_LEFT);
     m_capture_gain.set_value(audio.GetCaptureGain() * 100.0);
     m_capture_gain.signal_value_changed().connect([this]() {
-        const double val = m_capture_gain.get_value();
-        m_signal_gain.emit(val / 100.0);
+        const double val = m_capture_gain.get_value() / 100.0;
+        Abaddon::Get().GetAudio().SetCaptureGain(val);
     });
 
     m_vad_combo.set_valign(Gtk::ALIGN_END);
@@ -204,7 +205,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         auto *window = new VoiceSettingsWindow;
         const auto cb = [this](double gain) {
             m_capture_gain.set_value(gain * 100.0);
-            m_signal_gain.emit(gain);
+            Abaddon::Get().GetAudio().SetCaptureGain(gain);
         };
         window->signal_gain().connect(sigc::track_obj(cb, *this));
         window->show();
@@ -318,14 +319,6 @@ VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {
 
 VoiceWindow::type_signal_deafen VoiceWindow::signal_deafen() {
     return m_signal_deafen;
-}
-
-VoiceWindow::type_signal_gate VoiceWindow::signal_gate() {
-    return m_signal_gate;
-}
-
-VoiceWindow::type_signal_gate VoiceWindow::signal_gain() {
-    return m_signal_gain;
 }
 
 VoiceWindow::type_signal_mute_user_cs VoiceWindow::signal_mute_user_cs() {
