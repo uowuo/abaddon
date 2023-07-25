@@ -78,7 +78,9 @@ Abaddon::Abaddon()
         });
     }
 
+#ifdef WITH_VOICE
     m_audio.SetVADMethod(GetSettings().VAD);
+#endif
 }
 
 Abaddon &Abaddon::Get() {
