@@ -39,7 +39,9 @@ bool LazyImage::OnDraw(const Cairo::RefPtr<Cairo::Context> &context) {
         Abaddon::Get().GetImageManager().LoadAnimationFromURL(m_url, m_width, m_height, sigc::track_obj(cb, *this));
     } else {
         auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
-            property_pixbuf() = pb->scale_simple(m_width, m_height, Gdk::INTERP_BILINEAR);
+            int cw, ch;
+        	GetImageDimensions(pb->get_width(), pb->get_height(), cw, ch, m_width, m_height);
+            property_pixbuf() = pb->scale_simple(cw, ch, Gdk::INTERP_BILINEAR);
         };
 
         Abaddon::Get().GetImageManager().LoadFromURL(m_url, sigc::track_obj(cb, *this));
