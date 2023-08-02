@@ -54,7 +54,8 @@ std::optional<uint32_t> GetBuildNumberFromJSURL(const Glib::ustring &url, const 
 
     auto regex = Glib::Regex::create(R"("buildNumber",null!==\(t="(\d+)\"\))");
     Glib::MatchInfo match;
-    if (regex->match(res.text, match)) {
+    Glib::ustring string = res.text;
+    if (regex->match(string, match)) {
         const auto str_value = match.fetch(1);
         try {
             return std::stoul(str_value);

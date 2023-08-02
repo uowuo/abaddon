@@ -204,7 +204,8 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             if (data->Application.has_value()) {
                 static const auto regex = Glib::Regex::create(R"(</(.*?):(\d+)>)");
                 Glib::MatchInfo match;
-                if (regex->match(data->Content, match)) {
+                Glib::ustring string = data->Content;
+                if (regex->match(string, match)) {
                     const auto cmd = match.fetch(1);
                     const auto app = data->Application->Name;
                     b->insert_markup(s, "<i>used <span color='#697ec4'>" + cmd + "</span> with " + app + "</i>");
