@@ -487,6 +487,7 @@ bool AudioManager::CheckVADRNNoise(const int16_t *pcm) {
     for (size_t i = 0; i < 480; i++) {
         rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
     }
+    std::unique_lock<std::mutex> _(m_rnn_mutex);
     m_vad_prob = rnnoise_process_frame(m_rnnoise, denoised, rnnoise_input);
     return m_vad_prob > m_prob_threshold;
 }
@@ -494,6 +495,7 @@ bool AudioManager::CheckVADRNNoise(const int16_t *pcm) {
 void AudioManager::RNNoiseInitialize() {
     spdlog::get("audio")->debug("Initializing RNNoise");
     RNNoiseUninitialize();
+    std::unique_lock<std::mutex> _(m_rnn_mutex);
     m_rnnoise = rnnoise_create(nullptr);
     const auto expected = rnnoise_get_frame_size();
     if (expected != 480) {
@@ -504,6 +506,7 @@ void AudioManager::RNNoiseInitialize() {
 void AudioManager::RNNoiseUninitialize() {
     if (m_rnnoise != nullptr) {
         spdlog::get("audio")->debug("Uninitializing RNNoise");
+        std::unique_lock<std::mutex> _(m_rnn_mutex);
         rnnoise_destroy(m_rnnoise);
         m_rnnoise = nullptr;
     }

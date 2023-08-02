@@ -121,6 +121,10 @@ private:
     mutable std::mutex m_mutex;
     mutable std::mutex m_enc_mutex;
 
+#ifdef WITH_RNNOISE
+    mutable std::mutex m_rnn_mutex;
+#endif
+
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 
     OpusEncoder *m_encoder;
