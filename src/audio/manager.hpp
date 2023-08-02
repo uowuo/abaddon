@@ -81,6 +81,7 @@ public:
 
     float GetCurrentVADProbability() const;
     double GetRNNProbThreshold() const;
+    void SetRNNProbThreshold(double value);
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);

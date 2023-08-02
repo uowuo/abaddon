@@ -579,6 +579,10 @@ double AudioManager::GetRNNProbThreshold() const {
     return m_prob_threshold;
 }
 
+void AudioManager::SetRNNProbThreshold(double value) {
+    m_prob_threshold = value;
+}
+
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
     return m_signal_opus_packet;
 }

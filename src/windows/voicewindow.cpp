@@ -129,6 +129,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
                 break;
 #ifdef WITH_RNNOISE
             case AudioManager::VADMethod::RNNoise:
+                audio.SetRNNProbThreshold(val);
+                m_vad_value.SetTick(val);
                 break;
 #endif
         };
