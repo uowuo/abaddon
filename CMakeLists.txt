@@ -62,6 +62,11 @@ target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
+if(APPLE)
+    # Copy res directory to build directory
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR} FILES_MATCHING PATTERN "*")
+endif()
+
 if (ENABLE_QRCODE_LOGIN)
     add_library(qrcodegen subprojects/qrcodegen/cpp/qrcodegen.hpp subprojects/qrcodegen/cpp/qrcodegen.cpp)
     target_include_directories(qrcodegen PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/subprojects/qrcodegen/cpp")
