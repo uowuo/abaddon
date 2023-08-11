@@ -63,8 +63,13 @@ target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
 
 if(APPLE)
-    # Copy res directory to build directory
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR} FILES_MATCHING PATTERN "*")
+    file(GLOB RES_SUBDIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/res/*)
+    foreach(RES_SUBDIRECTORY ${RES_SUBDIRECTORIES})
+        if(IS_DIRECTORY ${RES_SUBDIRECTORY})
+            get_filename_component(RES_SUBDIRECTORY_NAME ${RES_SUBDIRECTORY} NAME)
+            install(DIRECTORY ${RES_SUBDIRECTORY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${RES_SUBDIRECTORY_NAME})
+        endif()
+    endforeach()
 endif()
 
 if (ENABLE_QRCODE_LOGIN)
