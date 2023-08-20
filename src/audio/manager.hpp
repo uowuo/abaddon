@@ -79,9 +79,13 @@ public:
     void SetVADMethod(VADMethod method);
     VADMethod GetVADMethod() const;
 
+#ifdef WITH_RNNOISE
     float GetCurrentVADProbability() const;
     double GetRNNProbThreshold() const;
     void SetRNNProbThreshold(double value);
+    void SetSuppressNoise(bool value);
+    bool GetSuppressNoise() const;
+#endif
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
@@ -95,7 +99,7 @@ private:
     bool CheckVADVoiceGate();
 
 #ifdef WITH_RNNOISE
-    bool CheckVADRNNoise(const int16_t *pcm);
+    bool CheckVADRNNoise(const int16_t *pcm, float *denoised_left, float *denoised_right);
 
     void RNNoiseInitialize();
     void RNNoiseUninitialize();
@@ -139,6 +143,7 @@ private:
     std::atomic<double> m_capture_gain = 1.0;
     std::atomic<double> m_prob_threshold = 0.5;
     std::atomic<float> m_vad_prob = 0.0;
+    std::atomic<bool> m_enable_noise_suppression = false;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
@@ -150,7 +155,7 @@ private:
 
     VADMethod m_vad_method;
 #ifdef WITH_RNNOISE
-    DenoiseState *m_rnnoise;
+    DenoiseState *m_rnnoise[2];
 #endif
     std::atomic<uint32_t> m_rtp_timestamp = 0;
 

@@ -88,6 +88,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_controls(Gtk::ORIENTATION_HORIZONTAL)
     , m_mute("Mute")
     , m_deafen("Deafen")
+    , m_noise_suppression("Suppress Noise")
     , m_channel_id(channel_id)
     , m_menu_view("View")
     , m_menu_view_settings("More _Settings", true) {
@@ -172,12 +173,17 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         UpdateVADParamValue();
     });
 
+    m_noise_suppression.set_active(audio.GetSuppressNoise());
+    m_noise_suppression.signal_toggled().connect([this]() {
+        Abaddon::Get().GetAudio().SetSuppressNoise(m_noise_suppression.get_active());
+    });
+
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
     m_playback_combo.set_valign(Gtk::ALIGN_END);
     m_playback_combo.set_hexpand(true);
     m_playback_combo.set_halign(Gtk::ALIGN_FILL);
-    m_playback_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetPlaybackDeviceModel());
-    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActivePlaybackDevice()) {
+    m_playback_combo.set_model(audio.GetDevices().GetPlaybackDeviceModel());
+    if (const auto iter = audio.GetDevices().GetActivePlaybackDevice()) {
         m_playback_combo.set_active(iter);
     }
     m_playback_combo.pack_start(*playback_renderer);
@@ -216,6 +222,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
+    m_controls.add(m_noise_suppression);
     m_main.add(m_menu_bar);
     m_main.add(m_controls);
     m_main.add(m_vad_value);

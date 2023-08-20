@@ -53,6 +53,8 @@ private:
     Gtk::Scale m_vad_param;
     Gtk::Scale m_capture_gain;
 
+    Gtk::CheckButton m_noise_suppression;
+
     Gtk::ComboBoxText m_vad_combo;
     Gtk::ComboBox m_playback_combo;
     Gtk::ComboBox m_capture_combo;
