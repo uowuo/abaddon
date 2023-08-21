@@ -482,6 +482,9 @@ bool AudioManager::DecayVolumeMeters() {
     m_capture_peak_meter -= 600;
     if (m_capture_peak_meter < 0) m_capture_peak_meter = 0;
 
+    const auto x = m_vad_prob.load() - 0.05f;
+    m_vad_prob.store(x < 0.0f ? 0.0f : x);
+
     std::lock_guard<std::mutex> _(m_vol_mtx);
 
     for (auto &[ssrc, meter] : m_volumes) {
@@ -505,13 +508,13 @@ bool AudioManager::CheckVADRNNoise(const int16_t *pcm, float *denoised_left, flo
     for (size_t i = 0; i < 480; i++) {
         rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
     }
-    m_vad_prob = rnnoise_process_frame(m_rnnoise[0], denoised_left, rnnoise_input);
+    m_vad_prob = std::max(m_vad_prob.load(), rnnoise_process_frame(m_rnnoise[0], denoised_left, rnnoise_input));
 
     if (m_enable_noise_suppression) {
         for (size_t i = 0; i < 480; i++) {
             rnnoise_input[i] = static_cast<float>(pcm[i * 2 + 1]);
         }
-        m_vad_prob = rnnoise_process_frame(m_rnnoise[1], denoised_right, rnnoise_input);
+        rnnoise_process_frame(m_rnnoise[1], denoised_right, rnnoise_input);
     }
 
     return m_vad_prob > m_prob_threshold;
