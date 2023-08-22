@@ -64,6 +64,10 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
 AudioManager::AudioManager() {
     m_ok = true;
 
+#ifdef WITH_RNNOISE
+    RNNoiseInitialize();
+#endif
+
     int err;
     m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
     if (err != OPUS_OK) {
@@ -426,13 +430,20 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     static std::array<float, 480> denoised_L;
     static std::array<float, 480> denoised_R;
 
+    bool m_rnnoise_passed = false;
+#ifdef WITH_RNNOISE
+    if (m_vad_method == VADMethod::RNNoise || m_enable_noise_suppression) {
+        m_rnnoise_passed = CheckVADRNNoise(new_pcm.data(), denoised_L.data(), denoised_R.data());
+    }
+#endif
+
     switch (m_vad_method) {
         case VADMethod::Gate:
             if (!CheckVADVoiceGate()) return;
             break;
 #ifdef WITH_RNNOISE
         case VADMethod::RNNoise:
-            if (!CheckVADRNNoise(new_pcm.data(), denoised_L.data(), denoised_R.data())) return;
+            if (!m_rnnoise_passed) return;
             break;
 #endif
     }
@@ -588,14 +599,6 @@ void AudioManager::SetVADMethod(const std::string &method) {
 void AudioManager::SetVADMethod(VADMethod method) {
     spdlog::get("audio")->debug("Setting VAD method to enum {}", static_cast<int>(method));
     m_vad_method = method;
-
-#ifdef WITH_RNNOISE
-    if (method == VADMethod::RNNoise) {
-        RNNoiseInitialize();
-    } else {
-        RNNoiseUninitialize();
-    }
-#endif
 }
 
 AudioManager::VADMethod AudioManager::GetVADMethod() const {
