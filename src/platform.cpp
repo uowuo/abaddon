@@ -151,6 +151,71 @@ std::string Platform::FindStateCacheFolder() {
     return ".";
 }
 
+#elif defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+#include <pwd.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+std::string Platform::FindResourceFolder() {
+    static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle());
+    char resourcePath[PATH_MAX];
+    if (CFURLGetFileSystemRepresentation(resourceURL, true, (UInt8 *)resourcePath, PATH_MAX)) {
+        if (resourceURL != NULL) {
+            CFRelease(resourceURL);
+        }
+        found_path = resourcePath;
+        found = true;
+        return found_path;
+    }
+
+    spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
+    found = true;
+    return found_path;
+}
+
+std::string Platform::FindConfigFile() {
+    const auto cfg = std::getenv("ABADDON_CONFIG");
+    if (cfg != nullptr) return cfg;
+
+    passwd *home = getpwuid(getuid());
+    const char *homeDir = home->pw_dir;
+
+    char appSupportPath[PATH_MAX];
+    snprintf(appSupportPath, sizeof(appSupportPath), "%s/Library/Application Support", homeDir);
+
+    char homefolder_path[PATH_MAX];
+    snprintf(homefolder_path, sizeof(homefolder_path), "%s/%s", appSupportPath, "com.github.uowuo.abaddon");
+
+    if (mkdir(homefolder_path, 0755) == 0) {
+        spdlog::get("discord")->warn("created Application Support dir");
+    }
+    
+    char home_path[PATH_MAX];
+    snprintf(home_path, sizeof(home_path), "%s/%s", homefolder_path, "/abaddon.ini");
+    
+    return home_path;
+}
+
+std::string Platform::FindStateCacheFolder() {
+    
+    passwd *home = getpwuid(getuid());
+    const char *homeDir = home->pw_dir;
+
+    char appSupportPath[PATH_MAX];
+    snprintf(appSupportPath, sizeof(appSupportPath), "%s/Library/Application Support", homeDir);
+
+    char home_path[PATH_MAX];
+    snprintf(home_path, sizeof(home_path), "%s/%s", appSupportPath, "com.github.uowuo.abaddon");
+
+    return home_path;
+}
+
+
 #else
 std::string Platform::FindResourceFolder() {
     spdlog::get("discord")->warn("unknown OS, trying to load resources from cwd");
