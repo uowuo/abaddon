@@ -149,11 +149,6 @@ void ChatInputTextContainer::ShowFileChooser() {
         }
     });
 
-    auto filter_all = Gtk::FileFilter::create();
-    filter_all->set_name("All files (*.*)");
-    filter_all->add_pattern("*.*");
-    dlg->add_filter(filter_all);
-
     dlg->run();
 }
 
