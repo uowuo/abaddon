@@ -161,12 +161,6 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
-    if (APPLE)
-        target_link_libraries(abaddon "-framework CoreFoundation")
-        target_link_libraries(abaddon "-framework CoreAudio")
-        target_link_libraries(abaddon "-framework AudioToolbox")
-    endif ()
-
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})
@@ -180,6 +174,13 @@ if (USE_MINIAUDIO)
               HINTS subprojects
               PATH_SUFFIXES miniaudio
               REQUIRED)
+
+    if (APPLE)
+        target_link_libraries(abaddon "-framework CoreFoundation")
+        target_link_libraries(abaddon "-framework CoreAudio")
+        target_link_libraries(abaddon "-framework AudioToolbox")
+    endif ()
+
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()
