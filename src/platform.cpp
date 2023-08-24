@@ -103,7 +103,7 @@ std::string Platform::FindResourceFolder() {
         }
     }
 
-    puts("cant find a resources folder, will try to load from cwd");
+    spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
     found_path = ".";
     found = true;
     return found_path;
@@ -133,7 +133,7 @@ std::string Platform::FindConfigFile() {
     }
 
     // fallback to cwd if cant find + cant make in ~/.config
-    puts("can't find configuration file!");
+    spdlog::get("discord")->warn("can't find configuration file!");
     return "./abaddon.ini";
 }
 
@@ -147,13 +147,13 @@ std::string Platform::FindStateCacheFolder() {
         if (util::IsFolder(home_path))
             return home_path;
     }
-    puts("can't find cache folder!");
+    spdlog::get("discord")->warn("can't find cache folder!");
     return ".";
 }
 
 #else
 std::string Platform::FindResourceFolder() {
-    puts("unknown OS, trying to load resources from cwd");
+    spdlog::get("discord")->warn("unknown OS, trying to load resources from cwd");
     return ".";
 }
 
@@ -161,12 +161,12 @@ std::string Platform::FindConfigFile() {
     const auto x = std::getenv("ABADDON_CONFIG");
     if (x != nullptr)
         return x;
-    puts("unknown OS, trying to load config from cwd");
+    spdlog::get("discord")->warn("unknown OS, trying to load config from cwd");
     return "./abaddon.ini";
 }
 
 std::string Platform::FindStateCacheFolder() {
-    puts("unknown OS, setting state cache folder to cwd");
+    spdlog::get("discord")->warn("unknown OS, setting state cache folder to cwd");
     return ".";
 }
 #endif
