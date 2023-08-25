@@ -362,3 +362,6 @@ fonts/fonts.conf
 *.zip
 *.tar.*
 *.rar
+
+#macOS resource forks
+.DS_Store
