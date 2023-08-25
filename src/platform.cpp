@@ -103,7 +103,7 @@ std::string Platform::FindResourceFolder() {
         }
     }
 
-    puts("cant find a resources folder, will try to load from cwd");
+    spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
     found_path = ".";
     found = true;
     return found_path;
@@ -133,7 +133,7 @@ std::string Platform::FindConfigFile() {
     }
 
     // fallback to cwd if cant find + cant make in ~/.config
-    puts("can't find configuration file!");
+    spdlog::get("discord")->warn("can't find configuration file!");
     return "./abaddon.ini";
 }
 
@@ -147,13 +147,78 @@ std::string Platform::FindStateCacheFolder() {
         if (util::IsFolder(home_path))
             return home_path;
     }
-    puts("can't find cache folder!");
+    spdlog::get("discord")->warn("can't find cache folder!");
     return ".";
 }
 
+#elif defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+#include <pwd.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+std::string Platform::FindResourceFolder() {
+    static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle());
+    char resourcePath[PATH_MAX];
+    if (CFURLGetFileSystemRepresentation(resourceURL, true, (UInt8 *)resourcePath, PATH_MAX)) {
+        if (resourceURL != NULL) {
+            CFRelease(resourceURL);
+        }
+        found_path = resourcePath;
+        found = true;
+        return found_path;
+    }
+
+    spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
+    found = true;
+    return found_path;
+}
+
+std::string Platform::FindConfigFile() {
+    const auto cfg = std::getenv("ABADDON_CONFIG");
+    if (cfg != nullptr) return cfg;
+
+    passwd *home = getpwuid(getuid());
+    const char *homeDir = home->pw_dir;
+
+    char appSupportPath[PATH_MAX];
+    snprintf(appSupportPath, sizeof(appSupportPath), "%s/Library/Application Support", homeDir);
+
+    char homefolder_path[PATH_MAX];
+    snprintf(homefolder_path, sizeof(homefolder_path), "%s/%s", appSupportPath, "com.github.uowuo.abaddon");
+
+    if (mkdir(homefolder_path, 0755) == 0) {
+        spdlog::get("discord")->warn("created Application Support dir");
+    }
+    
+    char home_path[PATH_MAX];
+    snprintf(home_path, sizeof(home_path), "%s/%s", homefolder_path, "/abaddon.ini");
+    
+    return home_path;
+}
+
+std::string Platform::FindStateCacheFolder() {
+    
+    passwd *home = getpwuid(getuid());
+    const char *homeDir = home->pw_dir;
+
+    char appSupportPath[PATH_MAX];
+    snprintf(appSupportPath, sizeof(appSupportPath), "%s/Library/Application Support", homeDir);
+
+    char home_path[PATH_MAX];
+    snprintf(home_path, sizeof(home_path), "%s/%s", appSupportPath, "com.github.uowuo.abaddon");
+
+    return home_path;
+}
+
+
 #else
 std::string Platform::FindResourceFolder() {
-    puts("unknown OS, trying to load resources from cwd");
+    spdlog::get("discord")->warn("unknown OS, trying to load resources from cwd");
     return ".";
 }
 
@@ -161,12 +226,12 @@ std::string Platform::FindConfigFile() {
     const auto x = std::getenv("ABADDON_CONFIG");
     if (x != nullptr)
         return x;
-    puts("unknown OS, trying to load config from cwd");
+    spdlog::get("discord")->warn("unknown OS, trying to load config from cwd");
     return "./abaddon.ini";
 }
 
 std::string Platform::FindStateCacheFolder() {
-    puts("unknown OS, setting state cache folder to cwd");
+    spdlog::get("discord")->warn("unknown OS, setting state cache folder to cwd");
     return ".";
 }
 #endif
