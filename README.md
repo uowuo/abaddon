@@ -294,6 +294,7 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `custom_emojis`             | boolean | true    | download and use custom Discord emojis                                                                                     |
 | `css`                       | string  |         | path to the main CSS file                                                                                                  |
 | `animations`                | boolean | true    | use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used           |
+| `animated_image_embeds`     | boolean | false   | animate attachments and embeds (GIF files and links)                                                                       |
 | `animated_guild_hover_only` | boolean | true    | only animate guild icons when the guild is being hovered over                                                              |
 | `owner_crown`               | boolean | true    | show a crown next to the owner                                                                                             |
 | `unreads`                   | boolean | true    | show unread indicators and mention badges                                                                                  |
