@@ -598,7 +598,8 @@ void AudioManager::SetVADMethod(const std::string &method) {
 }
 
 void AudioManager::SetVADMethod(VADMethod method) {
-    spdlog::get("audio")->debug("Setting VAD method to enum {}", static_cast<int>(method));
+    const auto method_int = static_cast<int>(method);
+    spdlog::get("audio")->debug("Setting VAD method to enum {}", method_int);
     m_vad_method = method;
 }
 
