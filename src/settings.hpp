@@ -17,6 +17,7 @@ public:
         // [gui]
         std::string MainCSS { "main.css" };
         bool AnimatedGuildHoverOnly { true };
+        bool AnimatedImageEmbeds { false };
         bool ShowAnimations { true };
         bool ShowCustomEmojis { true };
         bool ShowMemberListDiscriminators { true };

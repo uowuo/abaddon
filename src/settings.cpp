@@ -50,6 +50,7 @@ void SettingsManager::ReadSettings() {
     SMBOOL("discord", "autoconnect", Autoconnect);
     SMSTR("gui", "css", MainCSS);
     SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
+    SMBOOL("gui", "animated_image_embeds", AnimatedImageEmbeds);
     SMBOOL("gui", "animations", ShowAnimations);
     SMBOOL("gui", "custom_emojis", ShowCustomEmojis);
     SMBOOL("gui", "member_list_discriminator", ShowMemberListDiscriminators);
@@ -134,6 +135,7 @@ void SettingsManager::Close() {
         SMBOOL("discord", "autoconnect", Autoconnect);
         SMSTR("gui", "css", MainCSS);
         SMBOOL("gui", "animated_guild_hover_only", AnimatedGuildHoverOnly);
+        SMBOOL("gui", "animated_image_embeds", AnimatedImageEmbeds);
         SMBOOL("gui", "animations", ShowAnimations);
         SMBOOL("gui", "custom_emojis", ShowCustomEmojis);
         SMBOOL("gui", "member_list_discriminator", ShowMemberListDiscriminators);
