@@ -151,6 +151,7 @@ spam filter's wrath:
 * [miniaudio](https://miniaud.io/) (optional, provided as submodule, required for voice)
 * [libopus](https://opus-codec.org/) (optional, required for voice)
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
+* [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
 
 ### TODO:
 
@@ -319,6 +320,12 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 |-------------|---------|--------------------------|-------------------------------------------------------------------------------|
 | `enabled`   | boolean | true (if not on Windows) | Enable desktop notifications                                                  |
 | `playsound` | boolean | true                     | Enable notification sounds. Requires ENABLE_NOTIFICATION_SOUNDS=TRUE in CMake |
+
+#### voice
+
+| Setting | Type   | Default                            | Description                                                |
+|---------|--------|------------------------------------|------------------------------------------------------------|
+| vad     | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI |
 
 ### Environment variables
 
