@@ -207,10 +207,17 @@ endif ()
 
 if (USE_MINIAUDIO)
     find_path(MINIAUDIO_INCLUDE_DIR
-              NAMES miniaudio.h
-              HINTS subprojects
-              PATH_SUFFIXES miniaudio
-              REQUIRED)
+            NAMES miniaudio.h
+            HINTS subprojects
+            PATH_SUFFIXES miniaudio
+            REQUIRED)
+
+    if (APPLE)
+        target_link_libraries(abaddon "-framework CoreFoundation")
+        target_link_libraries(abaddon "-framework CoreAudio")
+        target_link_libraries(abaddon "-framework AudioToolbox")
+    endif ()
+
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()

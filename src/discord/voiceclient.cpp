@@ -182,7 +182,8 @@ void DiscordVoiceClient::Start() {
 
 void DiscordVoiceClient::Stop() {
     if (!IsConnected() && !IsConnecting()) {
-        m_log->warn("Requested stop while not connected (from {})", GetStateName(m_state));
+        const auto state_name = GetStateName(m_state);
+        m_log->warn("Requested stop while not connected (from {})", state_name);
         return;
     }
 
@@ -264,7 +265,8 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
             HandleGatewaySpeaking(msg);
             break;
         default:
-            m_log->warn("Unhandled opcode: {}", static_cast<int>(msg.Opcode));
+            const auto opcode_int = static_cast<int>(msg.Opcode);
+            m_log->warn("Unhandled opcode: {}", opcode_int);
     }
 }
 
@@ -318,7 +320,8 @@ void DiscordVoiceClient::HandleGatewayReady(const VoiceGatewayMessage &m) {
 void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessage &m) {
     VoiceSessionDescriptionData d = m.Data;
 
-    m_log->debug("Received session description (mode: {}) (key: {:ns}) ", d.Mode, spdlog::to_hex(d.SecretKey.begin(), d.SecretKey.end()));
+    const auto key_hex = spdlog::to_hex(d.SecretKey.begin(), d.SecretKey.end());
+    m_log->debug("Received session description (mode: {}) (key: {:ns}) ", d.Mode, key_hex);
 
     VoiceSpeakingMessage msg;
     msg.Delay = 0;
@@ -379,7 +382,7 @@ void DiscordVoiceClient::Discovery() {
     m_udp.Send(payload.data(), payload.size());
 
     constexpr int MAX_TRIES = 100;
-    for (int i = 0; i < MAX_TRIES; i++) {
+    for (int i = 1; i <= MAX_TRIES; i++) {
         const auto response = m_udp.Receive();
         if (response.size() >= 74 && response[0] == 0x00 && response[1] == 0x02) {
             const char *ip = reinterpret_cast<const char *>(response.data() + 8);
@@ -388,7 +391,7 @@ void DiscordVoiceClient::Discovery() {
             SelectProtocol(ip, port);
             break;
         } else {
-            m_log->error("Received non-discovery packet after sending request (try {}/{})", i + 1, MAX_TRIES);
+            m_log->error("Received non-discovery packet after sending request (try {}/{})", i, MAX_TRIES);
         }
     }
 }
@@ -451,7 +454,8 @@ void DiscordVoiceClient::KeepaliveThread() {
 }
 
 void DiscordVoiceClient::SetState(State state) {
-    m_log->debug("Changing state to {}", GetStateName(state));
+    const auto state_name = GetStateName(state);
+    m_log->debug("Changing state to {}", state_name);
     m_state = state;
     m_signal_state_update.emit(state);
 }

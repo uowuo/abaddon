@@ -27,7 +27,7 @@ void from_json(const nlohmann::json &j, MessageDeleteBulkData &m) {
 void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::GroupItem &m) {
     m.Type = "group";
     JS_D("id", m.ID);
-    JS_D("count", m.Count);
+    JS_ON("count", m.Count);
 }
 
 GuildMember GuildMemberListUpdateMessage::MemberItem::GetAsMemberData() const {
@@ -54,16 +54,16 @@ void from_json(const nlohmann::json &j, GuildMemberListUpdateMessage::OpObject &
         m.Items.emplace();
         JS_D("range", m.Range);
         for (const auto &ij : j.at("items")) {
-            if (ij.contains("group"))
-                m.Items->push_back(std::make_unique<GuildMemberListUpdateMessage::GroupItem>(ij.at("group")));
-            else if (ij.contains("member"))
+            if (ij.contains("member")) {
                 m.Items->push_back(std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member")));
+            }
         }
     } else if (m.Op == "UPDATE") {
         JS_D("index", m.Index);
         const auto &ij = j.at("item");
-        if (ij.contains("member"))
+        if (ij.contains("member")) {
             m.OpItem = std::make_unique<GuildMemberListUpdateMessage::MemberItem>(ij.at("member"));
+        }
     }
 }
 

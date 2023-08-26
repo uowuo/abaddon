@@ -111,9 +111,10 @@ void RemoteAuthClient::HandleGatewayPendingTicket(const nlohmann::json &j) {
     const auto encrypted_payload = Glib::Base64::decode(j.at("encrypted_user_payload").get<std::string>());
     const auto payload = Decrypt(reinterpret_cast<const unsigned char *>(encrypted_payload.data()), encrypted_payload.size());
 
-    m_log->trace("User payload: {}", std::string(payload.begin(), payload.end()));
+    const auto payload_str = std::string(payload.begin(), payload.end());
+    m_log->trace("User payload: {}", payload_str);
 
-    const std::vector<Glib::ustring> user_info = Glib::Regex::split_simple(":", std::string(payload.begin(), payload.end()));
+    const std::vector<Glib::ustring> user_info = Glib::Regex::split_simple(":", payload_str);
     Snowflake user_id;
     std::string discriminator;
     std::string avatar_hash;
@@ -140,7 +141,8 @@ void RemoteAuthClient::HandleGatewayCancel(const nlohmann::json &j) {
 
 void RemoteAuthClient::OnRemoteAuthLoginResponse(const std::optional<std::string> &encrypted_token, DiscordError err) {
     if (!encrypted_token.has_value()) {
-        m_log->error("Remote auth login failed: {}", static_cast<int>(err));
+        const auto err_int = static_cast<int>(err);
+        m_log->error("Remote auth login failed: {}", err_int);
         if (err == DiscordError::CAPTCHA_REQUIRED) {
             m_signal_error.emit("Discord is requiring a captcha. You must use a web browser to log in.");
         } else {

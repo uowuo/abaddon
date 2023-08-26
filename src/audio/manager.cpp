@@ -83,7 +83,8 @@ AudioManager::AudioManager() {
         return;
     }
 
-    spdlog::get("audio")->info("Audio backend: {}", ma_get_backend_name(m_context.backend));
+    const auto backend_name = ma_get_backend_name(m_context.backend);
+    spdlog::get("audio")->info("Audio backend: {}", backend_name);
 
     Enumerate();
 
