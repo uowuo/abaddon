@@ -74,7 +74,8 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
             m_open_dispatcher.emit();
         } break;
         case ix::WebSocketMessageType::Close: {
-            m_log->debug("Received close frame, dispatching. {} ({}){}", msg->closeInfo.code, msg->closeInfo.reason, msg->closeInfo.remote ? " Remote" : "");
+            const auto remote = msg->closeInfo.remote ? " Remote" : "";
+            m_log->debug("Received close frame, dispatching. {} ({}){}", msg->closeInfo.code, msg->closeInfo.reason, remote);
             m_close_info = msg->closeInfo;
             m_close_dispatcher.emit();
         } break;

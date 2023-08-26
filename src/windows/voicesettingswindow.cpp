@@ -35,7 +35,6 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     m_encoding_mode.signal_changed().connect([this]() {
         const auto mode = m_encoding_mode.get_active_text();
         auto &audio = Abaddon::Get().GetAudio();
-        spdlog::get("audio")->debug("Chose encoding mode: {}", mode.c_str());
         if (mode == "Voice") {
             audio.SetEncodingApplication(OPUS_APPLICATION_VOIP);
         } else if (mode == "Music") {
@@ -67,7 +66,6 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     m_signal.signal_changed().connect([this]() {
         const auto signal = m_signal.get_active_text();
         auto &audio = Abaddon::Get().GetAudio();
-        spdlog::get("audio")->debug("Chose signal hint: {}", signal.c_str());
         if (signal == "Auto") {
             audio.SetSignalHint(OPUS_AUTO);
         } else if (signal == "Voice") {
