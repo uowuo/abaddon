@@ -190,6 +190,8 @@ if (ENABLE_VOICE)
                     subprojects/rnnoise/include/rnnoise.h)
             target_include_directories(rnnoise PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/subprojects/rnnoise/include")
             target_link_libraries(abaddon rnnoise)
+        else ()
+            target_link_libraries(abaddon rnnoise::rnnoise)
         endif ()
     endif ()
 
