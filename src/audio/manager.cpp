@@ -64,6 +64,10 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
 AudioManager::AudioManager() {
     m_ok = true;
 
+#ifdef WITH_RNNOISE
+    RNNoiseInitialize();
+#endif
+
     int err;
     m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
     if (err != OPUS_OK) {
@@ -144,6 +148,10 @@ AudioManager::~AudioManager() {
     ma_device_uninit(&m_capture_device);
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
+
+#ifdef WITH_RNNOISE
+    RNNoiseUninitialize();
+#endif
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
@@ -420,10 +428,43 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
 
     UpdateCaptureVolume(new_pcm.data(), frames);
 
-    if (m_capture_peak_meter / 32768.0 < m_capture_gate) return;
+    static std::array<float, 480> denoised_L;
+    static std::array<float, 480> denoised_R;
+
+    bool m_rnnoise_passed = false;
+#ifdef WITH_RNNOISE
+    if (m_vad_method == VADMethod::RNNoise || m_enable_noise_suppression) {
+        m_rnnoise_passed = CheckVADRNNoise(new_pcm.data(), denoised_L.data(), denoised_R.data());
+    }
+#endif
+
+    switch (m_vad_method) {
+        case VADMethod::Gate:
+            if (!CheckVADVoiceGate()) return;
+            break;
+#ifdef WITH_RNNOISE
+        case VADMethod::RNNoise:
+            if (!m_rnnoise_passed) return;
+            break;
+#endif
+    }
 
     m_enc_mutex.lock();
-    int payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
+    int payload_len = -1;
+
+    if (m_enable_noise_suppression) {
+        static std::array<int16_t, 960> denoised_interleaved;
+        for (size_t i = 0; i < 480; i++) {
+            denoised_interleaved[i * 2] = static_cast<int16_t>(denoised_L[i]);
+        }
+        for (size_t i = 0; i < 480; i++) {
+            denoised_interleaved[i * 2 + 1] = static_cast<int16_t>(denoised_R[i]);
+        }
+        payload_len = opus_encode(m_encoder, denoised_interleaved.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
+    } else {
+        payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
+    }
+
     m_enc_mutex.unlock();
     if (payload_len < 0) {
         spdlog::get("audio")->error("encoding error: {}", payload_len);
@@ -453,6 +494,9 @@ bool AudioManager::DecayVolumeMeters() {
     m_capture_peak_meter -= 600;
     if (m_capture_peak_meter < 0) m_capture_peak_meter = 0;
 
+    const auto x = m_vad_prob.load() - 0.05f;
+    m_vad_prob.store(x < 0.0f ? 0.0f : x);
+
     std::lock_guard<std::mutex> _(m_vol_mtx);
 
     for (auto &[ssrc, meter] : m_volumes) {
@@ -462,6 +506,55 @@ bool AudioManager::DecayVolumeMeters() {
 
     return true;
 }
+
+bool AudioManager::CheckVADVoiceGate() {
+    return m_capture_peak_meter / 32768.0 > m_capture_gate;
+}
+
+#ifdef WITH_RNNOISE
+bool AudioManager::CheckVADRNNoise(const int16_t *pcm, float *denoised_left, float *denoised_right) {
+    // use left channel for vad, only denoise right if noise suppression enabled
+    std::unique_lock<std::mutex> _(m_rnn_mutex);
+
+    static float rnnoise_input[480];
+    for (size_t i = 0; i < 480; i++) {
+        rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
+    }
+    m_vad_prob = std::max(m_vad_prob.load(), rnnoise_process_frame(m_rnnoise[0], denoised_left, rnnoise_input));
+
+    if (m_enable_noise_suppression) {
+        for (size_t i = 0; i < 480; i++) {
+            rnnoise_input[i] = static_cast<float>(pcm[i * 2 + 1]);
+        }
+        rnnoise_process_frame(m_rnnoise[1], denoised_right, rnnoise_input);
+    }
+
+    return m_vad_prob > m_prob_threshold;
+}
+
+void AudioManager::RNNoiseInitialize() {
+    spdlog::get("audio")->debug("Initializing RNNoise");
+    RNNoiseUninitialize();
+    std::unique_lock<std::mutex> _(m_rnn_mutex);
+    m_rnnoise[0] = rnnoise_create(nullptr);
+    m_rnnoise[1] = rnnoise_create(nullptr);
+    const auto expected = rnnoise_get_frame_size();
+    if (expected != 480) {
+        spdlog::get("audio")->warn("RNNoise expects a frame count other than 480");
+    }
+}
+
+void AudioManager::RNNoiseUninitialize() {
+    if (m_rnnoise[0] != nullptr) {
+        spdlog::get("audio")->debug("Uninitializing RNNoise");
+        std::unique_lock<std::mutex> _(m_rnn_mutex);
+        rnnoise_destroy(m_rnnoise[0]);
+        rnnoise_destroy(m_rnnoise[1]);
+        m_rnnoise[0] = nullptr;
+        m_rnnoise[1] = nullptr;
+    }
+}
+#endif
 
 bool AudioManager::OK() const {
     return m_ok;
@@ -486,6 +579,55 @@ AudioDevices &AudioManager::GetDevices() {
 uint32_t AudioManager::GetRTPTimestamp() const noexcept {
     return m_rtp_timestamp;
 }
+
+void AudioManager::SetVADMethod(const std::string &method) {
+    spdlog::get("audio")->debug("Setting VAD method to {}", method);
+    if (method == "gate") {
+        SetVADMethod(VADMethod::Gate);
+    } else if (method == "rnnoise") {
+#ifdef WITH_RNNOISE
+        SetVADMethod(VADMethod::RNNoise);
+#else
+        SetVADMethod(VADMethod::Gate);
+        spdlog::get("audio")->error("Tried to set RNNoise VAD method with support disabled");
+#endif
+    } else {
+        SetVADMethod(VADMethod::Gate);
+        spdlog::get("audio")->error("Tried to set unknown VAD method {}", method);
+    }
+}
+
+void AudioManager::SetVADMethod(VADMethod method) {
+    const auto method_int = static_cast<int>(method);
+    spdlog::get("audio")->debug("Setting VAD method to enum {}", method_int);
+    m_vad_method = method;
+}
+
+AudioManager::VADMethod AudioManager::GetVADMethod() const {
+    return m_vad_method;
+}
+
+#ifdef WITH_RNNOISE
+float AudioManager::GetCurrentVADProbability() const {
+    return m_vad_prob;
+}
+
+double AudioManager::GetRNNProbThreshold() const {
+    return m_prob_threshold;
+}
+
+void AudioManager::SetRNNProbThreshold(double value) {
+    m_prob_threshold = value;
+}
+
+void AudioManager::SetSuppressNoise(bool value) {
+    m_enable_noise_suppression = value;
+}
+
+bool AudioManager::GetSuppressNoise() const {
+    return m_enable_noise_suppression;
+}
+#endif
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
     return m_signal_opus_packet;

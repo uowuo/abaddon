@@ -35,7 +35,7 @@ DerivePointerAlignment: 'false'
 FixNamespaceComments: 'true'
 IncludeBlocks: Merge
 IndentCaseLabels: 'true'
-IndentPPDirectives: BeforeHash
+IndentPPDirectives: None
 IndentWidth: '4'
 IndentWrappedFunctionNames: 'false'
 JavaScriptQuotes: Double

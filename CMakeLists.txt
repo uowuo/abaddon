@@ -11,6 +11,7 @@ option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)
 option(ENABLE_VOICE "Enable voice suppport" ON)
 option(USE_KEYCHAIN "Store the token in the keychain (default)" ON)
 option(ENABLE_NOTIFICATION_SOUNDS "Enable notification sounds (default)" ON)
+option(ENABLE_RNNOISE "Enable RNNoise for voice activity detection (default)" ON)
 option(ENABLE_QRCODE_LOGIN "Enable QR code login (default)" ON)
 
 find_package(nlohmann_json REQUIRED)
@@ -161,6 +162,44 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
+    if (ENABLE_RNNOISE)
+        target_compile_definitions(abaddon PRIVATE WITH_RNNOISE)
+
+        find_package(rnnoise QUIET)
+        if (NOT rnnoise_FOUND)
+            message("rnnoise was not found and will be included as a submodule")
+            # This is potentially really stupid
+            add_library(rnnoise STATIC
+                    subprojects/rnnoise/src/arch.h
+                    subprojects/rnnoise/src/celt_lpc.c
+                    subprojects/rnnoise/src/celt_lpc.h
+                    subprojects/rnnoise/src/common.h
+                    subprojects/rnnoise/src/denoise.c
+                    subprojects/rnnoise/src/kiss_fft.c
+                    subprojects/rnnoise/src/kiss_fft.h
+                    subprojects/rnnoise/src/opus_types.h
+                    subprojects/rnnoise/src/pitch.c
+                    subprojects/rnnoise/src/pitch.h
+                    subprojects/rnnoise/src/rnn_data.c
+                    subprojects/rnnoise/src/rnn_data.h
+                    subprojects/rnnoise/src/rnn_reader.c
+                    subprojects/rnnoise/src/rnn.c
+                    subprojects/rnnoise/src/rnn.h
+                    subprojects/rnnoise/src/tansig_table.h
+                    subprojects/rnnoise/src/_kiss_fft_guts.h
+                    subprojects/rnnoise/include/rnnoise.h)
+            target_include_directories(rnnoise PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/subprojects/rnnoise/include")
+            target_link_libraries(abaddon rnnoise)
+        else ()
+            target_link_libraries(abaddon rnnoise::rnnoise)
+        endif ()
+    endif ()
+
+    if (APPLE)
+        target_link_libraries(abaddon "-framework CoreFoundation")
+        target_link_libraries(abaddon "-framework CoreAudio")
+        target_link_libraries(abaddon "-framework AudioToolbox")
+    endif ()
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})
@@ -170,10 +209,10 @@ endif ()
 
 if (USE_MINIAUDIO)
     find_path(MINIAUDIO_INCLUDE_DIR
-              NAMES miniaudio.h
-              HINTS subprojects
-              PATH_SUFFIXES miniaudio
-              REQUIRED)
+            NAMES miniaudio.h
+            HINTS subprojects
+            PATH_SUFFIXES miniaudio
+            REQUIRED)
 
     if (APPLE)
         target_link_libraries(abaddon "-framework CoreFoundation")

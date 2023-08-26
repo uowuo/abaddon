@@ -14,6 +14,11 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <sigc++/sigc++.h>
+
+#ifdef WITH_RNNOISE
+#include <rnnoise.h>
+#endif
+
 #include "devices.hpp"
 // clang-format on
 
@@ -40,30 +45,47 @@ public:
 
     void SetCaptureGate(double gate);
     void SetCaptureGain(double gain);
-    [[nodiscard]] double GetCaptureGate() const noexcept;
-    [[nodiscard]] double GetCaptureGain() const noexcept;
+    double GetCaptureGate() const noexcept;
+    double GetCaptureGain() const noexcept;
 
     void SetMuteSSRC(uint32_t ssrc, bool mute);
     void SetVolumeSSRC(uint32_t ssrc, double volume);
-    [[nodiscard]] double GetVolumeSSRC(uint32_t ssrc) const;
+    double GetVolumeSSRC(uint32_t ssrc) const;
 
     void SetEncodingApplication(int application);
-    [[nodiscard]] int GetEncodingApplication();
+    int GetEncodingApplication();
     void SetSignalHint(int signal);
-    [[nodiscard]] int GetSignalHint();
+    int GetSignalHint();
     void SetBitrate(int bitrate);
-    [[nodiscard]] int GetBitrate();
+    int GetBitrate();
 
     void Enumerate();
 
-    [[nodiscard]] bool OK() const;
+    bool OK() const;
 
-    [[nodiscard]] double GetCaptureVolumeLevel() const noexcept;
-    [[nodiscard]] double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
+    double GetCaptureVolumeLevel() const noexcept;
+    double GetSSRCVolumeLevel(uint32_t ssrc) const noexcept;
 
-    [[nodiscard]] AudioDevices &GetDevices();
+    AudioDevices &GetDevices();
 
-    [[nodiscard]] uint32_t GetRTPTimestamp() const noexcept;
+    uint32_t GetRTPTimestamp() const noexcept;
+
+    enum class VADMethod {
+        Gate,
+        RNNoise,
+    };
+
+    void SetVADMethod(const std::string &method);
+    void SetVADMethod(VADMethod method);
+    VADMethod GetVADMethod() const;
+
+#ifdef WITH_RNNOISE
+    float GetCurrentVADProbability() const;
+    double GetRNNProbThreshold() const;
+    void SetRNNProbThreshold(double value);
+    void SetSuppressNoise(bool value);
+    bool GetSuppressNoise() const;
+#endif
 
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
@@ -73,6 +95,15 @@ private:
     std::atomic<int> m_capture_peak_meter = 0;
 
     bool DecayVolumeMeters();
+
+    bool CheckVADVoiceGate();
+
+#ifdef WITH_RNNOISE
+    bool CheckVADRNNoise(const int16_t *pcm, float *denoised_left, float *denoised_right);
+
+    void RNNoiseInitialize();
+    void RNNoiseUninitialize();
+#endif
 
     friend void data_callback(ma_device *, void *, const void *, ma_uint32);
     friend void capture_data_callback(ma_device *, void *, const void *, ma_uint32);
@@ -95,6 +126,10 @@ private:
     mutable std::mutex m_mutex;
     mutable std::mutex m_enc_mutex;
 
+#ifdef WITH_RNNOISE
+    mutable std::mutex m_rnn_mutex;
+#endif
+
     std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 
     OpusEncoder *m_encoder;
@@ -106,6 +141,9 @@ private:
 
     std::atomic<double> m_capture_gate = 0.0;
     std::atomic<double> m_capture_gain = 1.0;
+    std::atomic<double> m_prob_threshold = 0.5;
+    std::atomic<float> m_vad_prob = 0.0;
+    std::atomic<bool> m_enable_noise_suppression = false;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
@@ -115,6 +153,10 @@ private:
 
     AudioDevices m_devices;
 
+    VADMethod m_vad_method;
+#ifdef WITH_RNNOISE
+    DenoiseState *m_rnnoise[2];
+#endif
     std::atomic<uint32_t> m_rtp_timestamp = 0;
 
 public:

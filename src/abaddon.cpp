@@ -23,11 +23,11 @@
 #include "remoteauth/remoteauthdialog.hpp"
 
 #ifdef WITH_LIBHANDY
-    #include <handy.h>
+#include <handy.h>
 #endif
 
 #ifdef _WIN32
-    #pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "crypt32.lib")
 #endif
 
 Abaddon::Abaddon()
@@ -67,7 +67,7 @@ Abaddon::Abaddon()
         if (!accessible)
             m_channels_requested.erase(id);
     });
-    if (GetSettings().Prefetch)
+    if (GetSettings().Prefetch) {
         m_discord.signal_message_create().connect([this](const Message &message) {
             if (message.Author.HasAvatar())
                 m_img_mgr.Prefetch(message.Author.GetAvatarURL());
@@ -76,6 +76,11 @@ Abaddon::Abaddon()
                     m_img_mgr.Prefetch(attachment.ProxyURL);
             }
         });
+    }
+
+#ifdef WITH_VOICE
+    m_audio.SetVADMethod(GetSettings().VAD);
+#endif
 }
 
 Abaddon &Abaddon::Get() {
@@ -473,14 +478,6 @@ void Abaddon::ShowVoiceWindow() {
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
         m_audio.SetPlayback(!is_deaf);
-    });
-
-    wnd->signal_gate().connect([this](double gate) {
-        m_audio.SetCaptureGate(gate);
-    });
-
-    wnd->signal_gain().connect([this](double gain) {
-        m_audio.SetCaptureGain(gain);
     });
 
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
