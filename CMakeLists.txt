@@ -169,7 +169,7 @@ if (ENABLE_VOICE)
         if (NOT rnnoise_FOUND)
             message("rnnoise was not found and will be included as a submodule")
             # This is potentially really stupid
-            add_library(rnnoise
+            add_library(rnnoise STATIC
                     subprojects/rnnoise/src/arch.h
                     subprojects/rnnoise/src/celt_lpc.c
                     subprojects/rnnoise/src/celt_lpc.h
