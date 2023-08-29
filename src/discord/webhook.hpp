@@ -22,3 +22,12 @@ struct WebhookData {
 
     friend void from_json(const nlohmann::json &j, WebhookData &m);
 };
+
+struct WebhookMessageData {
+    Snowflake MessageID;
+    Snowflake WebhookID;
+    std::string Username;
+    std::string Avatar;
+
+    std::string GetAvatarURL() const;
+};

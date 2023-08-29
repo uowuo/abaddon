@@ -283,3 +283,11 @@ bool Message::DoesMention(Snowflake id) const noexcept {
     if (!member.has_value()) return false;
     return std::find_first_of(MentionRoles.begin(), MentionRoles.end(), member->Roles.begin(), member->Roles.end()) != MentionRoles.end();
 }
+
+bool Message::IsWebhook() const noexcept {
+    return WebhookID.has_value();
+}
+
+std::optional<WebhookMessageData> Message::GetWebhookData() const {
+    return Abaddon::Get().GetDiscordClient().GetWebhookMessageData(ID);
+}

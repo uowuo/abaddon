@@ -918,11 +918,22 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     const auto author = Abaddon::Get().GetDiscordClient().GetUser(UserID);
     auto &img = Abaddon::Get().GetImageManager();
 
+    std::string avatar_url;
+    if (data.IsWebhook()) {
+        const auto webhook_data = Abaddon::Get().GetDiscordClient().GetWebhookMessageData(data.ID);
+        if (webhook_data.has_value()) {
+            avatar_url = webhook_data->GetAvatarURL();
+        }
+    }
+    if (avatar_url.empty()) {
+        avatar_url = author->GetAvatarURL(data.GuildID);
+    }
+
     auto cb = [this](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
         m_static_avatar = pb->scale_simple(AvatarSize, AvatarSize, Gdk::INTERP_BILINEAR);
         m_avatar.property_pixbuf() = m_static_avatar;
     };
-    img.LoadFromURL(author->GetAvatarURL(data.GuildID), sigc::track_obj(cb, *this));
+    img.LoadFromURL(avatar_url, sigc::track_obj(cb, *this));
 
     if (author->HasAnimatedAvatar(data.GuildID)) {
         auto cb = [this](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -955,10 +966,11 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
         m_extra->set_can_focus(false);
         m_extra->set_use_markup(true);
     }
-    if (author->IsABot())
-        m_extra->set_markup("<b>BOT</b>");
-    else if (data.WebhookID.has_value())
+    if (data.IsWebhook()) {
         m_extra->set_markup("<b>Webhook</b>");
+    } else if (author->IsABot()) {
+        m_extra->set_markup("<b>BOT</b>");
+    }
 
     m_timestamp.set_text(data.ID.GetLocalTimestamp());
     m_timestamp.set_hexpand(true);
@@ -1018,11 +1030,21 @@ ChatMessageHeader::ChatMessageHeader(const Message &data)
     show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    auto role_update_cb = [this](...) { UpdateName(); };
-    discord.signal_role_update().connect(sigc::track_obj(role_update_cb, *this));
-    auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateName(); };
-    discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
-    UpdateName();
+    if (data.IsWebhook()) {
+        const auto webhook_data = discord.GetWebhookMessageData(data.ID);
+        if (webhook_data.has_value()) {
+            const auto name = Glib::Markup::escape_text(webhook_data->Username);
+            m_author.set_markup("<span weight='bold'>" + name + "</span>");
+        } else {
+            UpdateName();
+        }
+    } else {
+        auto role_update_cb = [this](...) { UpdateName(); };
+        discord.signal_role_update().connect(sigc::track_obj(role_update_cb, *this));
+        auto guild_member_update_cb = [this](const auto &, const auto &) { UpdateName(); };
+        discord.signal_guild_member_update().connect(sigc::track_obj(guild_member_update_cb, *this));
+        UpdateName();
+    }
     AttachUserMenuHandler(m_meta_ev);
     AttachUserMenuHandler(m_avatar_ev);
 }

@@ -333,6 +333,10 @@ std::vector<Snowflake> DiscordClient::GetChildChannelIDs(Snowflake parent_id) co
     return m_store.GetChannelIDsWithParentID(parent_id);
 }
 
+std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake message_id) const {
+    return m_store.GetWebhookMessage(message_id);
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -2735,15 +2739,18 @@ void DiscordClient::StoreMessageData(Message &msg) {
         for (const auto &r : *msg.Reactions) {
             if (!r.Emoji.ID.IsValid()) continue;
             const auto cur = m_store.GetEmoji(r.Emoji.ID);
-            if (!cur.has_value())
+            if (!cur.has_value()) {
                 m_store.SetEmoji(r.Emoji.ID, r.Emoji);
+            }
         }
 
-    for (const auto &user : msg.Mentions)
+    for (const auto &user : msg.Mentions) {
         m_store.SetUser(user.ID, user);
+    }
 
-    if (msg.Member.has_value())
+    if (msg.Member.has_value()) {
         m_store.SetGuildMember(*msg.GuildID, msg.Author.ID, *msg.Member);
+    }
 
     if (msg.Interaction.has_value()) {
         m_store.SetUser(msg.Interaction->User.ID, msg.Interaction->User);
@@ -2752,11 +2759,17 @@ void DiscordClient::StoreMessageData(Message &msg) {
         }
     }
 
+    if (msg.IsWebhook()) {
+        m_store.SetWebhookMessage(msg);
+    }
+
     m_store.EndTransaction();
 
-    if (msg.ReferencedMessage.has_value() && msg.MessageReference.has_value() && msg.MessageReference->ChannelID.has_value())
-        if (msg.ReferencedMessage.value() != nullptr)
+    if (msg.ReferencedMessage.has_value() && msg.MessageReference.has_value() && msg.MessageReference->ChannelID.has_value()) {
+        if (msg.ReferencedMessage.value() != nullptr) {
             StoreMessageData(**msg.ReferencedMessage);
+        }
+    }
 }
 
 // some notes for myself

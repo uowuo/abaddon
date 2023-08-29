@@ -8,6 +8,7 @@
 #include "emoji.hpp"
 #include "member.hpp"
 #include "interactions.hpp"
+#include "webhook.hpp"
 #include "misc/bitwise.hpp"
 
 enum class MessageType {
@@ -226,6 +227,9 @@ struct Message {
 
     bool DoesMentionEveryoneOrUser(Snowflake id) const noexcept;
     bool DoesMention(Snowflake id) const noexcept;
+    bool IsWebhook() const noexcept;
+
+    std::optional<WebhookMessageData> GetWebhookData() const;
 
 private:
     bool m_deleted = false;

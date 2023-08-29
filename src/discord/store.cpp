@@ -57,6 +57,20 @@ void Store::SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban) {
     s->Reset();
 }
 
+void Store::SetWebhookMessage(const Message &message) {
+    auto &s = m_stmt_set_webhook_msg;
+
+    s->Bind(1, message.ID);
+    s->Bind(2, message.WebhookID);
+    s->Bind(3, message.Author.Username);
+    s->Bind(4, message.Author.Avatar);
+
+    if (!s->Insert())
+        fprintf(stderr, "webhook message insert failed for %" PRIu64 ": %s\n", static_cast<uint64_t>(message.ID), m_db.ErrStr());
+
+    s->Reset();
+}
+
 void Store::SetChannel(Snowflake id, const ChannelData &chan) {
     auto &s = m_stmt_set_chan;
 
@@ -482,6 +496,29 @@ std::vector<BanData> Store::GetBans(Snowflake guild_id) const {
 
     return ret;
 }
+
+std::optional<WebhookMessageData> Store::GetWebhookMessage(Snowflake message_id) const {
+    auto &s = m_stmt_get_webhook_msg;
+
+    s->Bind(1, message_id);
+    if (!s->FetchOne()) {
+        if (m_db.Error() != SQLITE_DONE)
+            fprintf(stderr, "error while fetching webhook message %" PRIu64 ": %s\n", static_cast<uint64_t>(message_id), m_db.ErrStr());
+        s->Reset();
+        return {};
+    }
+
+    WebhookMessageData data;
+    s->Get(0, data.MessageID);
+    s->Get(1, data.WebhookID);
+    s->Get(2, data.Username);
+    s->Get(3, data.Avatar);
+
+    s->Reset();
+
+    return data;
+}
+
 
 Snowflake Store::GetGuildOwner(Snowflake guild_id) const {
     auto &s = m_stmt_get_guild_owner;
@@ -1503,6 +1540,15 @@ bool Store::CreateTables() {
         )
     )";
 
+    const char *create_webhook_messages = R"(
+        CREATE TABLE IF NOT EXISTS webhook_messages (
+            message_id INTEGER NOT NULL,
+            webhook_id INTEGER NOT NULL,
+            username TEXT,
+            avatar TEXT
+        )
+    )";
+
     if (m_db.Execute(create_users) != SQLITE_OK) {
         fprintf(stderr, "failed to create user table: %s\n", m_db.ErrStr());
         return false;
@@ -1605,6 +1651,11 @@ bool Store::CreateTables() {
 
     if (m_db.Execute(create_reactions) != SQLITE_OK) {
         fprintf(stderr, "failed to create reactions table: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    if (m_db.Execute(create_webhook_messages) != SQLITE_OK) {
+        fprintf(stderr, "failed to create webhook messages table: %s\n", m_db.ErrStr());
         return false;
     }
 
@@ -2285,6 +2336,24 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_guild_owner->OK()) {
         fprintf(stderr, "failed to prepare get guild owner statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_set_webhook_msg = std::make_unique<Statement>(m_db, R"(
+        REPLACE INTO webhook_messages VALUES (
+            ?, ?, ?, ?
+        )
+    )");
+    if (!m_stmt_set_webhook_msg->OK()) {
+        fprintf(stderr, "failed to prepare set webhook message statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_webhook_msg = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM webhook_messages WHERE message_id = ?
+    )");
+    if (!m_stmt_get_webhook_msg->OK()) {
+        fprintf(stderr, "failed to prepare get webhook message statement: %s\n", m_db.ErrStr());
         return false;
     }
 

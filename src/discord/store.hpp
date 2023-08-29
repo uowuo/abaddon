@@ -7,7 +7,7 @@
 #include <sqlite3.h>
 
 #ifdef GetMessage // fuck you windows.h
-    #undef GetMessage
+#undef GetMessage
 #endif
 
 class Store {
@@ -26,6 +26,7 @@ public:
     void SetPermissionOverwrite(Snowflake channel_id, Snowflake id, const PermissionOverwrite &perm);
     void SetEmoji(Snowflake id, const EmojiData &emoji);
     void SetBan(Snowflake guild_id, Snowflake user_id, const BanData &ban);
+    void SetWebhookMessage(const Message &message);
 
     std::optional<ChannelData> GetChannel(Snowflake id) const;
     std::optional<EmojiData> GetEmoji(Snowflake id) const;
@@ -37,6 +38,7 @@ public:
     std::optional<UserData> GetUser(Snowflake id) const;
     std::optional<BanData> GetBan(Snowflake guild_id, Snowflake user_id) const;
     std::vector<BanData> GetBans(Snowflake guild_id) const;
+    std::optional<WebhookMessageData> GetWebhookMessage(Snowflake message_id) const;
 
     Snowflake GetGuildOwner(Snowflake guild_id) const;
     std::vector<Snowflake> GetMemberRoles(Snowflake guild_id, Snowflake user_id) const;
@@ -313,5 +315,7 @@ private:
     STMT(get_guild_member_ids);
     STMT(clr_role);
     STMT(get_guild_owner);
+    STMT(set_webhook_msg);
+    STMT(get_webhook_msg);
 #undef STMT
 };
