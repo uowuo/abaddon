@@ -733,6 +733,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
 bool ChatMessageItemContainer::IsEmbedImageOnly(const EmbedData &data) {
     if (!data.Thumbnail.has_value()) return false;
+    if (data.Title.has_value()) return false;
     if (data.Author.has_value()) return false;
     if (data.Description.has_value()) return false;
     if (data.Fields.has_value()) return false;
