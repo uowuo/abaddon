@@ -94,7 +94,7 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
-6. Download and drag "res" and "css" into the folder containing Abaddon executible (downloads linked below)
+6. Download and drag "res" and "css" into the folder containing Abaddon executible, most likely your "build" folder. (downloads linked below) 
 
 ### Downloads:
 
