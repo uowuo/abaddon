@@ -1,43 +1,36 @@
 #pragma once
-#include <mutex>
-#include <unordered_map>
-#include <optional>
-#include "discord/discord.hpp"
+#include <gtkmm/treemodel.h>
+#include <gtkmm/treestore.h>
+#include <gtkmm/treeview.h>
 
-class LazyImage;
-class StatusIndicator;
-class MemberListUserRow : public Gtk::ListBoxRow {
-public:
-    MemberListUserRow(const std::optional<GuildData> &guild, const UserData &data);
-
-    Snowflake ID;
-
-private:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    LazyImage *m_avatar;
-    StatusIndicator *m_status_indicator;
-    Gtk::Label *m_label;
-    Gtk::Image *m_crown = nullptr;
-};
+#include "cellrenderermemberlist.hpp"
+#include "discord/snowflake.hpp"
 
 class MemberList {
 public:
     MemberList();
-    Gtk::Widget *GetRoot() const;
+    Gtk::Widget *GetRoot();
 
     void UpdateMemberList();
     void Clear();
     void SetActiveChannel(Snowflake id);
 
 private:
-    void AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id);
+    class ModelColumns : public Gtk::TreeModel::ColumnRecord {
+    public:
+        ModelColumns();
 
-    Gtk::ScrolledWindow *m_main;
-    Gtk::ListBox *m_listbox;
+        Gtk::TreeModelColumn<MemberListRenderType> m_type;
+        Gtk::TreeModelColumn<uint64_t> m_id;
+        Gtk::TreeModelColumn<Glib::ustring> m_name;
+    };
 
-    Snowflake m_guild_id;
-    Snowflake m_chan_id;
+    ModelColumns m_columns;
+    Glib::RefPtr<Gtk::TreeStore> m_model;
+    Gtk::TreeView m_view;
 
-    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_id_to_row;
+    Gtk::ScrolledWindow m_main;
+
+    Snowflake m_active_channel;
+    Snowflake m_active_guild;
 };
