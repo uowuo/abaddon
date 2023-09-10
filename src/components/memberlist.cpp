@@ -22,7 +22,11 @@ MemberList::MemberList()
     column->add_attribute(renderer->property_type(), m_columns.m_type);
     column->add_attribute(renderer->property_id(), m_columns.m_id);
     column->add_attribute(renderer->property_name(), m_columns.m_name);
+    column->add_attribute(renderer->property_pixbuf(), m_columns.m_pixbuf);
+    column->add_attribute(renderer->property_color(), m_columns.m_color);
     m_view.append_column(*column);
+
+    renderer->signal_render().connect(sigc::mem_fun(*this, &MemberList::OnCellRender));
 }
 
 Gtk::Widget *MemberList::GetRoot() {
@@ -85,19 +89,29 @@ void MemberList::UpdateMemberList() {
         if (col_role.has_value()) user_to_color[user_id] = col_role->Color;
     }
 
-    const auto add_user = [this, &guild](const UserData &user, const Gtk::TreeRow &parent) {
-        auto row = *m_model->append(parent->children());
+    const auto add_user = [this, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) {
+        auto test = m_model->append(parent->children());
+        auto row = *test;
         row[m_columns.m_type] = MemberListRenderType::Member;
         row[m_columns.m_id] = user.ID;
         row[m_columns.m_name] = user.GetDisplayNameEscaped();
-        return row;
+        row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+        row[m_columns.m_av_requested] = false;
+        if (const auto iter = user_to_color.find(user.ID); iter != user_to_color.end()) {
+            row[m_columns.m_color] = IntToRGBA(iter->second);
+        } else {
+            const static auto transparent = Gdk::RGBA("rgba(0,0,0,0)");
+            row[m_columns.m_color] = transparent;
+        }
+        m_pending_avatars[user.ID] = test;
+        return test;
     };
 
     const auto add_role = [this](const RoleData &role) {
         auto row = *m_model->append();
         row[m_columns.m_type] = MemberListRenderType::Role;
         row[m_columns.m_id] = role.ID;
-        row[m_columns.m_name] = role.GetEscapedName();
+        row[m_columns.m_name] = "<b>" + role.GetEscapedName() + "</b>";
         return row;
     };
 
@@ -118,7 +132,7 @@ void MemberList::UpdateMemberList() {
     auto everyone_role = *m_model->append();
     everyone_role[m_columns.m_type] = MemberListRenderType::Role;
     everyone_role[m_columns.m_id] = m_active_guild; // yes thats how the role works
-    everyone_role[m_columns.m_name] = "@everyone";
+    everyone_role[m_columns.m_name] = "<b>@everyone</b>";
 
     for (const auto id : roleless_users) {
         const auto user = discord.GetUser(id);
@@ -130,6 +144,7 @@ void MemberList::UpdateMemberList() {
 
 void MemberList::Clear() {
     m_model->clear();
+    m_pending_avatars.clear();
 }
 
 void MemberList::SetActiveChannel(Snowflake id) {
@@ -141,8 +156,33 @@ void MemberList::SetActiveChannel(Snowflake id) {
     }
 }
 
+void MemberList::OnCellRender(uint64_t id) {
+    Snowflake real_id = id;
+    if (const auto iter = m_pending_avatars.find(real_id); iter != m_pending_avatars.end()) {
+        auto row = iter->second;
+        m_pending_avatars.erase(iter);
+        if (!row) return;
+        if ((*row)[m_columns.m_av_requested]) return;
+        (*row)[m_columns.m_av_requested] = true;
+        const auto user = Abaddon::Get().GetDiscordClient().GetUser(real_id);
+        if (!user.has_value()) return;
+        const auto cb = [this, row](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            // for some reason row::operator bool() returns true when m_model->iter_is_valid returns false
+            // idk why since other code already does essentially the same thing im doing here
+            // iter_is_valid is "slow" according to gtk but the only other workaround i can think of would be worse
+            if (row && m_model->iter_is_valid(row)) {
+                (*row)[m_columns.m_pixbuf] = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
+            }
+        };
+        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "16"), cb);
+    }
+}
+
 MemberList::ModelColumns::ModelColumns() {
     add(m_type);
     add(m_id);
     add(m_name);
+    add(m_pixbuf);
+    add(m_av_requested);
+    add(m_color);
 }

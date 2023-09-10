@@ -14,6 +14,8 @@ public:
     Glib::PropertyProxy<MemberListRenderType> property_type();
     Glib::PropertyProxy<uint64_t> property_id();
     Glib::PropertyProxy<Glib::ustring> property_name();
+    Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_pixbuf();
+    Glib::PropertyProxy<Gdk::RGBA> property_color();
 
 protected:
     void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
@@ -48,9 +50,16 @@ protected:
 
 private:
     Gtk::CellRendererText m_renderer_text;
-    Gtk::CellRendererPixbuf m_renderer_pixbuf;
 
     Glib::Property<MemberListRenderType> m_property_type;
     Glib::Property<uint64_t> m_property_id;
     Glib::Property<Glib::ustring> m_property_name;
+    Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf;
+    Glib::Property<Gdk::RGBA> m_property_color;
+
+    using type_signal_render = sigc::signal<void(uint64_t)>;
+    type_signal_render m_signal_render;
+
+public:
+    type_signal_render signal_render();
 };

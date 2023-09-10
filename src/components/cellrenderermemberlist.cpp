@@ -2,10 +2,11 @@
 
 CellRendererMemberList::CellRendererMemberList()
     : Glib::ObjectBase(typeid(CellRendererMemberList))
-    , Gtk::CellRenderer()
     , m_property_type(*this, "render-type")
     , m_property_id(*this, "id")
-    , m_property_name(*this, "name") {
+    , m_property_name(*this, "name")
+    , m_property_pixbuf(*this, "pixbuf")
+    , m_property_color(*this, "color") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -24,6 +25,14 @@ Glib::PropertyProxy<uint64_t> CellRendererMemberList::property_id() {
 
 Glib::PropertyProxy<Glib::ustring> CellRendererMemberList::property_name() {
     return m_property_name.get_proxy();
+}
+
+Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererMemberList::property_pixbuf() {
+    return m_property_pixbuf.get_proxy();
+}
+
+Glib::PropertyProxy<Gdk::RGBA> CellRendererMemberList::property_color() {
+    return m_property_color.get_proxy();
 }
 
 void CellRendererMemberList::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -108,5 +117,24 @@ void CellRendererMemberList::get_preferred_height_for_width_vfunc_member(Gtk::Wi
 }
 
 void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    m_renderer_text.render(cr, widget, background_area, cell_area, flags);
+    Gdk::Rectangle text_cell_area = cell_area;
+    text_cell_area.set_x(22);
+    const auto color = m_property_color.get_value();
+    if (color.get_alpha_u() > 0) {
+        m_renderer_text.property_foreground_rgba().set_value(color);
+    }
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
+    m_renderer_text.property_foreground_set().set_value(false);
+
+    const double icon_x = background_area.get_x() + 6.0;
+    const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - 8.0;
+    Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
+    cr->rectangle(icon_x, icon_y, 16.0, 16.0);
+    cr->fill();
+
+    m_signal_render.emit(m_property_id.get_value());
+}
+
+CellRendererMemberList::type_signal_render CellRendererMemberList::signal_render() {
+    return m_signal_render;
 }
