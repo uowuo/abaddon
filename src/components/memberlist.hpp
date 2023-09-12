@@ -20,6 +20,9 @@ public:
 
 private:
     void OnCellRender(uint64_t id);
+    bool OnButtonPressEvent(GdkEventButton *ev);
+
+    void OnRoleSubmenuPopup();
 
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {
     public:
@@ -39,10 +42,15 @@ private:
     Glib::RefPtr<Gtk::TreeStore> m_model;
     Gtk::TreeView m_view;
 
+    Gtk::TreePath m_path_for_menu;
+
     Gtk::ScrolledWindow m_main;
 
     Snowflake m_active_channel;
     Snowflake m_active_guild;
+
+    Gtk::Menu m_menu_role;
+    Gtk::MenuItem m_menu_role_copy_id;
 
     std::unordered_map<Snowflake, Gtk::TreeIter> m_pending_avatars;
 };

@@ -1,7 +1,8 @@
 #include "memberlist.hpp"
 
 MemberList::MemberList()
-    : m_model(Gtk::TreeStore::create(m_columns)) {
+    : m_model(Gtk::TreeStore::create(m_columns))
+    , m_menu_role_copy_id("_Copy ID", true) {
     m_main.get_style_context()->add_class("member-list");
 
     m_view.set_hexpand(true);
@@ -12,6 +13,7 @@ MemberList::MemberList()
     m_view.set_headers_visible(false);
     m_view.get_selection()->set_mode(Gtk::SELECTION_NONE);
     m_view.set_model(m_model);
+    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &MemberList::OnButtonPressEvent), false);
 
     m_main.add(m_view);
     m_main.show_all_children();
@@ -37,6 +39,15 @@ MemberList::MemberList()
     });
 
     renderer->signal_render().connect(sigc::mem_fun(*this, &MemberList::OnCellRender));
+
+    // Menu stuff
+
+    m_menu_role.append(m_menu_role_copy_id);
+    m_menu_role.show_all();
+
+    m_menu_role_copy_id.signal_activate().connect([this]() {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
 }
 
 Gtk::Widget *MemberList::GetRoot() {
@@ -180,6 +191,30 @@ void MemberList::OnCellRender(uint64_t id) {
         };
         Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "16"), cb);
     }
+}
+
+bool MemberList::OnButtonPressEvent(GdkEventButton *ev) {
+    if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
+        if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
+            switch ((*m_model->get_iter(m_path_for_menu))[m_columns.m_type]) {
+                case MemberListRenderType::Role:
+                    OnRoleSubmenuPopup();
+                    m_menu_role.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case MemberListRenderType::Member:
+                    Abaddon::Get().ShowUserMenu(
+                        reinterpret_cast<GdkEvent *>(ev),
+                        static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]),
+                        m_active_guild);
+                    break;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void MemberList::OnRoleSubmenuPopup() {
 }
 
 MemberList::ModelColumns::ModelColumns() {
