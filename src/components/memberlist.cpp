@@ -26,6 +26,16 @@ MemberList::MemberList()
     column->add_attribute(renderer->property_color(), m_columns.m_color);
     m_view.append_column(*column);
 
+    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
+    m_model->set_sort_func(m_columns.m_sort, [this](const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b) -> int {
+        if ((*a)[m_columns.m_type] == MemberListRenderType::Role) {
+            return (*b)[m_columns.m_sort] - (*a)[m_columns.m_sort];
+        } else if ((*a)[m_columns.m_type] == MemberListRenderType::Member) {
+            return static_cast<Glib::ustring>((*a)[m_columns.m_name]).compare((*b)[m_columns.m_name]);
+        }
+        return 0;
+    });
+
     renderer->signal_render().connect(sigc::mem_fun(*this, &MemberList::OnCellRender));
 }
 
@@ -65,8 +75,7 @@ void MemberList::UpdateMemberList() {
         ids = discord.GetUsersInGuild(m_active_guild);
     }
 
-    std::map<int, RoleData> pos_to_role;
-    std::map<int, std::vector<UserData>> pos_to_users;
+    std::unordered_map<Snowflake, std::vector<UserData>> role_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
     std::vector<Snowflake> roleless_users;
 
@@ -84,8 +93,7 @@ void MemberList::UpdateMemberList() {
             continue;
         }
 
-        pos_to_role[pos_role->Position] = *pos_role;
-        pos_to_users[pos_role->Position].push_back(std::move(*user));
+        role_to_users[pos_role->ID].push_back(std::move(*user));
         if (col_role.has_value()) user_to_color[user_id] = col_role->Color;
     }
 
@@ -112,20 +120,15 @@ void MemberList::UpdateMemberList() {
         row[m_columns.m_type] = MemberListRenderType::Role;
         row[m_columns.m_id] = role.ID;
         row[m_columns.m_name] = "<b>" + role.GetEscapedName() + "</b>";
+        row[m_columns.m_sort] = role.Position;
         return row;
     };
 
-    for (auto it = pos_to_role.crbegin(); it != pos_to_role.crend(); it++) {
-        const auto pos = it->first;
-        const auto &role = it->second;
+    for (const auto &[role_id, users] : role_to_users) {
+        const auto role = discord.GetRole(role_id);
+        if (!role.has_value()) continue;
 
-        auto role_row = add_role(role);
-
-        if (pos_to_users.find(pos) == pos_to_users.end()) continue;
-
-        auto &users = pos_to_users.at(pos);
-        AlphabeticalSort(users.begin(), users.end(), [](const auto &e) { return e.Username; });
-
+        auto role_row = add_role(*role);
         for (const auto &user : users) add_user(user, role_row);
     }
 
@@ -133,6 +136,7 @@ void MemberList::UpdateMemberList() {
     everyone_role[m_columns.m_type] = MemberListRenderType::Role;
     everyone_role[m_columns.m_id] = m_active_guild; // yes thats how the role works
     everyone_role[m_columns.m_name] = "<b>@everyone</b>";
+    everyone_role[m_columns.m_sort] = 0;
 
     for (const auto id : roleless_users) {
         const auto user = discord.GetUser(id);
@@ -185,4 +189,5 @@ MemberList::ModelColumns::ModelColumns() {
     add(m_pixbuf);
     add(m_av_requested);
     add(m_color);
+    add(m_sort);
 }

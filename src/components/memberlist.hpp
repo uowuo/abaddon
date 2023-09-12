@@ -30,6 +30,7 @@ private:
         Gtk::TreeModelColumn<Glib::ustring> m_name;
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_pixbuf;
         Gtk::TreeModelColumn<Gdk::RGBA> m_color;
+        Gtk::TreeModelColumn<int> m_sort;
 
         Gtk::TreeModelColumn<bool> m_av_requested;
     };
