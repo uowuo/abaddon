@@ -72,6 +72,8 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
+6. `Copy resources "res" and "css" into ~/abaddon/build`
+
 
 #### Linux:
 
@@ -94,7 +96,7 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
-6. `Download and drag "res" and "css" into ~/abaddon/build`
+6. `Copy resources "res" and "css" into ~/abaddon/build`
 
 ### Downloads:
 
