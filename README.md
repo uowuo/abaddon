@@ -64,6 +64,7 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
 5. `ninja`
+6. [Copy resources](#resources)
 
 #### Mac:
 
@@ -72,6 +73,8 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
+6. [Copy resources](#resources)
+
 
 #### Linux:
 
@@ -94,6 +97,7 @@ the result of fundamental issues with Discord's thread implementation.
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
+6. [Copy resources](#resources)
 
 ### Downloads:
 
