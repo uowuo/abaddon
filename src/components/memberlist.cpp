@@ -29,14 +29,8 @@ MemberList::MemberList()
     m_view.append_column(*column);
 
     m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
-    m_model->set_sort_func(m_columns.m_sort, [this](const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b) -> int {
-        if ((*a)[m_columns.m_type] == MemberListRenderType::Role) {
-            return (*b)[m_columns.m_sort] - (*a)[m_columns.m_sort];
-        } else if ((*a)[m_columns.m_type] == MemberListRenderType::Member) {
-            return static_cast<Glib::ustring>((*a)[m_columns.m_name]).compare((*b)[m_columns.m_name]);
-        }
-        return 0;
-    });
+    m_model->set_default_sort_func([](const Gtk::TreeModel::iterator &, const Gtk::TreeModel::iterator &) -> int { return 0; });
+    m_model->set_sort_func(m_columns.m_sort, sigc::mem_fun(*this, &MemberList::SortFunc));
 
     renderer->signal_render().connect(sigc::mem_fun(*this, &MemberList::OnCellRender));
 
@@ -88,24 +82,31 @@ void MemberList::UpdateMemberList() {
 
     std::unordered_map<Snowflake, std::vector<UserData>> role_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
-    std::vector<Snowflake> roleless_users;
+    std::vector<UserData> roleless_users;
 
-    for (const auto user_id : ids) {
-        auto user = discord.GetUser(user_id);
-        if (!user.has_value() || user->IsDeleted()) continue;
+    const auto users = discord.GetUsersBulk(ids.begin(), ids.end());
 
-        const auto pos_role_id = discord.GetMemberHoistedRole(m_active_guild, user_id);
-        const auto col_role_id = discord.GetMemberHoistedRole(m_active_guild, user_id, true);
-        const auto pos_role = discord.GetRole(pos_role_id);
-        const auto col_role = discord.GetRole(col_role_id);
+    std::unordered_map<Snowflake, RoleData> role_cache;
+    if (guild->Roles.has_value()) {
+        for (const auto &role : *guild->Roles) {
+            role_cache[role.ID] = role;
+        }
+    }
+    for (const auto &user : users) {
+        if (user.IsDeleted()) continue;
+        const auto member = discord.GetMember(user.ID, m_active_guild);
+        if (!member.has_value()) continue;
+
+        const auto pos_role = discord.GetMemberHoistedRoleCached(*member, role_cache);
+        const auto col_role = discord.GetMemberHoistedRoleCached(*member, role_cache, true);
 
         if (!pos_role.has_value()) {
-            roleless_users.push_back(user_id);
+            roleless_users.push_back(user);
             continue;
         }
 
-        role_to_users[pos_role->ID].push_back(std::move(*user));
-        if (col_role.has_value()) user_to_color[user_id] = col_role->Color;
+        role_to_users[pos_role->ID].push_back(user);
+        if (col_role.has_value()) user_to_color[user.ID] = col_role->Color;
     }
 
     const auto add_user = [this, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) {
@@ -135,12 +136,15 @@ void MemberList::UpdateMemberList() {
         return row;
     };
 
-    for (const auto &[role_id, users] : role_to_users) {
-        const auto role = discord.GetRole(role_id);
-        if (!role.has_value()) continue;
+    // Kill sorting
+    m_view.freeze_child_notify();
+    m_model->set_sort_column(Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID, Gtk::SORT_ASCENDING);
 
-        auto role_row = add_role(*role);
-        for (const auto &user : users) add_user(user, role_row);
+    for (const auto &[role_id, users] : role_to_users) {
+        if (const auto iter = role_cache.find(role_id); iter != role_cache.end()) {
+            auto role_row = add_role(iter->second);
+            for (const auto &user : users) add_user(user, role_row);
+        }
     }
 
     auto everyone_role = *m_model->append();
@@ -149,12 +153,14 @@ void MemberList::UpdateMemberList() {
     everyone_role[m_columns.m_name] = "<b>@everyone</b>";
     everyone_role[m_columns.m_sort] = 0;
 
-    for (const auto id : roleless_users) {
-        const auto user = discord.GetUser(id);
-        if (user.has_value()) add_user(*user, everyone_role);
+    for (const auto &user : roleless_users) {
+        add_user(user, everyone_role);
     }
 
+    // Restore sorting
+    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
     m_view.expand_all();
+    m_view.thaw_child_notify();
 }
 
 void MemberList::Clear() {
@@ -215,6 +221,15 @@ bool MemberList::OnButtonPressEvent(GdkEventButton *ev) {
 }
 
 void MemberList::OnRoleSubmenuPopup() {
+}
+
+int MemberList::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b) {
+    if ((*a)[m_columns.m_type] == MemberListRenderType::Role) {
+        return (*b)[m_columns.m_sort] - (*a)[m_columns.m_sort];
+    } else if ((*a)[m_columns.m_type] == MemberListRenderType::Member) {
+        return static_cast<Glib::ustring>((*a)[m_columns.m_name]).compare((*b)[m_columns.m_name]);
+    }
+    return 0;
 }
 
 MemberList::ModelColumns::ModelColumns() {

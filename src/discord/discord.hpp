@@ -18,7 +18,7 @@
 #include <queue>
 
 #ifdef GetMessage
-    #undef GetMessage
+#undef GetMessage
 #endif
 
 class Abaddon;
@@ -55,6 +55,7 @@ public:
     std::optional<GuildData> GetGuild(Snowflake id) const;
     std::optional<GuildMember> GetMember(Snowflake user_id, Snowflake guild_id) const;
     Snowflake GetMemberHoistedRole(Snowflake guild_id, Snowflake user_id, bool with_color = false) const;
+    std::optional<RoleData> GetMemberHoistedRoleCached(const GuildMember &member, const std::unordered_map<Snowflake, RoleData> &roles, bool with_color = false) const;
     std::optional<RoleData> GetMemberHighestRole(Snowflake guild_id, Snowflake user_id) const;
     std::set<Snowflake> GetUsersInGuild(Snowflake id) const;
     std::set<Snowflake> GetChannelsInGuild(Snowflake id) const;
@@ -160,6 +161,11 @@ public:
             else
                 callback(GetCodeFromResponse(response));
         });
+    }
+
+    template<typename Iter>
+    std::vector<UserData> GetUsersBulk(Iter begin, Iter end) {
+        return m_store.GetUsersBulk(begin, end);
     }
 
     // FetchGuildBans fetches all bans+reasons via api, this func fetches stored bans (so usually just GUILD_BAN_ADD data)

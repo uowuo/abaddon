@@ -11,6 +11,9 @@
 #endif
 
 class Store {
+private:
+    class Statement;
+
 public:
     Store(bool mem_store = false);
     ~Store();
@@ -51,6 +54,48 @@ public:
     std::unordered_set<Snowflake> GetMembersInGuild(Snowflake guild_id) const;
     // ^ not the same as GetUsersInGuild since users in a guild may include users who do not have retrieved member data
 
+    template<typename Iter>
+    std::vector<UserData> GetUsersBulk(Iter begin, Iter end) {
+        const int size = std::distance(begin, end);
+        if (size == 0) return {};
+
+        std::string query = "SELECT * FROM USERS WHERE id IN (";
+        for (int i = 0; i < size; i++) {
+            query += "?, ";
+        }
+        query.resize(query.size() - 2); // chop off extra ", "
+        query += ")";
+
+        Statement s(m_db, query.c_str());
+        if (!s.OK()) {
+            printf("failed to prepare bulk users: %s\n", m_db.ErrStr());
+            return {};
+        }
+
+        for (int i = 0; begin != end; i++, begin++) {
+            s.Bind(i, *begin);
+        }
+
+        std::vector<UserData> r;
+        r.reserve(size);
+        while (s.FetchOne()) {
+            UserData u;
+            s.Get(0, u.ID);
+            s.Get(1, u.Username);
+            s.Get(2, u.Discriminator);
+            s.Get(3, u.Avatar);
+            s.Get(4, u.IsBot);
+            s.Get(5, u.IsSystem);
+            s.Get(6, u.IsMFAEnabled);
+            s.Get(7, u.PremiumType);
+            s.Get(8, u.PublicFlags);
+            s.Get(9, u.GlobalName);
+            r.push_back(u);
+        }
+        printf("fetched %llu\n", r.size());
+        return r;
+    }
+
     void AddReaction(const MessageReactionAddObject &data, bool byself);
     void RemoveReaction(const MessageReactionRemoveObject &data, bool byself);
 
@@ -69,7 +114,6 @@ public:
     void EndTransaction();
 
 private:
-    class Statement;
     class Database {
     public:
         Database(const char *path);
