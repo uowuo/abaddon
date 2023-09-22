@@ -60,12 +60,19 @@ void MemberList::UpdateMemberList() {
         return;
     }
 
+    const static auto color_transparent = Gdk::RGBA("rgba(0,0,0,0)");
+
     if (channel->IsDM()) {
         for (const auto &user : channel->GetDMRecipients()) {
-            auto row = *m_model->append();
+            auto row_iter = m_model->append();
+            auto row = *row_iter;
             row[m_columns.m_type] = MemberListRenderType::Member;
             row[m_columns.m_id] = user.ID;
             row[m_columns.m_name] = user.GetDisplayNameEscaped();
+            row[m_columns.m_color] = color_transparent;
+            row[m_columns.m_av_requested] = false;
+            row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+            m_pending_avatars[user.ID] = row_iter;
         }
     }
 
@@ -110,8 +117,8 @@ void MemberList::UpdateMemberList() {
     }
 
     const auto add_user = [this, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) {
-        auto test = m_model->append(parent->children());
-        auto row = *test;
+        auto row_iter = m_model->append(parent->children());
+        auto row = *row_iter;
         row[m_columns.m_type] = MemberListRenderType::Member;
         row[m_columns.m_id] = user.ID;
         row[m_columns.m_name] = user.GetDisplayNameEscaped();
@@ -120,11 +127,10 @@ void MemberList::UpdateMemberList() {
         if (const auto iter = user_to_color.find(user.ID); iter != user_to_color.end()) {
             row[m_columns.m_color] = IntToRGBA(iter->second);
         } else {
-            const static auto transparent = Gdk::RGBA("rgba(0,0,0,0)");
-            row[m_columns.m_color] = transparent;
+            row[m_columns.m_color] = color_transparent;
         }
-        m_pending_avatars[user.ID] = test;
-        return test;
+        m_pending_avatars[user.ID] = row_iter;
+        return row_iter;
     };
 
     const auto add_role = [this](const RoleData &role) {
