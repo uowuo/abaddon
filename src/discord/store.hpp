@@ -79,18 +79,7 @@ public:
         std::vector<UserData> r;
         r.reserve(size);
         while (s.FetchOne()) {
-            UserData u;
-            s.Get(0, u.ID);
-            s.Get(1, u.Username);
-            s.Get(2, u.Discriminator);
-            s.Get(3, u.Avatar);
-            s.Get(4, u.IsBot);
-            s.Get(5, u.IsSystem);
-            s.Get(6, u.IsMFAEnabled);
-            s.Get(7, u.PremiumType);
-            s.Get(8, u.PublicFlags);
-            s.Get(9, u.GlobalName);
-            r.push_back(u);
+            r.push_back(GetUserBound(&s));
         }
         printf("fetched %llu\n", r.size());
         return r;
@@ -286,6 +275,7 @@ private:
         sqlite3_stmt *m_stmt;
     };
 
+    UserData GetUserBound(Statement *stmt) const;
     Message GetMessageBound(std::unique_ptr<Statement> &stmt) const;
     static RoleData GetRoleBound(std::unique_ptr<Statement> &stmt);
 

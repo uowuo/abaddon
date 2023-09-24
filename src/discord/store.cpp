@@ -519,7 +519,6 @@ std::optional<WebhookMessageData> Store::GetWebhookMessage(Snowflake message_id)
     return data;
 }
 
-
 Snowflake Store::GetGuildOwner(Snowflake guild_id) const {
     auto &s = m_stmt_get_guild_owner;
 
@@ -961,6 +960,21 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     return top;
 }
 
+UserData Store::GetUserBound(Statement *stmt) const {
+    UserData u;
+    stmt->Get(0, u.ID);
+    stmt->Get(1, u.Username);
+    stmt->Get(2, u.Discriminator);
+    stmt->Get(3, u.Avatar);
+    stmt->Get(4, u.IsBot);
+    stmt->Get(5, u.IsSystem);
+    stmt->Get(6, u.IsMFAEnabled);
+    stmt->Get(7, u.PremiumType);
+    stmt->Get(8, u.PublicFlags);
+    stmt->Get(9, u.GlobalName);
+    return u;
+}
+
 Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     Message r;
 
@@ -1137,18 +1151,7 @@ std::optional<UserData> Store::GetUser(Snowflake id) const {
         return {};
     }
 
-    UserData r;
-
-    r.ID = id;
-    s->Get(1, r.Username);
-    s->Get(2, r.Discriminator);
-    s->Get(3, r.Avatar);
-    s->Get(4, r.IsBot);
-    s->Get(5, r.IsSystem);
-    s->Get(6, r.IsMFAEnabled);
-    s->Get(7, r.PremiumType);
-    s->Get(8, r.PublicFlags);
-    s->Get(9, r.GlobalName);
+    auto r = GetUserBound(s.get());
 
     s->Reset();
 
