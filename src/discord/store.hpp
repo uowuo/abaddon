@@ -81,7 +81,6 @@ public:
         while (s.FetchOne()) {
             r.push_back(GetUserBound(&s));
         }
-        printf("fetched %llu\n", r.size());
         return r;
     }
 
