@@ -1,5 +1,7 @@
 #include "memberlist.hpp"
 
+constexpr static int MemberListUserLimit = 200;
+
 MemberList::MemberList()
     : m_model(Gtk::TreeStore::create(m_columns))
     , m_menu_role_copy_id("_Copy ID", true) {
@@ -116,7 +118,9 @@ void MemberList::UpdateMemberList() {
         if (col_role.has_value()) user_to_color[user.ID] = col_role->Color;
     }
 
-    const auto add_user = [this, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) {
+    int count = 0;
+    const auto add_user = [this, &count, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) -> bool {
+        if (count++ > MemberListUserLimit) return false;
         auto row_iter = m_model->append(parent->children());
         auto row = *row_iter;
         row[m_columns.m_type] = MemberListRenderType::Member;
@@ -130,7 +134,7 @@ void MemberList::UpdateMemberList() {
             row[m_columns.m_color] = color_transparent;
         }
         m_pending_avatars[user.ID] = row_iter;
-        return row_iter;
+        return true;
     };
 
     const auto add_role = [this](const RoleData &role) {
