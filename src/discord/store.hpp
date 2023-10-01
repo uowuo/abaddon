@@ -121,13 +121,7 @@ private:
         sqlite3 *m_db;
         int m_err = SQLITE_OK;
         mutable char m_err_scratch[256] { 0 };
-
-        // stupid shit i dont like to allow closing properly
-        using type_signal_close = sigc::signal<void>;
-        type_signal_close m_signal_close;
-
-    public:
-        type_signal_close signal_close();
+        std::filesystem::path m_db_path;
     };
 
     class Statement {

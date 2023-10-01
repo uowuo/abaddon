@@ -27,18 +27,7 @@ Store::Store(bool mem_store)
     m_ok &= CreateStatements();
 }
 
-Store::~Store() {
-    m_db.Close();
-    if (!m_db.OK()) {
-        fprintf(stderr, "error closing database: %s\n", m_db.ErrStr());
-        return;
-    }
-
-    if (m_db_path != ":memory:") {
-        std::error_code ec;
-        std::filesystem::remove(m_db_path, ec);
-    }
-}
+Store::~Store() {}
 
 bool Store::IsValid() const {
     return m_db.OK() && m_ok;
@@ -2363,7 +2352,8 @@ bool Store::CreateStatements() {
     return true;
 }
 
-Store::Database::Database(const char *path) {
+Store::Database::Database(const char *path)
+    : m_db_path(path) {
     if (path != ":memory:"s) {
         std::error_code ec;
         if (std::filesystem::exists(path, ec) && !std::filesystem::remove(path, ec)) {
@@ -2380,9 +2370,18 @@ Store::Database::~Database() {
 
 int Store::Database::Close() {
     if (m_db == nullptr) return m_err;
-    m_signal_close.emit();
     m_err = sqlite3_close(m_db);
     m_db = nullptr;
+
+    if (!OK()) {
+        fprintf(stderr, "error closing database: %s\n", ErrStr());
+    } else {
+        if (m_db_path != ":memory:") {
+            std::error_code ec;
+            std::filesystem::remove(m_db_path, ec);
+        }
+    }
+
     return m_err;
 }
 
@@ -2423,17 +2422,9 @@ sqlite3 *Store::Database::obj() {
     return m_db;
 }
 
-Store::Database::type_signal_close Store::Database::signal_close() {
-    return m_signal_close;
-}
-
 Store::Statement::Statement(Database &db, const char *command)
     : m_db(&db) {
     if (m_db->SetError(sqlite3_prepare_v2(m_db->obj(), command, -1, &m_stmt, nullptr)) != SQLITE_OK) return;
-    m_db->signal_close().connect([this] {
-        sqlite3_finalize(m_stmt);
-        m_stmt = nullptr;
-    });
 }
 
 Store::Statement::~Statement() {
