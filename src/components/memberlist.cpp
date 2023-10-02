@@ -58,7 +58,6 @@ void MemberList::UpdateMemberList() {
 
     const auto channel = discord.GetChannel(m_active_channel);
     if (!channel.has_value()) {
-        spdlog::get("ui")->warn("attempted to update member list with unfetchable channel");
         return;
     }
 
