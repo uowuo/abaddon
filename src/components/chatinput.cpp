@@ -1,5 +1,6 @@
 #include "chatinput.hpp"
 #include "constants.hpp"
+#include "misc/events.hpp"
 #include <filesystem>
 
 ChatInputText::ChatInputText() {
@@ -41,12 +42,14 @@ bool ChatInputText::ProcessKeyPress(GdkEventKey *event) {
         return true;
     }
 
+    const auto shortcut = EventsUtil::shortcut_key(event);
+
 #ifdef __APPLE__
-    if ((event->state & GDK_MOD2_MASK) && event->keyval == GDK_KEY_v) {
+    if ((event->state & GDK_MOD2_MASK) && shortcut == GDK_KEY_v) {
         return CheckHandleClipboardPaste();
     }
 #else
-    if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_v) {
+    if ((event->state & GDK_CONTROL_MASK) && shortcut == GDK_KEY_v) {
         return CheckHandleClipboardPaste();
     }
 #endif
