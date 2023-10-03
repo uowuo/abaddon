@@ -30,6 +30,7 @@ public:
         bool Unreads { true };
         bool AltMenu { false };
         bool HideToTray { false };
+        double FontScale { -1.0 };
 
         // [http]
         int CacheHTTPConcurrency { 20 };

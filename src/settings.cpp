@@ -42,6 +42,10 @@ void SettingsManager::ReadSettings() {
     try {                                                  \
         m_settings.var = m_file.get_integer(section, key); \
     } catch (...) {}
+#define SMFLT(section, key, var)                          \
+    try {                                                 \
+        m_settings.var = m_file.get_double(section, key); \
+    } catch (...) {}
 
     SMSTR("discord", "api_base", APIBaseURL);
     SMSTR("discord", "gateway", GatewayURL);
@@ -59,6 +63,7 @@ void SettingsManager::ReadSettings() {
     SMBOOL("gui", "unreads", Unreads);
     SMBOOL("gui", "alt_menu", AltMenu);
     SMBOOL("gui", "hide_to_tray", HideToTray);
+    SMFLT("gui", "font_scale", FontScale);
     SMINT("http", "concurrent", CacheHTTPConcurrency);
     SMSTR("http", "user_agent", UserAgent);
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
@@ -102,6 +107,7 @@ void SettingsManager::ReadSettings() {
 #undef SMBOOL
 #undef SMSTR
 #undef SMINT
+#undef SMFLT
 
     m_read_settings = m_settings;
 }
@@ -127,6 +133,9 @@ void SettingsManager::Close() {
 #define SMINT(section, key, var)               \
     if (m_settings.var != m_read_settings.var) \
         m_file.set_integer(section, key, m_settings.var);
+#define SMFLT(section, key, var)               \
+    if (m_settings.var != m_read_settings.var) \
+        m_file.set_double(section, key, m_settings.var);
 
         SMSTR("discord", "api_base", APIBaseURL);
         SMSTR("discord", "gateway", GatewayURL);
@@ -144,6 +153,7 @@ void SettingsManager::Close() {
         SMBOOL("gui", "unreads", Unreads);
         SMBOOL("gui", "alt_menu", AltMenu);
         SMBOOL("gui", "hide_to_tray", HideToTray);
+        SMFLT("gui", "font_scale", FontScale);
         SMINT("http", "concurrent", CacheHTTPConcurrency);
         SMSTR("http", "user_agent", UserAgent);
         SMSTR("style", "expandercolor", ChannelsExpanderColor);
@@ -172,6 +182,7 @@ void SettingsManager::Close() {
 #undef SMSTR
 #undef SMBOOL
 #undef SMINT
+#undef SMFLT
 
         try {
             if (!m_file.save_to_file(m_filename))

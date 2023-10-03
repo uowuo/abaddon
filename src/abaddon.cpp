@@ -263,6 +263,13 @@ int Abaddon::StartGTK() {
     }
 #endif
 
+    if (m_settings.GetSettings().FontScale > 0.0) {
+        auto dpi = Gdk::Screen::get_default()->get_resolution();
+        if (dpi < 0.0) dpi = 96.0;
+        auto newdpi = dpi * 1024.0 * m_settings.GetSettings().FontScale;
+        Gtk::Settings::get_default()->set_property("gtk-xft-dpi", newdpi);
+    }
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
