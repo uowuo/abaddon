@@ -199,12 +199,7 @@ spam filter's wrath:
 | `.embed-field-title`           | The title of an embed field                                                                       |
 | `.embed-field-value`           | The value of an embed field                                                                       |
 | `.embed-footer`                | The footer of an embed                                                                            |
-| `.members`                     | Container of the member list                                                                      |
-| `.members-row`                 | All rows within the members container                                                             |
-| `.members-row-label`           | All labels in the members container                                                               |
-| `.members-row-member`          | Rows containing a member                                                                          |
-| `.members-row-role`            | Rows containing a role                                                                            |
-| `.members-row-avatar`          | Contains the avatar for a row in the member list                                                  |
+| `.member-list`                 | Container of the member list                                                                      |
 | `.status-indicator`            | The status indicator                                                                              |
 | `.online`                      | Applied to status indicators when the associated user is online                                   |
 | `.idle`                        | Applied to status indicators when the associated user is away                                     |

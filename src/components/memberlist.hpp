@@ -1,43 +1,58 @@
 #pragma once
-#include <mutex>
+#include <gdkmm/pixbuf.h>
+#include <gtkmm/treemodel.h>
+#include <gtkmm/treestore.h>
+#include <gtkmm/treeview.h>
+
 #include <unordered_map>
-#include <optional>
-#include "discord/discord.hpp"
 
-class LazyImage;
-class StatusIndicator;
-class MemberListUserRow : public Gtk::ListBoxRow {
-public:
-    MemberListUserRow(const std::optional<GuildData> &guild, const UserData &data);
-
-    Snowflake ID;
-
-private:
-    Gtk::EventBox *m_ev;
-    Gtk::Box *m_box;
-    LazyImage *m_avatar;
-    StatusIndicator *m_status_indicator;
-    Gtk::Label *m_label;
-    Gtk::Image *m_crown = nullptr;
-};
+#include "cellrenderermemberlist.hpp"
+#include "discord/snowflake.hpp"
 
 class MemberList {
 public:
     MemberList();
-    Gtk::Widget *GetRoot() const;
+    Gtk::Widget *GetRoot();
 
     void UpdateMemberList();
     void Clear();
     void SetActiveChannel(Snowflake id);
 
 private:
-    void AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id);
+    void OnCellRender(uint64_t id);
+    bool OnButtonPressEvent(GdkEventButton *ev);
 
-    Gtk::ScrolledWindow *m_main;
-    Gtk::ListBox *m_listbox;
+    void OnRoleSubmenuPopup();
 
-    Snowflake m_guild_id;
-    Snowflake m_chan_id;
+    int SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b);
 
-    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_id_to_row;
+    class ModelColumns : public Gtk::TreeModel::ColumnRecord {
+    public:
+        ModelColumns();
+
+        Gtk::TreeModelColumn<MemberListRenderType> m_type;
+        Gtk::TreeModelColumn<uint64_t> m_id;
+        Gtk::TreeModelColumn<Glib::ustring> m_name;
+        Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_pixbuf;
+        Gtk::TreeModelColumn<Gdk::RGBA> m_color;
+        Gtk::TreeModelColumn<int> m_sort;
+
+        Gtk::TreeModelColumn<bool> m_av_requested;
+    };
+
+    ModelColumns m_columns;
+    Glib::RefPtr<Gtk::TreeStore> m_model;
+    Gtk::TreeView m_view;
+
+    Gtk::TreePath m_path_for_menu;
+
+    Gtk::ScrolledWindow m_main;
+
+    Snowflake m_active_channel;
+    Snowflake m_active_guild;
+
+    Gtk::Menu m_menu_role;
+    Gtk::MenuItem m_menu_role_copy_id;
+
+    std::unordered_map<Snowflake, Gtk::TreeIter> m_pending_avatars;
 };

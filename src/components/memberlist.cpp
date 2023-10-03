@@ -1,233 +1,252 @@
 #include "memberlist.hpp"
-#include "lazyimage.hpp"
-#include "statusindicator.hpp"
 
-constexpr static const int MaxMemberListRows = 200;
+constexpr static int MemberListUserLimit = 200;
 
-MemberListUserRow::MemberListUserRow(const std::optional<GuildData> &guild, const UserData &data) {
-    ID = data.ID;
-    m_ev = Gtk::manage(new Gtk::EventBox);
-    m_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
-    m_label = Gtk::manage(new Gtk::Label);
-    m_avatar = Gtk::manage(new LazyImage(16, 16));
-    m_status_indicator = Gtk::manage(new StatusIndicator(ID));
+MemberList::MemberList()
+    : m_model(Gtk::TreeStore::create(m_columns))
+    , m_menu_role_copy_id("_Copy ID", true) {
+    m_main.get_style_context()->add_class("member-list");
 
-    if (Abaddon::Get().GetSettings().ShowOwnerCrown && guild.has_value() && guild->OwnerID == data.ID) {
-        try {
-            const static auto crown_path = Abaddon::GetResPath("/crown.png");
-            auto pixbuf = Gdk::Pixbuf::create_from_file(crown_path, 12, 12);
-            m_crown = Gtk::manage(new Gtk::Image(pixbuf));
-            m_crown->set_valign(Gtk::ALIGN_CENTER);
-            m_crown->set_margin_end(8);
-        } catch (...) {}
-    }
+    m_view.set_hexpand(true);
+    m_view.set_vexpand(true);
 
-    m_status_indicator->set_margin_start(3);
+    m_view.set_show_expanders(false);
+    m_view.set_enable_search(false);
+    m_view.set_headers_visible(false);
+    m_view.get_selection()->set_mode(Gtk::SELECTION_NONE);
+    m_view.set_model(m_model);
+    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &MemberList::OnButtonPressEvent), false);
 
-    if (guild.has_value())
-        m_avatar->SetURL(data.GetAvatarURL(guild->ID, "png"));
-    else
-        m_avatar->SetURL(data.GetAvatarURL("png"));
+    m_main.add(m_view);
+    m_main.show_all_children();
 
-    get_style_context()->add_class("members-row");
-    get_style_context()->add_class("members-row-member");
-    m_label->get_style_context()->add_class("members-row-label");
-    m_avatar->get_style_context()->add_class("members-row-avatar");
+    auto *column = Gtk::make_managed<Gtk::TreeView::Column>("display");
+    auto *renderer = Gtk::make_managed<CellRendererMemberList>();
+    column->pack_start(*renderer);
+    column->add_attribute(renderer->property_type(), m_columns.m_type);
+    column->add_attribute(renderer->property_id(), m_columns.m_id);
+    column->add_attribute(renderer->property_name(), m_columns.m_name);
+    column->add_attribute(renderer->property_pixbuf(), m_columns.m_pixbuf);
+    column->add_attribute(renderer->property_color(), m_columns.m_color);
+    m_view.append_column(*column);
 
-    m_label->set_single_line_mode(true);
-    m_label->set_ellipsize(Pango::ELLIPSIZE_END);
+    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
+    m_model->set_default_sort_func([](const Gtk::TreeModel::iterator &, const Gtk::TreeModel::iterator &) -> int { return 0; });
+    m_model->set_sort_func(m_columns.m_sort, sigc::mem_fun(*this, &MemberList::SortFunc));
 
-    // todo remove after migration complete
-    std::string display;
-    if (data.IsPomelo()) {
-        display = data.GetDisplayName(guild.has_value() ? guild->ID : Snowflake::Invalid);
-    } else {
-        display = data.Username;
-        if (Abaddon::Get().GetSettings().ShowMemberListDiscriminators) {
-            display += "#" + data.Discriminator;
-        }
-    }
+    renderer->signal_render().connect(sigc::mem_fun(*this, &MemberList::OnCellRender));
 
-    if (guild.has_value()) {
-        if (const auto col_id = data.GetHoistedRole(guild->ID, true); col_id.IsValid()) {
-            auto color = Abaddon::Get().GetDiscordClient().GetRole(col_id)->Color;
-            m_label->set_use_markup(true);
-            m_label->set_markup("<span color='#" + IntToCSSColor(color) + "'>" + Glib::Markup::escape_text(display) + "</span>");
-        } else {
-            m_label->set_text(display);
-        }
-    } else {
-        m_label->set_text(display);
-    }
+    // Menu stuff
 
-    m_label->set_halign(Gtk::ALIGN_START);
-    m_box->add(*m_avatar);
-    m_box->add(*m_status_indicator);
-    m_box->add(*m_label);
-    if (m_crown != nullptr)
-        m_box->add(*m_crown);
-    m_ev->add(*m_box);
-    add(*m_ev);
-    show_all();
+    m_menu_role.append(m_menu_role_copy_id);
+    m_menu_role.show_all();
+
+    m_menu_role_copy_id.signal_activate().connect([this]() {
+        Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
+    });
 }
 
-MemberList::MemberList() {
-    m_main = Gtk::manage(new Gtk::ScrolledWindow);
-    m_listbox = Gtk::manage(new Gtk::ListBox);
-
-    m_listbox->get_style_context()->add_class("members");
-
-    m_listbox->set_selection_mode(Gtk::SELECTION_NONE);
-
-    m_main->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
-    m_main->add(*m_listbox);
-    m_main->show_all();
-}
-
-Gtk::Widget *MemberList::GetRoot() const {
-    return m_main;
-}
-
-void MemberList::Clear() {
-    SetActiveChannel(Snowflake::Invalid);
-    UpdateMemberList();
-}
-
-void MemberList::SetActiveChannel(Snowflake id) {
-    m_chan_id = id;
-    m_guild_id = Snowflake::Invalid;
-    if (m_chan_id.IsValid()) {
-        const auto chan = Abaddon::Get().GetDiscordClient().GetChannel(id);
-        if (chan.has_value() && chan->GuildID.has_value()) m_guild_id = *chan->GuildID;
-    }
+Gtk::Widget *MemberList::GetRoot() {
+    return &m_main;
 }
 
 void MemberList::UpdateMemberList() {
-    m_id_to_row.clear();
-
-    auto children = m_listbox->get_children();
-    auto it = children.begin();
-    while (it != children.end()) {
-        delete *it;
-        it++;
-    }
-
-    if (!Abaddon::Get().GetDiscordClient().IsStarted()) return;
-    if (!m_chan_id.IsValid()) return;
+    Clear();
+    if (!m_active_channel.IsValid()) return;
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    const auto chan = discord.GetChannel(m_chan_id);
-    if (!chan.has_value()) return;
-    if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM) {
-        int num_rows = 0;
-        for (const auto &user : chan->GetDMRecipients()) {
-            if (num_rows++ > MaxMemberListRows) break;
-            auto *row = Gtk::manage(new MemberListUserRow(std::nullopt, user));
-            m_id_to_row[user.ID] = row;
-            AttachUserMenuHandler(row, user.ID);
-            m_listbox->add(*row);
-        }
 
+    const auto channel = discord.GetChannel(m_active_channel);
+    if (!channel.has_value()) {
         return;
     }
 
+    const static auto color_transparent = Gdk::RGBA("rgba(0,0,0,0)");
+
+    if (channel->IsDM()) {
+        for (const auto &user : channel->GetDMRecipients()) {
+            auto row_iter = m_model->append();
+            auto row = *row_iter;
+            row[m_columns.m_type] = MemberListRenderType::Member;
+            row[m_columns.m_id] = user.ID;
+            row[m_columns.m_name] = user.GetDisplayNameEscaped();
+            row[m_columns.m_color] = color_transparent;
+            row[m_columns.m_av_requested] = false;
+            row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+            m_pending_avatars[user.ID] = row_iter;
+        }
+    }
+
+    const auto guild = discord.GetGuild(m_active_guild);
+    if (!guild.has_value()) return;
+
     std::set<Snowflake> ids;
-    if (chan->IsThread()) {
-        const auto x = discord.GetUsersInThread(m_chan_id);
+    if (channel->IsThread()) {
+        const auto x = discord.GetUsersInThread(m_active_channel);
         ids = { x.begin(), x.end() };
-    } else
-        ids = discord.GetUsersInGuild(m_guild_id);
+    } else {
+        ids = discord.GetUsersInGuild(m_active_guild);
+    }
 
-    // process all the shit first so its in proper order
-    std::map<int, RoleData> pos_to_role;
-    std::map<int, std::vector<UserData>> pos_to_users;
+    std::unordered_map<Snowflake, std::vector<UserData>> role_to_users;
     std::unordered_map<Snowflake, int> user_to_color;
-    std::vector<Snowflake> roleless_users;
+    std::vector<UserData> roleless_users;
 
-    for (const auto &id : ids) {
-        auto user = discord.GetUser(id);
-        if (!user.has_value() || user->IsDeleted())
-            continue;
+    const auto users = discord.GetUsersBulk(ids.begin(), ids.end());
 
-        auto pos_role_id = discord.GetMemberHoistedRole(m_guild_id, id);       // role for positioning
-        auto col_role_id = discord.GetMemberHoistedRole(m_guild_id, id, true); // role for color
-        auto pos_role = discord.GetRole(pos_role_id);
-        auto col_role = discord.GetRole(col_role_id);
+    std::unordered_map<Snowflake, RoleData> role_cache;
+    if (guild->Roles.has_value()) {
+        for (const auto &role : *guild->Roles) {
+            role_cache[role.ID] = role;
+        }
+    }
+    for (const auto &user : users) {
+        if (user.IsDeleted()) continue;
+        const auto member = discord.GetMember(user.ID, m_active_guild);
+        if (!member.has_value()) continue;
+
+        const auto pos_role = discord.GetMemberHoistedRoleCached(*member, role_cache);
+        const auto col_role = discord.GetMemberHoistedRoleCached(*member, role_cache, true);
 
         if (!pos_role.has_value()) {
-            roleless_users.push_back(id);
+            roleless_users.push_back(user);
             continue;
         }
 
-        pos_to_role[pos_role->Position] = *pos_role;
-        pos_to_users[pos_role->Position].push_back(std::move(*user));
-        if (col_role.has_value())
-            user_to_color[id] = col_role->Color;
+        role_to_users[pos_role->ID].push_back(user);
+        if (col_role.has_value()) user_to_color[user.ID] = col_role->Color;
     }
 
-    int num_rows = 0;
-    const auto guild = discord.GetGuild(m_guild_id);
-    if (!guild.has_value()) return;
-    auto add_user = [this, &num_rows, guild](const UserData &data) -> bool {
-        if (num_rows++ > MaxMemberListRows) return false;
-        auto *row = Gtk::manage(new MemberListUserRow(*guild, data));
-        m_id_to_row[data.ID] = row;
-        AttachUserMenuHandler(row, data.ID);
-        m_listbox->add(*row);
+    int count = 0;
+    const auto add_user = [this, &count, &guild, &user_to_color](const UserData &user, const Gtk::TreeRow &parent) -> bool {
+        if (count++ > MemberListUserLimit) return false;
+        auto row_iter = m_model->append(parent->children());
+        auto row = *row_iter;
+        row[m_columns.m_type] = MemberListRenderType::Member;
+        row[m_columns.m_id] = user.ID;
+        row[m_columns.m_name] = user.GetDisplayNameEscaped();
+        row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+        row[m_columns.m_av_requested] = false;
+        if (const auto iter = user_to_color.find(user.ID); iter != user_to_color.end()) {
+            row[m_columns.m_color] = IntToRGBA(iter->second);
+        } else {
+            row[m_columns.m_color] = color_transparent;
+        }
+        m_pending_avatars[user.ID] = row_iter;
         return true;
     };
 
-    auto add_role = [this](const std::string &name) {
-        auto *role_row = Gtk::manage(new Gtk::ListBoxRow);
-        auto *role_lbl = Gtk::manage(new Gtk::Label);
-
-        role_row->get_style_context()->add_class("members-row");
-        role_row->get_style_context()->add_class("members-row-role");
-        role_lbl->get_style_context()->add_class("members-row-label");
-
-        role_lbl->set_single_line_mode(true);
-        role_lbl->set_ellipsize(Pango::ELLIPSIZE_END);
-        role_lbl->set_use_markup(true);
-        role_lbl->set_markup("<b>" + Glib::Markup::escape_text(name) + "</b>");
-        role_lbl->set_halign(Gtk::ALIGN_START);
-        role_row->add(*role_lbl);
-        role_row->show_all();
-        m_listbox->add(*role_row);
+    const auto add_role = [this](const RoleData &role) {
+        auto row = *m_model->append();
+        row[m_columns.m_type] = MemberListRenderType::Role;
+        row[m_columns.m_id] = role.ID;
+        row[m_columns.m_name] = "<b>" + role.GetEscapedName() + "</b>";
+        row[m_columns.m_sort] = role.Position;
+        return row;
     };
 
-    for (auto it = pos_to_role.crbegin(); it != pos_to_role.crend(); it++) {
-        auto pos = it->first;
-        const auto &role = it->second;
+    // Kill sorting
+    m_view.freeze_child_notify();
+    m_model->set_sort_column(Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID, Gtk::SORT_ASCENDING);
 
-        add_role(role.Name);
-
-        if (pos_to_users.find(pos) == pos_to_users.end()) continue;
-
-        auto &users = pos_to_users.at(pos);
-        AlphabeticalSort(users.begin(), users.end(), [](const auto &e) { return e.Username; });
-
-        for (const auto &data : users)
-            if (!add_user(data)) return;
+    for (const auto &[role_id, users] : role_to_users) {
+        if (const auto iter = role_cache.find(role_id); iter != role_cache.end()) {
+            auto role_row = add_role(iter->second);
+            for (const auto &user : users) add_user(user, role_row);
+        }
     }
 
-    if (chan->Type == ChannelType::DM || chan->Type == ChannelType::GROUP_DM)
-        add_role("Users");
-    else
-        add_role("@everyone");
-    for (const auto &id : roleless_users) {
-        const auto user = discord.GetUser(id);
-        if (user.has_value())
-            if (!add_user(*user)) return;
+    auto everyone_role = *m_model->append();
+    everyone_role[m_columns.m_type] = MemberListRenderType::Role;
+    everyone_role[m_columns.m_id] = m_active_guild; // yes thats how the role works
+    everyone_role[m_columns.m_name] = "<b>@everyone</b>";
+    everyone_role[m_columns.m_sort] = 0;
+
+    for (const auto &user : roleless_users) {
+        add_user(user, everyone_role);
+    }
+
+    // Restore sorting
+    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
+    m_view.expand_all();
+    m_view.thaw_child_notify();
+}
+
+void MemberList::Clear() {
+    m_model->clear();
+    m_pending_avatars.clear();
+}
+
+void MemberList::SetActiveChannel(Snowflake id) {
+    m_active_channel = id;
+    m_active_guild = Snowflake::Invalid;
+    if (m_active_channel.IsValid()) {
+        const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(m_active_channel);
+        if (channel.has_value() && channel->GuildID.has_value()) m_active_guild = *channel->GuildID;
     }
 }
 
-void MemberList::AttachUserMenuHandler(Gtk::ListBoxRow *row, Snowflake id) {
-    row->signal_button_press_event().connect([this, id](GdkEventButton *e) -> bool {
-        if (e->type == GDK_BUTTON_PRESS && e->button == GDK_BUTTON_SECONDARY) {
-            Abaddon::Get().ShowUserMenu(reinterpret_cast<const GdkEvent *>(e), id, m_guild_id);
-            return true;
-        }
+void MemberList::OnCellRender(uint64_t id) {
+    Snowflake real_id = id;
+    if (const auto iter = m_pending_avatars.find(real_id); iter != m_pending_avatars.end()) {
+        auto row = iter->second;
+        m_pending_avatars.erase(iter);
+        if (!row) return;
+        if ((*row)[m_columns.m_av_requested]) return;
+        (*row)[m_columns.m_av_requested] = true;
+        const auto user = Abaddon::Get().GetDiscordClient().GetUser(real_id);
+        if (!user.has_value()) return;
+        const auto cb = [this, row](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
+            // for some reason row::operator bool() returns true when m_model->iter_is_valid returns false
+            // idk why since other code already does essentially the same thing im doing here
+            // iter_is_valid is "slow" according to gtk but the only other workaround i can think of would be worse
+            if (row && m_model->iter_is_valid(row)) {
+                (*row)[m_columns.m_pixbuf] = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
+            }
+        };
+        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "16"), cb);
+    }
+}
 
-        return false;
-    });
+bool MemberList::OnButtonPressEvent(GdkEventButton *ev) {
+    if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
+        if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
+            switch ((*m_model->get_iter(m_path_for_menu))[m_columns.m_type]) {
+                case MemberListRenderType::Role:
+                    OnRoleSubmenuPopup();
+                    m_menu_role.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
+                case MemberListRenderType::Member:
+                    Abaddon::Get().ShowUserMenu(
+                        reinterpret_cast<GdkEvent *>(ev),
+                        static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]),
+                        m_active_guild);
+                    break;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void MemberList::OnRoleSubmenuPopup() {
+}
+
+int MemberList::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b) {
+    if ((*a)[m_columns.m_type] == MemberListRenderType::Role) {
+        return (*b)[m_columns.m_sort] - (*a)[m_columns.m_sort];
+    } else if ((*a)[m_columns.m_type] == MemberListRenderType::Member) {
+        return static_cast<Glib::ustring>((*a)[m_columns.m_name]).compare((*b)[m_columns.m_name]);
+    }
+    return 0;
+}
+
+MemberList::ModelColumns::ModelColumns() {
+    add(m_type);
+    add(m_id);
+    add(m_name);
+    add(m_pixbuf);
+    add(m_av_requested);
+    add(m_color);
+    add(m_sort);
 }

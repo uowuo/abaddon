@@ -27,18 +27,7 @@ Store::Store(bool mem_store)
     m_ok &= CreateStatements();
 }
 
-Store::~Store() {
-    m_db.Close();
-    if (!m_db.OK()) {
-        fprintf(stderr, "error closing database: %s\n", m_db.ErrStr());
-        return;
-    }
-
-    if (m_db_path != ":memory:") {
-        std::error_code ec;
-        std::filesystem::remove(m_db_path, ec);
-    }
-}
+Store::~Store() {}
 
 bool Store::IsValid() const {
     return m_db.OK() && m_ok;
@@ -519,7 +508,6 @@ std::optional<WebhookMessageData> Store::GetWebhookMessage(Snowflake message_id)
     return data;
 }
 
-
 Snowflake Store::GetGuildOwner(Snowflake guild_id) const {
     auto &s = m_stmt_get_guild_owner;
 
@@ -961,6 +949,21 @@ std::optional<Message> Store::GetMessage(Snowflake id) const {
     return top;
 }
 
+UserData Store::GetUserBound(Statement *stmt) const {
+    UserData u;
+    stmt->Get(0, u.ID);
+    stmt->Get(1, u.Username);
+    stmt->Get(2, u.Discriminator);
+    stmt->Get(3, u.Avatar);
+    stmt->Get(4, u.IsBot);
+    stmt->Get(5, u.IsSystem);
+    stmt->Get(6, u.IsMFAEnabled);
+    stmt->Get(7, u.PremiumType);
+    stmt->Get(8, u.PublicFlags);
+    stmt->Get(9, u.GlobalName);
+    return u;
+}
+
 Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     Message r;
 
@@ -1137,18 +1140,7 @@ std::optional<UserData> Store::GetUser(Snowflake id) const {
         return {};
     }
 
-    UserData r;
-
-    r.ID = id;
-    s->Get(1, r.Username);
-    s->Get(2, r.Discriminator);
-    s->Get(3, r.Avatar);
-    s->Get(4, r.IsBot);
-    s->Get(5, r.IsSystem);
-    s->Get(6, r.IsMFAEnabled);
-    s->Get(7, r.PremiumType);
-    s->Get(8, r.PublicFlags);
-    s->Get(9, r.GlobalName);
+    auto r = GetUserBound(s.get());
 
     s->Reset();
 
@@ -2360,7 +2352,8 @@ bool Store::CreateStatements() {
     return true;
 }
 
-Store::Database::Database(const char *path) {
+Store::Database::Database(const char *path)
+    : m_db_path(path) {
     if (path != ":memory:"s) {
         std::error_code ec;
         if (std::filesystem::exists(path, ec) && !std::filesystem::remove(path, ec)) {
@@ -2377,9 +2370,18 @@ Store::Database::~Database() {
 
 int Store::Database::Close() {
     if (m_db == nullptr) return m_err;
-    m_signal_close.emit();
     m_err = sqlite3_close(m_db);
     m_db = nullptr;
+
+    if (!OK()) {
+        fprintf(stderr, "error closing database: %s\n", ErrStr());
+    } else {
+        if (m_db_path != ":memory:") {
+            std::error_code ec;
+            std::filesystem::remove(m_db_path, ec);
+        }
+    }
+
     return m_err;
 }
 
@@ -2420,17 +2422,9 @@ sqlite3 *Store::Database::obj() {
     return m_db;
 }
 
-Store::Database::type_signal_close Store::Database::signal_close() {
-    return m_signal_close;
-}
-
 Store::Statement::Statement(Database &db, const char *command)
     : m_db(&db) {
     if (m_db->SetError(sqlite3_prepare_v2(m_db->obj(), command, -1, &m_stmt, nullptr)) != SQLITE_OK) return;
-    m_db->signal_close().connect([this] {
-        sqlite3_finalize(m_stmt);
-        m_stmt = nullptr;
-    });
 }
 
 Store::Statement::~Statement() {

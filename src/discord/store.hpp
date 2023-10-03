@@ -11,6 +11,9 @@
 #endif
 
 class Store {
+private:
+    class Statement;
+
 public:
     Store(bool mem_store = false);
     ~Store();
@@ -51,6 +54,36 @@ public:
     std::unordered_set<Snowflake> GetMembersInGuild(Snowflake guild_id) const;
     // ^ not the same as GetUsersInGuild since users in a guild may include users who do not have retrieved member data
 
+    template<typename Iter>
+    std::vector<UserData> GetUsersBulk(Iter begin, Iter end) {
+        const int size = std::distance(begin, end);
+        if (size == 0) return {};
+
+        std::string query = "SELECT * FROM USERS WHERE id IN (";
+        for (int i = 0; i < size; i++) {
+            query += "?, ";
+        }
+        query.resize(query.size() - 2); // chop off extra ", "
+        query += ")";
+
+        Statement s(m_db, query.c_str());
+        if (!s.OK()) {
+            printf("failed to prepare bulk users: %s\n", m_db.ErrStr());
+            return {};
+        }
+
+        for (int i = 0; begin != end; i++, begin++) {
+            s.Bind(i, *begin);
+        }
+
+        std::vector<UserData> r;
+        r.reserve(size);
+        while (s.FetchOne()) {
+            r.push_back(GetUserBound(&s));
+        }
+        return r;
+    }
+
     void AddReaction(const MessageReactionAddObject &data, bool byself);
     void RemoveReaction(const MessageReactionRemoveObject &data, bool byself);
 
@@ -69,7 +102,6 @@ public:
     void EndTransaction();
 
 private:
-    class Statement;
     class Database {
     public:
         Database(const char *path);
@@ -89,13 +121,7 @@ private:
         sqlite3 *m_db;
         int m_err = SQLITE_OK;
         mutable char m_err_scratch[256] { 0 };
-
-        // stupid shit i dont like to allow closing properly
-        using type_signal_close = sigc::signal<void>;
-        type_signal_close m_signal_close;
-
-    public:
-        type_signal_close signal_close();
+        std::filesystem::path m_db_path;
     };
 
     class Statement {
@@ -242,6 +268,7 @@ private:
         sqlite3_stmt *m_stmt;
     };
 
+    UserData GetUserBound(Statement *stmt) const;
     Message GetMessageBound(std::unique_ptr<Statement> &stmt) const;
     static RoleData GetRoleBound(std::unique_ptr<Statement> &stmt);
 
