@@ -37,6 +37,7 @@
 /bin/libiconv-2.dll
 /bin/libidn2-0.dll
 /bin/libintl-8.dll
+/bin/libjpeg-8.dll
 /bin/libnghttp2-14.dll
 /bin/libopus-0.dll
 /bin/libpango-1.0-0.dll
