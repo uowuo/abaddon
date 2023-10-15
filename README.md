@@ -299,6 +299,7 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `save_state`                | boolean | true    | save the state of the gui (active channels, tabs, expanded channels)                                                       |
 | `alt_menu`                  | boolean | false   | keep the menu hidden unless revealed with alt key                                                                          |
 | `hide_to_tray`              | boolean | false   | hide abaddon to the system tray on window close                                                                            |
+| `show_deleted_messages`     | boolean | true    | choose if you want to see the [deleted] mark instead of hiding the message container
 | `font_scale`                | double  |         | scale font rendering. 1 is unchanged                                                                                       |
 
 #### style
