@@ -63,6 +63,7 @@ void SettingsManager::ReadSettings() {
     SMBOOL("gui", "unreads", Unreads);
     SMBOOL("gui", "alt_menu", AltMenu);
     SMBOOL("gui", "hide_to_tray", HideToTray);
+    SMBOOL("gui", "show_deleted_messages", ShowDeletedMessages);
     SMFLT("gui", "font_scale", FontScale);
     SMINT("http", "concurrent", CacheHTTPConcurrency);
     SMSTR("http", "user_agent", UserAgent);
@@ -153,6 +154,7 @@ void SettingsManager::Close() {
         SMBOOL("gui", "unreads", Unreads);
         SMBOOL("gui", "alt_menu", AltMenu);
         SMBOOL("gui", "hide_to_tray", HideToTray);
+        SMBOOL("gui", "show_deleted_messages", ShowDeletedMessages);
         SMFLT("gui", "font_scale", FontScale);
         SMINT("http", "concurrent", CacheHTTPConcurrency);
         SMSTR("http", "user_agent", UserAgent);
