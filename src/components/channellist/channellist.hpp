@@ -8,11 +8,12 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/treemodel.h>
 #include <gtkmm/treestore.h>
+#include <gtkmm/treemodelfilter.h>
 #include <gtkmm/treeview.h>
 #include <sigc++/sigc++.h>
 #include "discord/discord.hpp"
 #include "state.hpp"
-#include "channelscellrenderer.hpp"
+#include "cellrendererchannels.hpp"
 
 constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
@@ -82,6 +83,7 @@ protected:
 
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
+    Glib::RefPtr<Gtk::TreeModelFilter> m_filter_model;
 
     Gtk::TreeModel::iterator AddFolder(const UserSettingsGuildFoldersEntry &folder);
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
@@ -116,7 +118,7 @@ protected:
     void UpdateCreateDMChannel(const ChannelData &channel);
     void SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm);
 
-    void RedrawUnreadIndicatorsForChannel(const ChannelData& channel);
+    void RedrawUnreadIndicatorsForChannel(const ChannelData &channel);
     void OnMessageAck(const MessageAckData &data);
     void OnMessageCreate(const Message &msg);
 

@@ -1,4 +1,4 @@
-#include "channelscellrenderer.hpp"
+#include "cellrendererchannels.hpp"
 
 constexpr static int MentionsRightPad = 7;
 #ifndef M_PI

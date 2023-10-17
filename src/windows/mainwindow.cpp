@@ -1,4 +1,5 @@
 #include "mainwindow.hpp"
+#include "components/channellist/channellist.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)

@@ -1,6 +1,6 @@
-#include "channels.hpp"
+#include "channellist.hpp"
 #include "imgmanager.hpp"
-#include "statusindicator.hpp"
+#include "components/statusindicator.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -8,6 +8,7 @@
 ChannelList::ChannelList()
     : Glib::ObjectBase(typeid(ChannelList))
     , m_model(Gtk::TreeStore::create(m_columns))
+    , m_filter_model(Gtk::TreeModelFilter::create(m_model))
     , m_menu_guild_copy_id("_Copy ID", true)
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
@@ -36,9 +37,9 @@ ChannelList::ChannelList()
     , m_menu_thread_mark_as_read("Mark as _Read", true) {
     get_style_context()->add_class("channel-list");
 
-    // todo: move to method
+    // Filter iters
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
-        auto row = *m_model->get_iter(path);
+        auto row = *m_filter_model->get_iter(path);
         const auto type = row[m_columns.m_type];
         // text channels should not be allowed to be collapsed
         // maybe they should be but it seems a little difficult to handle expansion to permit this
@@ -72,13 +73,22 @@ ChannelList::ChannelList()
     m_view.set_show_expanders(false);
     m_view.set_enable_search(false);
     m_view.set_headers_visible(false);
-    m_view.set_model(m_model);
+    m_view.set_model(m_filter_model);
     m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
 
     m_model->signal_row_inserted().connect([this](const Gtk::TreeModel::Path &path, const Gtk::TreeModel::iterator &iter) {
         if (m_updating_listing) return;
-        if (auto parent = iter->parent(); parent && (*parent)[m_columns.m_expanded])
-            m_view.expand_row(m_model->get_path(parent), false);
+        if (auto parent = iter->parent(); parent && (*parent)[m_columns.m_expanded]) {
+            const auto filter_path = m_filter_model->convert_child_path_to_path(m_model->get_path(parent));
+            m_view.expand_row(filter_path, false);
+        }
+    });
+
+    m_filter_model->set_visible_func([this](const Gtk::TreeModel::const_iterator &iter) -> bool {
+        if ((*iter)[m_columns.m_type] == RenderType::Guild) {
+            return (*iter)[m_columns.m_id] == 754921263616753776ULL;
+        }
+        return true;
     });
 
     m_view.show();
@@ -594,9 +604,9 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
     const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
         if (expand_to) {
-            m_view.expand_to_path(m_model->get_path(channel_iter));
+            m_view.expand_to_path(m_filter_model->convert_child_path_to_path(m_model->get_path(channel_iter)));
         }
-        m_view.get_selection()->select(channel_iter);
+        m_view.get_selection()->select(m_filter_model->convert_child_iter_to_iter(channel_iter));
     } else {
         m_view.get_selection()->unselect_all();
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
@@ -604,63 +614,16 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
         auto parent_iter = GetIteratorForRowFromID(*channel->ParentID);
         if (!parent_iter) return;
         m_temporary_thread_row = CreateThreadRow(parent_iter->children(), *channel);
-        m_view.get_selection()->select(m_temporary_thread_row);
+        m_view.get_selection()->select(m_filter_model->convert_child_iter_to_iter(m_temporary_thread_row));
     }
 }
 
 void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
-    auto recurse = [this](auto &self, const ExpansionStateRoot &root) -> void {
-        for (const auto &[id, state] : root.Children) {
-            Gtk::TreeModel::iterator row_iter;
-            if (const auto map_iter = m_tmp_row_map.find(id); map_iter != m_tmp_row_map.end()) {
-                row_iter = map_iter->second;
-            } else if (const auto map_iter = m_tmp_guild_row_map.find(id); map_iter != m_tmp_guild_row_map.end()) {
-                row_iter = map_iter->second;
-            }
-
-            if (row_iter) {
-                if (state.IsExpanded)
-                    m_view.expand_row(m_model->get_path(row_iter), false);
-                else
-                    m_view.collapse_row(m_model->get_path(row_iter));
-            }
-
-            self(self, state.Children);
-        }
-    };
-
-    for (const auto &[id, state] : root.Children) {
-        if (const auto iter = GetIteratorForTopLevelFromID(id)) {
-            if (state.IsExpanded)
-                m_view.expand_row(m_model->get_path(iter), false);
-            else
-                m_view.collapse_row(m_model->get_path(iter));
-        }
-
-        recurse(recurse, state.Children);
-    }
-
     m_tmp_row_map.clear();
 }
 
 ExpansionStateRoot ChannelList::GetExpansionState() const {
     ExpansionStateRoot r;
-
-    auto recurse = [this](auto &self, const Gtk::TreeRow &row) -> ExpansionState {
-        ExpansionState r;
-
-        r.IsExpanded = row[m_columns.m_expanded];
-        for (const auto &child : row.children())
-            r.Children.Children[static_cast<Snowflake>(child[m_columns.m_id])] = self(self, child);
-
-        return r;
-    };
-
-    for (const auto &child : m_model->children()) {
-        const auto id = static_cast<Snowflake>(child[m_columns.m_id]);
-        if (static_cast<uint64_t>(id) == 0ULL) continue; // dont save DM header
-        r.Children[id] = recurse(recurse, child);
-    }
 
     return r;
 }
@@ -969,7 +932,7 @@ void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk:
     // restore previous expansion
     for (auto it = iter->children().begin(); it != iter->children().end(); it++) {
         if ((*it)[m_columns.m_expanded])
-            m_view.expand_row(m_model->get_path(it), false);
+            m_view.expand_row(m_filter_model->get_path(it), false);
     }
 
     // try and restore selection if previous collapsed
@@ -981,11 +944,13 @@ void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk:
 }
 
 bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
-    if (auto selection = m_view.get_selection())
-        if (auto row = selection->get_selected())
-            m_last_selected = m_model->get_path(row);
+    if (auto selection = m_view.get_selection()) {
+        if (auto row = selection->get_selected()) {
+            m_last_selected = m_filter_model->get_path(row);
+        }
+    }
 
-    auto type = (*m_model->get_iter(path))[m_columns.m_type];
+    auto type = (*model->get_iter(path))[m_columns.m_type];
     return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread;
 }
 
@@ -1139,7 +1104,7 @@ void ChannelList::OnMessageCreate(const Message &msg) {
 bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
         if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
-            auto row = (*m_model->get_iter(m_path_for_menu));
+            auto row = (*m_filter_model->get_iter(m_path_for_menu));
             switch (static_cast<RenderType>(row[m_columns.m_type])) {
                 case RenderType::Guild:
                     OnGuildSubmenuPopup();

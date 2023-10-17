@@ -1,5 +1,5 @@
 #pragma once
-#include "components/channels.hpp"
+#include "components/channellist/channellist.hpp"
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
