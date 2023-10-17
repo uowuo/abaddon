@@ -604,9 +604,15 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
     const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
         if (expand_to) {
-            m_view.expand_to_path(m_filter_model->convert_child_path_to_path(m_model->get_path(channel_iter)));
+            const auto filter_path = m_filter_model->convert_child_path_to_path(m_model->get_path(channel_iter));
+            if (filter_path) {
+                m_view.expand_to_path(filter_path);
+            }
         }
-        m_view.get_selection()->select(m_filter_model->convert_child_iter_to_iter(channel_iter));
+        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(channel_iter);
+        if (filter_iter) {
+            m_view.get_selection()->select(filter_iter);
+        }
     } else {
         m_view.get_selection()->unselect_all();
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
@@ -614,7 +620,10 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
         auto parent_iter = GetIteratorForRowFromID(*channel->ParentID);
         if (!parent_iter) return;
         m_temporary_thread_row = CreateThreadRow(parent_iter->children(), *channel);
-        m_view.get_selection()->select(m_filter_model->convert_child_iter_to_iter(m_temporary_thread_row));
+        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(m_temporary_thread_row);
+        if (filter_iter) {
+            m_view.get_selection()->select(filter_iter);
+        }
     }
 }
 
