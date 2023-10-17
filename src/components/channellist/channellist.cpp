@@ -628,7 +628,6 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
 }
 
 void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
-    m_tmp_row_map.clear();
 }
 
 ExpansionStateRoot ChannelList::GetExpansionState() const {
@@ -650,7 +649,6 @@ Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEn
         auto folder_row = *m_model->append();
         folder_row[m_columns.m_type] = RenderType::Folder;
         folder_row[m_columns.m_id] = *folder.ID;
-        m_tmp_row_map[*folder.ID] = folder_row;
         if (folder.Name.has_value()) {
             folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
         } else {
@@ -684,7 +682,6 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
     guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
-    m_tmp_guild_row_map[guild.ID] = guild_row;
 
     if (Abaddon::Get().GetSettings().ShowAnimations && guild.HasAnimatedIcon()) {
         const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -735,8 +732,9 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
         const auto it = threads.find(channel.ID);
         if (it == threads.end()) return;
 
-        for (const auto &thread : it->second)
-            m_tmp_row_map[thread.ID] = CreateThreadRow(row.children(), thread);
+        for (const auto &thread : it->second) {
+            CreateThreadRow(row.children(), thread);
+        }
     };
 
 #ifdef WITH_VOICE
@@ -766,7 +764,6 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
         add_threads(channel, channel_row);
-        m_tmp_row_map[channel.ID] = channel_row;
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -778,7 +775,6 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
         cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
         cat_row[m_columns.m_sort] = *category->Position;
         cat_row[m_columns.m_expanded] = true;
-        m_tmp_row_map[category_id] = cat_row;
         // m_view.expand_row wont work because it might not have channels
 
         for (const auto &channel : channels) {
@@ -798,7 +794,6 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
             add_threads(channel, channel_row);
-            m_tmp_row_map[channel.ID] = channel_row;
         }
     }
 
