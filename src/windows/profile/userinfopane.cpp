@@ -1,6 +1,34 @@
 #include "userinfopane.hpp"
 #include <unordered_set>
 
+static std::string GetConnectionURL(const ConnectionData &conn) {
+    if (conn.Type == "github") {
+        return "https://github.com/" + conn.Name;
+    } else if (conn.Type == "steam") {
+        return "https://steamcommunity.com/profiles/" + conn.ID;
+    } else if (conn.Type == "twitch") {
+        return "https://twitch.tv/" + conn.Name;
+    } else if (conn.Type == "twitter") {
+        return "https://twitter.com/i/user/" + conn.ID;
+    } else if (conn.Type == "spotify") {
+        return "https://open.spotify.com/user/" + conn.ID;
+    } else if (conn.Type == "reddit") {
+        return "https://reddit.com/u/" + conn.Name;
+    } else if (conn.Type == "youtube") {
+        return "https://www.youtube.com/channel/" + conn.ID;
+    } else if (conn.Type == "facebook") {
+        return "https://www.facebook.com/" + conn.ID;
+    } else if (conn.Type == "ebay") {
+        return "https://www.ebay.com/usr/" + conn.Name;
+    } else if (conn.Type == "instagram") {
+        return "https://www.instagram.com/" + conn.Name;
+    } else if (conn.Type == "tiktok") {
+        return "https://www.tiktok.com/@" + conn.Name;
+    }
+
+    return "";
+}
+
 ConnectionItem::ConnectionItem(const ConnectionData &conn)
     : m_box(Gtk::ORIENTATION_HORIZONTAL)
     , m_name(conn.Name) {
@@ -8,23 +36,7 @@ ConnectionItem::ConnectionItem(const ConnectionData &conn)
     try {
         pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/" + conn.Type + ".png"), 32, 32);
     } catch (const Glib::Exception &e) {}
-    std::string url;
-    if (conn.Type == "github")
-        url = "https://github.com/" + conn.Name;
-    else if (conn.Type == "steam")
-        url = "https://steamcommunity.com/profiles/" + conn.ID;
-    else if (conn.Type == "twitch")
-        url = "https://twitch.tv/" + conn.Name;
-    else if (conn.Type == "twitter")
-        url = "https://twitter.com/i/user/" + conn.ID;
-    else if (conn.Type == "spotify")
-        url = "https://open.spotify.com/user/" + conn.ID;
-    else if (conn.Type == "reddit")
-        url = "https://reddit.com/u/" + conn.Name;
-    else if (conn.Type == "youtube")
-        url = "https://www.youtube.com/channel/" + conn.ID;
-    else if (conn.Type == "facebook")
-        url = "https://www.facebook.com/" + conn.ID;
+    std::string url = GetConnectionURL(conn);
     if (pixbuf) {
         m_image = Gtk::manage(new Gtk::Image(pixbuf));
         m_image->get_style_context()->add_class("profile-connection-image");
@@ -83,17 +95,24 @@ void ConnectionsContainer::SetConnections(const std::vector<ConnectionData> &con
 
     static const std::unordered_set<std::string> supported_services = {
         "battlenet",
+        "ebay",
+        "epicgames",
+        "facebook",
         "github",
+        "instagram",
         "leagueoflegends",
+        "paypal",
+        "playstation",
         "reddit",
+        "riotgames",
         "skype",
         "spotify",
         "steam",
+        "tiktok",
         "twitch",
         "twitter",
         "xbox",
         "youtube",
-        "facebook"
     };
 
     int i = 0;
