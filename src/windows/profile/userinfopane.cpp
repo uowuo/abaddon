@@ -96,12 +96,13 @@ void ConnectionsContainer::SetConnections(const std::vector<ConnectionData> &con
         "facebook"
     };
 
-    for (size_t i = 0; i < connections.size(); i++) {
-        const auto &conn = connections[i];
+    int i = 0;
+    for (const auto &conn : connections) {
         if (supported_services.find(conn.Type) == supported_services.end()) continue;
         auto widget = Gtk::manage(new ConnectionItem(conn));
         widget->show();
-        attach(*widget, static_cast<int>(i % 2), static_cast<int>(i / 2), 1, 1);
+        attach(*widget, i % 2, i / 2, 1, 1);
+        i++;
     }
 
     set_halign(Gtk::ALIGN_FILL);
