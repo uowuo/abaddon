@@ -324,7 +324,13 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 | Setting | Type   | Default                            | Description                                                |
 |---------|--------|------------------------------------|------------------------------------------------------------|
-| vad     | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI |
+| `vad`   | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI |
+
+#### windows
+
+| Setting       | Type    | Default | Description             |
+|---------------|---------|---------|-------------------------|
+| `hideconsole` | boolean | true    | Hide console on startup |
 
 ### Environment variables
 
