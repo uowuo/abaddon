@@ -189,10 +189,11 @@ void ChatList::DeleteMessage(Snowflake id) {
     auto *x = dynamic_cast<ChatMessageItemContainer *>(widget->second);
 
     if (x != nullptr) {
-        if (Abaddon::Get().GetSettings().ShowDeletedMessages) {
+        if (Abaddon::Get().GetSettings().ShowDeletedIndicator) {
             x->UpdateAttributes();
         } else {
-            x->remove();
+            RemoveMessageAndHeader(x);
+            m_id_to_widget.erase(id);
         }
     }
 }

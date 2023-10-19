@@ -30,7 +30,7 @@ public:
         bool Unreads { true };
         bool AltMenu { false };
         bool HideToTray { false };
-        bool ShowDeletedMessages { true };
+        bool ShowDeletedIndicator { true };
         double FontScale { -1.0 };
 
         // [http]
