@@ -87,6 +87,9 @@ public:
     bool GetSuppressNoise() const;
 #endif
 
+    void SetMixMono(bool value);
+    bool GetMixMono() const;
+
 private:
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
@@ -144,6 +147,7 @@ private:
     std::atomic<double> m_prob_threshold = 0.5;
     std::atomic<float> m_vad_prob = 0.0;
     std::atomic<bool> m_enable_noise_suppression = false;
+    std::atomic<bool> m_mix_mono = false;
 
     std::unordered_set<uint32_t> m_muted_ssrcs;
     std::unordered_map<uint32_t, double> m_volume_ssrc;
