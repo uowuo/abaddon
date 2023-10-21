@@ -1057,10 +1057,9 @@ void ChatMessageHeader::UpdateName() {
     const auto chan = discord.GetChannel(ChannelID);
     bool is_guild = chan.has_value() && chan->GuildID.has_value();
     if (is_guild) {
-        const auto member = discord.GetMember(UserID, *chan->GuildID);
         const auto role_id = discord.GetMemberHoistedRole(*chan->GuildID, UserID, true);
         const auto role = discord.GetRole(role_id);
-        const auto name = GetEscapedDisplayName(*user, member);
+        const auto name = user->GetDisplayNameEscaped(*chan->GuildID);
 
         std::string md;
         if (role.has_value())
@@ -1088,13 +1087,6 @@ void ChatMessageHeader::AttachUserMenuHandler(Gtk::Widget &widget) {
 
         return false;
     });
-}
-
-Glib::ustring ChatMessageHeader::GetEscapedDisplayName(const UserData &user, const std::optional<GuildMember> &member) {
-    if (member.has_value() && !member->Nickname.empty())
-        return Glib::Markup::escape_text(member->Nickname);
-    else
-        return Glib::Markup::escape_text(user.GetDisplayNameEscaped());
 }
 
 bool ChatMessageHeader::on_author_button_press(GdkEventButton *ev) {
