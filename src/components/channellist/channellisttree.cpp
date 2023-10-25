@@ -1,12 +1,12 @@
-#include "channellist.hpp"
+#include "channellisttree.hpp"
 #include "imgmanager.hpp"
 #include "components/statusindicator.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
 
-ChannelList::ChannelList()
-    : Glib::ObjectBase(typeid(ChannelList))
+ChannelListTree::ChannelListTree()
+    : Glib::ObjectBase(typeid(ChannelListTree))
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_filter_model(Gtk::TreeModelFilter::create(m_model))
     , m_menu_guild_copy_id("_Copy ID", true)
@@ -60,12 +60,12 @@ ChannelList::ChannelList()
         }
     };
     m_view.signal_row_activated().connect(cb, false);
-    m_view.signal_row_collapsed().connect(sigc::mem_fun(*this, &ChannelList::OnRowCollapsed), false);
-    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelList::OnRowExpanded), false);
+    m_view.signal_row_collapsed().connect(sigc::mem_fun(*this, &ChannelListTree::OnRowCollapsed), false);
+    m_view.signal_row_expanded().connect(sigc::mem_fun(*this, &ChannelListTree::OnRowExpanded), false);
     m_view.set_activate_on_single_click(true);
     m_view.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
-    m_view.get_selection()->set_select_function(sigc::mem_fun(*this, &ChannelList::SelectionFunc));
-    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &ChannelList::OnButtonPressEvent), false);
+    m_view.get_selection()->set_select_function(sigc::mem_fun(*this, &ChannelListTree::SelectionFunc));
+    m_view.signal_button_press_event().connect(sigc::mem_fun(*this, &ChannelListTree::OnButtonPressEvent), false);
 
     m_view.set_hexpand(true);
     m_view.set_vexpand(true);
@@ -272,40 +272,40 @@ ChannelList::ChannelList()
     m_menu_thread.show_all();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
-    discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelList::OnMessageCreate));
-    discord.signal_guild_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateNewGuild));
-    discord.signal_guild_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveGuild));
-    discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelList::UpdateRemoveChannel));
-    discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateChannel));
-    discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelList::UpdateCreateChannel));
-    discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelList::OnThreadDelete));
-    discord.signal_thread_update().connect(sigc::mem_fun(*this, &ChannelList::OnThreadUpdate));
-    discord.signal_thread_list_sync().connect(sigc::mem_fun(*this, &ChannelList::OnThreadListSync));
-    discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadJoined));
-    discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelList::OnThreadRemoved));
-    discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelList::UpdateGuild));
-    discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelList::OnMessageAck));
-    discord.signal_channel_muted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelMute));
-    discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnChannelUnmute));
-    discord.signal_guild_muted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildMute));
-    discord.signal_guild_unmuted().connect(sigc::mem_fun(*this, &ChannelList::OnGuildUnmute));
+    discord.signal_message_create().connect(sigc::mem_fun(*this, &ChannelListTree::OnMessageCreate));
+    discord.signal_guild_create().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateNewGuild));
+    discord.signal_guild_delete().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateRemoveGuild));
+    discord.signal_channel_delete().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateRemoveChannel));
+    discord.signal_channel_update().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateChannel));
+    discord.signal_channel_create().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateCreateChannel));
+    discord.signal_thread_delete().connect(sigc::mem_fun(*this, &ChannelListTree::OnThreadDelete));
+    discord.signal_thread_update().connect(sigc::mem_fun(*this, &ChannelListTree::OnThreadUpdate));
+    discord.signal_thread_list_sync().connect(sigc::mem_fun(*this, &ChannelListTree::OnThreadListSync));
+    discord.signal_added_to_thread().connect(sigc::mem_fun(*this, &ChannelListTree::OnThreadJoined));
+    discord.signal_removed_from_thread().connect(sigc::mem_fun(*this, &ChannelListTree::OnThreadRemoved));
+    discord.signal_guild_update().connect(sigc::mem_fun(*this, &ChannelListTree::UpdateGuild));
+    discord.signal_message_ack().connect(sigc::mem_fun(*this, &ChannelListTree::OnMessageAck));
+    discord.signal_channel_muted().connect(sigc::mem_fun(*this, &ChannelListTree::OnChannelMute));
+    discord.signal_channel_unmuted().connect(sigc::mem_fun(*this, &ChannelListTree::OnChannelUnmute));
+    discord.signal_guild_muted().connect(sigc::mem_fun(*this, &ChannelListTree::OnGuildMute));
+    discord.signal_guild_unmuted().connect(sigc::mem_fun(*this, &ChannelListTree::OnGuildUnmute));
 
 #if WITH_VOICE
-    discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserConnect));
-    discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceUserDisconnect));
-    discord.signal_voice_state_set().connect(sigc::mem_fun(*this, &ChannelList::OnVoiceStateSet));
+    discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &ChannelListTree::OnVoiceUserConnect));
+    discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &ChannelListTree::OnVoiceUserDisconnect));
+    discord.signal_voice_state_set().connect(sigc::mem_fun(*this, &ChannelListTree::OnVoiceStateSet));
 #endif
 }
 
-void ChannelList::UsePanedHack(Gtk::Paned &paned) {
-    paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelList::OnPanedPositionChanged));
+void ChannelListTree::UsePanedHack(Gtk::Paned &paned) {
+    paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelListTree::OnPanedPositionChanged));
 }
 
-void ChannelList::OnPanedPositionChanged() {
+void ChannelListTree::OnPanedPositionChanged() {
     m_view.queue_draw();
 }
 
-void ChannelList::UpdateListing() {
+void ChannelListTree::UpdateListing() {
     m_updating_listing = true;
 
     m_model->clear();
@@ -375,7 +375,7 @@ void ChannelList::UpdateListing() {
 }
 
 // TODO update for folders
-void ChannelList::UpdateNewGuild(const GuildData &guild) {
+void ChannelListTree::UpdateNewGuild(const GuildData &guild) {
     AddGuild(guild, m_model->children());
     // update sort order
     int sortnum = 0;
@@ -386,19 +386,19 @@ void ChannelList::UpdateNewGuild(const GuildData &guild) {
     }
 }
 
-void ChannelList::UpdateRemoveGuild(Snowflake id) {
+void ChannelListTree::UpdateRemoveGuild(Snowflake id) {
     auto iter = GetIteratorForGuildFromID(id);
     if (!iter) return;
     m_model->erase(iter);
 }
 
-void ChannelList::UpdateRemoveChannel(Snowflake id) {
+void ChannelListTree::UpdateRemoveChannel(Snowflake id) {
     auto iter = GetIteratorForRowFromID(id);
     if (!iter) return;
     m_model->erase(iter);
 }
 
-void ChannelList::UpdateChannel(Snowflake id) {
+void ChannelListTree::UpdateChannel(Snowflake id) {
     auto iter = GetIteratorForRowFromID(id);
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!iter || !channel.has_value()) return;
@@ -422,7 +422,7 @@ void ChannelList::UpdateChannel(Snowflake id) {
         MoveRow(iter, new_parent);
 }
 
-void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
+void ChannelListTree::UpdateCreateChannel(const ChannelData &channel) {
     if (channel.Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(channel);
     if (channel.Type == ChannelType::DM || channel.Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(channel);
     if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS) return;
@@ -448,7 +448,7 @@ void ChannelList::UpdateCreateChannel(const ChannelData &channel) {
         channel_row[m_columns.m_sort] = *channel.Position;
 }
 
-void ChannelList::UpdateGuild(Snowflake id) {
+void ChannelListTree::UpdateGuild(Snowflake id) {
     auto iter = GetIteratorForGuildFromID(id);
     auto &img = Abaddon::Get().GetImageManager();
     const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(id);
@@ -472,7 +472,7 @@ void ChannelList::UpdateGuild(Snowflake id) {
     }
 }
 
-void ChannelList::OnThreadJoined(Snowflake id) {
+void ChannelListTree::OnThreadJoined(Snowflake id) {
     if (GetIteratorForRowFromID(id)) return;
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!channel.has_value()) return;
@@ -481,16 +481,16 @@ void ChannelList::OnThreadJoined(Snowflake id) {
         CreateThreadRow(parent->children(), *channel);
 }
 
-void ChannelList::OnThreadRemoved(Snowflake id) {
+void ChannelListTree::OnThreadRemoved(Snowflake id) {
     DeleteThreadRow(id);
 }
 
-void ChannelList::OnThreadDelete(const ThreadDeleteData &data) {
+void ChannelListTree::OnThreadDelete(const ThreadDeleteData &data) {
     DeleteThreadRow(data.ID);
 }
 
 // todo probably make the row stick around if its selected until the selection changes
-void ChannelList::OnThreadUpdate(const ThreadUpdateData &data) {
+void ChannelListTree::OnThreadUpdate(const ThreadUpdateData &data) {
     auto iter = GetIteratorForRowFromID(data.Thread.ID);
     if (iter)
         (*iter)[m_columns.m_name] = "- " + Glib::Markup::escape_text(*data.Thread.Name);
@@ -499,7 +499,7 @@ void ChannelList::OnThreadUpdate(const ThreadUpdateData &data) {
         DeleteThreadRow(data.Thread.ID);
 }
 
-void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
+void ChannelListTree::OnThreadListSync(const ThreadListSyncData &data) {
     // get the threads in the guild
     std::vector<Snowflake> threads;
     auto guild_iter = GetIteratorForGuildFromID(data.GuildID);
@@ -535,7 +535,7 @@ void ChannelList::OnThreadListSync(const ThreadListSyncData &data) {
 }
 
 #ifdef WITH_VOICE
-void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
+void ChannelListTree::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
     auto parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::VoiceChannel);
     if (!parent_iter) parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::DM);
     if (!parent_iter) return;
@@ -545,48 +545,48 @@ void ChannelList::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
     CreateVoiceParticipantRow(*user, parent_iter->children());
 }
 
-void ChannelList::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
+void ChannelListTree::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) {
     if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
         m_model->erase(iter);
     }
 }
 
-void ChannelList::OnVoiceStateSet(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
+void ChannelListTree::OnVoiceStateSet(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
     if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
         (*iter)[m_columns.m_voice_flags] = flags;
     }
 }
 #endif
 
-void ChannelList::DeleteThreadRow(Snowflake id) {
+void ChannelListTree::DeleteThreadRow(Snowflake id) {
     auto iter = GetIteratorForRowFromID(id);
     if (iter)
         m_model->erase(iter);
 }
 
-void ChannelList::OnChannelMute(Snowflake id) {
+void ChannelListTree::OnChannelMute(Snowflake id) {
     if (auto iter = GetIteratorForRowFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
-void ChannelList::OnChannelUnmute(Snowflake id) {
+void ChannelListTree::OnChannelUnmute(Snowflake id) {
     if (auto iter = GetIteratorForRowFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
-void ChannelList::OnGuildMute(Snowflake id) {
+void ChannelListTree::OnGuildMute(Snowflake id) {
     if (auto iter = GetIteratorForGuildFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
-void ChannelList::OnGuildUnmute(Snowflake id) {
+void ChannelListTree::OnGuildUnmute(Snowflake id) {
     if (auto iter = GetIteratorForGuildFromID(id))
         m_model->row_changed(m_model->get_path(iter), iter);
 }
 
 // create a temporary channel row for non-joined threads
 // and delete them when the active channel switches off of them if still not joined
-void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
+void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
     // mark channel as read when switching off
     if (m_active_channel.IsValid())
         Abaddon::Get().GetDiscordClient().MarkChannelAsRead(m_active_channel, [](...) {});
@@ -627,16 +627,16 @@ void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
     }
 }
 
-void ChannelList::UseExpansionState(const ExpansionStateRoot &root) {
+void ChannelListTree::UseExpansionState(const ExpansionStateRoot &root) {
 }
 
-ExpansionStateRoot ChannelList::GetExpansionState() const {
+ExpansionStateRoot ChannelListTree::GetExpansionState() const {
     ExpansionStateRoot r;
 
     return r;
 }
 
-Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
+Gtk::TreeModel::iterator ChannelListTree::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
     if (!folder.ID.has_value()) {
         // just a guild
         if (!folder.GuildIDs.empty()) {
@@ -673,7 +673,7 @@ Gtk::TreeModel::iterator ChannelList::AddFolder(const UserSettingsGuildFoldersEn
     return {};
 }
 
-Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root) {
+Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &img = Abaddon::Get().GetImageManager();
 
@@ -800,7 +800,7 @@ Gtk::TreeModel::iterator ChannelList::AddGuild(const GuildData &guild, const Gtk
     return guild_row;
 }
 
-Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelData &channel) {
+Gtk::TreeModel::iterator ChannelListTree::UpdateCreateChannelCategory(const ChannelData &channel) {
     const auto iter = GetIteratorForGuildFromID(*channel.GuildID);
     if (!iter) return {};
 
@@ -814,7 +814,7 @@ Gtk::TreeModel::iterator ChannelList::UpdateCreateChannelCategory(const ChannelD
     return cat_row;
 }
 
-Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel) {
+Gtk::TreeModel::iterator ChannelListTree::CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel) {
     auto thread_iter = m_model->append(children);
     auto thread_row = *thread_iter;
     thread_row[m_columns.m_type] = RenderType::Thread;
@@ -827,7 +827,7 @@ Gtk::TreeModel::iterator ChannelList::CreateThreadRow(const Gtk::TreeNodeChildre
 }
 
 #ifdef WITH_VOICE
-Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent) {
+Gtk::TreeModel::iterator ChannelListTree::CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent) {
     auto row = *m_model->append(parent);
     row[m_columns.m_type] = RenderType::VoiceParticipant;
     row[m_columns.m_id] = user.ID;
@@ -850,7 +850,7 @@ Gtk::TreeModel::iterator ChannelList::CreateVoiceParticipantRow(const UserData &
 }
 #endif
 
-void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
+void ChannelListTree::UpdateChannelCategory(const ChannelData &channel) {
     auto iter = GetIteratorForRowFromID(channel.ID);
     if (!iter) return;
 
@@ -859,7 +859,7 @@ void ChannelList::UpdateChannelCategory(const ChannelData &channel) {
 }
 
 // todo this all needs refactoring for shooore
-Gtk::TreeModel::iterator ChannelList::GetIteratorForTopLevelFromID(Snowflake id) {
+Gtk::TreeModel::iterator ChannelListTree::GetIteratorForTopLevelFromID(Snowflake id) {
     for (const auto &child : m_model->children()) {
         if ((child[m_columns.m_type] == RenderType::Guild || child[m_columns.m_type] == RenderType::Folder) && child[m_columns.m_id] == id) {
             return child;
@@ -874,7 +874,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForTopLevelFromID(Snowflake id)
     return {};
 }
 
-Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
+Gtk::TreeModel::iterator ChannelListTree::GetIteratorForGuildFromID(Snowflake id) {
     for (const auto &child : m_model->children()) {
         if (child[m_columns.m_type] == RenderType::Guild && child[m_columns.m_id] == id) {
             return child;
@@ -889,7 +889,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForGuildFromID(Snowflake id) {
     return {};
 }
 
-Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromID(Snowflake id) {
+Gtk::TreeModel::iterator ChannelListTree::GetIteratorForRowFromID(Snowflake id) {
     std::queue<Gtk::TreeModel::iterator> queue;
     for (const auto &child : m_model->children())
         for (const auto &child2 : child.children())
@@ -906,7 +906,7 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromID(Snowflake id) {
     return {};
 }
 
-Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromIDOfType(Snowflake id, RenderType type) {
+Gtk::TreeModel::iterator ChannelListTree::GetIteratorForRowFromIDOfType(Snowflake id, RenderType type) {
     std::queue<Gtk::TreeModel::iterator> queue;
     for (const auto &child : m_model->children())
         for (const auto &child2 : child.children())
@@ -923,16 +923,16 @@ Gtk::TreeModel::iterator ChannelList::GetIteratorForRowFromIDOfType(Snowflake id
     return {};
 }
 
-bool ChannelList::IsTextChannel(ChannelType type) {
+bool ChannelListTree::IsTextChannel(ChannelType type) {
     return type == ChannelType::GUILD_TEXT || type == ChannelType::GUILD_NEWS;
 }
 
 // this should be unncessary but something is behaving strange so its just in case
-void ChannelList::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) const {
+void ChannelListTree::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) const {
     (*iter)[m_columns.m_expanded] = false;
 }
 
-void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
+void ChannelListTree::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
     // restore previous expansion
     for (auto it = iter->children().begin(); it != iter->children().end(); it++) {
         if ((*it)[m_columns.m_expanded])
@@ -947,7 +947,7 @@ void ChannelList::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk:
     (*iter)[m_columns.m_expanded] = true;
 }
 
-bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
+bool ChannelListTree::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
     if (auto selection = m_view.get_selection()) {
         if (auto row = selection->get_selected()) {
             m_last_selected = m_filter_model->get_path(row);
@@ -958,7 +958,7 @@ bool ChannelList::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const
     return type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread;
 }
 
-void ChannelList::AddPrivateChannels() {
+void ChannelListTree::AddPrivateChannels() {
     auto header_row = *m_model->append();
     header_row[m_columns.m_type] = RenderType::DMHeader;
     header_row[m_columns.m_sort] = -1;
@@ -999,7 +999,7 @@ void ChannelList::AddPrivateChannels() {
     }
 }
 
-void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
+void ChannelListTree::UpdateCreateDMChannel(const ChannelData &dm) {
     auto header_row = m_model->get_iter(m_dm_header);
     auto &img = Abaddon::Get().GetImageManager();
 
@@ -1014,7 +1014,7 @@ void ChannelList::UpdateCreateDMChannel(const ChannelData &dm) {
     SetDMChannelIcon(iter, dm);
 }
 
-void ChannelList::SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm) {
+void ChannelListTree::SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm) {
     auto &img = Abaddon::Get().GetImageManager();
 
     std::optional<UserData> top_recipient;
@@ -1071,7 +1071,7 @@ void ChannelList::SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm) {
     }
 }
 
-void ChannelList::RedrawUnreadIndicatorsForChannel(const ChannelData &channel) {
+void ChannelListTree::RedrawUnreadIndicatorsForChannel(const ChannelData &channel) {
     if (channel.GuildID.has_value()) {
         auto iter = GetIteratorForGuildFromID(*channel.GuildID);
         if (iter) m_model->row_changed(m_model->get_path(iter), iter);
@@ -1082,7 +1082,7 @@ void ChannelList::RedrawUnreadIndicatorsForChannel(const ChannelData &channel) {
     }
 }
 
-void ChannelList::OnMessageAck(const MessageAckData &data) {
+void ChannelListTree::OnMessageAck(const MessageAckData &data) {
     // trick renderer into redrawing
     m_model->row_changed(Gtk::TreeModel::Path("0"), m_model->get_iter("0")); // 0 is always path for dm header
     auto iter = GetIteratorForRowFromID(data.ChannelID);
@@ -1093,7 +1093,7 @@ void ChannelList::OnMessageAck(const MessageAckData &data) {
     }
 }
 
-void ChannelList::OnMessageCreate(const Message &msg) {
+void ChannelListTree::OnMessageCreate(const Message &msg) {
     auto iter = GetIteratorForRowFromID(msg.ChannelID);
     if (iter) m_model->row_changed(m_model->get_path(iter), iter); // redraw
     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(msg.ChannelID);
@@ -1105,7 +1105,7 @@ void ChannelList::OnMessageCreate(const Message &msg) {
     RedrawUnreadIndicatorsForChannel(*channel);
 }
 
-bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
+bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
         if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
             auto row = (*m_filter_model->get_iter(m_path_for_menu));
@@ -1152,7 +1152,7 @@ bool ChannelList::OnButtonPressEvent(GdkEventButton *ev) {
     return false;
 }
 
-void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::iterator &new_parent) {
+void ChannelListTree::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::iterator &new_parent) {
     // duplicate the row data under the new parent and then delete the old row
     auto row = *m_model->append(new_parent->children());
     // would be nice to be able to get all columns out at runtime so i dont need this
@@ -1180,7 +1180,7 @@ void ChannelList::MoveRow(const Gtk::TreeModel::iterator &iter, const Gtk::TreeM
     m_model->erase(iter);
 }
 
-void ChannelList::OnGuildSubmenuPopup() {
+void ChannelListTree::OnGuildSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -1195,7 +1195,7 @@ void ChannelList::OnGuildSubmenuPopup() {
     m_menu_guild_leave.set_sensitive(!(guild.has_value() && guild->OwnerID == self_id));
 }
 
-void ChannelList::OnCategorySubmenuPopup() {
+void ChannelListTree::OnCategorySubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -1205,7 +1205,7 @@ void ChannelList::OnCategorySubmenuPopup() {
         m_menu_category_toggle_mute.set_label("Mute");
 }
 
-void ChannelList::OnChannelSubmenuPopup() {
+void ChannelListTree::OnChannelSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -1221,7 +1221,7 @@ void ChannelList::OnChannelSubmenuPopup() {
 }
 
 #ifdef WITH_VOICE
-void ChannelList::OnVoiceChannelSubmenuPopup() {
+void ChannelListTree::OnVoiceChannelSubmenuPopup() {
     const auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -1236,7 +1236,7 @@ void ChannelList::OnVoiceChannelSubmenuPopup() {
 }
 #endif
 
-void ChannelList::OnDMSubmenuPopup() {
+void ChannelListTree::OnDMSubmenuPopup() {
     auto iter = m_model->get_iter(m_path_for_menu);
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
@@ -1257,7 +1257,7 @@ void ChannelList::OnDMSubmenuPopup() {
 #endif
 }
 
-void ChannelList::OnThreadSubmenuPopup() {
+void ChannelListTree::OnThreadSubmenuPopup() {
     m_menu_thread_archive.set_visible(false);
     m_menu_thread_unarchive.set_visible(false);
 
@@ -1279,35 +1279,35 @@ void ChannelList::OnThreadSubmenuPopup() {
     m_menu_thread_unarchive.set_visible(channel->ThreadMetadata->IsArchived);
 }
 
-ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
+ChannelListTree::type_signal_action_channel_item_select ChannelListTree::signal_action_channel_item_select() {
     return m_signal_action_channel_item_select;
 }
 
-ChannelList::type_signal_action_guild_leave ChannelList::signal_action_guild_leave() {
+ChannelListTree::type_signal_action_guild_leave ChannelListTree::signal_action_guild_leave() {
     return m_signal_action_guild_leave;
 }
 
-ChannelList::type_signal_action_guild_settings ChannelList::signal_action_guild_settings() {
+ChannelListTree::type_signal_action_guild_settings ChannelListTree::signal_action_guild_settings() {
     return m_signal_action_guild_settings;
 }
 
 #ifdef WITH_LIBHANDY
-ChannelList::type_signal_action_open_new_tab ChannelList::signal_action_open_new_tab() {
+ChannelListTree::type_signal_action_open_new_tab ChannelListTree::signal_action_open_new_tab() {
     return m_signal_action_open_new_tab;
 }
 #endif
 
 #ifdef WITH_VOICE
-ChannelList::type_signal_action_join_voice_channel ChannelList::signal_action_join_voice_channel() {
+ChannelListTree::type_signal_action_join_voice_channel ChannelListTree::signal_action_join_voice_channel() {
     return m_signal_action_join_voice_channel;
 }
 
-ChannelList::type_signal_action_disconnect_voice ChannelList::signal_action_disconnect_voice() {
+ChannelListTree::type_signal_action_disconnect_voice ChannelListTree::signal_action_disconnect_voice() {
     return m_signal_action_disconnect_voice;
 }
 #endif
 
-ChannelList::ModelColumns::ModelColumns() {
+ChannelListTree::ModelColumns::ModelColumns() {
     add(m_type);
     add(m_id);
     add(m_name);

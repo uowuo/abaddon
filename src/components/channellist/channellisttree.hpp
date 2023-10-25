@@ -20,9 +20,9 @@ constexpr static int DMIconSize = 20;
 constexpr static int VoiceParticipantIconSize = 18;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
-class ChannelList : public Gtk::ScrolledWindow {
+class ChannelListTree : public Gtk::ScrolledWindow {
 public:
-    ChannelList();
+    ChannelListTree();
 
     void UpdateListing();
     void SetActiveChannel(Snowflake id, bool expand_to);
