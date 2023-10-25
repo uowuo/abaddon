@@ -1,5 +1,5 @@
 #pragma once
-#include "components/channellist/channellisttree.hpp"
+#include "components/channellist/channellist.hpp"
 #include "components/chatwindow.hpp"
 #include "components/memberlist.hpp"
 #include "components/friendslist.hpp"
@@ -39,7 +39,7 @@ public:
     void GoToTab(int idx);
 #endif
 
-    ChannelListTree *GetChannelList();
+    ChannelList *GetChannelList();
     ChatWindow *GetChatWindow();
     MemberList *GetMemberList();
 
@@ -54,7 +54,7 @@ private:
     Gtk::Paned m_chan_content_paned;
     Gtk::Paned m_content_members_paned;
 
-    ChannelListTree m_channel_list;
+    ChannelList m_channel_list;
     ChatWindow m_chat;
     MemberList m_members;
     FriendsList m_friends;

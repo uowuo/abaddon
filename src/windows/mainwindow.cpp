@@ -1,5 +1,4 @@
 #include "mainwindow.hpp"
-#include "components/channellist/channellisttree.hpp"
 
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
@@ -235,7 +234,7 @@ void MainWindow::OnViewSubmenuPopup() {
     }
 }
 
-ChannelListTree *MainWindow::GetChannelList() {
+ChannelList *MainWindow::GetChannelList() {
     return &m_channel_list;
 }
 
