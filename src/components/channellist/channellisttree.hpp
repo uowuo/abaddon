@@ -33,6 +33,9 @@ public:
 
     void UsePanedHack(Gtk::Paned &paned);
 
+    void SetClassic(bool value);
+    void SetSelectedGuild(Snowflake guild_id);
+
 protected:
     void OnPanedPositionChanged();
 
@@ -185,6 +188,9 @@ protected:
 #endif
 
     bool m_updating_listing = false;
+
+    bool m_classic = false;
+    Snowflake m_classic_selected_guild;
 
     Snowflake m_active_channel;
 

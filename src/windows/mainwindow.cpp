@@ -33,6 +33,8 @@ MainWindow::MainWindow()
     });
 #endif
 
+    // TEMP TEMP TEMP TEMP!!!!!!!!!!!! AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+    m_channel_list.SetClassic(true);
     m_channel_list.set_vexpand(true);
     m_channel_list.set_size_request(-1, -1);
     m_channel_list.show();

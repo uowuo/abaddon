@@ -2,11 +2,12 @@
 #include <gtkmm/box.h>
 #include <gtkmm/paned.h>
 #include "channellisttree.hpp"
+#include "classic/guildlist.hpp"
 #include "discord/snowflake.hpp"
 #include "state.hpp"
 
 // Contains the actual ChannelListTree and the classic listing if enabled
-class ChannelList : public Gtk::Box {
+class ChannelList : public Gtk::HBox {
     // have to proxy public and signals to underlying tree... ew!!!
 public:
     ChannelList();
@@ -20,8 +21,15 @@ public:
 
     void UsePanedHack(Gtk::Paned &paned);
 
+    void SetClassic(bool value);
+
 private:
+    void ConnectSignals();
+
     ChannelListTree m_tree;
+
+    Gtk::ScrolledWindow m_guilds_scroll;
+    GuildList m_guilds;
 
 public:
     using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;

@@ -6,13 +6,6 @@ GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
     add(m_image);
     show_all_children();
 
-    signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
-        if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
-            printf("Click %llu\n", (uint64_t)ID);
-        }
-        return true;
-    });
-
     set_tooltip_text(guild.Name);
 
     UpdateIcon();

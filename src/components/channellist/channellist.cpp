@@ -1,12 +1,26 @@
 #include "channellist.hpp"
 
 ChannelList::ChannelList() {
+    ConnectSignals();
+
+    m_guilds.set_halign(Gtk::ALIGN_START);
+
+    m_guilds_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+
+    m_guilds.signal_guild_selected().connect([this](Snowflake guild_id) {
+        m_tree.SetSelectedGuild(guild_id);
+    });
+
+    m_guilds.show();
     m_tree.show();
-    add(m_tree);
+    m_guilds_scroll.add(m_guilds);
+    pack_start(m_guilds_scroll, false, false); // only take the space it needs
+    pack_start(m_tree, true, true);            // use all the remaining space
 }
 
 void ChannelList::UpdateListing() {
     m_tree.UpdateListing();
+    m_guilds.UpdateListing();
 }
 
 void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
@@ -18,11 +32,43 @@ void ChannelList::UseExpansionState(const ExpansionStateRoot &state) {
 }
 
 ExpansionStateRoot ChannelList::GetExpansionState() const {
-    m_tree.GetExpansionState();
+    return m_tree.GetExpansionState();
 }
 
 void ChannelList::UsePanedHack(Gtk::Paned &paned) {
     m_tree.UsePanedHack(paned);
+}
+
+void ChannelList::SetClassic(bool value) {
+    m_tree.SetClassic(value);
+    m_guilds_scroll.set_visible(value);
+}
+
+void ChannelList::ConnectSignals() {
+    // TODO: if these all just travel upwards to the singleton then get rid of them but mayeb they dont
+    m_tree.signal_action_open_new_tab().connect([this](Snowflake id) {
+        m_signal_action_open_new_tab.emit(id);
+    });
+
+    m_tree.signal_action_join_voice_channel().connect([this](Snowflake id) {
+        m_signal_action_join_voice_channel.emit(id);
+    });
+
+    m_tree.signal_action_disconnect_voice().connect([this]() {
+        m_signal_action_disconnect_voice.emit();
+    });
+
+    m_tree.signal_action_channel_item_select().connect([this](Snowflake id) {
+        m_signal_action_channel_item_select.emit(id);
+    });
+
+    m_tree.signal_action_guild_leave().connect([this](Snowflake id) {
+        m_signal_action_guild_leave.emit(id);
+    });
+
+    m_tree.signal_action_guild_settings().connect([this](Snowflake id) {
+        m_signal_action_guild_settings.emit(id);
+    });
 }
 
 ChannelList::type_signal_action_open_new_tab ChannelList::signal_action_open_new_tab() {

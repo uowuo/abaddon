@@ -85,8 +85,10 @@ ChannelListTree::ChannelListTree()
     });
 
     m_filter_model->set_visible_func([this](const Gtk::TreeModel::const_iterator &iter) -> bool {
+        if (!m_classic) return true;
+
         if ((*iter)[m_columns.m_type] == RenderType::Guild) {
-            return (*iter)[m_columns.m_id] == 754921263616753776ULL;
+            return (*iter)[m_columns.m_id] == m_classic_selected_guild;
         }
         return true;
     });
@@ -299,6 +301,16 @@ ChannelListTree::ChannelListTree()
 
 void ChannelListTree::UsePanedHack(Gtk::Paned &paned) {
     paned.property_position().signal_changed().connect(sigc::mem_fun(*this, &ChannelListTree::OnPanedPositionChanged));
+}
+
+void ChannelListTree::SetClassic(bool value) {
+    m_classic = value;
+    m_filter_model->refilter();
+}
+
+void ChannelListTree::SetSelectedGuild(Snowflake guild_id) {
+    m_classic_selected_guild = guild_id;
+    m_filter_model->refilter();
 }
 
 void ChannelListTree::OnPanedPositionChanged() {
