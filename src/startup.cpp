@@ -29,10 +29,22 @@ std::optional<std::pair<std::string, std::string>> ParseCookie(const Glib::ustri
 }
 
 std::optional<Glib::ustring> GetJavascriptFileFromAppPage(const Glib::ustring &contents) {
-    auto regex = Glib::Regex::create(R"(app-mount.*(/assets/[\w\d]*.js).*/assets/[\w\d]*.js)");
+    auto regex = Glib::Regex::create(R"(/assets/\w{20}.js)");
+    std::vector<Glib::ustring> matches;
+
+    // regex->match_all doesnt work for some reason
+    int start_position = 0;
     Glib::MatchInfo match;
-    if (regex->match(contents, match)) {
-        return match.fetch(1);
+    while (regex->match(contents, start_position, match)) {
+        const auto str = match.fetch(0);
+        matches.push_back(str);
+        int foo;
+        match.fetch_pos(0, start_position, foo);
+        start_position += str.size();
+    }
+
+    if (matches.size() >= 6) {
+        return matches[matches.size() - 6];
     }
 
     return {};
@@ -52,7 +64,7 @@ std::optional<uint32_t> GetBuildNumberFromJSURL(const Glib::ustring &url, const 
     auto res = req.execute();
     if (res.error) return {};
 
-    auto regex = Glib::Regex::create(R"("buildNumber",null!==\(t="(\d+)\"\))");
+    auto regex = Glib::Regex::create("buildNumber:\"(\\d+)\"");
     Glib::MatchInfo match;
     Glib::ustring string = res.text;
     if (regex->match(string, match)) {
