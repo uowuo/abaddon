@@ -6,9 +6,13 @@
 
 #include "guildlistguilditem.hpp"
 
+class GuildListGuildItem;
+
 class GuildListFolderItem : public Gtk::VBox {
 public:
     GuildListFolderItem();
+
+    void AddGuildWidget(GuildListGuildItem *widget);
 
 private:
     Gtk::EventBox m_ev;
