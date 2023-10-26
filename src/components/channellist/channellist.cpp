@@ -46,10 +46,14 @@ void ChannelList::SetClassic(bool value) {
 
 void ChannelList::ConnectSignals() {
     // TODO: if these all just travel upwards to the singleton then get rid of them but mayeb they dont
+
+#ifdef WITH_LIBHANDY
     m_tree.signal_action_open_new_tab().connect([this](Snowflake id) {
         m_signal_action_open_new_tab.emit(id);
     });
+#endif
 
+#ifdef WITH_VOICE
     m_tree.signal_action_join_voice_channel().connect([this](Snowflake id) {
         m_signal_action_join_voice_channel.emit(id);
     });
@@ -57,6 +61,7 @@ void ChannelList::ConnectSignals() {
     m_tree.signal_action_disconnect_voice().connect([this]() {
         m_signal_action_disconnect_voice.emit();
     });
+#endif
 
     m_tree.signal_action_channel_item_select().connect([this](Snowflake id) {
         m_signal_action_channel_item_select.emit(id);
@@ -71,10 +76,13 @@ void ChannelList::ConnectSignals() {
     });
 }
 
+#ifdef WITH_LIBHANDY
 ChannelList::type_signal_action_open_new_tab ChannelList::signal_action_open_new_tab() {
     return m_signal_action_open_new_tab;
 }
+#endif
 
+#ifdef WITH_VOICE
 ChannelList::type_signal_action_join_voice_channel ChannelList::signal_action_join_voice_channel() {
     return m_signal_action_join_voice_channel;
 }
@@ -82,6 +90,7 @@ ChannelList::type_signal_action_join_voice_channel ChannelList::signal_action_jo
 ChannelList::type_signal_action_disconnect_voice ChannelList::signal_action_disconnect_voice() {
     return m_signal_action_disconnect_voice;
 }
+#endif
 
 ChannelList::type_signal_action_channel_item_select ChannelList::signal_action_channel_item_select() {
     return m_signal_action_channel_item_select;
