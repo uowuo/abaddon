@@ -1120,7 +1120,9 @@ void ChannelListTree::OnMessageCreate(const Message &msg) {
 bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
         if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
-            auto row = (*m_filter_model->get_iter(m_path_for_menu));
+            m_path_for_menu = m_filter_model->convert_path_to_child_path(m_path_for_menu);
+            if (!m_path_for_menu) return true;
+            auto row = (*m_model->get_iter(m_path_for_menu));
             switch (static_cast<RenderType>(row[m_columns.m_type])) {
                 case RenderType::Guild:
                     OnGuildSubmenuPopup();
