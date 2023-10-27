@@ -89,6 +89,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_mute("Mute")
     , m_deafen("Deafen")
     , m_noise_suppression("Suppress Noise")
+    , m_mix_mono("Mix Mono")
     , m_channel_id(channel_id)
     , m_menu_view("View")
     , m_menu_view_settings("More _Settings", true) {
@@ -178,6 +179,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         Abaddon::Get().GetAudio().SetSuppressNoise(m_noise_suppression.get_active());
     });
 
+    m_mix_mono.set_active(audio.GetMixMono());
+    m_mix_mono.signal_toggled().connect([this]() {
+       Abaddon::Get().GetAudio().SetMixMono(m_mix_mono.get_active());
+    });
+
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
     m_playback_combo.set_valign(Gtk::ALIGN_END);
     m_playback_combo.set_hexpand(true);
@@ -223,6 +229,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
+    m_controls.add(m_mix_mono);
     m_main.add(m_menu_bar);
     m_main.add(m_controls);
     m_main.add(m_vad_value);

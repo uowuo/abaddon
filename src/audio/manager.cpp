@@ -419,11 +419,21 @@ void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
     if (m_opus_buffer == nullptr || !m_should_capture) return;
 
     const double gain = m_capture_gain;
-    // i have a suspicion i can cast the const away... but i wont
+
     std::vector<int16_t> new_pcm(pcm, pcm + frames * 2);
     for (auto &val : new_pcm) {
         const int32_t unclamped = static_cast<int32_t>(val * gain);
         val = std::clamp(unclamped, INT16_MIN, INT16_MAX);
+    }
+
+    if (m_mix_mono) {
+        for (size_t i = 0; i < frames * 2; i += 2) {
+            const int sample_L = new_pcm[i];
+            const int sample_R = new_pcm[i + 1];
+            const int16_t mixed = static_cast<int16_t>((sample_L + sample_R) / 2);
+            new_pcm[i] = mixed;
+            new_pcm[i + 1] = mixed;
+        }
     }
 
     UpdateCaptureVolume(new_pcm.data(), frames);
@@ -628,6 +638,14 @@ bool AudioManager::GetSuppressNoise() const {
     return m_enable_noise_suppression;
 }
 #endif
+
+void AudioManager::SetMixMono(bool value) {
+    m_mix_mono = value;
+}
+
+bool AudioManager::GetMixMono() const {
+    return m_mix_mono;
+}
 
 AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
     return m_signal_opus_packet;
