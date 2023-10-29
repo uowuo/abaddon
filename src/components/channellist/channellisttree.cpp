@@ -317,7 +317,30 @@ void ChannelListTree::OnPanedPositionChanged() {
     m_view.queue_draw();
 }
 
+void ChannelListTree::UpdateListingClassic() {
+    m_updating_listing = true;
+
+    m_model->clear();
+
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto guild_ids = discord.GetUserSortedGuilds();
+    for (const auto guild_id : guild_ids) {
+        if (const auto guild = discord.GetGuild(guild_id); guild.has_value()) {
+            AddGuild(*guild, m_model->children());
+        }
+    }
+
+    m_updating_listing = false;
+
+    AddPrivateChannels();
+}
+
 void ChannelListTree::UpdateListing() {
+    if (m_classic) {
+        UpdateListingClassic();
+        return;
+    }
+
     m_updating_listing = true;
 
     m_model->clear();
@@ -599,6 +622,8 @@ void ChannelListTree::OnGuildUnmute(Snowflake id) {
 // create a temporary channel row for non-joined threads
 // and delete them when the active channel switches off of them if still not joined
 void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
+    while (Gtk::Main::events_pending()) Gtk::Main::iteration();
+
     // mark channel as read when switching off
     if (m_active_channel.IsValid())
         Abaddon::Get().GetDiscordClient().MarkChannelAsRead(m_active_channel, [](...) {});
@@ -615,16 +640,6 @@ void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
 
     const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
-        if (expand_to) {
-            const auto filter_path = m_filter_model->convert_child_path_to_path(m_model->get_path(channel_iter));
-            if (filter_path) {
-                m_view.expand_to_path(filter_path);
-            }
-        }
-        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(channel_iter);
-        if (filter_iter) {
-            m_view.get_selection()->select(filter_iter);
-        }
     } else {
         m_view.get_selection()->unselect_all();
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);

@@ -39,6 +39,8 @@ public:
 protected:
     void OnPanedPositionChanged();
 
+    void UpdateListingClassic();
+
     void UpdateNewGuild(const GuildData &guild);
     void UpdateRemoveGuild(Snowflake id);
     void UpdateRemoveChannel(Snowflake id);
