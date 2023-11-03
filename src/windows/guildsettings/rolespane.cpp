@@ -262,7 +262,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::VIEW_CHANNEL,
         Permission::MANAGE_CHANNELS,
         Permission::MANAGE_ROLES,
-        Permission::MANAGE_EMOJIS,
+        Permission::MANAGE_GUILD_EXPRESSIONS,
         Permission::VIEW_AUDIT_LOG,
         Permission::VIEW_GUILD_INSIGHTS,
         Permission::MANAGE_WEBHOOKS,
@@ -277,8 +277,8 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     add_perms("Text Channels", RIGHT, {
         Permission::SEND_MESSAGES,
-        Permission::USE_PUBLIC_THREADS,
-        Permission::USE_PRIVATE_THREADS,
+        Permission::CREATE_PUBLIC_THREADS,
+        Permission::CREATE_PRIVATE_THREADS,
         Permission::EMBED_LINKS,
         Permission::ATTACH_FILES,
         Permission::ADD_REACTIONS,
@@ -288,7 +288,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::MANAGE_THREADS,
         Permission::READ_MESSAGE_HISTORY,
         Permission::SEND_TTS_MESSAGES,
-        Permission::USE_SLASH_COMMANDS });
+        Permission::USE_APPLICATION_COMMANDS });
 
     add_perms("Voice Channels", RIGHT, {
         Permission::CONNECT,

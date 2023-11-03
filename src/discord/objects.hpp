@@ -53,6 +53,13 @@ enum class GatewayOp : int {
     EmbeddedActivityClose = 26,
     EmbeddedActivityUpdate = 27,
     RequestForumUnreads = 28,
+    RemoteCommand = 29,
+    GetDeletedEntityIDsNotMatchingHash = 30,
+    RequestSoundboardSounds = 31,
+    SpeedTestCreate = 32,
+    SpeedTestDelete = 33,
+    RequestLastMessages = 34,
+    SearchRecentMembers = 35,
 };
 
 enum class GatewayEvent : int {

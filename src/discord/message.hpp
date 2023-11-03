@@ -33,6 +33,28 @@ enum class MessageType {
     INLINE_REPLY = 19,                                 // yep
     APPLICATION_COMMAND = 20,                          // yep
     THREAD_STARTER_MESSAGE = 21,                       // nope
+    GUILD_INVITE_REMINDER = 22,                        // nope
+    CONTEXT_MENU_COMMAND = 23,                         // nope
+    AUTO_MODERATION_ACTION = 24,                       // nope
+    ROLE_SUBSCRIPTION_PURCHASE = 25,                   // nope
+    INTERACTION_PREMIUM_UPSELL = 26,                   // nope
+    STAGE_START = 27,                                  // nope
+    STAGE_END = 28,                                    // nope
+    STAGE_SPEAKER = 29,                                // nope
+    STAGE_TOPIC = 31,                                  // nope
+    GUILD_APPLICATION_PREMIUM_SUBSCRIPTION = 32,       // nope
+    PRIVATE_CHANNEL_INTEGRATION_ADDED = 33,            // nope
+    PRIVATE_CHANNEL_INTEGRATION_REMOVED = 34,          // nope
+    PREMIUM_REFERRAL = 35,                             // nope
+    GUILD_INCIDENT_ALERT_MODE_ENABLED = 36,            // nope
+    GUILD_INCIDENT_ALERT_MODE_DISABLED = 37,           // nope
+    GUILD_INCIDENT_REPORT_RAID = 38,                   // nope
+    GUILD_INCIDENT_REPORT_FALSE_ALARM = 39,            // nope
+    GUILD_DEADCHAT_REVIVE_PROMPT = 40,                 // nope
+    CUSTOM_GIFT = 41,                                  // nope
+    GUILD_GAMING_STATS_PROMPT = 42,                    // nope
+    POLL = 43,                                         // nope
+    PURCHASE_NOTIFICATION = 44,                        // nope
 };
 
 enum class MessageFlags {

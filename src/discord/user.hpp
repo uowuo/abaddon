@@ -7,9 +7,11 @@ enum class EPremiumType {
     None = 0,
     NitroClassic = 1,
     Nitro = 2,
+    Basic = 3,
 };
 
 struct UserData {
+    // todo: enum class? (for consistencys sake)
     enum {
         DiscordEmployee = 1 << 0,
         PartneredServerOwner = 1 << 1,
@@ -29,6 +31,7 @@ struct UserData {
         Spammer = 1 << 20,
         DisablePremium = 1 << 21,
         ActiveDeveloper = 1 << 22,
+        ApplicationCommandBadge = 1 << 23,
         Quarantined = 1ULL << 44,
 
         MaxFlag_PlusOne,
