@@ -258,49 +258,61 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     // fuck you clang-format you suck
     // clang-format off
-    add_perms("General", LEFT, { 
+    add_perms("General", RIGHT, {
         Permission::VIEW_CHANNEL,
         Permission::MANAGE_CHANNELS,
         Permission::MANAGE_ROLES,
+        Permission::CREATE_GUILD_EXPRESSIONS,
         Permission::MANAGE_GUILD_EXPRESSIONS,
         Permission::VIEW_AUDIT_LOG,
-        Permission::VIEW_GUILD_INSIGHTS,
         Permission::MANAGE_WEBHOOKS,
         Permission::MANAGE_GUILD });
 
-    add_perms("Membership", LEFT, {
-        Permission::CREATE_INSTANT_INVITE,
-        Permission::CHANGE_NICKNAME,
-        Permission::MANAGE_NICKNAMES,
-        Permission::KICK_MEMBERS,
-        Permission::BAN_MEMBERS });
-
-    add_perms("Text Channels", RIGHT, {
+    add_perms("Text Channels", LEFT, {
         Permission::SEND_MESSAGES,
+        Permission::SEND_MESSAGES_IN_THREADS,
         Permission::CREATE_PUBLIC_THREADS,
         Permission::CREATE_PRIVATE_THREADS,
         Permission::EMBED_LINKS,
         Permission::ATTACH_FILES,
         Permission::ADD_REACTIONS,
         Permission::USE_EXTERNAL_EMOJIS,
+        Permission::USE_EXTERNAL_STICKERS,
         Permission::MENTION_EVERYONE,
         Permission::MANAGE_MESSAGES,
         Permission::MANAGE_THREADS,
         Permission::READ_MESSAGE_HISTORY,
         Permission::SEND_TTS_MESSAGES,
-        Permission::USE_APPLICATION_COMMANDS });
+        Permission::USE_APPLICATION_COMMANDS,
+        Permission::SEND_VOICE_MESSAGES, });
+
+    add_perms("Membership", LEFT, {
+        Permission::CREATE_INSTANT_INVITE,
+        Permission::CHANGE_NICKNAME,
+        Permission::MANAGE_NICKNAMES,
+        Permission::KICK_MEMBERS,
+        Permission::BAN_MEMBERS,
+        Permission::MODERATE_MEMBERS });
+
+    add_perms("Advanced", LEFT, { Permission::ADMINISTRATOR });
 
     add_perms("Voice Channels", RIGHT, {
         Permission::CONNECT,
         Permission::SPEAK,
         Permission::STREAM,
+        Permission::USE_EMBEDDED_ACTIVITIES,
+        Permission::USE_SOUNDBOARD,
+        Permission::USE_EXTERNAL_SOUNDS,
         Permission::USE_VAD,
         Permission::PRIORITY_SPEAKER,
         Permission::MUTE_MEMBERS,
         Permission::DEAFEN_MEMBERS,
-        Permission::MOVE_MEMBERS });
+        Permission::MOVE_MEMBERS,
+        Permission::SET_VOICE_CHANNEL_STATUS });
 
-    add_perms("Advanced", LEFT, { Permission::ADMINISTRATOR });
+    add_perms("Events", RIGHT, {
+        Permission::CREATE_EVENTS,
+        Permission::MANAGE_EVENTS, });
 
     // clang-format on
 

@@ -50,12 +50,12 @@ enum class Permission : uint64_t {
     MODERATE_MEMBERS = (1ULL << 40),                    // Allows for timing out users to prevent them from sending or reacting to messages in chat and threads, and from speaking in voice and stage channels
     VIEW_CREATOR_MONETIZATION_ANALYTICS = (1ULL << 41), // Allows for viewing role subscription insights
     USE_SOUNDBOARD = (1ULL << 42),                      // Allows for using soundboard in a voice channel
-    CREATE_GUILD_EXPRESSIONS = (1ULL << 43),            // undocumented
-    CREATE_EVENTS = (1ULL << 44),                       // undocumented
+    CREATE_GUILD_EXPRESSIONS = (1ULL << 43),            // undocumented. Present in client
+    CREATE_EVENTS = (1ULL << 44),                       // undocumented. Present in client
     USE_EXTERNAL_SOUNDS = (1ULL << 45),                 // Allows the usage of custom soundboard sounds from other servers
     SEND_VOICE_MESSAGES = (1ULL << 46),                 // Allows sending voice messages
     USE_CLYDE_AI = (1ULL << 47),                        // undocumented
-    SET_VOICE_CHANNEL_STATUS = (1ULL << 48),            // undocumented
+    SET_VOICE_CHANNEL_STATUS = (1ULL << 48),            // undocumented. Present in Client
 
     ALL = 0x1FFFFFFFFFFFFULL,
 };
@@ -104,7 +104,7 @@ constexpr const char *GetPermissionString(Permission perm) {
         case Permission::STREAM:
             return "Video";
         case Permission::VIEW_CHANNEL:
-            return "View Channel";
+            return "View Channels";
         case Permission::SEND_MESSAGES:
             return "Send Messages";
         case Permission::SEND_TTS_MESSAGES:
@@ -144,15 +144,41 @@ constexpr const char *GetPermissionString(Permission perm) {
         case Permission::MANAGE_WEBHOOKS:
             return "Manage Webhooks";
         case Permission::MANAGE_GUILD_EXPRESSIONS:
-            return "Manage Emojis";
+            return "Manage Expressions";
         case Permission::USE_APPLICATION_COMMANDS:
-            return "Use Slash Commands";
+            return "Use Application Commands";
+        case Permission::MANAGE_EVENTS:
+            return "Manage Events";
         case Permission::MANAGE_THREADS:
             return "Manage Threads";
         case Permission::CREATE_PUBLIC_THREADS:
-            return "Use Public Threads";
+            return "Create Public Threads";
         case Permission::CREATE_PRIVATE_THREADS:
-            return "Use Private Threads";
+            return "Create Private Threads";
+        case Permission::USE_EXTERNAL_STICKERS:
+            return "Use External Stickers";
+        case Permission::SEND_MESSAGES_IN_THREADS:
+            return "Send Messages In Threads";
+        case Permission::USE_EMBEDDED_ACTIVITIES:
+            return "Use Activities";
+        case Permission::MODERATE_MEMBERS:
+            return "Timeout Members";
+        // case Permission::VIEW_CREATOR_MONETIZATION_ANALYTICS:
+        //     return "";
+        case Permission::USE_SOUNDBOARD:
+            return "Use Soundboard";
+        case Permission::CREATE_GUILD_EXPRESSIONS:
+            return "Create Expressions";
+        case Permission::CREATE_EVENTS:
+            return "Create Events";
+        case Permission::USE_EXTERNAL_SOUNDS:
+            return "Use External Sounds";
+        case Permission::SEND_VOICE_MESSAGES:
+            return "Send Voice Messages";
+        // case Permission::USE_CLYDE_AI:
+        //     return "";
+        case Permission::SET_VOICE_CHANNEL_STATUS:
+            return "Set Voice Channel Status";
         default:
             return "Unknown Permission";
     }
@@ -223,15 +249,41 @@ constexpr const char *GetPermissionDescription(Permission perm) {
         case Permission::MANAGE_WEBHOOKS:
             return "Allows members to create, edit, or delete webhooks, which can post messages from other apps or sites into this server.";
         case Permission::MANAGE_GUILD_EXPRESSIONS:
-            return "Allows members to add or remove custom emojis in this server.";
+            return "Allows members to add or remove custom emoji, stickers, and sounds in this server.";
         case Permission::USE_APPLICATION_COMMANDS:
-            return "Allows members to use slash commands in text channels.";
+            return "Allows members to use commands from applications, including slash commands and context menu commands.";
+        case Permission::MANAGE_EVENTS:
+            return "Allows members to edit and cancel events.";
         case Permission::MANAGE_THREADS:
-            return "Allows members to rename, delete, archive/unarchive, and turn on slow mode for threads.";
+            return "Allows members to rename, delete, close, and turn on slow mode for threads. They can also view private threads";
         case Permission::CREATE_PUBLIC_THREADS:
-            return "Allows members to talk in threads. The \"Send Messages\" permission must be enabled for members to start new threads; if it's disabled, they can only respond to existing threads.";
+            return "Allows members to create threads that everyone in a channel can view.";
         case Permission::CREATE_PRIVATE_THREADS:
-            return "Allows members to create and chat in private threads. The \"Send Messages\" permission must be enabled for members to start new private threads; if it's disabled, they can only respond to private threads they're added to.";
+            return "Allows members to create invite-only threads.";
+        case Permission::USE_EXTERNAL_STICKERS:
+            return "Allows members to use stickers from other servers, if they're a Discord Nitro member.";
+        case Permission::SEND_MESSAGES_IN_THREADS:
+            return "Allows members to send messages in threads.";
+        case Permission::USE_EMBEDDED_ACTIVITIES:
+            return "Allows members to use Activities in this server.";
+        case Permission::MODERATE_MEMBERS:
+            return "When you put a user in timeout they will not be able to send messages in chat, reply within threads, react to messages, or speak in voice or Stage channels.";
+        // case Permission::VIEW_CREATOR_MONETIZATION_ANALYTICS:
+        //     return "";
+        case Permission::USE_SOUNDBOARD:
+            return "Allows members to send sounds from server soundboard.";
+        case Permission::CREATE_GUILD_EXPRESSIONS:
+            return "Allows members to add custom emoji, stickers, and sounds in this server.";
+        case Permission::CREATE_EVENTS:
+            return "Allows members to create events.";
+        case Permission::USE_EXTERNAL_SOUNDS:
+            return "Allows members to use sounds from other servers, if they're a Discord Nitro member.";
+        case Permission::SEND_VOICE_MESSAGES:
+            return "Allows members to send voice messages.";
+        // case Permission::USE_CLYDE_AI:
+        //     return "";
+        case Permission::SET_VOICE_CHANNEL_STATUS:
+            return "Allows members to create and edit voice channel status.";
         default:
             return "";
     }
