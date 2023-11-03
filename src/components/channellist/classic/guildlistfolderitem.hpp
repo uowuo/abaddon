@@ -5,12 +5,13 @@
 #include <gtkmm/revealer.h>
 
 #include "guildlistguilditem.hpp"
+#include "discord/usersettings.hpp"
 
 class GuildListGuildItem;
 
 class GuildListFolderItem : public Gtk::VBox {
 public:
-    GuildListFolderItem();
+    GuildListFolderItem(const UserSettingsGuildFoldersEntry &folder);
 
     void AddGuildWidget(GuildListGuildItem *widget);
 

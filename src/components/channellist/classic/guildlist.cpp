@@ -64,7 +64,7 @@ void GuildList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
         return;
     }
 
-    auto *folder_widget = Gtk::make_managed<GuildListFolderItem>();
+    auto *folder_widget = Gtk::make_managed<GuildListFolderItem>(folder);
     for (const auto guild_id : folder.GuildIDs) {
         if (auto *guild_widget = CreateGuildWidget(guild_id)) {
             guild_widget->show();
