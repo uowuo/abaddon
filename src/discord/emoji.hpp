@@ -22,4 +22,6 @@ struct EmojiData {
     static std::string URLFromID(const std::string &emoji_id, const char *ext = "png", const char *size = nullptr);
     static std::string URLFromID(Snowflake emoji_id, const char *ext = "png", const char *size = nullptr);
     static std::string URLFromID(const Glib::ustring &emoji_id, const char *ext = "png", const char *size = nullptr);
+
+    bool IsEmojiAnimated() const noexcept;
 };

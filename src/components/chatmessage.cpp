@@ -620,7 +620,11 @@ Gtk::Widget *ChatMessageItemContainer::CreateReactionsComponent(const Message &d
         } else { // custom
             ev->set_tooltip_text(reaction.Emoji.Name);
 
-            auto img = Gtk::manage(new LazyImage(reaction.Emoji.GetURL(), 16, 16));
+            auto *img = Gtk::make_managed<LazyImage>(reaction.Emoji.GetURL(), 16, 16);
+            if (reaction.Emoji.IsEmojiAnimated() && Abaddon::Get().GetSettings().ShowAnimations) {
+                img->SetURL(reaction.Emoji.GetURL("gif"));
+                img->SetAnimated(true);
+            }
             img->set_can_focus(false);
             box->add(*img);
         }

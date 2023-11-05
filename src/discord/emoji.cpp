@@ -49,3 +49,7 @@ std::string EmojiData::URLFromID(Snowflake emoji_id, const char *ext, const char
 std::string EmojiData::URLFromID(const Glib::ustring &emoji_id, const char *ext, const char *size) {
     return URLFromID(emoji_id.raw(), ext, size);
 }
+
+bool EmojiData::IsEmojiAnimated() const noexcept {
+    return IsAnimated.has_value() && *IsAnimated;
+}

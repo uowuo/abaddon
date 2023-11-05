@@ -1056,11 +1056,12 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
         while (s->FetchOne()) {
             size_t idx;
             ReactionData q;
-            s->Get(0, q.Emoji.ID);
-            s->Get(1, q.Emoji.Name);
-            s->Get(2, q.Count);
-            s->Get(3, q.HasReactedWith);
-            s->Get(4, idx);
+            s->Get(0, q.Count);
+            s->Get(1, q.HasReactedWith);
+            s->Get(2, idx);
+            s->Get(3, q.Emoji.ID);
+            s->Get(4, q.Emoji.Name);
+            s->Get(5, q.Emoji.IsAnimated);
             tmp[idx] = q;
         }
         s->Reset();
@@ -2291,7 +2292,19 @@ bool Store::CreateStatements() {
     }
 
     m_stmt_get_reactions = std::make_unique<Statement>(m_db, R"(
-        SELECT emoji_id, name, count, me, idx FROM reactions WHERE message = ?
+        SELECT
+            reactions.count,
+            reactions.me,
+            reactions.idx,
+            emojis.id,
+            emojis.name,
+            emojis.animated
+        FROM
+            reactions
+        INNER JOIN
+            emojis ON reactions.emoji_id = emojis.id
+        WHERE
+            message = ?
     )");
     if (!m_stmt_get_reactions->OK()) {
         fprintf(stderr, "failed to prepare get reactions statement: %s\n", m_db.ErrStr());
