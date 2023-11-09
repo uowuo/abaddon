@@ -33,3 +33,8 @@
 .status-indicator.idle {
     color: #FAA61A;
 }
+
+/* make room for attachment icon */
+.message-input.with-browse-icon {
+    padding-left: 30px;
+}

@@ -20,7 +20,7 @@ ChatInputText::ChatInputText() {
     m_textview.signal_key_press_event().connect(cb, false);
     m_textview.set_hexpand(false);
     m_textview.set_halign(Gtk::ALIGN_FILL);
-    m_textview.set_valign(Gtk::ALIGN_CENTER);
+    m_textview.set_valign(Gtk::ALIGN_FILL);
     m_textview.set_wrap_mode(Gtk::WRAP_WORD_CHAR);
     m_textview.show();
     add(m_textview);
