@@ -113,30 +113,25 @@ ChatInputTextContainer::ChatInputTextContainer() {
     };
     m_input.signal_key_press_proxy().connect(cb);
 
+    m_upload_button.set_image(m_upload_img);
+    m_upload_button.set_halign(Gtk::ALIGN_CENTER);
+    m_upload_button.set_valign(Gtk::ALIGN_CENTER);
+    m_upload_button.get_style_context()->add_class(GTK_STYLE_CLASS_FLAT);
+
     m_upload_img.property_icon_name() = "document-send-symbolic";
     m_upload_img.property_icon_size() = Gtk::ICON_SIZE_LARGE_TOOLBAR;
     m_upload_img.get_style_context()->add_class("message-input-browse-icon");
 
-    AddPointerCursor(m_upload_ev);
-
-    m_upload_ev.signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
-        if (ev->button == GDK_BUTTON_PRIMARY) {
-            ShowFileChooser();
-            // return focus
-            m_input.grab_focus();
-            return true;
-        }
-        return false;
+    m_upload_button.signal_clicked().connect([this]() {
+        ShowFileChooser();
+        m_input.grab_focus();
     });
 
-    m_upload_ev.add(m_upload_img);
-    add_overlay(m_upload_ev);
-    add(m_input);
+    m_upload_box.pack_start(m_upload_button);
+    pack_start(m_upload_box, false, false);
+    pack_start(m_input);
 
     show_all_children();
-
-    // stop the overlay from using (start) padding
-    signal_get_child_position().connect(sigc::mem_fun(*this, &ChatInputTextContainer::GetChildPosition), false);
 }
 
 void ChatInputTextContainer::ShowFileChooser() {
@@ -160,39 +155,11 @@ ChatInputText &ChatInputTextContainer::Get() {
 }
 
 void ChatInputTextContainer::ShowChooserIcon() {
-    m_upload_ev.show();
+    m_upload_button.show();
 }
 
 void ChatInputTextContainer::HideChooserIcon() {
-    m_upload_ev.hide();
-}
-
-bool ChatInputTextContainer::GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos) {
-    Gtk::Allocation main_alloc;
-    {
-        auto *grandchild = m_input.get_child();
-        int x, y;
-        if (grandchild->translate_coordinates(m_input, 0, 0, x, y)) {
-            main_alloc.set_x(x);
-            main_alloc.set_y(y);
-        } else {
-            main_alloc.set_x(0);
-            main_alloc.set_y(0);
-        }
-        main_alloc.set_width(grandchild->get_allocated_width());
-        main_alloc.set_height(grandchild->get_allocated_height());
-    }
-
-    Gtk::Requisition min, req;
-    child->get_preferred_size(min, req);
-
-    // let css move it around
-    pos.set_x(0);
-    pos.set_y(0);
-    pos.set_width(std::max(min.width, std::min(main_alloc.get_width(), req.width)));
-    pos.set_height(std::max(min.height, std::min(main_alloc.get_height(), req.height)));
-
-    return true;
+    m_upload_button.hide();
 }
 
 ChatInputTextContainer::type_signal_add_attachment ChatInputTextContainer::signal_add_attachment() {

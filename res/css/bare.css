@@ -34,7 +34,10 @@
     color: #FAA61A;
 }
 
-/* make room for attachment icon */
-.message-input.with-browse-icon {
-    padding-left: 30px;
+.message-input textview, .message-input textview text {
+    background-color: inherit;
+}
+
+.message-input textview {
+    padding: 10px 5px;
 }
