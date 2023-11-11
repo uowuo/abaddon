@@ -50,7 +50,7 @@
 /bin/libpng16-16.dll
 /bin/libpsl-5.dll
 /bin/libsigc-2.0-0.dll
-/bin/libsodium-23.dll
+/bin/libsodium-26.dll
 /bin/libspdlog.dll
 /bin/libsqlite3-0.dll
 /bin/libssh2-1.dll
