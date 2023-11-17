@@ -199,11 +199,6 @@ spam filter's wrath:
 | `.embed-field-value`           | The value of an embed field                                                                       |
 | `.embed-footer`                | The footer of an embed                                                                            |
 | `.member-list`                 | Container of the member list                                                                      |
-| `.status-indicator`            | The status indicator                                                                              |
-| `.online`                      | Applied to status indicators when the associated user is online                                   |
-| `.idle`                        | Applied to status indicators when the associated user is away                                     |
-| `.dnd`                         | Applied to status indicators when the associated user is on do not disturb                        |
-| `.offline`                     | Applied to status indicators when the associated user is offline                                  |
 | `.typing-indicator`            | The typing indicator (also used for replies)                                                      |
 
 Used in reorderable list implementation:
