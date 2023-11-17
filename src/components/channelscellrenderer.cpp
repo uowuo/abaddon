@@ -243,12 +243,12 @@ void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Contex
 
     static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
     if (m_property_color.get_value().has_value()) {
-        m_renderer_text.property_foreground_rgba() = *m_property_color.get_value();
+        // m_renderer_text.property_foreground_rgba() = *m_property_color.get_value();
     } else {
-        m_renderer_text.property_foreground_rgba() = color;
+        // m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+    // m_renderer_text.property_foreground_set() = false;
 }
 
 // guild functions
@@ -326,7 +326,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
                                   static_cast<int>(text_h));
 
     static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-    m_renderer_text.property_foreground_rgba() = color;
+    // m_renderer_text.property_foreground_rgba() = color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
     const bool hover_only = Abaddon::Get().GetSettings().AnimatedGuildHoverOnly;
@@ -465,15 +465,15 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
         muted.set_red(muted.get_red() * 0.5);
         muted.set_green(muted.get_green() * 0.5);
         muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
+        // m_renderer_text.property_foreground_rgba() = muted;
     } else {
         if (discord.GetUnreadChannelsCountForCategory(id) > 0) {
             AddUnreadIndicator(cr, background_area);
         }
-        m_renderer_text.property_foreground_rgba() = color;
+        // m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+    // m_renderer_text.property_foreground_set() = false;
 }
 
 // text channel
@@ -511,22 +511,21 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     static const auto sfw_unmuted = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
 
-    m_renderer_text.property_sensitive() = false;
     static const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
-    if (m_property_nsfw.get_value())
-        m_renderer_text.property_foreground_rgba() = nsfw_color;
+    /* if (m_property_nsfw.get_value())
+        // m_renderer_text.property_foreground_rgba() = nsfw_color;
     else
-        m_renderer_text.property_foreground_rgba() = sfw_unmuted;
+        // m_renderer_text.property_foreground_rgba() = sfw_unmuted;
     if (is_muted) {
-        auto col = m_renderer_text.property_foreground_rgba().get_value();
+        auto col = // m_renderer_text.property_foreground_rgba().get_value();
         col.set_red(col.get_red() * 0.5);
         col.set_green(col.get_green() * 0.5);
         col.set_blue(col.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = col;
-    }
+        // m_renderer_text.property_foreground_rgba() = col;
+    }*/
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     // unset foreground to default so properties dont bleed
-    m_renderer_text.property_foreground_set() = false;
+    // m_renderer_text.property_foreground_set() = false;
 
     // unread
     if (!Abaddon::Get().GetSettings().Unreads) return;
@@ -586,12 +585,12 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
         muted.set_red(muted.get_red() * 0.5);
         muted.set_green(muted.get_green() * 0.5);
         muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
+        // m_renderer_text.property_foreground_rgba() = muted;
     } else {
-        m_renderer_text.property_foreground_rgba() = color;
+        // m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+    // m_renderer_text.property_foreground_set() = false;
 
     // unread
     if (!Abaddon::Get().GetSettings().Unreads) return;
@@ -903,12 +902,12 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
         muted.set_red(muted.get_red() * 0.5);
         muted.set_green(muted.get_green() * 0.5);
         muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
+        // m_renderer_text.property_foreground_rgba() = muted;
     } else {
-        m_renderer_text.property_foreground_rgba() = color;
+        // m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
+    // m_renderer_text.property_foreground_set() = false;
 
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
     cr->rectangle(icon_x, icon_y, icon_w, icon_h);
