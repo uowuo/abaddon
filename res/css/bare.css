@@ -1,6 +1,7 @@
 .embed {
     border-radius: 5px;
     padding: 10px;
+    background-color: rgba(0.0, 0.0, 0.0, 0.1);
 }
 
 .embed-footer {
