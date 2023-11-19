@@ -57,3 +57,51 @@
     padding-bottom: 6px;
     opacity: 0.8;
 }
+
+.profile-main-container {
+    padding: 20px;
+}
+
+.profile-username {
+    margin-left: 10px;
+    font-size: 20px;
+}
+
+.profile-username-nondisplay {
+    margin-left: 10px;
+}
+
+.profile-switcher {
+    padding-top: 5px;
+}
+
+.profile-stack {
+    padding-top: 5px;
+}
+
+.profile-notes-label {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.profile-badges {
+    padding-left: 5px;
+}
+
+.profile-badge {
+    margin-right: 5px;
+}
+
+.profile-connections {
+    margin-top: 10px;
+}
+
+.profile-connection {
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px solid black;
+}
+
+.profile-connection-image {
+    padding-right: 5px;
+}
