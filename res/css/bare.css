@@ -18,6 +18,10 @@
     padding: 2px 5px 2px 5px;
 }
 
+.message-attachment-box label {
+    margin: 5px;
+}
+
 .status-indicator.dnd {
     color: #982929;
 }
