@@ -45,3 +45,11 @@
 .message-input textview {
     padding: 10px 5px;
 }
+
+.message-reply {
+    border-left: 2px solid gray;
+    padding-left: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    opacity: 0.8;
+}
