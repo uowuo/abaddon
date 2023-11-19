@@ -38,6 +38,10 @@
     background-color: inherit;
 }
 
+.message-text, .message-text text {
+    background: inherit;
+}
+
 .message-input textview {
     padding: 10px 5px;
 }
