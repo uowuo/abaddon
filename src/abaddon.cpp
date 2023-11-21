@@ -177,6 +177,7 @@ static void MainEventHandler(GdkEvent *event, void *main_window) {
 
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
+    Glib::set_application_name(APP_TITLE);
 
 #ifdef WITH_LIBHANDY
     m_gtk_app->signal_activate().connect([] {
