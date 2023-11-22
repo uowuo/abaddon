@@ -181,7 +181,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_mix_mono.set_active(audio.GetMixMono());
     m_mix_mono.signal_toggled().connect([this]() {
-       Abaddon::Get().GetAudio().SetMixMono(m_mix_mono.get_active());
+        Abaddon::Get().GetAudio().SetMixMono(m_mix_mono.get_active());
     });
 
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
@@ -225,6 +225,28 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         window->show();
     });
 
+    auto *sliders_container = Gtk::make_managed<Gtk::HBox>();
+    auto *sliders_labels = Gtk::make_managed<Gtk::VBox>();
+    auto *sliders_sliders = Gtk::make_managed<Gtk::VBox>();
+    sliders_container->pack_start(*sliders_labels, false, true, 2);
+    sliders_container->pack_start(*sliders_sliders);
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Threshold", Gtk::ALIGN_END));
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Gain", Gtk::ALIGN_END));
+    sliders_sliders->pack_start(m_vad_param);
+    sliders_sliders->pack_start(m_capture_gain);
+
+    auto *combos_container = Gtk::make_managed<Gtk::HBox>();
+    auto *combos_labels = Gtk::make_managed<Gtk::VBox>();
+    auto *combos_combos = Gtk::make_managed<Gtk::VBox>();
+    combos_container->pack_start(*combos_labels, false, true, 2);
+    combos_container->pack_start(*combos_combos);
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("VAD Method", Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Output Device", Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Input Device", Gtk::ALIGN_END));
+    combos_combos->pack_start(m_vad_combo);
+    combos_combos->pack_start(m_playback_combo);
+    combos_combos->pack_start(m_capture_combo);
+
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
@@ -233,12 +255,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.add(m_menu_bar);
     m_main.add(m_controls);
     m_main.add(m_vad_value);
-    m_main.add(m_vad_param);
-    m_main.add(m_capture_gain);
+    m_main.add(*sliders_container);
     m_main.add(m_scroll);
-    m_main.add(m_vad_combo);
-    m_main.add(m_playback_combo);
-    m_main.add(m_capture_combo);
+    m_main.add(*combos_container);
     add(m_main);
     show_all_children();
 
