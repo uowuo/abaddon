@@ -238,8 +238,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto *combos_container = Gtk::make_managed<Gtk::HBox>();
     auto *combos_labels = Gtk::make_managed<Gtk::VBox>();
     auto *combos_combos = Gtk::make_managed<Gtk::VBox>();
-    combos_container->pack_start(*combos_labels, false, true, 2);
-    combos_container->pack_start(*combos_combos);
+    combos_container->pack_start(*combos_labels, false, true, 6);
+    combos_container->pack_start(*combos_combos, Gtk::PACK_EXPAND_WIDGET, 6);
     combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("VAD Method", Gtk::ALIGN_END));
     combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Output Device", Gtk::ALIGN_END));
     combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Input Device", Gtk::ALIGN_END));
@@ -252,12 +252,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
-    m_main.add(m_menu_bar);
-    m_main.add(m_controls);
-    m_main.add(m_vad_value);
-    m_main.add(*sliders_container);
-    m_main.add(m_scroll);
-    m_main.add(*combos_container);
+    m_main.pack_start(m_menu_bar);
+    m_main.pack_start(m_controls);
+    m_main.pack_start(m_vad_value);
+    m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"));
+    m_main.pack_start(*sliders_container);
+    m_main.pack_start(m_scroll);
+    m_main.pack_start(*combos_container, Gtk::PACK_EXPAND_WIDGET, 2);
     add(m_main);
     show_all_children();
 
