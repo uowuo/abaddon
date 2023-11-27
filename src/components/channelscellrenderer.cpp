@@ -7,6 +7,17 @@ constexpr static double M_PI = 3.14159265358979;
 constexpr static double M_PI_H = M_PI / 2.0;
 constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
+void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rectangle &background_area) {
+    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
+    const auto x = background_area.get_x();
+    const auto y = background_area.get_y();
+    const auto w = background_area.get_width();
+    const auto h = background_area.get_height();
+    cr->rectangle(x, y, 3, h);
+    cr->fill();
+}
+
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))
     , Gtk::CellRenderer()
@@ -373,14 +384,9 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     const auto has_unread = discord.GetUnreadStateForGuild(id, total_mentions);
 
     if (has_unread && !discord.IsGuildMuted(id)) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y + h / 2.0 - 24.0 / 2.0, 3.0, 24.0);
-        cr->fill();
+        auto area = background_area;
+        area.set_y(area.get_y() + area.get_height() / 2.0 - 24.0 / 2.0);
+        AddUnreadIndicator(cr, area);
     }
 
     if (total_mentions < 1) return;
@@ -408,17 +414,6 @@ void CellRendererChannels::get_preferred_height_vfunc_category(Gtk::Widget &widg
 
 void CellRendererChannels::get_preferred_height_for_width_vfunc_category(Gtk::Widget &widget, int width, int &minimum_height, int &natural_height) const {
     m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
-}
-
-void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rectangle &background_area) {
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-    const auto x = background_area.get_x();
-    const auto y = background_area.get_y();
-    const auto w = background_area.get_width();
-    const auto h = background_area.get_height();
-    cr->rectangle(x, y, 3, h);
-    cr->fill();
 }
 
 void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
@@ -927,14 +922,7 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y, 3, h);
-        cr->fill();
+        AddUnreadIndicator(cr, background_area);
     }
 }
 
