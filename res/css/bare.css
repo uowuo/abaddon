@@ -117,3 +117,11 @@
     border: 1px solid #5865f2;
     background-color: rgba(89, 102, 242, 0.5);
 }
+
+.set-status-dialog .dialog-vbox {
+    padding: 5px;
+}
+
+.set-status-dialog .dialog-action-area {
+    margin: 10px 5px 5px 5px;
+}
