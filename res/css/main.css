@@ -1,12 +1,7 @@
-@define-color background_color #141414;
-@define-color secondary_color #111111;
-@define-color text_color #fbfbfb;
-
 .embed {
-    background-color: rgba(0, 0, 0, 0.2);
-    color: #cbcbcb;
     border-radius: 5px;
     padding: 10px;
+    background-color: rgba(0.0, 0.0, 0.0, 0.1);
 }
 
 .embed-footer {
@@ -19,201 +14,13 @@
     font-size: 12px;
 }
 
-.channel-list {
-    background-color: @secondary_color;
-}
-
-.channel-row-label {
-    padding: 5px;
-}
-
-.channel-row-label, .channel-row-label text {
-    color: @text_color;
-    background: rgba(0, 0, 0, 0);
-}
-
-.channel-row-label.nsfw text {
-    color: #ed6666;
-}
-
-.channel-row:focus {
-    background-color: #34495e;
-}
-
-.channel-row-category {
-    padding-left: 15px;
-    color: #ff5370;
-}
-
-.channel-row-channel {
-    padding-left: 30px;
-}
-
-.messages, .message-container {
-    background-color: @background_color;
-}
-
-.messages {
-    padding: 15px;
-}
-
-.message-container-extra {
-    color: #78909c;
-}
-
-.message-container-timestamp {
-    color: #78909c;
-}
-
-.message-text {
-    /* this isnt stricly necessary but it fixes emoji clipping */
-    padding-bottom: 5px;
-}
-
-.message-text:not(.failed) text, .message-reply {
-    color: @text_color;
-}
-
-.message-text.pending text {
-    color: shade(@text_color, 0.5);
-}
-
-.message-text.failed text {
-    color: #b72d4f;
-}
-
-.message-reply {
-    border-left: 2px solid gray;
-    padding-left: 20px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    opacity: 0.7;
-}
-
-.message-text + .message-text {
-    padding-top: 5px;
-}
-
-.message-text text {
-    background-color: @background_color;
-}
-
-.message-input, .message-input textview, .message-input textview text {
-    background-color: #242424;
-    color: #adadad;
-    border-radius: 3px;
-    border: 1px solid transparent;
-}
-
-.message-input {
-    border: 1px solid #444444;
-    margin-right: 15px;
-}
-
-.message-input.replying {
-    border: 1px solid #026FB9;
-}
-
-.message-input.editing {
-    border: 1px solid #b9026f;
-}
-
-.message-input.bad-input {
-    border: 1px solid #dd3300;
-}
-
-.message-input-browse-icon {
-    color: #b9bbbe;
-    margin-left: 5px;
-    margin-top: 11px;
-}
-
-/* i dont think theres a way to circumvent having to do this to adjust around the browse icon */
-.message-input:not(.with-browser-icon) {
-    padding: 0px 0px 0px 5px;
-}
-
-.message-input.with-browse-icon {
-    padding: 0px 0px 0px 30px;
-}
-
-.members {
-    background-color: @background_color;
-}
-
-.members-row-label {
-    color: @text_color;
-    padding: 5px;
-}
-
-.members-row-member {
-    padding: 0;
-    padding-left: 15px;
-}
-
 .message-attachment-box {
-    color: #aaaaaa;
     border: 1px solid #aaaaaa;
     padding: 2px 5px 2px 5px;
 }
 
 .message-attachment-box label {
     margin: 5px;
-}
-
-.message-component {
-    margin: 5px;
-}
-
-.message-component.primary {
-    background: #5865F2;
-}
-
-.message-component.secondary, .message-component.link {
-    background: #4F545C;
-}
-
-.message-component.success {
-    background: #43B581;
-}
-
-.message-component.danger {
-    background: #F04747;
-}
-
-.reaction-box {
-    padding: 2px 5px 2px 5px;
-    margin: 0px 0px 0px 0px;
-    background-color: rgba(0.4, 0.4, 0.4, 0.4);
-    border-radius: 5px;
-    border: 1px solid transparent;
-}
-
-.reaction-box.reacted {
-    border: 1px solid white;
-}
-
-.reaction-count {
-    color: @text_color;
-}
-
-.completer {
-    background-color: @secondary_color;
-    padding: 5px;
-}
-
-.completer-entry {
-    color: @text_color;
-}
-
-.completer-entry-image {
-    margin-right: 6px;
-}
-
-.typing-indicator {
-    margin-top: 10px;
-    margin-bottom: -7px;
-    color: @text_color;
 }
 
 .status-indicator.dnd {
@@ -232,6 +39,26 @@
     color: #FAA61A;
 }
 
+.message-input textview, .message-input textview text {
+    background-color: inherit;
+}
+
+.message-text, .message-text text {
+    background: inherit;
+}
+
+.message-input textview {
+    padding: 10px 5px;
+}
+
+.message-reply {
+    border-left: 2px solid gray;
+    padding-left: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    opacity: 0.8;
+}
+
 .profile-main-container {
     padding: 20px;
 }
@@ -242,29 +69,11 @@
 }
 
 .profile-username-nondisplay {
-	margin-left: 10px;
-}
-
-.profile-badge {
-    margin-right: 10px;
+    margin-left: 10px;
 }
 
 .profile-switcher {
     padding-top: 5px;
-}
-
-.profile-connections {
-    margin-top: 10px;
-}
-
-.profile-connection {
-    background: @secondary_color;
-    border-radius: 15px;
-    margin-right: 20px;
-}
-
-.profile-connection box {
-    padding: 5px;
 }
 
 .profile-stack {
@@ -276,126 +85,43 @@
     padding-bottom: 5px;
 }
 
-.profile-notes-text, .profile-notes-text text {
-    background: @secondary_color;
-}
-
-.profile-notes-text text {
-    border-radius: 5px;
-    border: 1px solid #36515e;
-    color: @text_color;
-    padding-bottom: 5px;
-}
-
 .profile-badges {
     padding-left: 5px;
 }
 
-.guild-members-pane-info {
-    padding: 10px;
+.profile-badge {
+    margin-right: 5px;
 }
 
-.drag-hover-top {
-    background: linear-gradient(to bottom, rgba(255, 66, 66, 0.65) 0%, rgba(0, 0, 0, 0) 35%);
-}
-
-.drag-hover-bottom {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 65%, rgba(255, 66, 66, 0.65) 100%);
-}
-
-.friends-list list {
-    background: @background_color;
-    padding-left: 10px;
-}
-
-.friends-list-row-bot {
-    color: #ff0000;
-}
-
-.channel-tab-switcher .box {
-    margin: -7px -1px -7px -1px;
-    background: #2a2a2a;
-    border: 1px solid black;
-}
-
-.channel-tab-switcher tab:hover {
-    box-shadow: inset 0 -6px #17633e;
-}
-
-.channel-tab-switcher tab:checked {
-    box-shadow: inset 0 -6px #2feb90;
-}
-
-.channel-tab-switcher tab {
-    background: #1A1A1A;
-    border: 1px solid #808080;
-    min-height: 35px;
-}
-
-.channel-tab-switcher tab.needs-attention:not(:checked) {
-  font-weight: bold;
-  animation: 150ms ease-in;
-  /* background-image: radial-gradient(ellipse at bottom, #FF5370, #1A1A1A 30%); */
-  box-shadow: inset 0 -6px red;
-}
-
-.channel-tab-switcher tab > button {
-    border: none;
-    padding: 0;
-    margin: 5px;
-    min-width: 16px;
-    min-height: 16px;
-    color: #FF5370;
-    background-color: rgba(0.21, 0.21, 0.21, 0.5);
-}
-
-.channel-tab-switcher tab > button:hover {
-    background-color: alpha(#ff0000, 0.5);
-}
-
-.message-progress {
-    border: none;
-    margin-bottom: -8px;
-}
-
-.message-progress trough {
-    border: none;
-    background-color: transparent;
-}
-
-.message-progress progress {
-    border: none;
-    background-color: #dd3300;
-    margin-left: 1px;
-}
-
-.voice-info {
-    background-color: #0B0B0B;
-    padding: 5px;
-    border: 1px solid #202020;
-}
-
-.voice-info-disconnect-image {
-    color: #DDDDDD;
-}
-
-.voice-info-status {
-    font-weight: bold;
-}
-
-.voice-info-location {
-
-}
-
-.voice-state-server {
-    color: red;
-}
-
-spinbutton {
-    color: @text_color;
+.profile-connections {
     margin-top: 10px;
 }
 
-.emoji-picker, .emoji-picker stack box {
-    background-color: @background_color;
+.profile-connection {
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px solid black;
+}
+
+.profile-connection-image {
+    padding-right: 5px;
+}
+
+.reaction-box {
+    padding: 2px 5px 2px 5px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+
+.reaction-box.reacted {
+    border: 1px solid #5865f2;
+    background-color: rgba(89, 102, 242, 0.5);
+}
+
+.set-status-dialog .dialog-vbox {
+    padding: 5px;
+}
+
+.set-status-dialog .dialog-action-area {
+    margin: 10px 5px 5px 5px;
 }
