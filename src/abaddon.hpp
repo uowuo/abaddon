@@ -182,7 +182,6 @@ private:
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     Glib::RefPtr<Gtk::CssProvider> m_css_provider;
-    Glib::RefPtr<Gtk::CssProvider> m_css_low_provider; // registered with a lower priority to allow better customization
     Glib::RefPtr<Gtk::StatusIcon> m_tray;
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
 
