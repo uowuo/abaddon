@@ -95,6 +95,10 @@ jobs:
           mkdir -p 16x16/devices 24x24/devices 32x32/devices 48x48/devices 64x64/devices 96x96/devices scalable/devices
           mkdir -p 16x16/status 24x24/status 32x32/status 48x48/status 64x64/status 96x96/status scalable/status
           cd ${GITHUB_WORKSPACE}
+          wget https://github.com/rtlewis1/GTK/archive/refs/heads/Material-Black-Colors-Desktop.zip
+          unzip Material-Black-Colors-Desktop.zip 'GTK-Material-Black-Colors-Desktop/Material-Black-Cherry/**/*'
+          mv ./GTK-Material-Black-Colors-Desktop/Material-Black-Cherry ${artifact_dir}/share/themes/Material-Black-Cherry
+          cp -r ci/tree/. ${artifact_dir}
           cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/index.theme ${artifact_dir}/share/icons/Adwaita/index.theme
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/16x16/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/16x16/%.symbolic.png || :
           cat "ci/used-icons.txt" | sed 's/\r$//' | xargs -I % cp ci/gtk-for-windows/gtk-nsis-pack/share/icons/Adwaita/24x24/%.symbolic.png ${artifact_dir}/share/icons/Adwaita/24x24/%.symbolic.png || :
