@@ -29,7 +29,7 @@ std::optional<std::pair<std::string, std::string>> ParseCookie(const Glib::ustri
 }
 
 std::optional<Glib::ustring> GetJavascriptFileFromAppPage(const Glib::ustring &contents) {
-    auto regex = Glib::Regex::create(R"(/assets/\w{20}.js)");
+    auto regex = Glib::Regex::create(R"(/assets/\w+\.?\w{20}\.js)");
     std::vector<Glib::ustring> matches;
 
     // regex->match_all doesnt work for some reason
@@ -43,8 +43,8 @@ std::optional<Glib::ustring> GetJavascriptFileFromAppPage(const Glib::ustring &c
         start_position += str.size();
     }
 
-    if (matches.size() >= 2) {
-        return matches[matches.size() - 2];
+    if (matches.size() >= 10) {
+        return matches[matches.size() - 10];
     }
 
     return {};
