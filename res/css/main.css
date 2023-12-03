@@ -133,3 +133,7 @@
 .voice-settings-window scale {
     margin-right: 8px;
 }
+
+.message-input scrollbar.vertical slider {
+    min-height: 0px;
+}
