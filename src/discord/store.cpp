@@ -975,7 +975,7 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     s->Get(5, r.Timestamp);
     s->Get(6, r.EditedTimestamp);
     // s->Get(7, r.IsTTS);
-    // s->Get(8, r.DoesMentionEveryone);
+    s->Get(8, r.DoesMentionEveryone);
     s->GetJSON(9, r.Embeds);
     s->Get(10, r.IsPinned);
     s->Get(11, r.WebhookID);
