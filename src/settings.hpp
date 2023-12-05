@@ -39,7 +39,6 @@ public:
 
         // [style]
         // TODO: convert to StyleProperty... or maybe not? i still cant figure out what the "correct" method is for this
-        std::string LinkColor { "rgba(40, 200, 180, 255)" };
         std::string ChannelsExpanderColor { "rgba(255, 83, 112, 255)" };
         std::string NSFWChannelColor { "#ed6666" };
         std::string ChannelColor { "#fbfbfb" };
