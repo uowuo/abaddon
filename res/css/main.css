@@ -110,12 +110,12 @@
 .reaction-box {
     padding: 2px 5px 2px 5px;
     border-radius: 5px;
-    border: 1px solid black;
+    border: 1px solid @theme_fg_color;
 }
 
 .reaction-box.reacted {
     border: 1px solid #5865f2;
-    background-color: rgba(89, 102, 242, 0.5);
+    background-color: alpha(@theme_selected_bg_color, 0.5);
 }
 
 .set-status-dialog .dialog-vbox {
