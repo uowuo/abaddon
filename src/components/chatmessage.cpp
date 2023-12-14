@@ -46,6 +46,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     for (const auto &a : data.Attachments) {
         if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
+            if (a.Description.has_value()) {
+                widget->set_tooltip_text(*a.Description);
+            }
             container->m_main.add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);

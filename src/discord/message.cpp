@@ -128,6 +128,7 @@ void to_json(nlohmann::json &j, const AttachmentData &m) {
     j["proxy_url"] = m.ProxyURL;
     JS_IF("height", m.Height);
     JS_IF("width", m.Width);
+    JS_IF("description", m.Description);
 }
 
 void from_json(const nlohmann::json &j, AttachmentData &m) {
@@ -138,6 +139,7 @@ void from_json(const nlohmann::json &j, AttachmentData &m) {
     JS_D("proxy_url", m.ProxyURL);
     JS_ON("height", m.Height);
     JS_ON("width", m.Width);
+    JS_ON("description", m.Description);
 }
 
 void from_json(const nlohmann::json &j, MessageReferenceData &m) {
