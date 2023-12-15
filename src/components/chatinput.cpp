@@ -295,7 +295,7 @@ std::vector<ChatSubmitParams::Attachment> ChatInputAttachmentContainer::GetAttac
     for (auto *x : m_attachments) {
         if (!x->GetFile()->query_exists())
             puts("bad!");
-        ret.push_back({ x->GetFile(), x->GetType(), x->GetFilename() });
+        ret.push_back({ x->GetFile(), x->GetType(), x->GetFilename(), x->GetDescription() });
     }
     return ret;
 }
@@ -343,6 +343,7 @@ ChatInputAttachmentItem::ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &
     , m_img(Gtk::make_managed<Gtk::Image>())
     , m_type(is_extant ? ChatSubmitParams::ExtantFile : ChatSubmitParams::PastedImage)
     , m_filename("unknown.png")
+    , m_is_image(true)
     , m_label("unknown.png")
     , m_box(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("attachment-item");
@@ -389,8 +390,16 @@ std::string ChatInputAttachmentItem::GetFilename() const {
     return m_filename;
 }
 
+std::optional<std::string> ChatInputAttachmentItem::GetDescription() const {
+    return m_description.empty() ? std::nullopt : std::optional<std::string>(m_description);
+}
+
 bool ChatInputAttachmentItem::IsTemp() const noexcept {
     return m_type == ChatSubmitParams::PastedImage;
+}
+
+bool ChatInputAttachmentItem::IsImage() const noexcept {
+    return m_is_image;
 }
 
 void ChatInputAttachmentItem::RemoveIfTemp() {
@@ -420,12 +429,22 @@ void ChatInputAttachmentItem::SetupMenu() {
         }
     });
 
+    m_menu_set_alt_text.set_label("Change Alt-Text");
+    m_menu_set_alt_text.signal_activate().connect([this]() {
+        const auto description = Abaddon::Get().ShowTextPrompt("Enter description (alt-text) for attachment", "Enter alt-text", m_description);
+        if (description.has_value()) {
+            m_description = *description;
+        }
+    });
+
     m_menu.add(m_menu_set_filename);
+    m_menu.add(m_menu_set_alt_text);
     m_menu.add(m_menu_remove);
     m_menu.show_all();
 
     signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
         if (ev->button == GDK_BUTTON_SECONDARY) {
+            m_menu_set_alt_text.set_visible(IsImage());
             m_menu.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
             return true;
         }

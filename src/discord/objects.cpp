@@ -306,9 +306,15 @@ void to_json(nlohmann::json &j, const HeartbeatMessage &m) {
         j["d"] = m.Sequence;
 }
 
+void to_json(nlohmann::json &j, const CreateMessageAttachmentObject &m) {
+    j["id"] = m.ID;
+    JS_IF("description", m.Description);
+}
+
 void to_json(nlohmann::json &j, const CreateMessageObject &m) {
     j["content"] = m.Content;
     j["flags"] = m.Flags;
+    JS_IF("attachments", m.Attachments);
     JS_IF("message_reference", m.MessageReference);
     JS_IF("nonce", m.Nonce);
 }
