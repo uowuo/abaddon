@@ -433,11 +433,19 @@ struct HeartbeatMessage : GatewayMessage {
     friend void to_json(nlohmann::json &j, const HeartbeatMessage &m);
 };
 
+struct CreateMessageAttachmentObject {
+    int ID;
+    std::optional<std::string> Description;
+
+    friend void to_json(nlohmann::json &j, const CreateMessageAttachmentObject &m);
+};
+
 struct CreateMessageObject {
     std::string Content;
     MessageFlags Flags = MessageFlags::NONE;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
+    std::optional<std::vector<CreateMessageAttachmentObject>> Attachments;
 
     friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
 };

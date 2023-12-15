@@ -46,6 +46,9 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     for (const auto &a : data.Attachments) {
         if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
             auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
+            if (a.Description.has_value()) {
+                widget->set_tooltip_text(*a.Description);
+            }
             container->m_main.add(*widget);
         } else {
             auto *widget = container->CreateAttachmentComponent(a);
@@ -661,7 +664,12 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                 if (role.has_value()) {
                     const auto author = discord.GetUser(author_id);
                     if (author.has_value()) {
-                        return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetDisplayNameEscaped(guild_id) + "</span></b>";
+                        const auto is_mention = !data.Interaction.has_value() && data.DoesMention(author_id);
+                        if (is_mention) {
+                            return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">@" + author->GetDisplayNameEscaped(guild_id) + "</span></b>";
+                        } else {
+                            return "<b><span color=\"#" + IntToCSSColor(role->Color) + "\">" + author->GetDisplayNameEscaped(guild_id) + "</span></b>";
+                        }
                     }
                 }
             }
@@ -717,16 +725,12 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
                 HandleChannelMentions(buf);
                 text = Glib::Markup::escape_text(buf->get_text());
             }
-            // getting markup out of a textbuffer seems like something that to me should be really simple
-            // but actually is horribly annoying. replies won't have mention colors because you can't do this
-            // also no emojis because idk how to make a textview act like a label
-            // which of course would not be an issue if i could figure out how to get fonts to work on this god-forsaken framework
-            // oh well
-            // but ill manually get colors for the user who is being replied to
-            if (referenced.GuildID.has_value())
+
+            if (referenced.GuildID.has_value()) {
                 lbl->set_markup(get_author_markup(referenced.Author.ID, *referenced.GuildID) + ": " + text);
-            else
+            } else {
                 lbl->set_markup(get_author_markup(referenced.Author.ID) + ": " + text);
+            }
         }
     } else {
         lbl->set_markup("<i>reply unavailable</i>");

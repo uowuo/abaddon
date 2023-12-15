@@ -7,10 +7,13 @@ public:
     ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file);
     ChatInputAttachmentItem(const Glib::RefPtr<Gio::File> &file, const Glib::RefPtr<Gdk::Pixbuf> &pb, bool is_extant = false);
 
-    [[nodiscard]] Glib::RefPtr<Gio::File> GetFile() const;
-    [[nodiscard]] ChatSubmitParams::AttachmentType GetType() const;
-    [[nodiscard]] std::string GetFilename() const;
-    [[nodiscard]] bool IsTemp() const noexcept;
+    Glib::RefPtr<Gio::File> GetFile() const;
+    ChatSubmitParams::AttachmentType GetType() const;
+    std::string GetFilename() const;
+    std::optional<std::string> GetDescription() const;
+    bool IsTemp() const noexcept;
+    bool IsImage() const noexcept;
+
     void RemoveIfTemp();
 
 private:
@@ -21,6 +24,7 @@ private:
     Gtk::Menu m_menu;
     Gtk::MenuItem m_menu_remove;
     Gtk::MenuItem m_menu_set_filename;
+    Gtk::MenuItem m_menu_set_alt_text;
 
     Gtk::Box m_box;
     Gtk::Label m_label;
@@ -29,6 +33,8 @@ private:
     Glib::RefPtr<Gio::File> m_file;
     ChatSubmitParams::AttachmentType m_type;
     std::string m_filename;
+    std::string m_description;
+    bool m_is_image = false;
 
 private:
     using type_signal_item_removed = sigc::signal<void>;

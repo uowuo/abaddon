@@ -168,8 +168,9 @@ struct AttachmentData {
     int Bytes;
     std::string URL;
     std::string ProxyURL;
-    std::optional<int> Height; // null
-    std::optional<int> Width;  // null
+    std::optional<int> Height;              // null
+    std::optional<int> Width;               // null
+    std::optional<std::string> Description; // alt text
 
     friend void to_json(nlohmann::json &j, const AttachmentData &m);
     friend void from_json(const nlohmann::json &j, AttachmentData &m);

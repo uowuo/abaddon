@@ -368,6 +368,7 @@ void Store::SetMessage(Snowflake id, const Message &message) {
         s->Bind(6, a.ProxyURL);
         s->Bind(7, a.Height);
         s->Bind(8, a.Width);
+        s->Bind(9, a.Description);
         if (!s->Insert())
             fprintf(stderr, "message attachment insert failed for %" PRIu64 "/%" PRIu64 ": %s\n", static_cast<uint64_t>(id), static_cast<uint64_t>(a.ID), m_db.ErrStr());
         s->Reset();
@@ -975,7 +976,7 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
     s->Get(5, r.Timestamp);
     s->Get(6, r.EditedTimestamp);
     // s->Get(7, r.IsTTS);
-    // s->Get(8, r.DoesMentionEveryone);
+    s->Get(8, r.DoesMentionEveryone);
     s->GetJSON(9, r.Embeds);
     s->Get(10, r.IsPinned);
     s->Get(11, r.WebhookID);
@@ -1021,6 +1022,7 @@ Message Store::GetMessageBound(std::unique_ptr<Statement> &s) const {
             s->Get(5, q.ProxyURL);
             s->Get(6, q.Height);
             s->Get(7, q.Width);
+            s->Get(8, q.Description);
         }
         s->Reset();
     }
@@ -1509,6 +1511,7 @@ bool Store::CreateTables() {
             proxy TEXT NOT NULL,
             height INTEGER,
             width INTEGER,
+            description TEXT,
             PRIMARY KEY(message, id)
         )
     )";
@@ -2212,7 +2215,7 @@ bool Store::CreateStatements() {
 
     m_stmt_set_attachment = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO attachments VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     )");
     if (!m_stmt_set_attachment->OK()) {
