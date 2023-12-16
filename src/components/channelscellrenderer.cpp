@@ -39,7 +39,10 @@ void RenderExpander(int x_offset, const Cairo::RefPtr<Cairo::Context> &cr, Gtk::
     cr->move_to(x1, y1);
     cr->line_to(x2, y2);
     cr->line_to(x3, y3);
-    const auto expander_color = widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+    auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
+    if (expander_color.get_alpha_u() == 0) {
+        expander_color = widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+    }
     cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
     cr->stroke();
 }
