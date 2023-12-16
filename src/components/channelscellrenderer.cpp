@@ -18,6 +18,32 @@ void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rect
     cr->fill();
 }
 
+void RenderExpander(int x_offset, const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, bool is_expanded) {
+    constexpr static int len = 5;
+    int x1, y1, x2, y2, x3, y3;
+    if (is_expanded) {
+        x1 = background_area.get_x() + x_offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + x_offset + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + x_offset + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + x_offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + x_offset + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + x_offset;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    const auto expander_color = widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
+}
+
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))
     , Gtk::CellRenderer()
@@ -218,30 +244,7 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_folder(Gtk::Widg
 }
 
 void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    constexpr static int len = 5;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + 7 + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + 7;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
-
+    RenderExpander(7, cr, widget, background_area, property_expanded());
     Gtk::Requisition text_minimum, text_natural;
     m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
 
@@ -417,30 +420,7 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_category(Gtk::Wi
 }
 
 void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    // todo: figure out how Gtk::Arrow is rendered because i like it better :^)
-    constexpr static int len = 5;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + 7 + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + 7;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
+    RenderExpander(7, cr, widget, background_area, property_expanded());
 
     Gtk::Requisition text_minimum, text_natural;
     m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
@@ -668,31 +648,7 @@ void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo:
         cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0);
     layout->show_in_cairo_context(cr);
 
-    // expander
-    constexpr static int len = 5;
-    constexpr static int offset = 24;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + offset;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + offset + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + offset + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + offset;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + offset + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + offset;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
+    RenderExpander(24, cr, widget, background_area, property_expanded());
 }
 
 // voice participant
