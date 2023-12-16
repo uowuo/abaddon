@@ -69,7 +69,6 @@ void SettingsManager::ReadSettings() {
     SMSTR("http", "user_agent", UserAgent);
     SMSTR("style", "expandercolor", ChannelsExpanderColor);
     SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
-    SMSTR("style", "channelcolor", ChannelColor);
     SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
     SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
     SMSTR("style", "unreadcolor", UnreadIndicatorColor);
@@ -159,7 +158,6 @@ void SettingsManager::Close() {
         SMSTR("http", "user_agent", UserAgent);
         SMSTR("style", "expandercolor", ChannelsExpanderColor);
         SMSTR("style", "nsfwchannelcolor", NSFWChannelColor);
-        SMSTR("style", "channelcolor", ChannelColor);
         SMSTR("style", "mentionbadgecolor", MentionBadgeColor);
         SMSTR("style", "mentionbadgetextcolor", MentionBadgeTextColor);
         SMSTR("style", "unreadcolor", UnreadIndicatorColor);
