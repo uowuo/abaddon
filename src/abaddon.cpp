@@ -254,7 +254,6 @@ int Abaddon::StartGTK() {
         Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
-        return 1;
     }
 #endif
 
