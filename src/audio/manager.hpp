@@ -14,6 +14,7 @@
 #include <miniaudio.h>
 #include <opus.h>
 #include <sigc++/sigc++.h>
+#include <spdlog/spdlog.h>
 
 #ifdef WITH_RNNOISE
 #include <rnnoise.h>
@@ -162,6 +163,9 @@ private:
     DenoiseState *m_rnnoise[2];
 #endif
     std::atomic<uint32_t> m_rtp_timestamp = 0;
+
+    ma_log m_ma_log;
+    std::shared_ptr<spdlog::logger> m_log;
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;

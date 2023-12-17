@@ -8,7 +8,7 @@
 #include "manager.hpp"
 #include <array>
 #include <glibmm/main.h>
-#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <miniaudio.h>
 #include <opus.h>
 #include <cstring>
@@ -61,8 +61,36 @@ void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput
     mgr->m_rtp_timestamp += 480;
 }
 
-AudioManager::AudioManager() {
+void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
+    auto *log = static_cast<spdlog::logger *>(pUserData);
+
+    gchar *msg = g_strstrip(g_strdup(pMessage));
+
+    switch (level) {
+        case MA_LOG_LEVEL_DEBUG:
+            log->debug(msg);
+            break;
+        case MA_LOG_LEVEL_INFO:
+            log->info(msg);
+            break;
+        case MA_LOG_LEVEL_WARNING:
+            log->warn(msg);
+            break;
+        case MA_LOG_LEVEL_ERROR:
+            log->error(msg);
+        default:
+            break;
+    }
+
+    g_free(msg);
+}
+
+AudioManager::AudioManager()
+    : m_log(spdlog::stdout_color_mt("miniaudio")) {
     m_ok = true;
+
+    ma_log_init(nullptr, &m_ma_log);
+    ma_log_register_callback(&m_ma_log, ma_log_callback_init(mgr_log_callback, m_log.get()));
 
 #ifdef WITH_RNNOISE
     RNNoiseInitialize();
@@ -77,7 +105,9 @@ AudioManager::AudioManager() {
     }
     opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(64000));
 
-    if (ma_context_init(nullptr, 0, nullptr, &m_context) != MA_SUCCESS) {
+    auto ctx_cfg = ma_context_config_init();
+    ctx_cfg.pLog = &m_ma_log;
+    if (ma_context_init(nullptr, 0, &ctx_cfg, &m_context) != MA_SUCCESS) {
         spdlog::get("audio")->error("failed to initialize context");
         m_ok = false;
         return;
@@ -99,14 +129,14 @@ AudioManager::AudioManager() {
         m_playback_id = *playback_id;
         m_playback_config.playback.pDeviceID = &m_playback_id;
 
-        if (ma_device_init(&m_context, &m_playback_config, &m_playback_device) != MA_SUCCESS) {
-            spdlog::get("audio")->error("failed to initialize playback device");
+        if (auto code = ma_device_init(&m_context, &m_playback_config, &m_playback_device); code != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to initialize playback device (code: {})", static_cast<int>(code));
             m_ok = false;
             return;
         }
 
-        if (ma_device_start(&m_playback_device) != MA_SUCCESS) {
-            spdlog::get("audio")->error("failed to start playback");
+        if (auto code = ma_device_start(&m_playback_device); code != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to start playback (code: {})", static_cast<int>(code));
             ma_device_uninit(&m_playback_device);
             m_ok = false;
             return;
@@ -129,8 +159,8 @@ AudioManager::AudioManager() {
         m_capture_id = *capture_id;
         m_capture_config.capture.pDeviceID = &m_capture_id;
 
-        if (ma_device_init(&m_context, &m_capture_config, &m_capture_device) != MA_SUCCESS) {
-            spdlog::get("audio")->error("failed to initialize capture device");
+        if (auto code = ma_device_init(&m_context, &m_capture_config, &m_capture_device); code != MA_SUCCESS) {
+            spdlog::get("audio")->error("failed to initialize capture device (code: {})", static_cast<int>(code));
             m_ok = false;
             return;
         }
