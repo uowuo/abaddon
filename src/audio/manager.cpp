@@ -215,7 +215,7 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
 }
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
-    if (!m_should_playback) return;
+    if (!m_should_playback || ma_device_get_state(&m_playback_device) != ma_device_state_started) return;
 
     std::lock_guard<std::mutex> _(m_mutex);
     if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
