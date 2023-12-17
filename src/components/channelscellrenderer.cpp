@@ -7,8 +7,11 @@ constexpr static double M_PI = 3.14159265358979;
 constexpr static double M_PI_H = M_PI / 2.0;
 constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
-void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rectangle &background_area) {
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area) {
+    static const auto color_setting = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+
+    const auto color = color_setting.get_alpha_u() > 0 ? color_setting : widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+
     cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
     const auto x = background_area.get_x();
     const auto y = background_area.get_y();
@@ -387,7 +390,7 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     if (has_unread && !discord.IsGuildMuted(id)) {
         auto area = background_area;
         area.set_y(area.get_y() + area.get_height() / 2.0 - 24.0 / 2.0);
-        AddUnreadIndicator(cr, area);
+        AddUnreadIndicator(cr, widget, area);
     }
 
     if (total_mentions < 1) return;
@@ -434,7 +437,7 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
     const auto id = m_property_id.get_value();
     if (!discord.IsChannelMuted(m_property_id.get_value())) {
         if (discord.GetUnreadChannelsCountForCategory(id) > 0) {
-            AddUnreadIndicator(cr, background_area);
+            AddUnreadIndicator(cr, widget, background_area);
         }
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
@@ -490,7 +493,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        AddUnreadIndicator(cr, background_area);
+        AddUnreadIndicator(cr, widget, background_area);
     }
 
     if (unread_state < 1) return;
@@ -544,14 +547,7 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y, 3, h);
-        cr->fill();
+        AddUnreadIndicator(cr, widget, background_area);
     }
 
     if (unread_state < 1) return;
@@ -830,7 +826,7 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        AddUnreadIndicator(cr, background_area);
+        AddUnreadIndicator(cr, widget, background_area);
     }
 }
 
@@ -857,8 +853,11 @@ void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Con
     int width, height;
     layout->get_pixel_size(width, height);
     {
-        static const auto bg = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeColor);
-        static const auto text = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeTextColor);
+        static const auto badge_setting = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeColor);
+        static const auto text_setting = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeTextColor);
+
+        auto bg = badge_setting.get_alpha_u() > 0 ? badge_setting : widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+        auto text = text_setting.get_alpha_u() > 0 ? text_setting : widget.get_style_context()->get_color(Gtk::STATE_FLAG_SELECTED);
 
         const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
         const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;

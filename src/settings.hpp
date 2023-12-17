@@ -40,9 +40,9 @@ public:
         // [style]
         std::string ChannelsExpanderColor { "rgba(255, 83, 112, 0)" };
         std::string NSFWChannelColor { "#970d0d" };
-        std::string MentionBadgeColor { "#b82525" };
-        std::string MentionBadgeTextColor { "#fbfbfb" };
-        std::string UnreadIndicatorColor { "#ffffff" };
+        std::string MentionBadgeColor { "rgba(184, 37, 37, 0)" };
+        std::string MentionBadgeTextColor { "rgba(251, 251, 251, 0)" };
+        std::string UnreadIndicatorColor { "rgba(255, 255, 255, 0)" };
 
         // [notifications]
 #ifdef _WIN32
