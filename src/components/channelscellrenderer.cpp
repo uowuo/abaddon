@@ -475,11 +475,11 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
 
     static const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
 
-    if (is_muted) {
-        auto color = widget.get_style_context()->get_color(Gtk::STATE_FLAG_NORMAL);
-        color.set_alpha(0.6);
-        m_renderer_text.property_foreground_rgba() = color;
-    }
+    auto color = widget.get_style_context()->get_color(Gtk::STATE_FLAG_NORMAL);
+    if (property_nsfw()) color = nsfw_color;
+    if (is_muted) color.set_alpha(0.6);
+
+    m_renderer_text.property_foreground_rgba() = color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
 
