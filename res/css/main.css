@@ -137,3 +137,11 @@
 .message-input scrollbar.vertical slider {
     min-height: 0px;
 }
+
+.message-text.pending {
+    color: alpha(currentColor, 0.5);
+}
+
+.message-text.failed {
+    color: red;
+}
