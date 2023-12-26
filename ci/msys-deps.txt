@@ -38,6 +38,7 @@
 /bin/libidn2-0.dll
 /bin/libintl-8.dll
 /bin/libjpeg-8.dll
+/bin/liblzma-5.dll
 /bin/libnghttp2-14.dll
 /bin/libopus-0.dll
 /bin/libpango-1.0-0.dll
@@ -49,6 +50,7 @@
 /bin/libpixman-1-0.dll
 /bin/libpng16-16.dll
 /bin/libpsl-5.dll
+/bin/librsvg-2-2.dll
 /bin/libsigc-2.0-0.dll
 /bin/libsodium-26.dll
 /bin/libspdlog.dll
@@ -59,6 +61,7 @@
 /bin/libthai-0.dll
 /bin/libunistring-5.dll
 /bin/libwinpthread-1.dll
+/bin/libxml2-2.dll
 /bin/libzstd.dll
 /bin/zlib1.dll
 /../usr/bin/msys-2.0.dll

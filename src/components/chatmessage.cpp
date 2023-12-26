@@ -364,7 +364,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
                 }
                 return false;
             });
-            static auto color = Abaddon::Get().GetSettings().LinkColor;
+            const auto color = title_label->get_style_context()->get_color(Gtk::STATE_FLAG_LINK);
             title_label->override_color(Gdk::RGBA(color));
             title_label->set_markup("<b>" + Glib::Markup::escape_text(*embed.Title) + "</b>");
         }
@@ -856,7 +856,8 @@ void ChatMessageItemContainer::HandleLinks(Gtk::TextView &tv) {
         std::string link = match.fetch(0);
         auto tag = buf->create_tag();
         m_link_tagmap[tag] = link;
-        tag->property_foreground_rgba() = Gdk::RGBA(Abaddon::Get().GetSettings().LinkColor);
+        const auto color = tv.get_style_context()->get_color(Gtk::STATE_FLAG_LINK);
+        tag->property_foreground_rgba() = color;
         tag->set_property("underline", 1); // stupid workaround for vcpkg bug (i think)
 
         const auto chars_start = g_utf8_pointer_to_offset(text.c_str(), text.c_str() + mstart);

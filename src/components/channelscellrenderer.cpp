@@ -7,6 +7,49 @@ constexpr static double M_PI = 3.14159265358979;
 constexpr static double M_PI_H = M_PI / 2.0;
 constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
+void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area) {
+    static const auto color_setting = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
+
+    const auto color = color_setting.get_alpha_u() > 0 ? color_setting : widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+
+    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
+    const auto x = background_area.get_x();
+    const auto y = background_area.get_y();
+    const auto w = background_area.get_width();
+    const auto h = background_area.get_height();
+    cr->rectangle(x, y, 3, h);
+    cr->fill();
+}
+
+void RenderExpander(int x_offset, const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, bool is_expanded) {
+    constexpr static int len = 5;
+    int x1, y1, x2, y2, x3, y3;
+    if (is_expanded) {
+        x1 = background_area.get_x() + x_offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + x_offset + len;
+        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
+        x3 = background_area.get_x() + x_offset + len * 2;
+        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
+    } else {
+        x1 = background_area.get_x() + x_offset;
+        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
+        x2 = background_area.get_x() + x_offset + len * 2;
+        y2 = background_area.get_y() + background_area.get_height() / 2;
+        x3 = background_area.get_x() + x_offset;
+        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
+    }
+    cr->move_to(x1, y1);
+    cr->line_to(x2, y2);
+    cr->line_to(x3, y3);
+    auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
+    if (expander_color.get_alpha_u() == 0) {
+        expander_color = widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+    }
+    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
+    cr->stroke();
+}
+
 CellRendererChannels::CellRendererChannels()
     : Glib::ObjectBase(typeid(CellRendererChannels))
     , Gtk::CellRenderer()
@@ -207,30 +250,7 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_folder(Gtk::Widg
 }
 
 void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    constexpr static int len = 5;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + 7 + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + 7;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
-
+    RenderExpander(7, cr, widget, background_area, property_expanded());
     Gtk::Requisition text_minimum, text_natural;
     m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
 
@@ -241,11 +261,8 @@ void CellRendererChannels::render_vfunc_folder(const Cairo::RefPtr<Cairo::Contex
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
     if (m_property_color.get_value().has_value()) {
         m_renderer_text.property_foreground_rgba() = *m_property_color.get_value();
-    } else {
-        m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set() = false;
@@ -325,8 +342,6 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
                                   static_cast<int>(text_w),
                                   static_cast<int>(text_h));
 
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-    m_renderer_text.property_foreground_rgba() = color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
     const bool hover_only = Abaddon::Get().GetSettings().AnimatedGuildHoverOnly;
@@ -373,14 +388,9 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     const auto has_unread = discord.GetUnreadStateForGuild(id, total_mentions);
 
     if (has_unread && !discord.IsGuildMuted(id)) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y + h / 2.0 - 24.0 / 2.0, 3.0, 24.0);
-        cr->fill();
+        auto area = background_area;
+        area.set_y(area.get_y() + area.get_height() / 2.0 - 24.0 / 2.0);
+        AddUnreadIndicator(cr, widget, area);
     }
 
     if (total_mentions < 1) return;
@@ -410,42 +420,8 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_category(Gtk::Wi
     m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
 }
 
-void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, const Gdk::Rectangle &background_area) {
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-    cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-    const auto x = background_area.get_x();
-    const auto y = background_area.get_y();
-    const auto w = background_area.get_width();
-    const auto h = background_area.get_height();
-    cr->rectangle(x, y, 3, h);
-    cr->fill();
-}
-
 void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
-    // todo: figure out how Gtk::Arrow is rendered because i like it better :^)
-    constexpr static int len = 5;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + 7 + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + 7;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + 7 + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + 7;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
+    RenderExpander(7, cr, widget, background_area, property_expanded());
 
     Gtk::Requisition text_minimum, text_natural;
     m_renderer_text.get_preferred_size(widget, text_minimum, text_natural);
@@ -457,23 +433,14 @@ void CellRendererChannels::render_vfunc_category(const Cairo::RefPtr<Cairo::Cont
 
     Gdk::Rectangle text_cell_area(text_x, text_y, text_w, text_h);
 
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto id = m_property_id.get_value();
-    if (discord.IsChannelMuted(m_property_id.get_value())) {
-        auto muted = color;
-        muted.set_red(muted.get_red() * 0.5);
-        muted.set_green(muted.get_green() * 0.5);
-        muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
-    } else {
+    if (!discord.IsChannelMuted(m_property_id.get_value())) {
         if (discord.GetUnreadChannelsCountForCategory(id) > 0) {
-            AddUnreadIndicator(cr, background_area);
+            AddUnreadIndicator(cr, widget, background_area);
         }
-        m_renderer_text.property_foreground_rgba() = color;
     }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
 }
 
 // text channel
@@ -509,23 +476,14 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    static const auto sfw_unmuted = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-
-    m_renderer_text.property_sensitive() = false;
     static const auto nsfw_color = Gdk::RGBA(Abaddon::Get().GetSettings().NSFWChannelColor);
-    if (m_property_nsfw.get_value())
-        m_renderer_text.property_foreground_rgba() = nsfw_color;
-    else
-        m_renderer_text.property_foreground_rgba() = sfw_unmuted;
-    if (is_muted) {
-        auto col = m_renderer_text.property_foreground_rgba().get_value();
-        col.set_red(col.get_red() * 0.5);
-        col.set_green(col.get_green() * 0.5);
-        col.set_blue(col.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = col;
-    }
+
+    auto color = widget.get_style_context()->get_color(Gtk::STATE_FLAG_NORMAL);
+    if (property_nsfw()) color = nsfw_color;
+    if (is_muted) color.set_alpha(0.6);
+
+    m_renderer_text.property_foreground_rgba() = color;
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    // unset foreground to default so properties dont bleed
     m_renderer_text.property_foreground_set() = false;
 
     // unread
@@ -535,7 +493,7 @@ void CellRendererChannels::render_vfunc_channel(const Cairo::RefPtr<Cairo::Conte
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        AddUnreadIndicator(cr, background_area);
+        AddUnreadIndicator(cr, widget, background_area);
     }
 
     if (unread_state < 1) return;
@@ -580,18 +538,7 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value())) {
-        auto muted = color;
-        muted.set_red(muted.get_red() * 0.5);
-        muted.set_green(muted.get_green() * 0.5);
-        muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
-    } else {
-        m_renderer_text.property_foreground_rgba() = color;
-    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
 
     // unread
     if (!Abaddon::Get().GetSettings().Unreads) return;
@@ -600,14 +547,7 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y, 3, h);
-        cr->fill();
+        AddUnreadIndicator(cr, widget, background_area);
     }
 
     if (unread_state < 1) return;
@@ -667,31 +607,7 @@ void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo:
         cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0);
     layout->show_in_cairo_context(cr);
 
-    // expander
-    constexpr static int len = 5;
-    constexpr static int offset = 24;
-    int x1, y1, x2, y2, x3, y3;
-    if (property_expanded()) {
-        x1 = background_area.get_x() + offset;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + offset + len;
-        y2 = background_area.get_y() + background_area.get_height() / 2 + len;
-        x3 = background_area.get_x() + offset + len * 2;
-        y3 = background_area.get_y() + background_area.get_height() / 2 - len;
-    } else {
-        x1 = background_area.get_x() + offset;
-        y1 = background_area.get_y() + background_area.get_height() / 2 - len;
-        x2 = background_area.get_x() + offset + len * 2;
-        y2 = background_area.get_y() + background_area.get_height() / 2;
-        x3 = background_area.get_x() + offset;
-        y3 = background_area.get_y() + background_area.get_height() / 2 + len;
-    }
-    cr->move_to(x1, y1);
-    cr->line_to(x2, y2);
-    cr->line_to(x3, y3);
-    const auto expander_color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelsExpanderColor);
-    cr->set_source_rgb(expander_color.get_red(), expander_color.get_green(), expander_color.get_blue());
-    cr->stroke();
+    RenderExpander(24, cr, widget, background_area, property_expanded());
 }
 
 // voice participant
@@ -897,18 +813,7 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     const auto id = m_property_id.get_value();
     const bool is_muted = discord.IsChannelMuted(id);
 
-    static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().ChannelColor);
-    if (Abaddon::Get().GetDiscordClient().IsChannelMuted(m_property_id.get_value())) {
-        auto muted = color;
-        muted.set_red(muted.get_red() * 0.5);
-        muted.set_green(muted.get_green() * 0.5);
-        muted.set_blue(muted.get_blue() * 0.5);
-        m_renderer_text.property_foreground_rgba() = muted;
-    } else {
-        m_renderer_text.property_foreground_rgba() = color;
-    }
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-    m_renderer_text.property_foreground_set() = false;
 
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
     cr->rectangle(icon_x, icon_y, icon_w, icon_h);
@@ -921,14 +826,7 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     if (unread_state < 0) return;
 
     if (!is_muted) {
-        static const auto color = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
-        cr->set_source_rgb(color.get_red(), color.get_green(), color.get_blue());
-        const auto x = background_area.get_x();
-        const auto y = background_area.get_y();
-        const auto w = background_area.get_width();
-        const auto h = background_area.get_height();
-        cr->rectangle(x, y, 3, h);
-        cr->fill();
+        AddUnreadIndicator(cr, widget, background_area);
     }
 }
 
@@ -955,8 +853,11 @@ void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Con
     int width, height;
     layout->get_pixel_size(width, height);
     {
-        static const auto bg = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeColor);
-        static const auto text = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeTextColor);
+        static const auto badge_setting = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeColor);
+        static const auto text_setting = Gdk::RGBA(Abaddon::Get().GetSettings().MentionBadgeTextColor);
+
+        auto bg = badge_setting.get_alpha_u() > 0 ? badge_setting : widget.get_style_context()->get_background_color(Gtk::STATE_FLAG_SELECTED);
+        auto text = text_setting.get_alpha_u() > 0 ? text_setting : widget.get_style_context()->get_color(Gtk::STATE_FLAG_SELECTED);
 
         const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
         const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;

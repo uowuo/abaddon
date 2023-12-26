@@ -2,7 +2,16 @@
 ---
 Alternative Discord client made in C++ with GTK
 
-<img src="/.readme/s3.png">
+<table>
+  <tr>
+    <td><img src="/.readme/s5.png"></td>
+    <td><img src="/.readme/s6.png"></td>
+  </tr>
+  <tr>
+    <td><img src="/.readme/s7.png"></td>
+    <td><img src="/.readme/s8.png"></td>
+  </tr>
+</table>
 
 <a href="https://discord.gg/wkCU3vuzG5"><img src="https://discord.com/api/guilds/858156817711890443/widget.png?style=shield"></a>
 
@@ -11,7 +20,7 @@ Current features:
 * Not Electron
 * Voice support
 * Handles most types of chat messages including embeds, images, and replies
-* Completely styleable/customizable with CSS (if you have a system GTK theme it won't really use it though)
+* Completely styleable/customizable
 * Identifies to Discord as the web client unlike other clients so less likely to be falsely flagged as spam<sup>1</sup>
 * Set status
 * Unread and mention indicators
@@ -301,10 +310,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 | Setting                 | Type   | Description                                         |
 |-------------------------|--------|-----------------------------------------------------|
-| `linkcolor`             | string | color to use for links in messages                  |
 | `expandercolor`         | string | color to use for the expander in the channel list   |
 | `nsfwchannelcolor`      | string | color to use for NSFW channels in the channel list  |
-| `channelcolor`          | string | color to use for SFW channels in the channel list   |
 | `mentionbadgecolor`     | string | background color for mention badges                 |
 | `mentionbadgetextcolor` | string | color to use for number displayed on mention badges |
 | `unreadcolor`           | string | color to use for the unread indicator               |

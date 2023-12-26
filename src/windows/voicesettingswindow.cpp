@@ -12,6 +12,7 @@
 VoiceSettingsWindow::VoiceSettingsWindow()
     : m_main(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("app-window");
+    get_style_context()->add_class("voice-settings-window");
     set_default_size(300, 300);
 
     m_encoding_mode.append("Voice");
@@ -115,10 +116,21 @@ VoiceSettingsWindow::VoiceSettingsWindow()
         m_signal_gain.emit(m_gain.get_value() / 100.0);
     });
 
-    m_main.add(m_encoding_mode);
-    m_main.add(m_signal);
-    m_main.add(m_bitrate);
-    m_main.add(m_gain);
+    auto *layout = Gtk::make_managed<Gtk::HBox>();
+    auto *labels = Gtk::make_managed<Gtk::VBox>();
+    auto *widgets = Gtk::make_managed<Gtk::VBox>();
+    layout->pack_start(*labels, false, true, 5);
+    layout->pack_start(*widgets);
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Coding Mode", Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Signal Hint", Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Bitrate", Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Gain", Gtk::ALIGN_END));
+    widgets->pack_start(m_encoding_mode);
+    widgets->pack_start(m_signal);
+    widgets->pack_start(m_bitrate);
+    widgets->pack_start(m_gain);
+
+    m_main.add(*layout);
     add(m_main);
     show_all_children();
 

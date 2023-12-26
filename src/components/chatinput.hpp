@@ -104,7 +104,7 @@ private:
 };
 
 // file upload, text
-class ChatInputTextContainer : public Gtk::Overlay {
+class ChatInputTextContainer : public Gtk::Box {
 public:
     ChatInputTextContainer();
 
@@ -116,9 +116,9 @@ public:
 
 private:
     void ShowFileChooser();
-    bool GetChildPosition(Gtk::Widget *child, Gdk::Rectangle &pos);
 
-    Gtk::EventBox m_upload_ev;
+    Gtk::Box m_upload_box;
+    Gtk::Button m_upload_button;
     Gtk::Image m_upload_img;
     ChatInputText m_input;
 
