@@ -28,6 +28,7 @@ MemberList::MemberList()
     column->add_attribute(renderer->property_name(), m_columns.m_name);
     column->add_attribute(renderer->property_pixbuf(), m_columns.m_pixbuf);
     column->add_attribute(renderer->property_color(), m_columns.m_color);
+    column->add_attribute(renderer->property_status(), m_columns.m_status);
     m_view.append_column(*column);
 
     m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
@@ -44,6 +45,8 @@ MemberList::MemberList()
     m_menu_role_copy_id.signal_activate().connect([this]() {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
+
+    Abaddon::Get().GetDiscordClient().signal_presence_update().connect(sigc::mem_fun(*this, &MemberList::OnPresenceUpdate));
 }
 
 Gtk::Widget *MemberList::GetRoot() {
@@ -73,6 +76,7 @@ void MemberList::UpdateMemberList() {
             row[m_columns.m_color] = color_transparent;
             row[m_columns.m_av_requested] = false;
             row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+            row[m_columns.m_status] = Abaddon::Get().GetDiscordClient().GetUserStatus(user.ID);
             m_pending_avatars[user.ID] = row_iter;
         }
     }
@@ -126,6 +130,7 @@ void MemberList::UpdateMemberList() {
         row[m_columns.m_id] = user.ID;
         row[m_columns.m_name] = user.GetDisplayNameEscaped();
         row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+        row[m_columns.m_status] = Abaddon::Get().GetDiscordClient().GetUserStatus(user.ID);
         row[m_columns.m_av_requested] = false;
         if (const auto iter = user_to_color.find(user.ID); iter != user_to_color.end()) {
             row[m_columns.m_color] = IntToRGBA(iter->second);
@@ -241,12 +246,24 @@ int MemberList::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel
     return 0;
 }
 
+void MemberList::OnPresenceUpdate(const UserData &user, PresenceStatus status) {
+    for (auto &role : m_model->children()) {
+        for (auto &member : role.children()) {
+            if ((*member)[m_columns.m_id] == user.ID) {
+                (*member)[m_columns.m_status] = status;
+                return;
+            }
+        }
+    }
+}
+
 MemberList::ModelColumns::ModelColumns() {
     add(m_type);
     add(m_id);
     add(m_name);
     add(m_pixbuf);
-    add(m_av_requested);
     add(m_color);
+    add(m_status);
     add(m_sort);
+    add(m_av_requested);
 }

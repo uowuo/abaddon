@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <vector>
 #include <string>
 #include <glibmm/ustring.h>
@@ -15,6 +16,7 @@ struct ChatSubmitParams {
         Glib::RefPtr<Gio::File> File;
         AttachmentType Type;
         std::string Filename;
+        std::optional<std::string> Description;
     };
 
     bool Silent = false;

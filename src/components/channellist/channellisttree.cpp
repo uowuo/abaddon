@@ -1,6 +1,5 @@
 #include "channellisttree.hpp"
 #include "imgmanager.hpp"
-#include "components/statusindicator.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>

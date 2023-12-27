@@ -177,6 +177,7 @@ static void MainEventHandler(GdkEvent *event, void *main_window) {
 
 int Abaddon::StartGTK() {
     m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
+    Glib::set_application_name(APP_TITLE);
 
 #ifdef WITH_LIBHANDY
     m_gtk_app->signal_activate().connect([] {
@@ -187,13 +188,6 @@ int Abaddon::StartGTK() {
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
         Gtk::MessageDialog dlg("css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
-        dlg.set_position(Gtk::WIN_POS_CENTER);
-        dlg.run();
-    });
-
-    m_css_low_provider = Gtk::CssProvider::create();
-    m_css_low_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg("low-priority css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
@@ -253,7 +247,6 @@ int Abaddon::StartGTK() {
         Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
-        return 1;
     }
 #endif
 
@@ -1086,10 +1079,6 @@ void Abaddon::ActionReloadCSS() {
         Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_provider);
         m_css_provider->load_from_path(GetCSSPath("/" + GetSettings().MainCSS));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-        Gtk::StyleContext::remove_provider_for_screen(Gdk::Screen::get_default(), m_css_low_provider);
-        m_css_low_provider->load_from_path(GetCSSPath("/application-low-priority.css"));
-        Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_low_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION - 1);
     } catch (Glib::Error &e) {
         Gtk::MessageDialog dlg(*m_main_window, "css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);

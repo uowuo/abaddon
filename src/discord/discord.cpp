@@ -518,6 +518,7 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
     CreateMessageObject obj;
     obj.Content = params.Message;
     obj.Nonce = nonce;
+    obj.Attachments.emplace();
     if (params.Silent) {
         obj.Flags |= MessageFlags::SUPPRESS_NOTIFICATIONS;
     }
@@ -541,11 +542,16 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
         m_generic_dispatch.emit();
     });
     req.make_form();
-    req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
+
     for (size_t i = 0; i < params.Attachments.size(); i++) {
+        auto &attachment = params.Attachments.at(i);
         const auto field_name = "files[" + std::to_string(i) + "]";
-        req.add_file(field_name, params.Attachments.at(i).File, params.Attachments.at(i).Filename);
+        req.add_file(field_name, attachment.File, attachment.Filename);
+        obj.Attachments->push_back({ static_cast<int>(i), attachment.Description });
     }
+
+    req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
+
     m_http.Execute(std::move(req), [this, params, nonce, callback](const http::response_type &res) {
         for (const auto &attachment : params.Attachments) {
             if (attachment.Type == ChatSubmitParams::AttachmentType::PastedImage) {

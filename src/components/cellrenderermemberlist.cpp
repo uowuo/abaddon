@@ -6,7 +6,8 @@ CellRendererMemberList::CellRendererMemberList()
     , m_property_id(*this, "id")
     , m_property_name(*this, "name")
     , m_property_pixbuf(*this, "pixbuf")
-    , m_property_color(*this, "color") {
+    , m_property_color(*this, "color")
+    , m_property_status(*this, "status") {
     property_mode() = Gtk::CELL_RENDERER_MODE_ACTIVATABLE;
     property_xpad() = 2;
     property_ypad() = 2;
@@ -33,6 +34,10 @@ Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> CellRendererMemberList::property_
 
 Glib::PropertyProxy<Gdk::RGBA> CellRendererMemberList::property_color() {
     return m_property_color.get_proxy();
+}
+
+Glib::PropertyProxy<PresenceStatus> CellRendererMemberList::property_status() {
+    return m_property_status.get_proxy();
 }
 
 void CellRendererMemberList::get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -117,8 +122,9 @@ void CellRendererMemberList::get_preferred_height_for_width_vfunc_member(Gtk::Wi
 }
 
 void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+    // Text
     Gdk::Rectangle text_cell_area = cell_area;
-    text_cell_area.set_x(22);
+    text_cell_area.set_x(31);
     const auto color = m_property_color.get_value();
     if (color.get_alpha_u() > 0) {
         m_renderer_text.property_foreground_rgba().set_value(color);
@@ -126,6 +132,30 @@ void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Cont
     m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
     m_renderer_text.property_foreground_set().set_value(false);
 
+    // Status indicator
+    // TODO: reintroduce custom status colors... somehow
+    cr->begin_new_path();
+    switch (m_property_status.get_value()) {
+        case PresenceStatus::Online:
+            cr->set_source_rgb(33.0 / 255.0, 157.0 / 255.0, 86.0 / 255.0);
+            break;
+        case PresenceStatus::Idle:
+            cr->set_source_rgb(230.0 / 255.0, 170.0 / 255.0, 48.0 / 255.0);
+            break;
+        case PresenceStatus::DND:
+            cr->set_source_rgb(233.0 / 255.0, 61.0 / 255.0, 65.0 / 255.0);
+            break;
+        case PresenceStatus::Offline:
+            cr->set_source_rgb(122.0 / 255.0, 126.0 / 255.0, 135.0 / 255.0);
+            break;
+    }
+
+    cr->arc(background_area.get_x() + 6.0 + 16.0 + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
+    cr->close_path();
+    cr->fill_preserve();
+    cr->stroke();
+
+    // Icon
     const double icon_x = background_area.get_x() + 6.0;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - 8.0;
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);

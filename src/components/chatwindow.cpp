@@ -5,7 +5,7 @@
 #include "chatlist.hpp"
 #include "constants.hpp"
 #ifdef WITH_LIBHANDY
-    #include "channeltabswitcherhandy.hpp"
+#include "channeltabswitcherhandy.hpp"
 #endif
 
 ChatWindow::ChatWindow() {
@@ -109,7 +109,13 @@ ChatWindow::ChatWindow() {
     m_main->add(*m_meta);
     m_main->add(m_progress);
 
-    m_progress.show();
+    m_progress.signal_start().connect([this]() {
+        m_progress.show();
+    });
+
+    m_progress.signal_stop().connect([this]() {
+        m_progress.hide();
+    });
 
     m_main->show();
 }

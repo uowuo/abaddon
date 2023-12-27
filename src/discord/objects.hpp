@@ -53,6 +53,13 @@ enum class GatewayOp : int {
     EmbeddedActivityClose = 26,
     EmbeddedActivityUpdate = 27,
     RequestForumUnreads = 28,
+    RemoteCommand = 29,
+    GetDeletedEntityIDsNotMatchingHash = 30,
+    RequestSoundboardSounds = 31,
+    SpeedTestCreate = 32,
+    SpeedTestDelete = 33,
+    RequestLastMessages = 34,
+    SearchRecentMembers = 35,
 };
 
 enum class GatewayEvent : int {
@@ -426,11 +433,19 @@ struct HeartbeatMessage : GatewayMessage {
     friend void to_json(nlohmann::json &j, const HeartbeatMessage &m);
 };
 
+struct CreateMessageAttachmentObject {
+    int ID;
+    std::optional<std::string> Description;
+
+    friend void to_json(nlohmann::json &j, const CreateMessageAttachmentObject &m);
+};
+
 struct CreateMessageObject {
     std::string Content;
     MessageFlags Flags = MessageFlags::NONE;
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
+    std::optional<std::vector<CreateMessageAttachmentObject>> Attachments;
 
     friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
 };

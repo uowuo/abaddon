@@ -34,7 +34,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     discord.signal_guild_emojis_update().connect(sigc::hide<0>(sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnFetchEmojis)));
 
     const auto self_id = discord.GetUserData().ID;
-    const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_EMOJIS);
+    const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD_EXPRESSIONS);
     m_menu_delete.set_sensitive(can_manage);
 
     m_search.set_placeholder_text("Filter");
@@ -104,7 +104,7 @@ void GuildSettingsEmojisPane::OnMap() {
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto self_id = discord.GetUserData().ID;
-    const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_EMOJIS);
+    const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD_EXPRESSIONS);
     m_menu_delete.set_sensitive(can_manage);
 
     discord.FetchGuildEmojis(GuildID, sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnFetchEmojis));
@@ -228,7 +228,7 @@ bool GuildSettingsEmojisPane::OnTreeButtonPress(GdkEventButton *event) {
     if (event->button == GDK_BUTTON_SECONDARY) {
         auto &discord = Abaddon::Get().GetDiscordClient();
         const auto self_id = discord.GetUserData().ID;
-        const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_EMOJIS);
+        const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD_EXPRESSIONS);
         m_menu_delete.set_sensitive(can_manage);
 
         auto selection = m_view.get_selection();

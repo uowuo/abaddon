@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm/cellrenderer.h>
+#include "discord/activity.hpp"
 
 enum class MemberListRenderType : uint8_t {
     Role,
@@ -16,6 +17,7 @@ public:
     Glib::PropertyProxy<Glib::ustring> property_name();
     Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_pixbuf();
     Glib::PropertyProxy<Gdk::RGBA> property_color();
+    Glib::PropertyProxy<PresenceStatus> property_status();
 
 protected:
     void get_preferred_width_vfunc(Gtk::Widget &widget, int &minimum_width, int &natural_width) const override;
@@ -56,6 +58,7 @@ private:
     Glib::Property<Glib::ustring> m_property_name;
     Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_property_pixbuf;
     Glib::Property<Gdk::RGBA> m_property_color;
+    Glib::Property<PresenceStatus> m_property_status;
 
     using type_signal_render = sigc::signal<void(uint64_t)>;
     type_signal_render m_signal_render;

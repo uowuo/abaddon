@@ -20,6 +20,11 @@ enum class ChannelType : int {
     GUILD_PUBLIC_THREAD = 11,
     GUILD_PRIVATE_THREAD = 12,
     GUILD_STAGE_VOICE = 13,
+
+    // Unimplemented:
+    GUILD_DIRECTORY = 14,
+    GUILD_FORUM = 15,
+    GUILD_MEDIA = 16,
 };
 
 enum class StagePrivacy {

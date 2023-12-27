@@ -26,6 +26,8 @@ private:
 
     int SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b);
 
+    void OnPresenceUpdate(const UserData &user, PresenceStatus status);
+
     class ModelColumns : public Gtk::TreeModel::ColumnRecord {
     public:
         ModelColumns();
@@ -35,6 +37,7 @@ private:
         Gtk::TreeModelColumn<Glib::ustring> m_name;
         Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> m_pixbuf;
         Gtk::TreeModelColumn<Gdk::RGBA> m_color;
+        Gtk::TreeModelColumn<PresenceStatus> m_status;
         Gtk::TreeModelColumn<int> m_sort;
 
         Gtk::TreeModelColumn<bool> m_av_requested;
