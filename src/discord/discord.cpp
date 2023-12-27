@@ -24,14 +24,16 @@ DiscordClient::DiscordClient(bool mem_store)
     m_websocket.signal_close().connect(sigc::mem_fun(*this, &DiscordClient::HandleSocketClose));
 
 #ifdef WITH_VOICE
+    // hack: tracking signal objects instead of ensuring m_voice doesnt emit during destruction
     m_voice.signal_connected().connect(sigc::mem_fun(*this, &DiscordClient::OnVoiceConnected));
-    m_voice.signal_disconnected().connect(sigc::mem_fun(*this, &DiscordClient::OnVoiceDisconnected));
+    m_voice.signal_disconnected().connect(sigc::track_obj(sigc::mem_fun(*this, &DiscordClient::OnVoiceDisconnected), m_signal_voice_disconnected));
     m_voice.signal_speaking().connect([this](const VoiceSpeakingData &data) {
         m_signal_voice_speaking.emit(data);
     });
-    m_voice.signal_state_update().connect([this](DiscordVoiceClient::State state) {
+    const auto signal_state_update_cb = [this](DiscordVoiceClient::State state) {
         m_signal_voice_client_state_update.emit(state);
-    });
+    };
+    m_voice.signal_state_update().connect(sigc::track_obj(signal_state_update_cb, m_signal_voice_client_state_update));
 #endif
 
     LoadEventMap();
