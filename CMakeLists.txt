@@ -83,7 +83,7 @@ endif ()
 if (NOT WIN32)
     target_sources(abaddon PRIVATE src/notifications/notifier_gio.cpp)
 else ()
-    target_sources(abaddon PRIVATE src/notifications/notifier_null.cpp)
+    target_sources(abaddon PRIVATE src/notifications/notifier_fallback.cpp)
 endif ()
 
 if (IXWebSocket_LIBRARIES)
