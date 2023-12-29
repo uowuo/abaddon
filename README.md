@@ -87,7 +87,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Linux:
 
 1. Install dependencies
-    * On Ubuntu 20.04 (Focal) and newer:
+    * On Ubuntu 22.04 (Jammy) and newer:
       ```Shell
       $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev libopus-dev libsodium-dev libspdlog-dev
       ```
@@ -117,7 +117,7 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 - MacOS: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-macos-RelWithDebInfo.zip) unsigned,
   unpackaged, requires gtkmm3 (e.g. from homebrew)
 - Linux: [here](https://nightly.link/uowuo/abaddon/workflows/ci/master/build-linux-MinSizeRel.zip) unpackaged (for now),
-  requires gtkmm3. built on Ubuntu 18.04 + gcc9
+  requires gtkmm3. built on Ubuntu 22.04 + gcc9
 
 > **Warning**: If you use Windows, make sure to start from the `bin` directory
 
