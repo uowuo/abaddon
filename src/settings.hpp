@@ -47,10 +47,11 @@ public:
         // [notifications]
 #ifdef _WIN32
         bool NotificationsEnabled { false };
+        bool NotificationsPlaySound { false };
 #else
         bool NotificationsEnabled { true };
-#endif
         bool NotificationsPlaySound { true };
+#endif
 
         // [voice]
 #ifdef WITH_RNNOISE
