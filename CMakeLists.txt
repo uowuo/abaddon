@@ -53,7 +53,7 @@ file(GLOB_RECURSE ABADDON_SOURCES
         )
 
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_gio\\.cpp$")
-list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_null\\.cpp$")
+list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_fallback\\.cpp$")
 
 add_executable(abaddon ${ABADDON_SOURCES})
 target_include_directories(abaddon PUBLIC ${PROJECT_SOURCE_DIR}/src)
