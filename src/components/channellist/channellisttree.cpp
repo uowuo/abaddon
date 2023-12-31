@@ -639,6 +639,14 @@ void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
 
     const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
+        m_view.get_selection()->unselect_all();
+        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(channel_iter);
+        if (filter_iter) {
+            if (expand_to) {
+                m_view.expand_to_path(m_filter_model->get_path(filter_iter));
+            }
+            m_view.get_selection()->select(filter_iter);
+        }
     } else {
         m_view.get_selection()->unselect_all();
         const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
