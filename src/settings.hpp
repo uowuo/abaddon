@@ -7,61 +7,47 @@ class SettingsManager {
 public:
     struct Settings {
         // [discord]
-        std::string APIBaseURL { "https://discord.com/api/v9" };
-        std::string GatewayURL { "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream" };
+        std::string APIBaseURL;
+        std::string GatewayURL;
         std::string DiscordToken;
-        bool UseMemoryDB { false };
-        bool Prefetch { false };
-        bool Autoconnect { false };
+        bool UseMemoryDB;
+        bool Prefetch;
+        bool Autoconnect;
 
         // [gui]
-        std::string MainCSS { "main.css" };
-        bool AnimatedGuildHoverOnly { true };
-        bool ShowAnimations { true };
-        bool ShowCustomEmojis { true };
-        bool ShowMemberListDiscriminators { true };
-        bool ShowOwnerCrown { true };
-        bool SaveState { true };
-#ifdef _WIN32
-        bool ShowStockEmojis { false };
-#else
-        bool ShowStockEmojis { true };
-#endif
-        bool Unreads { true };
-        bool AltMenu { false };
-        bool HideToTray { false };
-        bool ShowDeletedIndicator { true };
-        double FontScale { -1.0 };
+        std::string MainCSS;
+        bool AnimatedGuildHoverOnly;
+        bool ShowAnimations;
+        bool ShowCustomEmojis;
+        bool ShowOwnerCrown;
+        bool SaveState;
+        bool ShowStockEmojis;
+        bool Unreads;
+        bool AltMenu;
+        bool HideToTray;
+        bool ShowDeletedIndicator;
+        double FontScale;
 
         // [http]
-        int CacheHTTPConcurrency { 20 };
-        std::string UserAgent { "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36" };
+        int CacheHTTPConcurrency;
+        std::string UserAgent;
 
         // [style]
-        std::string ChannelsExpanderColor { "rgba(255, 83, 112, 0)" };
-        std::string NSFWChannelColor { "#970d0d" };
-        std::string MentionBadgeColor { "rgba(184, 37, 37, 0)" };
-        std::string MentionBadgeTextColor { "rgba(251, 251, 251, 0)" };
-        std::string UnreadIndicatorColor { "rgba(255, 255, 255, 0)" };
+        std::string ChannelsExpanderColor;
+        std::string NSFWChannelColor;
+        std::string MentionBadgeColor;
+        std::string MentionBadgeTextColor;
+        std::string UnreadIndicatorColor;
 
         // [notifications]
-#ifdef _WIN32
-        bool NotificationsEnabled { false };
-        bool NotificationsPlaySound { false };
-#else
-        bool NotificationsEnabled { true };
-        bool NotificationsPlaySound { true };
-#endif
+        bool NotificationsEnabled;
+        bool NotificationsPlaySound;
 
         // [voice]
-#ifdef WITH_RNNOISE
-        std::string VAD { "rnnoise" };
-#else
-        std::string VAD { "gate" };
-#endif
+        std::string VAD;
 
         // [windows]
-        bool HideConsole { false };
+        bool HideConsole;
     };
 
     SettingsManager(const std::string &filename);
@@ -71,7 +57,61 @@ public:
     Settings &GetSettings();
 
 private:
+    void HandleReadToken();
+    void HandleWriteToken();
+
+    void DefineSettings();
     void ReadSettings();
+
+    // a little weird because i dont want to have to change every line where settings are used
+    // why this way: i dont want to have to define a setting in multiple places and the old way was ugly
+    struct SettingDefinition {
+        using StringPtr = std::string Settings::*;
+        using BoolPtr = bool Settings::*;
+        using DoublePtr = double Settings::*;
+        using IntPtr = int Settings::*;
+
+        std::string Section;
+        std::string Name;
+
+        enum SettingType {
+            TypeString,
+            TypeBool,
+            TypeDouble,
+            TypeInt,
+        } Type;
+
+        union {
+            StringPtr String;
+            BoolPtr Bool;
+            DoublePtr Double;
+            IntPtr Int;
+        } Ptr;
+    };
+
+    std::unordered_map<std::string, SettingDefinition> m_definitions;
+
+    template<typename FieldType>
+    void AddSetting(const char *section, const char *name, FieldType default_value, FieldType Settings::*ptr) {
+        m_settings.*ptr = default_value;
+        SettingDefinition definition;
+        definition.Section = section;
+        definition.Name = name;
+        if constexpr (std::is_same<FieldType, std::string>::value) {
+            definition.Type = SettingDefinition::TypeString;
+            definition.Ptr.String = ptr;
+        } else if constexpr (std::is_same<FieldType, bool>::value) {
+            definition.Type = SettingDefinition::TypeBool;
+            definition.Ptr.Bool = ptr;
+        } else if constexpr (std::is_same<FieldType, double>::value) {
+            definition.Type = SettingDefinition::TypeDouble;
+            definition.Ptr.Double = ptr;
+        } else if constexpr (std::is_same<FieldType, int>::value) {
+            definition.Type = SettingDefinition::TypeInt;
+            definition.Ptr.Int = ptr;
+        }
+        m_definitions[name] = definition;
+    }
 
     bool m_ok;
     std::string m_filename;
