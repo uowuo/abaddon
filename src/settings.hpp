@@ -13,6 +13,7 @@ public:
         bool UseMemoryDB;
         bool Prefetch;
         bool Autoconnect;
+        bool UseKeychain;
 
         // [gui]
         std::string MainCSS;

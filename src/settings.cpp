@@ -22,7 +22,7 @@ SettingsManager::SettingsManager(const std::string &filename)
     try {
         m_ok = m_file.load_from_file(m_filename, Glib::KEY_FILE_KEEP_COMMENTS);
     } catch (const Glib::Error &e) {
-        fprintf(stderr, "error opening settings KeyFile: %s\n", e.what().c_str());
+        spdlog::get("ui")->error("Error opening settings KeyFile: {}", e.what().c_str());
         m_ok = false;
     }
 
@@ -30,14 +30,16 @@ SettingsManager::SettingsManager(const std::string &filename)
     if (m_ok) ReadSettings();
 }
 
+// semi-misleading name... only handles keychain (token is a normal setting)
+// DONT call AddSetting here
 void SettingsManager::HandleReadToken() {
 #ifdef WITH_KEYCHAIN
-    // Move to keychain if present
+    using namespace std::string_literals;
 
-    std::string token;
-    try {
-        token = m_file.get_string("discord", "token");
-    } catch (...) {}
+    if (!m_settings.UseKeychain) return;
+
+    // Move to keychain if present in .ini
+    std::string token = m_settings.DiscordToken;
 
     if (!token.empty()) {
         keychain::Error error {};
@@ -54,19 +56,18 @@ void SettingsManager::HandleReadToken() {
     if (error && error.type != keychain::ErrorType::NotFound) {
         spdlog::get("ui")->error("Keychain error reading token: {} ({})", error.message, error.code);
     }
-
-#else
-    AddSetting("discord", "token", "", &Settings::DiscordToken);
 #endif
 }
 
 void SettingsManager::HandleWriteToken() {
 #ifdef WITH_KEYCHAIN
-    keychain::Error error {};
+    if (m_settings.UseKeychain) {
+        keychain::Error error {};
 
-    keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, m_settings.DiscordToken, error);
-    if (error) {
-        spdlog::get("ui")->error("Keychain error setting token: {}", error.message);
+        keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, m_settings.DiscordToken, error);
+        if (error) {
+            spdlog::get("ui")->error("Keychain error setting token: {}", error.message);
+        }
     }
 #endif
     // else it will get enumerated over as part of definitions
@@ -77,9 +78,11 @@ void SettingsManager::DefineSettings() {
 
     AddSetting("discord", "api_base", "https://discord.com/api/v9"s, &Settings::APIBaseURL);
     AddSetting("discord", "gateway", "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream"s, &Settings::GatewayURL);
+    AddSetting("discord", "token", ""s, &Settings::DiscordToken);
     AddSetting("discord", "memory_db", false, &Settings::UseMemoryDB);
     AddSetting("discord", "prefetch", false, &Settings::Prefetch);
     AddSetting("discord", "autoconnect", false, &Settings::Autoconnect);
+    AddSetting("discord", "keychain", true, &Settings::UseKeychain);
 
     AddSetting("gui", "css", "main.css"s, &Settings::MainCSS);
     AddSetting("gui", "animated_guild_hover_only", true, &Settings::AnimatedGuildHoverOnly);
@@ -118,8 +121,6 @@ void SettingsManager::DefineSettings() {
 #else
     AddSetting("voice", "vad", "gate"s, &Settings::VAD);
 #endif
-
-    HandleReadToken();
 }
 
 void SettingsManager::ReadSettings() {
@@ -147,6 +148,8 @@ void SettingsManager::ReadSettings() {
                 break;
         }
     }
+
+    HandleReadToken();
 
     m_read_settings = m_settings;
 }
