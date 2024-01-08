@@ -280,6 +280,7 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `token`       | string  |         | Discord token used to login, this can be set from the menu                                       |
 | `prefetch`    | boolean | false   | if true, new messages will cause the avatar and image attachments to be automatically downloaded |
 | `autoconnect` | boolean | false   | autoconnect to discord                                                                           |
+| `keychain`    | boolean | true    | store token in system keychain (if compiled with support)                                        |
 
 #### http
 
