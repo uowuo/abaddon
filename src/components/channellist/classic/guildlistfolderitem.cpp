@@ -42,7 +42,7 @@ GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &fo
     get_style_context()->add_class("classic-guild-folder");
 
     m_revealer.add(m_box);
-    m_revealer.set_reveal_child(true);
+    m_revealer.set_reveal_child(false);
 
     m_image.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(48);
 
