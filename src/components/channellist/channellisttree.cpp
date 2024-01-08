@@ -310,6 +310,12 @@ void ChannelListTree::SetClassic(bool value) {
 void ChannelListTree::SetSelectedGuild(Snowflake guild_id) {
     m_classic_selected_guild = guild_id;
     m_filter_model->refilter();
+    auto guild_iter = GetIteratorForGuildFromID(guild_id);
+    if (guild_iter) {
+        if (auto filter_iter = m_filter_model->convert_child_iter_to_iter(guild_iter)) {
+            m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+        }
+    }
 }
 
 void ChannelListTree::OnPanedPositionChanged() {
