@@ -60,6 +60,9 @@ GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &fo
 
     m_icon.property_icon_name() = "folder-symbolic";
     m_icon.property_icon_size() = Gtk::ICON_SIZE_DND;
+    if (folder.Color.has_value()) {
+        m_icon.override_color(IntToRGBA(*folder.Color));
+    }
     m_icon.show();
 
     m_stack.add(m_grid, "grid");
