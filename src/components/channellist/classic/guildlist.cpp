@@ -4,7 +4,10 @@
 class GuildListDMsButton : public Gtk::EventBox {
 public:
     GuildListDMsButton() {
-        m_img.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(48);
+        set_size_request(48, 48);
+
+        m_img.property_icon_name() = "user-available-symbolic"; // meh
+        m_img.property_icon_size() = Gtk::ICON_SIZE_DND;
         add(m_img);
         show_all_children();
     }
