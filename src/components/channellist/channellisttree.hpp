@@ -35,6 +35,7 @@ public:
 
     void SetClassic(bool value);
     void SetSelectedGuild(Snowflake guild_id);
+    void SetSelectedDMs();
 
 protected:
     void OnPanedPositionChanged();
@@ -193,6 +194,7 @@ protected:
 
     bool m_classic = false;
     Snowflake m_classic_selected_guild;
+    bool m_classic_selected_dms = false;
 
     Snowflake m_active_channel;
 

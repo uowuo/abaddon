@@ -86,10 +86,17 @@ ChannelListTree::ChannelListTree()
     m_filter_model->set_visible_func([this](const Gtk::TreeModel::const_iterator &iter) -> bool {
         if (!m_classic) return true;
 
-        if ((*iter)[m_columns.m_type] == RenderType::Guild) {
+        const RenderType type = (*iter)[m_columns.m_type];
+
+        if (m_classic_selected_dms) {
+            if (iter->parent()) return true;
+            return type == RenderType::DMHeader;
+        }
+
+        if (type == RenderType::Guild) {
             return (*iter)[m_columns.m_id] == m_classic_selected_guild;
         }
-        return true;
+        return type != RenderType::DMHeader;
     });
 
     m_view.show();
@@ -309,11 +316,22 @@ void ChannelListTree::SetClassic(bool value) {
 
 void ChannelListTree::SetSelectedGuild(Snowflake guild_id) {
     m_classic_selected_guild = guild_id;
+    m_classic_selected_dms = false;
     m_filter_model->refilter();
     auto guild_iter = GetIteratorForGuildFromID(guild_id);
     if (guild_iter) {
         if (auto filter_iter = m_filter_model->convert_child_iter_to_iter(guild_iter)) {
             m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+        }
+    }
+}
+
+void ChannelListTree::SetSelectedDMs() {
+    m_classic_selected_dms = true;
+    m_filter_model->refilter();
+    if (m_dm_header) {
+        if (auto filter_path = m_filter_model->convert_child_path_to_path(m_dm_header)) {
+            m_view.expand_row(filter_path, false);
         }
     }
 }

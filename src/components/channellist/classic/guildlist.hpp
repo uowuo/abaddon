@@ -20,9 +20,12 @@ private:
 
 public:
     using type_signal_guild_selected = sigc::signal<void, Snowflake>;
+    using type_signal_dms_selected = sigc::signal<void>;
 
     type_signal_guild_selected signal_guild_selected();
+    type_signal_dms_selected signal_dms_selected();
 
 private:
     type_signal_guild_selected m_signal_guild_selected;
+    type_signal_dms_selected m_signal_dms_selected;
 };

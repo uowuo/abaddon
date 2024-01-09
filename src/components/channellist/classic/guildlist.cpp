@@ -1,6 +1,18 @@
 #include "guildlist.hpp"
 #include "guildlistfolderitem.hpp"
 
+class GuildListDMsButton : public Gtk::EventBox {
+public:
+    GuildListDMsButton() {
+        m_img.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(48);
+        add(m_img);
+        show_all_children();
+    }
+
+private:
+    Gtk::Image m_img;
+};
+
 GuildList::GuildList() {
     set_selection_mode(Gtk::SELECTION_NONE);
     show_all_children();
@@ -10,6 +22,16 @@ void GuildList::UpdateListing() {
     auto &discord = Abaddon::Get().GetDiscordClient();
 
     Clear();
+
+    auto *dms = Gtk::make_managed<GuildListDMsButton>();
+    dms->show();
+    dms->signal_button_press_event().connect([this](GdkEventButton *ev) -> bool {
+        if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_PRIMARY) {
+            m_signal_dms_selected.emit();
+        }
+        return false;
+    });
+    add(*dms);
 
     // does this function still even work ??lol
     const auto folders = discord.GetUserSettings().GuildFolders;
@@ -85,4 +107,8 @@ void GuildList::Clear() {
 
 GuildList::type_signal_guild_selected GuildList::signal_guild_selected() {
     return m_signal_guild_selected;
+}
+
+GuildList::type_signal_dms_selected GuildList::signal_dms_selected() {
+    return m_signal_dms_selected;
 }

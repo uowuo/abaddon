@@ -11,6 +11,10 @@ ChannelList::ChannelList() {
         m_tree.SetSelectedGuild(guild_id);
     });
 
+    m_guilds.signal_dms_selected().connect([this]() {
+        m_tree.SetSelectedDMs();
+    });
+
     m_guilds.show();
     m_tree.show();
     m_guilds_scroll.add(m_guilds);
