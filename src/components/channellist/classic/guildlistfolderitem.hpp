@@ -9,6 +9,15 @@
 
 class GuildListGuildItem;
 
+class GuildListFolderButton : public Gtk::Grid {
+public:
+    GuildListFolderButton();
+    void SetGuilds(const std::vector<Snowflake> &guild_ids);
+
+private:
+    Gtk::Image m_images[2][2];
+};
+
 class GuildListFolderItem : public Gtk::VBox {
 public:
     GuildListFolderItem(const UserSettingsGuildFoldersEntry &folder);
@@ -16,6 +25,10 @@ public:
     void AddGuildWidget(GuildListGuildItem *widget);
 
 private:
+    Gtk::Stack m_stack;
+    GuildListFolderButton m_grid;
+    Gtk::Image m_icon;
+
     Gtk::EventBox m_ev;
     Gtk::Image m_image;
     Gtk::Revealer m_revealer;

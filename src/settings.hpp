@@ -28,6 +28,7 @@ public:
         bool HideToTray;
         bool ShowDeletedIndicator;
         double FontScale;
+        bool FolderIconOnly;
 
         // [http]
         int CacheHTTPConcurrency;
