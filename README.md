@@ -306,6 +306,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `hide_to_tray`              | boolean | false   | hide abaddon to the system tray on window close                                                                            |
 | `show_deleted_indicator`    | boolean | true    | show \[deleted\] indicator next to deleted messages instead of actually deleting the message                               |
 | `font_scale`                | double  |         | scale font rendering. 1 is unchanged                                                                                       |
+| `image_embed_clamp_width`   | int     | 400     | maximum width of image embeds                                                                                              |
+| `image_embed_clamp_height`  | int     | 300     | maximum height of image embeds                                                                                             |
 
 #### style
 
