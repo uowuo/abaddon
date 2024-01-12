@@ -291,21 +291,22 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### gui
 
-| Setting                     | Type    | Default | Description                                                                                                                |
-|-----------------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------------|
-| `member_list_discriminator` | boolean | true    | show user discriminators in the member list                                                                                |
-| `stock_emojis`              | boolean | true    | allow abaddon to substitute unicode emojis with images from emojis.bin, must be false to allow GTK to render emojis itself |
-| `custom_emojis`             | boolean | true    | download and use custom Discord emojis                                                                                     |
-| `css`                       | string  |         | path to the main CSS file                                                                                                  |
-| `animations`                | boolean | true    | use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used           |
-| `animated_guild_hover_only` | boolean | true    | only animate guild icons when the guild is being hovered over                                                              |
-| `owner_crown`               | boolean | true    | show a crown next to the owner                                                                                             |
-| `unreads`                   | boolean | true    | show unread indicators and mention badges                                                                                  |
-| `save_state`                | boolean | true    | save the state of the gui (active channels, tabs, expanded channels)                                                       |
-| `alt_menu`                  | boolean | false   | keep the menu hidden unless revealed with alt key                                                                          |
-| `hide_to_tray`              | boolean | false   | hide abaddon to the system tray on window close                                                                            |
-| `show_deleted_indicator`    | boolean | true    | show \[deleted\] indicator next to deleted messages instead of actually deleting the message                               |
-| `font_scale`                | double  |         | scale font rendering. 1 is unchanged                                                                                       |
+| Setting                        | Type    | Default | Description                                                                                                                |
+|--------------------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------------|
+| `member_list_discriminator`    | boolean | true    | show user discriminators in the member list                                                                                |
+| `stock_emojis`                 | boolean | true    | allow abaddon to substitute unicode emojis with images from emojis.bin, must be false to allow GTK to render emojis itself |
+| `custom_emojis`                | boolean | true    | download and use custom Discord emojis                                                                                     |
+| `css`                          | string  |         | path to the main CSS file                                                                                                  |
+| `animations`                   | boolean | true    | use animated images where available (e.g. server icons, emojis, avatars). false means static images will be used           |
+| `animated_guild_hover_only`    | boolean | true    | only animate guild icons when the guild is being hovered over                                                              |
+| `owner_crown`                  | boolean | true    | show a crown next to the owner                                                                                             |
+| `unreads`                      | boolean | true    | show unread indicators and mention badges                                                                                  |
+| `save_state`                   | boolean | true    | save the state of the gui (active channels, tabs, expanded channels)                                                       |
+| `alt_menu`                     | boolean | false   | keep the menu hidden unless revealed with alt key                                                                          |
+| `hide_to_tray`                 | boolean | false   | hide abaddon to the system tray on window close                                                                            |
+| `show_deleted_indicator`       | boolean | true    | show \[deleted\] indicator next to deleted messages instead of actually deleting the message                               |
+| `font_scale`                   | double  |         | scale font rendering. 1 is unchanged                                                                                       |
+| `classic_change_guild_on_open` | boolean | true    | change displayed guild when selecting a channel (classic channel list)                                                     |
 
 #### style
 

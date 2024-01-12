@@ -29,6 +29,7 @@ public:
         bool ShowDeletedIndicator;
         double FontScale;
         bool FolderIconOnly;
+        bool ClassicChangeGuildOnOpen;
 
         // [http]
         int CacheHTTPConcurrency;
