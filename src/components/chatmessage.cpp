@@ -431,7 +431,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
 
     if (embed.Image.has_value() && embed.Image->ProxyURL.has_value()) {
         int w = 0, h = 0;
-        GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, EmbedImageWidth, EmbedImageHeight);
+        const int clamp_width = Abaddon::Get().GetSettings().ImageEmbedClampWidth;
+        const int clamp_height = Abaddon::Get().GetSettings().ImageEmbedClampHeight;
+        GetImageDimensions(*embed.Image->Width, *embed.Image->Height, w, h, clamp_width, clamp_height);
 
         auto *img = Gtk::manage(new LazyImage(*embed.Image->ProxyURL, w, h, false));
         img->set_halign(Gtk::ALIGN_CENTER);
@@ -488,7 +490,9 @@ Gtk::Widget *ChatMessageItemContainer::CreateEmbedComponent(const EmbedData &emb
 
 Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &proxy_url, const std::string &url, int inw, int inh) {
     int w, h;
-    GetImageDimensions(inw, inh, w, h);
+    const int clamp_width = Abaddon::Get().GetSettings().ImageEmbedClampWidth;
+    const int clamp_height = Abaddon::Get().GetSettings().ImageEmbedClampHeight;
+    GetImageDimensions(inw, inh, w, h, clamp_width, clamp_height);
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
     Gtk::Image *widget = Gtk::manage(new LazyImage(proxy_url, w, h, false));

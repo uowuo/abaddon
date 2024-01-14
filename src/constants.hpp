@@ -12,7 +12,5 @@ constexpr static int BoostLevel3AttachmentSizeLimit = 100 * 1024 * 1024;
 constexpr static int MaxMessagePayloadSize = 199 * 1024 * 1024;
 constexpr static int EmojiSize = 24; // settings eventually
 constexpr static int AvatarSize = 32;
-constexpr static int EmbedImageWidth = 400;
-constexpr static int EmbedImageHeight = 300;
 constexpr static int ThumbnailSize = 100;
 constexpr static int StickerComponentSize = 160;

@@ -30,6 +30,8 @@ public:
         double FontScale;
         bool FolderIconOnly;
         bool ClassicChangeGuildOnOpen;
+        int ImageEmbedClampWidth;
+        int ImageEmbedClampHeight;
 
         // [http]
         int CacheHTTPConcurrency;
