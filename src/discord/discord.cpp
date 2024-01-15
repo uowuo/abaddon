@@ -2802,17 +2802,26 @@ void DiscordClient::StoreMessageData(Message &msg) {
 // no entry.id cannot be a guild even though sometimes it looks like it
 void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &guild : data.Guilds) {
-        for (const auto &channel : *guild.Channels)
-            if (channel.LastMessageID.has_value())
-                m_last_message_id[channel.ID] = *channel.LastMessageID;
-        for (const auto &thread : *guild.Threads)
-            if (thread.LastMessageID.has_value())
-                m_last_message_id[thread.ID] = *thread.LastMessageID;
+        if (guild.Channels.has_value()) {
+            for (const auto &channel : *guild.Channels) {
+                if (channel.LastMessageID.has_value()) {
+                    m_last_message_id[channel.ID] = *channel.LastMessageID;
+                }
+            }
+        }
+        if (guild.Threads.has_value()) {
+            for (const auto &thread : *guild.Threads) {
+                if (thread.LastMessageID.has_value()) {
+                    m_last_message_id[thread.ID] = *thread.LastMessageID;
+                }
+            }
+        }
     }
-    for (const auto &channel : data.PrivateChannels)
-        if (channel.LastMessageID.has_value())
+    for (const auto &channel : data.PrivateChannels) {
+        if (channel.LastMessageID.has_value()) {
             m_last_message_id[channel.ID] = *channel.LastMessageID;
-
+        }
+    }
     for (const auto &entry : data.ReadState.Entries) {
         const auto it = m_last_message_id.find(entry.ID);
         if (it == m_last_message_id.end()) continue;
