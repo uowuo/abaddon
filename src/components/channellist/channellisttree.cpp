@@ -84,7 +84,7 @@ ChannelListTree::ChannelListTree()
     });
 
     m_filter_model->set_visible_func([this](const Gtk::TreeModel::const_iterator &iter) -> bool {
-        if (!m_classic) return true;
+        if (!m_classic || m_updating_listing) return true;
 
         const RenderType type = (*iter)[m_columns.m_type];
 
