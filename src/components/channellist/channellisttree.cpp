@@ -343,6 +343,9 @@ void ChannelListTree::OnPanedPositionChanged() {
 void ChannelListTree::UpdateListingClassic() {
     m_updating_listing = true;
 
+    // refilter so every row is visible
+    // otherwise clear() causes a CRITICAL assert in a slot for the filter model
+    m_filter_model->refilter();
     m_model->clear();
 
     auto &discord = Abaddon::Get().GetDiscordClient();
