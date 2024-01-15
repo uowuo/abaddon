@@ -691,6 +691,23 @@ void ChannelListTree::UseExpansionState(const ExpansionStateRoot &root) {
 ExpansionStateRoot ChannelListTree::GetExpansionState() const {
     ExpansionStateRoot r;
 
+    auto recurse = [this](auto &self, const Gtk::TreeRow &row) -> ExpansionState {
+        ExpansionState r;
+
+        r.IsExpanded = row[m_columns.m_expanded];
+        for (auto child : row.children()) {
+            r.Children.Children[static_cast<Snowflake>(child[m_columns.m_id])] = self(self, child);
+        }
+
+        return r;
+    };
+
+    for (auto child : m_model->children()) {
+        const auto id = static_cast<Snowflake>(child[m_columns.m_id]);
+        if (static_cast<uint64_t>(id) == 0ULL) continue; // dont save DM header
+        r.Children[id] = recurse(recurse, child);
+    }
+
     return r;
 }
 
