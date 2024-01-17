@@ -689,6 +689,55 @@ void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
 }
 
 void ChannelListTree::UseExpansionState(const ExpansionStateRoot &root) {
+    m_updating_listing = true;
+    m_filter_model->refilter();
+
+    auto recurse = [this](auto &self, const ExpansionStateRoot &root) -> void {
+        for (const auto &[id, state] : root.Children) {
+            Gtk::TreeModel::iterator row_iter;
+            if (const auto map_iter = m_tmp_row_map.find(id); map_iter != m_tmp_row_map.end()) {
+                row_iter = map_iter->second;
+            } else if (const auto map_iter = m_tmp_guild_row_map.find(id); map_iter != m_tmp_guild_row_map.end()) {
+                row_iter = map_iter->second;
+            }
+
+            if (row_iter) {
+                (*row_iter)[m_columns.m_expanded] = state.IsExpanded;
+                auto filter_iter = m_filter_model->convert_child_iter_to_iter(row_iter);
+                if (filter_iter) {
+                    if (state.IsExpanded) {
+                        m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+                    } else {
+                        m_view.collapse_row(m_filter_model->get_path(filter_iter));
+                    }
+                }
+            }
+
+            self(self, state.Children);
+        }
+    };
+
+    for (const auto &[id, state] : root.Children) {
+        if (const auto iter = GetIteratorForTopLevelFromID(id)) {
+            (*iter)[m_columns.m_expanded]  = state.IsExpanded;
+            auto filter_iter = m_filter_model->convert_child_iter_to_iter(iter);
+            if (filter_iter) {
+                if (state.IsExpanded) {
+                    m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+                } else {
+                    m_view.collapse_row(m_filter_model->get_path(filter_iter));
+                }
+            }
+        }
+
+        recurse(recurse, state.Children);
+    }
+
+    m_updating_listing = false;
+    m_filter_model->refilter();
+
+    m_tmp_row_map.clear();
+    m_tmp_guild_row_map.clear();
 }
 
 ExpansionStateRoot ChannelListTree::GetExpansionState() const {
@@ -727,6 +776,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddFolder(const UserSettingsGuildFolde
         auto folder_row = *m_model->append();
         folder_row[m_columns.m_type] = RenderType::Folder;
         folder_row[m_columns.m_id] = *folder.ID;
+        m_tmp_row_map[*folder.ID] = folder_row;
         if (folder.Name.has_value()) {
             folder_row[m_columns.m_name] = Glib::Markup::escape_text(*folder.Name);
         } else {
@@ -760,6 +810,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
     guild_row[m_columns.m_id] = guild.ID;
     guild_row[m_columns.m_name] = "<b>" + Glib::Markup::escape_text(guild.Name) + "</b>";
     guild_row[m_columns.m_icon] = img.GetPlaceholder(GuildIconSize);
+    m_tmp_guild_row_map[guild.ID] = guild_row;
 
     if (Abaddon::Get().GetSettings().ShowAnimations && guild.HasAnimatedIcon()) {
         const auto cb = [this, id = guild.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -842,6 +893,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
         channel_row[m_columns.m_sort] = *channel.Position + OrphanChannelSortOffset;
         channel_row[m_columns.m_nsfw] = channel.NSFW();
         add_threads(channel, channel_row);
+        m_tmp_row_map[channel.ID] = channel_row;
     }
 
     for (const auto &[category_id, channels] : categories) {
@@ -853,6 +905,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
         cat_row[m_columns.m_name] = Glib::Markup::escape_text(*category->Name);
         cat_row[m_columns.m_sort] = *category->Position;
         cat_row[m_columns.m_expanded] = true;
+        m_tmp_row_map[category_id] = cat_row;
         // m_view.expand_row wont work because it might not have channels
 
         for (const auto &channel : channels) {
@@ -872,6 +925,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
             channel_row[m_columns.m_sort] = *channel.Position;
             channel_row[m_columns.m_nsfw] = channel.NSFW();
             add_threads(channel, channel_row);
+            m_tmp_row_map[channel.ID] = channel_row;
         }
     }
 

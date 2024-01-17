@@ -198,6 +198,10 @@ protected:
 
     Snowflake m_active_channel;
 
+    // hashtable for the billion lookups done in UseExpansionState
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_row_map;
+    std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_guild_row_map;
+
 public:
     using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;
     using type_signal_action_guild_leave = sigc::signal<void, Snowflake>;
