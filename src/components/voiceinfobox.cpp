@@ -1,8 +1,12 @@
 #ifdef WITH_VOICE
 
-    #include "voiceinfobox.hpp"
-    #include "abaddon.hpp"
-    #include "util.hpp"
+// clang-format off
+
+#include "voiceinfobox.hpp"
+#include "abaddon.hpp"
+#include "util.hpp"
+
+// clang-format on
 
 VoiceInfoBox::VoiceInfoBox()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)

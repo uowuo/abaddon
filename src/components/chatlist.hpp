@@ -1,6 +1,10 @@
 #pragma once
 #include <map>
 #include <vector>
+#include <glibmm/timer.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/scrolledwindow.h>
 #include "discord/message.hpp"
 #include "discord/snowflake.hpp"
 

@@ -1,4 +1,5 @@
 #include "cellrenderermemberlist.hpp"
+#include <gdkmm/general.h>
 
 CellRendererMemberList::CellRendererMemberList()
     : Glib::ObjectBase(typeid(CellRendererMemberList))

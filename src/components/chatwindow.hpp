@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <set>
+#include <gtkmm/eventbox.h>
 #include "discord/discord.hpp"
 #include "discord/chatsubmitparams.hpp"
 #include "completer.hpp"

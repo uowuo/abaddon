@@ -1,6 +1,11 @@
 #pragma once
 #include <unordered_map>
 #include <chrono>
+
+#include <gtkmm/box.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+
 #include "discord/message.hpp"
 
 class RateLimitIndicator : public Gtk::Box {

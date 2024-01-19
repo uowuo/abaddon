@@ -1,4 +1,6 @@
 #include "cellrendererchannels.hpp"
+#include <gdkmm/general.h>
+#include "abaddon.hpp"
 
 constexpr static int MentionsRightPad = 7;
 #ifndef M_PI

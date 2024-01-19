@@ -1,4 +1,13 @@
 #pragma once
+
+#include <gtkmm/box.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/liststore.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treemodel.h>
+#include <gtkmm/treemodelfilter.h>
+#include <gtkmm/treeview.h>
+
 #include "discord/emoji.hpp"
 
 class GuildSettingsEmojisPane : public Gtk::Box {

@@ -1,4 +1,16 @@
 #pragma once
+
+#include <gtkmm/box.h>
+#include <gtkmm/buttonbox.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/radiobutton.h>
+#include <gtkmm/radiobuttongroup.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/stack.h>
+#include <gtkmm/stackswitcher.h>
+#include <gtkmm/window.h>
+
 #include "discord/objects.hpp"
 
 class ActiveThreadsList : public Gtk::ScrolledWindow {

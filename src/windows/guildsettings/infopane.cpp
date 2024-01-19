@@ -1,5 +1,13 @@
 #include "infopane.hpp"
+
 #include <filesystem>
+
+#include <gdkmm/pixbufloader.h>
+#include <gtkmm/filechoosernative.h>
+#include <gtkmm/messagedialog.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
 
 GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
     : m_guild_name_label("Guild name")

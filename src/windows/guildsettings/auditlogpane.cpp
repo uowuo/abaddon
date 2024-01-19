@@ -1,5 +1,10 @@
 #include "auditlogpane.hpp"
 
+#include <gtkmm/expander.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
+
 using namespace std::string_literals;
 
 GuildSettingsAuditLogPane::GuildSettingsAuditLogPane(Snowflake id)

@@ -1,4 +1,13 @@
 #pragma once
+#include <gtkmm/box.h>
+#include <gtkmm/button.h>
+#include <gtkmm/buttonbox.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/radiobuttongroup.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/window.h>
 #include "discord/objects.hpp"
 
 class FriendsListAddComponent : public Gtk::Box {

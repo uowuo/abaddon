@@ -1,5 +1,7 @@
 #include "pinnedwindow.hpp"
 
+#include "abaddon.hpp"
+
 PinnedWindow::PinnedWindow(const ChannelData &data)
     : ChannelID(data.ID) {
     if (data.GuildID.has_value())

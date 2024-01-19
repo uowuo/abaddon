@@ -1,5 +1,7 @@
 #include "channel.hpp"
 
+#include "abaddon.hpp"
+
 void from_json(const nlohmann::json &j, ThreadMetadataData &m) {
     JS_D("archived", m.IsArchived);
     JS_D("auto_archive_duration", m.AutoArchiveDuration);

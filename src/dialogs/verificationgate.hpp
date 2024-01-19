@@ -1,5 +1,12 @@
 #pragma once
+
 #include <optional>
+
+#include <gtkmm/dialog.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/objects.hpp"
 
 class VerificationGateDialog : public Gtk::Dialog {

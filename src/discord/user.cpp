@@ -1,5 +1,7 @@
 #include "user.hpp"
 
+#include "abaddon.hpp"
+
 bool UserData::IsPomelo() const noexcept {
     return Discriminator.size() == 1 && Discriminator[0] == '0';
 }

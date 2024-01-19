@@ -1,7 +1,10 @@
 #pragma once
-#include "notifier.hpp"
+
 #include <map>
 #include <vector>
+
+#include "discord/snowflake.hpp"
+#include "notifier.hpp"
 
 class Message;
 

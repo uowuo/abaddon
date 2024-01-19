@@ -1,5 +1,9 @@
 #include "ratelimitindicator.hpp"
+
 #include <filesystem>
+
+#include "abaddon.hpp"
+#include "util.hpp"
 
 RateLimitIndicator::RateLimitIndicator()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL) {

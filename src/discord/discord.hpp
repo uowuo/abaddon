@@ -7,6 +7,7 @@
 #include "voiceclient.hpp"
 #include "voicestateflags.hpp"
 #include "websocket.hpp"
+#include <gdkmm/rgba.h>
 #include <sigc++/sigc++.h>
 #include <nlohmann/json.hpp>
 #include <thread>
@@ -21,7 +22,6 @@
 #undef GetMessage
 #endif
 
-class Abaddon;
 class DiscordClient {
     friend class Abaddon;
 

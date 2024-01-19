@@ -5,6 +5,9 @@
 // clang-format off
 
 #include <gtkmm/dialog.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+
 #include "remoteauthclient.hpp"
 
 // clang-format on

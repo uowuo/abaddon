@@ -1,6 +1,9 @@
 #include "startup.hpp"
+
 #include <future>
 #include <memory>
+
+#include "abaddon.hpp"
 
 DiscordStartupDialog::DiscordStartupDialog(Gtk::Window &window)
     : Gtk::MessageDialog(window, "", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_NONE, true) {

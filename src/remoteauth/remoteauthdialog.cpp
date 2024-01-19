@@ -3,7 +3,11 @@
 // clang-format off
 
 #include "remoteauthdialog.hpp"
+
+#include <gdkmm/pixbufloader.h>
 #include <qrcodegen.hpp>
+
+#include "abaddon.hpp"
 
 // clang-format on
 

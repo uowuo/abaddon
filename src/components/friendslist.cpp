@@ -1,5 +1,9 @@
 #include "friendslist.hpp"
+#include <gtkmm/messagedialog.h>
+#include <gtkmm/radiobutton.h>
+#include "abaddon.hpp"
 #include "lazyimage.hpp"
+#include "util.hpp"
 
 using namespace std::string_literals;
 

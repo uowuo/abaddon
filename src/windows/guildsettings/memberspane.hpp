@@ -1,5 +1,15 @@
 #pragma once
+
 #include <unordered_set>
+
+#include <gtkmm/box.h>
+#include <gtkmm/checkbutton.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/member.hpp"
 #include "discord/guild.hpp"
 #include "components/lazyimage.hpp"

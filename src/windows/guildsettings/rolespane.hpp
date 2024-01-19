@@ -1,5 +1,16 @@
 #pragma once
+
 #include <unordered_map>
+
+#include <gtkmm/box.h>
+#include <gtkmm/checkbutton.h>
+#include <gtkmm/colorbutton.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/label.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/guild.hpp"
 #include "components/draglistbox.hpp"
 

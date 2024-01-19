@@ -1,4 +1,13 @@
 #pragma once
+
+#include <gtkmm/box.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/overlay.h>
+#include <gtkmm/textview.h>
+
 #include "discord/objects.hpp"
 
 class ConnectionItem : public Gtk::EventBox {

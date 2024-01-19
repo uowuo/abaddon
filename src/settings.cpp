@@ -1,7 +1,10 @@
 #include "settings.hpp"
+
 #include <filesystem>
 #include <fstream>
+
 #include <glibmm/miscutils.h>
+#include <spdlog/spdlog.h>
 
 #ifdef WITH_KEYCHAIN
 #include <keychain/keychain.h>

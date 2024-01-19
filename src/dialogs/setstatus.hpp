@@ -1,4 +1,9 @@
 #pragma once
+
+#include <gtkmm/comboboxtext.h>
+#include <gtkmm/dialog.h>
+#include <gtkmm/entry.h>
+
 #include "discord/objects.hpp"
 
 class SetStatusDialog : public Gtk::Dialog {

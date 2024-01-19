@@ -1,5 +1,11 @@
 #include "userinfopane.hpp"
+
 #include <unordered_set>
+
+#include <gtkmm/messagedialog.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
 
 static std::string GetConnectionURL(const ConnectionData &conn) {
     if (conn.Type == "github") {

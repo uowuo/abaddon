@@ -6,6 +6,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/comboboxtext.h>
 #include <gtkmm/scale.h>
+#include <gtkmm/spinbutton.h>
 #include <gtkmm/window.h>
 
 // clang-format on

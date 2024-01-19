@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "misc/bitwise.hpp"
 
 enum class VoiceStateFlags : uint8_t {
     Clear = 0,

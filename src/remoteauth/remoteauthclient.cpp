@@ -3,9 +3,13 @@
 // clang-format off
 
 #include "remoteauthclient.hpp"
-#include "http.hpp"
+
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/bin_to_hex.h>
+
+#include "abaddon.hpp"
+#include "http.hpp"
+
 
 // clang-format on
 

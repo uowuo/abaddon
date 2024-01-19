@@ -1,5 +1,8 @@
 #include "chatutil.hpp"
+
+#include "abaddon.hpp"
 #include "constants.hpp"
+#include "util.hpp"
 
 namespace ChatUtil {
 Glib::ustring GetText(const Glib::RefPtr<Gtk::TextBuffer> &buf) {

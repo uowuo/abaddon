@@ -2,6 +2,11 @@
 
 #include <utility>
 
+#include <gdkmm/pixbufloader.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
+
 ImageManager::ImageManager() {
     m_cb_dispatcher.connect(sigc::mem_fun(*this, &ImageManager::RunCallbacks));
 }

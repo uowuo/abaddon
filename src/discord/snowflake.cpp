@@ -1,7 +1,10 @@
 #include "snowflake.hpp"
+
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+
+#include "util.hpp"
 
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 

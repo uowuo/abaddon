@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <map>
 #include <unordered_map>
+#include "abaddon.hpp"
+#include "util.hpp"
 
 ChannelListTree::ChannelListTree()
     : Glib::ObjectBase(typeid(ChannelListTree))

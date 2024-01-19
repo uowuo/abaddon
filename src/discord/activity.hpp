@@ -3,6 +3,7 @@
 #include <optional>
 #include "json.hpp"
 #include "snowflake.hpp"
+#include "misc/bitwise.hpp"
 
 enum class PresenceStatus : uint8_t {
     Online,

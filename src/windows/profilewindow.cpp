@@ -1,5 +1,8 @@
 #include "profilewindow.hpp"
 
+#include "abaddon.hpp"
+#include "util.hpp"
+
 ProfileWindow::ProfileWindow(Snowflake user_id)
     : ID(user_id)
     , m_main(Gtk::ORIENTATION_VERTICAL)

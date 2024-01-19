@@ -1,12 +1,14 @@
 #pragma once
+#include <unordered_map>
+
 #include <gdkmm/pixbuf.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/treemodel.h>
 #include <gtkmm/treestore.h>
 #include <gtkmm/treeview.h>
 
-#include <unordered_map>
-
 #include "cellrenderermemberlist.hpp"
+#include "discord/user.hpp"
 #include "discord/snowflake.hpp"
 
 class MemberList {

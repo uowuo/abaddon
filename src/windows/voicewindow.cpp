@@ -2,11 +2,12 @@
 
 // clang-format off
 
-#include "voicewindow.hpp"
-#include "components/lazyimage.hpp"
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
+#include "components/lazyimage.hpp"
 #include "voicesettingswindow.hpp"
+#include "voicewindow.hpp"
+
 // clang-format on
 
 class VoiceWindowUserListEntry : public Gtk::ListBoxRow {

@@ -1,6 +1,10 @@
+#include "util.hpp"
+
 #include <array>
 #include <cstring>
 #include <filesystem>
+
+#include <gtkmm.h>
 
 void LaunchBrowser(const Glib::ustring &url) {
     GError *err = nullptr;

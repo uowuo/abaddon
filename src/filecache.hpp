@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <future>
 #include <mutex>
+#include <queue>
 #include "http.hpp"
 
 class FileCacheWorkerThread {
