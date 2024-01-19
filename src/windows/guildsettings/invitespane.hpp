@@ -1,4 +1,10 @@
 #pragma once
+
+#include <gtkmm/liststore.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treeview.h>
+
 #include "discord/objects.hpp"
 
 class GuildSettingsInvitesPane : public Gtk::ScrolledWindow {

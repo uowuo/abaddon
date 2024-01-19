@@ -1,5 +1,7 @@
 #include "notifier.hpp"
 
+#include "abaddon.hpp"
+
 /* no actual notifications, just sounds
   GNotification has no win32 backend, and WinToast uses headers msys2 doesnt provide
   maybe it can be LoadLibrary'd in :s

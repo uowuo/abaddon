@@ -1,5 +1,11 @@
 #include "emojispane.hpp"
+
+#include <gtkmm/messagedialog.h>
+#include <gtkmm/treemodelfilter.h>
+
+#include "abaddon.hpp"
 #include "components/cellrendererpixbufanimation.hpp"
+#include "util.hpp"
 
 GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)

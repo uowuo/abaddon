@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <gtkmm/progressbar.h>
 
 class MessageUploadProgressBar : public Gtk::ProgressBar {
 public:

@@ -1,6 +1,8 @@
 #include "filecache.hpp"
 
 #include <utility>
+
+#include "abaddon.hpp"
 #include "MurmurHash3.h"
 
 std::string GetCachedName(const std::string &str) {

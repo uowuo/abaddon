@@ -1,4 +1,11 @@
 #pragma once
+
+#include <gtkmm/dialog.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/snowflake.hpp"
 
 class FriendPickerDialog : public Gtk::Dialog {

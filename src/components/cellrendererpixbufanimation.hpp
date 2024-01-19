@@ -1,5 +1,8 @@
 #pragma once
 #include <unordered_map>
+#include <gdkmm/pixbufanimation.h>
+#include <glibmm/property.h>
+#include <gtkmm/cellrenderer.h>
 
 // handles both static and animated
 class CellRendererPixbufAnimation : public Gtk::CellRenderer {

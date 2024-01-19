@@ -1,4 +1,11 @@
 #pragma once
+
+#include <gtkmm/box.h>
+#include <gtkmm/liststore.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/treeview.h>
+
 #include "discord/snowflake.hpp"
 #include "discord/ban.hpp"
 

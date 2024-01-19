@@ -1,5 +1,7 @@
 #pragma once
-#include <string>
+
+#include <gtkmm/dialog.h>
+#include <gtkmm/entry.h>
 
 class TokenDialog : public Gtk::Dialog {
 public:

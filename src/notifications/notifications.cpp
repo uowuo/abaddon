@@ -1,6 +1,8 @@
 #include "notifications.hpp"
-#include "misc/chatutil.hpp"
+
+#include "abaddon.hpp"
 #include "discord/message.hpp"
+#include "misc/chatutil.hpp"
 
 Notifications::Notifications() {
 }

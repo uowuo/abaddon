@@ -1,5 +1,12 @@
 #pragma once
 #include <functional>
+#include <gdkmm/pixbuf.h>
+#include <gtkmm/box.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/listboxrow.h>
+#include <gtkmm/revealer.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/textview.h>
 #include "lazyimage.hpp"
 #include "discord/snowflake.hpp"
 

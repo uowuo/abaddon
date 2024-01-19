@@ -1,4 +1,5 @@
 #pragma once
+#include <gtkmm/listbox.h>
 
 class DragListBox : public Gtk::ListBox {
 public:

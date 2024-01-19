@@ -4,12 +4,17 @@
 
 // clang-format off
 
+#include <optional>
 #include <string>
 #include <queue>
+
 #include <spdlog/logger.h>
-#include "ssl.hpp"
+
+#include "discord/errors.hpp"
+#include "discord/snowflake.hpp"
 #include "discord/waiter.hpp"
 #include "discord/websocket.hpp"
+#include "ssl.hpp"
 
 // clang-format on
 

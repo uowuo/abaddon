@@ -1,4 +1,6 @@
 #include "draglistbox.hpp"
+#include <glibmm/main.h>
+#include <gtkmm/adjustment.h>
 
 DragListBox::DragListBox() {
     drag_dest_set(m_entries, Gtk::DEST_DEFAULT_MOTION | Gtk::DEST_DEFAULT_DROP, Gdk::ACTION_MOVE);

@@ -1,8 +1,14 @@
 #pragma once
-#include <string>
-#include <unordered_map>
+
 #include <functional>
 #include <queue>
+#include <string>
+#include <unordered_map>
+
+#include <gdkmm/pixbuf.h>
+#include <gdkmm/pixbufanimation.h>
+#include <glibmm/dispatcher.h>
+
 #include "filecache.hpp"
 
 class ImageManager {

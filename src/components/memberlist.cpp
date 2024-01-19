@@ -1,5 +1,8 @@
 #include "memberlist.hpp"
 
+#include "abaddon.hpp"
+#include "util.hpp"
+
 constexpr static int MemberListUserLimit = 200;
 
 MemberList::MemberList()

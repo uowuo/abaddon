@@ -1,5 +1,8 @@
 #pragma once
 
+#include <gtkmm/dialog.h>
+#include <gtkmm/label.h>
+
 class ConfirmDialog : public Gtk::Dialog {
 public:
     ConfirmDialog(Gtk::Window &parent);

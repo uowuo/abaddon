@@ -1,5 +1,7 @@
 #include "mutualfriendspane.hpp"
 
+#include "abaddon.hpp"
+
 MutualFriendItem::MutualFriendItem(const UserData &user)
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL) {
     get_style_context()->add_class("mutual-friend-item");

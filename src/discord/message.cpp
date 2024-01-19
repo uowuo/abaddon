@@ -1,5 +1,7 @@
 #include "message.hpp"
 
+#include "abaddon.hpp"
+
 void to_json(nlohmann::json &j, const EmbedFooterData &m) {
     j["text"] = m.Text;
     JS_IF("icon_url", m.IconURL);

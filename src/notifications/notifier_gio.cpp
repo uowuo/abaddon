@@ -1,5 +1,8 @@
 #include "notifier.hpp"
+
 #include <giomm/notification.h>
+
+#include "abaddon.hpp"
 
 Notifier::Notifier() {
 #ifdef ENABLE_NOTIFICATION_SOUNDS

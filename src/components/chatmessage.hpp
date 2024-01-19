@@ -1,4 +1,10 @@
 #pragma once
+#include <gdkmm/pixbufanimation.h>
+#include <gtkmm/box.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/image.h>
+#include <gtkmm/listboxrow.h>
+#include <gtkmm/textview.h>
 #include "discord/discord.hpp"
 
 class ChatMessageItemContainer : public Gtk::EventBox {

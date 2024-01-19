@@ -1,4 +1,12 @@
 #pragma once
+
+#include <gdkmm/pixbuf.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+
 #include "discord/guild.hpp"
 
 class GuildSettingsInfoPane : public Gtk::Grid {

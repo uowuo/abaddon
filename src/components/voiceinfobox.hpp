@@ -2,10 +2,14 @@
 
 #ifdef WITH_VOICE
 
-    #include <gtkmm/box.h>
-    #include <gtkmm/eventbox.h>
-    #include <gtkmm/image.h>
-    #include <gtkmm/label.h>
+// clang-format off
+
+#include <gtkmm/box.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+
+// clang-format on
 
 class VoiceInfoBox : public Gtk::Box {
 public:

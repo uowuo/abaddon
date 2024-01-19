@@ -1,5 +1,8 @@
 #include "mainwindow.hpp"
 
+#include "abaddon.hpp"
+#include "util.hpp"
+
 MainWindow::MainWindow()
     : m_main_box(Gtk::ORIENTATION_VERTICAL)
     , m_content_box(Gtk::ORIENTATION_HORIZONTAL)

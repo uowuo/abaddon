@@ -2,10 +2,11 @@
 
 // clang-format off
 
-#include "voicesettingswindow.hpp"
+#include <spdlog/spdlog.h>
+
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
-#include <spdlog/spdlog.h>
+#include "voicesettingswindow.hpp"
 
 // clang-format on
 

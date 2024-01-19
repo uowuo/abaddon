@@ -1,5 +1,8 @@
-#include <filesystem>
 #include "chatinputindicator.hpp"
+#include <filesystem>
+#include <gdkmm/pixbufloader.h>
+#include "abaddon.hpp"
+#include "util.hpp"
 
 constexpr static const int MaxUsersInIndicator = 4;
 

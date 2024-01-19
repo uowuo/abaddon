@@ -1,5 +1,7 @@
 #include "friendpicker.hpp"
 
+#include "abaddon.hpp"
+
 FriendPickerDialog::FriendPickerDialog(Gtk::Window &parent)
     : Gtk::Dialog("Pick a friend", parent, true)
     , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {

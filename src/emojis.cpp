@@ -1,6 +1,9 @@
 #include "emojis.hpp"
+
 #include <sstream>
 #include <utility>
+
+#include <gdkmm/pixbufloader.h>
 
 #ifdef ABADDON_IS_BIG_ENDIAN
 /* Allows processing emojis.bin correctly on big-endian systems. */

@@ -1,7 +1,11 @@
 #include "discord.hpp"
-#include <spdlog/spdlog.h>
+
 #include <cinttypes>
 #include <utility>
+
+#include <spdlog/spdlog.h>
+
+#include "abaddon.hpp"
 
 using namespace std::string_literals;
 

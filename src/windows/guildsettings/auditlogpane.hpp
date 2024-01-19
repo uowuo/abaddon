@@ -1,4 +1,8 @@
 #pragma once
+
+#include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/objects.hpp"
 
 class GuildSettingsAuditLogPane : public Gtk::ScrolledWindow {

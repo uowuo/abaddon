@@ -1,4 +1,5 @@
 #pragma once
+#include <gtkmm/image.h>
 
 // loads an image only when the widget is drawn for the first time
 class LazyImage : public Gtk::Image {

@@ -1,7 +1,10 @@
 #pragma once
+#include <map>
+#include <optional>
 #include <gdkmm/pixbufanimation.h>
 #include <glibmm/property.h>
-#include <map>
+#include <gtkmm/cellrendererpixbuf.h>
+#include <gtkmm/cellrenderertext.h>
 #include "discord/snowflake.hpp"
 #include "discord/voicestateflags.hpp"
 #include "misc/bitwise.hpp"

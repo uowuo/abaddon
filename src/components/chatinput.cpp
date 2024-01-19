@@ -1,7 +1,11 @@
 #include "chatinput.hpp"
+#include <filesystem>
+#include <gtkmm/dialog.h>
+#include <gtkmm/filechoosernative.h>
+#include "abaddon.hpp"
 #include "constants.hpp"
 #include "misc/events.hpp"
-#include <filesystem>
+#include "util.hpp"
 
 ChatInputText::ChatInputText() {
     get_style_context()->add_class("message-input");

@@ -1,4 +1,11 @@
 #pragma once
+
+#include <gtkmm/box.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/listbox.h>
+#include <gtkmm/scrolledwindow.h>
+
 #include "discord/objects.hpp"
 
 class MutualFriendItem : public Gtk::Box {

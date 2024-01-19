@@ -1,8 +1,12 @@
 #pragma once
+
 #include <string>
 #include <cstdio>
 #include <unordered_map>
 #include <vector>
+
+#include <gdkmm/pixbuf.h>
+#include <gtkmm/textbuffer.h>
 
 // shoutout to gtk for only supporting .svg's sometimes
 

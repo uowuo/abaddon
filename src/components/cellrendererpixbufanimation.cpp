@@ -1,4 +1,6 @@
 #include "cellrendererpixbufanimation.hpp"
+#include <gdkmm/general.h>
+#include <glibmm/main.h>
 
 CellRendererPixbufAnimation::CellRendererPixbufAnimation()
     : Glib::ObjectBase(typeid(CellRendererPixbufAnimation))

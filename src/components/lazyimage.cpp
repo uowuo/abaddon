@@ -1,6 +1,8 @@
 #include "lazyimage.hpp"
 
 #include <utility>
+#include "abaddon.hpp"
+#include "util.hpp"
 
 LazyImage::LazyImage(int w, int h, bool use_placeholder)
     : m_width(w)

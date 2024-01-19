@@ -1,5 +1,14 @@
 #pragma once
+#include <gtkmm/box.h>
+#include <gtkmm/button.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/image.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/revealer.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/textview.h>
 #include "discord/chatsubmitparams.hpp"
+#include "discord/message.hpp"
 #include "discord/permissions.hpp"
 
 class ChatInputAttachmentItem : public Gtk::EventBox {

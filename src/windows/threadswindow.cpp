@@ -1,5 +1,7 @@
 #include "threadswindow.hpp"
 
+#include "abaddon.hpp"
+
 ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     : m_channel_id(channel.ID)
     , m_filter_public(m_group, "Public")

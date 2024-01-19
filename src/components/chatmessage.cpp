@@ -1,8 +1,11 @@
 #include "chatmessage.hpp"
+#include <unordered_map>
+#include <gtkmm/flowbox.h>
+#include "abaddon.hpp"
 #include "constants.hpp"
 #include "lazyimage.hpp"
 #include "misc/chatutil.hpp"
-#include <unordered_map>
+#include "util.hpp"
 
 ChatMessageItemContainer::ChatMessageItemContainer()
     : m_main(Gtk::ORIENTATION_VERTICAL) {

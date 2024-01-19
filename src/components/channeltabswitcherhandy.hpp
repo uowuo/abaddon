@@ -1,10 +1,16 @@
 #pragma once
 // perhaps this should be conditionally included within cmakelists?
 #ifdef WITH_LIBHANDY
-        #include <unordered_map>
-    #include <handy.h>
-    #include "discord/snowflake.hpp"
-    #include "state.hpp"
+
+// clang-format off
+
+#include <unordered_map>
+#include <gtkmm/box.h>
+#include <handy.h>
+#include "discord/snowflake.hpp"
+#include "state.hpp"
+
+// clang-format off
 
 class ChannelData;
 

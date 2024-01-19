@@ -1,4 +1,9 @@
 #pragma once
+
+#include <gtkmm/stack.h>
+#include <gtkmm/stackswitcher.h>
+#include <gtkmm/window.h>
+
 #include "discord/snowflake.hpp"
 #include "guildsettings/infopane.hpp"
 #include "guildsettings/banspane.hpp"

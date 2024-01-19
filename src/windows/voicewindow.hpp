@@ -6,7 +6,7 @@
 #include "discord/snowflake.hpp"
 #include <gtkmm/box.h>
 #include <gtkmm/checkbutton.h>
-#include <gtkmm/combobox.h>
+#include <gtkmm/comboboxtext.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/menubar.h>
 #include <gtkmm/progressbar.h>

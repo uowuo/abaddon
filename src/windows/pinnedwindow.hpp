@@ -1,4 +1,7 @@
 #pragma once
+
+#include <gtkmm/window.h>
+
 #include "discord/errors.hpp"
 #include "discord/channel.hpp"
 #include "discord/message.hpp"

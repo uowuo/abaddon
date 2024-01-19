@@ -1,5 +1,7 @@
 #include "setstatus.hpp"
 
+#include "abaddon.hpp"
+
 static const std::array feelings = {
     "wonderful",
     "splendiferous",

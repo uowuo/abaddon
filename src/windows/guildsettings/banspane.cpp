@@ -1,7 +1,8 @@
 #include "banspane.hpp"
 
-// gtk_list_store_set_value: assertion 'column >= 0 && column < priv->n_columns' failed
-// dont care to figure out why this happens cuz it doesnt seem to break anything
+#include <gtkmm/messagedialog.h>
+
+#include "abaddon.hpp"
 
 GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)

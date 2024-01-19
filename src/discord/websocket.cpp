@@ -1,6 +1,10 @@
 #include "websocket.hpp"
-#include <spdlog/sinks/stdout_color_sinks.h>
+
 #include <utility>
+
+#include <gtkmm/main.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 
 Websocket::Websocket(const std::string &id)
     : m_close_info { 1000, "Normal", false } {

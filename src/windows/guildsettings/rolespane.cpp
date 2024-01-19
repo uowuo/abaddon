@@ -1,5 +1,10 @@
 #include "rolespane.hpp"
 
+#include <gtkmm/messagedialog.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
+
 GuildSettingsRolesPane::GuildSettingsRolesPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
     , GuildID(id)

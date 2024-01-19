@@ -1,9 +1,11 @@
+#include "abaddon.hpp"
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #include <algorithm>
+#include <gtkmm.h>
 #include "platform.hpp"
 #include "audio/manager.hpp"
 #include "discord/discord.hpp"
@@ -21,6 +23,7 @@
 #include "startup.hpp"
 #include "notifications/notifications.hpp"
 #include "remoteauth/remoteauthdialog.hpp"
+#include "util.hpp"
 
 #ifdef WITH_LIBHANDY
 #include <handy.h>

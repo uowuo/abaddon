@@ -1,5 +1,7 @@
 #pragma once
+#include <glibmm/property.h>
 #include <gtkmm/cellrenderer.h>
+#include <gtkmm/cellrenderertext.h>
 #include "discord/activity.hpp"
 
 enum class MemberListRenderType : uint8_t {

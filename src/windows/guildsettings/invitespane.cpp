@@ -1,5 +1,10 @@
 #include "invitespane.hpp"
 
+#include <gtkmm/messagedialog.h>
+
+#include "abaddon.hpp"
+#include "util.hpp"
+
 GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     : GuildID(id)
     , m_model(Gtk::ListStore::create(m_columns))
