@@ -1,4 +1,6 @@
 #include "guildlist.hpp"
+
+#include "abaddon.hpp"
 #include "guildlistfolderitem.hpp"
 
 class GuildListDMsButton : public Gtk::EventBox {

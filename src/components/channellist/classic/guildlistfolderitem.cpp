@@ -1,5 +1,8 @@
 #include "guildlistfolderitem.hpp"
+
+#include "abaddon.hpp"
 #include "guildlistguilditem.hpp"
+#include "util.hpp"
 
 // doing my best to copy discord here
 

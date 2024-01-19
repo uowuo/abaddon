@@ -1,5 +1,7 @@
 #include "guildlistguilditem.hpp"
 
+#include "abaddon.hpp"
+
 GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
     : ID(guild.ID) {
     m_image.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(48);

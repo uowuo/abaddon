@@ -1,8 +1,10 @@
 #pragma once
 #include <gtkmm/box.h>
 #include <gtkmm/eventbox.h>
+#include <gtkmm/grid.h>
 #include <gtkmm/image.h>
 #include <gtkmm/revealer.h>
+#include <gtkmm/stack.h>
 
 #include "guildlistguilditem.hpp"
 #include "discord/usersettings.hpp"

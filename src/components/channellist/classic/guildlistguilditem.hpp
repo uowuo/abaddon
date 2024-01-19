@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm/box.h>
+#include <gtkmm/eventbox.h>
 #include <gtkmm/image.h>
 #include "discord/guild.hpp"
 

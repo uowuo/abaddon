@@ -1,5 +1,7 @@
 #include "channellist.hpp"
 
+#include "abaddon.hpp"
+
 ChannelList::ChannelList() {
     ConnectSignals();
 

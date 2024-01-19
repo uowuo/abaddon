@@ -1,9 +1,13 @@
 #include "channellisttree.hpp"
-#include "imgmanager.hpp"
+
 #include <algorithm>
 #include <map>
 #include <unordered_map>
+
+#include <gtkmm/main.h>
+
 #include "abaddon.hpp"
+#include "imgmanager.hpp"
 #include "util.hpp"
 
 ChannelListTree::ChannelListTree()
