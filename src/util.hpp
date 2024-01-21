@@ -14,7 +14,6 @@
 #include <optional>
 #include <type_traits>
 
-#include <gtkmm/enums.h>
 #include <sigc++/slot.h>
 
 namespace Glib {
@@ -39,8 +38,6 @@ bool IsFolder(std::string_view path);
 bool IsFile(std::string_view path);
 
 uint64_t TimeToEpoch(int year, int month, int day, int hour, int minute, int seconds);
-
-Gtk::PolicyType TranslateScrollPolicy(const std::string &str);
 } // namespace util
 
 void LaunchBrowser(const Glib::ustring &url);

@@ -44,8 +44,6 @@ public:
         std::string MentionBadgeColor;
         std::string MentionBadgeTextColor;
         std::string UnreadIndicatorColor;
-        std::string ClassicGuildScrollPolicy;
-        std::string ClassicChannelScrollPolicy;
 
         // [notifications]
         bool NotificationsEnabled;
