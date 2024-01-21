@@ -32,6 +32,7 @@ public:
         bool ClassicChangeGuildOnOpen;
         int ImageEmbedClampWidth;
         int ImageEmbedClampHeight;
+        bool ClassicChannels;
 
         // [http]
         int CacheHTTPConcurrency;
