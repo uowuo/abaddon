@@ -308,7 +308,8 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `font_scale`                   | double  |         | scale font rendering. 1 is unchanged                                                                                       |
 | `image_embed_clamp_width`      | int     | 400     | maximum width of image embeds                                                                                              |
 | `image_embed_clamp_height`     | int     | 300     | maximum height of image embeds                                                                                             |
-| `classic_change_guild_on_open` | boolean | true    | change displayed guild when selecting a channel (classic channel list)                                                     |
+| `classic_change_guild_on_open` | boolean | true    | change displayed guild when selecting a channel (classic channel list)     
+|`classic-channels`              | bloolean| true    | Changes the channel layout from classic discord, to abaddon layout                                                         |
 
 #### style
 
