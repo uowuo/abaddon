@@ -113,6 +113,8 @@ void SettingsManager::DefineSettings() {
     AddSetting("style", "mentionbadgecolor", "rgba(184, 37, 37, 0)"s, &Settings::MentionBadgeColor);
     AddSetting("style", "mentionbadgetextcolor", "rgba(251, 251, 251, 0)"s, &Settings::MentionBadgeTextColor);
     AddSetting("style", "unreadcolor", "rgba(255, 255, 255, 0)"s, &Settings::UnreadIndicatorColor);
+    AddSetting("style", "classic_guild_scroll_policy", "automatic"s, &Settings::ClassicGuildScrollPolicy);
+    AddSetting("style", "classic_channel_scroll_policy", "automatic"s, &Settings::ClassicChannelScrollPolicy);
 
 #ifdef _WIN32
     AddSetting("notifications", "enabled", false, &Settings::NotificationsEnabled);

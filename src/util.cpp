@@ -228,3 +228,11 @@ uint64_t util::TimeToEpoch(int year, int month, int day, int hour, int minute, i
     secs += seconds;
     return secs;
 }
+
+Gtk::PolicyType util::TranslateScrollPolicy(const std::string &str) {
+    if (str == "never") return Gtk::POLICY_NEVER;
+    if (str == "automatic") return Gtk::POLICY_AUTOMATIC;
+    if (str == "always") return Gtk::POLICY_ALWAYS;
+    if (str == "external") return Gtk::POLICY_EXTERNAL;
+    return Gtk::POLICY_AUTOMATIC;
+}

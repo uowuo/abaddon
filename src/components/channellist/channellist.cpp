@@ -1,13 +1,15 @@
 #include "channellist.hpp"
 
 #include "abaddon.hpp"
+#include "util.hpp"
 
 ChannelList::ChannelList() {
     ConnectSignals();
 
     m_guilds.set_halign(Gtk::ALIGN_START);
 
-    m_guilds_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    m_guilds_scroll.set_policy(Gtk::POLICY_NEVER, util::TranslateScrollPolicy(Abaddon::Get().GetSettings().ClassicGuildScrollPolicy));
+    m_tree.set_policy(Gtk::POLICY_AUTOMATIC, util::TranslateScrollPolicy(Abaddon::Get().GetSettings().ClassicChannelScrollPolicy));
 
     m_guilds.signal_guild_selected().connect([this](Snowflake guild_id) {
         m_tree.SetSelectedGuild(guild_id);
