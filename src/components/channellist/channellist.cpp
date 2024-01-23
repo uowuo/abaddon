@@ -3,6 +3,8 @@
 #include "abaddon.hpp"
 
 ChannelList::ChannelList() {
+    get_style_context()->add_class("channel-browser-pane");
+
     ConnectSignals();
 
     m_guilds.set_halign(Gtk::ALIGN_START);
