@@ -15,7 +15,7 @@ GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
 
 void GuildListGuildItem::UpdateIcon() {
     const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(ID);
-    if (!guild.has_value()) return;
+    if (!guild.has_value() || !guild->HasIcon()) return;
     Abaddon::Get().GetImageManager().LoadFromURL(guild->GetIconURL("png", "64"), sigc::mem_fun(*this, &GuildListGuildItem::OnIconFetched));
 }
 

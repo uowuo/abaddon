@@ -24,7 +24,7 @@ void GuildListFolderButton::SetGuilds(const std::vector<Snowflake> &guild_ids) {
             if (i < guild_ids.size()) {
                 widget.show();
 
-                if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(guild_ids[i]); guild.has_value()) {
+                if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(guild_ids[i]); guild.has_value() && guild->HasIcon()) {
                     const auto cb = [&widget](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
                         widget.property_pixbuf() = pb->scale_simple(FolderGridImageSize, FolderGridImageSize, Gdk::INTERP_BILINEAR);
                     };
