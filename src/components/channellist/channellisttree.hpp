@@ -90,7 +90,13 @@ protected:
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
     Glib::RefPtr<Gtk::TreeModelFilter> m_filter_model;
+    Glib::RefPtr<Gtk::TreeModelSort> m_sort_model;
 
+    Gtk::TreePath ConvertModelPathToView(const Gtk::TreePath &path);
+    Gtk::TreeIter ConvertModelIterToView(const Gtk::TreeIter &iter);
+    Gtk::TreePath ConvertViewPathToModel(const Gtk::TreePath &path);
+    Gtk::TreeIter ConvertViewIterToModel(const Gtk::TreeIter &iter);
+    Gtk::TreePath GetViewPathFromViewIter(const Gtk::TreeIter &iter);
     Gtk::TreeModel::iterator AddFolder(const UserSettingsGuildFoldersEntry &folder);
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);

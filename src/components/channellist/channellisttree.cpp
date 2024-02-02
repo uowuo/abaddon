@@ -14,6 +14,7 @@ ChannelListTree::ChannelListTree()
     : Glib::ObjectBase(typeid(ChannelListTree))
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_filter_model(Gtk::TreeModelFilter::create(m_model))
+    , m_sort_model(Gtk::TreeModelSort::create(m_filter_model))
     , m_menu_guild_copy_id("_Copy ID", true)
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
@@ -44,7 +45,10 @@ ChannelListTree::ChannelListTree()
 
     // Filter iters
     const auto cb = [this](const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *column) {
-        auto row = *m_filter_model->get_iter(path);
+        auto view_path = ConvertViewPathToModel(path);
+        if (!view_path) return;
+        auto row = *m_model->get_iter(view_path);
+        if (!row) return;
         const auto type = row[m_columns.m_type];
         // text channels should not be allowed to be collapsed
         // maybe they should be but it seems a little difficult to handle expansion to permit this
@@ -78,14 +82,15 @@ ChannelListTree::ChannelListTree()
     m_view.set_show_expanders(false);
     m_view.set_enable_search(false);
     m_view.set_headers_visible(false);
-    m_view.set_model(m_filter_model);
-    m_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
+    m_view.set_model(m_sort_model);
+    m_sort_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
 
     m_model->signal_row_inserted().connect([this](const Gtk::TreeModel::Path &path, const Gtk::TreeModel::iterator &iter) {
         if (m_updating_listing) return;
         if (auto parent = iter->parent(); parent && (*parent)[m_columns.m_expanded]) {
-            const auto filter_path = m_filter_model->convert_child_path_to_path(m_model->get_path(parent));
-            m_view.expand_row(filter_path, false);
+            if (const auto view_path = ConvertModelPathToView(m_model->get_path(parent))) {
+                m_view.expand_row(view_path, false);
+            }
         }
     });
 
@@ -326,8 +331,8 @@ void ChannelListTree::SetSelectedGuild(Snowflake guild_id) {
     m_filter_model->refilter();
     auto guild_iter = GetIteratorForGuildFromID(guild_id);
     if (guild_iter) {
-        if (auto filter_iter = m_filter_model->convert_child_iter_to_iter(guild_iter)) {
-            m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+        if (auto view_iter = ConvertModelIterToView(guild_iter)) {
+            m_view.expand_row(GetViewPathFromViewIter(view_iter), false);
         }
     }
 }
@@ -336,8 +341,8 @@ void ChannelListTree::SetSelectedDMs() {
     m_classic_selected_dms = true;
     m_filter_model->refilter();
     if (m_dm_header) {
-        if (auto filter_path = m_filter_model->convert_child_path_to_path(m_dm_header)) {
-            m_view.expand_row(filter_path, false);
+        if (auto view_path = ConvertModelPathToView(m_dm_header)) {
+            m_view.expand_row(view_path, false);
         }
     }
 }
@@ -673,12 +678,12 @@ void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
     const auto channel_iter = GetIteratorForRowFromID(id);
     if (channel_iter) {
         m_view.get_selection()->unselect_all();
-        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(channel_iter);
-        if (filter_iter) {
+        const auto view_iter = ConvertModelIterToView(channel_iter);
+        if (view_iter) {
             if (expand_to) {
-                m_view.expand_to_path(m_filter_model->get_path(filter_iter));
+                m_view.expand_to_path(GetViewPathFromViewIter(view_iter));
             }
-            m_view.get_selection()->select(filter_iter);
+            m_view.get_selection()->select(view_iter);
         }
     } else {
         m_view.get_selection()->unselect_all();
@@ -687,9 +692,9 @@ void ChannelListTree::SetActiveChannel(Snowflake id, bool expand_to) {
         auto parent_iter = GetIteratorForRowFromID(*channel->ParentID);
         if (!parent_iter) return;
         m_temporary_thread_row = CreateThreadRow(parent_iter->children(), *channel);
-        const auto filter_iter = m_filter_model->convert_child_iter_to_iter(m_temporary_thread_row);
-        if (filter_iter) {
-            m_view.get_selection()->select(filter_iter);
+        const auto view_iter = ConvertModelIterToView(m_temporary_thread_row);
+        if (view_iter) {
+            m_view.get_selection()->select(view_iter);
         }
     }
 }
@@ -709,12 +714,12 @@ void ChannelListTree::UseExpansionState(const ExpansionStateRoot &root) {
 
             if (row_iter) {
                 (*row_iter)[m_columns.m_expanded] = state.IsExpanded;
-                auto filter_iter = m_filter_model->convert_child_iter_to_iter(row_iter);
-                if (filter_iter) {
+                auto view_iter = ConvertModelIterToView(row_iter);
+                if (view_iter) {
                     if (state.IsExpanded) {
-                        m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+                        m_view.expand_row(GetViewPathFromViewIter(view_iter), false);
                     } else {
-                        m_view.collapse_row(m_filter_model->get_path(filter_iter));
+                        m_view.collapse_row(GetViewPathFromViewIter(view_iter));
                     }
                 }
             }
@@ -725,13 +730,13 @@ void ChannelListTree::UseExpansionState(const ExpansionStateRoot &root) {
 
     for (const auto &[id, state] : root.Children) {
         if (const auto iter = GetIteratorForTopLevelFromID(id)) {
-            (*iter)[m_columns.m_expanded]  = state.IsExpanded;
-            auto filter_iter = m_filter_model->convert_child_iter_to_iter(iter);
-            if (filter_iter) {
+            (*iter)[m_columns.m_expanded] = state.IsExpanded;
+            auto view_iter = ConvertModelIterToView(iter);
+            if (view_iter) {
                 if (state.IsExpanded) {
-                    m_view.expand_row(m_filter_model->get_path(filter_iter), false);
+                    m_view.expand_row(GetViewPathFromViewIter(view_iter), false);
                 } else {
-                    m_view.collapse_row(m_filter_model->get_path(filter_iter));
+                    m_view.collapse_row(GetViewPathFromViewIter(view_iter));
                 }
             }
         }
@@ -767,6 +772,50 @@ ExpansionStateRoot ChannelListTree::GetExpansionState() const {
     }
 
     return r;
+}
+
+Gtk::TreePath ChannelListTree::ConvertModelPathToView(const Gtk::TreePath &path) {
+    if (const auto filter_path = m_filter_model->convert_child_path_to_path(path)) {
+        if (const auto sort_path = m_sort_model->convert_child_path_to_path(filter_path)) {
+            return sort_path;
+        }
+    }
+
+    return {};
+}
+
+Gtk::TreeIter ChannelListTree::ConvertModelIterToView(const Gtk::TreeIter &iter) {
+    if (const auto filter_iter = m_filter_model->convert_child_iter_to_iter(iter)) {
+        if (const auto sort_iter = m_sort_model->convert_child_iter_to_iter(filter_iter)) {
+            return sort_iter;
+        }
+    }
+
+    return {};
+}
+
+Gtk::TreePath ChannelListTree::ConvertViewPathToModel(const Gtk::TreePath &path) {
+    if (const auto filter_path = m_sort_model->convert_path_to_child_path(path)) {
+        if (const auto model_path = m_filter_model->convert_path_to_child_path(filter_path)) {
+            return model_path;
+        }
+    }
+
+    return {};
+}
+
+Gtk::TreeIter ChannelListTree::ConvertViewIterToModel(const Gtk::TreeIter &iter) {
+    if (const auto filter_iter = m_sort_model->convert_iter_to_child_iter(iter)) {
+        if (const auto model_iter = m_filter_model->convert_iter_to_child_iter(filter_iter)) {
+            return model_iter;
+        }
+    }
+
+    return {};
+}
+
+Gtk::TreePath ChannelListTree::GetViewPathFromViewIter(const Gtk::TreeIter &iter) {
+    return m_sort_model->get_path(iter);
 }
 
 Gtk::TreeModel::iterator ChannelListTree::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
@@ -1072,9 +1121,11 @@ void ChannelListTree::OnRowCollapsed(const Gtk::TreeModel::iterator &iter, const
 
 void ChannelListTree::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const Gtk::TreeModel::Path &path) {
     // restore previous expansion
-    for (auto it = iter->children().begin(); it != iter->children().end(); it++) {
-        if ((*it)[m_columns.m_expanded])
-            m_view.expand_row(m_filter_model->get_path(it), false);
+    auto model_iter = ConvertViewIterToModel(iter);
+    for (auto it = model_iter->children().begin(); it != model_iter->children().end(); it++) {
+        if ((*it)[m_columns.m_expanded]) {
+            m_view.expand_row(GetViewPathFromViewIter(ConvertModelIterToView(it)), false);
+        }
     }
 
     // try and restore selection if previous collapsed
@@ -1082,13 +1133,13 @@ void ChannelListTree::OnRowExpanded(const Gtk::TreeModel::iterator &iter, const 
         selection->select(m_last_selected);
     }
 
-    (*iter)[m_columns.m_expanded] = true;
+    (*model_iter)[m_columns.m_expanded] = true;
 }
 
 bool ChannelListTree::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, const Gtk::TreeModel::Path &path, bool is_currently_selected) {
     if (auto selection = m_view.get_selection()) {
         if (auto row = selection->get_selected()) {
-            m_last_selected = m_filter_model->get_path(row);
+            m_last_selected = GetViewPathFromViewIter(row);
         }
     }
 
@@ -1246,7 +1297,7 @@ void ChannelListTree::OnMessageCreate(const Message &msg) {
 bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
     if (ev->button == GDK_BUTTON_SECONDARY && ev->type == GDK_BUTTON_PRESS) {
         if (m_view.get_path_at_pos(static_cast<int>(ev->x), static_cast<int>(ev->y), m_path_for_menu)) {
-            m_path_for_menu = m_filter_model->convert_path_to_child_path(m_path_for_menu);
+            m_path_for_menu = m_filter_model->convert_path_to_child_path(m_sort_model->convert_path_to_child_path(m_path_for_menu));
             if (!m_path_for_menu) return true;
             auto row = (*m_model->get_iter(m_path_for_menu));
             switch (static_cast<RenderType>(row[m_columns.m_type])) {
