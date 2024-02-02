@@ -355,8 +355,10 @@ int ChannelListTree::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::Tree
     const int64_t b_sort = (*b)[m_columns.m_sort];
     if (a_type == RenderType::DMHeader) return -1;
     if (b_type == RenderType::DMHeader) return 1;
+#ifdef WITH_VOICE
     if (a_type == RenderType::TextChannel && b_type == RenderType::VoiceChannel) return -1;
     if (b_type == RenderType::TextChannel && a_type == RenderType::VoiceChannel) return 1;
+#endif
     if (a_type == b_type) return static_cast<int>(a_sort - b_sort);
     return 0;
 }
