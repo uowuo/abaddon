@@ -31,6 +31,8 @@ private:
     Gtk::ScrolledWindow m_guilds_scroll;
     GuildList m_guilds;
 
+    bool m_is_classic = false;
+
 public:
     using type_signal_action_channel_item_select = sigc::signal<void, Snowflake>;
     using type_signal_action_guild_leave = sigc::signal<void, Snowflake>;

@@ -28,7 +28,7 @@ ChannelList::ChannelList() {
 
 void ChannelList::UpdateListing() {
     m_tree.UpdateListing();
-    m_guilds.UpdateListing();
+    if (m_is_classic) m_guilds.UpdateListing();
 }
 
 void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
@@ -56,6 +56,7 @@ void ChannelList::UsePanedHack(Gtk::Paned &paned) {
 }
 
 void ChannelList::SetClassic(bool value) {
+    m_is_classic = value;
     m_tree.SetClassic(value);
     m_guilds_scroll.set_visible(value);
 }
