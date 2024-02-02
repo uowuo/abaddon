@@ -19,6 +19,7 @@ private:
 };
 
 GuildList::GuildList() {
+    get_style_context()->add_class("guild-list");
     set_selection_mode(Gtk::SELECTION_NONE);
     show_all_children();
 }

@@ -9,6 +9,7 @@ ChannelList::ChannelList() {
 
     m_guilds.set_halign(Gtk::ALIGN_START);
 
+    m_guilds_scroll.get_style_context()->add_class("guild-list-scroll");
     m_guilds_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
 
     m_guilds.signal_guild_selected().connect([this](Snowflake guild_id) {

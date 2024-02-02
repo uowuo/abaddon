@@ -145,3 +145,14 @@
 .message-text.failed {
     color: red;
 }
+
+.guild-list-scroll > scrollbar {
+    border: none;
+}
+
+.guild-list-scroll > scrollbar slider {
+    border: none;
+    margin: 0px;
+    min-width: 0px;
+    min-height: 0px;
+}
