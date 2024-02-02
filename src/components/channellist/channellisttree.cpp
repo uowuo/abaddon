@@ -84,6 +84,7 @@ ChannelListTree::ChannelListTree()
     m_view.set_headers_visible(false);
     m_view.set_model(m_sort_model);
     m_sort_model->set_sort_column(m_columns.m_sort, Gtk::SORT_ASCENDING);
+    m_sort_model->set_sort_func(m_columns.m_sort, sigc::mem_fun(*this, &ChannelListTree::SortFunc));
 
     m_model->signal_row_inserted().connect([this](const Gtk::TreeModel::Path &path, const Gtk::TreeModel::iterator &iter) {
         if (m_updating_listing) return;
@@ -345,6 +346,19 @@ void ChannelListTree::SetSelectedDMs() {
             m_view.expand_row(view_path, false);
         }
     }
+}
+
+int ChannelListTree::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b) {
+    const RenderType a_type = (*a)[m_columns.m_type];
+    const RenderType b_type = (*b)[m_columns.m_type];
+    const int64_t a_sort = (*a)[m_columns.m_sort];
+    const int64_t b_sort = (*b)[m_columns.m_sort];
+    if (a_type == RenderType::DMHeader) return -1;
+    if (b_type == RenderType::DMHeader) return 1;
+    if (a_type == RenderType::TextChannel && b_type == RenderType::VoiceChannel) return -1;
+    if (b_type == RenderType::TextChannel && a_type == RenderType::VoiceChannel) return 1;
+    if (a_type == b_type) return static_cast<int>(a_sort - b_sort);
+    return 0;
 }
 
 void ChannelListTree::OnPanedPositionChanged() {

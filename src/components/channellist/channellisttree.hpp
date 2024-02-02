@@ -38,6 +38,8 @@ public:
     void SetSelectedDMs();
 
 protected:
+    int SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b);
+
     void OnPanedPositionChanged();
 
     void UpdateListingClassic();
