@@ -3,3 +3,5 @@ actions/call-stop-symbolic
 status/microphone-disabled-symbolic
 status/audio-volume-muted-symbolic
 devices/camera-web-symbolic
+status/user-available-symbolic
+places/folder-symbolic
