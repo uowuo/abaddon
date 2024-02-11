@@ -18,10 +18,41 @@ private:
     Gtk::Image m_img;
 };
 
-GuildList::GuildList() {
+GuildList::GuildList()
+    : m_menu_guild_copy_id("_Copy ID", true)
+    , m_menu_guild_settings("View _Settings", true)
+    , m_menu_guild_leave("_Leave", true)
+    , m_menu_guild_mark_as_read("Mark as _Read", true) {
     get_style_context()->add_class("guild-list");
     set_selection_mode(Gtk::SELECTION_NONE);
     show_all_children();
+
+    m_menu_guild_copy_id.signal_activate().connect([this] {
+        Gtk::Clipboard::get()->set_text(std::to_string(m_menu_guild_target));
+    });
+    m_menu_guild_settings.signal_activate().connect([this] {
+        m_signal_action_guild_settings.emit(m_menu_guild_target);
+    });
+    m_menu_guild_leave.signal_activate().connect([this] {
+        m_signal_action_guild_leave.emit(m_menu_guild_target);
+    });
+    m_menu_guild_mark_as_read.signal_activate().connect([this] {
+        Abaddon::Get().GetDiscordClient().MarkGuildAsRead(m_menu_guild_target, [](...) {});
+    });
+    m_menu_guild_toggle_mute.signal_activate().connect([this] {
+        const auto id = m_menu_guild_target;
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        if (discord.IsGuildMuted(id))
+            discord.UnmuteGuild(id, NOOP_CALLBACK);
+        else
+            discord.MuteGuild(id, NOOP_CALLBACK);
+    });
+    m_menu_guild.append(m_menu_guild_mark_as_read);
+    m_menu_guild.append(m_menu_guild_settings);
+    m_menu_guild.append(m_menu_guild_leave);
+    m_menu_guild.append(m_menu_guild_toggle_mute);
+    m_menu_guild.append(m_menu_guild_copy_id);
+    m_menu_guild.show_all();
 }
 
 void GuildList::UpdateListing() {
@@ -76,6 +107,10 @@ GuildListGuildItem *GuildList::CreateGuildWidget(Snowflake id) {
     item->signal_button_press_event().connect([this, id](GdkEventButton *event) -> bool {
         if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
             m_signal_guild_selected.emit(id);
+        } else if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_SECONDARY) {
+            m_menu_guild_target = id;
+            OnGuildSubmenuPopup();
+            m_menu_guild.popup_at_pointer(reinterpret_cast<GdkEvent *>(event));
         }
         return true;
     });
@@ -111,10 +146,32 @@ void GuildList::Clear() {
     }
 }
 
+void GuildList::OnGuildSubmenuPopup() {
+    const auto id = m_menu_guild_target;
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.IsGuildMuted(id)) {
+        m_menu_guild_toggle_mute.set_label("Unmute");
+    } else {
+        m_menu_guild_toggle_mute.set_label("Mute");
+    }
+
+    const auto guild = discord.GetGuild(id);
+    const auto self_id = discord.GetUserData().ID;
+    m_menu_guild_leave.set_sensitive(!(guild.has_value() && guild->OwnerID == self_id));
+}
+
 GuildList::type_signal_guild_selected GuildList::signal_guild_selected() {
     return m_signal_guild_selected;
 }
 
 GuildList::type_signal_dms_selected GuildList::signal_dms_selected() {
     return m_signal_dms_selected;
+}
+
+GuildList::type_signal_action_guild_leave GuildList::signal_action_guild_leave() {
+    return m_signal_action_guild_leave;
+}
+
+GuildList::type_signal_action_guild_settings GuildList::signal_action_guild_settings() {
+    return m_signal_action_guild_settings;
 }

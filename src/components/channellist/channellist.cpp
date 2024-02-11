@@ -92,6 +92,14 @@ void ChannelList::ConnectSignals() {
     m_tree.signal_action_guild_settings().connect([this](Snowflake id) {
         m_signal_action_guild_settings.emit(id);
     });
+
+    m_guilds.signal_action_guild_leave().connect([this](Snowflake id) {
+        m_signal_action_guild_leave.emit(id);
+    });
+
+    m_guilds.signal_action_guild_settings().connect([this](Snowflake id) {
+        m_signal_action_guild_settings.emit(id);
+    });
 }
 
 #ifdef WITH_LIBHANDY
