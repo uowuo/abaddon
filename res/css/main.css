@@ -156,3 +156,7 @@
     min-width: 0px;
     min-height: 0px;
 }
+
+.channel-list .view:selected {
+    background-color: @theme_selected_bg_color;
+}
