@@ -4,8 +4,12 @@
 
 GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
     : ID(guild.ID) {
+    get_style_context()->add_class("classic-guild-list-guild");
+
     m_image.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(48);
-    add(m_image);
+
+    add(m_box);
+    m_box.pack_start(m_image);
     show_all_children();
 
     set_tooltip_text(guild.Name);

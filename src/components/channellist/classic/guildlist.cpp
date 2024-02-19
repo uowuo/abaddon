@@ -23,7 +23,7 @@ GuildList::GuildList()
     , m_menu_guild_settings("View _Settings", true)
     , m_menu_guild_leave("_Leave", true)
     , m_menu_guild_mark_as_read("Mark as _Read", true) {
-    get_style_context()->add_class("guild-list");
+    get_style_context()->add_class("classic-guild-list");
     set_selection_mode(Gtk::SELECTION_NONE);
     show_all_children();
 

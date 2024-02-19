@@ -14,5 +14,6 @@ private:
     void UpdateIcon();
     void OnIconFetched(const Glib::RefPtr<Gdk::Pixbuf> &pb);
 
+    Gtk::Box m_box;
     Gtk::Image m_image;
 };

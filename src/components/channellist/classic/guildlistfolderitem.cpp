@@ -36,7 +36,7 @@ void GuildListFolderButton::SetGuilds(const std::vector<Snowflake> &guild_ids) {
 }
 
 GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &folder) {
-    get_style_context()->add_class("classic-guild-folder");
+    get_style_context()->add_class("classic-guild-list-folder");
 
     if (folder.Name.has_value()) {
         set_tooltip_text(*folder.Name);
