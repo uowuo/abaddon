@@ -13,6 +13,9 @@ public:
 private:
     void UpdateIcon();
     void OnIconFetched(const Glib::RefPtr<Gdk::Pixbuf> &pb);
+    void OnMessageCreate(const Message &msg);
+    void OnMessageAck(const MessageAckData &data);
+    void CheckUnreadStatus();
 
     Gtk::Box m_box;
     Gtk::Image m_image;

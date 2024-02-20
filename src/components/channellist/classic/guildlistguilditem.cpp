@@ -15,6 +15,9 @@ GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
     set_tooltip_text(guild.Name);
 
     UpdateIcon();
+
+    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &GuildListGuildItem::OnMessageCreate));
+    Abaddon::Get().GetDiscordClient().signal_message_ack().connect(sigc::mem_fun(*this, &GuildListGuildItem::OnMessageAck));
 }
 
 void GuildListGuildItem::UpdateIcon() {
@@ -25,4 +28,23 @@ void GuildListGuildItem::UpdateIcon() {
 
 void GuildListGuildItem::OnIconFetched(const Glib::RefPtr<Gdk::Pixbuf> &pb) {
     m_image.property_pixbuf() = pb->scale_simple(48, 48, Gdk::INTERP_BILINEAR);
+}
+
+void GuildListGuildItem::OnMessageCreate(const Message &msg) {
+    if (msg.GuildID.has_value() && *msg.GuildID == ID) CheckUnreadStatus();
+}
+
+void GuildListGuildItem::OnMessageAck(const MessageAckData &data) {
+    CheckUnreadStatus();
+}
+
+void GuildListGuildItem::CheckUnreadStatus() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (!Abaddon::Get().GetSettings().Unreads) return;
+    int mentions;
+    if (!discord.IsGuildMuted(ID) && discord.GetUnreadStateForGuild(ID, mentions)) {
+        get_style_context()->add_class("has-unread");
+    } else {
+        get_style_context()->remove_class("has-unread");
+    }
 }
