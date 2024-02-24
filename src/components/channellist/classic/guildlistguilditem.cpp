@@ -18,6 +18,8 @@ GuildListGuildItem::GuildListGuildItem(const GuildData &guild)
 
     Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &GuildListGuildItem::OnMessageCreate));
     Abaddon::Get().GetDiscordClient().signal_message_ack().connect(sigc::mem_fun(*this, &GuildListGuildItem::OnMessageAck));
+
+    CheckUnreadStatus();
 }
 
 void GuildListGuildItem::UpdateIcon() {
