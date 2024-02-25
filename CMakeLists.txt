@@ -222,4 +222,10 @@ if (USE_MINIAUDIO)
 
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
+
+    set(MINIAUDIO_OPTIONS, "")
+
+    foreach (MINIAUDIO_OPTION IN LISTS MINIAUDIO_OPTIONS)
+        target_compile_definitions(abaddon PRIVATE ${MINIAUDIO_OPTION})
+    endforeach()
 endif ()
