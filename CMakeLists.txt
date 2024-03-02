@@ -50,7 +50,7 @@ file(GLOB_RECURSE ABADDON_SOURCES
         "src/*.h"
         "src/*.hpp"
         "src/*.cpp"
-        )
+)
 
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_gio\\.cpp$")
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_fallback\\.cpp$")
@@ -148,6 +148,12 @@ endif ()
 
 set(USE_MINIAUDIO FALSE)
 
+if (APPLE)
+    target_link_libraries(abaddon "-framework CoreFoundation")
+    target_link_libraries(abaddon "-framework CoreAudio")
+    target_link_libraries(abaddon "-framework AudioToolbox")
+endif ()
+
 if (ENABLE_VOICE)
     target_compile_definitions(abaddon PRIVATE WITH_VOICE)
 
@@ -194,12 +200,6 @@ if (ENABLE_VOICE)
             target_link_libraries(abaddon rnnoise::rnnoise)
         endif ()
     endif ()
-
-    if (APPLE)
-        target_link_libraries(abaddon "-framework CoreFoundation")
-        target_link_libraries(abaddon "-framework CoreAudio")
-        target_link_libraries(abaddon "-framework AudioToolbox")
-    endif ()
 endif ()
 
 if (${ENABLE_NOTIFICATION_SOUNDS})
@@ -213,12 +213,6 @@ if (USE_MINIAUDIO)
             HINTS subprojects
             PATH_SUFFIXES miniaudio
             REQUIRED)
-
-    if (APPLE)
-        target_link_libraries(abaddon "-framework CoreFoundation")
-        target_link_libraries(abaddon "-framework CoreAudio")
-        target_link_libraries(abaddon "-framework AudioToolbox")
-    endif ()
 
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
