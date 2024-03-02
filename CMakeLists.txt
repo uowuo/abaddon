@@ -50,7 +50,7 @@ file(GLOB_RECURSE ABADDON_SOURCES
         "src/*.h"
         "src/*.hpp"
         "src/*.cpp"
-        )
+)
 
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_gio\\.cpp$")
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_fallback\\.cpp$")
@@ -222,15 +222,9 @@ if (USE_MINIAUDIO)
 
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
-
-    set(MINIAUDIO_OPTIONS "" CACHE STRING "Compiler definitions for miniaudio")
-
-    foreach (MINIAUDIO_OPTION IN LISTS MINIAUDIO_OPTIONS)
-        set_property(
-                SOURCE src/audio/ma_impl.cpp
-                APPEND
-                PROPERTY
-                COMPILE_DEFINITIONS "${MINIAUDIO_OPTION}"
-        )
-    endforeach ()
 endif ()
+
+set(ABADDON_COMPILER_DEFS "" CACHE STRING "Additional compiler definitions")
+foreach (COMPILER_DEF IN LISTS ABADDON_COMPILER_DEFS)
+    target_compile_definitions(abaddon PRIVATE "${COMPILER_DEF}")
+endforeach ()
