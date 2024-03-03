@@ -217,3 +217,8 @@ if (USE_MINIAUDIO)
     target_include_directories(abaddon PUBLIC ${MINIAUDIO_INCLUDE_DIR})
     target_compile_definitions(abaddon PRIVATE WITH_MINIAUDIO)
 endif ()
+
+set(ABADDON_COMPILER_DEFS "" CACHE STRING "Additional compiler definitions")
+foreach (COMPILER_DEF IN LISTS ABADDON_COMPILER_DEFS)
+    target_compile_definitions(abaddon PRIVATE "${COMPILER_DEF}")
+endforeach ()
