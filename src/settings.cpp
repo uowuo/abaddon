@@ -126,6 +126,7 @@ void SettingsManager::DefineSettings() {
 #else
     AddSetting("voice", "vad", "gate"s, &Settings::VAD);
 #endif
+    AddSetting("voice", "backends", ""s, &Settings::Backends);
 }
 
 void SettingsManager::ReadSettings() {
