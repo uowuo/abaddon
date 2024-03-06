@@ -25,6 +25,23 @@
 #include "remoteauth/remoteauthdialog.hpp"
 #include "util.hpp"
 
+#if defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+
+void macOSThemeChanged() {
+    CFPropertyListRef appearanceName = CFPreferencesCopyAppValue(CFSTR("AppleInterfaceStyle"), kCFPreferencesAnyApplication);
+    if (appearanceName != NULL && CFGetTypeID(appearanceName) == CFStringGetTypeID() && CFStringCompare((CFStringRef)appearanceName, CFSTR("Dark"), 0) == kCFCompareEqualTo) {
+        Gtk::Settings::get_default()->set_property("gtk-application-prefer-dark-theme", true);
+    } else {
+        Gtk::Settings::get_default()->set_property("gtk-application-prefer-dark-theme", false);
+    }
+}
+
+void macOSThemeChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    macOSThemeChanged();
+}
+#endif
+
 #ifdef WITH_LIBHANDY
 #include <handy.h>
 #endif
@@ -331,6 +348,17 @@ int Abaddon::StartGTK() {
 
     m_gtk_app->hold();
     m_main_window->show();
+
+#if defined(__APPLE__)
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(),
+                                    NULL,
+                                    macOSThemeChangedCallback,
+                                    CFSTR("AppleInterfaceThemeChangedNotification"),
+                                    NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce);
+
+    macOSThemeChanged();
+#endif
 
     RunFirstTimeDiscordStartup();
 
