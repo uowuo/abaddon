@@ -54,7 +54,10 @@ Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
     , m_discord(GetSettings().UseMemoryDB) // stupid but easy
     , m_emojis(GetResPath("/emojis.bin"))
-    , m_audio(GetSettings().Backends) {
+#ifdef WITH_VOICE
+    , m_audio(GetSettings().Backends)
+#endif
+{
     LoadFromSettings();
 
     // todo: set user agent for non-client(?)
