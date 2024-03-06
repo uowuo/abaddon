@@ -36,6 +36,8 @@ void GuildListFolderButton::SetGuilds(const std::vector<Snowflake> &guild_ids) {
 }
 
 GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &folder) {
+    m_guild_ids = folder.GuildIDs;
+
     get_style_context()->add_class("classic-guild-list-folder");
 
     if (folder.Name.has_value()) {
@@ -86,8 +88,42 @@ GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &fo
     m_box.show();
     m_image.show();
     show();
+
+    Abaddon::Get().GetDiscordClient().signal_message_create().connect(sigc::mem_fun(*this, &GuildListFolderItem::OnMessageCreate));
+    Abaddon::Get().GetDiscordClient().signal_message_ack().connect(sigc::mem_fun(*this, &GuildListFolderItem::OnMessageAck));
+
+    CheckUnreadStatus();
 }
 
 void GuildListFolderItem::AddGuildWidget(GuildListGuildItem *widget) {
     m_box.add(*widget);
+}
+
+void GuildListFolderItem::OnMessageCreate(const Message &msg) {
+    if (msg.GuildID.has_value() && std::find(m_guild_ids.begin(), m_guild_ids.end(), *msg.GuildID) != m_guild_ids.end()) CheckUnreadStatus();
+}
+
+void GuildListFolderItem::OnMessageAck(const MessageAckData &data) {
+    CheckUnreadStatus();
+}
+
+void GuildListFolderItem::CheckUnreadStatus() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (!Abaddon::Get().GetSettings().Unreads) return;
+
+    bool has_any_unreads = false;
+
+    for (auto guild_id : m_guild_ids) {
+        int mentions;
+        if (!discord.IsGuildMuted(guild_id) && discord.GetUnreadStateForGuild(guild_id, mentions)) {
+            has_any_unreads = true;
+            break;
+        }
+    }
+
+    if (has_any_unreads) {
+        get_style_context()->add_class("has-unread");
+    } else {
+        get_style_context()->remove_class("has-unread");
+    }
 }

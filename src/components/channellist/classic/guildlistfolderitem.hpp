@@ -27,6 +27,12 @@ public:
     void AddGuildWidget(GuildListGuildItem *widget);
 
 private:
+    void OnMessageCreate(const Message &msg);
+    void OnMessageAck(const MessageAckData &data);
+    void CheckUnreadStatus();
+
+    std::vector<Snowflake> m_guild_ids;
+
     Gtk::Stack m_stack;
     GuildListFolderButton m_grid;
     Gtk::Image m_icon;
