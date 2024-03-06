@@ -85,7 +85,7 @@ void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
     g_free(msg);
 }
 
-AudioManager::AudioManager()
+AudioManager::AudioManager(const Glib::ustring &backends_string)
     : m_log(spdlog::stdout_color_mt("miniaudio")) {
     m_ok = true;
 
@@ -107,7 +107,19 @@ AudioManager::AudioManager()
 
     auto ctx_cfg = ma_context_config_init();
     ctx_cfg.pLog = &m_ma_log;
-    if (ma_context_init(nullptr, 0, &ctx_cfg, &m_context) != MA_SUCCESS) {
+
+    ma_backend *pBackends = nullptr;
+    ma_uint32 backendCount = 0;
+
+    std::vector<ma_backend> backends_vec;
+    if (!backends_string.empty()) {
+        spdlog::get("audio")->debug("Using backends list: {}", std::string(backends_string));
+        backends_vec = ParseBackendsList(backends_string);
+        pBackends = backends_vec.data();
+        backendCount = static_cast<ma_uint32>(backends_vec.size());
+    }
+
+    if (ma_context_init(pBackends, backendCount, &ctx_cfg, &m_context) != MA_SUCCESS) {
         spdlog::get("audio")->error("failed to initialize context");
         m_ok = false;
         return;
@@ -645,6 +657,28 @@ void AudioManager::SetVADMethod(VADMethod method) {
 
 AudioManager::VADMethod AudioManager::GetVADMethod() const {
     return m_vad_method;
+}
+
+std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &list) {
+    auto regex = Glib::Regex::create(";");
+    const std::vector<Glib::ustring> split = regex->split(list);
+
+    std::vector<ma_backend> backends;
+    for (const auto &s : split) {
+        if (s == "wasapi") backends.push_back(ma_backend_wasapi);
+        else if (s == "dsound") backends.push_back(ma_backend_dsound);
+        else if (s == "winmm") backends.push_back(ma_backend_winmm);
+        else if (s == "coreaudio") backends.push_back(ma_backend_coreaudio);
+        else if (s == "sndio") backends.push_back(ma_backend_sndio);
+        else if (s == "audio4") backends.push_back(ma_backend_audio4);
+        else if (s == "oss") backends.push_back(ma_backend_oss);
+        else if (s == "pulseaudio") backends.push_back(ma_backend_pulseaudio);
+        else if (s == "alsa") backends.push_back(ma_backend_alsa);
+        else if (s == "jack") backends.push_back(ma_backend_jack);
+    }
+    backends.push_back(ma_backend_null);
+
+    return backends;
 }
 
 #ifdef WITH_RNNOISE

@@ -25,7 +25,7 @@
 
 class AudioManager {
 public:
-    AudioManager();
+    AudioManager(const Glib::ustring &backends_string);
     ~AudioManager();
 
     void AddSSRC(uint32_t ssrc);
@@ -79,6 +79,8 @@ public:
     void SetVADMethod(const std::string &method);
     void SetVADMethod(VADMethod method);
     VADMethod GetVADMethod() const;
+
+    static std::vector<ma_backend> ParseBackendsList(const Glib::ustring &list);
 
 #ifdef WITH_RNNOISE
     float GetCurrentVADProbability() const;
