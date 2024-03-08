@@ -359,7 +359,7 @@ int ChannelListTree::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::Tree
     if (a_type == RenderType::TextChannel && b_type == RenderType::VoiceChannel) return -1;
     if (b_type == RenderType::TextChannel && a_type == RenderType::VoiceChannel) return 1;
 #endif
-    return static_cast<int>(a_sort - b_sort);
+    return static_cast<int>(std::clamp(a_sort - b_sort, -1LL, 1LL));
 }
 
 void ChannelListTree::OnPanedPositionChanged() {
