@@ -484,11 +484,13 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
+    m_audio.StartPlaybackDevice();
     m_audio.StartCaptureDevice();
     ShowVoiceWindow();
 }
 
 void Abaddon::OnVoiceDisconnected() {
+    m_audio.StopPlaybackDevice();
     m_audio.StopCaptureDevice();
     m_audio.RemoveAllSSRCs();
     if (m_voice_window != nullptr) {
