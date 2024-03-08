@@ -13,11 +13,11 @@ AudioDevices::AudioDevices()
     , m_capture(Gtk::ListStore::create(m_capture_columns)) {
 }
 
-Glib::RefPtr<Gtk::ListStore> AudioDevices::GetPlaybackDeviceModel() {
+Glib::RefPtr<Gtk::ListStore> AudioDevices::GetPlaybackDeviceModel() const {
     return m_playback;
 }
 
-Glib::RefPtr<Gtk::ListStore> AudioDevices::GetCaptureDeviceModel() {
+Glib::RefPtr<Gtk::ListStore> AudioDevices::GetCaptureDeviceModel() const {
     return m_capture;
 }
 
@@ -33,7 +33,7 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
 
         if (d.isDefault) {
             m_default_playback_iter = row;
-            SetActivePlaybackDevice(row);
+            SetActivePlaybackDeviceIter(row);
         }
     }
 
@@ -48,7 +48,7 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
 
         if (d.isDefault) {
             m_default_capture_iter = row;
-            SetActiveCaptureDevice(row);
+            SetActiveCaptureDeviceIter(row);
         }
     }
 
@@ -78,34 +78,34 @@ std::optional<ma_device_id> AudioDevices::GetCaptureDeviceIDFromModel(const Gtk:
 }
 
 std::optional<ma_device_id> AudioDevices::GetDefaultPlayback() const {
-    if (m_default_playback_iter) {
-        return static_cast<ma_device_id>((*m_default_playback_iter)[m_playback_columns.DeviceID]);
-    }
-
-    return std::nullopt;
+    return GetPlaybackDeviceIDFromModel(m_default_playback_iter);
 }
 
 std::optional<ma_device_id> AudioDevices::GetDefaultCapture() const {
-    if (m_default_capture_iter) {
-        return static_cast<ma_device_id>((*m_default_capture_iter)[m_capture_columns.DeviceID]);
-    }
-
-    return std::nullopt;
+    return GetCaptureDeviceIDFromModel(m_default_capture_iter);
 }
 
-void AudioDevices::SetActivePlaybackDevice(const Gtk::TreeModel::iterator &iter) {
+std::optional<ma_device_id> AudioDevices::GetActivePlayback() const {
+    return GetPlaybackDeviceIDFromModel(m_active_playback_iter);
+}
+
+std::optional<ma_device_id> AudioDevices::GetActiveCapture() const {
+    return GetCaptureDeviceIDFromModel(m_active_capture_iter);
+}
+
+void AudioDevices::SetActivePlaybackDeviceIter(const Gtk::TreeModel::iterator &iter) {
     m_active_playback_iter = iter;
 }
 
-void AudioDevices::SetActiveCaptureDevice(const Gtk::TreeModel::iterator &iter) {
+void AudioDevices::SetActiveCaptureDeviceIter(const Gtk::TreeModel::iterator &iter) {
     m_active_capture_iter = iter;
 }
 
-Gtk::TreeModel::iterator AudioDevices::GetActivePlaybackDevice() {
+Gtk::TreeModel::iterator AudioDevices::GetActivePlaybackDeviceIter() const {
     return m_active_playback_iter;
 }
 
-Gtk::TreeModel::iterator AudioDevices::GetActiveCaptureDevice() {
+Gtk::TreeModel::iterator AudioDevices::GetActiveCaptureDeviceIter() const {
     return m_active_capture_iter;
 }
 

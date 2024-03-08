@@ -190,7 +190,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_playback_combo.set_hexpand(true);
     m_playback_combo.set_halign(Gtk::ALIGN_FILL);
     m_playback_combo.set_model(audio.GetDevices().GetPlaybackDeviceModel());
-    if (const auto iter = audio.GetDevices().GetActivePlaybackDevice()) {
+    if (const auto iter = audio.GetDevices().GetActivePlaybackDeviceIter()) {
         m_playback_combo.set_active(iter);
     }
     m_playback_combo.pack_start(*playback_renderer);
@@ -204,7 +204,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_combo.set_hexpand(true);
     m_capture_combo.set_halign(Gtk::ALIGN_FILL);
     m_capture_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetCaptureDeviceModel());
-    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice()) {
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDeviceIter()) {
         m_capture_combo.set_active(iter);
     }
     m_capture_combo.pack_start(*capture_renderer);

@@ -35,7 +35,19 @@ public:
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
 
+    void OpenPlaybackDevice(const ma_device_id device_id);
+    void OpenCaptureDevice(const ma_device_id device_id);
+
+    void TryOpenPlaybackDevice(const ma_device_id device_id);
+    void TryOpenCaptureDevice(const ma_device_id device_id);
+
+    void ClosePlaybackDevice();
+    void CloseCaptureDevice();
+
+    void StartPlaybackDevice();
     void StartCaptureDevice();
+
+    void StopPlaybackDevice();
     void StopCaptureDevice();
 
     void SetPlaybackDevice(const Gtk::TreeModel::iterator &iter);
@@ -120,12 +132,10 @@ private:
 
     // playback
     ma_device m_playback_device;
-    ma_device_config m_playback_config;
-    ma_device_id m_playback_id;
+    bool m_playback_device_ready = false;
     // capture
     ma_device m_capture_device;
-    ma_device_config m_capture_config;
-    ma_device_id m_capture_id;
+    bool m_capture_device_ready = false;
 
     ma_context m_context;
 
