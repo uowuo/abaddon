@@ -1,4 +1,4 @@
-#include "channelscellrenderer.hpp"
+#include "cellrendererchannels.hpp"
 #include <gdkmm/general.h>
 #include "abaddon.hpp"
 

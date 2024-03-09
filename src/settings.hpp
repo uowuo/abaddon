@@ -28,8 +28,11 @@ public:
         bool HideToTray;
         bool ShowDeletedIndicator;
         double FontScale;
+        bool FolderIconOnly;
+        bool ClassicChangeGuildOnOpen;
         int ImageEmbedClampWidth;
         int ImageEmbedClampHeight;
+        bool ClassicChannels;
 
         // [http]
         int CacheHTTPConcurrency;

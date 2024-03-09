@@ -99,8 +99,11 @@ void SettingsManager::DefineSettings() {
     AddSetting("gui", "hide_to_try", false, &Settings::HideToTray);
     AddSetting("gui", "show_deleted_indicator", true, &Settings::ShowDeletedIndicator);
     AddSetting("gui", "font_scale", -1.0, &Settings::FontScale);
+    AddSetting("gui", "folder_icon_only", false, &Settings::FolderIconOnly);
+    AddSetting("gui", "classic_change_guild_on_open", true, &Settings::ClassicChangeGuildOnOpen);
     AddSetting("gui", "image_embed_clamp_width", 400, &Settings::ImageEmbedClampWidth);
     AddSetting("gui", "image_embed_clamp_height", 300, &Settings::ImageEmbedClampHeight);
+    AddSetting("gui", "classic_channels", false, &Settings::ClassicChannels);
 
     AddSetting("http", "concurrent", 20, &Settings::CacheHTTPConcurrency);
     AddSetting("http", "user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"s, &Settings::UserAgent);

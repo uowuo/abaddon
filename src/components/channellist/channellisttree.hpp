@@ -8,20 +8,21 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/treemodel.h>
 #include <gtkmm/treestore.h>
+#include <gtkmm/treemodelfilter.h>
 #include <gtkmm/treeview.h>
 #include <sigc++/sigc++.h>
 #include "discord/discord.hpp"
 #include "state.hpp"
-#include "channelscellrenderer.hpp"
+#include "cellrendererchannels.hpp"
 
 constexpr static int GuildIconSize = 24;
 constexpr static int DMIconSize = 20;
 constexpr static int VoiceParticipantIconSize = 18;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
-class ChannelList : public Gtk::ScrolledWindow {
+class ChannelListTree : public Gtk::ScrolledWindow {
 public:
-    ChannelList();
+    ChannelListTree();
 
     void UpdateListing();
     void SetActiveChannel(Snowflake id, bool expand_to);
@@ -32,8 +33,16 @@ public:
 
     void UsePanedHack(Gtk::Paned &paned);
 
+    void SetClassic(bool value);
+    void SetSelectedGuild(Snowflake guild_id);
+    void SetSelectedDMs();
+
 protected:
+    int SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::TreeModel::iterator &b);
+
     void OnPanedPositionChanged();
+
+    void UpdateListingClassic();
 
     void UpdateNewGuild(const GuildData &guild);
     void UpdateRemoveGuild(Snowflake id);
@@ -82,7 +91,14 @@ protected:
 
     ModelColumns m_columns;
     Glib::RefPtr<Gtk::TreeStore> m_model;
+    Glib::RefPtr<Gtk::TreeModelFilter> m_filter_model;
+    Glib::RefPtr<Gtk::TreeModelSort> m_sort_model;
 
+    Gtk::TreePath ConvertModelPathToView(const Gtk::TreePath &path);
+    Gtk::TreeIter ConvertModelIterToView(const Gtk::TreeIter &iter);
+    Gtk::TreePath ConvertViewPathToModel(const Gtk::TreePath &path);
+    Gtk::TreeIter ConvertViewIterToModel(const Gtk::TreeIter &iter);
+    Gtk::TreePath GetViewPathFromViewIter(const Gtk::TreeIter &iter);
     Gtk::TreeModel::iterator AddFolder(const UserSettingsGuildFoldersEntry &folder);
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
@@ -116,7 +132,7 @@ protected:
     void UpdateCreateDMChannel(const ChannelData &channel);
     void SetDMChannelIcon(Gtk::TreeIter iter, const ChannelData &dm);
 
-    void RedrawUnreadIndicatorsForChannel(const ChannelData& channel);
+    void RedrawUnreadIndicatorsForChannel(const ChannelData &channel);
     void OnMessageAck(const MessageAckData &data);
     void OnMessageCreate(const Message &msg);
 
@@ -184,10 +200,13 @@ protected:
 
     bool m_updating_listing = false;
 
+    bool m_classic = false;
+    Snowflake m_classic_selected_guild;
+    bool m_classic_selected_dms = false;
+
     Snowflake m_active_channel;
 
-    // (GetIteratorForChannelFromID is rather slow)
-    // only temporary since i dont want to worry about maintaining this map
+    // hashtable for the billion lookups done in UseExpansionState
     std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_row_map;
     std::unordered_map<Snowflake, Gtk::TreeModel::iterator> m_tmp_guild_row_map;
 

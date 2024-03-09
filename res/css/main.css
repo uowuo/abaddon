@@ -145,3 +145,37 @@
 .message-text.failed {
     color: red;
 }
+
+.guild-list-scroll > scrollbar {
+    border: none;
+}
+
+.guild-list-scroll > scrollbar slider {
+    border: none;
+    margin: 0px;
+    min-width: 0px;
+    min-height: 0px;
+}
+
+.channel-list .view:selected {
+    background-color: @theme_selected_bg_color;
+}
+
+.classic-guild-list > row {
+    padding-left: 0px;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+.classic-guild-list > row:hover {
+    background: none;
+}
+
+.classic-guild-list-guild.has-unread {
+    background: radial-gradient(7px circle at left, @theme_selected_bg_color 50%, transparent 20%);
+}
+
+.classic-guild-list-guild box, .classic-guild-list-folder stack {
+    padding-left: 10px;
+}
