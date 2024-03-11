@@ -35,11 +35,11 @@ public:
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
 
-    void OpenPlaybackDevice(const ma_device_id device_id);
-    void OpenCaptureDevice(const ma_device_id device_id);
+    void OpenPlaybackDevice(const ma_device_id &device_id);
+    void OpenCaptureDevice(const ma_device_id &device_id);
 
-    void TryOpenPlaybackDevice(const ma_device_id device_id);
-    void TryOpenCaptureDevice(const ma_device_id device_id);
+    void TryOpenPlaybackDevice(const ma_device_id &device_id);
+    void TryOpenCaptureDevice(const ma_device_id &device_id);
 
     void ClosePlaybackDevice();
     void CloseCaptureDevice();
@@ -106,6 +106,7 @@ public:
     bool GetMixMono() const;
 
 private:
+    void LogOpenedDevice(ma_device *device, const ma_device_type device_type);
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
     void UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames);

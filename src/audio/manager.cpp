@@ -150,8 +150,11 @@ AudioManager::~AudioManager() {
 #endif
 }
 
-void AudioManager::OpenPlaybackDevice(const ma_device_id device_id) {
-    assert(!m_playback_device_ready && "Tried to open new playback device without closing the current one");
+void AudioManager::OpenPlaybackDevice(const ma_device_id &device_id) {
+    if (m_playback_device_ready) {
+        spdlog::get("audio")->warn("Tried to open new playback device without closing the current one");
+        return;
+    }
 
     auto config = ma_device_config_init(ma_device_type_playback);
     config.playback.format = ma_format_f32;
@@ -178,8 +181,11 @@ void AudioManager::OpenPlaybackDevice(const ma_device_id device_id) {
     m_playback_device_ready = true;
 }
 
-void AudioManager::OpenCaptureDevice(const ma_device_id device_id) {
-    assert(!m_capture_device_ready && "Tried to open new capture device without closing the current one");
+void AudioManager::OpenCaptureDevice(const ma_device_id &device_id) {
+    if (m_capture_device_ready) {
+        spdlog::get("audio")->warn("Tried to open new capture device without closing the current one");
+        return;
+    }
 
     auto config = ma_device_config_init(ma_device_type_capture);
     config.capture.format = ma_format_s16;
@@ -207,48 +213,51 @@ void AudioManager::OpenCaptureDevice(const ma_device_id device_id) {
     m_capture_device_ready = true;
 }
 
-void AudioManager::TryOpenPlaybackDevice(const ma_device_id device_id) {
-    OpenPlaybackDevice(std::move(device_id));
+void AudioManager::TryOpenPlaybackDevice(const ma_device_id &device_id) {
+    OpenPlaybackDevice(device_id);
 
     if (m_playback_device_ready) {
-        char name[MA_MAX_DEVICE_NAME_LENGTH + 1];
-        const auto result = ma_device_get_name(&m_playback_device, ma_device_type_playback, name, sizeof(name), nullptr);
-
-        if (result == MA_SUCCESS) {
-            spdlog::get("audio")->info("Started playback device: {}", name);
-        } else {
-            spdlog::get("audio")->info("Started playback device: <unknown>");
-        }
+        LogOpenedDevice(&m_playback_device, ma_device_type_playback);
     }
 }
 
-void AudioManager::TryOpenCaptureDevice(const ma_device_id device_id) {
-    OpenCaptureDevice(std::move(device_id));
+void AudioManager::TryOpenCaptureDevice(const ma_device_id &device_id) {
+    OpenCaptureDevice(device_id);
 
     if (m_capture_device_ready) {
-        char name[MA_MAX_DEVICE_NAME_LENGTH + 1];
-        const auto result = ma_device_get_name(&m_capture_device, ma_device_type_capture, name, sizeof(name), nullptr);
-
-        if (result == MA_SUCCESS) {
-            spdlog::get("audio")->info("Started capture device: {}", name);
-        } else {
-            spdlog::get("audio")->info("Started capture device: <unknown>");
-        }
+        LogOpenedDevice(&m_capture_device, ma_device_type_capture);
     }
 }
 
 void AudioManager::ClosePlaybackDevice() {
-    assert(m_playback_device_ready && "Tried to close uninitialized playback device");
+    if(!m_playback_device_ready) {
+        spdlog::get("audio")->warn("Tried to close uninitialized playback device");
+        return;
+    }
 
     ma_device_uninit(&m_playback_device);
     m_playback_device_ready = false;
 }
 
 void AudioManager::CloseCaptureDevice() {
-    assert(m_capture_device_ready && "Tried to close uninitialized capture device");
+    if(!m_capture_device_ready) {
+        spdlog::get("audio")->warn("Tried to close uninitialized capture device");
+        return;
+    }
 
     ma_device_uninit(&m_capture_device);
     m_capture_device_ready = false;
+}
+
+void AudioManager::LogOpenedDevice(ma_device *device, const ma_device_type device_type) {
+    char name[MA_MAX_DEVICE_NAME_LENGTH + 1] = "<unknown>";
+    const auto result = ma_device_get_name(device, device_type, name, sizeof(name), nullptr);
+
+    if (device_type == ma_device_type_playback) {
+        spdlog::get("audio")->info("Started playback device: {}", name);
+    } else if (device_type == ma_device_type_capture) {
+        spdlog::get("audio")->info("Started capture device: {}", name);
+    }
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
@@ -308,7 +317,7 @@ void AudioManager::StartPlaybackDevice() {
         return;
     }
 
-    TryOpenPlaybackDevice(std::move(*playback_device_id));
+    TryOpenPlaybackDevice(*playback_device_id);
 }
 
 void AudioManager::StopPlaybackDevice() {
@@ -325,7 +334,7 @@ void AudioManager::StartCaptureDevice() {
         return;
     }
 
-    TryOpenCaptureDevice(std::move(*capture_device_id));
+    TryOpenCaptureDevice(*capture_device_id);
 }
 
 void AudioManager::StopCaptureDevice() {
@@ -349,7 +358,7 @@ void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
     }
 
     m_devices.SetActivePlaybackDeviceIter(iter);
-    TryOpenPlaybackDevice(std::move(*device_id));
+    TryOpenPlaybackDevice(*device_id);
 }
 
 void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
@@ -366,7 +375,7 @@ void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
     }
 
     m_devices.SetActiveCaptureDeviceIter(iter);
-    TryOpenCaptureDevice(std::move(*device_id));
+    TryOpenCaptureDevice(*device_id);
 }
 
 void AudioManager::SetCapture(bool capture) {
