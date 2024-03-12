@@ -248,12 +248,26 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
 
+    discord.signal_stage_instance_create().connect([this](const StageInstance &instance) {
+        m_TMP_stagelabel.show();
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
+    });
+
+    discord.signal_stage_instance_update().connect([this](const StageInstance &instance) {
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
+    });
+
+    discord.signal_stage_instance_delete().connect([this](const StageInstance &instance) {
+        m_TMP_stagelabel.hide();
+    });
+
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
     m_main.pack_start(m_menu_bar, false, true);
+    m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);
     m_main.pack_start(m_vad_value, false, true);
     m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
@@ -262,6 +276,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(*combos_container, false, true, 2);
     add(m_main);
     show_all_children();
+
+    m_TMP_stagelabel.hide();
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
 }

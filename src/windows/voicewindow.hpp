@@ -69,6 +69,8 @@ private:
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_settings;
 
+    Gtk::Label m_TMP_stagelabel;
+
 public:
     using type_signal_mute = sigc::signal<void(bool)>;
     using type_signal_deafen = sigc::signal<void(bool)>;

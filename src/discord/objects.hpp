@@ -20,6 +20,7 @@
 #include "auditlog.hpp"
 #include "relationship.hpp"
 #include "errors.hpp"
+#include "stage.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -110,6 +111,9 @@ enum class GatewayEvent : int {
     VOICE_STATE_UPDATE,
     VOICE_SERVER_UPDATE,
     CALL_CREATE,
+    STAGE_INSTANCE_CREATE,
+    STAGE_INSTANCE_UPDATE,
+    STAGE_INSTANCE_DELETE,
 };
 
 enum class GatewayCloseCode : uint16_t {

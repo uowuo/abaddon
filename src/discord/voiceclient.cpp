@@ -96,11 +96,11 @@ std::vector<uint8_t> UDPSocket::Receive() {
 }
 
 void UDPSocket::Stop() {
-    #ifdef _WIN32
+#ifdef _WIN32
     closesocket(m_socket);
-    #else
+#else
     close(m_socket);
-    #endif
+#endif
     m_running = false;
     if (m_thread.joinable()) m_thread.join();
 }
@@ -250,6 +250,7 @@ bool DiscordVoiceClient::IsConnecting() const noexcept {
 }
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
+    m_log->trace("IN: {}", str);
     VoiceGatewayMessage msg = nlohmann::json::parse(str);
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello:

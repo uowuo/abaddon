@@ -165,6 +165,10 @@ protected:
     Gtk::Menu m_menu_voice_channel;
     Gtk::MenuItem m_menu_voice_channel_join;
     Gtk::MenuItem m_menu_voice_channel_disconnect;
+
+    Gtk::Menu m_menu_voice_stage;
+    Gtk::MenuItem m_menu_voice_stage_join;
+    Gtk::MenuItem m_menu_voice_stage_disconnect;
 #endif
 
     Gtk::Menu m_menu_dm;
@@ -196,6 +200,7 @@ protected:
 
 #ifdef WITH_VOICE
     void OnVoiceChannelSubmenuPopup();
+    void OnVoiceStageSubmenuPopup();
 #endif
 
     bool m_updating_listing = false;

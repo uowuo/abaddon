@@ -1646,6 +1646,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBERS_CHUNK: {
                         HandleGatewayGuildMembersChunk(m);
                     } break;
+                    case GatewayEvent::STAGE_INSTANCE_CREATE: {
+                        HandleGatewayStageInstanceCreate(m);
+                    } break;
+                    case GatewayEvent::STAGE_INSTANCE_UPDATE: {
+                        HandleGatewayStageInstanceUpdate(m);
+                    } break;
+                    case GatewayEvent::STAGE_INSTANCE_DELETE: {
+                        HandleGatewayStageInstanceDelete(m);
+                    } break;
 #ifdef WITH_VOICE
                     case GatewayEvent::VOICE_STATE_UPDATE: {
                         HandleGatewayVoiceStateUpdate(m);
@@ -2294,6 +2303,29 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
     for (const auto &member : data.Members)
         m_store.SetGuildMember(data.GuildID, member.User->ID, member);
     m_store.EndTransaction();
+}
+
+void DiscordClient::HandleGatewayStageInstanceCreate(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_CREATE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances[data.ID] = data;
+    m_channel_to_stage_instance[data.ChannelID] = data.ID;
+    m_signal_stage_instance_create.emit(data);
+}
+
+void DiscordClient::HandleGatewayStageInstanceUpdate(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_UPDATE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances[data.ID] = data;
+    m_signal_stage_instance_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayStageInstanceDelete(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_DELETE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances.erase(data.ID);
+    m_channel_to_stage_instance.erase(data.ChannelID);
+    m_signal_stage_instance_delete.emit(data);
 }
 
 #ifdef WITH_VOICE
@@ -3001,6 +3033,9 @@ void DiscordClient::LoadEventMap() {
     m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
     m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
     m_event_map["CALL_CREATE"] = GatewayEvent::CALL_CREATE;
+    m_event_map["STAGE_INSTANCE_CREATE"] = GatewayEvent::STAGE_INSTANCE_CREATE;
+    m_event_map["STAGE_INSTANCE_UPDATE"] = GatewayEvent::STAGE_INSTANCE_UPDATE;
+    m_event_map["STAGE_INSTANCE_DELETE"] = GatewayEvent::STAGE_INSTANCE_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -3177,6 +3212,18 @@ DiscordClient::type_signal_message_ack DiscordClient::signal_message_ack() {
 
 DiscordClient::type_signal_guild_members_chunk DiscordClient::signal_guild_members_chunk() {
     return m_signal_guild_members_chunk;
+}
+
+DiscordClient::type_signal_stage_instance_create DiscordClient::signal_stage_instance_create() {
+    return m_signal_stage_instance_create;
+}
+
+DiscordClient::type_signal_stage_instance_update DiscordClient::signal_stage_instance_update() {
+    return m_signal_stage_instance_update;
+}
+
+DiscordClient::type_signal_stage_instance_delete DiscordClient::signal_stage_instance_delete() {
+    return m_signal_stage_instance_delete;
 }
 
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {

@@ -294,12 +294,16 @@ private:
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceCreate(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceUpdate(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceDelete(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
 
 #ifdef WITH_VOICE
-    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
+    void
+    HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayCallCreate(const GatewayMessage &msg);
 
@@ -341,6 +345,8 @@ private:
     std::unordered_set<Snowflake> m_muted_channels;
     std::unordered_map<Snowflake, int> m_unread;
     std::unordered_set<Snowflake> m_channel_muted_parent;
+    std::map<Snowflake, StageInstance> m_stage_instances;
+    std::map<Snowflake, Snowflake> m_channel_to_stage_instance;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -441,6 +447,9 @@ public:
     typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
     typedef sigc::signal<void, MessageAckData> type_signal_message_ack;
     typedef sigc::signal<void, GuildMembersChunkData> type_signal_guild_members_chunk;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_create;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_update;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_delete;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -513,6 +522,9 @@ public:
     type_signal_thread_member_list_update signal_thread_member_list_update();
     type_signal_message_ack signal_message_ack();
     type_signal_guild_members_chunk signal_guild_members_chunk();
+    type_signal_stage_instance_create signal_stage_instance_create();
+    type_signal_stage_instance_update signal_stage_instance_update();
+    type_signal_stage_instance_delete signal_stage_instance_delete();
 
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
@@ -582,6 +594,9 @@ protected:
     type_signal_thread_member_list_update m_signal_thread_member_list_update;
     type_signal_message_ack m_signal_message_ack;
     type_signal_guild_members_chunk m_signal_guild_members_chunk;
+    type_signal_stage_instance_create m_signal_stage_instance_create;
+    type_signal_stage_instance_update m_signal_stage_instance_update;
+    type_signal_stage_instance_delete m_signal_stage_instance_delete;
 
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;
