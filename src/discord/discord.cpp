@@ -2960,6 +2960,7 @@ void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
     if (state.IsDeafened) flags |= VoiceStateFlags::Deaf;
     if (state.IsSelfStream) flags |= VoiceStateFlags::SelfStream;
     if (state.IsSelfVideo) flags |= VoiceStateFlags::SelfVideo;
+    if (state.IsSuppressed) flags |= VoiceStateFlags::Suppressed;
 
     m_voice_states[user_id] = std::make_pair(*state.ChannelID, flags);
     m_voice_state_channel_users[*state.ChannelID].insert(user_id);

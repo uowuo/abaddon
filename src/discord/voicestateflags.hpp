@@ -10,6 +10,7 @@ enum class VoiceStateFlags : uint8_t {
     SelfMute = 1 << 3,
     SelfStream = 1 << 4,
     SelfVideo = 1 << 5,
+    Suppressed = 1 << 6,
 };
 
 template<>
