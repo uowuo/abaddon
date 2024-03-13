@@ -17,6 +17,7 @@
 // clang-format on
 
 class VoiceWindowUserListEntry;
+
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
