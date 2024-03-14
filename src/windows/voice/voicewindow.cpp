@@ -36,6 +36,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
+    discord.signal_voice_speaker_state_changed().connect(sigc::mem_fun(*this, &VoiceWindow::OnSpeakerStateChanged));
 
     if (const auto self_state = discord.GetVoiceState(discord.GetUserData().ID); self_state.has_value()) {
         m_mute.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfMute));
@@ -298,6 +299,20 @@ void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
 
 void VoiceWindow::OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id) {
     if (m_channel_id == from_channel_id) {
+        if (auto it = m_rows.find(user_id); it != m_rows.end()) {
+            delete it->second;
+            m_rows.erase(it);
+        }
+    }
+}
+
+void VoiceWindow::OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker) {
+    if (m_channel_id != channel_id) return;
+    if (is_speaker) {
+        if (auto it = m_rows.find(user_id); it == m_rows.end()) {
+            m_user_list.add(*CreateRow(user_id));
+        }
+    } else {
         if (auto it = m_rows.find(user_id); it != m_rows.end()) {
             delete it->second;
             m_rows.erase(it);

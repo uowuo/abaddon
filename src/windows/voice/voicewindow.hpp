@@ -29,6 +29,7 @@ private:
 
     void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
+    void OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker);
 
     void OnMuteChanged();
     void OnDeafenChanged();

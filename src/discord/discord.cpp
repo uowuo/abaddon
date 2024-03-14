@@ -2426,9 +2426,14 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.ChannelID.has_value()) {
         const auto old_state = GetVoiceState(data.UserID);
         SetVoiceState(data.UserID, data);
-        if (old_state.has_value() && old_state->first != *data.ChannelID) {
-            m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
-            m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
+        const auto new_state = GetVoiceState(data.UserID);
+        if (old_state.has_value()) {
+            if (old_state->first != *data.ChannelID) {
+                m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
+                m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
+            } else if (old_state->second.IsSpeaker() != new_state.value().second.IsSpeaker()) {
+                m_signal_voice_speaker_state_changed.emit(*data.ChannelID, data.UserID, new_state->second.IsSpeaker());
+            }
         } else if (!old_state.has_value()) {
             m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
         }
@@ -3307,5 +3312,9 @@ DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_cha
 
 DiscordClient::type_signal_voice_state_set DiscordClient::signal_voice_state_set() {
     return m_signal_voice_state_set;
+}
+
+DiscordClient::type_signal_voice_speaker_state_changed DiscordClient::signal_voice_speaker_state_changed() {
+    return m_signal_voice_speaker_state_changed;
 }
 #endif
