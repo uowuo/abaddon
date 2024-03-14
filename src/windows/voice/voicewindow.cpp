@@ -176,18 +176,21 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
 
-    discord.signal_stage_instance_create().connect([this](const StageInstance &instance) {
+    discord.signal_stage_instance_create().connect(sigc::track_obj([this](const StageInstance &instance) {
         m_TMP_stagelabel.show();
         m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
-    });
+    },
+                                                                   *this));
 
-    discord.signal_stage_instance_update().connect([this](const StageInstance &instance) {
+    discord.signal_stage_instance_update().connect(sigc::track_obj([this](const StageInstance &instance) {
         m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
-    });
+    },
+                                                                   *this));
 
-    discord.signal_stage_instance_delete().connect([this](const StageInstance &instance) {
+    discord.signal_stage_instance_delete().connect(sigc::track_obj([this](const StageInstance &instance) {
         m_TMP_stagelabel.hide();
-    });
+    },
+                                                                   *this));
 
     m_scroll.add(m_user_list);
     m_controls.add(m_mute);
