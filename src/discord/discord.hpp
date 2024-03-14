@@ -5,7 +5,7 @@
 #include "objects.hpp"
 #include "store.hpp"
 #include "voiceclient.hpp"
-#include "voicestateflags.hpp"
+#include "voicestate.hpp"
 #include "websocket.hpp"
 #include <gdkmm/rgba.h>
 #include <sigc++/sigc++.h>
@@ -202,7 +202,8 @@ public:
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
     [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
-    [[nodiscard]] std::optional<std::pair<Snowflake, VoiceStateFlags>> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] bool IsUserSpeaker(Snowflake user_id) const;
 
     DiscordVoiceClient &GetVoiceClient();
 
@@ -380,7 +381,7 @@ private:
 
     Snowflake m_voice_channel_id;
     // todo sql i guess
-    std::unordered_map<Snowflake, std::pair<Snowflake, VoiceStateFlags>> m_voice_states;
+    std::unordered_map<Snowflake, std::pair<Snowflake, PackedVoiceState>> m_voice_states;
     std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     void SendVoiceStateUpdate();

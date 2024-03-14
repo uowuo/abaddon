@@ -62,6 +62,7 @@ private:
     Gtk::ComboBox m_capture_combo;
 
     Snowflake m_channel_id;
+    bool m_is_stage;
 
     std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
 

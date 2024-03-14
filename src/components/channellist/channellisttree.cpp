@@ -1061,7 +1061,7 @@ Gtk::TreeModel::iterator ChannelListTree::CreateVoiceParticipantRow(const UserDa
 
     const auto voice_state = Abaddon::Get().GetDiscordClient().GetVoiceState(user.ID);
     if (voice_state.has_value()) {
-        row[m_columns.m_voice_flags] = voice_state->second;
+        row[m_columns.m_voice_flags] = voice_state->second.Flags;
     }
 
     auto &img = Abaddon::Get().GetImageManager();

@@ -29,14 +29,17 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &audio = Abaddon::Get().GetAudio();
 
+    const auto channel = discord.GetChannel(m_channel_id);
+    m_is_stage = channel.has_value() && channel->Type == ChannelType::GUILD_STAGE_VOICE;
+
     SetUsers(discord.GetUsersInVoiceChannel(m_channel_id));
 
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
 
     if (const auto self_state = discord.GetVoiceState(discord.GetUserData().ID); self_state.has_value()) {
-        m_mute.set_active((self_state->second & VoiceStateFlags::SelfMute) == VoiceStateFlags::SelfMute);
-        m_deafen.set_active((self_state->second & VoiceStateFlags::SelfDeaf) == VoiceStateFlags::SelfDeaf);
+        m_mute.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfMute));
+        m_deafen.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfDeaf));
     }
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
@@ -214,10 +217,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
-    const auto me = Abaddon::Get().GetDiscordClient().GetUserData().ID;
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto me = discord.GetUserData().ID;
     for (auto id : user_ids) {
         if (id == me) continue;
-        m_user_list.add(*CreateRow(id));
+        if (discord.IsUserSpeaker(id)) {
+            m_user_list.add(*CreateRow(id));
+        }
     }
 }
 
@@ -283,7 +289,9 @@ void VoiceWindow::UpdateVADParamValue() {
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
     if (m_channel_id == to_channel_id) {
         if (auto it = m_rows.find(user_id); it == m_rows.end()) {
-            m_user_list.add(*CreateRow(user_id));
+            if (Abaddon::Get().GetDiscordClient().IsUserSpeaker(user_id)) {
+                m_user_list.add(*CreateRow(user_id));
+            }
         }
     }
 }

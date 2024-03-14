@@ -1290,11 +1290,16 @@ std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
     return m_voice.GetSSRCOfUser(id);
 }
 
-std::optional<std::pair<Snowflake, VoiceStateFlags>> DiscordClient::GetVoiceState(Snowflake user_id) const {
+std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
     if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
         return it->second;
     }
     return std::nullopt;
+}
+
+bool DiscordClient::IsUserSpeaker(Snowflake user_id) const {
+    const auto state = GetVoiceState(user_id);
+    return state.has_value() && state->second.IsSpeaker();
 }
 
 DiscordVoiceClient &DiscordClient::GetVoiceClient() {
@@ -2962,7 +2967,7 @@ void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
     if (state.IsSelfVideo) flags |= VoiceStateFlags::SelfVideo;
     if (state.IsSuppressed) flags |= VoiceStateFlags::Suppressed;
 
-    m_voice_states[user_id] = std::make_pair(*state.ChannelID, flags);
+    m_voice_states[user_id] = std::make_pair(*state.ChannelID, PackedVoiceState { flags, state.RequestToSpeakTimestamp });
     m_voice_state_channel_users[*state.ChannelID].insert(user_id);
 
     m_signal_voice_state_set.emit(user_id, *state.ChannelID, flags);

@@ -6,7 +6,7 @@
 #include <gtkmm/cellrendererpixbuf.h>
 #include <gtkmm/cellrenderertext.h>
 #include "discord/snowflake.hpp"
-#include "discord/voicestateflags.hpp"
+#include "discord/voicestate.hpp"
 #include "misc/bitwise.hpp"
 
 enum class RenderType : uint8_t {

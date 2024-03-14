@@ -714,4 +714,5 @@ void from_json(const nlohmann::json &j, VoiceState &m) {
     JS_D("user_id", m.UserID);
     JS_ON("member", m.Member);
     JS_D("session_id", m.SessionID);
+    JS_ON("request_to_speak_timestamp", m.RequestToSpeakTimestamp);
 }

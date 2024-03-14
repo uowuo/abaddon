@@ -921,6 +921,7 @@ struct VoiceState {
     std::string SessionID;
     bool IsSuppressed;
     Snowflake UserID;
+    std::optional<std::string> RequestToSpeakTimestamp;
 
     friend void from_json(const nlohmann::json &j, VoiceState &m);
 };
