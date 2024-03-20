@@ -1,8 +1,8 @@
-#include "voicewindowuserlistentry.hpp"
+#include "voicewindowspeakerlistentry.hpp"
 
 #include "abaddon.hpp"
 
-VoiceWindowUserListEntry::VoiceWindowUserListEntry(Snowflake id)
+VoiceWindowSpeakerListEntry::VoiceWindowSpeakerListEntry(Snowflake id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
     , m_horz(Gtk::ORIENTATION_HORIZONTAL)
     , m_avatar(32, 32)
@@ -41,18 +41,18 @@ VoiceWindowUserListEntry::VoiceWindowUserListEntry(Snowflake id)
     });
 }
 
-void VoiceWindowUserListEntry::SetVolumeMeter(double frac) {
+void VoiceWindowSpeakerListEntry::SetVolumeMeter(double frac) {
     m_meter.SetVolume(frac);
 }
 
-void VoiceWindowUserListEntry::RestoreGain(double frac) {
+void VoiceWindowSpeakerListEntry::RestoreGain(double frac) {
     m_volume.set_value(frac * 100.0);
 }
 
-VoiceWindowUserListEntry::type_signal_mute_cs VoiceWindowUserListEntry::signal_mute_cs() {
+VoiceWindowSpeakerListEntry::type_signal_mute_cs VoiceWindowSpeakerListEntry::signal_mute_cs() {
     return m_signal_mute_cs;
 }
 
-VoiceWindowUserListEntry::type_signal_volume VoiceWindowUserListEntry::signal_volume() {
+VoiceWindowSpeakerListEntry::type_signal_volume VoiceWindowSpeakerListEntry::signal_volume() {
     return m_signal_volume;
 }

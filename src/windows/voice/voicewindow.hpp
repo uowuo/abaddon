@@ -16,8 +16,6 @@
 #include <unordered_set>
 // clang-format on
 
-class VoiceWindowUserListEntry;
-
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
@@ -25,7 +23,8 @@ public:
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
-    Gtk::ListBoxRow *CreateRow(Snowflake id);
+    Gtk::ListBoxRow *CreateSpeakerRow(Snowflake id);
+    Gtk::ListBoxRow *CreateAudienceRow(Snowflake id);
 
     void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
@@ -33,6 +32,8 @@ private:
 
     void OnMuteChanged();
     void OnDeafenChanged();
+
+    void TryDeleteRow(Snowflake id);
 
     bool UpdateVoiceMeters();
 
@@ -45,7 +46,9 @@ private:
     Gtk::CheckButton m_deafen;
 
     Gtk::ScrolledWindow m_scroll;
-    Gtk::ListBox m_user_list;
+    Gtk::VBox m_listing;
+    Gtk::ListBox m_speakers_list;
+    Gtk::ListBox m_audience_list;
 
     // Shows volume for gate VAD method
     // Shows probability for RNNoise VAD method
@@ -65,7 +68,7 @@ private:
     Snowflake m_channel_id;
     bool m_is_stage;
 
-    std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
+    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_rows;
 
     Gtk::MenuBar m_menu_bar;
     Gtk::MenuItem m_menu_view;
@@ -73,6 +76,8 @@ private:
     Gtk::MenuItem m_menu_view_settings;
 
     Gtk::Label m_TMP_stagelabel;
+    Gtk::Label m_TMP_speakers_label;
+    Gtk::Label m_TMP_audience_label;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;

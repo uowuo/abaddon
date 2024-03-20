@@ -10,9 +10,9 @@
 #include <gtkmm/listboxrow.h>
 #include <gtkmm/scale.h>
 
-class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
+class VoiceWindowSpeakerListEntry : public Gtk::ListBoxRow {
 public:
-    VoiceWindowUserListEntry(Snowflake id);
+    VoiceWindowSpeakerListEntry(Snowflake id);
 
     void SetVolumeMeter(double frac);
     void RestoreGain(double frac);

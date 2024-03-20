@@ -7,7 +7,8 @@
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "components/lazyimage.hpp"
-#include "voicewindowuserlistentry.hpp"
+#include "voicewindowaudiencelistentry.hpp"
+#include "voicewindowspeakerlistentry.hpp"
 #include "windows/voicesettingswindow.hpp"
 
 // clang-format on
@@ -196,7 +197,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     },
                                                                    *this));
 
-    m_scroll.add(m_user_list);
+    m_TMP_speakers_label.set_markup("<b>Speakers</b>");
+    m_listing.pack_start(m_TMP_speakers_label, false, true);
+    m_listing.pack_start(m_speakers_list, false, true);
+    m_TMP_audience_label.set_markup("<b>Audience</b>");
+    m_listing.pack_start(m_TMP_audience_label, false, true);
+    m_listing.pack_start(m_audience_list, false, true);
+    m_scroll.add(m_listing);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
@@ -221,15 +228,16 @@ void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto me = discord.GetUserData().ID;
     for (auto id : user_ids) {
-        if (id == me) continue;
         if (discord.IsUserSpeaker(id)) {
-            m_user_list.add(*CreateRow(id));
+            if (id != me) m_speakers_list.add(*CreateSpeakerRow(id));
+        } else {
+            m_audience_list.add(*CreateAudienceRow(id));
         }
     }
 }
 
-Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
-    auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
+Gtk::ListBoxRow *VoiceWindow::CreateSpeakerRow(Snowflake id) {
+    auto *row = Gtk::make_managed<VoiceWindowSpeakerListEntry>(id);
     m_rows[id] = row;
     auto &vc = Abaddon::Get().GetDiscordClient().GetVoiceClient();
     row->RestoreGain(vc.GetUserVolume(id));
@@ -239,7 +247,14 @@ Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
     row->signal_volume().connect([this, id](double volume) {
         m_signal_user_volume_changed.emit(id, volume);
     });
-    row->show_all();
+    row->show();
+    return row;
+}
+
+Gtk::ListBoxRow *VoiceWindow::CreateAudienceRow(Snowflake id) {
+    auto *row = Gtk::make_managed<VoiceWindowAudienceListEntry>(id);
+    m_rows[id] = row;
+    row->show();
     return row;
 }
 
@@ -249,6 +264,13 @@ void VoiceWindow::OnMuteChanged() {
 
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
+}
+
+void VoiceWindow::TryDeleteRow(Snowflake id) {
+    if (auto it = m_rows.find(id); it != m_rows.end()) {
+        delete it->second;
+        m_rows.erase(it);
+    }
 }
 
 bool VoiceWindow::UpdateVoiceMeters() {
@@ -267,7 +289,9 @@ bool VoiceWindow::UpdateVoiceMeters() {
     for (auto [id, row] : m_rows) {
         const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
         if (ssrc.has_value()) {
-            row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
+            if (auto *speaker_row = dynamic_cast<VoiceWindowSpeakerListEntry *>(row)) {
+                speaker_row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
+            }
         }
     }
     return true;
@@ -291,32 +315,25 @@ void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
     if (m_channel_id == to_channel_id) {
         if (auto it = m_rows.find(user_id); it == m_rows.end()) {
             if (Abaddon::Get().GetDiscordClient().IsUserSpeaker(user_id)) {
-                m_user_list.add(*CreateRow(user_id));
+                m_speakers_list.add(*CreateSpeakerRow(user_id));
+            } else {
+                m_audience_list.add(*CreateAudienceRow(user_id));
             }
         }
     }
 }
 
 void VoiceWindow::OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id) {
-    if (m_channel_id == from_channel_id) {
-        if (auto it = m_rows.find(user_id); it != m_rows.end()) {
-            delete it->second;
-            m_rows.erase(it);
-        }
-    }
+    if (m_channel_id == from_channel_id) TryDeleteRow(user_id);
 }
 
 void VoiceWindow::OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker) {
     if (m_channel_id != channel_id) return;
+    TryDeleteRow(user_id);
     if (is_speaker) {
-        if (auto it = m_rows.find(user_id); it == m_rows.end()) {
-            m_user_list.add(*CreateRow(user_id));
-        }
+        m_speakers_list.add(*CreateSpeakerRow(user_id));
     } else {
-        if (auto it = m_rows.find(user_id); it != m_rows.end()) {
-            delete it->second;
-            m_rows.erase(it);
-        }
+        m_audience_list.add(*CreateAudienceRow(user_id));
     }
 }
 
