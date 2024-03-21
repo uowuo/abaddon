@@ -96,11 +96,11 @@ std::vector<uint8_t> UDPSocket::Receive() {
 }
 
 void UDPSocket::Stop() {
-    #ifdef _WIN32
+#ifdef _WIN32
     closesocket(m_socket);
-    #else
+#else
     close(m_socket);
-    #endif
+#endif
     m_running = false;
     if (m_thread.joinable()) m_thread.join();
 }
@@ -264,6 +264,8 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
         case VoiceGatewayOp::Speaking:
             HandleGatewaySpeaking(msg);
             break;
+        case VoiceGatewayOp::HeartbeatAck:
+            break; // stfu
         default:
             const auto opcode_int = static_cast<int>(msg.Opcode);
             m_log->warn("Unhandled opcode: {}", opcode_int);
