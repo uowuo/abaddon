@@ -130,6 +130,8 @@ void SettingsManager::DefineSettings() {
     AddSetting("voice", "vad", "gate"s, &Settings::VAD);
 #endif
     AddSetting("voice", "backends", ""s, &Settings::Backends);
+    AddSetting("voice", "jitter_latency_desired", 50, &Settings::JitterDesiredLatency);
+    AddSetting("voice", "jitter_latency_maximum", 200, &Settings::JitterMaximumLatency);
 }
 
 void SettingsManager::ReadSettings() {
