@@ -250,6 +250,7 @@ bool DiscordVoiceClient::IsConnecting() const noexcept {
 }
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
+    m_log->trace("IN: {}", str);
     VoiceGatewayMessage msg = nlohmann::json::parse(str);
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello:

@@ -17,6 +17,7 @@
 // clang-format on
 
 class VoiceWindowUserListEntry;
+
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
@@ -28,6 +29,7 @@ private:
 
     void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
+    void OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker);
 
     void OnMuteChanged();
     void OnDeafenChanged();
@@ -61,6 +63,7 @@ private:
     Gtk::ComboBox m_capture_combo;
 
     Snowflake m_channel_id;
+    bool m_is_stage;
 
     std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
 
@@ -68,6 +71,8 @@ private:
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_settings;
+
+    Gtk::Label m_TMP_stagelabel;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;

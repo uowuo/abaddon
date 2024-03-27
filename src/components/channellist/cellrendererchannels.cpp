@@ -122,6 +122,7 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
 #ifdef WITH_VOICE
         case RenderType::VoiceChannel:
+        case RenderType::VoiceStage:
             return get_preferred_width_vfunc_voice_channel(widget, minimum_width, natural_width);
         case RenderType::VoiceParticipant:
             return get_preferred_width_vfunc_voice_participant(widget, minimum_width, natural_width);
@@ -147,6 +148,7 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_thread(widget, height, minimum_width, natural_width);
 #ifdef WITH_VOICE
         case RenderType::VoiceChannel:
+        case RenderType::VoiceStage:
             return get_preferred_width_for_height_vfunc_voice_channel(widget, height, minimum_width, natural_width);
         case RenderType::VoiceParticipant:
             return get_preferred_width_for_height_vfunc_voice_participant(widget, height, minimum_width, natural_width);
@@ -172,6 +174,7 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
 #ifdef WITH_VOICE
         case RenderType::VoiceChannel:
+        case RenderType::VoiceStage:
             return get_preferred_height_vfunc_voice_channel(widget, minimum_height, natural_height);
         case RenderType::VoiceParticipant:
             return get_preferred_height_vfunc_voice_participant(widget, minimum_height, natural_height);
@@ -197,6 +200,7 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_thread(widget, width, minimum_height, natural_height);
 #ifdef WITH_VOICE
         case RenderType::VoiceChannel:
+        case RenderType::VoiceStage:
             return get_preferred_height_for_width_vfunc_voice_channel(widget, width, minimum_height, natural_height);
         case RenderType::VoiceParticipant:
             return get_preferred_height_for_width_vfunc_voice_participant(widget, width, minimum_height, natural_height);
@@ -222,7 +226,9 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_thread(cr, widget, background_area, cell_area, flags);
 #ifdef WITH_VOICE
         case RenderType::VoiceChannel:
-            return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags);
+            return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags, "\U0001F50A");
+        case RenderType::VoiceStage:
+            return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags, "\U0001F4E1");
         case RenderType::VoiceParticipant:
             return render_vfunc_voice_participant(cr, widget, background_area, cell_area, flags);
 #endif
@@ -581,7 +587,7 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc_voice_channel(Gt
     m_renderer_text.get_preferred_height_for_width(widget, width, minimum_height, natural_height);
 }
 
-void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
+void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags, const char *emoji) {
     // channel name text
     Gtk::Requisition minimum_size, natural_size;
     m_renderer_text.get_preferred_size(widget, minimum_size, natural_size);
@@ -598,7 +604,7 @@ void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo:
     Pango::FontDescription font;
     font.set_family("sans 14");
 
-    auto layout = widget.create_pango_layout("\U0001F50A");
+    auto layout = widget.create_pango_layout(emoji);
     layout->set_font_description(font);
     layout->set_alignment(Pango::ALIGN_LEFT);
     cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
