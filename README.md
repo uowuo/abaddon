@@ -330,11 +330,12 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### voice
 
-| Setting                  | Type   | Default                            | Description                                                                     |
-|--------------------------|--------|------------------------------------|---------------------------------------------------------------------------------|
-| `vad`                    | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                      |
-| `jitter_latency_desired` | int    | 50                                 | Desired/Minimum latency for jitter buffer (in milliseconds)                     |
-| `jitter_latency_maximum` | int    | 200                                | Maximum latency for jitter buffer before frames are discarded (in milliseconds) |
+| Setting                  | Type   | Default                            | Description                                                                                                                |
+|--------------------------|--------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `vad`                    | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
+| `backends`               | string | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
+| `jitter_latency_desired` | int    | 50                                 | Desired/Minimum latency for jitter buffer (in milliseconds)                                                                |
+| `jitter_latency_maximum` | int    | 200                                | Maximum latency for jitter buffer before frames are discarded (in milliseconds)                                            |
 
 #### windows
 
