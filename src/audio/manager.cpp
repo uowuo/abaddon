@@ -6,6 +6,7 @@
 #endif
 
 #include "manager.hpp"
+#include "abaddon.hpp"
 #include <array>
 #include <glibmm/main.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
