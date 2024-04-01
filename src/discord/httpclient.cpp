@@ -143,7 +143,13 @@ void HTTPClient::AddHeaders(http::request &r) {
         r.set_header(name, val);
     }
     curl_easy_setopt(r.get_curl(), CURLOPT_COOKIE, m_cookie.c_str());
+    // https://github.com/curl/curl/issues/13226
+    // TODO remove when new release
+#if defined(LIBCURL_VERSION_NUM) && (LIBCURL_VERSION_NUM == 0x080701 || LIBCURL_VERSION_NUM == 0x080700)
+    //
+#else
     curl_easy_setopt(r.get_curl(), CURLOPT_ACCEPT_ENCODING, "");
+#endif
 }
 
 void HTTPClient::OnResponse(const http::response_type &r, const std::function<void(http::response_type r)> &cb) {

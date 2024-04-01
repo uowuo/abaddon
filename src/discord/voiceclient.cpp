@@ -265,6 +265,8 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
         case VoiceGatewayOp::Speaking:
             HandleGatewaySpeaking(msg);
             break;
+        case VoiceGatewayOp::HeartbeatAck:
+            break; // stfu
         default:
             const auto opcode_int = static_cast<int>(msg.Opcode);
             m_log->warn("Unhandled opcode: {}", opcode_int);

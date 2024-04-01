@@ -331,7 +331,7 @@ private:
 
     std::string m_token;
 
-    uint32_t m_build_number = 142000;
+    uint32_t m_build_number = 279382;
 
     void AddUserToGuild(Snowflake user_id, Snowflake guild_id);
     std::map<Snowflake, std::set<Snowflake>> m_guild_to_users;

@@ -9,6 +9,7 @@
 #include <gtkmm/treemodel.h>
 #include <gtkmm/treestore.h>
 #include <gtkmm/treemodelfilter.h>
+#include <gtkmm/treemodelsort.h>
 #include <gtkmm/treeview.h>
 #include <sigc++/sigc++.h>
 #include "discord/discord.hpp"
