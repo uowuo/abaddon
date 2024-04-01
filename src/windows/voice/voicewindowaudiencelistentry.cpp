@@ -1,4 +1,5 @@
 #include "voicewindowaudiencelistentry.hpp"
+#include "abaddon.hpp"
 
 VoiceWindowAudienceListEntry::VoiceWindowAudienceListEntry(Snowflake id)
     : m_main(Gtk::ORIENTATION_HORIZONTAL)
