@@ -52,8 +52,6 @@ public:
         // [voice]
         std::string VAD;
         std::string Backends;
-        int JitterDesiredLatency;
-        int JitterMaximumLatency;
 
         // [windows]
         bool HideConsole;

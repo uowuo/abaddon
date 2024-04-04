@@ -26,7 +26,6 @@ const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t
     return buf;
 }
 
-// frameCount is configured to be 480 samples per channel
 void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
     AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
     if (mgr == nullptr) return;
@@ -38,14 +37,12 @@ void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uin
         if (const auto vol_it = mgr->m_volume_ssrc.find(ssrc); vol_it != mgr->m_volume_ssrc.end()) {
             volume = vol_it->second;
         }
-
-        static std::array<int16_t, 480 * 2> buf;
-
-        if (!pair.first.PopSamples(buf.data(), 480 * 2)) continue;
-
-        for (size_t i = 0; i < 480 * 2; i++) {
+        auto &buf = pair.first;
+        const size_t n = std::min(static_cast<size_t>(buf.size()), static_cast<size_t>(frameCount * 2ULL));
+        for (size_t i = 0; i < n; i++) {
             pOutputF32[i] += volume * buf[i] / 32768.F;
         }
+        buf.erase(buf.begin(), buf.begin() + n);
     }
 }
 
@@ -205,14 +202,7 @@ void AudioManager::AddSSRC(uint32_t ssrc) {
     int error;
     if (m_sources.find(ssrc) == m_sources.end()) {
         auto *decoder = opus_decoder_create(48000, 2, &error);
-        auto &s = Abaddon::Get().GetSettings();
-        m_sources.insert(std::make_pair(ssrc, std::make_pair(
-                                                  JitterBuffer<int16_t>(
-                                                      s.JitterDesiredLatency,
-                                                      s.JitterMaximumLatency,
-                                                      2,
-                                                      48000),
-                                                  decoder)));
+        m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
     }
 }
 
@@ -252,7 +242,7 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
         } else {
             UpdateReceiveVolume(ssrc, pcm.data(), decoded);
             auto &buf = it->second.first;
-            buf.PushSamples(pcm.data(), decoded * 2);
+            buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
         }
     }
 }
