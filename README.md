@@ -87,7 +87,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Linux:
 
 1. Install dependencies
-    * On Ubuntu 22.04 (Jammy) and newer:
+    * On Ubuntu 22.04 (Jammy)/Debian 12 (bookworm) and newer:
       ```Shell
       $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev libopus-dev libsodium-dev libspdlog-dev
       ```
