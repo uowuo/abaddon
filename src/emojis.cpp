@@ -5,90 +5,48 @@
 
 #include <gdkmm/pixbufloader.h>
 
-#ifdef ABADDON_IS_BIG_ENDIAN
-/* Allows processing emojis.bin correctly on big-endian systems. */
-int emojis_int32_correct_endian(int little_endian_in) {
-    /* this does the same thing as __bswap_32() but can be done without
-       non-standard headers. */
-    return ((little_endian_in >> 24) & 0xff) |      // move byte 3 to byte 0
-           ((little_endian_in << 8) & 0xff0000) |   // move byte 1 to byte 2
-           ((little_endian_in >> 8) & 0xff00) |     // move byte 2 to byte 1
-           ((little_endian_in << 24) & 0xff000000); // byte 0 to byte 3
-}
-#else
-int emojis_int32_correct_endian(int little_endian_in) {
-    return little_endian_in;
-}
-#endif
-
 EmojiResource::EmojiResource(std::string filepath)
     : m_filepath(std::move(filepath)) {}
 
+EmojiResource::~EmojiResource() {
+    sqlite3_finalize(m_get_emoji_stmt);
+    sqlite3_close(m_db);
+}
+
 bool EmojiResource::Load() {
-    m_fp = std::fopen(m_filepath.c_str(), "rb");
-    if (m_fp == nullptr) return false;
+    if (sqlite3_open(m_filepath.c_str(), &m_db) != SQLITE_OK) return false;
 
-    int index_offset;
-    std::fread(&index_offset, 4, 1, m_fp);
-    index_offset = emojis_int32_correct_endian(index_offset);
-    std::fseek(m_fp, index_offset, SEEK_SET);
+    if (sqlite3_prepare_v2(m_db, "SELECT data FROM emoji_data WHERE emoji = ?", -1, &m_get_emoji_stmt, nullptr) != SQLITE_OK) return false;
 
-    int emojis_count;
-    std::fread(&emojis_count, 4, 1, m_fp);
-    emojis_count = emojis_int32_correct_endian(emojis_count);
-    for (int i = 0; i < emojis_count; i++) {
-        std::vector<std::string> shortcodes;
-
-        int shortcodes_count;
-        std::fread(&shortcodes_count, 4, 1, m_fp);
-        shortcodes_count = emojis_int32_correct_endian(shortcodes_count);
-        for (int j = 0; j < shortcodes_count; j++) {
-            int shortcode_length;
-            std::fread(&shortcode_length, 4, 1, m_fp);
-            shortcode_length = emojis_int32_correct_endian(shortcode_length);
-            std::string shortcode(shortcode_length, '\0');
-            std::fread(shortcode.data(), shortcode_length, 1, m_fp);
-            shortcodes.push_back(std::move(shortcode));
-        }
-
-        int surrogates_count;
-        std::fread(&surrogates_count, 4, 1, m_fp);
-        surrogates_count = emojis_int32_correct_endian(surrogates_count);
-        std::string surrogates(surrogates_count, '\0');
-        std::fread(surrogates.data(), surrogates_count, 1, m_fp);
-        m_patterns.emplace_back(surrogates);
-
-        int data_size, data_offset;
-        std::fread(&data_size, 4, 1, m_fp);
-        data_size = emojis_int32_correct_endian(data_size);
-        std::fread(&data_offset, 4, 1, m_fp);
-        data_offset = emojis_int32_correct_endian(data_offset);
-        m_index[surrogates] = { data_offset, data_size };
-
-        for (const auto &shortcode : shortcodes)
-            m_shortcode_index[shortcode] = surrogates;
-
-        m_pattern_shortcode_index[surrogates] = std::move(shortcodes);
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(m_db, "SELECT * FROM emoji_shortcodes", -1, &stmt, nullptr) != SQLITE_OK) return false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string shortcode = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+        std::string emoji = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        m_shortcode_index[shortcode] = emoji;
+        m_pattern_shortcode_index[emoji].push_back(shortcode);
     }
+    sqlite3_finalize(stmt);
 
     std::sort(m_patterns.begin(), m_patterns.end(), [](const Glib::ustring &a, const Glib::ustring &b) {
         return a.size() > b.size();
     });
+
     return true;
 }
 
 Glib::RefPtr<Gdk::Pixbuf> EmojiResource::GetPixBuf(const Glib::ustring &pattern) {
-    const auto it = m_index.find(pattern);
-    if (it == m_index.end()) return {};
-    const int pos = it->second.first;
-    const int len = it->second.second;
-    std::fseek(m_fp, pos, SEEK_SET);
-    std::vector<uint8_t> data(len);
-    std::fread(data.data(), len, 1, m_fp);
-    auto loader = Gdk::PixbufLoader::create();
-    loader->write(static_cast<const guint8 *>(data.data()), data.size());
-    loader->close();
-    return loader->get_pixbuf();
+    if (sqlite3_reset(m_get_emoji_stmt) != SQLITE_OK) return {};
+    if (sqlite3_bind_text(m_get_emoji_stmt, 1, pattern.c_str(), -1, nullptr) != SQLITE_OK) return {};
+    if (sqlite3_step(m_get_emoji_stmt) != SQLITE_ROW) return {};
+    if (const void *blob = sqlite3_column_blob(m_get_emoji_stmt, 0)) {
+        const int bytes = sqlite3_column_bytes(m_get_emoji_stmt, 0);
+        auto loader = Gdk::PixbufLoader::create();
+        loader->write(static_cast<const guint8 *>(blob), bytes);
+        loader->close();
+        return loader->get_pixbuf();
+    }
+    return {};
 }
 
 void EmojiResource::ReplaceEmojis(Glib::RefPtr<Gtk::TextBuffer> buf, int size) {
