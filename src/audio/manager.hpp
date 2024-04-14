@@ -21,7 +21,6 @@
 #endif
 
 #include "devices.hpp"
-#include "jitterbuffer.hpp"
 // clang-format on
 
 class AudioManager {
@@ -137,7 +136,7 @@ private:
     mutable std::mutex m_rnn_mutex;
 #endif
 
-    std::unordered_map<uint32_t, std::pair<JitterBuffer<int16_t>, OpusDecoder *>> m_sources;
+    std::unordered_map<uint32_t, std::pair<std::deque<int16_t>, OpusDecoder *>> m_sources;
 
     OpusEncoder *m_encoder;
 
