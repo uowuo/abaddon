@@ -4,6 +4,7 @@
 #include "role.hpp"
 #include "channel.hpp"
 #include "emoji.hpp"
+#include "stage.hpp"
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -90,6 +91,7 @@ struct GuildData {
     std::optional<int> ApproximateMemberCount;
     std::optional<int> ApproximatePresenceCount;
     std::optional<std::vector<ChannelData>> Threads; // only with permissions to view, id only
+    std::optional<std::vector<StageInstance>> StageInstances;
 
     // undocumented
     // std::map<std::string, Unknown> GuildHashes;

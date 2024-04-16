@@ -1720,6 +1720,13 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
         return;
     }
 
+    if (guild.StageInstances.has_value()) {
+        for (const auto &stage : *guild.StageInstances) {
+            m_stage_instances[stage.ID] = stage;
+            m_channel_to_stage_instance[stage.ChannelID] = stage.ID;
+        }
+    }
+
     m_store.BeginTransaction();
 
     m_store.SetGuild(guild.ID, guild);
