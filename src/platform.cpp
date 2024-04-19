@@ -4,6 +4,10 @@
 #include <fstream>
 #include <string>
 
+#ifdef __APPLE__
+    #include <unistd.h>
+#endif
+
 using namespace std::literals::string_literals;
 
 #if defined(_WIN32)
