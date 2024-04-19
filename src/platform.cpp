@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 
+#include <spdlog/spdlog.h>
+
 using namespace std::literals::string_literals;
 
 #if defined(_WIN32)
