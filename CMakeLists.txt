@@ -148,6 +148,7 @@ if (APPLE)
     target_link_libraries(abaddon "-framework CoreFoundation")
     target_link_libraries(abaddon "-framework CoreAudio")
     target_link_libraries(abaddon "-framework AudioToolbox")
+    target_link_libraries(abaddon "-framework AudioUnit")
 endif ()
 
 if (ENABLE_VOICE)
