@@ -94,21 +94,37 @@ std::string Platform::FindStateCacheFolder() {
 }
 
 #elif defined(__linux__)
+static std::string TryUseEnvForResurceFolder(std::string env) {
+    const static std::string data_path = env + "/abaddon"s;
+    for (const auto &path : { "."s, data_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
+        if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
+            return path;
+        }
+    }
+    return "";
+}
+
 std::string Platform::FindResourceFolder() {
     static std::string found_path;
     static bool found = false;
     if (found) return found_path;
 
+    const auto data_env = std::getenv("XDG_DATA_HOME");
+    const auto path = TryUseEnvForResurceFolder(data_env);
+    if (path != "") {
+        found_path = path;
+        found = true;
+        return path;
+    }
+
     const auto home_env = std::getenv("HOME");
     if (home_env != nullptr) {
-        const static std::string home_path = home_env + "/.local/share/abaddon"s;
-
-        for (const auto &path : { "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR) }) {
-            if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
-                found_path = path;
-                found = true;
-                return found_path;
-            }
+        const static std::string home_path = home_env + "/.local/share"s;
+        const auto path = TryUseEnvForResurceFolder(home_path);
+        if (path != "") {
+            found_path = path;
+            found = true;
+            return found_path;
         }
     }
 
@@ -116,6 +132,19 @@ std::string Platform::FindResourceFolder() {
     found_path = ".";
     found = true;
     return found_path;
+}
+
+static std::string FindOrCreateConfigDirInPath(std::string path) {
+    if (auto config_path = path + "/abaddon/abaddon.ini"s; util::IsFile(config_path)) {
+        return config_path;
+    }
+    std::error_code ec;
+    const auto config_path = path + "/abaddon"s;
+    if (!util::IsFolder(config_path))
+        std::filesystem::create_directories(config_path, ec);
+    if (util::IsFolder(config_path))
+        return config_path + "/abaddon.ini";
+    return "";
 }
 
 std::string Platform::FindConfigFile() {
@@ -126,19 +155,17 @@ std::string Platform::FindConfigFile() {
     if (util::IsFile("./abaddon.ini"))
         return "./abaddon.ini";
 
-    if (const auto home_env = std::getenv("HOME")) {
-        // use ~/.config if present
-        if (auto home_path = home_env + "/.config/abaddon/abaddon.ini"s; util::IsFile(home_path)) {
-            return home_path;
-        }
+    if (const auto config_env = std::getenv("XDG_CONFIG_HOME")) {
+        const auto path = FindOrCreateConfigDirInPath(config_env);
+        if (path != "")
+            return path;
+    }
 
-        // fallback to ~/.config if the directory exists/can be created
-        std::error_code ec;
-        const auto home_path = home_env + "/.config/abaddon"s;
-        if (!util::IsFolder(home_path))
-            std::filesystem::create_directories(home_path, ec);
-        if (util::IsFolder(home_path))
-            return home_path + "/abaddon.ini";
+    if (const auto home_env = std::getenv("HOME")) {
+        const auto config_path = std::string(home_env) + "/.config";
+        const auto path = FindOrCreateConfigDirInPath(config_path);
+        if (path != "")
+            return path;
     }
 
     // fallback to cwd if cant find + cant make in ~/.config
@@ -146,15 +173,27 @@ std::string Platform::FindConfigFile() {
     return "./abaddon.ini";
 }
 
+static std::string FindOrCreateCacheDirInPath(std::string path) {
+    auto cache_path = path + "/abaddon"s;
+    std::error_code ec;
+    if (!util::IsFolder(cache_path))
+        std::filesystem::create_directories(cache_path, ec);
+    if (util::IsFolder(cache_path))
+        return cache_path;
+    return "";
+}
+
 std::string Platform::FindStateCacheFolder() {
-    const auto home_env = std::getenv("HOME");
-    if (home_env != nullptr) {
-        auto home_path = home_env + "/.cache/abaddon"s;
-        std::error_code ec;
-        if (!util::IsFolder(home_path))
-            std::filesystem::create_directories(home_path, ec);
-        if (util::IsFolder(home_path))
-            return home_path;
+    if (const auto cache_env = std::getenv("XDG_CACHE_HOME")) {
+        const auto path = FindOrCreateCacheDirInPath(cache_env);
+        if (path != "")
+            return path;
+    }
+    if (const auto home_env = std::getenv("HOME")) {
+        const auto cache_path = std::string(home_env) + "/.cache"s;
+        const auto path = FindOrCreateCacheDirInPath(cache_path);
+        if (path != "")
+            return path;
     }
     spdlog::get("discord")->warn("can't find cache folder!");
     return ".";
