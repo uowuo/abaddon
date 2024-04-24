@@ -181,6 +181,14 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
 
+    if (const auto instance = discord.GetStageInstanceFromChannel(channel_id); instance.has_value()) {
+        printf("%s\n", instance->Topic.c_str());
+        m_TMP_stagelabel.show();
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance->Topic + "</span>");
+    } else {
+        m_TMP_stagelabel.hide();
+    }
+
     discord.signal_stage_instance_create().connect(sigc::track_obj([this](const StageInstance &instance) {
         m_TMP_stagelabel.show();
         m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
@@ -218,9 +226,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(*combos_container, false, true, 2);
     add(m_main);
     show_all_children();
-
-    m_TMP_stagelabel.hide();
-
+    
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
 }
 

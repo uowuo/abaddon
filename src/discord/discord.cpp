@@ -358,6 +358,14 @@ std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake
     return m_store.GetWebhookMessage(message_id);
 }
 
+std::optional<StageInstance> DiscordClient::GetStageInstanceFromChannel(Snowflake channel_id) const {
+    const auto iter1 = m_channel_to_stage_instance.find(channel_id);
+    if (iter1 == m_channel_to_stage_instance.end()) return {};
+    const auto iter2 = m_stage_instances.find(iter1->second);
+    if (iter2 == m_stage_instances.end()) return {};
+    return iter2->second;
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -1722,6 +1730,7 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
 
     if (guild.StageInstances.has_value()) {
         for (const auto &stage : *guild.StageInstances) {
+            spdlog::get("discord")->debug("storing stage {} in channel {}", stage.ID, stage.ChannelID);
             m_stage_instances[stage.ID] = stage;
             m_channel_to_stage_instance[stage.ChannelID] = stage.ID;
         }
