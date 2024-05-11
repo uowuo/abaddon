@@ -3,6 +3,8 @@
 #include <nlohmann/json.hpp>
 #include "discord/snowflake.hpp"
 
+#include "yyjson.h"
+
 struct ExpansionState;
 struct ExpansionStateRoot {
     std::map<Snowflake, ExpansionState> Children;
@@ -33,4 +35,5 @@ struct AbaddonApplicationState {
 
     friend void to_json(nlohmann::json &j, const AbaddonApplicationState &m);
     friend void from_json(const nlohmann::json &j, AbaddonApplicationState &m);
+
 };

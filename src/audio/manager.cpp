@@ -183,6 +183,13 @@ AudioManager::AudioManager(const Glib::ustring &backends_string)
         spdlog::get("audio")->info("using {} as capture device", capture_device_name);
     }
 
+    ma_result result;
+
+    result = ma_engine_init(NULL, &m_sound_engine);
+    if (result != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to start playback engine. Error code: {}", result); // Failed to initialize the engine.
+    }
+
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }
 
@@ -192,9 +199,21 @@ AudioManager::~AudioManager() {
     ma_context_uninit(&m_context);
     RemoveAllSSRCs();
 
+    ma_engine_uninit(&m_sound_engine);
+
 #ifdef WITH_RNNOISE
     RNNoiseUninitialize();
 #endif
+}
+
+void AudioManager::PlayAudioFile(const std::string path)
+{
+    ma_result result;
+    result = ma_engine_play_sound(&m_sound_engine, path.c_str(), NULL);
+
+    if (result != MA_SUCCESS) {
+        spdlog::get("audio")->error("Failed to play sound \"{}\". Error code: {}", path , result);
+    }
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {

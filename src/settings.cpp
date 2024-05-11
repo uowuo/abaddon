@@ -87,6 +87,8 @@ void SettingsManager::DefineSettings() {
     AddSetting("discord", "autoconnect", false, &Settings::Autoconnect);
     AddSetting("discord", "keychain", true, &Settings::UseKeychain);
 
+
+
     AddSetting("gui", "css", "main.css"s, &Settings::MainCSS);
     AddSetting("gui", "animated_guild_hover_only", true, &Settings::AnimatedGuildHoverOnly);
     AddSetting("gui", "animations", true, &Settings::ShowAnimations);

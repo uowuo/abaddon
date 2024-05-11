@@ -206,6 +206,7 @@ struct MessageApplicationData {
 };
 
 struct Message {
+
     Snowflake ID;
     Snowflake ChannelID;
     std::optional<Snowflake> GuildID;

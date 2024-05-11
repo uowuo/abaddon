@@ -5,6 +5,8 @@
 #include "snowflake.hpp"
 #include "misc/bitwise.hpp"
 
+#include "yyjson_util.h"
+
 enum class PresenceStatus : uint8_t {
     Online,
     Offline,
@@ -122,6 +124,35 @@ struct ActivityData {
     std::optional<bool> IsInstance;               //
     std::optional<ActivityFlags> Flags;           //
 
+    YYJsonDocument yyjsn;
+
+    yyjson_mut_val* GetDataBlock()
+    {
+        yyjsn.CreateDoc();
+        if (Type == ActivityType::Custom) {
+            yyjsn.AddString("name","Custom Status");
+            yyjsn.AddString("state",Name);
+        } else {
+            yyjsn.AddString("name",Name);
+            yyjsn.AddString("state",State);
+        }
+
+        yyjsn.AddInt("type",(int)Type);
+        yyjsn.AddString("url",URL);
+        yyjsn.AddString("created_at",URL);
+        yyjsn.AddString("timestamps",URL);
+        yyjsn.AddString("application_id",URL);
+        yyjsn.AddString("details",URL);
+        yyjsn.AddString("emoji",URL);
+        yyjsn.AddString("party",URL);
+        yyjsn.AddString("assets",URL);
+        yyjsn.AddString("secrets",URL);
+        yyjsn.AddString("instance",URL);
+        yyjsn.AddString("flags",URL);
+
+        return yyjsn.GetMutableRoot();
+    }
+
     friend void from_json(const nlohmann::json &j, ActivityData &m);
     friend void to_json(nlohmann::json &j, const ActivityData &m);
 };
@@ -131,6 +162,24 @@ struct PresenceData {
     std::string Status;
     std::optional<bool> IsAFK;
     std::optional<int> Since;
+
+    yyjson_mut_val* GetDataBlock() const
+    {
+        YYJsonDocument yyjsn2;
+        yyjsn2.CreateDoc(false);
+
+        yyjsn2.CreateArrayEmpty("activities");
+
+        yyjsn2.AddString("status",Status.c_str());
+        yyjsn2.AddBool("afk",IsAFK);
+
+        if (Since.has_value())
+            yyjsn2.AddInt("since",Since);
+        else
+            yyjsn2.AddInt("since",0);
+
+        return yyjsn2.GetMutableRoot();
+    }
 
     friend void from_json(const nlohmann::json &j, PresenceData &m);
     friend void to_json(nlohmann::json &j, const PresenceData &m);

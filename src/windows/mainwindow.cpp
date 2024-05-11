@@ -41,6 +41,7 @@ MainWindow::MainWindow()
     m_channel_list.set_size_request(-1, -1);
     m_channel_list.show();
 
+
     member_list->set_vexpand(true);
     member_list->show();
 
@@ -51,7 +52,7 @@ MainWindow::MainWindow()
     m_content_stack.add(*chat, "chat");
     m_content_stack.add(m_friends, "friends");
     m_content_stack.set_vexpand(true);
-    m_content_stack.set_hexpand(true);
+    m_content_stack.set_hexpand(false);
     m_content_stack.set_visible_child("chat");
     m_content_stack.show();
 
@@ -63,9 +64,9 @@ MainWindow::MainWindow()
 
     m_chan_content_paned.pack1(m_left_pane);
     m_chan_content_paned.pack2(m_content_members_paned);
-    m_chan_content_paned.child_property_shrink(m_content_members_paned) = true;
-    m_chan_content_paned.child_property_resize(m_content_members_paned) = true;
-    m_chan_content_paned.child_property_shrink(m_left_pane) = true;
+    m_chan_content_paned.child_property_shrink(m_content_members_paned) = false;
+    m_chan_content_paned.child_property_resize(m_content_members_paned) = false;
+    m_chan_content_paned.child_property_shrink(m_left_pane) = false;
     m_chan_content_paned.child_property_resize(m_left_pane) = true;
     m_chan_content_paned.set_position(200);
     m_chan_content_paned.show();
@@ -74,10 +75,10 @@ MainWindow::MainWindow()
 
     m_content_members_paned.pack1(m_content_stack);
     m_content_members_paned.pack2(*member_list);
-    m_content_members_paned.child_property_shrink(m_content_stack) = true;
-    m_content_members_paned.child_property_resize(m_content_stack) = true;
+    m_content_members_paned.child_property_shrink(m_content_stack) = false;
+    m_content_members_paned.child_property_resize(m_content_stack) = false;
     m_content_members_paned.child_property_shrink(*member_list) = true;
-    m_content_members_paned.child_property_resize(*member_list) = true;
+    m_content_members_paned.child_property_resize(*member_list) = false;
     int w, h;
     get_default_size(w, h); // :s
     m_content_members_paned.set_position(w - m_chan_content_paned.get_position() - 150);

@@ -16,9 +16,12 @@
 #include "state.hpp"
 #include "cellrendererchannels.hpp"
 
-constexpr static int GuildIconSize = 24;
-constexpr static int DMIconSize = 20;
-constexpr static int VoiceParticipantIconSize = 18;
+//constexpr static int GuildIconSize = 24;
+constexpr static int GuildIconSize = 40;
+//constexpr static int DMIconSize = 20;
+constexpr static int DMIconSize = 30;
+//constexpr static int VoiceParticipantIconSize = 18;
+constexpr static int VoiceParticipantIconSize = 20;
 constexpr static int OrphanChannelSortOffset = -100; // forces orphan channels to the top of the list
 
 class ChannelListTree : public Gtk::ScrolledWindow {
@@ -234,6 +237,7 @@ public:
     type_signal_action_guild_settings signal_action_guild_settings();
 
 private:
+
     type_signal_action_channel_item_select m_signal_action_channel_item_select;
     type_signal_action_guild_leave m_signal_action_guild_leave;
     type_signal_action_guild_settings m_signal_action_guild_settings;

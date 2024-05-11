@@ -495,7 +495,8 @@ void DiscordClient::SendChatMessageNoAttachments(const ChatSubmitParams &params,
     }
 
     m_http.MakePOST("/channels/" + std::to_string(params.ChannelID) + "/messages",
-                    nlohmann::json(obj).dump(),
+                    //nlohmann::json(obj).dump(),
+                    obj.BuildJson(),
                     [this, nonce, callback](const http::response_type &r) {
                         ChatMessageCallback(nonce, r, callback);
                     });
@@ -556,7 +557,10 @@ void DiscordClient::SendChatMessageAttachments(const ChatSubmitParams &params, c
         obj.Attachments->push_back({ static_cast<int>(i), attachment.Description });
     }
 
-    req.add_field("payload_json", nlohmann::json(obj).dump().c_str(), CURL_ZERO_TERMINATED);
+    req.add_field("payload_json",
+                  //nlohmann::json(obj).dump().c_str(),
+                  obj.BuildJson().c_str(),
+                  CURL_ZERO_TERMINATED);
 
     m_http.Execute(std::move(req), [this, params, nonce, callback](const http::response_type &res) {
         for (const auto &attachment : params.Attachments) {
@@ -1656,6 +1660,9 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::CALL_CREATE: {
                         HandleGatewayCallCreate(m);
                     } break;
+                    case GatewayEvent::CALL_DESTROY: {
+                        HandleGatewayCallDestroy(m);
+                    } break;
 #endif
                 }
             } break;
@@ -1811,6 +1818,12 @@ void DiscordClient::HandleGatewayMessageCreate(const GatewayMessage &msg) {
         m_unread[data.ChannelID]++;
     }
     m_signal_message_create.emit(data);
+
+    DiscordClient& discord = Abaddon::Get().GetDiscordClient();
+    if(!discord.IsChannelMuted(data.ChannelID) && !discord.IsGuildMuted(data.GuildID.value()) && data.DoesMentionEveryoneOrUser(discord.m_user_data.ID))
+    {
+        Abaddon::Get().GetAudio().PlayAudioFile("res/sound/message.mp3");
+    }
 }
 
 void DiscordClient::HandleGatewayMessageDelete(const GatewayMessage &msg) {
@@ -2355,6 +2368,12 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     m_voice.Start();
 }
 
+
+void DiscordClient::HandleGatewayCallDestroy(const GatewayMessage &msg) {
+    //Actually we don t need that at all. but i want to make some sound on disconnect
+    //Abaddon::Get().GetAudio().PlayAudioFile("res/sound/voice_disconnect.mp3");
+}
+
 void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     CallCreateData data = msg.Data;
 
@@ -2363,6 +2382,8 @@ void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     for (const auto &state : data.VoiceStates) {
         CheckVoiceState(state);
     }
+
+    //Abaddon::Get().GetAudio().PlayAudioFile("res/sound/voice_connect.mp3");
 }
 
 void DiscordClient::CheckVoiceState(const VoiceState &data) {
@@ -2670,7 +2691,7 @@ void DiscordClient::SendIdentify() {
     SetSuperPropertiesFromIdentity(msg);
     const bool b = m_websocket.GetPrintMessages();
     m_websocket.SetPrintMessages(false);
-    m_websocket.Send(msg);
+    m_websocket.Send(msg.BuildJson());
     m_websocket.SetPrintMessages(b);
 }
 
@@ -2693,22 +2714,7 @@ void DiscordClient::SetHeaders() {
 }
 
 void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identity) {
-    nlohmann::ordered_json j;
-    j["os"] = identity.Properties.OS;
-    j["browser"] = identity.Properties.Browser;
-    j["device"] = identity.Properties.Device;
-    j["system_locale"] = identity.Properties.SystemLocale;
-    j["browser_user_agent"] = identity.Properties.BrowserUserAgent;
-    j["browser_version"] = identity.Properties.BrowserVersion;
-    j["os_version"] = identity.Properties.OSVersion;
-    j["referrer"] = identity.Properties.Referrer;
-    j["referring_domain"] = identity.Properties.ReferringDomain;
-    j["referrer_current"] = identity.Properties.ReferrerCurrent;
-    j["referring_domain_current"] = identity.Properties.ReferringDomainCurrent;
-    j["release_channel"] = identity.Properties.ReleaseChannel;
-    j["client_build_number"] = identity.Properties.ClientBuildNumber;
-    j["client_event_source"] = nullptr; // probably will never be non-null ("") anyways
-    m_http.SetPersistentHeader("X-Super-Properties", Glib::Base64::encode(j.dump()));
+    m_http.SetPersistentHeader("X-Super-Properties", Glib::Base64::encode(identity.Properties.BuildJson()));
     m_http.SetPersistentHeader("X-Discord-Locale", identity.Properties.SystemLocale);
 }
 
@@ -3001,6 +3007,7 @@ void DiscordClient::LoadEventMap() {
     m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
     m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
     m_event_map["CALL_CREATE"] = GatewayEvent::CALL_CREATE;
+    m_event_map["CALL_DESTROY"] = GatewayEvent::CALL_DESTROY;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {

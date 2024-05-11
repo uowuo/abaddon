@@ -19,3 +19,6 @@
 [submodule "subprojects/qrcodegen"]
 	path = subprojects/qrcodegen
 	url = https://github.com/nayuki/QR-Code-generator
+[submodule "subprojects/qrcodegen"]
+	path = subprojects/yyjson-master
+	url = https://github.com/ibireme/yyjson.git

@@ -47,13 +47,24 @@ ChatMessageItemContainer *ChatMessageItemContainer::FromMessage(const Message &d
     // i dont think attachments can be edited
     // also this can definitely be done much better holy shit
     for (const auto &a : data.Attachments) {
-        if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value()) {
-            auto *widget = container->CreateImageComponent(a.ProxyURL, a.URL, *a.Width, *a.Height);
-            if (a.Description.has_value()) {
+        if (IsURLViewableImage(a.ProxyURL) && a.Width.has_value() && a.Height.has_value())
+        {
+            auto *widget = container->CreateImageComponent(a.ProxyURL,
+                                                           a.URL, *a.Width, *a.Height);
+            if (a.Description.has_value())
+            {
                 widget->set_tooltip_text(*a.Description);
             }
             container->m_main.add(*widget);
-        } else {
+            continue;
+        }
+
+        if(IsURLViewableVideo(a.ProxyURL))
+        {
+            ///Gtk::
+        }
+
+        {
             auto *widget = container->CreateAttachmentComponent(a);
             container->m_main.add(*widget);
         }
@@ -498,7 +509,11 @@ Gtk::Widget *ChatMessageItemContainer::CreateImageComponent(const std::string &p
     GetImageDimensions(inw, inh, w, h, clamp_width, clamp_height);
 
     Gtk::EventBox *ev = Gtk::manage(new Gtk::EventBox);
-    Gtk::Image *widget = Gtk::manage(new LazyImage(proxy_url, w, h, false));
+
+    LazyImage* lazyim = new LazyImage(proxy_url, w, h, false);
+    lazyim->SetAnimated(true);
+
+    Gtk::Image *widget = Gtk::manage(lazyim);
     ev->add(*widget);
     ev->set_halign(Gtk::ALIGN_START);
     widget->set_halign(Gtk::ALIGN_START);

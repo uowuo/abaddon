@@ -11,6 +11,8 @@
 #include "discord/user.hpp"
 #include "discord/snowflake.hpp"
 
+constexpr static int MembersIconSize = 20;
+
 class MemberList {
 public:
     MemberList();

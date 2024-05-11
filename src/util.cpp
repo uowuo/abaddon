@@ -178,6 +178,21 @@ bool IsURLViewableImage(const std::string &url) {
     return false;
 }
 
+bool IsURLViewableVideo(const std::string &url) {
+    std::string lw_url = url;
+    std::transform(lw_url.begin(), lw_url.end(), lw_url.begin(), ::tolower);
+
+    const auto ext = GetExtension(lw_url);
+    static const char *exts[] = { ".mp4",
+                                  ".webm",nullptr };
+    const char *str = ext.c_str();
+    for (int i = 0; exts[i] != nullptr; i++)
+        if (strcmp(str, exts[i]) == 0)
+            return true;
+    return false;
+}
+
+
 void AddPointerCursor(Gtk::Widget &widget) {
     widget.signal_realize().connect([&widget]() {
         auto window = widget.get_window();

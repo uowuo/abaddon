@@ -8,6 +8,7 @@
 #include <sigc++/sigc++.h>
 #include <spdlog/spdlog.h>
 
+
 class Websocket {
 public:
     Websocket(const std::string &id);

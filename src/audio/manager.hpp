@@ -28,6 +28,8 @@ public:
     AudioManager(const Glib::ustring &backends_string);
     ~AudioManager();
 
+    void PlayAudioFile(const std::string path);
+
     void AddSSRC(uint32_t ssrc);
     void RemoveSSRC(uint32_t ssrc);
     void RemoveAllSSRCs();
@@ -94,6 +96,8 @@ public:
     bool GetMixMono() const;
 
 private:
+
+
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
     void UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames);
@@ -122,12 +126,15 @@ private:
     ma_device m_playback_device;
     ma_device_config m_playback_config;
     ma_device_id m_playback_id;
+
     // capture
     ma_device m_capture_device;
     ma_device_config m_capture_config;
     ma_device_id m_capture_id;
 
     ma_context m_context;
+
+    ma_engine m_sound_engine;
 
     mutable std::mutex m_mutex;
     mutable std::mutex m_enc_mutex;

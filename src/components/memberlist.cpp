@@ -78,7 +78,7 @@ void MemberList::UpdateMemberList() {
             row[m_columns.m_name] = user.GetDisplayNameEscaped();
             row[m_columns.m_color] = color_transparent;
             row[m_columns.m_av_requested] = false;
-            row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+            row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(MembersIconSize);
             row[m_columns.m_status] = Abaddon::Get().GetDiscordClient().GetUserStatus(user.ID);
             m_pending_avatars[user.ID] = row_iter;
         }
@@ -132,7 +132,7 @@ void MemberList::UpdateMemberList() {
         row[m_columns.m_type] = MemberListRenderType::Member;
         row[m_columns.m_id] = user.ID;
         row[m_columns.m_name] = user.GetDisplayNameEscaped();
-        row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(16);
+        row[m_columns.m_pixbuf] = Abaddon::Get().GetImageManager().GetPlaceholder(MembersIconSize);
         row[m_columns.m_status] = Abaddon::Get().GetDiscordClient().GetUserStatus(user.ID);
         row[m_columns.m_av_requested] = false;
         if (const auto iter = user_to_color.find(user.ID); iter != user_to_color.end()) {
@@ -209,10 +209,10 @@ void MemberList::OnCellRender(uint64_t id) {
             // idk why since other code already does essentially the same thing im doing here
             // iter_is_valid is "slow" according to gtk but the only other workaround i can think of would be worse
             if (row && m_model->iter_is_valid(row)) {
-                (*row)[m_columns.m_pixbuf] = pb->scale_simple(16, 16, Gdk::INTERP_BILINEAR);
+                (*row)[m_columns.m_pixbuf] = pb->scale_simple(MembersIconSize, MembersIconSize, Gdk::INTERP_BILINEAR);
             }
         };
-        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", "16"), cb);
+        Abaddon::Get().GetImageManager().LoadFromURL(user->GetAvatarURL("png", std::to_string(MembersIconSize)), cb);
     }
 }
 

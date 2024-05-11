@@ -70,6 +70,7 @@ CellRendererChannels::CellRendererChannels()
     m_property_name.get_proxy().signal_changed().connect([this] {
         m_renderer_text.property_markup() = m_property_name;
     });
+
 }
 
 Glib::PropertyProxy<RenderType> CellRendererChannels::property_type() {
@@ -334,18 +335,6 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
     const double icon_x = background_area.get_x() + 3;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - icon_h / 2.0;
 
-    const double text_x = icon_x + icon_w + 5.0;
-    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
-    const double text_w = text_natural.width;
-    const double text_h = text_natural.height;
-
-    Gdk::Rectangle text_cell_area(static_cast<int>(text_x),
-                                  static_cast<int>(text_y),
-                                  static_cast<int>(text_w),
-                                  static_cast<int>(text_h));
-
-    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
-
     const bool hover_only = Abaddon::Get().GetSettings().AnimatedGuildHoverOnly;
     const bool is_hovered = flags & Gtk::CELL_RENDERER_PRELIT;
     auto anim = m_property_pixbuf_animation.get_value();
@@ -379,6 +368,34 @@ void CellRendererChannels::render_vfunc_guild(const Cairo::RefPtr<Cairo::Context
         cr->rectangle(icon_x, icon_y, icon_w, icon_h);
         cr->fill();
     }
+
+    const double text_x = icon_x + icon_w + 5.0;
+    const double text_y = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0;
+    const double text_y_mute = background_area.get_y() + background_area.get_height() / 2.0 - text_natural.height / 2.0+5;
+    const double text_w = text_natural.width;
+    const double text_h = text_natural.height;
+
+    Gdk::Rectangle text_cell_area(static_cast<int>(text_x),
+                                  static_cast<int>(text_y),
+                                  static_cast<int>(text_w),
+                                  static_cast<int>(text_h));
+
+    if(Abaddon::Get().GetDiscordClient().IsGuildMuted(m_property_id.get_value()))
+    {
+
+        text_cell_area.set_y(text_y_mute);
+
+        const int icon_w = 20;
+        const int icon_h = 20;
+        const float icon_x = background_area.get_x() + GuildIconSize + 5;
+        const float icon_y = background_area.get_y();
+        Gdk::Rectangle icon_cell_area(icon_x, icon_y, icon_w, icon_h);
+
+        m_renderer_pixbuf.property_icon_name() = "audio-volume-muted-symbolic";
+        m_renderer_pixbuf.render(cr, widget, background_area, icon_cell_area, flags);
+    }
+
+    m_renderer_text.render(cr, widget, background_area, text_cell_area, flags);
 
     // unread
     if (!Abaddon::Get().GetSettings().Unreads) return;
@@ -666,6 +683,53 @@ void CellRendererChannels::render_vfunc_voice_participant(const Cairo::RefPtr<Ca
         cr->fill();
     }
 
+    auto &audio = Abaddon::Get().GetAudio();
+    if(std::strcmp(Abaddon::Get().GetDiscordClient().GetUserData().GetUsername().c_str(), m_property_name.get_value().c_str()) == 0)
+    {
+    switch (audio.GetVADMethod())
+        {
+        case AudioManager::VADMethod::Gate:
+            if(audio.GetCaptureVolumeLevel() > 0.3f)
+            {
+                cr->begin_new_path();
+                cr->set_source_rgb(33.0 / 255.0, 157.0 / 255.0, 86.0 / 255.0);
+                cr->arc(background_area.get_x() + 6.0 + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
+                cr->close_path();
+                cr->fill_preserve();
+                cr->stroke();
+            }
+            break;
+#ifdef WITH_RNNOISE
+        case AudioManager::VADMethod::RNNoise:
+            if(audio.GetCurrentVADProbability() > 0.1f)
+            {
+                cr->begin_new_path();
+                cr->set_source_rgb(33.0 / 255.0, 157.0 / 255.0, 86.0 / 255.0);
+                cr->arc(background_area.get_x() + 6.0 + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
+                cr->close_path();
+                cr->fill_preserve();
+                cr->stroke();
+            }
+            break;
+#endif
+        }
+    }
+    else
+    {
+
+        const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(m_property_id.get_value());
+
+        if(audio.GetSSRCVolumeLevel(*ssrc) > 0.01f)
+        {
+            cr->begin_new_path();
+            cr->set_source_rgb(33.0 / 255.0, 157.0 / 255.0, 86.0 / 255.0);
+            cr->arc(background_area.get_x() + 6.0 + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
+            cr->close_path();
+            cr->fill_preserve();
+            cr->stroke();
+        }
+
+    }
     auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
     if (paned != nullptr) {
         const auto edge = std::min(paned->get_position(), background_area.get_width());
@@ -747,6 +811,7 @@ void CellRendererChannels::render_vfunc_dmheader(const Cairo::RefPtr<Cairo::Cont
         if (const auto unread = Abaddon::Get().GetDiscordClient().GetUnreadDMsCount(); unread > 0)
             unread_render_mentions(cr, widget, unread, edge, background_area);
     }
+
 }
 
 // dm (basically the same thing as guild)

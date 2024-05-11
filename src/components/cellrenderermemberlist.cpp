@@ -1,4 +1,5 @@
 #include "cellrenderermemberlist.hpp"
+#include "memberlist.hpp"
 #include <gdkmm/general.h>
 
 CellRendererMemberList::CellRendererMemberList()
@@ -125,7 +126,7 @@ void CellRendererMemberList::get_preferred_height_for_width_vfunc_member(Gtk::Wi
 void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area, const Gdk::Rectangle &cell_area, Gtk::CellRendererState flags) {
     // Text
     Gdk::Rectangle text_cell_area = cell_area;
-    text_cell_area.set_x(31);
+    text_cell_area.set_x( MembersIconSize + 20 /*31*/);
     const auto color = m_property_color.get_value();
     if (color.get_alpha_u() > 0) {
         m_renderer_text.property_foreground_rgba().set_value(color);
@@ -151,7 +152,7 @@ void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Cont
             break;
     }
 
-    cr->arc(background_area.get_x() + 6.0 + 16.0 + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
+    cr->arc(background_area.get_x() + 6.0 + MembersIconSize + 6.0, background_area.get_y() + background_area.get_height() / 2.0, 2.0, 0.0, 2 * (4 * std::atan(1)));
     cr->close_path();
     cr->fill_preserve();
     cr->stroke();
@@ -160,7 +161,7 @@ void CellRendererMemberList::render_vfunc_member(const Cairo::RefPtr<Cairo::Cont
     const double icon_x = background_area.get_x() + 6.0;
     const double icon_y = background_area.get_y() + background_area.get_height() / 2.0 - 8.0;
     Gdk::Cairo::set_source_pixbuf(cr, m_property_pixbuf.get_value(), icon_x, icon_y);
-    cr->rectangle(icon_x, icon_y, 16.0, 16.0);
+    cr->rectangle(icon_x, icon_y, MembersIconSize, MembersIconSize);
     cr->fill();
 
     m_signal_render.emit(m_property_id.get_value());

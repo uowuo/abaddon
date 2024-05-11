@@ -24,6 +24,7 @@ public:
     void SetClassic(bool value);
 
 private:
+
     void ConnectSignals();
 
     ChannelListTree m_tree;

@@ -4,11 +4,13 @@
 
 #include "remoteauthclient.hpp"
 
-#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include "abaddon.hpp"
 #include "http.hpp"
+
+#include "yyjson_util.h"
 
 
 // clang-format on
@@ -169,10 +171,18 @@ void RemoteAuthClient::Init() {
         return;
     }
 
-    nlohmann::json msg;
-    msg["op"] = "init";
-    msg["encoded_public_key"] = key;
-    m_ws.Send(msg);
+    //nlohmann::json msg;
+    //msg["op"] = "init";
+    //msg["encoded_public_key"] = key;
+    //m_ws.Send(msg);
+
+    YYJsonDocument yyjsn;
+    yyjsn.CreateDoc();
+    yyjsn.AddString("op", "init");
+    yyjsn.AddString("encoded_public_key", key.c_str());
+
+    m_ws.Send(yyjsn.BuildJson());
+
 }
 
 void RemoteAuthClient::GenerateKey() {
@@ -305,9 +315,13 @@ void RemoteAuthClient::HeartbeatThread() {
     while (true) {
         if (!m_heartbeat_waiter.wait_for(std::chrono::milliseconds(m_heartbeat_msec))) break;
 
-        nlohmann::json hb;
-        hb["op"] = "heartbeat";
-        m_ws.Send(hb);
+        YYJsonDocument yyjsn;
+        yyjsn.CreateDoc();
+        yyjsn.AddString("op", "heartbeat");
+
+        //nlohmann::json hb;
+        //hb["op"] = "heartbeat";
+        m_ws.Send(yyjsn.BuildJson());
     }
 }
 

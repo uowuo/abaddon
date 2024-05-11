@@ -102,6 +102,7 @@ public:
 #endif
 
     SettingsManager::Settings &GetSettings();
+    SettingsManager &GetSettingsManager();
 
     Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
 

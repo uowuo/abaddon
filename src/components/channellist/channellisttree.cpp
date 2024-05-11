@@ -10,6 +10,13 @@
 #include "imgmanager.hpp"
 #include "util.hpp"
 
+static gboolean Update (gpointer user_data)
+{
+    Gtk::TreeView* m_view = static_cast<Gtk::TreeView*>(user_data);
+    m_view->queue_draw();
+    return true;
+}
+
 ChannelListTree::ChannelListTree()
     : Glib::ObjectBase(typeid(ChannelListTree))
     , m_model(Gtk::TreeStore::create(m_columns))
@@ -111,12 +118,13 @@ ChannelListTree::ChannelListTree()
         return type != RenderType::DMHeader;
     });
 
+
     m_view.show();
 
     add(m_view);
 
-    auto *column = Gtk::manage(new Gtk::TreeView::Column("display"));
-    auto *renderer = Gtk::manage(new CellRendererChannels);
+    Gtk::TreeViewColumn *column = Gtk::manage(new Gtk::TreeView::Column("display"));
+    CellRendererChannels *renderer = Gtk::manage(new CellRendererChannels);
     column->pack_start(*renderer);
     column->add_attribute(renderer->property_type(), m_columns.m_type);
     column->add_attribute(renderer->property_icon(), m_columns.m_icon);
@@ -128,6 +136,8 @@ ChannelListTree::ChannelListTree()
     column->add_attribute(renderer->property_color(), m_columns.m_color);
     column->add_attribute(renderer->property_voice_state(), m_columns.m_voice_flags);
     m_view.append_column(*column);
+
+    g_timeout_add(100,Update, &m_view);
 
     m_menu_guild_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
@@ -385,6 +395,7 @@ void ChannelListTree::UpdateListingClassic() {
     m_updating_listing = false;
 
     AddPrivateChannels();
+    m_view.queue_draw();
 }
 
 void ChannelListTree::UpdateListing() {
@@ -459,6 +470,7 @@ void ChannelListTree::UpdateListing() {
     m_updating_listing = false;
 
     AddPrivateChannels();
+    m_view.queue_draw();
 }
 
 // TODO update for folders
@@ -507,6 +519,7 @@ void ChannelListTree::UpdateChannel(Snowflake id) {
 
     if (new_parent && iter->parent() != new_parent)
         MoveRow(iter, new_parent);
+    m_view.queue_draw();
 }
 
 void ChannelListTree::UpdateCreateChannel(const ChannelData &channel) {
@@ -548,14 +561,14 @@ void ChannelListTree::UpdateGuild(Snowflake id) {
             auto iter = GetIteratorForGuildFromID(id);
             if (iter) (*iter)[m_columns.m_icon_anim] = pb;
         };
-        img.LoadAnimationFromURL(guild->GetIconURL("gif", "32"), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
+        img.LoadAnimationFromURL(guild->GetIconURL("gif", std::to_string(GuildIconSize)), GuildIconSize, GuildIconSize, sigc::track_obj(cb, *this));
     } else if (guild->HasIcon()) {
         const auto cb = [this, id](const Glib::RefPtr<Gdk::Pixbuf> &pb) {
             // iter might be invalid
             auto iter = GetIteratorForGuildFromID(id);
             if (iter) (*iter)[m_columns.m_icon] = pb->scale_simple(GuildIconSize, GuildIconSize, Gdk::INTERP_BILINEAR);
         };
-        img.LoadFromURL(guild->GetIconURL("png", "32"), sigc::track_obj(cb, *this));
+        img.LoadFromURL(guild->GetIconURL("png", std::to_string(GuildIconSize)), sigc::track_obj(cb, *this));
     }
 }
 
@@ -1349,6 +1362,15 @@ bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
                     m_menu_thread.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
                 } break;
+                case RenderType::VoiceParticipant:
+                {
+
+                Abaddon::Get().ShowUserMenu(
+                                reinterpret_cast<GdkEvent *>(ev),
+                                static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]),
+                                0);
+                break;
+                }
                 default:
                     break;
             }

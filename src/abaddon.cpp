@@ -200,7 +200,7 @@ static void MainEventHandler(GdkEvent *event, void *main_window) {
 }
 
 int Abaddon::StartGTK() {
-    m_gtk_app = Gtk::Application::create("com.github.uowuo.abaddon");
+    m_gtk_app = Gtk::Application::create("com.github.celisej.abaddon");
     Glib::set_application_name(APP_TITLE);
 
 #ifdef WITH_LIBHANDY
@@ -540,6 +540,10 @@ void Abaddon::ShowVoiceWindow() {
 
 SettingsManager::Settings &Abaddon::GetSettings() {
     return m_settings.GetSettings();
+}
+
+SettingsManager &Abaddon::GetSettingsManager() {
+    return m_settings;
 }
 
 Glib::RefPtr<Gtk::CssProvider> Abaddon::GetStyleProvider() {

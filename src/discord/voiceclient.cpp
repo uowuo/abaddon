@@ -270,6 +270,8 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
             const auto opcode_int = static_cast<int>(msg.Opcode);
             m_log->warn("Unhandled opcode: {}", opcode_int);
     }
+
+
 }
 
 const char *DiscordVoiceClient::GetStateName(State state) {

@@ -24,7 +24,7 @@ ChannelList::ChannelList() {
     m_tree.show();
     m_guilds_scroll.add(m_guilds);
     pack_start(m_guilds_scroll, false, false); // only take the space it needs
-    pack_start(m_tree, true, true);            // use all the remaining space
+    pack_start(m_tree, true, true);         // use all the remaining space
 }
 
 void ChannelList::UpdateListing() {

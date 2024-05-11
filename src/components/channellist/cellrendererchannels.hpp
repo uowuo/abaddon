@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include <optional>
+#include "discord/discord.hpp"
 #include <gdkmm/pixbufanimation.h>
 #include <glibmm/property.h>
 #include <gtkmm/cellrendererpixbuf.h>
@@ -157,6 +158,7 @@ protected:
     static void unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area);
 
 private:
+
     Gtk::CellRendererText m_renderer_text;
     Gtk::CellRendererPixbuf m_renderer_pixbuf;
 

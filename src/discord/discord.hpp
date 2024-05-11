@@ -302,7 +302,7 @@ private:
     void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayCallCreate(const GatewayMessage &msg);
-
+    void HandleGatewayCallDestroy(const GatewayMessage &msg);
     void CheckVoiceState(const VoiceState &data);
 #endif
 

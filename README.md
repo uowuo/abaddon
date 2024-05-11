@@ -53,31 +53,11 @@ allow GTK to render emojis natively on Windows.
 3 - There are some inconsistencies with thread state that might be encountered in some more uncommon cases, but they are
 the result of fundamental issues with Discord's thread implementation.
 
-### Building manually (recommended if not on Windows):
-
-#### Windows (with MSYS2):
-
-1. Install following packages:
-    * mingw-w64-x86_64-cmake
-    * mingw-w64-x86_64-ninja
-    * mingw-w64-x86_64-sqlite3
-    * mingw-w64-x86_64-nlohmann-json
-    * mingw-w64-x86_64-curl
-    * mingw-w64-x86_64-zlib
-    * mingw-w64-x86_64-gtkmm3
-    * mingw-w64-x86_64-libhandy
-    * mingw-w64-x86_64-opus
-    * mingw-w64-x86_64-libsodium
-    * mingw-w64-x86_64-spdlog
-2. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
-3. `mkdir build && cd build`
-4. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
-5. `ninja`
-6. [Copy resources](#resources)
+### Building manually:
 
 #### Mac:
 
-1. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
+1. `git clone https://github.com/celisej/abaddon --recursive && cd abaddon`
 2. `brew install gtkmm3 nlohmann-json libhandy opus libsodium spdlog adwaita-icon-theme`
 3. `mkdir build && cd build`
 4. `cmake ..`
@@ -101,7 +81,7 @@ the result of fundamental issues with Discord's thread implementation.
       ```
       > **Note:** On older versions of fedora you might need to install gtkmm30-devel instead of gtkmm3.0-devel.
       Use `dnf search gtkmm3` to see available packages.
-2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
+2. `git clone https://github.com/celisej567/abaddon --recursive && cd abaddon`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`

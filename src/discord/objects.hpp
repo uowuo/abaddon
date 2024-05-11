@@ -21,6 +21,8 @@
 #include "relationship.hpp"
 #include "errors.hpp"
 
+#include "yyjson_util.h"
+
 // most stuff below should just be objects that get processed and thrown away immediately
 
 enum class GatewayOp : int {
@@ -110,6 +112,7 @@ enum class GatewayEvent : int {
     VOICE_STATE_UPDATE,
     VOICE_SERVER_UPDATE,
     CALL_CREATE,
+    CALL_DESTROY,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -403,6 +406,58 @@ struct IdentifyProperties {
     int ClientBuildNumber;
     std::string ClientEventSource; // empty -> null
 
+    yyjson_mut_val*  const GetDataBlock() const
+    {
+        YYJsonDocument yyjsn2;
+        yyjsn2.CreateDoc(false);
+        yyjsn2.AddString("os",OS.c_str());
+        yyjsn2.AddString("browser",Browser.c_str());
+        yyjsn2.AddString("device",Device.c_str());
+        yyjsn2.AddString("system_locale",SystemLocale.c_str());
+        yyjsn2.AddString("browser_user_agent",BrowserUserAgent.c_str());
+        yyjsn2.AddString("browser_version",BrowserVersion.c_str());
+        yyjsn2.AddString("os_version",OSVersion.c_str());
+        yyjsn2.AddString("referrer",Referrer.c_str());
+        yyjsn2.AddString("referring_domain",ReferringDomain.c_str());
+        yyjsn2.AddString("referrer_current",ReferrerCurrent.c_str());
+        yyjsn2.AddString("referring_domain_current",ReferringDomainCurrent.c_str());
+        yyjsn2.AddString("release_channel",ReleaseChannel.c_str());
+        yyjsn2.AddInt("client_build_number",ClientBuildNumber);
+
+        if (ClientEventSource.empty())
+            yyjsn2.AddNull("client_event_source");
+        else
+            yyjsn2.AddString("client_event_source", ClientEventSource.c_str());
+
+        return yyjsn2.GetMutableRoot();
+    }
+
+    std::string  BuildJson()const
+    {
+        YYJsonDocument yyjsn2;
+        yyjsn2.CreateDoc(false);
+        yyjsn2.AddString("os",OS.c_str());
+        yyjsn2.AddString("browser",Browser.c_str());
+        yyjsn2.AddString("device",Device.c_str());
+        yyjsn2.AddString("system_locale",SystemLocale.c_str());
+        yyjsn2.AddString("browser_user_agent",BrowserUserAgent.c_str());
+        yyjsn2.AddString("browser_version",BrowserVersion.c_str());
+        yyjsn2.AddString("os_version",OSVersion.c_str());
+        yyjsn2.AddString("referrer",Referrer.c_str());
+        yyjsn2.AddString("referring_domain",ReferringDomain.c_str());
+        yyjsn2.AddString("referrer_current",ReferrerCurrent.c_str());
+        yyjsn2.AddString("referring_domain_current",ReferringDomainCurrent.c_str());
+        yyjsn2.AddString("release_channel",ReleaseChannel.c_str());
+        yyjsn2.AddInt("client_build_number",ClientBuildNumber);
+
+        if (ClientEventSource.empty())
+            yyjsn2.AddNull("client_event_source");
+        else
+            yyjsn2.AddString("client_event_source", ClientEventSource.c_str());
+
+        return yyjsn2.BuildJson();
+    }
+
     friend void to_json(nlohmann::json &j, const IdentifyProperties &m);
 };
 
@@ -412,6 +467,21 @@ struct ClientStateProperties {
     int ReadStateVersion = 0;
     int UserGuildSettingsVersion = -1;
     int UserSettingsVersion = -1;
+
+    yyjson_mut_val* GetDataBlock()const
+    {
+        YYJsonDocument yyjsn2;
+        yyjsn2.CreateDoc(false);
+        yyjsn2.CreateBlock();
+        yyjsn2.PushBlock("guild_hashes");
+
+        yyjsn2.AddString("highest_last_message_id", HighestLastMessageID.c_str());
+        yyjsn2.AddInt("read_state_version",ReadStateVersion);
+        yyjsn2.AddInt("user_guild_settings_version",UserGuildSettingsVersion);
+        yyjsn2.AddInt("user_settings_version",UserSettingsVersion);
+
+        return yyjsn2.GetMutableRoot();
+    }
 
     friend void to_json(nlohmann::json &j, const ClientStateProperties &m);
 };
@@ -425,6 +495,23 @@ struct IdentifyMessage : GatewayMessage {
     int Capabilities;
 
     friend void to_json(nlohmann::json &j, const IdentifyMessage &m);
+
+    std::string BuildJson() const
+    {
+        YYJsonDocument yyjsn;
+        yyjsn.CreateDoc();
+        yyjsn.AddInt("op",(int)GatewayOp::Identify);
+        yyjsn.CreateBlock();
+        yyjsn.AddString("token",Token.c_str());
+        yyjsn.AddInt("capabilities",Capabilities);
+        yyjsn.AddBlock("properties",Properties.GetDataBlock());
+        yyjsn.AddBool("compress",DoesSupportCompression);
+        yyjsn.AddBlock("presence",Presence.GetDataBlock());
+        yyjsn.AddBlock("client_state",ClientState.GetDataBlock());
+        yyjsn.PushBlock("d");
+
+        return yyjsn.BuildJson();
+    }
 };
 
 struct HeartbeatMessage : GatewayMessage {
@@ -437,6 +524,15 @@ struct CreateMessageAttachmentObject {
     int ID;
     std::optional<std::string> Description;
 
+    yyjson_mut_val*  const GetDataBlock() const
+    {
+        YYJsonDocument yyjsn;
+        yyjsn.CreateDoc(false);
+        yyjsn.AddInt("id",ID);
+        yyjsn.AddString("description",Description);
+        return yyjsn.GetMutableRoot();
+    }
+
     friend void to_json(nlohmann::json &j, const CreateMessageAttachmentObject &m);
 };
 
@@ -446,6 +542,63 @@ struct CreateMessageObject {
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
     std::optional<std::vector<CreateMessageAttachmentObject>> Attachments;
+
+    std::string BuildJson() const
+    {
+        YYJsonDocument yyjsn;
+        yyjsn.CreateDoc();
+        yyjsn.AddString("content",Content.c_str());
+        yyjsn.AddInt("flags",(int)Flags);
+
+        if(Attachments.has_value())
+        {
+            YYJsonArray arr;
+
+            for(auto v : *Attachments)
+            {
+                yyjson_mut_val* obj = yyjson_mut_obj(arr.GetDoc());
+                yyjson_mut_obj_add_int(arr.GetDoc(), obj, "id", v.ID);
+                if(v.Description.has_value())
+                    yyjson_mut_obj_add_str(arr.GetDoc(), obj, "description", (*(v.Description)).c_str());
+
+                arr.AddBlock(obj);
+            }
+
+
+            yyjsn.AddArray("attachments", arr.GetArray());
+        }
+
+        if(MessageReference.has_value())
+        {
+            yyjsn.CreateBlock();
+            if(MessageReference->MessageID.has_value())
+            {
+                std::string* str = new std::string(std::to_string(*(MessageReference->MessageID)));
+                yyjsn.AddString("message_id", str->c_str());
+            }
+
+            if(MessageReference->ChannelID.has_value())
+            {
+                std::string* str = new std::string(std::to_string(*(MessageReference->ChannelID)));
+                yyjsn.AddString("channel_id", str->c_str());
+            }
+
+            if(MessageReference->GuildID.has_value())
+            {
+                std::string* str = new std::string(std::to_string(*(MessageReference->GuildID)));
+                yyjsn.AddString("guild_id", str->c_str());
+            }
+            yyjsn.PushBlock("message_reference");
+        }
+
+        if(Nonce.has_value())
+        {
+            yyjsn.AddString("nonce", (*Nonce).c_str());
+        }
+
+        return yyjsn.BuildJson();
+
+    }
 
     friend void to_json(nlohmann::json &j, const CreateMessageObject &m);
 };

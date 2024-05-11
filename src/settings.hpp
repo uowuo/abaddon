@@ -14,6 +14,7 @@ public:
         bool Prefetch;
         bool Autoconnect;
         bool UseKeychain;
+        std::map<Snowflake, double> UsersVolume;
 
         // [gui]
         std::string MainCSS;
@@ -98,6 +99,7 @@ private:
 
     std::unordered_map<std::string, SettingDefinition> m_definitions;
 
+public:
     template<typename FieldType>
     void AddSetting(const char *section, const char *name, FieldType default_value, FieldType Settings::*ptr) {
         m_settings.*ptr = default_value;
