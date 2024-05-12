@@ -87,7 +87,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Linux:
 
 1. Install dependencies
-    * On Ubuntu 22.04 (Jammy) and newer:
+    * On Ubuntu 22.04 (Jammy)/Debian 12 (bookworm) and newer:
       ```Shell
       $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev libopus-dev libsodium-dev libspdlog-dev
       ```
@@ -173,6 +173,9 @@ spam filter's wrath:
 
 ### Styling
 
+<details>
+    <summary>Show all styles</summary>
+
 #### CSS selectors
 
 | Selector                       | Description                                                                                       |
@@ -257,6 +260,8 @@ Used in profile popup:
 | `.profile-badges`              | Container for badges                                       |
 | `.profile-badge`               |                                                            |
 
+</details>
+
 ### Settings
 
 Settings are configured (for now) by editing `abaddon.ini`.
@@ -269,6 +274,9 @@ The format is similar to the standard Windows ini format **except**:
 
 This listing is organized by section.
 For example, memory_db would be set by adding `memory_db = true` under the line `[discord]`
+
+<details>
+    <summary>Show all settings</summary>
 
 #### discord
 
@@ -330,9 +338,10 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### voice
 
-| Setting | Type   | Default                            | Description                                                |
-|---------|--------|------------------------------------|------------------------------------------------------------|
-| `vad`   | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI |
+| Setting    | Type   | Default                            | Description                                                                                                                |
+|------------|--------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `vad`      | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
+| `backends` | string | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
 
 #### windows
 
@@ -346,3 +355,5 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 |------------------|------------------------------------------------------------------------------|
 | `ABADDON_NO_FC`  | (Windows only) don't use custom font config                                  |
 | `ABADDON_CONFIG` | change path of configuration file to use. relative to cwd or can be absolute |
+
+</details>

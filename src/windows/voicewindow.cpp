@@ -253,13 +253,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
-    m_main.pack_start(m_menu_bar);
-    m_main.pack_start(m_controls);
-    m_main.pack_start(m_vad_value);
-    m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"));
-    m_main.pack_start(*sliders_container);
+    m_main.pack_start(m_menu_bar, false, true);
+    m_main.pack_start(m_controls, false, true);
+    m_main.pack_start(m_vad_value, false, true);
+    m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
+    m_main.pack_start(*sliders_container, false, true);
     m_main.pack_start(m_scroll);
-    m_main.pack_start(*combos_container, Gtk::PACK_EXPAND_WIDGET, 2);
+    m_main.pack_start(*combos_container, false, true, 2);
     add(m_main);
     show_all_children();
 

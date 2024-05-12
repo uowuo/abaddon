@@ -1,5 +1,6 @@
 #pragma once
 #include <gtkmm/listbox.h>
+#include <gtkmm/menu.h>
 #include "discord/snowflake.hpp"
 #include "discord/usersettings.hpp"
 

@@ -53,7 +53,7 @@ void macOSThemeChangedCallback(CFNotificationCenterRef center, void *observer, C
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
     , m_discord(GetSettings().UseMemoryDB) // stupid but easy
-    , m_emojis(GetResPath("/emojis.bin"))
+    , m_emojis(GetResPath("/emojis.db"))
 #ifdef WITH_VOICE
     , m_audio(GetSettings().Backends)
 #endif

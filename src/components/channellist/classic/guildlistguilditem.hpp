@@ -4,6 +4,8 @@
 #include <gtkmm/image.h>
 #include "discord/guild.hpp"
 
+struct Message;
+struct MessageAckData;
 class GuildListGuildItem : public Gtk::EventBox {
 public:
     GuildListGuildItem(const GuildData &guild);
