@@ -487,14 +487,12 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
-    m_audio.StartPlaybackDevice();
-    m_audio.StartCaptureDevice();
+    m_audio.StartVoice();
     ShowVoiceWindow();
 }
 
 void Abaddon::OnVoiceDisconnected() {
-    m_audio.StopPlaybackDevice();
-    m_audio.StopCaptureDevice();
+    m_audio.StopVoice();
     m_audio.RemoveAllSSRCs();
     if (m_voice_window != nullptr) {
         m_voice_window->close();
@@ -1131,7 +1129,7 @@ EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
 }
 
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
 AudioManager &Abaddon::GetAudio() {
     return m_audio;
 }

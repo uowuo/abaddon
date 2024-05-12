@@ -1,4 +1,4 @@
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
 // clang-format off
 
 #ifdef _WIN32
@@ -119,30 +119,20 @@ AudioManager::AudioManager(const Glib::ustring &backends_string)
         backendCount = static_cast<ma_uint32>(backends_vec.size());
     }
 
-    if (ma_context_init(pBackends, backendCount, &ctx_cfg, &m_context) != MA_SUCCESS) {
-        spdlog::get("audio")->error("failed to initialize context");
-        m_ok = false;
-        return;
+    m_context = AbaddonClient::Audio::Context::Create(std::move(ctx_cfg), backends_vec);
+
+    if (m_context) {
+        Enumerate();
+
+#if WITH_VOICE
+        m_voice.emplace(*m_context);
+#endif
     }
-
-    const auto backend_name = ma_get_backend_name(m_context.backend);
-    spdlog::get("audio")->info("Audio backend: {}", backend_name);
-
-    Enumerate();
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
 }
 
 AudioManager::~AudioManager() {
-    if (m_playback_device_ready) {
-        ClosePlaybackDevice();
-    }
-
-    if (m_capture_device_ready) {
-        CloseCaptureDevice();
-    }
-
-    ma_context_uninit(&m_context);
     RemoveAllSSRCs();
 
 #ifdef WITH_RNNOISE
@@ -150,140 +140,29 @@ AudioManager::~AudioManager() {
 #endif
 }
 
-void AudioManager::OpenPlaybackDevice(const ma_device_id &device_id) {
-    if (m_playback_device_ready) {
-        spdlog::get("audio")->warn("Tried to open new playback device without closing the current one");
-        return;
-    }
-
-    auto config = ma_device_config_init(ma_device_type_playback);
-    config.playback.format = ma_format_f32;
-    config.playback.channels = 2;
-    config.playback.pDeviceID = &device_id;
-    config.sampleRate = 48000;
-    config.dataCallback = data_callback;
-    config.pUserData = this;
-
-    auto result = ma_device_init(&m_context, &config, &m_playback_device);
-    if (result != MA_SUCCESS) {
-        spdlog::get("audio")->error("Failed to initialize playback device (code: {})", static_cast<int>(result));
-        return;
-    }
-
-    result = ma_device_start(&m_playback_device);
-    if (result != MA_SUCCESS) {
-        spdlog::get("audio")->error("Failed to start playback device (code: {})", static_cast<int>(result));
-
-        ma_device_uninit(&m_playback_device);
-        return;
-    }
-
-    m_playback_device_ready = true;
+void AudioManager::StartVoice() {
+    m_voice->Start();
 }
 
-void AudioManager::OpenCaptureDevice(const ma_device_id &device_id) {
-    if (m_capture_device_ready) {
-        spdlog::get("audio")->warn("Tried to open new capture device without closing the current one");
-        return;
-    }
-
-    auto config = ma_device_config_init(ma_device_type_capture);
-    config.capture.format = ma_format_s16;
-    config.capture.channels = 2;
-    config.capture.pDeviceID = &device_id;
-    config.sampleRate = 48000;
-    config.periodSizeInFrames = 480;
-    config.dataCallback = capture_data_callback;
-    config.pUserData = this;
-
-    auto result = ma_device_init(&m_context, &config, &m_capture_device);
-    if (result != MA_SUCCESS) {
-        spdlog::get("audio")->error("Failed to initialize capture device (code: {})", static_cast<int>(result));
-        return;
-    }
-
-    result = ma_device_start(&m_capture_device);
-    if (result != MA_SUCCESS) {
-        spdlog::get("audio")->error("Failed to start capture device (code: {})", static_cast<int>(result));
-
-        ma_device_uninit(&m_capture_device);
-        return;
-    }
-
-    m_capture_device_ready = true;
-}
-
-void AudioManager::TryOpenPlaybackDevice(const ma_device_id &device_id) {
-    OpenPlaybackDevice(device_id);
-
-    if (m_playback_device_ready) {
-        LogOpenedDevice(&m_playback_device, ma_device_type_playback);
-    }
-}
-
-void AudioManager::TryOpenCaptureDevice(const ma_device_id &device_id) {
-    OpenCaptureDevice(device_id);
-
-    if (m_capture_device_ready) {
-        LogOpenedDevice(&m_capture_device, ma_device_type_capture);
-    }
-}
-
-void AudioManager::ClosePlaybackDevice() {
-    if(!m_playback_device_ready) {
-        spdlog::get("audio")->warn("Tried to close uninitialized playback device");
-        return;
-    }
-
-    ma_device_uninit(&m_playback_device);
-    m_playback_device_ready = false;
-}
-
-void AudioManager::CloseCaptureDevice() {
-    if(!m_capture_device_ready) {
-        spdlog::get("audio")->warn("Tried to close uninitialized capture device");
-        return;
-    }
-
-    ma_device_uninit(&m_capture_device);
-    m_capture_device_ready = false;
-}
-
-void AudioManager::LogOpenedDevice(ma_device *device, const ma_device_type device_type) {
-    char name[MA_MAX_DEVICE_NAME_LENGTH + 1] = "<unknown>";
-    const auto result = ma_device_get_name(device, device_type, name, sizeof(name), nullptr);
-
-    if (device_type == ma_device_type_playback) {
-        spdlog::get("audio")->info("Started playback device: {}", name);
-    } else if (device_type == ma_device_type_capture) {
-        spdlog::get("audio")->info("Started capture device: {}", name);
-    }
+void AudioManager::StopVoice() {
+    m_voice->Stop();
 }
 
 void AudioManager::AddSSRC(uint32_t ssrc) {
     std::lock_guard<std::mutex> _(m_mutex);
-    int error;
-    if (m_sources.find(ssrc) == m_sources.end()) {
-        auto *decoder = opus_decoder_create(48000, 2, &error);
-        m_sources.insert(std::make_pair(ssrc, std::make_pair(std::deque<int16_t> {}, decoder)));
-    }
+    m_voice->GetPlayback().GetClientStore().AddClient(ssrc);
 }
 
 void AudioManager::RemoveSSRC(uint32_t ssrc) {
     std::lock_guard<std::mutex> _(m_mutex);
-    if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
-        opus_decoder_destroy(it->second.second);
-        m_sources.erase(it);
-    }
+
+    m_voice->GetPlayback().GetClientStore().RemoveClient(ssrc);
 }
 
 void AudioManager::RemoveAllSSRCs() {
     spdlog::get("audio")->info("removing all ssrc");
     std::lock_guard<std::mutex> _(m_mutex);
-    for (auto &[ssrc, pair] : m_sources) {
-        opus_decoder_destroy(pair.second);
-    }
-    m_sources.clear();
+    m_voice->GetPlayback().GetClientStore().Clear();
 }
 
 void AudioManager::SetOpusBuffer(uint8_t *ptr) {
@@ -291,197 +170,92 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
 }
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
-    if (!m_should_playback || !m_playback_device_ready) return;
-
-    std::lock_guard<std::mutex> _(m_mutex);
-    if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
-
-    size_t payload_size = 0;
-    const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
-    static std::array<opus_int16, 120 * 48 * 2> pcm;
-    if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
-        int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
-        if (decoded <= 0) {
-        } else {
-            UpdateReceiveVolume(ssrc, pcm.data(), decoded);
-            auto &buf = it->second.first;
-            buf.insert(buf.end(), pcm.begin(), pcm.begin() + decoded * 2);
-        }
-    }
+    m_voice->GetPlayback().OnRTPData(ssrc, std::move(data));
 }
 
-void AudioManager::StartPlaybackDevice() {
-    const auto playback_device_id = m_devices.GetActivePlayback();
-    if (!playback_device_id) {
-        spdlog::get("audio")->warn("No active playback device!");
-        return;
-    }
-
-    TryOpenPlaybackDevice(*playback_device_id);
-}
-
-void AudioManager::StopPlaybackDevice() {
-    if (m_playback_device_ready) {
-        ClosePlaybackDevice();
-        spdlog::get("audio")->info("Closed playback device");
-    }
-}
-
-void AudioManager::StartCaptureDevice() {
-    const auto capture_device_id = m_devices.GetActiveCapture();
-    if (!capture_device_id) {
-        spdlog::get("audio")->warn("No active capture device!");
-        return;
-    }
-
-    TryOpenCaptureDevice(*capture_device_id);
-}
-
-void AudioManager::StopCaptureDevice() {
-    if (m_capture_device_ready) {
-        CloseCaptureDevice();
-        spdlog::get("audio")->info("Closed capture device");
-    }
-}
 
 void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
-    spdlog::get("audio")->debug("Setting new playback device");
-
-    if (m_playback_device_ready) {
-        ClosePlaybackDevice();
-    }
-
-    const auto device_id = m_devices.GetPlaybackDeviceIDFromModel(iter);
+    auto device_id = m_devices.GetPlaybackDeviceIDFromModel(iter);
     if (!device_id) {
         spdlog::get("audio")->error("Requested ID from iterator is invalid");
         return;
     }
 
-    m_devices.SetActivePlaybackDeviceIter(iter);
-    TryOpenPlaybackDevice(*device_id);
+    m_voice->GetPlayback().SetPlaybackDevice(std::move(*device_id));
 }
 
 void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
-    spdlog::get("audio")->debug("Setting new capture device");
-
-    if (m_capture_device_ready) {
-        CloseCaptureDevice();
-    }
-
-    const auto device_id = m_devices.GetCaptureDeviceIDFromModel(iter);
+    auto device_id = m_devices.GetCaptureDeviceIDFromModel(iter);
     if (!device_id) {
         spdlog::get("audio")->error("Requested ID from iterator is invalid");
         return;
     }
 
-    m_devices.SetActiveCaptureDeviceIter(iter);
-    TryOpenCaptureDevice(*device_id);
+    m_voice->GetCapture().SetCaptureDevice(std::move(*device_id));
 }
 
 void AudioManager::SetCapture(bool capture) {
-    m_should_capture = capture;
+    m_voice->GetCapture().SetActive(capture);
 }
 
 void AudioManager::SetPlayback(bool playback) {
-    m_should_playback = playback;
+    m_voice->GetPlayback().SetActive(playback);
 }
 
 void AudioManager::SetCaptureGate(double gate) {
-    m_capture_gate = gate;
+    m_voice->GetCapture().GetEffects().GetGate().m_vad_threshold = gate;
 }
 
 void AudioManager::SetCaptureGain(double gain) {
-    m_capture_gain = gain;
+    m_voice->GetCapture().m_gain = gain;
 }
 
 double AudioManager::GetCaptureGate() const noexcept {
-    return m_capture_gate;
+    return m_voice->GetCapture().GetEffects().GetGate().m_vad_threshold;
 }
 
 double AudioManager::GetCaptureGain() const noexcept {
-    return m_capture_gain;
+    return m_voice->GetCapture().m_gain;
 }
 
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
-    std::lock_guard<std::mutex> _(m_mutex);
-    if (mute) {
-        m_muted_ssrcs.insert(ssrc);
-    } else {
-        m_muted_ssrcs.erase(ssrc);
-    }
+    m_voice->GetPlayback().GetClientStore().SetClientMute(ssrc, mute);
 }
 
 void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
-    std::lock_guard<std::mutex> _(m_mutex);
-    m_volume_ssrc[ssrc] = volume;
+   m_voice->GetPlayback().GetClientStore().SetClientVolume(ssrc, volume);
 }
 
 double AudioManager::GetVolumeSSRC(uint32_t ssrc) const {
-    std::lock_guard<std::mutex> _(m_mutex);
-    if (const auto iter = m_volume_ssrc.find(ssrc); iter != m_volume_ssrc.end()) {
-        return iter->second;
-    }
-    return 1.0;
+    return m_voice->GetPlayback().GetClientStore().GetClientVolume(ssrc);
 }
 
 void AudioManager::SetEncodingApplication(int application) {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    int prev_bitrate = 64000;
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_BITRATE(&prev_bitrate)); err != OPUS_OK) {
-        spdlog::get("audio")->error("Failed to get old bitrate when reinitializing: {}", err);
-    }
-    opus_encoder_destroy(m_encoder);
-    int err = 0;
-    m_encoder = opus_encoder_create(48000, 2, application, &err);
-    if (err != OPUS_OK) {
-        spdlog::get("audio")->critical("opus_encoder_create failed: {}", err);
-        return;
-    }
-
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(prev_bitrate)); err != OPUS_OK) {
-        spdlog::get("audio")->error("Failed to set bitrate when reinitializing: {}", err);
-    }
+    const auto _application = static_cast<AbaddonClient::Audio::Voice::Opus::OpusEncoder::EncodingApplication>(application);
+    m_voice->GetCapture().GetEncoder()->value().SetEncodingApplication(_application);
 }
 
 int AudioManager::GetEncodingApplication() {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    int temp = OPUS_APPLICATION_VOIP;
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_APPLICATION(&temp)); err != OPUS_OK) {
-        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_APPLICATION) failed: {}", err);
-    }
-    return temp;
+    const auto application = m_voice->GetCapture().GetEncoder()->value().GetEncodingApplication();
+    return static_cast<int>(application);
 }
 
 void AudioManager::SetSignalHint(int signal) {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_SIGNAL(signal)); err != OPUS_OK) {
-        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_SET_SIGNAL) failed: {}", err);
-    }
+    const auto _signal = static_cast<AbaddonClient::Audio::Voice::Opus::OpusEncoder::SignalHint>(signal);
+    m_voice->GetCapture().GetEncoder()->value().SetSignalHint(_signal);
 }
 
 int AudioManager::GetSignalHint() {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    int temp = OPUS_AUTO;
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_SIGNAL(&temp)); err != OPUS_OK) {
-        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_SIGNAL) failed: {}", err);
-    }
-    return temp;
+    const auto hint = m_voice->GetCapture().GetEncoder()->value().GetSignalHint();
+    return static_cast<int>(hint);
 }
 
 void AudioManager::SetBitrate(int bitrate) {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(bitrate)); err != OPUS_OK) {
-        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_SET_BITRATE) failed: {}", err);
-    }
+    m_voice->GetCapture().GetEncoder()->value().SetBitrate(bitrate);
 }
 
 int AudioManager::GetBitrate() {
-    std::lock_guard<std::mutex> _(m_enc_mutex);
-    int temp = 64000;
-    if (int err = opus_encoder_ctl(m_encoder, OPUS_GET_BITRATE(&temp)); err != OPUS_OK) {
-        spdlog::get("audio")->error("opus_encoder_ctl(OPUS_GET_BITRATE) failed: {}", err);
-    }
-    return temp;
+    return m_voice->GetCapture().GetEncoder()->value().GetBitrate();
 }
 
 void AudioManager::Enumerate() {
@@ -492,19 +266,18 @@ void AudioManager::Enumerate() {
 
     spdlog::get("audio")->debug("Enumerating devices");
 
-    if (ma_context_get_devices(
-            &m_context,
-            &pPlaybackDeviceInfo,
-            &playbackDeviceCount,
-            &pCaptureDeviceInfo,
-            &captureDeviceCount) != MA_SUCCESS) {
-        spdlog::get("audio")->error("Failed to enumerate devices");
-        return;
-    }
+    const auto playback_devices = m_context->GetPlaybackDevices();
+    const auto capture_devices = m_context->GetCaptureDevices();
 
-    spdlog::get("audio")->debug("Found {} playback devices and {} capture devices", playbackDeviceCount, captureDeviceCount);
+    spdlog::get("audio")->info("Found {} playback devices and {} capture devices", playback_devices.size(), capture_devices.size());
 
-    m_devices.SetDevices(pPlaybackDeviceInfo, playbackDeviceCount, pCaptureDeviceInfo, captureDeviceCount);
+    // I don't know why this does not accept const
+    m_devices.SetDevices(
+        const_cast<ma_device_info*>(playback_devices.data()),
+        playback_devices.size(),
+        const_cast<ma_device_info*>(capture_devices.data()),
+        capture_devices.size()
+    );
 }
 
 void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
@@ -593,18 +366,8 @@ void AudioManager::UpdateCaptureVolume(const int16_t *pcm, ma_uint32 frames) {
 }
 
 bool AudioManager::DecayVolumeMeters() {
-    m_capture_peak_meter -= 600;
-    if (m_capture_peak_meter < 0) m_capture_peak_meter = 0;
-
-    const auto x = m_vad_prob.load() - 0.05f;
-    m_vad_prob.store(x < 0.0f ? 0.0f : x);
-
-    std::lock_guard<std::mutex> _(m_vol_mtx);
-
-    for (auto &[ssrc, meter] : m_volumes) {
-        meter -= 0.01;
-        if (meter < 0.0) meter = 0.0;
-    }
+    m_voice->GetCapture().GetPeakMeter().Decay();
+    m_voice->GetPlayback().GetClientStore().DecayPeakMeters();
 
     return true;
 }
@@ -663,15 +426,11 @@ bool AudioManager::OK() const {
 }
 
 double AudioManager::GetCaptureVolumeLevel() const noexcept {
-    return m_capture_peak_meter / 32768.0;
+    return m_voice->GetCapture().GetPeakMeter().GetPeak();
 }
 
 double AudioManager::GetSSRCVolumeLevel(uint32_t ssrc) const noexcept {
-    std::lock_guard<std::mutex> _(m_vol_mtx);
-    if (const auto it = m_volumes.find(ssrc); it != m_volumes.end()) {
-        return it->second;
-    }
-    return 0.0;
+    return m_voice->GetPlayback().GetClientStore().GetClientPeakVolume(ssrc);
 }
 
 AudioDevices &AudioManager::GetDevices() {
@@ -679,34 +438,24 @@ AudioDevices &AudioManager::GetDevices() {
 }
 
 uint32_t AudioManager::GetRTPTimestamp() const noexcept {
-    return m_rtp_timestamp;
+    return m_voice->GetCapture().GetRTPTimestamp();
 }
 
 void AudioManager::SetVADMethod(const std::string &method) {
     spdlog::get("audio")->debug("Setting VAD method to {}", method);
-    if (method == "gate") {
-        SetVADMethod(VADMethod::Gate);
-    } else if (method == "rnnoise") {
-#ifdef WITH_RNNOISE
-        SetVADMethod(VADMethod::RNNoise);
-#else
-        SetVADMethod(VADMethod::Gate);
-        spdlog::get("audio")->error("Tried to set RNNoise VAD method with support disabled");
-#endif
-    } else {
-        SetVADMethod(VADMethod::Gate);
-        spdlog::get("audio")->error("Tried to set unknown VAD method {}", method);
-    }
+    m_voice->GetCapture().GetEffects().SetVADMethod(method);
 }
 
 void AudioManager::SetVADMethod(VADMethod method) {
     const auto method_int = static_cast<int>(method);
     spdlog::get("audio")->debug("Setting VAD method to enum {}", method_int);
-    m_vad_method = method;
+
+    m_voice->GetCapture().GetEffects().SetVADMethod(method_int);
 }
 
 AudioManager::VADMethod AudioManager::GetVADMethod() const {
-    return m_vad_method;
+    const auto method = m_voice->GetCapture().GetEffects().GetVADMethod();
+    return static_cast<VADMethod>(method);
 }
 
 std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &list) {
@@ -733,36 +482,36 @@ std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &lis
 
 #ifdef WITH_RNNOISE
 float AudioManager::GetCurrentVADProbability() const {
-    return m_vad_prob;
+    return m_voice->GetCapture().GetEffects().GetNoise().GetPeakMeter().GetPeak();
 }
 
 double AudioManager::GetRNNProbThreshold() const {
-    return m_prob_threshold;
+    return m_voice->GetCapture().GetEffects().GetNoise().m_vad_threshold;
 }
 
 void AudioManager::SetRNNProbThreshold(double value) {
-    m_prob_threshold = value;
+    m_voice->GetCapture().GetEffects().GetNoise().m_vad_threshold = value;
 }
 
 void AudioManager::SetSuppressNoise(bool value) {
-    m_enable_noise_suppression = value;
+    m_voice->GetCapture().m_suppress_noise = value;
 }
 
 bool AudioManager::GetSuppressNoise() const {
-    return m_enable_noise_suppression;
+    return m_voice->GetCapture().m_suppress_noise;
 }
 #endif
 
 void AudioManager::SetMixMono(bool value) {
-    m_mix_mono = value;
+    m_voice->GetCapture().m_mix_mono = value;
 }
 
 bool AudioManager::GetMixMono() const {
-    return m_mix_mono;
+    return m_voice->GetCapture().m_mix_mono;
 }
 
-AudioManager::type_signal_opus_packet AudioManager::signal_opus_packet() {
-    return m_signal_opus_packet;
+AbaddonClient::Audio::Voice::VoiceCapture::CaptureSignal AudioManager::signal_opus_packet() {
+    return m_voice->GetCapture().GetCaptureSignal();
 }
 
 #endif

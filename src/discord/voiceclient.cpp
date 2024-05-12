@@ -154,9 +154,9 @@ DiscordVoiceClient::DiscordVoiceClient()
     Glib::signal_idle().connect_once([this]() {
         auto &audio = Abaddon::Get().GetAudio();
         audio.SetOpusBuffer(m_opus_buffer.data());
-        audio.signal_opus_packet().connect([this](int payload_size) {
+        audio.signal_opus_packet().connect([this](const std::vector<uint8_t> opus) {
             if (IsConnected()) {
-                m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
+                m_udp.SendEncrypted(opus.data(), opus.size());
             }
         });
     });

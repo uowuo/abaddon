@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
 // clang-format off
 
 #include <array>
@@ -21,6 +21,11 @@
 #endif
 
 #include "devices.hpp"
+
+#ifdef WITH_VOICE
+#include "voice/voice_audio.hpp"
+#endif
+
 // clang-format on
 
 class AudioManager {
@@ -35,20 +40,8 @@ public:
     void SetOpusBuffer(uint8_t *ptr);
     void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
 
-    void OpenPlaybackDevice(const ma_device_id &device_id);
-    void OpenCaptureDevice(const ma_device_id &device_id);
-
-    void TryOpenPlaybackDevice(const ma_device_id &device_id);
-    void TryOpenCaptureDevice(const ma_device_id &device_id);
-
-    void ClosePlaybackDevice();
-    void CloseCaptureDevice();
-
-    void StartPlaybackDevice();
-    void StartCaptureDevice();
-
-    void StopPlaybackDevice();
-    void StopCaptureDevice();
+    void StartVoice();
+    void StopVoice();
 
     void SetPlaybackDevice(const Gtk::TreeModel::iterator &iter);
     void SetCaptureDevice(const Gtk::TreeModel::iterator &iter);
@@ -106,7 +99,6 @@ public:
     bool GetMixMono() const;
 
 private:
-    void LogOpenedDevice(ma_device *device, const ma_device_type device_type);
     void OnCapturedPCM(const int16_t *pcm, ma_uint32 frames);
 
     void UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames);
@@ -138,7 +130,7 @@ private:
     ma_device m_capture_device;
     bool m_capture_device_ready = false;
 
-    ma_context m_context;
+    std::optional<AbaddonClient::Audio::Context> m_context;
 
     mutable std::mutex m_mutex;
     mutable std::mutex m_enc_mutex;
@@ -171,6 +163,10 @@ private:
 
     AudioDevices m_devices;
 
+#ifdef WITH_VOICE
+    std::optional<AbaddonClient::Audio::VoiceAudio> m_voice;
+#endif
+
     VADMethod m_vad_method;
 #ifdef WITH_RNNOISE
     DenoiseState *m_rnnoise[2];
@@ -182,7 +178,7 @@ private:
 
 public:
     using type_signal_opus_packet = sigc::signal<void(int payload_size)>;
-    type_signal_opus_packet signal_opus_packet();
+    AbaddonClient::Audio::Voice::VoiceCapture::CaptureSignal signal_opus_packet();
 
 private:
     type_signal_opus_packet m_signal_opus_packet;
