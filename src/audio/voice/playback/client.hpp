@@ -11,7 +11,7 @@ class Client {
 public:
     Client(Opus::OpusDecoder &&decoder, VoiceBuffer &&buffer, DecodePool &decode_pool) noexcept;
 
-    void DecodeFromRTP(const std::vector<u_int8_t> &&rtp) noexcept;
+    void DecodeFromRTP(const std::vector<uint8_t> &&rtp) noexcept;
     void WriteAudio(OutputBuffer output) noexcept;
 
     void ClearBuffer() noexcept;
