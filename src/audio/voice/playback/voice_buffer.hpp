@@ -16,8 +16,6 @@ public:
     void Clear() noexcept;
 
 private:
-
-
     RingBufferPtr m_ringbuffer;
 
     uint32_t m_channels;

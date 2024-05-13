@@ -6,6 +6,7 @@ namespace AbaddonClient::Audio {
 
 class Context {
 public:
+    Context(Miniaudio::MaContext &&context) noexcept;
     static std::optional<Context> Create(ma_context_config &&config, ConstSlice<ma_backend> backends) noexcept;
 
     ConstSlice<ma_device_info> GetPlaybackDevices() noexcept;
@@ -17,7 +18,6 @@ public:
     Miniaudio::MaContext& GetRaw() noexcept;
 
 private:
-    Context(Miniaudio::MaContext &&context) noexcept;
 
     void PopulateDevices() noexcept;
     void FindDefaultDevices() noexcept;
