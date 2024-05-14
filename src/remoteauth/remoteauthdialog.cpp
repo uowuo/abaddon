@@ -75,7 +75,7 @@ void RemoteAuthDialog::OnFingerprint(const std::string &fingerprint) {
     int size = qr.getSize();
     const int border = 4;
 
-    const auto module_set = "192 0 255";
+    const auto module_set = "0 0 0";
     const auto module_clr = "255 255 255";
 
     std::ostringstream sb;
