@@ -8,6 +8,8 @@
     #include <unistd.h>
 #endif
 
+#include <spdlog/spdlog.h>
+
 using namespace std::literals::string_literals;
 
 #if defined(_WIN32)
