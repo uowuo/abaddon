@@ -66,7 +66,9 @@ if (ENABLE_QRCODE_LOGIN)
     target_compile_definitions(abaddon PRIVATE WITH_QRLOGIN)
 endif ()
 
-target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
+if (NOT (APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+    target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
+endif()
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -146,6 +148,7 @@ if (APPLE)
     target_link_libraries(abaddon "-framework CoreFoundation")
     target_link_libraries(abaddon "-framework CoreAudio")
     target_link_libraries(abaddon "-framework AudioToolbox")
+    target_link_libraries(abaddon "-framework AudioUnit")
 endif ()
 
 if (ENABLE_VOICE)
