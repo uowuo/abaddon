@@ -221,33 +221,33 @@ void UserData::update_from_json(const nlohmann::json &j) {
 
 const char *UserData::GetFlagName(uint64_t flag) {
     switch (flag) {
-        case DiscordEmployee:
+        case static_cast<uint64_t>(UserData::EFlags::DiscordEmployee):
             return "discordstaff";
-        case PartneredServerOwner:
+        case static_cast<uint64_t>(UserData::EFlags::PartneredServerOwner):
             return "partneredowner";
-        case HypeSquadEvents:
+        case static_cast<uint64_t>(UserData::EFlags::HypeSquadEvents):
             return "hypesquadevents";
-        case BugHunterLevel1:
+        case static_cast<uint64_t>(UserData::EFlags::BugHunterLevel1):
             return "discordbughunter";
-        case HouseBravery:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBravery):
             return "hypesquadbravery";
-        case HouseBrilliance:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBrilliance):
             return "hypesquadbrilliance";
-        case HouseBalance:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBalance):
             return "hypesquadbalance";
-        case EarlySupporter:
+        case static_cast<uint64_t>(UserData::EFlags::EarlySupporter):
             return "earlysupporter";
-        case TeamUser:
+        case static_cast<uint64_t>(UserData::EFlags::TeamUser):
             return "teamuser";
-        case System:
+        case static_cast<uint64_t>(UserData::EFlags::System):
             return "system";
-        case BugHunterLevel2:
+        case static_cast<uint64_t>(UserData::EFlags::BugHunterLevel2):
             return "discordbughunter2";
-        case VerifiedBot:
+        case static_cast<uint64_t>(UserData::EFlags::VerifiedBot):
             return "verifiedbot";
-        case EarlyVerifiedBotDeveloper:
+        case static_cast<uint64_t>(UserData::EFlags::EarlyVerifiedBotDeveloper):
             return "earlyverifiedbotdeveloper";
-        case CertifiedModerator:
+        case static_cast<uint64_t>(UserData::EFlags::CertifiedModerator):
             return "certifiedmoderator";
         default:
             return "unknown";
@@ -256,33 +256,33 @@ const char *UserData::GetFlagName(uint64_t flag) {
 
 const char *UserData::GetFlagReadableName(uint64_t flag) {
     switch (flag) {
-        case DiscordEmployee:
+        case static_cast<uint64_t>(UserData::EFlags::DiscordEmployee):
             return "Discord Staff";
-        case PartneredServerOwner:
+        case static_cast<uint64_t>(UserData::EFlags::PartneredServerOwner):
             return "Partnered Server Owner";
-        case HypeSquadEvents:
+        case static_cast<uint64_t>(UserData::EFlags::HypeSquadEvents):
             return "HypeSquad Events";
-        case BugHunterLevel1:
+        case static_cast<uint64_t>(UserData::EFlags::BugHunterLevel1):
             return "Discord Bug Hunter";
-        case HouseBravery:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBravery):
             return "HypeSquad Bravery";
-        case HouseBrilliance:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBrilliance):
             return "HypeSquad Brilliance";
-        case HouseBalance:
+        case static_cast<uint64_t>(UserData::EFlags::HouseBalance):
             return "HypeSquad Balance";
-        case EarlySupporter:
+        case static_cast<uint64_t>(UserData::EFlags::EarlySupporter):
             return "Early Supporter";
-        case TeamUser:
+        case static_cast<uint64_t>(UserData::EFlags::TeamUser):
             return "Team User"; // ???
-        case System:
+        case static_cast<uint64_t>(UserData::EFlags::System):
             return "System";
-        case BugHunterLevel2:
+        case static_cast<uint64_t>(UserData::EFlags::BugHunterLevel2):
             return "Discord Bug Hunter Level 2";
-        case VerifiedBot:
+        case static_cast<uint64_t>(UserData::EFlags::VerifiedBot):
             return "Verified Bot";
-        case EarlyVerifiedBotDeveloper:
+        case static_cast<uint64_t>(UserData::EFlags::EarlyVerifiedBotDeveloper):
             return "Early Verified Bot Developer";
-        case CertifiedModerator:
+        case static_cast<uint64_t>(UserData::EFlags::CertifiedModerator):
             return "Discord Certified Moderator";
         default:
             return "";
