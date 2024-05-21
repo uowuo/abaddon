@@ -1,13 +1,15 @@
 #include "cellrendererchannels.hpp"
+
 #include <gdkmm/general.h>
+
+#include "misc/cairo.hpp"
+
 #include "abaddon.hpp"
 
 constexpr static int MentionsRightPad = 7;
 #ifndef M_PI
 constexpr static double M_PI = 3.14159265358979;
 #endif
-constexpr static double M_PI_H = M_PI / 2.0;
-constexpr static double M_PI_3_2 = M_PI * 3.0 / 2.0;
 
 void AddUnreadIndicator(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, const Gdk::Rectangle &background_area) {
     static const auto color_setting = Gdk::RGBA(Abaddon::Get().GetSettings().UnreadIndicatorColor);
@@ -832,17 +834,6 @@ void CellRendererChannels::render_vfunc_dm(const Cairo::RefPtr<Cairo::Context> &
     }
 }
 
-void CellRendererChannels::cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Context> &cr, double x, double y, double w, double h, double r) {
-    const double degrees = M_PI / 180.0;
-
-    cr->begin_new_sub_path();
-    cr->arc(x + w - r, y + r, r, -M_PI_H, 0);
-    cr->arc(x + w - r, y + h - r, r, 0, M_PI_H);
-    cr->arc(x + r, y + h - r, r, M_PI_H, M_PI);
-    cr->arc(x + r, y + r, r, M_PI, M_PI_3_2);
-    cr->close_path();
-}
-
 void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area) {
     Pango::FontDescription font;
     font.set_family("sans 14");
@@ -863,7 +854,7 @@ void CellRendererChannels::unread_render_mentions(const Cairo::RefPtr<Cairo::Con
 
         const auto x = cell_area.get_x() + edge - width - MentionsRightPad;
         const auto y = cell_area.get_y() + cell_area.get_height() / 2.0 - height / 2.0 - 1;
-        cairo_path_rounded_rect(cr, x - 4, y + 2, width + 8, height, 5);
+        CairoUtil::PathRoundedRect(cr, x - 4, y + 2, width + 8, height, 5);
         cr->set_source_rgb(bg.get_red(), bg.get_green(), bg.get_blue());
         cr->fill();
         cr->set_source_rgb(text.get_red(), text.get_green(), text.get_blue());

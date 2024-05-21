@@ -3,6 +3,7 @@
 #include "abaddon.hpp"
 #include "util.hpp"
 #include "guildlistfolderitem.hpp"
+#include "mentionoverlay.hpp"
 
 class GuildListDMsButton : public Gtk::EventBox {
 public:
@@ -93,10 +94,19 @@ void GuildList::UpdateListing() {
     }
 }
 
+static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, Snowflake guild_id) {
+    auto *overlay = Gtk::make_managed<Gtk::Overlay>();
+    overlay->add(*widget);
+    auto *mention_overlay = Gtk::make_managed<MentionOverlay>(guild_id);
+    overlay->add_overlay(*mention_overlay);
+    overlay->show_all();
+    return overlay;
+}
+
 void GuildList::AddGuild(Snowflake id) {
     if (auto item = CreateGuildWidget(id)) {
         item->show();
-        add(*item);
+        add(*AddMentionOverlay(item, id));
     }
 }
 
@@ -132,7 +142,7 @@ void GuildList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
     for (const auto guild_id : folder.GuildIDs) {
         if (auto *guild_widget = CreateGuildWidget(guild_id)) {
             guild_widget->show();
-            folder_widget->AddGuildWidget(guild_widget);
+            folder_widget->AddGuildWidget(AddMentionOverlay(guild_widget, guild_id));
         }
     }
 
