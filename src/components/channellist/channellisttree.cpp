@@ -535,7 +535,11 @@ void ChannelListTree::UpdateCreateChannel(const ChannelData &channel) {
         auto iter = GetIteratorForGuildFromID(*channel.GuildID);
         channel_row = *m_model->append(iter->children());
     }
+#ifdef WITH_VOICE
     channel_row[m_columns.m_type] = IsTextChannel(channel.Type) ? RenderType::TextChannel : RenderType::VoiceChannel;
+#else
+    channel_row[m_columns.m_type] = RenderType::TextChannel;
+#endif
     channel_row[m_columns.m_id] = channel.ID;
     channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
     channel_row[m_columns.m_nsfw] = channel.NSFW();
