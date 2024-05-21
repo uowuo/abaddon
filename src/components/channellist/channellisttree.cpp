@@ -490,7 +490,13 @@ void ChannelListTree::UpdateChannel(Snowflake id) {
     auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id);
     if (!iter || !channel.has_value()) return;
     if (channel->Type == ChannelType::GUILD_CATEGORY) return UpdateChannelCategory(*channel);
+        // TODO: theres like 4 different fucking ways of checking if somethin g is text or voice can i fix that How stupid .
+        // fun fact clang-format is indenting me right now i wonder why ,,,,,,,,,,,
+#ifdef WITH_VOICE
+    if (!channel->IsText() && channel->Type != ChannelType::GUILD_VOICE) return;
+#else
     if (!channel->IsText()) return;
+#endif
 
     // refresh stuff that might have changed
     const bool is_orphan_TMP = !channel->ParentID.has_value();
@@ -512,7 +518,11 @@ void ChannelListTree::UpdateChannel(Snowflake id) {
 void ChannelListTree::UpdateCreateChannel(const ChannelData &channel) {
     if (channel.Type == ChannelType::GUILD_CATEGORY) return (void)UpdateCreateChannelCategory(channel);
     if (channel.Type == ChannelType::DM || channel.Type == ChannelType::GROUP_DM) return UpdateCreateDMChannel(channel);
+#ifdef WITH_VOICE
+    if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS && channel.Type != ChannelType::GUILD_VOICE) return;
+#else
     if (channel.Type != ChannelType::GUILD_TEXT && channel.Type != ChannelType::GUILD_NEWS) return;
+#endif
 
     Gtk::TreeRow channel_row;
     bool orphan;
@@ -525,7 +535,7 @@ void ChannelListTree::UpdateCreateChannel(const ChannelData &channel) {
         auto iter = GetIteratorForGuildFromID(*channel.GuildID);
         channel_row = *m_model->append(iter->children());
     }
-    channel_row[m_columns.m_type] = RenderType::TextChannel;
+    channel_row[m_columns.m_type] = IsTextChannel(channel.Type) ? RenderType::TextChannel : RenderType::VoiceChannel;
     channel_row[m_columns.m_id] = channel.ID;
     channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
     channel_row[m_columns.m_nsfw] = channel.NSFW();
