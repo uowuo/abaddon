@@ -99,6 +99,10 @@ static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, Snowflake guild_id) {
     overlay->add(*widget);
     auto *mention_overlay = Gtk::make_managed<MentionOverlay>(guild_id);
     overlay->add_overlay(*mention_overlay);
+    overlay->set_overlay_pass_through(*mention_overlay, true);
+    mention_overlay->signal_realize().connect([mention_overlay]() {
+        mention_overlay->get_window()->set_pass_through(true);
+    });
     overlay->show_all();
     return overlay;
 }
