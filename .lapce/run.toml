@@ -8,15 +8,10 @@ name = "cmake-debug"
 # type = "lldb"
 
 # the program to run
-program = "cmake"
+program = "sh"
 
 # the program arguments, e.g. args = ["arg1", "arg2"], optional
-args = [
-  ".",
-  "-B", "build",
-  "-DCMAKE_BUILD_TYPE=Debug",
-  "-DCMAKE_EXPORT_COMPILE_COMMANDS=True"
-]
+args = ["gen_compile_commands.sh"]
 
 # current working directory, optional
 # cwd = "${workspace}"
