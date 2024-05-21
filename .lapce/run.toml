@@ -1,0 +1,36 @@
+# The run config is used for both run mode and debug mode
+
+[[configs]]
+# the name of this task
+name = "cmake-debug"
+
+# the type of the debugger. If not set, it can't be debugged but can still be run
+# type = "lldb"
+
+# the program to run
+program = "cmake"
+
+# the program arguments, e.g. args = ["arg1", "arg2"], optional
+args = [
+  ".",
+  "-B", "build",
+  "-DCMAKE_BUILD_TYPE=Debug",
+  "-DCMAKE_EXPORT_COMPILE_COMMANDS=True"
+]
+
+# current working directory, optional
+# cwd = "${workspace}"
+
+# environment variables, optional
+[configs.env]
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+# VAR1 = "VAL1"
+# VAR2 = "VAL2"
+
+# task to run before the run/debug session is started, optional
+# [configs.prelaunch]
+# program = "cargo"
+# args = [
+#   "build",
+# ]
