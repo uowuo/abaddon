@@ -44,8 +44,8 @@ bool AudioDevice::Stop() noexcept {
     return true;
 }
 
-bool AudioDevice::ChangeDevice(ma_device_id &&device_id) noexcept {
-    m_device_id = std::move(device_id);
+bool AudioDevice::ChangeDevice(const ma_device_id &device_id) noexcept {
+    m_device_id = device_id;
 
     return RefreshDevice();
 }

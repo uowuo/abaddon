@@ -170,7 +170,7 @@ void AudioManager::SetOpusBuffer(uint8_t *ptr) {
     m_opus_buffer = ptr;
 }
 
-void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
+void AudioManager::FeedMeOpus(uint32_t ssrc, std::vector<uint8_t> &&data) {
     m_voice->GetPlayback().OnRTPData(ssrc, std::move(data));
 }
 
@@ -182,7 +182,7 @@ void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
         return;
     }
 
-    m_voice->GetPlayback().SetPlaybackDevice(std::move(*device_id));
+    m_voice->GetPlayback().SetPlaybackDevice(*device_id);
 }
 
 void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
@@ -192,7 +192,7 @@ void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
         return;
     }
 
-    m_voice->GetCapture().SetCaptureDevice(std::move(*device_id));
+    m_voice->GetCapture().SetCaptureDevice(*device_id);
 }
 
 void AudioManager::SetCapture(bool capture) {
@@ -204,19 +204,19 @@ void AudioManager::SetPlayback(bool playback) {
 }
 
 void AudioManager::SetCaptureGate(double gate) {
-    m_voice->GetCapture().GetEffects().GetGate().m_vad_threshold = gate;
+    m_voice->GetCapture().GetEffects().GetGate().VADThreshold = gate;
 }
 
 void AudioManager::SetCaptureGain(double gain) {
-    m_voice->GetCapture().m_gain = gain;
+    m_voice->GetCapture().Gain = gain;
 }
 
 double AudioManager::GetCaptureGate() const noexcept {
-    return m_voice->GetCapture().GetEffects().GetGate().m_vad_threshold;
+    return m_voice->GetCapture().GetEffects().GetGate().VADThreshold;
 }
 
 double AudioManager::GetCaptureGain() const noexcept {
-    return m_voice->GetCapture().m_gain;
+    return m_voice->GetCapture().Gain;
 }
 
 void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
@@ -272,11 +272,10 @@ void AudioManager::Enumerate() {
 
     spdlog::get("audio")->info("Found {} playback devices and {} capture devices", playback_devices.size(), capture_devices.size());
 
-    // I don't know why this does not accept const
     m_devices.SetDevices(
-        const_cast<ma_device_info*>(playback_devices.data()),
+        playback_devices.data(),
         playback_devices.size(),
-        const_cast<ma_device_info*>(capture_devices.data()),
+        capture_devices.data(),
         capture_devices.size()
     );
 }
@@ -487,28 +486,28 @@ float AudioManager::GetCurrentVADProbability() const {
 }
 
 double AudioManager::GetRNNProbThreshold() const {
-    return m_voice->GetCapture().GetEffects().GetNoise().m_vad_threshold;
+    return m_voice->GetCapture().GetEffects().GetNoise().VADThreshold;
 }
 
 void AudioManager::SetRNNProbThreshold(double value) {
-    m_voice->GetCapture().GetEffects().GetNoise().m_vad_threshold = value;
+    m_voice->GetCapture().GetEffects().GetNoise().VADThreshold = value;
 }
 
 void AudioManager::SetSuppressNoise(bool value) {
-    m_voice->GetCapture().m_suppress_noise = value;
+    m_voice->GetCapture().SuppressNoise = value;
 }
 
 bool AudioManager::GetSuppressNoise() const {
-    return m_voice->GetCapture().m_suppress_noise;
+    return m_voice->GetCapture().SuppressNoise;
 }
 #endif
 
 void AudioManager::SetMixMono(bool value) {
-    m_voice->GetCapture().m_mix_mono = value;
+    m_voice->GetCapture().MixMono = value;
 }
 
 bool AudioManager::GetMixMono() const {
-    return m_voice->GetCapture().m_mix_mono;
+    return m_voice->GetCapture().MixMono;
 }
 
 AbaddonClient::Audio::Voice::VoiceCapture::CaptureSignal AudioManager::signal_opus_packet() {

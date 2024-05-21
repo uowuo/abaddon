@@ -64,7 +64,6 @@ template <typename T>
 class Mutex {
 
 public:
-    Mutex() {}
     Mutex(T&& object) : m_object(std::forward<T>(object)) {}
 
     template<typename... Args>

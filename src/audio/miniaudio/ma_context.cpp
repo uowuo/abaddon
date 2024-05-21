@@ -14,7 +14,7 @@ std::optional<MaContext> MaContext::Create(ma_context_config &&config, ConstSlic
         return std::nullopt;
     }
 
-    return std::make_optional<MaContext>(std::move(context));
+    return std::move(context);
 }
 
 std::optional<MaContext::DeviceInfo> MaContext::GetDevices() noexcept {
@@ -33,7 +33,7 @@ std::optional<MaContext::DeviceInfo> MaContext::GetDevices() noexcept {
     const auto playback_info = PlaybackDeviceInfo(playback_device_infos, playback_device_count);
     const auto capture_info = CaptureDeviceInfo(capture_device_infos, capture_device_count);
 
-    return std::make_optional<DeviceInfo>(std::move(playback_info), std::move(capture_info));
+    return DeviceInfo(playback_info, capture_info);
 }
 
 ma_context& MaContext::GetInternal() noexcept {

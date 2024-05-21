@@ -15,7 +15,7 @@ std::optional<Context> Context::Create(ma_context_config &&config, ConstSlice<ma
         return std::nullopt;
     }
 
-    return std::make_optional<Context>(std::move(*context));
+    return std::move(*context);
 }
 
 

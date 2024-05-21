@@ -8,7 +8,7 @@ class Gate {
 public:
     bool PassesVAD(InputBuffer buffer, float current_peak) const noexcept;
 
-    std::atomic<float> m_vad_threshold;
+    std::atomic<float> VADThreshold;
 };
 
 }

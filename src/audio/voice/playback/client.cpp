@@ -7,7 +7,7 @@ Client::Client(Opus::OpusDecoder &&decoder, VoiceBuffer &&buffer, DecodePool &de
     m_buffer( std::make_shared<VoiceBuffer>( std::move(buffer) )),
     m_decode_pool(decode_pool) {}
 
-void Client::DecodeFromRTP(const std::vector<uint8_t> &&rtp) noexcept {
+void Client::DecodeFromRTP(std::vector<uint8_t> &&rtp) noexcept {
     if (m_muted) {
         return;
     }
@@ -27,7 +27,7 @@ void Client::WriteAudio(OutputBuffer buffer) noexcept {
     }
 
     m_buffer->Read(buffer);
-    AudioUtils::ApplyGain(buffer, m_volume);
+    AudioUtils::ApplyGain(buffer, Volume);
 
     m_peak_meter.UpdatePeak(buffer);
 }

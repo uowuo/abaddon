@@ -26,7 +26,7 @@ public:
 
     static void MixStereoToMono(OutputBuffer buffer) noexcept {
         for (auto iter = buffer.begin(); iter < buffer.end() - 2; iter += 2) {
-            const auto mixed = std::reduce(iter, iter + 2, 0) / 2.0f;
+            const auto mixed = std::reduce(iter, iter + 2, 0.0f) / 2.0f;
             std::fill(iter, iter + 2, mixed);
         }
     }

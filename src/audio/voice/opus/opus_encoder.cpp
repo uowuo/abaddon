@@ -29,7 +29,7 @@ OpusEncoder::Create(EncoderSettings settings) noexcept {
     }
 
     auto encoder_ptr = EncoderPtr(encoder, opus_encoder_destroy);
-    return std::make_optional<OpusEncoder>(std::move(encoder_ptr), std::move(settings));
+    return OpusEncoder(std::move(encoder_ptr), settings);
 }
 
 int OpusEncoder::Encode(InputBuffer &&input, OpusOutput &&output, int frame_size) noexcept {
@@ -63,10 +63,15 @@ void OpusEncoder::SetSignalHint(SignalHint hint) noexcept {
 }
 
 void OpusEncoder::SetEncodingApplication(EncodingApplication application) noexcept {
-    // TODO: It should be fine to omit the error check here since we're only changing the application?
     int error;
-    auto ptr = opus_encoder_create(m_sample_rate, m_channels, static_cast<int>(application), &error);
-    m_encoder.reset(ptr);
+    const auto encoder = opus_encoder_create(m_sample_rate, m_channels, static_cast<int>(application), &error);
+
+    if (error != OPUS_OK) {
+        spdlog::get("voice")->error("Cannot change encoding application: {}", opus_strerror(error));
+        return;
+    }
+
+    m_encoder.reset(encoder);
 
     SetBitrate(m_bitrate);
     SetSignalHint(m_signal_hint);

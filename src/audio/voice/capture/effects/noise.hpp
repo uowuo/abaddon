@@ -5,7 +5,7 @@
 #include "audio/voice/capture/constants.hpp"
 #include "audio/voice/peak_meter/peak_meter.hpp"
 
-#include "rnnoise.h"
+#include <rnnoise.h>
 
 namespace AbaddonClient::Audio::Voice::Capture::Effects {
 
@@ -32,14 +32,14 @@ public:
     PeakMeter& GetPeakMeter() noexcept;
     const PeakMeter& GetPeakMeter() const noexcept;
 
-    std::atomic<float> m_vad_threshold = 0.5;
+    std::atomic<float> VADThreshold = 0.5;
 private:
     using NoiseArray = std::array<NoiseBuffer, CAPTURE_CHANNELS>;
 
     Mutex<NoiseArray> m_channels;
     PeakMeter m_peak_meter;
 
-    bool denoised_first_channel;
+    bool m_denoised_first_channel;
 };
 
 };

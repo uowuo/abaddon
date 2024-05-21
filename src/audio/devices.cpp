@@ -21,7 +21,7 @@ Glib::RefPtr<Gtk::ListStore> AudioDevices::GetCaptureDeviceModel() const {
     return m_capture;
 }
 
-void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_count, ma_device_info *pCapture, ma_uint32 capture_count) {
+void AudioDevices::SetDevices(const ma_device_info *pPlayback, ma_uint32 playback_count, const ma_device_info *pCapture, ma_uint32 capture_count) {
     m_playback->clear();
 
     for (ma_uint32 i = 0; i < playback_count; i++) {

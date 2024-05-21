@@ -11,7 +11,7 @@ void ClientStore::AddClient(ClientID id) noexcept {
         return;
     };
 
-    auto settings = Opus::OpusDecoder::DecoderSettings {};
+    Opus::OpusDecoder::DecoderSettings settings;
     settings.sample_rate = RTP_SAMPLE_RATE;
     settings.channels = RTP_CHANNELS;
 
@@ -49,7 +49,7 @@ void ClientStore::Clear() noexcept {
     m_clients.Lock()->clear();
 }
 
-void ClientStore::DecodeFromRTP(ClientID id, const std::vector<uint8_t> &&data) noexcept {
+void ClientStore::DecodeFromRTP(ClientID id, std::vector<uint8_t> &&data) noexcept {
     auto clients = m_clients.Lock();
     auto client = clients->find(id);
 
@@ -87,12 +87,12 @@ void ClientStore::DecayPeakMeters() noexcept {
     }
 }
 
-void ClientStore::SetClientVolume(const ClientID id, const float volume) noexcept {
+void ClientStore::SetClientVolume(ClientID id, float volume) noexcept {
     auto clients = m_clients.Lock();
     auto client = clients->find(id);
 
     if (client != clients->end()) {
-        client->second.m_volume = volume;
+        client->second.Volume = volume;
     }
 }
 
@@ -104,7 +104,7 @@ void ClientStore::ClearAllBuffers() noexcept {
     }
 }
 
-void ClientStore::SetClientMute(const ClientID id, const bool muted) noexcept {
+void ClientStore::SetClientMute(ClientID id, bool muted) noexcept {
     auto clients = m_clients.Lock();
     auto client = clients->find(id);
 
@@ -113,18 +113,18 @@ void ClientStore::SetClientMute(const ClientID id, const bool muted) noexcept {
     }
 }
 
-float ClientStore::GetClientVolume(const ClientID id) const noexcept {
+float ClientStore::GetClientVolume(ClientID id) const noexcept {
     const auto clients = m_clients.Lock();
     const auto client = clients->find(id);
 
     if (client != clients->end()) {
-        return client->second.m_volume;
+        return client->second.Volume;
     }
 
     return 1.0;
 }
 
-bool ClientStore::GetClientMute(const ClientID id) const noexcept {
+bool ClientStore::GetClientMute(ClientID id) const noexcept {
     const auto clients = m_clients.Lock();
     const auto client = clients->find(id);
 
@@ -135,7 +135,7 @@ bool ClientStore::GetClientMute(const ClientID id) const noexcept {
     return false;
 }
 
-float ClientStore::GetClientPeakVolume(const ClientID id) const noexcept {
+float ClientStore::GetClientPeakVolume(ClientID id) const noexcept {
     const auto clients = m_clients.Lock();
     const auto client = clients->find(id);
 

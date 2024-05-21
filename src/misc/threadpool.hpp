@@ -1,5 +1,6 @@
 #pragma once
 
+#include "thread"
 #include "variant"
 
 #include "channel.hpp"
@@ -11,18 +12,24 @@ class ThreadPool {
 public:
     using ThreadMessage = std::variant<ThreadData, Terminate>;
 
-    ThreadPool() noexcept;
-
     ThreadPool(Callable callable, size_t channel_capacity) noexcept :
         m_callable(std::move(callable)),
-        m_channel(Channel<ThreadMessage>(channel_capacity)) {}
+        m_channel(Channel<ThreadMessage>(channel_capacity))
+    {
+        auto concurrency = std::thread::hardware_concurrency() / 2;
+        if (concurrency == 0) {
+            concurrency = 2;
+        }
+
+        MaxThreads = concurrency;
+    }
 
     ~ThreadPool() noexcept {
         Clear();
     }
 
     void AddThread() noexcept {
-        if (GetThreadCount() == m_max_threads) {
+        if (GetThreadCount() == MaxThreads) {
             return;
         }
 
@@ -59,7 +66,7 @@ public:
         m_channel.Send(std::move(data));
     }
 
-    size_t m_max_threads;
+    size_t MaxThreads;
 
 private:
     std::vector<std::thread> m_threads;

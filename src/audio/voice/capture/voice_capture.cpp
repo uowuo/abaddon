@@ -9,7 +9,7 @@ using SignalHint = OpusEncoder::SignalHint;
 using EncodingApplication = OpusEncoder::EncodingApplication;
 
 void capture_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-    auto capture = reinterpret_cast<VoiceCapture*>(pDevice->pUserData);
+    auto capture = static_cast<VoiceCapture*>(pDevice->pUserData);
     if (capture == nullptr) {
         return;
     }
@@ -39,10 +39,10 @@ void VoiceCapture::SetActive(bool active) noexcept {
     m_active = active;
 }
 
-void VoiceCapture::SetCaptureDevice(ma_device_id &&device_id) noexcept {
+void VoiceCapture::SetCaptureDevice(const ma_device_id &device_id) noexcept {
     spdlog::get("voice")->info("Setting capture device");
 
-    const auto success = m_device.ChangeDevice(std::move(device_id));
+    const auto success = m_device.ChangeDevice(device_id);
     if (!success) {
         spdlog::get("voice")->error("Failed to set capture device");
     }
@@ -65,7 +65,7 @@ ma_device_config VoiceCapture::GetDeviceConfig() noexcept {
 }
 
 void VoiceCapture::StartEncoder() noexcept {
-    auto settings = EncoderSettings {};
+    EncoderSettings settings;
     settings.sample_rate = CAPTURE_SAMPLE_RATE;
     settings.channels = CAPTURE_CHANNELS;
     settings.bitrate = 64000;
@@ -90,16 +90,16 @@ void VoiceCapture::OnAudioCapture(InputBuffer input) noexcept {
 
     ApplyEffects(buffer);
     if (ApplyNoise(buffer)) {
-        EncodeAndSend(std::move(buffer));
+        EncodeAndSend(buffer);
     }
 }
 
 void VoiceCapture::ApplyEffects(CaptureBuffer &buffer) noexcept {
-    if (m_mix_mono) {
+    if (MixMono) {
         AudioUtils::MixStereoToMono(buffer);
     }
 
-    AudioUtils::ApplyGain(buffer, m_gain);
+    AudioUtils::ApplyGain(buffer, Gain);
     m_peak_meter.UpdatePeak(buffer);
 }
 
@@ -108,14 +108,14 @@ bool VoiceCapture::ApplyNoise(CaptureBuffer &buffer) noexcept {
         return false;
     }
 
-    if (m_suppress_noise) {
+    if (SuppressNoise) {
         m_effects.Denoise(buffer);
     }
 
     return true;
 }
 
-void VoiceCapture::EncodeAndSend(CaptureBuffer &&buffer) noexcept {
+void VoiceCapture::EncodeAndSend(const CaptureBuffer &buffer) noexcept {
     std::vector<uint8_t> opus;
     opus.resize(1275);
 
@@ -123,7 +123,7 @@ void VoiceCapture::EncodeAndSend(CaptureBuffer &&buffer) noexcept {
     opus.resize(bytes);
 
     if (bytes > 0) {
-        m_signal.emit(std::move(opus));
+        m_signal.emit(opus);
     }
 
     m_rtp_timestamp += CAPTURE_FRAME_SIZE;

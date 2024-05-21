@@ -7,15 +7,15 @@ bool Noise::PassesVAD(InputBuffer buffer) noexcept {
     const auto prob = m_channels.Lock()[0].DenoiseChannel(buffer, 0);
 
     m_peak_meter.SetPeak(prob);
-    denoised_first_channel = true;
+    m_denoised_first_channel = true;
 
-    return prob > m_vad_threshold;
+    return prob > VADThreshold;
 }
 
 void Noise::Denoise(OutputBuffer buffer) noexcept {
     auto start = 0;
-    if (denoised_first_channel) {
-        denoised_first_channel = false;
+    if (m_denoised_first_channel) {
+        m_denoised_first_channel = false;
         start = 1;
     }
 

@@ -13,7 +13,7 @@ class AudioDevices {
 public:
     AudioDevices();
 
-    void SetDevices(ma_device_info *pPlayback, ma_uint32 playback_count, ma_device_info *pCapture, ma_uint32 capture_count);
+    void SetDevices(const ma_device_info *pPlayback, ma_uint32 playback_count, const ma_device_info *pCapture, ma_uint32 capture_count);
 
     [[nodiscard]] std::optional<ma_device_id> GetPlaybackDeviceIDFromModel(const Gtk::TreeModel::iterator &iter) const;
     [[nodiscard]] std::optional<ma_device_id> GetCaptureDeviceIDFromModel(const Gtk::TreeModel::iterator &iter) const;

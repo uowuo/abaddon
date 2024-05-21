@@ -16,7 +16,7 @@ OpusDecoder::Create(const DecoderSettings settings) noexcept {
     }
 
     auto decoder_ptr = DecoderPtr(decoder, opus_decoder_destroy);
-    return std::make_optional<OpusDecoder>(std::move(decoder_ptr), std::move(settings));
+    return OpusDecoder(std::move(decoder_ptr), std::move(settings));
 }
 
 int OpusDecoder::Decode(OpusInput opus, OutputBuffer output, const int frame_size) noexcept {

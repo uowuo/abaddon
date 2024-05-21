@@ -15,7 +15,7 @@ public:
     DecodePool() noexcept;
 
     struct DecodeData {
-        const std::vector<uint8_t> rtp;
+        std::vector<uint8_t> rtp;
 
         SharedDecoder decoder;
         SharedBuffer buffer;

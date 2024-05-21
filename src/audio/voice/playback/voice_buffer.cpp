@@ -16,7 +16,7 @@ std::optional<VoiceBuffer> VoiceBuffer::Create(uint32_t channels, uint32_t buffe
         return std::nullopt;
     }
 
-    return std::make_optional<VoiceBuffer>(std::move(ringbuffer_ptr), channels, buffer_frames);
+    return VoiceBuffer(std::move(ringbuffer_ptr), channels, buffer_frames);
 }
 
 void VoiceBuffer::Read(OutputBuffer output) noexcept {

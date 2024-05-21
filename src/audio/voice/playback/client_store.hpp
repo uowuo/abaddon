@@ -17,26 +17,26 @@ class ClientStore {
 public:
     using ClientID = uint32_t;
 
-    void AddClient(const ClientID id) noexcept;
-    void RemoveClient(const ClientID id) noexcept;
+    void AddClient(ClientID id) noexcept;
+    void RemoveClient(ClientID id) noexcept;
     void Clear() noexcept;
 
     void DecayPeakMeters() noexcept;
     void ClearAllBuffers() noexcept;
 
-    void SetClientVolume(const ClientID id, const float volume) noexcept;
-    void SetClientMute(const ClientID id, const bool muted) noexcept;
+    void SetClientVolume(ClientID id, float volume) noexcept;
+    void SetClientMute(ClientID id, bool muted) noexcept;
 
-    float GetClientVolume(const ClientID id) const noexcept;
-    bool GetClientMute(const ClientID id) const noexcept;
+    float GetClientVolume(ClientID id) const noexcept;
+    bool GetClientMute(ClientID id) const noexcept;
 
-    float GetClientPeakVolume(const ClientID id) const noexcept;
+    float GetClientPeakVolume(ClientID id) const noexcept;
 
 private:
     using ClientMap = std::unordered_map<ClientID, Client>;
 
     // Keep these two private and expose through VoicePlayback
-    void DecodeFromRTP(const ClientID id, const std::vector<uint8_t> &&data) noexcept;
+    void DecodeFromRTP(ClientID id, std::vector<uint8_t> &&data) noexcept;
     void WriteMixed(OutputBuffer buffer) noexcept;
 
     DecodePool m_decode_pool;

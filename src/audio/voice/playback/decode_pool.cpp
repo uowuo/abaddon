@@ -14,15 +14,7 @@ Opus::OpusInput StripRTPExtensionHeader(ConstSlice<uint8_t> rtp) {
 }
 
 DecodePool::DecodePool() noexcept :
-    m_pool(Pool(&DecodePool::DecodeThread, 20))
-{
-    auto concurrency = std::thread::hardware_concurrency() / 2;
-    if (concurrency == 0) {
-        concurrency = 2;
-    }
-
-    m_pool.m_max_threads = concurrency;
-}
+    m_pool(Pool(&DecodePool::DecodeThread, 20)) {}
 
 void DecodePool::DecodeFromRTP(DecodeData &&decode_data) noexcept {
     m_pool.SendToPool(std::move(decode_data));
@@ -57,7 +49,7 @@ void DecodePool::DecodeThread(Channel<Pool::ThreadMessage> &channel) noexcept {
 }
 
 void DecodePool::OnDecodeMessage(DecodeData &&message) noexcept {
-    auto&& [rtp, decoder, buffer] = message;
+    auto& [rtp, decoder, buffer] = message;
 
     static std::array<float, RTP_OPUS_MAX_BUFFER_SIZE> pcm;
     const auto opus = StripRTPExtensionHeader(rtp);

@@ -38,7 +38,7 @@ public:
     void RemoveAllSSRCs();
 
     void SetOpusBuffer(uint8_t *ptr);
-    void FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data);
+    void FeedMeOpus(uint32_t ssrc, std::vector<uint8_t> &&data);
 
     void StartVoice();
     void StopVoice();

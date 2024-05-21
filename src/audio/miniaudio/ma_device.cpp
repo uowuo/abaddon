@@ -14,7 +14,7 @@ std::optional<MaDevice> MaDevice::Create(MaContext &context, ma_device_config &c
         return std::nullopt;
     }
 
-    return std::make_optional<MaDevice>(std::move(device));
+    return std::move(device);
 }
 
 bool MaDevice::Start() noexcept {

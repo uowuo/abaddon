@@ -4,7 +4,7 @@
 namespace AbaddonClient::Audio::Voice {
 
 void playback_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-    auto playback = reinterpret_cast<VoicePlayback*>(pDevice->pUserData);
+    auto playback = static_cast<VoicePlayback*>(pDevice->pUserData);
     if (playback == nullptr) {
         return;
     }
@@ -16,7 +16,7 @@ void playback_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma
 VoicePlayback::VoicePlayback(Context &context) noexcept :
     m_device(context, GetDeviceConfig(), context.GetActivePlaybackID()) {}
 
-void VoicePlayback::OnRTPData(ClientID id, const std::vector<uint8_t> &&data) noexcept {
+void VoicePlayback::OnRTPData(ClientID id, std::vector<uint8_t> &&data) noexcept {
     if (m_active) {
         m_clients.DecodeFromRTP(id, std::move(data));
     }
@@ -46,10 +46,10 @@ void VoicePlayback::SetActive(bool active) noexcept {
     m_active = active;
 }
 
-void VoicePlayback::SetPlaybackDevice(ma_device_id &&device_id) noexcept {
+void VoicePlayback::SetPlaybackDevice(const ma_device_id &device_id) noexcept {
     spdlog::get("voice")->info("Setting playback device");
 
-    const auto success = m_device.ChangeDevice(std::move(device_id));
+    const auto success = m_device.ChangeDevice(device_id);
     if (!success) {
         spdlog::get("voice")->error("Failed to set playback device");
     }

@@ -13,7 +13,7 @@ public:
     bool Start() noexcept;
     bool Stop() noexcept;
 
-    bool ChangeDevice(ma_device_id &&device_id) noexcept;
+    bool ChangeDevice(const ma_device_id &device_id) noexcept;
 private:
     void SyncDeviceID() noexcept;
     bool RefreshDevice() noexcept;

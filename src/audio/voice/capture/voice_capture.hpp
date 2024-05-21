@@ -13,7 +13,7 @@ namespace AbaddonClient::Audio::Voice {
 
 class VoiceCapture {
 public:
-    using CaptureSignal = sigc::signal<void (const std::vector<uint8_t>)>;
+    using CaptureSignal = sigc::signal<void (const std::vector<uint8_t>&)>;
 
     VoiceCapture(Context &context) noexcept;
 
@@ -21,7 +21,7 @@ public:
     void Stop() noexcept;
 
     void SetActive(bool active) noexcept;
-    void SetCaptureDevice(ma_device_id &&device_id) noexcept;
+    void SetCaptureDevice(const ma_device_id &device_id) noexcept;
 
     Capture::VoiceEffects& GetEffects() noexcept;
     const Capture::VoiceEffects& GetEffects() const noexcept;
@@ -35,9 +35,9 @@ public:
     CaptureSignal GetCaptureSignal() const noexcept;
     uint32_t GetRTPTimestamp() const noexcept;
 
-    std::atomic<float> m_gain = 1.0f;
-    std::atomic<bool> m_mix_mono = false;
-    std::atomic<bool> m_suppress_noise = false;
+    std::atomic<float> Gain = 1.0f;
+    std::atomic<bool> MixMono = false;
+    std::atomic<bool> SuppressNoise = false;
 private:
     ma_device_config GetDeviceConfig() noexcept;
     void StartEncoder() noexcept;
@@ -46,7 +46,7 @@ private:
 
     void ApplyEffects(CaptureBuffer &buffer) noexcept;
     bool ApplyNoise(CaptureBuffer &buffer) noexcept;
-    void EncodeAndSend(CaptureBuffer &&buffer) noexcept;
+    void EncodeAndSend(const CaptureBuffer &buffer) noexcept;
 
     Capture::VoiceEffects m_effects;
     PeakMeter m_peak_meter;
