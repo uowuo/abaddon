@@ -80,6 +80,7 @@ void AudioDevice::SyncDeviceID() noexcept {
 bool AudioDevice::RefreshDevice() noexcept {
     m_device.reset();
     if (m_started) {
+        m_started = false;
         return Start();
     }
 
