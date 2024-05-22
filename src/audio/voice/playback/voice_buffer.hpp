@@ -1,6 +1,6 @@
 #pragma once
 
-#include <miniaudio.h>
+#include "audio/miniaudio/ma_pcm_rb.hpp"
 
 namespace AbaddonClient::Audio::Voice::Playback {
 
@@ -13,21 +13,10 @@ public:
     void Clear() noexcept;
 
 private:
-    struct RingBufferDeleter {
-        void operator()(ma_pcm_rb* ptr) noexcept {
-            ma_pcm_rb_uninit(ptr);
-        }
-    };
+    VoiceBuffer(Miniaudio::MaPCMRingBuffer &&ringbuffer, uint32_t buffer_frames) noexcept;
 
-    using RingBufferPtr = std::unique_ptr<ma_pcm_rb, RingBufferDeleter>;
-    VoiceBuffer(RingBufferPtr &&ringbuffer, uint32_t channels, uint32_t buffer_frames) noexcept;
-
-    RingBufferPtr m_ringbuffer;
-
-    uint32_t m_channels;
-    uint32_t m_buffer_frames;
-
-    bool moved = false;
+    Miniaudio::MaPCMRingBuffer m_ringbuffer;
+    const uint32_t m_buffer_frames;
 };
 
 }
