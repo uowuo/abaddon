@@ -6,7 +6,7 @@ MaDevice::MaDevice(DevicePtr &&device) noexcept :
     m_device(std::move(device)) {}
 
 std::optional<MaDevice> MaDevice::Create(MaContext &context, ma_device_config &config) noexcept {
-    DevicePtr device = DevicePtr(new ma_device, &ma_device_uninit);
+    DevicePtr device = DevicePtr(new ma_device);
 
     const auto result = ma_device_init(&context.GetInternal(), &config, device.get());
     if (result != MA_SUCCESS) {
@@ -14,7 +14,7 @@ std::optional<MaDevice> MaDevice::Create(MaContext &context, ma_device_config &c
         return std::nullopt;
     }
 
-    return std::move(device);
+    return MaDevice(std::move(device));
 }
 
 bool MaDevice::Start() noexcept {

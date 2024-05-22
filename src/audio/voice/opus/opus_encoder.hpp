@@ -10,8 +10,6 @@ using OpusOutput = Slice<uint8_t>;
 
 class OpusEncoder {
 public:
-    using EncoderPtr = std::unique_ptr<::OpusEncoder, decltype(&opus_encoder_destroy)>;
-
     enum class EncodingApplication {
         Audio = OPUS_APPLICATION_AUDIO,
         LowDelay = OPUS_APPLICATION_RESTRICTED_LOWDELAY,
@@ -32,7 +30,6 @@ public:
         EncodingApplication application = EncodingApplication::Audio;
     };
 
-    OpusEncoder(EncoderPtr encoder, EncoderSettings settings) noexcept;
     static std::optional<OpusEncoder> Create(EncoderSettings settings) noexcept;
 
     int Encode(InputBuffer &&audio, OpusOutput &&opus, int frame_size) noexcept;
@@ -46,6 +43,15 @@ public:
     SignalHint GetSignalHint() const noexcept;
     EncodingApplication GetEncodingApplication() const noexcept;
 private:
+    struct EncoderDeleter {
+        void operator()(::OpusEncoder* ptr) noexcept {
+            opus_encoder_destroy(ptr);
+        }
+    };
+
+    using EncoderPtr = std::unique_ptr<::OpusEncoder, EncoderDeleter>;
+    OpusEncoder(EncoderPtr encoder, EncoderSettings settings) noexcept;
+
     template<typename... Args>
     bool OpusCTL(std::string_view request, Args&& ...args) noexcept;
 

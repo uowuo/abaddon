@@ -37,7 +37,7 @@ const PeakMeter& Noise::GetPeakMeter() const noexcept {
 }
 
 NoiseBuffer::NoiseBuffer() noexcept :
-    m_state(RNNoisePtr(rnnoise_create(NULL), rnnoise_destroy)) {}
+    m_state(RNNoisePtr(rnnoise_create(NULL))) {}
 
 float NoiseBuffer::DenoiseChannel(InputBuffer buffer, size_t channel) noexcept {
     ChannelBuffer input_channel;

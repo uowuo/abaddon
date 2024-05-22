@@ -6,7 +6,7 @@ MaContext::MaContext(ContextPtr &&context) noexcept :
     m_context(std::move(context)) {}
 
 std::optional<MaContext> MaContext::Create(ma_context_config &&config, ConstSlice<ma_backend> backends) noexcept {
-    ContextPtr context = ContextPtr(new ma_context, &ma_context_uninit);
+    ContextPtr context = ContextPtr(new ma_context);
 
     const auto result = ma_context_init(backends.data(), backends.size(), &config, context.get());
     if (result != MA_SUCCESS) {
@@ -14,7 +14,7 @@ std::optional<MaContext> MaContext::Create(ma_context_config &&config, ConstSlic
         return std::nullopt;
     }
 
-    return std::move(context);
+    return MaContext(std::move(context));
 }
 
 std::optional<MaContext::DeviceInfo> MaContext::GetDevices() noexcept {

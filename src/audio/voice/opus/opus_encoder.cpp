@@ -28,7 +28,7 @@ OpusEncoder::Create(EncoderSettings settings) noexcept {
         return std::nullopt;
     }
 
-    auto encoder_ptr = EncoderPtr(encoder, opus_encoder_destroy);
+    auto encoder_ptr = EncoderPtr(encoder);
     return OpusEncoder(std::move(encoder_ptr), settings);
 }
 

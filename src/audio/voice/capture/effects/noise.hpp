@@ -17,7 +17,13 @@ public:
     void WriteChannel(OutputBuffer buffer, size_t channel) noexcept;
 
 private:
-    using RNNoisePtr = std::unique_ptr<DenoiseState, decltype(&rnnoise_destroy)>;
+    struct RNNoiseDeleter {
+        void operator()(DenoiseState* ptr) noexcept {
+            rnnoise_destroy(ptr);
+        }
+    };
+
+    using RNNoisePtr = std::unique_ptr<DenoiseState, RNNoiseDeleter>;
     using ChannelBuffer = std::array<float, CAPTURE_FRAME_SIZE>;
 
     RNNoisePtr m_state;

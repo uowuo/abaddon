@@ -8,7 +8,7 @@ VoiceBuffer::VoiceBuffer(RingBufferPtr &&ringbuffer, uint32_t channels, uint32_t
     m_buffer_frames(buffer_frames) {}
 
 std::optional<VoiceBuffer> VoiceBuffer::Create(uint32_t channels, uint32_t buffer_size_in_frames, uint32_t buffer_frames) noexcept {
-    auto ringbuffer_ptr = RingBufferPtr(new ma_pcm_rb, &ma_pcm_rb_uninit);
+    auto ringbuffer_ptr = RingBufferPtr(new ma_pcm_rb);
 
     const auto result = ma_pcm_rb_init(ma_format_f32, channels, buffer_size_in_frames, nullptr, nullptr, ringbuffer_ptr.get());
     if (result != MA_SUCCESS) {
