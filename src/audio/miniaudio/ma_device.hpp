@@ -8,7 +8,6 @@ namespace AbaddonClient::Audio::Miniaudio {
 
 class MaDevice {
 public:
-
     static std::optional<MaDevice> Create(MaContext &context, ma_device_config &config) noexcept;
 
     bool Start() noexcept;
@@ -28,7 +27,6 @@ private:
     // Moving it to other location would cause memory corruption
     using DevicePtr = std::unique_ptr<ma_device, DeviceDeleter>;
     MaDevice(DevicePtr &&device) noexcept;
-
 
     DevicePtr m_device;
 };

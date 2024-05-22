@@ -30,7 +30,7 @@
 
 class AudioManager {
 public:
-    AudioManager(const Glib::ustring &backends_string);
+    AudioManager(const Glib::ustring &backends_string, DiscordClient &discord);
     ~AudioManager();
 
     void AddSSRC(uint32_t ssrc);

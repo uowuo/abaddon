@@ -13,8 +13,16 @@ void playback_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma
     playback->OnAudioPlayback(buffer);
 }
 
-VoicePlayback::VoicePlayback(Context &context) noexcept :
-    m_device(context, GetDeviceConfig(), context.GetActivePlaybackID()) {}
+VoicePlayback::VoicePlayback(Context &context, DiscordClient &discord) noexcept :
+    m_device(context, GetDeviceConfig(), context.GetActivePlaybackID()),
+    m_voice_client(discord.GetVoiceClient())
+{
+    m_voice_client.signal_speaking()
+        .connect(sigc::mem_fun(*this, &VoicePlayback::OnUserSpeaking));
+
+    discord.signal_voice_user_disconnect()
+        .connect(sigc::mem_fun(*this, &VoicePlayback::OnUserDisconnect));
+}
 
 void VoicePlayback::OnRTPData(ClientID id, std::vector<uint8_t> &&data) noexcept {
     if (m_active) {
@@ -26,6 +34,20 @@ void VoicePlayback::OnAudioPlayback(OutputBuffer buffer) noexcept {
     if (m_active) {
         m_clients.WriteMixed(buffer);
         AudioUtils::ClampToFloatRange(buffer); // Clamp it at the end
+    }
+}
+
+void VoicePlayback::OnUserSpeaking(const VoiceSpeakingData &speaking_data) noexcept {
+    m_clients.AddClient(speaking_data.SSRC);
+
+    const auto volume = m_voice_client.GetUserVolume(speaking_data.UserID);
+    m_clients.SetClientVolume(speaking_data.SSRC, volume);
+}
+
+void VoicePlayback::OnUserDisconnect(Snowflake user_id, Snowflake channel_id) noexcept {
+    const auto ssrc = m_voice_client.GetSSRCOfUser(user_id);
+    if (ssrc) {
+        m_clients.RemoveClient(*ssrc);
     }
 }
 

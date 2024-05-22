@@ -1,5 +1,9 @@
 #pragma once
 
+#include <sigc++/sigc++.h>
+
+#include "discord/discord.hpp"
+
 #include "audio/context.hpp"
 
 #include "capture/voice_capture.hpp"
@@ -7,12 +11,12 @@
 
 namespace AbaddonClient::Audio {
 
-class VoiceAudio {
+class VoiceAudio : public sigc::trackable {
 public:
     using VoicePlayback = Voice::VoicePlayback;
     using VoiceCapture = Voice::VoiceCapture;
 
-    VoiceAudio(Context &context) noexcept;
+    VoiceAudio(Context &context, DiscordClient &discord) noexcept;
 
     void Start() noexcept;
     void Stop() noexcept;

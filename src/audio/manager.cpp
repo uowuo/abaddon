@@ -86,7 +86,7 @@ void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
     g_free(msg);
 }
 
-AudioManager::AudioManager(const Glib::ustring &backends_string)
+AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &discord)
     : m_log(spdlog::stdout_color_mt("miniaudio")) {
     m_ok = true;
 
@@ -126,7 +126,7 @@ AudioManager::AudioManager(const Glib::ustring &backends_string)
         Enumerate();
 
 #if WITH_VOICE
-        m_voice.emplace(*m_context);
+        m_voice.emplace(*m_context, discord);
 #endif
     }
 

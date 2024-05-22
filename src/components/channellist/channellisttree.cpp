@@ -636,12 +636,6 @@ void ChannelListTree::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel
     if (auto iter = GetIteratorForRowFromIDOfType(user_id, RenderType::VoiceParticipant)) {
         m_model->erase(iter);
     }
-
-    auto& abaddon = Abaddon::Get();
-    auto ssrc = abaddon.GetDiscordClient().GetSSRCOfUser(user_id);
-    if (ssrc) {
-        abaddon.GetAudio().RemoveSSRC(*ssrc);
-    }
 }
 
 void ChannelListTree::OnVoiceStateSet(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {

@@ -1,5 +1,11 @@
 #pragma once
 
+#include <sigc++/sigc++.h>
+
+#include "discord/snowflake.hpp"
+#include "discord/discord.hpp"
+#include "discord/voiceclient.hpp"
+
 #include "audio/audio_device.hpp"
 #include "audio/context.hpp"
 #include "audio/utils.hpp"
@@ -8,11 +14,11 @@
 
 namespace AbaddonClient::Audio::Voice {
 
-class VoicePlayback {
+class VoicePlayback : public sigc::trackable  {
 public:
     using ClientID = Playback::ClientStore::ClientID;
 
-    VoicePlayback(Context &context) noexcept;
+    VoicePlayback(Context &context, DiscordClient &discord) noexcept;
 
     void OnRTPData(ClientID id, std::vector<uint8_t> &&data) noexcept;
 
@@ -27,7 +33,13 @@ public:
 
 private:
     void OnAudioPlayback(OutputBuffer buffer) noexcept;
+
+    void OnUserSpeaking(const VoiceSpeakingData &speaking_data) noexcept;
+    void OnUserDisconnect(Snowflake user_id, Snowflake channel_id) noexcept;
+
     ma_device_config GetDeviceConfig() noexcept;
+
+    DiscordVoiceClient &m_voice_client;
 
     AudioDevice m_device;
     Playback::ClientStore m_clients;
