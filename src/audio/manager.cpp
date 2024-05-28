@@ -87,11 +87,10 @@ void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
 }
 
 AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &discord)
-    : m_log(spdlog::stdout_color_mt("miniaudio")) {
+    : m_log(spdlog::stdout_color_mt("miniaudio")),
+      m_ma_log(AbaddonClient::Audio::Miniaudio::MaLog::Create())
+{
     m_ok = true;
-
-    ma_log_init(nullptr, &m_ma_log);
-    ma_log_register_callback(&m_ma_log, ma_log_callback_init(mgr_log_callback, m_log.get()));
 
 #ifdef WITH_RNNOISE
     RNNoiseInitialize();
@@ -107,7 +106,11 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
     opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(64000));
 
     auto ctx_cfg = ma_context_config_init();
-    ctx_cfg.pLog = &m_ma_log;
+
+    if (m_ma_log) {
+        m_ma_log->RegisterCallback(ma_log_callback_init(mgr_log_callback, m_log.get()));
+        ctx_cfg.pLog = &m_ma_log->GetInternal();
+    }
 
     ma_backend *pBackends = nullptr;
     ma_uint32 backendCount = 0;

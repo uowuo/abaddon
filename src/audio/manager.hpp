@@ -26,6 +26,8 @@
 #include "voice/voice_audio.hpp"
 #endif
 
+#include "miniaudio/ma_log.hpp"
+
 // clang-format on
 
 class AudioManager {
@@ -173,7 +175,7 @@ private:
 #endif
     std::atomic<uint32_t> m_rtp_timestamp = 0;
 
-    ma_log m_ma_log;
+    std::optional<AbaddonClient::Audio::Miniaudio::MaLog> m_ma_log;
     std::shared_ptr<spdlog::logger> m_log;
 
 public:
