@@ -7,60 +7,12 @@
 
 #include "manager.hpp"
 #include "abaddon.hpp"
-#include <array>
 #include <glibmm/main.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <miniaudio.h>
 #include <opus.h>
 #include <cstring>
 // clang-format on
-
-const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
-    if (buf[0] == 0xbe && buf[1] == 0xde && num_bytes > 4) {
-        uint64_t offset = 4 + 4 * ((buf[2] << 8) | buf[3]);
-
-        outlen = num_bytes - offset;
-        return buf + offset;
-    }
-    outlen = num_bytes;
-    return buf;
-}
-
-void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
-    AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
-    if (mgr == nullptr) return;
-    std::lock_guard<std::mutex> _(mgr->m_mutex);
-
-    auto *pOutputF32 = static_cast<float *>(pOutput);
-    for (auto &[ssrc, pair] : mgr->m_sources) {
-        double volume = 1.0;
-        if (const auto vol_it = mgr->m_volume_ssrc.find(ssrc); vol_it != mgr->m_volume_ssrc.end()) {
-            volume = vol_it->second;
-        }
-        auto &buf = pair.first;
-        const size_t n = std::min(static_cast<size_t>(buf.size()), static_cast<size_t>(frameCount * 2ULL));
-        for (size_t i = 0; i < n; i++) {
-            pOutputF32[i] += volume * buf[i] / 32768.F;
-        }
-        buf.erase(buf.begin(), buf.begin() + n);
-    }
-}
-
-void capture_data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
-    auto *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
-    if (mgr == nullptr) return;
-
-    mgr->OnCapturedPCM(static_cast<const int16_t *>(pInput), frameCount);
-
-    /*
-     * You can simply increment it by 480 in UDPSocket::SendEncrypted but this is wrong
-     * The timestamp is supposed to be strictly linear eg. if there's discontinuous
-     * transmission for 1 second then the timestamp should be 48000 greater than the
-     * last packet. So it's incremented here because this is fired 100x per second
-     * and is always called in sync with UDPSocket::SendEncrypted
-     */
-    mgr->m_rtp_timestamp += 480;
-}
 
 void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
     auto *log = static_cast<spdlog::logger *>(pUserData);
@@ -92,19 +44,6 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
 {
     m_ok = true;
 
-#ifdef WITH_RNNOISE
-    RNNoiseInitialize();
-#endif
-
-    int err;
-    m_encoder = opus_encoder_create(48000, 2, OPUS_APPLICATION_VOIP, &err);
-    if (err != OPUS_OK) {
-        spdlog::get("audio")->error("failed to initialize opus encoder: {}", err);
-        m_ok = false;
-        return;
-    }
-    opus_encoder_ctl(m_encoder, OPUS_SET_BITRATE(64000));
-
     auto ctx_cfg = ma_context_config_init();
 
     if (m_ma_log) {
@@ -112,18 +51,13 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
         ctx_cfg.pLog = &m_ma_log->GetInternal();
     }
 
-    ma_backend *pBackends = nullptr;
-    ma_uint32 backendCount = 0;
-
-    std::vector<ma_backend> backends_vec;
+    std::vector<ma_backend> backends;
     if (!backends_string.empty()) {
         spdlog::get("audio")->debug("Using backends list: {}", std::string(backends_string));
-        backends_vec = ParseBackendsList(backends_string);
-        pBackends = backends_vec.data();
-        backendCount = static_cast<ma_uint32>(backends_vec.size());
+        backends = ParseBackendsList(backends_string);
     }
 
-    m_context = AbaddonClient::Audio::Context::Create(std::move(ctx_cfg), backends_vec);
+    m_context = AbaddonClient::Audio::Context::Create(std::move(ctx_cfg), backends);
 
     if (m_context) {
         Enumerate();
@@ -134,43 +68,6 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
     }
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
-}
-
-AudioManager::~AudioManager() {
-    RemoveAllSSRCs();
-
-#ifdef WITH_RNNOISE
-    RNNoiseUninitialize();
-#endif
-}
-
-void AudioManager::StartVoice() {
-    m_voice->Start();
-}
-
-void AudioManager::StopVoice() {
-    m_voice->Stop();
-}
-
-void AudioManager::AddSSRC(uint32_t ssrc) {
-    std::lock_guard<std::mutex> _(m_mutex);
-    m_voice->GetPlayback().GetClientStore().AddClient(ssrc);
-}
-
-void AudioManager::RemoveSSRC(uint32_t ssrc) {
-    std::lock_guard<std::mutex> _(m_mutex);
-
-    m_voice->GetPlayback().GetClientStore().RemoveClient(ssrc);
-}
-
-void AudioManager::RemoveAllSSRCs() {
-    spdlog::get("audio")->info("removing all ssrc");
-    std::lock_guard<std::mutex> _(m_mutex);
-    m_voice->GetPlayback().GetClientStore().Clear();
-}
-
-void AudioManager::SetOpusBuffer(uint8_t *ptr) {
-    m_opus_buffer = ptr;
 }
 
 void AudioManager::FeedMeOpus(uint32_t ssrc, std::vector<uint8_t> &&data) {
@@ -283,146 +180,12 @@ void AudioManager::Enumerate() {
     );
 }
 
-void AudioManager::OnCapturedPCM(const int16_t *pcm, ma_uint32 frames) {
-    if (m_opus_buffer == nullptr || !m_should_capture) return;
-
-    const double gain = m_capture_gain;
-
-    std::vector<int16_t> new_pcm(pcm, pcm + frames * 2);
-    for (auto &val : new_pcm) {
-        const int32_t unclamped = static_cast<int32_t>(val * gain);
-        val = std::clamp(unclamped, INT16_MIN, INT16_MAX);
-    }
-
-    if (m_mix_mono) {
-        for (size_t i = 0; i < frames * 2; i += 2) {
-            const int sample_L = new_pcm[i];
-            const int sample_R = new_pcm[i + 1];
-            const int16_t mixed = static_cast<int16_t>((sample_L + sample_R) / 2);
-            new_pcm[i] = mixed;
-            new_pcm[i + 1] = mixed;
-        }
-    }
-
-    UpdateCaptureVolume(new_pcm.data(), frames);
-
-    static std::array<float, 480> denoised_L;
-    static std::array<float, 480> denoised_R;
-
-    bool m_rnnoise_passed = false;
-#ifdef WITH_RNNOISE
-    if (m_vad_method == VADMethod::RNNoise || m_enable_noise_suppression) {
-        m_rnnoise_passed = CheckVADRNNoise(new_pcm.data(), denoised_L.data(), denoised_R.data());
-    }
-#endif
-
-    switch (m_vad_method) {
-        case VADMethod::Gate:
-            if (!CheckVADVoiceGate()) return;
-            break;
-#ifdef WITH_RNNOISE
-        case VADMethod::RNNoise:
-            if (!m_rnnoise_passed) return;
-            break;
-#endif
-    }
-
-    m_enc_mutex.lock();
-    int payload_len = -1;
-
-    if (m_enable_noise_suppression) {
-        static std::array<int16_t, 960> denoised_interleaved;
-        for (size_t i = 0; i < 480; i++) {
-            denoised_interleaved[i * 2] = static_cast<int16_t>(denoised_L[i]);
-        }
-        for (size_t i = 0; i < 480; i++) {
-            denoised_interleaved[i * 2 + 1] = static_cast<int16_t>(denoised_R[i]);
-        }
-        payload_len = opus_encode(m_encoder, denoised_interleaved.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
-    } else {
-        payload_len = opus_encode(m_encoder, new_pcm.data(), 480, static_cast<unsigned char *>(m_opus_buffer), 1275);
-    }
-
-    m_enc_mutex.unlock();
-    if (payload_len < 0) {
-        spdlog::get("audio")->error("encoding error: {}", payload_len);
-    } else {
-        m_signal_opus_packet.emit(payload_len);
-    }
-}
-
-void AudioManager::UpdateReceiveVolume(uint32_t ssrc, const int16_t *pcm, int frames) {
-    std::lock_guard<std::mutex> _(m_vol_mtx);
-
-    auto &meter = m_volumes[ssrc];
-    for (int i = 0; i < frames * 2; i += 2) {
-        const int amp = std::abs(pcm[i]);
-        meter = std::max(meter, std::abs(amp) / 32768.0);
-    }
-}
-
-void AudioManager::UpdateCaptureVolume(const int16_t *pcm, ma_uint32 frames) {
-    for (ma_uint32 i = 0; i < frames * 2; i += 2) {
-        const int amp = std::abs(pcm[i]);
-        m_capture_peak_meter = std::max(m_capture_peak_meter.load(std::memory_order_relaxed), amp);
-    }
-}
-
 bool AudioManager::DecayVolumeMeters() {
     m_voice->GetCapture().GetPeakMeter().Decay();
     m_voice->GetPlayback().GetClientStore().DecayPeakMeters();
 
     return true;
 }
-
-bool AudioManager::CheckVADVoiceGate() {
-    return m_capture_peak_meter / 32768.0 > m_capture_gate;
-}
-
-#ifdef WITH_RNNOISE
-bool AudioManager::CheckVADRNNoise(const int16_t *pcm, float *denoised_left, float *denoised_right) {
-    // use left channel for vad, only denoise right if noise suppression enabled
-    std::unique_lock<std::mutex> _(m_rnn_mutex);
-
-    static float rnnoise_input[480];
-    for (size_t i = 0; i < 480; i++) {
-        rnnoise_input[i] = static_cast<float>(pcm[i * 2]);
-    }
-    m_vad_prob = std::max(m_vad_prob.load(), rnnoise_process_frame(m_rnnoise[0], denoised_left, rnnoise_input));
-
-    if (m_enable_noise_suppression) {
-        for (size_t i = 0; i < 480; i++) {
-            rnnoise_input[i] = static_cast<float>(pcm[i * 2 + 1]);
-        }
-        rnnoise_process_frame(m_rnnoise[1], denoised_right, rnnoise_input);
-    }
-
-    return m_vad_prob > m_prob_threshold;
-}
-
-void AudioManager::RNNoiseInitialize() {
-    spdlog::get("audio")->debug("Initializing RNNoise");
-    RNNoiseUninitialize();
-    std::unique_lock<std::mutex> _(m_rnn_mutex);
-    m_rnnoise[0] = rnnoise_create(nullptr);
-    m_rnnoise[1] = rnnoise_create(nullptr);
-    const auto expected = rnnoise_get_frame_size();
-    if (expected != 480) {
-        spdlog::get("audio")->warn("RNNoise expects a frame count other than 480");
-    }
-}
-
-void AudioManager::RNNoiseUninitialize() {
-    if (m_rnnoise[0] != nullptr) {
-        spdlog::get("audio")->debug("Uninitializing RNNoise");
-        std::unique_lock<std::mutex> _(m_rnn_mutex);
-        rnnoise_destroy(m_rnnoise[0]);
-        rnnoise_destroy(m_rnnoise[1]);
-        m_rnnoise[0] = nullptr;
-        m_rnnoise[1] = nullptr;
-    }
-}
-#endif
 
 bool AudioManager::OK() const {
     return m_ok;

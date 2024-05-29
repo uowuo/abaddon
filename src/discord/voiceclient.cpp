@@ -153,7 +153,6 @@ DiscordVoiceClient::DiscordVoiceClient()
     // idle or else singleton deadlock
     Glib::signal_idle().connect_once([this]() {
         auto &audio = Abaddon::Get().GetAudio();
-        audio.SetOpusBuffer(m_opus_buffer.data());
         audio.signal_opus_packet().connect([this](const std::vector<uint8_t> opus) {
             if (IsConnected()) {
                 m_udp.SendEncrypted(opus.data(), opus.size());
