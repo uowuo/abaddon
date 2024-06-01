@@ -100,7 +100,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_menu_view_settings(_("More _Settings"), true) {
     get_style_context()->add_class("app-window");
 
-    set_default_size(300, 300);
+    set_default_size(300, 400);
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &audio = Abaddon::Get().GetAudio();
