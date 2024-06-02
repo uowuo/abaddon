@@ -57,13 +57,20 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
 
     m_context = AbaddonClient::Audio::Context::Create(std::move(ctx_cfg), backends);
 
-    if (m_context) {
-        Enumerate();
+    if (!m_context) {
+        return;
+    }
+
+    Enumerate();
+
+    auto engine = AbaddonClient::Audio::Miniaudio::MaEngine::Create(ma_engine_config_init());
+    if (engine) {
+        m_system.emplace(std::move(*engine));
+    }
 
 #if WITH_VOICE
-        m_voice.emplace(*m_context, discord);
+    m_voice.emplace(*m_context, discord);
 #endif
-    }
 
     m_ok = true;
 }
@@ -131,5 +138,12 @@ const AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() const noexcept 
 
 #endif
 
+AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() noexcept {
+    return *m_system;
+}
+
+const AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() const noexcept {
+    return *m_system;
+}
 
 #endif

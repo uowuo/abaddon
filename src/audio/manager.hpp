@@ -15,6 +15,8 @@
 #include "voice/voice_audio.hpp"
 #endif
 
+#include "system/system_audio.hpp"
+
 #include "miniaudio/ma_log.hpp"
 
 // clang-format on
@@ -23,13 +25,17 @@ class AudioManager {
 public:
     AudioManager(const Glib::ustring &backends_string, DiscordClient &discord);
 
+    AudioDevices &GetDevices();
+
+    AbaddonClient::Audio::SystemAudio& GetSystem() noexcept;
+    const AbaddonClient::Audio::SystemAudio& GetSystem() const noexcept;
+
 #if WITH_VOICE
     AbaddonClient::Audio::VoiceAudio& GetVoice() noexcept;
     const AbaddonClient::Audio::VoiceAudio& GetVoice() const noexcept;
 #endif
-    bool OK() const;
 
-    AudioDevices &GetDevices();
+    bool OK() const;
 
 private:
     void Enumerate();
@@ -45,6 +51,8 @@ private:
 #ifdef WITH_VOICE
     std::optional<AbaddonClient::Audio::VoiceAudio> m_voice;
 #endif
+
+    std::optional<AbaddonClient::Audio::SystemAudio> m_system;
 
     bool m_ok = false;
 };
