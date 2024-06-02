@@ -65,8 +65,6 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
 #endif
     }
 
-    Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
-
     m_ok = true;
 }
 
@@ -89,13 +87,6 @@ void AudioManager::Enumerate() {
         capture_devices.data(),
         capture_devices.size()
     );
-}
-
-bool AudioManager::DecayVolumeMeters() {
-    m_voice->GetCapture().GetPeakMeter().Decay();
-    m_voice->GetPlayback().GetClientStore().DecayPeakMeters();
-
-    return true;
 }
 
 bool AudioManager::OK() const {

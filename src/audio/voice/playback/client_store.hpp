@@ -21,7 +21,6 @@ public:
     void RemoveClient(ClientID id) noexcept;
     void Clear() noexcept;
 
-    void DecayPeakMeters() noexcept;
     void ClearAllBuffers() noexcept;
 
     void SetClientVolume(ClientID id, float volume) noexcept;

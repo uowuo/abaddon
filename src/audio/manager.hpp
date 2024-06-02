@@ -35,8 +35,6 @@ private:
     void Enumerate();
     static std::vector<ma_backend> ParseBackendsList(const Glib::ustring &list);
 
-    bool DecayVolumeMeters();
-
     AudioDevices m_devices;
 
     std::optional<AbaddonClient::Audio::Context> m_context;

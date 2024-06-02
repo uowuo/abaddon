@@ -79,14 +79,6 @@ void ClientStore::WriteMixed(OutputBuffer buffer) noexcept {
     }
 }
 
-void ClientStore::DecayPeakMeters() noexcept {
-    auto clients = m_clients.Lock();
-
-    for (auto& [_, client] : clients) {
-        client.GetPeakMeter().Decay();
-    }
-}
-
 void ClientStore::SetClientVolume(ClientID id, float volume) noexcept {
     auto clients = m_clients.Lock();
     auto client = clients->find(id);
