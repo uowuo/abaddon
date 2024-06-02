@@ -50,8 +50,7 @@ void UDPSocket::SetSSRC(uint32_t ssrc) {
 void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
     m_sequence++;
 
-    const uint32_t timestamp = Abaddon::Get().GetAudio().GetRTPTimestamp();
-
+    const uint32_t timestamp = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetRTPTimestamp();
     std::vector<uint8_t> rtp(12 + len + crypto_secretbox_MACBYTES, 0);
     rtp[0] = 0x80; // ver 2
     rtp[1] = 0x78; // payload type 0x78
@@ -152,8 +151,8 @@ DiscordVoiceClient::DiscordVoiceClient()
 
     // idle or else singleton deadlock
     Glib::signal_idle().connect_once([this]() {
-        auto &audio = Abaddon::Get().GetAudio();
-        audio.signal_opus_packet().connect([this](const std::vector<uint8_t> opus) {
+        auto &capture = Abaddon::Get().GetAudio().GetVoice().GetCapture();
+        capture.GetCaptureSignal().connect([this](const std::vector<uint8_t> opus) {
             if (IsConnected()) {
                 m_udp.SendEncrypted(opus.data(), opus.size());
             }
@@ -221,9 +220,6 @@ void DiscordVoiceClient::SetUserID(Snowflake id) {
 
 void DiscordVoiceClient::SetUserVolume(Snowflake id, float volume) {
     m_user_volumes[id] = volume;
-    if (const auto ssrc = GetSSRCOfUser(id); ssrc.has_value()) {
-        Abaddon::Get().GetAudio().SetVolumeSSRC(*ssrc, volume);
-    }
 }
 
 [[nodiscard]] float DiscordVoiceClient::GetUserVolume(Snowflake id) const {
@@ -345,7 +341,7 @@ void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
     // set volume if already set but ssrc just found
     if (const auto iter = m_user_volumes.find(d.UserID); iter != m_user_volumes.end()) {
         if (m_ssrc_map.find(d.UserID) == m_ssrc_map.end()) {
-            Abaddon::Get().GetAudio().SetVolumeSSRC(d.SSRC, iter->second);
+            Abaddon::Get().GetAudio().GetVoice().GetPlayback().GetClientStore().SetClientVolume(d.SSRC, iter->second);
         }
     }
 
@@ -472,7 +468,7 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
         // spdlog::get("voice")->trace("UDP payload decryption failure");
     } else {
-        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
+        Abaddon::Get().GetAudio().GetVoice().GetPlayback().OnRTPData(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
     }
 }
 

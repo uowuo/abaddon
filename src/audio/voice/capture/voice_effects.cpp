@@ -23,6 +23,34 @@ void VoiceEffects::Denoise(OutputBuffer buffer) noexcept {
 #endif
 }
 
+void VoiceEffects::SetCurrentThreshold(float threshold) noexcept {
+    switch (m_vad_method) {
+        case VADMethod::Gate: {
+            m_gate.VADThreshold = threshold;
+        } break;
+#ifdef WITH_RNNOISE
+        case VADMethod::RNNoise: {
+            m_noise.VADThreshold = threshold;
+        } break;
+#endif
+    }
+}
+
+float VoiceEffects::GetCurrentThreshold() const noexcept {
+    switch (m_vad_method) {
+        case VADMethod::Gate: {
+            return m_gate.VADThreshold;
+        } break;
+#ifdef WITH_RNNOISE
+        case VADMethod::RNNoise: {
+            return m_noise.VADThreshold;
+        } break;
+#endif
+    }
+
+    return 0.0f;
+}
+
 void VoiceEffects::SetVADMethod(const std::string &method) noexcept {
     if (method == "gate") {
         m_vad_method = VADMethod::Gate;
@@ -37,12 +65,12 @@ void VoiceEffects::SetVADMethod(const std::string &method) noexcept {
     }
 }
 
-void VoiceEffects::SetVADMethod(int method) noexcept {
-    m_vad_method = static_cast<VADMethod>(method);
+void VoiceEffects::SetVADMethod(VADMethod method) noexcept {
+    m_vad_method = method;
 }
 
-int VoiceEffects::GetVADMethod() const noexcept {
-    return static_cast<int>(m_vad_method);
+VADMethod VoiceEffects::GetVADMethod() const noexcept {
+    return m_vad_method;
 }
 
 Effects::Gate& VoiceEffects::GetGate() noexcept {

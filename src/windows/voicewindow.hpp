@@ -75,15 +75,24 @@ public:
     using type_signal_mute_user_cs = sigc::signal<void(Snowflake, bool)>;
     using type_signal_user_volume_changed = sigc::signal<void(Snowflake, double)>;
 
+    using type_signal_playback_device_changed = sigc::signal<void(const Gtk::TreeModel::iterator&)>;
+    using type_signal_capture_device_changed = sigc::signal<void(const Gtk::TreeModel::iterator&)>;
+
     type_signal_mute signal_mute();
     type_signal_deafen signal_deafen();
     type_signal_mute_user_cs signal_mute_user_cs();
     type_signal_user_volume_changed signal_user_volume_changed();
+
+    type_signal_playback_device_changed signal_playback_device_changed();
+    type_signal_capture_device_changed signal_capture_device_changed();
 
 private:
     type_signal_mute m_signal_mute;
     type_signal_deafen m_signal_deafen;
     type_signal_mute_user_cs m_signal_mute_user_cs;
     type_signal_user_volume_changed m_signal_user_volume_changed;
+
+    type_signal_playback_device_changed m_signal_playback_device_changed;
+    type_signal_capture_device_changed m_signal_capture_device_changed;
 };
 #endif

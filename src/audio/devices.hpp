@@ -1,5 +1,5 @@
 #pragma once
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
 
 // clang-format off
 

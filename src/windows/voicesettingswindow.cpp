@@ -10,6 +10,9 @@
 
 // clang-format on
 
+using SignalHint = AbaddonClient::Audio::Voice::Opus::OpusEncoder::SignalHint;
+using EncodingApplication = AbaddonClient::Audio::Voice::Opus::OpusEncoder::EncodingApplication;
+
 VoiceSettingsWindow::VoiceSettingsWindow()
     : m_main(Gtk::ORIENTATION_VERTICAL) {
     get_style_context()->add_class("app-window");
@@ -25,25 +28,27 @@ VoiceSettingsWindow::VoiceSettingsWindow()
         "Music - Optimize for non-voice signals incl. music\n"
         "Restricted - Optimize for non-voice, low latency. Not recommended");
 
-    const auto mode = Abaddon::Get().GetAudio().GetEncodingApplication();
-    if (mode == OPUS_APPLICATION_VOIP) {
+    const auto mode = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder()->value().GetEncodingApplication();
+
+    if (mode == EncodingApplication::VOIP) {
         m_encoding_mode.set_active(0);
-    } else if (mode == OPUS_APPLICATION_AUDIO) {
+    } else if (mode == EncodingApplication::Audio) {
         m_encoding_mode.set_active(1);
-    } else if (mode == OPUS_APPLICATION_RESTRICTED_LOWDELAY) {
+    } else if (mode == EncodingApplication::LowDelay) {
         m_encoding_mode.set_active(2);
     }
 
     m_encoding_mode.signal_changed().connect([this]() {
         const auto mode = m_encoding_mode.get_active_text();
-        auto &audio = Abaddon::Get().GetAudio();
+        auto &encoder = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder()->value();
+
         if (mode == "Voice") {
-            audio.SetEncodingApplication(OPUS_APPLICATION_VOIP);
+            encoder.SetEncodingApplication(EncodingApplication::VOIP);
         } else if (mode == "Music") {
             spdlog::get("audio")->debug("music/audio");
-            audio.SetEncodingApplication(OPUS_APPLICATION_AUDIO);
+            encoder.SetEncodingApplication(EncodingApplication::Audio);
         } else if (mode == "Restricted") {
-            audio.SetEncodingApplication(OPUS_APPLICATION_RESTRICTED_LOWDELAY);
+            encoder.SetEncodingApplication(EncodingApplication::LowDelay);
         }
     });
 
@@ -56,24 +61,28 @@ VoiceSettingsWindow::VoiceSettingsWindow()
         "Voice - Tell Opus it's a voice signal\n"
         "Music - Tell Opus it's a music signal");
 
-    const auto signal = Abaddon::Get().GetAudio().GetSignalHint();
-    if (signal == OPUS_AUTO) {
+    const auto signal = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder()->value().GetSignalHint();
+    if (signal == SignalHint::Auto) {
         m_signal.set_active(0);
-    } else if (signal == OPUS_SIGNAL_VOICE) {
+    } else if (signal == SignalHint::Voice) {
         m_signal.set_active(1);
-    } else if (signal == OPUS_SIGNAL_MUSIC) {
+    } else if (signal == SignalHint::Music) {
         m_signal.set_active(2);
     }
 
     m_signal.signal_changed().connect([this]() {
         const auto signal = m_signal.get_active_text();
-        auto &audio = Abaddon::Get().GetAudio();
+        auto encoder = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder();
+        if (!encoder->has_value()) {
+            return;
+        }
+
         if (signal == "Auto") {
-            audio.SetSignalHint(OPUS_AUTO);
+            encoder->value().SetSignalHint(SignalHint::Auto);
         } else if (signal == "Voice") {
-            audio.SetSignalHint(OPUS_SIGNAL_VOICE);
+            encoder->value().SetSignalHint(SignalHint::Voice);
         } else if (signal == "Music") {
-            audio.SetSignalHint(OPUS_SIGNAL_MUSIC);
+            encoder->value().SetSignalHint(SignalHint::Music);
         }
     });
 
@@ -91,7 +100,7 @@ VoiceSettingsWindow::VoiceSettingsWindow()
 
     m_bitrate.set_range(0.0, 100.0);
     m_bitrate.set_value_pos(Gtk::POS_TOP);
-    m_bitrate.set_value(bitrate_scale_r(Abaddon::Get().GetAudio().GetBitrate()));
+    m_bitrate.set_value(bitrate_scale_r(Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder()->value().GetBitrate()));
     m_bitrate.signal_format_value().connect([this, bitrate_scale](double value) {
         const auto scaled = bitrate_scale(value);
         if (value <= 99.9) {
@@ -103,16 +112,18 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     m_bitrate.signal_value_changed().connect([this, bitrate_scale]() {
         const auto value = m_bitrate.get_value();
         const auto scaled = bitrate_scale(value);
+
+        auto& encoder = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEncoder()->value();
         if (value <= 99.9) {
-            Abaddon::Get().GetAudio().SetBitrate(static_cast<int>(scaled));
+            encoder.SetBitrate(static_cast<int>(scaled));
         } else {
-            Abaddon::Get().GetAudio().SetBitrate(OPUS_BITRATE_MAX);
+            encoder.SetBitrate(OPUS_BITRATE_MAX);
         }
     });
 
     m_gain.set_increments(1.0, 5.0);
     m_gain.set_range(0.0, 6969696969.0);
-    m_gain.set_value(Abaddon::Get().GetAudio().GetCaptureGain() * 100.0);
+    m_gain.set_value(Abaddon::Get().GetAudio().GetVoice().GetCapture().Gain * 100.0);
     const auto cb = [this]() {
         spdlog::get("ui")->warn("emit");
         m_signal_gain.emit(m_gain.get_value() / 100.0);

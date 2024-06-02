@@ -42,8 +42,6 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
     : m_log(spdlog::stdout_color_mt("miniaudio")),
       m_ma_log(AbaddonClient::Audio::Miniaudio::MaLog::Create())
 {
-    m_ok = true;
-
     auto ctx_cfg = ma_context_config_init();
 
     if (m_ma_log) {
@@ -68,95 +66,8 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
     }
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &AudioManager::DecayVolumeMeters), 40);
-}
 
-void AudioManager::FeedMeOpus(uint32_t ssrc, std::vector<uint8_t> &&data) {
-    m_voice->GetPlayback().OnRTPData(ssrc, std::move(data));
-}
-
-
-void AudioManager::SetPlaybackDevice(const Gtk::TreeModel::iterator &iter) {
-    auto device_id = m_devices.GetPlaybackDeviceIDFromModel(iter);
-    if (!device_id) {
-        spdlog::get("audio")->error("Requested ID from iterator is invalid");
-        return;
-    }
-
-    m_voice->GetPlayback().SetPlaybackDevice(*device_id);
-}
-
-void AudioManager::SetCaptureDevice(const Gtk::TreeModel::iterator &iter) {
-    auto device_id = m_devices.GetCaptureDeviceIDFromModel(iter);
-    if (!device_id) {
-        spdlog::get("audio")->error("Requested ID from iterator is invalid");
-        return;
-    }
-
-    m_voice->GetCapture().SetCaptureDevice(*device_id);
-}
-
-void AudioManager::SetCapture(bool capture) {
-    m_voice->GetCapture().SetActive(capture);
-}
-
-void AudioManager::SetPlayback(bool playback) {
-    m_voice->GetPlayback().SetActive(playback);
-}
-
-void AudioManager::SetCaptureGate(double gate) {
-    m_voice->GetCapture().GetEffects().GetGate().VADThreshold = gate;
-}
-
-void AudioManager::SetCaptureGain(double gain) {
-    m_voice->GetCapture().Gain = gain;
-}
-
-double AudioManager::GetCaptureGate() const noexcept {
-    return m_voice->GetCapture().GetEffects().GetGate().VADThreshold;
-}
-
-double AudioManager::GetCaptureGain() const noexcept {
-    return m_voice->GetCapture().Gain;
-}
-
-void AudioManager::SetMuteSSRC(uint32_t ssrc, bool mute) {
-    m_voice->GetPlayback().GetClientStore().SetClientMute(ssrc, mute);
-}
-
-void AudioManager::SetVolumeSSRC(uint32_t ssrc, double volume) {
-   m_voice->GetPlayback().GetClientStore().SetClientVolume(ssrc, volume);
-}
-
-double AudioManager::GetVolumeSSRC(uint32_t ssrc) const {
-    return m_voice->GetPlayback().GetClientStore().GetClientVolume(ssrc);
-}
-
-void AudioManager::SetEncodingApplication(int application) {
-    const auto _application = static_cast<AbaddonClient::Audio::Voice::Opus::OpusEncoder::EncodingApplication>(application);
-    m_voice->GetCapture().GetEncoder()->value().SetEncodingApplication(_application);
-}
-
-int AudioManager::GetEncodingApplication() {
-    const auto application = m_voice->GetCapture().GetEncoder()->value().GetEncodingApplication();
-    return static_cast<int>(application);
-}
-
-void AudioManager::SetSignalHint(int signal) {
-    const auto _signal = static_cast<AbaddonClient::Audio::Voice::Opus::OpusEncoder::SignalHint>(signal);
-    m_voice->GetCapture().GetEncoder()->value().SetSignalHint(_signal);
-}
-
-int AudioManager::GetSignalHint() {
-    const auto hint = m_voice->GetCapture().GetEncoder()->value().GetSignalHint();
-    return static_cast<int>(hint);
-}
-
-void AudioManager::SetBitrate(int bitrate) {
-    m_voice->GetCapture().GetEncoder()->value().SetBitrate(bitrate);
-}
-
-int AudioManager::GetBitrate() {
-    return m_voice->GetCapture().GetEncoder()->value().GetBitrate();
+    m_ok = true;
 }
 
 void AudioManager::Enumerate() {
@@ -191,37 +102,8 @@ bool AudioManager::OK() const {
     return m_ok;
 }
 
-double AudioManager::GetCaptureVolumeLevel() const noexcept {
-    return m_voice->GetCapture().GetPeakMeter().GetPeak();
-}
-
-double AudioManager::GetSSRCVolumeLevel(uint32_t ssrc) const noexcept {
-    return m_voice->GetPlayback().GetClientStore().GetClientPeakVolume(ssrc);
-}
-
 AudioDevices &AudioManager::GetDevices() {
     return m_devices;
-}
-
-uint32_t AudioManager::GetRTPTimestamp() const noexcept {
-    return m_voice->GetCapture().GetRTPTimestamp();
-}
-
-void AudioManager::SetVADMethod(const std::string &method) {
-    spdlog::get("audio")->debug("Setting VAD method to {}", method);
-    m_voice->GetCapture().GetEffects().SetVADMethod(method);
-}
-
-void AudioManager::SetVADMethod(VADMethod method) {
-    const auto method_int = static_cast<int>(method);
-    spdlog::get("audio")->debug("Setting VAD method to enum {}", method_int);
-
-    m_voice->GetCapture().GetEffects().SetVADMethod(method_int);
-}
-
-AudioManager::VADMethod AudioManager::GetVADMethod() const {
-    const auto method = m_voice->GetCapture().GetEffects().GetVADMethod();
-    return static_cast<VADMethod>(method);
 }
 
 std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &list) {
@@ -246,38 +128,17 @@ std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &lis
     return backends;
 }
 
-#ifdef WITH_RNNOISE
-float AudioManager::GetCurrentVADProbability() const {
-    return m_voice->GetCapture().GetEffects().GetNoise().GetPeakMeter().GetPeak();
+#ifdef WITH_VOICE
+
+AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() noexcept {
+    return *m_voice;
 }
 
-double AudioManager::GetRNNProbThreshold() const {
-    return m_voice->GetCapture().GetEffects().GetNoise().VADThreshold;
+const AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() const noexcept {
+    return *m_voice;
 }
 
-void AudioManager::SetRNNProbThreshold(double value) {
-    m_voice->GetCapture().GetEffects().GetNoise().VADThreshold = value;
-}
-
-void AudioManager::SetSuppressNoise(bool value) {
-    m_voice->GetCapture().SuppressNoise = value;
-}
-
-bool AudioManager::GetSuppressNoise() const {
-    return m_voice->GetCapture().SuppressNoise;
-}
 #endif
 
-void AudioManager::SetMixMono(bool value) {
-    m_voice->GetCapture().MixMono = value;
-}
-
-bool AudioManager::GetMixMono() const {
-    return m_voice->GetCapture().MixMono;
-}
-
-AbaddonClient::Audio::Voice::VoiceCapture::CaptureSignal AudioManager::signal_opus_packet() {
-    return m_voice->GetCapture().GetCaptureSignal();
-}
 
 #endif

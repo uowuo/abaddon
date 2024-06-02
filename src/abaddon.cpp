@@ -99,7 +99,7 @@ Abaddon::Abaddon()
     }
 
 #ifdef WITH_VOICE
-    m_audio.SetVADMethod(GetSettings().VAD);
+    m_audio.GetVoice().GetCapture().GetEffects().SetVADMethod(GetSettings().VAD);
 #endif
 }
 
@@ -500,23 +500,47 @@ void Abaddon::ShowVoiceWindow() {
 
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
-        m_audio.SetCapture(!is_mute);
+        m_audio.GetVoice().GetCapture().SetActive(!is_mute);
     });
 
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
-        m_audio.SetPlayback(!is_deaf);
+        m_audio.GetVoice().GetPlayback().SetActive(!is_deaf);
     });
 
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
         if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
-            m_audio.SetMuteSSRC(*ssrc, is_mute);
+            m_audio.GetVoice().GetPlayback().GetClientStore().SetClientMute(*ssrc, is_mute);
         }
     });
 
     wnd->signal_user_volume_changed().connect([this](Snowflake id, double volume) {
         auto &vc = m_discord.GetVoiceClient();
         vc.SetUserVolume(id, volume);
+
+        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
+            m_audio.GetVoice().GetPlayback().GetClientStore().SetClientVolume(*ssrc, volume);
+        }
+    });
+
+    wnd->signal_playback_device_changed().connect([this](const Gtk::TreeModel::iterator &iter) {
+        auto device_id = m_audio.GetDevices().GetPlaybackDeviceIDFromModel(iter);
+        if (!device_id) {
+            spdlog::get("audio")->error("Requested ID from iterator is invalid");
+            return;
+        }
+
+        m_audio.GetVoice().GetPlayback().SetPlaybackDevice(*device_id);
+    });
+
+    wnd->signal_capture_device_changed().connect([this](const Gtk::TreeModel::iterator &iter) {
+        auto device_id = m_audio.GetDevices().GetCaptureDeviceIDFromModel(iter);
+        if (!device_id) {
+            spdlog::get("audio")->error("Requested ID from iterator is invalid");
+            return;
+        }
+
+        m_audio.GetVoice().GetCapture().SetCaptureDevice(*device_id);
     });
 
     wnd->set_position(Gtk::WIN_POS_CENTER);

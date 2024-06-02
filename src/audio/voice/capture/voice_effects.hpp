@@ -22,9 +22,12 @@ public:
     bool PassesVAD(InputBuffer buffer, float current_volume) noexcept;
     void Denoise(OutputBuffer buffer) noexcept;
 
+    void SetCurrentThreshold(float threshold) noexcept;
+    float GetCurrentThreshold() const noexcept;
+
     void SetVADMethod(const std::string &method) noexcept;
-    void SetVADMethod(int method) noexcept;
-    int GetVADMethod() const noexcept;
+    void SetVADMethod(VADMethod method) noexcept;
+    VADMethod GetVADMethod() const noexcept;
 
     Effects::Gate& GetGate() noexcept;
     const Effects::Gate& GetGate() const noexcept;
