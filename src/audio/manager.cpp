@@ -63,10 +63,7 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
 
     Enumerate();
 
-    auto engine = AbaddonClient::Audio::Miniaudio::MaEngine::Create(ma_engine_config_init());
-    if (engine) {
-        m_system.emplace(std::move(*engine));
-    }
+    m_system.emplace(*m_context);
 
 #if WITH_VOICE
     m_voice.emplace(*m_context, discord);

@@ -2,8 +2,8 @@
 
 namespace AbaddonClient::Audio {
 
-SystemAudio::SystemAudio(Miniaudio::MaEngine &&engine) noexcept :
-    m_engine(std::move(engine)) {}
+SystemAudio::SystemAudio(Context &context) noexcept :
+    m_engine(context) {}
 
 void SystemAudio::PlaySound(SystemSound sound) noexcept {
     const auto path = [&]() {

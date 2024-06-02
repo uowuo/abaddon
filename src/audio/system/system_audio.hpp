@@ -1,6 +1,6 @@
 #pragma once
 
-#include "audio/miniaudio/ma_engine.hpp"
+#include "audio/audio_engine.hpp"
 
 namespace AbaddonClient::Audio {
 
@@ -12,11 +12,12 @@ public:
 #endif
     };
 
-    SystemAudio(Miniaudio::MaEngine &&engine) noexcept;
+    SystemAudio(Context &context) noexcept;
 
     void PlaySound(SystemSound sound) noexcept;
+
 private:
-    Miniaudio::MaEngine m_engine;
+    AudioEngine m_engine;
 };
 
 }

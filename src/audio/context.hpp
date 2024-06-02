@@ -9,6 +9,8 @@ public:
     Context(Miniaudio::MaContext &&context) noexcept;
     static std::optional<Context> Create(ma_context_config &&config, ConstSlice<ma_backend> backends) noexcept;
 
+    ma_engine_config GetEngineConfig() noexcept;
+
     ConstSlice<ma_device_info> GetPlaybackDevices() noexcept;
     ConstSlice<ma_device_info> GetCaptureDevices() noexcept;
 

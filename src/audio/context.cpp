@@ -18,6 +18,12 @@ std::optional<Context> Context::Create(ma_context_config &&config, ConstSlice<ma
     return std::move(*context);
 }
 
+ma_engine_config Context::GetEngineConfig() noexcept {
+    auto config = ma_engine_config_init();
+    config.pContext = &m_context->GetInternal();
+
+    return config;
+}
 
 ConstSlice<ma_device_info> Context::GetPlaybackDevices() noexcept {
     return m_playback_devices;
