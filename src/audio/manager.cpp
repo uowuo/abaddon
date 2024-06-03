@@ -67,6 +67,7 @@ AudioManager::AudioManager(const Glib::ustring &backends_string, DiscordClient &
 
 #if WITH_VOICE
     m_voice.emplace(*m_context, discord);
+    m_system->BindToVoice(discord);
 #endif
 
     m_ok = true;

@@ -493,6 +493,8 @@ void Abaddon::OnVoiceDisconnected() {
 }
 
 void Abaddon::ShowVoiceWindow() {
+    using SystemSound = AbaddonClient::Audio::SystemAudio::SystemSound;
+
     if (m_voice_window != nullptr) return;
 
     auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
@@ -501,11 +503,17 @@ void Abaddon::ShowVoiceWindow() {
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
         m_audio.GetVoice().GetCapture().SetActive(!is_mute);
+
+        auto sound = is_mute ? SystemSound::VOICE_MUTED : SystemSound::VOICE_UNMUTED;
+        m_audio.GetSystem().PlaySound(sound);
     });
 
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
         m_audio.GetVoice().GetPlayback().SetActive(!is_deaf);
+
+        auto sound = is_deaf ? SystemSound::VOICE_DEAFENED : SystemSound::VOICE_UNDEAFENED;
+        m_audio.GetSystem().PlaySound(sound);
     });
 
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
