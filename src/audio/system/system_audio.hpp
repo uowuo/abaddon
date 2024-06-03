@@ -8,16 +8,16 @@ class SystemAudio : public sigc::trackable {
 public:
     enum SystemSound {
 #ifdef ENABLE_NOTIFICATION_SOUNDS
-        NOTIFICATION_SOUND,
+        Notification,
 #endif
 
 #ifdef WITH_VOICE
-        VOICE_CONNECTED,
-        VOICE_DISCONNECTED,
-        VOICE_MUTED,
-        VOICE_UNMUTED,
-        VOICE_DEAFENED,
-        VOICE_UNDEAFENED,
+        VoiceConnected,
+        VoiceDisconnected,
+        VoiceMuted,
+        VoiceUnmuted,
+        VoiceDeafened,
+        VoiceUndeafened,
 #endif
     };
 

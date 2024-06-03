@@ -8,28 +8,28 @@ SystemAudio::SystemAudio(Context &context) noexcept :
 std::string_view SystemAudio::GetSoundPath(SystemSound sound) noexcept {
     switch (sound) {
 #ifdef ENABLE_NOTIFICATION_SOUNDS
-        case SystemSound::NOTIFICATION_SOUND: {
+        case SystemSound::Notification: {
             return "/sound/message.mp3";
         }
 #endif
 
 #ifdef WITH_VOICE
-        case SystemSound::VOICE_CONNECTED: {
+        case SystemSound::VoiceConnected: {
             return "/sound/voice_connected.mp3";
         }
-        case SystemSound::VOICE_DISCONNECTED: {
+        case SystemSound::VoiceDisconnected: {
             return "/sound/voice_disconnected.mp3";
         }
-        case SystemSound::VOICE_MUTED: {
+        case SystemSound::VoiceMuted: {
             return "/sound/voice_muted.mp3";
         }
-        case SystemSound::VOICE_UNMUTED: {
+        case SystemSound::VoiceUnmuted: {
             return "/sound/voice_unmuted.mp3";
         }
-        case SystemSound::VOICE_DEAFENED: {
+        case SystemSound::VoiceDeafened: {
             return "/sound/voice_deafened.mp3";
         }
-        case SystemSound::VOICE_UNDEAFENED: {
+        case SystemSound::VoiceUndeafened: {
             return "/sound/voice_undeafened.mp3";
         }
 #endif
@@ -54,11 +54,11 @@ void SystemAudio::BindToVoice(DiscordClient &discord) noexcept {
 }
 
 void SystemAudio::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) noexcept {
-    PlaySound(SystemSound::VOICE_CONNECTED);
+    PlaySound(SystemSound::VoiceConnected);
 }
 
 void SystemAudio::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) noexcept {
-    PlaySound(SystemSound::VOICE_DISCONNECTED);
+    PlaySound(SystemSound::VoiceDisconnected);
 }
 
 #endif

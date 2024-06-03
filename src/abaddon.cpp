@@ -504,7 +504,7 @@ void Abaddon::ShowVoiceWindow() {
         m_discord.SetVoiceMuted(is_mute);
         m_audio.GetVoice().GetCapture().SetActive(!is_mute);
 
-        auto sound = is_mute ? SystemSound::VOICE_MUTED : SystemSound::VOICE_UNMUTED;
+        auto sound = is_mute ? SystemSound::VoiceMuted : SystemSound::VoiceUnmuted;
         m_audio.GetSystem().PlaySound(sound);
     });
 
@@ -512,7 +512,7 @@ void Abaddon::ShowVoiceWindow() {
         m_discord.SetVoiceDeafened(is_deaf);
         m_audio.GetVoice().GetPlayback().SetActive(!is_deaf);
 
-        auto sound = is_deaf ? SystemSound::VOICE_DEAFENED : SystemSound::VOICE_UNDEAFENED;
+        auto sound = is_deaf ? SystemSound::VoiceDeafened : SystemSound::VoiceUndeafened;
         m_audio.GetSystem().PlaySound(sound);
     });
 
