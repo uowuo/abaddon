@@ -54,11 +54,23 @@ void SystemAudio::BindToVoice(DiscordClient &discord) noexcept {
 }
 
 void SystemAudio::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) noexcept {
+    if (IsCurrentVoiceChannel(!channel_id)) {
+        return;
+    }
+
     PlaySound(SystemSound::VoiceConnected);
 }
 
 void SystemAudio::OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) noexcept {
+    if (!IsCurrentVoiceChannel(channel_id)) {
+        return;
+    }
+
     PlaySound(SystemSound::VoiceDisconnected);
+}
+
+bool SystemAudio::IsCurrentVoiceChannel(Snowflake channel_id) noexcept {
+    return Abaddon::Get().GetDiscordClient().GetVoiceChannelID() == channel_id;
 }
 
 #endif

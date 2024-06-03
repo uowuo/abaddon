@@ -35,6 +35,8 @@ private:
 #ifdef WITH_VOICE
     void OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) noexcept;
     void OnVoiceUserDisconnect(Snowflake user_id, Snowflake channel_id) noexcept;
+
+    static bool IsCurrentVoiceChannel(Snowflake channel_id) noexcept;
 #endif
 
     AudioEngine m_engine;
