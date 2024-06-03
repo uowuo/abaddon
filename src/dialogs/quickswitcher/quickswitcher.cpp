@@ -44,7 +44,10 @@ void QuickSwitcher::IndexPrivateChannels() {
     for (auto &dm_id : discord.GetPrivateChannels()) {
         if (auto dm = discord.GetChannel(dm_id); dm.has_value()) {
             const auto sort = static_cast<uint64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
-            m_index.push_back({ dm->GetDisplayName(), sort, dm_id });
+            m_index.push_back({ SwitcherEntry::ResultType::DM,
+                                dm->GetDisplayName(),
+                                sort,
+                                dm_id });
         }
     }
 }
@@ -54,7 +57,10 @@ void QuickSwitcher::IndexChannels() {
     const auto channels = discord.GetAllChannelData();
     for (auto &channel : channels) {
         if (!channel.Name.has_value()) continue;
-        m_index.push_back({ *channel.Name, static_cast<uint64_t>(channel.ID), channel.ID });
+        m_index.push_back({ SwitcherEntry::ResultType::Channel,
+                            *channel.Name,
+                            static_cast<uint64_t>(channel.ID),
+                            channel.ID });
     }
 }
 
@@ -76,12 +82,19 @@ void QuickSwitcher::Search() {
     });
 
     for (auto &result : results) {
-        auto *row = Gtk::make_managed<QuickSwitcherResultRow>(result.ID);
-        auto *lbl = Gtk::make_managed<Gtk::Label>(result.Name);
-        row->add(*lbl);
-        lbl->show();
-        row->show();
-        m_results.add(*row);
+        QuickSwitcherResultRow *row = nullptr;
+        switch (result.Type) {
+            case SwitcherEntry::ResultType::DM: {
+                if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(result.ID); channel.has_value()) {
+                    row = Gtk::make_managed<QuickSwitcherResultRowDM>(*channel);
+                }
+            } break;
+            case SwitcherEntry::ResultType::Channel: break;
+        }
+        if (row != nullptr) {
+            row->show();
+            m_results.add(*row);
+        }
     }
 
     GoUp();

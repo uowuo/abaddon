@@ -29,6 +29,10 @@ private:
     void OnResultRowActivate(Gtk::ListBoxRow *row);
 
     struct SwitcherEntry {
+        enum class ResultType {
+            DM,
+            Channel,
+        } Type;
         Glib::ustring Name;
         uint64_t Sort; // lower = further up
         Snowflake ID;
