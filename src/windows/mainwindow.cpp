@@ -296,6 +296,8 @@ void MainWindow::SetupMenu() {
     m_menu_view_members.set_label("Members");
     m_menu_view_members.add_accelerator("activate", m_accels, GDK_KEY_M, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
     m_menu_view_members.set_active(true);
+    m_menu_view_quick_switcher.set_label("Quick Switcher");
+    m_menu_view_quick_switcher.add_accelerator("activate", m_accels, GDK_KEY_K, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
 #ifdef WITH_LIBHANDY
     m_menu_view_go_back.set_label("Go Back");
     m_menu_view_go_forward.set_label("Go Forward");
@@ -308,6 +310,7 @@ void MainWindow::SetupMenu() {
     m_menu_view_sub.append(m_menu_view_mark_guild_as_read);
     m_menu_view_sub.append(m_menu_view_channels);
     m_menu_view_sub.append(m_menu_view_members);
+    m_menu_view_sub.append(m_menu_view_quick_switcher);
 #ifdef WITH_LIBHANDY
     m_menu_view_sub.append(m_menu_view_go_back);
     m_menu_view_sub.append(m_menu_view_go_forward);
@@ -401,6 +404,10 @@ void MainWindow::SetupMenu() {
 
     m_menu_view_members.signal_activate().connect([this]() {
         m_members.GetRoot()->set_visible(m_menu_view_members.get_active());
+    });
+
+    m_menu_view_quick_switcher.signal_activate().connect([this]() {
+        Abaddon::Get().ShowQuickSwitcher(this);
     });
 
 #ifdef WITH_LIBHANDY
