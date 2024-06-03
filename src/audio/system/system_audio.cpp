@@ -54,7 +54,7 @@ void SystemAudio::BindToVoice(DiscordClient &discord) noexcept {
 }
 
 void SystemAudio::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) noexcept {
-    if (IsCurrentVoiceChannel(!channel_id)) {
+    if (!IsCurrentVoiceChannel(!channel_id)) {
         return;
     }
 
