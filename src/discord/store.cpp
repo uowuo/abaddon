@@ -1222,6 +1222,37 @@ std::unordered_set<Snowflake> Store::GetGuilds() const {
     return r;
 }
 
+std::vector<ChannelData> Store::GetAllChannelData() const {
+    auto &s = m_stmt_get_all_chans;
+    std::vector<ChannelData> r;
+
+    while (s->FetchOne()) {
+        auto &c = r.emplace_back();
+        s->Get(0, c.ID);
+        s->Get(1, c.Type);
+        s->Get(2, c.GuildID);
+        s->Get(3, c.Position);
+        s->Get(4, c.Name);
+        s->Get(5, c.Topic);
+        s->Get(6, c.IsNSFW);
+        s->Get(7, c.LastMessageID);
+        s->Get(10, c.RateLimitPerUser);
+        s->Get(11, c.Icon);
+        s->Get(12, c.OwnerID);
+        s->Get(14, c.ParentID);
+        if (!s->IsNull(16)) {
+            c.ThreadMetadata.emplace();
+            s->Get(16, c.ThreadMetadata->IsArchived);
+            s->Get(17, c.ThreadMetadata->AutoArchiveDuration);
+            s->Get(18, c.ThreadMetadata->ArchiveTimestamp);
+        }
+    }
+
+    s->Reset();
+
+    return r;
+}
+
 void Store::ClearAll() {
     if (m_db.Execute(R"(
         DELETE FROM attachments;
@@ -1736,6 +1767,14 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_get_chan_ids->OK()) {
         fprintf(stderr, "failed to prepare get channel ids statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_all_chans = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM channels
+    )");
+    if (!m_stmt_get_all_chans->OK()) {
+        fprintf(stderr, "failed to prepare get channels statement: %s\n", m_db.ErrStr());
         return false;
     }
 

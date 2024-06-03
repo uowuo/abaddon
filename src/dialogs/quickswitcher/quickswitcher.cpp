@@ -35,13 +35,26 @@ QuickSwitcher::QuickSwitcher(Gtk::Window &parent)
 
 void QuickSwitcher::Index() {
     m_index.clear();
+    IndexPrivateChannels();
+    IndexChannels();
+}
 
+void QuickSwitcher::IndexPrivateChannels() {
     auto &discord = Abaddon::Get().GetDiscordClient();
     for (auto &dm_id : discord.GetPrivateChannels()) {
         if (auto dm = discord.GetChannel(dm_id); dm.has_value()) {
             const auto sort = static_cast<uint64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
             m_index.push_back({ dm->GetDisplayName(), sort, dm_id });
         }
+    }
+}
+
+void QuickSwitcher::IndexChannels() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto channels = discord.GetAllChannelData();
+    for (auto &channel : channels) {
+        if (!channel.Name.has_value()) continue;
+        m_index.push_back({ *channel.Name, static_cast<uint64_t>(channel.ID), channel.ID });
     }
 }
 
@@ -104,6 +117,8 @@ void QuickSwitcher::Move(int dir) {
     if (auto row = dynamic_cast<Gtk::ListBoxRow *>(children[idx])) {
         m_results.select_row(*row);
     }
+
+    ScrollListBoxToSelected(m_results);
 }
 
 void QuickSwitcher::OnEntryActivate() {

@@ -65,6 +65,7 @@ public:
     void GetArchivedPrivateThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback);
     std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
     std::optional<WebhookMessageData> GetWebhookMessageData(Snowflake message_id) const;
+    std::vector<ChannelData> GetAllChannelData() const;
 
     // get ids of given list of members for who we do not have the member data
     template<typename Iter>

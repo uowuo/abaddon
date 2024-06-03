@@ -15,6 +15,8 @@ public:
 
 private:
     void Index();
+    void IndexPrivateChannels();
+    void IndexChannels();
     void Search();
 
     void GoUp();

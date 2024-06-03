@@ -358,6 +358,10 @@ std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake
     return m_store.GetWebhookMessage(message_id);
 }
 
+std::vector<ChannelData> DiscordClient::GetAllChannelData() const {
+    return m_store.GetAllChannelData();
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }

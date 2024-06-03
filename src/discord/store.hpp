@@ -96,6 +96,9 @@ public:
     std::unordered_set<Snowflake> GetChannels() const;
     std::unordered_set<Snowflake> GetGuilds() const;
 
+    // this does NOT include recipients
+    std::vector<ChannelData> GetAllChannelData() const;
+
     void ClearAll();
 
     void BeginTransaction();
@@ -289,6 +292,7 @@ private:
     STMT(set_chan);
     STMT(get_chan);
     STMT(get_chan_ids);
+    STMT(get_all_chans);
     STMT(clr_chan);
     STMT(set_msg);
     STMT(get_msg);
