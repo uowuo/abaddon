@@ -68,7 +68,7 @@ endif ()
 
 if (NOT (APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
     target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
-endif()
+endif ()
 
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -115,10 +115,11 @@ target_link_libraries(abaddon spdlog::spdlog)
 
 target_link_libraries(abaddon ${SQLite3_LIBRARIES})
 target_link_libraries(abaddon ${GTKMM_LIBRARIES})
-target_link_libraries(abaddon ${CURL_LIBRARIES})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
 target_link_libraries(abaddon ${CMAKE_DL_LIBS})
+
+target_link_libraries(abaddon CURL::libcurl)
 
 include(CheckAtomic)
 if (NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
