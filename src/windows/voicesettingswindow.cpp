@@ -117,7 +117,7 @@ VoiceSettingsWindow::VoiceSettingsWindow()
         if (value <= 99.9) {
             encoder.SetBitrate(static_cast<int>(scaled));
         } else {
-            encoder.SetBitrate(OPUS_BITRATE_MAX);
+            encoder.SetBitrate(MAX_BITRATE);
         }
     });
 

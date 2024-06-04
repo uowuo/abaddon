@@ -27,7 +27,7 @@ public:
         int channels = 2;
         int32_t bitrate = 64000;
         SignalHint signal_hint = SignalHint::Auto;
-        EncodingApplication application = EncodingApplication::Audio;
+        EncodingApplication application = EncodingApplication::VOIP;
     };
 
     static std::optional<OpusEncoder> Create(EncoderSettings settings) noexcept;

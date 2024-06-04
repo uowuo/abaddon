@@ -72,6 +72,7 @@ void OpusEncoder::SetEncodingApplication(EncodingApplication application) noexce
     }
 
     m_encoder.reset(encoder);
+    m_application = application;
 
     SetBitrate(m_bitrate);
     SetSignalHint(m_signal_hint);

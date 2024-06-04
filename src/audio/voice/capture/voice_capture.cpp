@@ -70,7 +70,7 @@ void VoiceCapture::StartEncoder() noexcept {
     settings.channels = CAPTURE_CHANNELS;
     settings.bitrate = 64000;
     settings.signal_hint = SignalHint::Auto;
-    settings.application = EncodingApplication::Audio;
+    settings.application = EncodingApplication::VOIP;
 
     auto encoder = OpusEncoder::Create(settings);
     if (!encoder) {
