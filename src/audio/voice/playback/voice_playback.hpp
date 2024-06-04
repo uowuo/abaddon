@@ -26,6 +26,8 @@ public:
     void Stop() noexcept;
 
     void SetActive(bool active) noexcept;
+    bool GetActive() const noexcept;
+
     void SetPlaybackDevice(const ma_device_id &device_id) noexcept;
 
     Playback::ClientStore& GetClientStore() noexcept;

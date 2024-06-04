@@ -52,6 +52,10 @@ void VoicePlayback::OnUserDisconnect(Snowflake user_id, Snowflake channel_id) no
 }
 
 void VoicePlayback::Start() noexcept {
+    if (Abaddon::Get().GetSettings().SeparateSources) {
+        return;
+    }
+
     m_device.Start();
 }
 
@@ -66,6 +70,10 @@ void VoicePlayback::SetActive(bool active) noexcept {
     }
 
     m_active = active;
+}
+
+bool VoicePlayback::GetActive() const noexcept {
+    return m_active;
 }
 
 void VoicePlayback::SetPlaybackDevice(const ma_device_id &device_id) noexcept {

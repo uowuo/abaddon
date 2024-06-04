@@ -130,6 +130,7 @@ void SettingsManager::DefineSettings() {
     AddSetting("voice", "vad", "gate"s, &Settings::VAD);
 #endif
     AddSetting("voice", "backends", ""s, &Settings::Backends);
+    AddSetting("voice", "separate_sources", false, &Settings::SeparateSources);
 }
 
 void SettingsManager::ReadSettings() {

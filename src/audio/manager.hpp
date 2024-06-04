@@ -27,6 +27,9 @@ public:
 
     AudioDevices &GetDevices();
 
+    AbaddonClient::Audio::Context& GetContext() noexcept;
+    const AbaddonClient::Audio::Context& GetContext() const noexcept;
+
     AbaddonClient::Audio::SystemAudio& GetSystem() noexcept;
     const AbaddonClient::Audio::SystemAudio& GetSystem() const noexcept;
 

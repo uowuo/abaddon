@@ -52,6 +52,7 @@ public:
         // [voice]
         std::string VAD;
         std::string Backends;
+        bool SeparateSources;
 
         // [windows]
         bool HideConsole;

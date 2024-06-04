@@ -27,10 +27,13 @@ void ClientStore::AddClient(ClientID id) noexcept {
 
     m_decode_pool.AddDecoder();
 
+    auto &context = Abaddon::Get().GetAudio().GetContext();
+
     clients->emplace(
         std::piecewise_construct,
         std::forward_as_tuple(id),
-        std::forward_as_tuple(std::move(*decoder), std::move(*buffer), m_decode_pool));
+        std::forward_as_tuple(context, std::move(*decoder), std::move(*buffer), m_decode_pool)
+    );
 }
 
 void ClientStore::RemoveClient(ClientID id) noexcept {

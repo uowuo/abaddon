@@ -124,6 +124,22 @@ std::vector<ma_backend> AudioManager::ParseBackendsList(const Glib::ustring &lis
     return backends;
 }
 
+AbaddonClient::Audio::Context& AudioManager::GetContext() noexcept {
+    return *m_context;
+}
+
+const AbaddonClient::Audio::Context& AudioManager::GetContext() const noexcept {
+    return *m_context;
+}
+
+AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() noexcept {
+    return *m_system;
+}
+
+const AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() const noexcept {
+    return *m_system;
+}
+
 #ifdef WITH_VOICE
 
 AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() noexcept {
@@ -135,13 +151,5 @@ const AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() const noexcept 
 }
 
 #endif
-
-AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() noexcept {
-    return *m_system;
-}
-
-const AbaddonClient::Audio::SystemAudio& AudioManager::GetSystem() const noexcept {
-    return *m_system;
-}
 
 #endif
