@@ -29,20 +29,7 @@ void MaPCMRingBuffer::Read(OutputBuffer output) noexcept {
 
     // Try twice in case of wrap around
     while (read < total_frames && tries < 2) {
-        uint32_t frames = total_frames - read;
-        float* read_ptr;
-
-        ma_pcm_rb_acquire_read(m_ringbuffer.get(), &frames, reinterpret_cast<void**>(&read_ptr));
-
-        const auto start = read_ptr;
-        const auto end = start + frames * m_channels + 1;
-        const auto result = output.begin() + read * m_channels;
-
-        std::copy(start, end, result);
-
-        ma_pcm_rb_commit_read(m_ringbuffer.get(), frames);
-
-        read += frames;
+        read += DoRead(output, read, total_frames);
         tries++;
     }
 }
@@ -55,19 +42,7 @@ void MaPCMRingBuffer::Write(InputBuffer input) noexcept {
 
     // Try twice in case of wrap around
     while (written < total_frames && tries < 2) {
-        uint32_t frames = total_frames - written;
-        float* write_ptr;
-
-        ma_pcm_rb_acquire_write(m_ringbuffer.get(), &frames, reinterpret_cast<void**>(&write_ptr));
-
-        const auto start = input.begin() + written * m_channels;
-        const auto end = start + frames * m_channels + 1;
-
-        std::copy(start, end, write_ptr);
-
-        ma_pcm_rb_commit_write(m_ringbuffer.get(), frames);
-
-        written += frames;
+        written += DoWrite(input, written, total_frames);
         tries++;
     }
 }
@@ -84,5 +59,37 @@ uint32_t MaPCMRingBuffer::GetAvailableWriteFrames() noexcept {
     return ma_pcm_rb_available_write(m_ringbuffer.get());
 }
 
+
+uint32_t MaPCMRingBuffer::DoRead(OutputBuffer output, uint32_t read_frames, uint32_t total_frames) noexcept {
+    auto frames = total_frames - read_frames;
+    float* read_ptr;
+
+    ma_pcm_rb_acquire_read(m_ringbuffer.get(), &frames, reinterpret_cast<void**>(&read_ptr));
+
+    const auto output_ptr = output.begin() + read_frames * m_channels;
+    const auto samples = frames * m_channels;
+
+    std::copy_n(read_ptr, samples, output_ptr);
+
+    ma_pcm_rb_commit_read(m_ringbuffer.get(), frames);
+
+    return frames;
+}
+
+uint32_t MaPCMRingBuffer::DoWrite(InputBuffer input, uint32_t written_frames, uint32_t total_frames) noexcept {
+    auto frames = total_frames - written_frames;
+    float* write_ptr;
+
+    ma_pcm_rb_acquire_write(m_ringbuffer.get(), &frames, reinterpret_cast<void**>(&write_ptr));
+
+    const auto input_ptr = input.begin() + written_frames * m_channels;
+    const auto samples = frames * m_channels;
+
+    std::copy_n(input_ptr, samples, write_ptr);
+
+    ma_pcm_rb_commit_write(m_ringbuffer.get(), frames);
+
+    return frames;
+}
 
 }

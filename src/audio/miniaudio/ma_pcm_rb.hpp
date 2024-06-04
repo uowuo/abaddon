@@ -15,6 +15,9 @@ public:
     uint32_t GetAvailableReadFrames() noexcept;
     uint32_t GetAvailableWriteFrames() noexcept;
 private:
+    uint32_t DoRead(OutputBuffer output, uint32_t read_frames, uint32_t total_frames) noexcept;
+    uint32_t DoWrite(InputBuffer input, uint32_t written_frames, uint32_t total_frames) noexcept;
+
     struct RingBufferDeleter {
         void operator()(ma_pcm_rb* ptr) noexcept {
             ma_pcm_rb_uninit(ptr);
