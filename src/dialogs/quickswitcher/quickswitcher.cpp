@@ -37,6 +37,7 @@ void QuickSwitcher::Index() {
     m_index.clear();
     IndexPrivateChannels();
     IndexChannels();
+    IndexGuilds();
 }
 
 void QuickSwitcher::IndexPrivateChannels() {
@@ -44,10 +45,10 @@ void QuickSwitcher::IndexPrivateChannels() {
     for (auto &dm_id : discord.GetPrivateChannels()) {
         if (auto dm = discord.GetChannel(dm_id); dm.has_value()) {
             const auto sort = static_cast<uint64_t>(-(dm->LastMessageID.has_value() ? *dm->LastMessageID : dm_id));
-            m_index.push_back({ SwitcherEntry::ResultType::DM,
-                                dm->GetDisplayName(),
-                                sort,
-                                dm_id });
+            m_index[dm_id] = { SwitcherEntry::ResultType::DM,
+                               dm->GetDisplayName(),
+                               sort,
+                               dm_id };
         }
     }
 }
@@ -57,10 +58,24 @@ void QuickSwitcher::IndexChannels() {
     const auto channels = discord.GetAllChannelData();
     for (auto &channel : channels) {
         if (!channel.Name.has_value()) continue;
-        m_index.push_back({ SwitcherEntry::ResultType::Channel,
-                            *channel.Name,
-                            static_cast<uint64_t>(channel.ID),
-                            channel.ID });
+        m_index[channel.ID] = { SwitcherEntry::ResultType::Channel,
+                                *channel.Name,
+                                static_cast<uint64_t>(channel.ID),
+                                channel.ID };
+    }
+}
+
+void QuickSwitcher::IndexGuilds() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto guilds = discord.GetGuilds();
+    for (auto guild_id : guilds) {
+        const auto guild = discord.GetGuild(guild_id);
+        if (!guild.has_value()) continue;
+        // todo make this smart
+        m_index[guild->ID] = { SwitcherEntry::ResultType::Guild,
+                               guild->Name,
+                               static_cast<uint64_t>(guild->ID),
+                               guild->ID };
     }
 }
 
@@ -71,7 +86,7 @@ void QuickSwitcher::Search() {
     if (query.empty()) return;
 
     std::vector<SwitcherEntry> results;
-    for (auto &item : m_index) {
+    for (auto &[id, item] : m_index) {
         if (StringContainsCaseless(item.Name, query)) {
             results.push_back(item);
         }
@@ -89,7 +104,16 @@ void QuickSwitcher::Search() {
                     row = Gtk::make_managed<QuickSwitcherResultRowDM>(*channel);
                 }
             } break;
-            case SwitcherEntry::ResultType::Channel: break;
+            case SwitcherEntry::ResultType::Channel: {
+                if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(result.ID); channel.has_value()) {
+                    row = Gtk::make_managed<QuickSwitcherResultRowChannel>(*channel);
+                }
+            } break;
+            case SwitcherEntry::ResultType::Guild: {
+                if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(result.ID); guild.has_value()) {
+                    row = Gtk::make_managed<QuickSwitcherResultRowGuild>(*guild);
+                }
+            } break;
         }
         if (row != nullptr) {
             row->show();
@@ -134,9 +158,30 @@ void QuickSwitcher::Move(int dir) {
     ScrollListBoxToSelected(m_results);
 }
 
+void QuickSwitcher::AcceptResult(Snowflake id) {
+    const auto result = m_index.find(id);
+    if (result == m_index.end()) return;
+    const auto &entry = result->second;
+
+    switch (entry.Type) {
+        case SwitcherEntry::ResultType::Channel:
+        case SwitcherEntry::ResultType::DM:
+            Abaddon::Get().ActionChannelOpened(entry.ID, false);
+            break;
+        case SwitcherEntry::ResultType::Guild: {
+            const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(entry.ID);
+            if (!guild.has_value()) return;
+            const auto channel = guild->GetDefaultTextChannel();
+            if (channel.has_value()) {
+                Abaddon::Get().ActionChannelOpened(*channel, false);
+            }
+        } break;
+    }
+}
+
 void QuickSwitcher::OnEntryActivate() {
     if (auto *row = dynamic_cast<QuickSwitcherResultRow *>(m_results.get_selected_row())) {
-        Abaddon::Get().ActionChannelOpened(row->ID, false);
+        AcceptResult(row->ID);
     }
     response(Gtk::RESPONSE_OK);
 }
@@ -157,7 +202,7 @@ bool QuickSwitcher::OnEntryKeyPress(GdkEventKey *event) {
 
 void QuickSwitcher::OnResultRowActivate(Gtk::ListBoxRow *row_) {
     if (auto *row = dynamic_cast<QuickSwitcherResultRow *>(row_)) {
-        Abaddon::Get().ActionChannelOpened(row->ID, false);
+        AcceptResult(row->ID);
     }
     response(Gtk::RESPONSE_OK);
 }

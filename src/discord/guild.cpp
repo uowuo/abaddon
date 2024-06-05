@@ -1,5 +1,7 @@
 #include "guild.hpp"
 
+#include "abaddon.hpp"
+
 void from_json(const nlohmann::json &j, GuildData &m) {
     JS_D("id", m.ID);
     if (j.contains("unavailable")) {
@@ -136,6 +138,27 @@ bool GuildData::HasAnimatedIcon() const {
 
 std::string GuildData::GetIconURL(const std::string &ext, const std::string &size) const {
     return "https://cdn.discordapp.com/icons/" + std::to_string(ID) + "/" + Icon + "." + ext + "?size=" + size;
+}
+
+std::optional<Snowflake> GuildData::GetDefaultTextChannel() const {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto channel_ids = discord.GetChannelsInGuild(ID);
+    std::vector<ChannelData> channels;
+    for (auto channel_id : channel_ids) {
+        const auto channel = discord.GetChannel(channel_id);
+        if (!channel.has_value() || !channel->IsText() || !channel->Position.has_value()) continue;
+        channels.push_back(*channel);
+    }
+
+    std::sort(channels.begin(), channels.end(), [](const ChannelData &a, const ChannelData &b) -> bool {
+        return *a.Position < *b.Position;
+    });
+
+    for (const auto &channel : channels) {
+        if (discord.HasSelfChannelPermission(channel.ID, Permission::VIEW_CHANNEL)) return channel.ID;
+    }
+
+    return {};
 }
 
 void from_json(const nlohmann::json &j, GuildApplicationData &m) {
