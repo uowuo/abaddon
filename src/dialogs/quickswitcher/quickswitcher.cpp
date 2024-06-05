@@ -58,6 +58,9 @@ void QuickSwitcher::IndexChannels() {
     const auto channels = discord.GetAllChannelData();
     for (auto &channel : channels) {
         if (!channel.Name.has_value()) continue;
+        if (!channel.IsText()) continue;
+        // might want to optimize this at some point
+        if (!discord.HasSelfChannelPermission(channel.ID, Permission::VIEW_CHANNEL)) continue;
         m_index[channel.ID] = { SwitcherEntry::ResultType::Channel,
                                 *channel.Name,
                                 static_cast<uint64_t>(channel.ID),
