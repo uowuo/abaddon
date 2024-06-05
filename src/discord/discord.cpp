@@ -351,7 +351,9 @@ void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, const sigc::
 }
 
 std::vector<Snowflake> DiscordClient::GetChildChannelIDs(Snowflake parent_id) const {
-    return m_store.GetChannelIDsWithParentID(parent_id);
+    std::vector<Snowflake> ids;
+    for (auto [id, type] : m_store.GetChannelIDsWithParentID(parent_id)) ids.push_back(id);
+    return ids;
 }
 
 std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake message_id) const {
@@ -1371,7 +1373,8 @@ int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
 
 int DiscordClient::GetUnreadChannelsCountForCategory(Snowflake id) const noexcept {
     int result = 0;
-    for (Snowflake channel_id : m_store.GetChannelIDsWithParentID(id)) {
+    for (auto [channel_id, channel_type] : m_store.GetChannelIDsWithParentID(id)) {
+        if (!ShouldChannelTypeCountInUnread(channel_type)) continue;
         if (IsChannelMuted(channel_id)) continue;
         const auto iter = m_unread.find(channel_id);
         if (iter == m_unread.end()) continue;
@@ -1392,6 +1395,9 @@ bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) co
         // channels under muted categories wont contribute to unread state
         if (const auto iter = m_channel_muted_parent.find(channel_id); iter != m_channel_muted_parent.end())
             continue;
+
+        const auto channel = GetChannel(channel_id);
+        if (channel.has_value() && !ShouldChannelTypeCountInUnread(channel->Type)) continue;
 
         if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
             has_any_unread = true;
@@ -2751,6 +2757,14 @@ bool DiscordClient::CheckCode(const http::response_type &r, int expected) {
         return false;
     }
     return true;
+}
+
+bool DiscordClient::ShouldChannelTypeCountInUnread(ChannelType type) {
+    return type != ChannelType::GUILD_VOICE &&
+           type != ChannelType::GUILD_FORUM &&
+           type != ChannelType::GUILD_MEDIA &&
+           type != ChannelType::GUILD_STORE &&
+           type != ChannelType::GUILD_DIRECTORY;
 }
 
 void DiscordClient::StoreMessageData(Message &msg) {
