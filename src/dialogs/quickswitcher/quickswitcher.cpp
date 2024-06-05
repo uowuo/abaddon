@@ -96,21 +96,25 @@ void QuickSwitcher::Search() {
         return a.Sort < b.Sort;
     });
 
+    auto &discord = Abaddon::Get().GetDiscordClient();
+
+    int result_count = 0;
+    const int MAX_RESULTS = 30;
     for (auto &result : results) {
         QuickSwitcherResultRow *row = nullptr;
         switch (result.Type) {
             case SwitcherEntry::ResultType::DM: {
-                if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(result.ID); channel.has_value()) {
+                if (const auto channel = discord.GetChannel(result.ID); channel.has_value()) {
                     row = Gtk::make_managed<QuickSwitcherResultRowDM>(*channel);
                 }
             } break;
             case SwitcherEntry::ResultType::Channel: {
-                if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(result.ID); channel.has_value()) {
+                if (const auto channel = discord.GetChannel(result.ID); channel.has_value()) {
                     row = Gtk::make_managed<QuickSwitcherResultRowChannel>(*channel);
                 }
             } break;
             case SwitcherEntry::ResultType::Guild: {
-                if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(result.ID); guild.has_value()) {
+                if (const auto guild = discord.GetGuild(result.ID); guild.has_value()) {
                     row = Gtk::make_managed<QuickSwitcherResultRowGuild>(*guild);
                 }
             } break;
@@ -118,6 +122,7 @@ void QuickSwitcher::Search() {
         if (row != nullptr) {
             row->show();
             m_results.add(*row);
+            if (++result_count >= MAX_RESULTS) break;
         }
     }
 
