@@ -1,5 +1,7 @@
 #include "quickswitcherresultrow.hpp"
 
+#include "abaddon.hpp"
+
 static constexpr int HeightRequest = 24; // probably change this part up
 
 QuickSwitcherResultRow::QuickSwitcherResultRow(Snowflake id)
@@ -26,11 +28,20 @@ QuickSwitcherResultRowChannel::QuickSwitcherResultRowChannel(const ChannelData &
     : QuickSwitcherResultRow(channel.ID) {
     set_size_request(-1, HeightRequest);
 
-    m_label.set_text("#" + (channel.Name ? *channel.Name : std::string("???")));
+    if (channel.GuildID.has_value()) {
+        const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*channel.GuildID);
+        if (guild.has_value()) {
+            m_guild_label.set_text(guild->Name);
+        }
+    }
 
-    m_label.set_halign(Gtk::ALIGN_START);
+    m_channel_label.set_text("#" + (channel.Name ? *channel.Name : std::string("???")));
 
-    m_box.pack_start(m_label, true, true);
+    m_channel_label.set_halign(Gtk::ALIGN_START);
+    m_guild_label.set_halign(Gtk::ALIGN_END);
+
+    m_box.pack_start(m_channel_label, true, true);
+    m_box.pack_start(m_guild_label, true, true);
     add(m_box);
     show_all_children();
 }

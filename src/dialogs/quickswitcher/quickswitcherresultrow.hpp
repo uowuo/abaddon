@@ -30,7 +30,8 @@ public:
 
 private:
     Gtk::HBox m_box;
-    Gtk::Label m_label;
+    Gtk::Label m_channel_label;
+    Gtk::Label m_guild_label;
 };
 
 class QuickSwitcherResultRowGuild : public QuickSwitcherResultRow {
