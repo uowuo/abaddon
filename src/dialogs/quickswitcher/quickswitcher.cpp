@@ -102,7 +102,7 @@ void QuickSwitcher::Search() {
     auto &discord = Abaddon::Get().GetDiscordClient();
 
     int result_count = 0;
-    const int MAX_RESULTS = 30;
+    const int MAX_RESULTS = 15;
     for (auto &result : results) {
         QuickSwitcherResultRow *row = nullptr;
         switch (result.Type) {
