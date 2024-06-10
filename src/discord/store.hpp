@@ -98,6 +98,8 @@ public:
 
     // this does NOT include recipients
     std::vector<ChannelData> GetAllChannelData() const;
+    std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>> GetAllPermissionOverwriteData() const;
+    std::unordered_map<Snowflake, std::vector<RoleData>> GetAllMemberRoles(Snowflake user_id) const;
 
     void ClearAll();
 
@@ -309,6 +311,7 @@ private:
     STMT(get_emoji);
     STMT(set_perm);
     STMT(get_perm);
+    STMT(get_all_perms);
     STMT(set_ban);
     STMT(get_ban);
     STMT(get_bans);
@@ -317,6 +320,7 @@ private:
     STMT(set_member_roles);
     STMT(get_member_roles);
     STMT(clr_member_roles);
+    STMT(get_self_member_roles);
     STMT(set_guild_emoji);
     STMT(get_guild_emojis);
     STMT(clr_guild_emoji);

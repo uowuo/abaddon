@@ -66,6 +66,8 @@ public:
     std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
     std::optional<WebhookMessageData> GetWebhookMessageData(Snowflake message_id) const;
     std::vector<ChannelData> GetAllChannelData() const;
+    std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>> GetAllPermissionOverwrites() const;
+    std::unordered_map<Snowflake, std::vector<RoleData>> GetAllMemberRoles(Snowflake user_id) const;
 
     // get ids of given list of members for who we do not have the member data
     template<typename Iter>
@@ -87,6 +89,28 @@ public:
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
+
+    // IO-less calls
+    bool HasSelfChannelPermission(const ChannelData &channel,
+                                  Permission perm,
+                                  const std::unordered_map<Snowflake, RoleData> &roles,
+                                  const std::vector<RoleData> &member_roles,
+                                  const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const;
+    bool HasChannelPermission(Snowflake user_id,
+                              const ChannelData &channel,
+                              Permission perm,
+                              const std::unordered_map<Snowflake, RoleData> &roles,
+                              const std::vector<RoleData> &member_roles,
+                              const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const;
+    Permission ComputePermissions(Snowflake member_id,
+                                  Snowflake guild_id,
+                                  const std::unordered_map<Snowflake, RoleData> &roles,
+                                  const std::vector<RoleData> &member_roles) const;
+    Permission ComputeOverwrites(Permission base,
+                                 Snowflake member_id,
+                                 const ChannelData &channel,
+                                 const std::vector<RoleData> &member_roles,
+                                 const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const;
 
     void ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError code)> &callback);
     void SendChatMessageNoAttachments(const ChatSubmitParams &params, const sigc::slot<void(DiscordError code)> &callback);

@@ -55,12 +55,24 @@ void QuickSwitcher::IndexPrivateChannels() {
 
 void QuickSwitcher::IndexChannels() {
     auto &discord = Abaddon::Get().GetDiscordClient();
+
     const auto channels = discord.GetAllChannelData();
+    // grab literally everything to do in memory otherwise we get a shit ton of IOs
+    auto overwrites = discord.GetAllPermissionOverwrites();
+
+    auto member_roles = discord.GetAllMemberRoles(discord.GetUserData().ID);
+    std::unordered_map<Snowflake, RoleData> roles;
+    for (const auto &[guild_id, guild_roles] : member_roles) {
+        for (const auto &role_data : guild_roles) {
+            roles.emplace(role_data.ID, role_data);
+        }
+    }
+
     for (auto &channel : channels) {
         if (!channel.Name.has_value()) continue;
         if (!channel.IsText()) continue;
-        // might want to optimize this at some point
-        if (!discord.HasSelfChannelPermission(channel.ID, Permission::VIEW_CHANNEL)) continue;
+        if (channel.GuildID.has_value() &&
+            !discord.HasSelfChannelPermission(channel, Permission::VIEW_CHANNEL, roles, member_roles[*channel.GuildID], overwrites[channel.ID])) continue;
         m_index[channel.ID] = { SwitcherEntry::ResultType::Channel,
                                 *channel.Name,
                                 static_cast<uint64_t>(channel.ID),

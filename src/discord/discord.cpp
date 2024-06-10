@@ -362,6 +362,14 @@ std::vector<ChannelData> DiscordClient::GetAllChannelData() const {
     return m_store.GetAllChannelData();
 }
 
+std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>> DiscordClient::GetAllPermissionOverwrites() const {
+    return m_store.GetAllPermissionOverwriteData();
+}
+
+std::unordered_map<Snowflake, std::vector<RoleData>> DiscordClient::GetAllMemberRoles(Snowflake user_id) const {
+    return m_store.GetAllMemberRoles(user_id);
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -462,6 +470,88 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     if (!actor_highest.has_value()) return false;
     if (!target_highest.has_value()) return true;
     return actor_highest->Position > target_highest->Position;
+}
+bool DiscordClient::HasSelfChannelPermission(const ChannelData &channel,
+                                             Permission perm,
+                                             const std::unordered_map<Snowflake, RoleData> &roles,
+                                             const std::vector<RoleData> &member_roles,
+                                             const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const {
+    return HasChannelPermission(m_user_data.ID, channel, perm, roles, member_roles, overwrites);
+}
+
+bool DiscordClient::HasChannelPermission(Snowflake user_id,
+                                         const ChannelData &channel,
+                                         Permission perm,
+                                         const std::unordered_map<Snowflake, RoleData> &roles,
+                                         const std::vector<RoleData> &member_roles,
+                                         const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const {
+    if (channel.IsDM()) return true;
+    if (!channel.GuildID.has_value()) return false;
+    const auto base = ComputePermissions(user_id, *channel.GuildID, roles, member_roles);
+    const auto computed_overwrites = ComputeOverwrites(base, user_id, channel, member_roles, overwrites);
+    return (computed_overwrites & perm) == perm;
+}
+
+Permission DiscordClient::ComputePermissions(Snowflake member_id,
+                                             Snowflake guild_id,
+                                             const std::unordered_map<Snowflake, RoleData> &roles,
+                                             const std::vector<RoleData> &member_roles) const {
+    const auto guild_owner = m_store.GetGuildOwner(guild_id);
+
+    if (guild_owner == member_id)
+        return Permission::ALL;
+
+    if (const auto everyone_it = roles.find(guild_id); everyone_it != roles.end()) {
+        const auto &everyone = everyone_it->second;
+
+        Permission perms = everyone.Permissions;
+        for (const auto &role : member_roles) {
+            perms |= role.Permissions;
+        }
+
+        if ((perms & Permission::ADMINISTRATOR) == Permission::ADMINISTRATOR)
+            return Permission::ALL;
+
+        return perms;
+    }
+
+    return Permission::NONE;
+}
+
+Permission DiscordClient::ComputeOverwrites(Permission base,
+                                            Snowflake member_id,
+                                            const ChannelData &channel,
+                                            const std::vector<RoleData> &member_roles,
+                                            const std::unordered_map<Snowflake, PermissionOverwrite> &overwrites) const {
+    if ((base & Permission::ADMINISTRATOR) == Permission::ADMINISTRATOR)
+        return Permission::ALL;
+
+    if (!channel.GuildID.has_value()) return Permission::NONE;
+
+    Permission perms = base;
+    if (const auto overwrite_everyone = overwrites.find(*channel.GuildID); overwrite_everyone != overwrites.end()) {
+        perms &= ~overwrite_everyone->second.Deny;
+        perms |= overwrite_everyone->second.Allow;
+    }
+
+    Permission allow = Permission::NONE;
+    Permission deny = Permission::NONE;
+    for (const auto &role : member_roles) {
+        if (const auto overwrite = overwrites.find(role.ID); overwrite != overwrites.end()) {
+            allow |= overwrite->second.Allow;
+            deny |= overwrite->second.Deny;
+        }
+    }
+
+    perms &= ~deny;
+    perms |= allow;
+
+    if (const auto member_overwrite = overwrites.find(member_id); member_overwrite != overwrites.end()) {
+        perms &= ~member_overwrite->second.Deny;
+        perms |= member_overwrite->second.Allow;
+    }
+
+    return perms;
 }
 
 void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError)> &callback) {
