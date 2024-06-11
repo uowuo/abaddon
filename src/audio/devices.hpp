@@ -1,5 +1,4 @@
 #pragma once
-#ifdef WITH_MINIAUDIO
 
 // clang-format off
 
@@ -58,4 +57,3 @@ private:
     Gtk::TreeModel::iterator m_active_capture_iter;
     Gtk::TreeModel::iterator m_default_capture_iter;
 };
-#endif

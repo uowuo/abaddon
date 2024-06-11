@@ -1,5 +1,3 @@
-#ifdef WITH_VOICE
-
 // clang-format off
 
 #include "devices.hpp"
@@ -118,4 +116,3 @@ AudioDevices::CaptureColumns::CaptureColumns() {
     add(Name);
     add(DeviceID);
 }
-#endif

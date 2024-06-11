@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <gtkmm.h>
 #include "platform.hpp"
-#include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/confirm.hpp"
@@ -50,11 +49,15 @@ void macOSThemeChangedCallback(CFNotificationCenterRef center, void *observer, C
 #pragma comment(lib, "crypt32.lib")
 #endif
 
+#ifdef WITH_MINIAUDIO
+#include "audio/manager.hpp"
+#endif
+
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
     , m_discord(GetSettings().UseMemoryDB) // stupid but easy
     , m_emojis(GetResPath("/emojis.db"))
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
     , m_audio(GetSettings().Backends, m_discord)
 #endif
 {

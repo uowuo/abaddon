@@ -1,18 +1,4 @@
-#ifdef WITH_MINIAUDIO
-// clang-format off
-
-#ifdef _WIN32
-    #include <winsock2.h>
-#endif
-
 #include "manager.hpp"
-#include "abaddon.hpp"
-#include <glibmm/main.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <miniaudio.h>
-#include <opus.h>
-#include <cstring>
-// clang-format on
 
 void mgr_log_callback(void *pUserData, ma_uint32 level, const char *pMessage) {
     auto *log = static_cast<spdlog::logger *>(pUserData);
@@ -149,7 +135,5 @@ AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() noexcept {
 const AbaddonClient::Audio::VoiceAudio& AudioManager::GetVoice() const noexcept {
     return *m_voice;
 }
-
-#endif
 
 #endif

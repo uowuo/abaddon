@@ -1,15 +1,13 @@
 #pragma once
-#ifdef WITH_MINIAUDIO
+
 // clang-format off
 
-#include <gtkmm/treemodel.h>
-#include <vector>
-#include <miniaudio.h>
-#include <opus.h>
-#include <sigc++/sigc++.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "devices.hpp"
+
+#include "audio/context.hpp"
 
 #ifdef WITH_VOICE
 #include "voice/voice_audio.hpp"
@@ -59,4 +57,3 @@ private:
 
     bool m_ok = false;
 };
-#endif

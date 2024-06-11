@@ -2,6 +2,8 @@
 
 #include <miniaudio.h>
 
+#include "audio/utils.hpp"
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 class MaPCMRingBuffer {
