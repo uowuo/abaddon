@@ -225,4 +225,9 @@ foreach (COMPILER_DEF IN LISTS ABADDON_COMPILER_DEFS)
     target_compile_definitions(abaddon PRIVATE "${COMPILER_DEF}")
 endforeach ()
 
-set_property(TARGET abaddon PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+# LTO breaks on Windows
+# Due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108383
+# And other weirdness
+if (NOT WIN32)
+    set_property(TARGET abaddon PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
