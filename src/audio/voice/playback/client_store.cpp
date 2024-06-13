@@ -1,6 +1,10 @@
 #include "client_store.hpp"
 #include "constants.hpp"
 
+#include <spdlog/spdlog.h>
+
+#include "abaddon.hpp"
+
 namespace AbaddonClient::Audio::Voice::Playback {
 
 void ClientStore::AddClient(ClientID id) noexcept {

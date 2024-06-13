@@ -1,8 +1,11 @@
 #pragma once
 
-#include "misc/slice.hpp"
+#include <memory>
+#include <optional>
 
 #include <miniaudio.h>
+
+#include "misc/slice.hpp"
 
 namespace AbaddonClient::Audio::Miniaudio {
 

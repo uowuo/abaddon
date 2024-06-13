@@ -1,5 +1,9 @@
 #include "ma_log.hpp"
 
+#include <utility>
+
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 MaLog::MaLog(LogPtr &&log) noexcept :

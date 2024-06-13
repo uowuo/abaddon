@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deque>
+
 #include "mutex.hpp"
 
 // Channel with bounded queue size

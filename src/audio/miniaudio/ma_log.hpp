@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <optional>
+
 #include <miniaudio.h>
 
 namespace AbaddonClient::Audio::Miniaudio {

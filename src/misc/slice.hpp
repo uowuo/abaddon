@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 // C++20 span-like slice
 // T has to be contigious array-like initialized structure with size of "size * sizeof(T)"
 template<typename T>

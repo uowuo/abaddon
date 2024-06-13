@@ -1,5 +1,10 @@
 #pragma once
 
+#include <mutex>
+#include <condition_variable>
+
+#include <utility>
+
 // RAII style mutex guard
 // Unlocks mutex upon destruction
 template<typename T>

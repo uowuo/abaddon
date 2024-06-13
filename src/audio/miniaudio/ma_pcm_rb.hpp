@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <optional>
+
 #include <miniaudio.h>
 
 #include "audio/utils.hpp"

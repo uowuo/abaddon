@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "audio/utils.hpp"
 
 namespace AbaddonClient::Audio::Voice::Capture::Effects {

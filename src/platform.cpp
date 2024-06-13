@@ -1,8 +1,11 @@
 #include "platform.hpp"
+#include "util.hpp"
 #include <config.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
+
+#include <spdlog/spdlog.h>
 
 using namespace std::literals::string_literals;
 
@@ -194,15 +197,15 @@ std::string Platform::FindConfigFile() {
     if (mkdir(homefolder_path, 0755) == 0) {
         spdlog::get("discord")->warn("created Application Support dir");
     }
-    
+
     char home_path[PATH_MAX];
     snprintf(home_path, sizeof(home_path), "%s/%s", homefolder_path, "/abaddon.ini");
-    
+
     return home_path;
 }
 
 std::string Platform::FindStateCacheFolder() {
-    
+
     passwd *home = getpwuid(getuid());
     const char *homeDir = home->pw_dir;
 

@@ -1,5 +1,8 @@
 #include "audio_engine.hpp"
 
+#include <glibmm/main.h>
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio {
 
 AudioEngine::AudioEngine(Context &context) noexcept :

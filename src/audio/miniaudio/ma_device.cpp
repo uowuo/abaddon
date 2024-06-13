@@ -1,5 +1,7 @@
 #include "ma_device.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 MaDevice::MaDevice(DevicePtr &&device) noexcept :

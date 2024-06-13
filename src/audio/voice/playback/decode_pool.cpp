@@ -1,6 +1,8 @@
 #include "decode_pool.hpp"
 #include "constants.hpp"
 
+#include <array>
+
 namespace AbaddonClient::Audio::Voice::Playback {
 
 // I have no idea what this does, I just copied it from AudioManager

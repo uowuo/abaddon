@@ -1,6 +1,9 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "audio/utils.hpp"
+#include "misc/mutex.hpp"
 
 #include "client.hpp"
 #include "decode_pool.hpp"

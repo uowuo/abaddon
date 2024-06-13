@@ -1,5 +1,7 @@
 #include "peak_meter.hpp"
 
+#include <glibmm.h>
+
 namespace AbaddonClient::Audio::Voice {
 
 PeakMeter::PeakMeter() noexcept {

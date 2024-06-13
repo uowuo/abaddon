@@ -1,6 +1,8 @@
 #include "voice_playback.hpp"
 #include "constants.hpp"
 
+#include "abaddon.hpp"
+
 namespace AbaddonClient::Audio::Voice {
 
 void playback_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {

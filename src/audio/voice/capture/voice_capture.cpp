@@ -1,6 +1,8 @@
 #include "voice_capture.hpp"
 #include "constants.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Voice {
 
 using OpusEncoder = Opus::OpusEncoder;

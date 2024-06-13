@@ -1,5 +1,7 @@
 #include "opus_decoder.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Voice::Opus {
 
 OpusDecoder::OpusDecoder(DecoderPtr encoder, DecoderSettings settings) noexcept :

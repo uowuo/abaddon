@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <numeric>
+
 #include "misc/slice.hpp"
 
 using InputBuffer = ConstSlice<float>;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <optional>
+
 #include <miniaudio.h>
 
 #include "ma_context.hpp"

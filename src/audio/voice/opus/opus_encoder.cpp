@@ -1,5 +1,7 @@
 #include "opus_encoder.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Voice::Opus {
 
 using EncoderSettings = OpusEncoder::EncoderSettings;

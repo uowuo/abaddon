@@ -1,9 +1,13 @@
 #pragma once
 
+#include <string_view>
+
+#include <glib.h>
 #include <glibmm/timer.h>
 
 #include "misc/mutex.hpp"
 
+#include "audio/context.hpp"
 #include "miniaudio/ma_engine.hpp"
 
 namespace AbaddonClient::Audio {

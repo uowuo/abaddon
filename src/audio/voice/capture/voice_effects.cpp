@@ -1,5 +1,7 @@
 #include "voice_effects.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Voice::Capture {
 
 bool VoiceEffects::PassesVAD(InputBuffer buffer, float current_peak) noexcept {

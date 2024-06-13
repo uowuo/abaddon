@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 #include <miniaudio.h>
 
 constexpr ma_format CAPTURE_FORMAT = ma_format_f32;

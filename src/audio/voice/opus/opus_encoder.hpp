@@ -1,5 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string_view>
+
 #include <opus.h>
 
 #include "audio/utils.hpp"

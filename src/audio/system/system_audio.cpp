@@ -1,5 +1,7 @@
 #include "system_audio.hpp"
 
+#include "abaddon.hpp"
+
 namespace AbaddonClient::Audio {
 
 SystemAudio::SystemAudio(Context &context) noexcept :

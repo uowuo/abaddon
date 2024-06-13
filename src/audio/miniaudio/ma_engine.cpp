@@ -1,5 +1,9 @@
 #include "ma_engine.hpp"
 
+#include <utility>
+
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 MaEngine::MaEngine(EnginePtr &&engine) noexcept :

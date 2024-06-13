@@ -1,6 +1,12 @@
 #pragma once
 
+#include <string_view>
+
+#include <sigc++/sigc++.h>
+
 #include "audio/audio_engine.hpp"
+#include "discord/discord.hpp"
+#include "discord/snowflake.hpp"
 
 namespace AbaddonClient::Audio {
 

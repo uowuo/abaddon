@@ -1,5 +1,7 @@
 #include "ma_context.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 MaContext::MaContext(ContextPtr &&context) noexcept :

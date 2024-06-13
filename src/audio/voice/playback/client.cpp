@@ -1,6 +1,7 @@
 #include "client.hpp"
-
 #include "constants.hpp"
+
+#include "abaddon.hpp"
 
 namespace AbaddonClient::Audio::Voice::Playback {
 

@@ -1,5 +1,9 @@
 #include "ma_pcm_rb.hpp"
 
+#include <utility>
+
+#include <spdlog/spdlog.h>
+
 namespace AbaddonClient::Audio::Miniaudio {
 
 MaPCMRingBuffer::MaPCMRingBuffer(RingBufferPtr &&ringbuffer, uint32_t channels) noexcept :

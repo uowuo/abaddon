@@ -1,11 +1,12 @@
 #pragma once
 
-#include "misc/mutex.hpp"
+#include <atomic>
+
+#include <rnnoise.h>
 
 #include "audio/voice/capture/constants.hpp"
 #include "audio/voice/peak_meter/peak_meter.hpp"
-
-#include <rnnoise.h>
+#include "misc/mutex.hpp"
 
 namespace AbaddonClient::Audio::Voice::Capture::Effects {
 

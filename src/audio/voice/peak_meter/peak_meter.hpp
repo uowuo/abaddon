@@ -1,9 +1,8 @@
 #pragma once
 
-#include <glibmm.h>
+#include <atomic>
 
 #include "audio/utils.hpp"
-
 
 namespace AbaddonClient::Audio::Voice {
 

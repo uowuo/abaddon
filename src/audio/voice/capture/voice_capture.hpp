@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sigc++/sigc++.h>
+
 #include "audio/audio_device.hpp"
 #include "audio/context.hpp"
 #include "audio/utils.hpp"
