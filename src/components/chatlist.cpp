@@ -1,3 +1,4 @@
+#include <glibmm/i18n.h>
 #include "chatlist.hpp"
 #include "abaddon.hpp"
 #include "chatmessage.hpp"
@@ -294,28 +295,28 @@ std::optional<Snowflake> ChatList::GetLastSentEditableMessage() {
 }
 
 void ChatList::SetupMenu() {
-    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
+    m_menu_copy_id = Gtk::manage(new Gtk::MenuItem(_("Copy ID")));
     m_menu_copy_id->signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string(m_menu_selected_message));
     });
     m_menu_copy_id->show();
     m_menu.append(*m_menu_copy_id);
 
-    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem("Delete Message"));
+    m_menu_delete_message = Gtk::manage(new Gtk::MenuItem(_("Delete Message")));
     m_menu_delete_message->signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().DeleteMessage(m_active_channel, m_menu_selected_message);
     });
     m_menu_delete_message->show();
     m_menu.append(*m_menu_delete_message);
 
-    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem("Edit Message"));
+    m_menu_edit_message = Gtk::manage(new Gtk::MenuItem(_("Edit Message")));
     m_menu_edit_message->signal_activate().connect([this] {
         m_signal_action_message_edit.emit(m_active_channel, m_menu_selected_message);
     });
     m_menu_edit_message->show();
     m_menu.append(*m_menu_edit_message);
 
-    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem("Copy Content"));
+    m_menu_copy_content = Gtk::manage(new Gtk::MenuItem(_("Copy Content")));
     m_menu_copy_content->signal_activate().connect([this] {
         const auto msg = Abaddon::Get().GetDiscordClient().GetMessage(m_menu_selected_message);
         if (msg.has_value())
@@ -324,20 +325,20 @@ void ChatList::SetupMenu() {
     m_menu_copy_content->show();
     m_menu.append(*m_menu_copy_content);
 
-    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem("Reply To"));
+    m_menu_reply_to = Gtk::manage(new Gtk::MenuItem(_("Reply To")));
     m_menu_reply_to->signal_activate().connect([this] {
         m_signal_action_reply_to.emit(m_menu_selected_message);
     });
     m_menu_reply_to->show();
     m_menu.append(*m_menu_reply_to);
 
-    m_menu_unpin = Gtk::manage(new Gtk::MenuItem("Unpin"));
+    m_menu_unpin = Gtk::manage(new Gtk::MenuItem(_("Unpin")));
     m_menu_unpin->signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().Unpin(m_active_channel, m_menu_selected_message, [](...) {});
     });
     m_menu.append(*m_menu_unpin);
 
-    m_menu_pin = Gtk::manage(new Gtk::MenuItem("Pin"));
+    m_menu_pin = Gtk::manage(new Gtk::MenuItem(_("Pin")));
     m_menu_pin->signal_activate().connect([this] {
         Abaddon::Get().GetDiscordClient().Pin(m_active_channel, m_menu_selected_message, [](...) {});
     });

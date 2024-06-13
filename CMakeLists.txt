@@ -19,6 +19,7 @@ find_package(CURL)
 find_package(ZLIB REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(gtkmm REQUIRED)
+find_package(Intl REQUIRED)
 
 set(USE_TLS TRUE)
 set(USE_OPEN_SSL TRUE)
@@ -56,6 +57,9 @@ target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
+target_include_directories(abaddon PUBLIC ${INTL_INCLUDE_DIRS})
+
+add_subdirectory(po)
 
 if (ENABLE_QRCODE_LOGIN)
     add_library(qrcodegen subprojects/qrcodegen/cpp/qrcodegen.hpp subprojects/qrcodegen/cpp/qrcodegen.cpp)
@@ -118,6 +122,9 @@ target_link_libraries(abaddon ${GTKMM_LIBRARIES})
 target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
 target_link_libraries(abaddon ${CMAKE_DL_LIBS})
+target_link_libraries(abaddon ${INTL_LIBRARIES})
+
+target_link_libraries(abaddon CURL::libcurl)
 
 target_link_libraries(abaddon CURL::libcurl)
 

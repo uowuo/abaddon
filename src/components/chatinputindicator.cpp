@@ -1,6 +1,7 @@
 #include "chatinputindicator.hpp"
 #include <filesystem>
 #include <gdkmm/pixbufloader.h>
+#include <glibmm/i18n.h>
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -114,15 +115,15 @@ void ChatInputIndicator::ComputeTypingString() {
     if (typers.empty()) {
         SetTypingString("");
     } else if (typers.size() == 1) {
-        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " is typing...");
+        SetTypingString(typers[0].GetDisplayName(m_active_guild) + _(" is typing..."));
     } else if (typers.size() == 2) {
-        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " and " + typers[1].GetDisplayName(m_active_guild) + " are typing...");
+        SetTypingString(typers[0].GetDisplayName(m_active_guild) + _(" and ") + typers[1].GetDisplayName(m_active_guild) + _(" are typing..."));
     } else if (typers.size() > 2 && typers.size() <= MaxUsersInIndicator) {
         Glib::ustring str;
         for (size_t i = 0; i < typers.size() - 1; i++)
             str += typers[i].GetDisplayName(m_active_guild) + ", ";
-        SetTypingString(str + "and " + typers[typers.size() - 1].GetDisplayName(m_active_guild) + " are typing...");
+        SetTypingString(str + _("and ") + typers[typers.size() - 1].GetDisplayName(m_active_guild) + _(" are typing..."));
     } else { // size() > MaxUsersInIndicator
-        SetTypingString("Several people are typing...");
+        SetTypingString(_("Several people are typing..."));
     }
 }

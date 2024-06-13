@@ -1,4 +1,8 @@
 #include "chatwindow.hpp"
+
+#include <spdlog/fmt/fmt.h>
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "chatinputindicator.hpp"
 #include "ratelimitindicator.hpp"
@@ -327,9 +331,9 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     m_is_replying = true;
     m_input->StartReplying();
     if (author.has_value()) {
-        m_input_indicator->SetCustomMarkup("Replying to " + author->GetUsernameEscapedBold());
+        m_input_indicator->SetCustomMarkup(fmt::format(_("Replying to {}"), author->GetUsernameEscapedBold().c_str()));
     } else {
-        m_input_indicator->SetCustomMarkup("Replying...");
+        m_input_indicator->SetCustomMarkup(_("Replying..."));
     }
 }
 
@@ -349,7 +353,7 @@ void ChatWindow::StartEditing(Snowflake message_id) {
     m_is_editing = true;
     m_editing_id = message_id;
     m_input->StartEditing(*message);
-    m_input_indicator->SetCustomMarkup("Editing...");
+    m_input_indicator->SetCustomMarkup(_("Editing..."));
 }
 
 void ChatWindow::StopEditing() {

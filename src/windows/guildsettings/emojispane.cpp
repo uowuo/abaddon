@@ -1,5 +1,8 @@
 #include "emojispane.hpp"
 
+#include <glibmm/i18n.h>
+#include <spdlog/fmt/fmt.h>
+
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/treemodelfilter.h>
 
@@ -12,10 +15,10 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     , GuildID(guild_id)
     , m_model(Gtk::ListStore::create(m_columns))
     , m_filter(Gtk::TreeModelFilter::create(m_model))
-    , m_menu_delete("Delete")
-    , m_menu_copy_id("Copy ID")
-    , m_menu_copy_emoji_url("Copy Emoji URL")
-    , m_menu_show_emoji("Open in Browser") {
+    , m_menu_delete(_("Delete"))
+    , m_menu_copy_id(_("Copy ID"))
+    , m_menu_copy_emoji_url(_("Copy Emoji URL"))
+    , m_menu_show_emoji(_("Open in Browser")) {
     signal_map().connect(sigc::mem_fun(*this, &GuildSettingsEmojisPane::OnMap));
     set_name("guild-emojis-pane");
 
@@ -43,7 +46,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     const bool can_manage = discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD_EXPRESSIONS);
     m_menu_delete.set_sensitive(can_manage);
 
-    m_search.set_placeholder_text("Filter");
+    m_search.set_placeholder_text(_("Filter"));
     m_search.signal_changed().connect([this]() {
         m_filter->refilter();
     });
@@ -63,7 +66,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     m_view.set_enable_search(false);
     m_view.set_model(m_filter);
 
-    auto *column = Gtk::manage(new Gtk::TreeView::Column("Emoji"));
+    auto *column = Gtk::manage(new Gtk::TreeView::Column(_("Emoji")));
     auto *renderer = Gtk::manage(new CellRendererPixbufAnimation);
     column->pack_start(*renderer);
     column->add_attribute(renderer->property_pixbuf(), m_columns.m_col_pixbuf);
@@ -71,7 +74,7 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
     m_view.append_column(*column);
 
     if (can_manage) {
-        auto *column = Gtk::manage(new Gtk::TreeView::Column("Name"));
+        auto *column = Gtk::manage(new Gtk::TreeView::Column(_("Name")));
         auto *renderer = Gtk::manage(new Gtk::CellRendererText);
         column->pack_start(*renderer);
         column->add_attribute(renderer->property_text(), m_columns.m_col_name);
@@ -93,10 +96,10 @@ GuildSettingsEmojisPane::GuildSettingsEmojisPane(Snowflake guild_id)
         });
         m_view.append_column(*column);
     } else
-        m_view.append_column("Name", m_columns.m_col_name);
+        m_view.append_column(_("Name"), m_columns.m_col_name);
     if (can_manage)
-        m_view.append_column("Creator", m_columns.m_col_creator);
-    m_view.append_column("Is Animated?", m_columns.m_col_animated);
+        m_view.append_column(_("Creator"), m_columns.m_col_creator);
+    m_view.append_column(_("Is Animated?"), m_columns.m_col_animated);
 
     for (const auto column : m_view.get_columns())
         column->set_resizable(true);
@@ -127,13 +130,13 @@ void GuildSettingsEmojisPane::AddEmojiRow(const EmojiData &emoji) {
     if (emoji.Creator.has_value())
         row[m_columns.m_col_creator] = emoji.Creator->GetUsername();
     if (emoji.IsAnimated.has_value())
-        row[m_columns.m_col_animated] = *emoji.IsAnimated ? "Yes" : "No";
+        row[m_columns.m_col_animated] = *emoji.IsAnimated ? _("Yes") : _("No");
     else
-        row[m_columns.m_col_animated] = "No";
+        row[m_columns.m_col_animated] = _("No");
     if (emoji.IsAvailable.has_value())
-        row[m_columns.m_col_available] = *emoji.IsAvailable ? "Yes" : "No";
+        row[m_columns.m_col_available] = *emoji.IsAvailable ? _("Yes") : _("No");
     else
-        row[m_columns.m_col_available] = "Yes";
+        row[m_columns.m_col_available] = _("Yes");
 
     if (Abaddon::Get().GetSettings().ShowAnimations && emoji.IsAnimated.has_value() && *emoji.IsAnimated) {
         const auto cb = [this, id = emoji.ID](const Glib::RefPtr<Gdk::PixbufAnimation> &pb) {
@@ -181,7 +184,7 @@ void GuildSettingsEmojisPane::OnFetchEmojis(std::vector<EmojiData> emojis) {
 void GuildSettingsEmojisPane::OnEditName(Snowflake id, const std::string &name) {
     const auto cb = [](DiscordError code) {
         if (code != DiscordError::NONE) {
-            Gtk::MessageDialog dlg("Failed to set emoji name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
+            Gtk::MessageDialog dlg(_("Failed to set emoji name"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
@@ -201,10 +204,10 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
         const auto name = static_cast<Glib::ustring>(selected_row[m_columns.m_col_name]);
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
         if (auto *window = dynamic_cast<Gtk::Window *>(get_toplevel()))
-            if (Abaddon::Get().ShowConfirm("Are you sure you want to delete " + name + "?", window)) {
+            if (Abaddon::Get().ShowConfirm(fmt::format(_("Are you sure you want to delete {}?"), name.c_str()), window)) {
                 const auto cb = [](DiscordError code) {
                     if (code != DiscordError::NONE) {
-                        Gtk::MessageDialog dlg("Failed to delete emoji", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
+                        Gtk::MessageDialog dlg(_("Failed to delete emoji"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
                         dlg.set_position(Gtk::WIN_POS_CENTER);
                         dlg.run();
                     }
@@ -217,7 +220,7 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
 void GuildSettingsEmojisPane::OnMenuCopyEmojiURL() {
     if (auto selected_row = *m_view.get_selection()->get_selected()) {
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
-        const bool is_animated = static_cast<Glib::ustring>(selected_row[m_columns.m_col_animated]) == "Yes";
+        const bool is_animated = static_cast<Glib::ustring>(selected_row[m_columns.m_col_animated]) == _("Yes");
         Gtk::Clipboard::get()->set_text(EmojiData::URLFromID(id, is_animated ? "gif" : "png", "256"));
     }
 }
@@ -225,7 +228,7 @@ void GuildSettingsEmojisPane::OnMenuCopyEmojiURL() {
 void GuildSettingsEmojisPane::OnMenuShowEmoji() {
     if (auto selected_row = *m_view.get_selection()->get_selected()) {
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
-        const bool is_animated = static_cast<Glib::ustring>(selected_row[m_columns.m_col_animated]) == "Yes";
+        const bool is_animated = static_cast<Glib::ustring>(selected_row[m_columns.m_col_animated]) == _("Yes");
         LaunchBrowser(EmojiData::URLFromID(id, is_animated ? "gif" : "png", "256"));
     }
 }

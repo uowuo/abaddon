@@ -2,6 +2,8 @@
 
 // clang-format off
 
+#include <glibmm/i18n.h>
+
 #include "voiceinfobox.hpp"
 #include "abaddon.hpp"
 #include "util.hpp"
@@ -28,8 +30,8 @@ VoiceInfoBox::VoiceInfoBox()
     m_location.get_style_context()->add_class("voice-info-location");
     m_disconnect_img.get_style_context()->add_class("voice-info-disconnect-image");
 
-    m_status.set_label("You shouldn't see me");
-    m_location.set_label("You shouldn't see me");
+    m_status.set_label(_("You shouldn't see me"));
+    m_location.set_label(_("You shouldn't see me"));
 
     Abaddon::Get().GetDiscordClient().signal_voice_requested_connect().connect([this](Snowflake channel_id) {
         show();
@@ -44,20 +46,20 @@ VoiceInfoBox::VoiceInfoBox()
         Glib::ustring label;
         switch (state) {
             case DiscordVoiceClient::State::ConnectingToWebsocket:
-                label = "Connecting";
+                label = _("Connecting");
                 break;
             case DiscordVoiceClient::State::EstablishingConnection:
-                label = "Establishing connection";
+                label = _("Establishing connection");
                 break;
             case DiscordVoiceClient::State::Connected:
-                label = "Connected";
+                label = _("Connected");
                 break;
             case DiscordVoiceClient::State::DisconnectedByServer:
             case DiscordVoiceClient::State::DisconnectedByClient:
-                label = "Disconnected";
+                label = _("Disconnected");
                 break;
             default:
-                label = "Unknown";
+                label = _("Unknown");
                 break;
         }
         m_status.set_label(label);
@@ -113,7 +115,7 @@ void VoiceInfoBox::UpdateLocation() {
         return;
     }
 
-    m_location.set_label("Unknown");
+    m_location.set_label(_("Unknown"));
 }
 
 #endif
