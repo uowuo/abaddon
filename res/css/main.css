@@ -157,6 +157,11 @@
     min-height: 0px;
 }
 
+.classic-mention-overlay:selected {
+    color: @theme_selected_color;
+    background-color: @theme_selected_bg_color;
+}
+
 .channel-list .view:selected {
     background-color: @theme_selected_bg_color;
 }
@@ -173,6 +178,10 @@
 }
 
 .classic-guild-list-guild.has-unread {
+    background: radial-gradient(7px circle at left, @theme_selected_bg_color 50%, transparent 20%);
+}
+
+.classic-guild-list-folder.has-unread stack {
     background: radial-gradient(7px circle at left, @theme_selected_bg_color 50%, transparent 20%);
 }
 

@@ -321,6 +321,8 @@ private:
 
     void StoreMessageData(Message &msg);
 
+    static bool ShouldChannelTypeCountInUnread(ChannelType type);
+
     void HandleReadyReadState(const ReadyEventData &data);
     void HandleReadyGuildSettings(const ReadyEventData &data);
 

@@ -95,7 +95,7 @@ GuildListFolderItem::GuildListFolderItem(const UserSettingsGuildFoldersEntry &fo
     CheckUnreadStatus();
 }
 
-void GuildListFolderItem::AddGuildWidget(GuildListGuildItem *widget) {
+void GuildListFolderItem::AddGuildWidget(Gtk::Widget *widget) {
     m_box.add(*widget);
 }
 

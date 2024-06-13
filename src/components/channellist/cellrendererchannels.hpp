@@ -153,7 +153,6 @@ protected:
                          const Gdk::Rectangle &cell_area,
                          Gtk::CellRendererState flags);
 
-    static void cairo_path_rounded_rect(const Cairo::RefPtr<Cairo::Context> &cr, double x, double y, double w, double h, double r);
     static void unread_render_mentions(const Cairo::RefPtr<Cairo::Context> &cr, Gtk::Widget &widget, int mentions, int edge, const Gdk::Rectangle &cell_area);
 
 private:

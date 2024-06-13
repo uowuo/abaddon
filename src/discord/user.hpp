@@ -11,8 +11,7 @@ enum class EPremiumType {
 };
 
 struct UserData {
-    // todo: enum class? (for consistencys sake)
-    enum {
+    enum class EFlags : uint64_t {
         DiscordEmployee = 1 << 0,
         PartneredServerOwner = 1 << 1,
         HypeSquadEvents = 1 << 2,

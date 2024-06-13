@@ -56,6 +56,8 @@ private:
     Gtk::CheckButton m_noise_suppression;
     Gtk::CheckButton m_mix_mono;
 
+    Gtk::Button m_disconnect;
+
     Gtk::ComboBoxText m_vad_combo;
     Gtk::ComboBox m_playback_combo;
     Gtk::ComboBox m_capture_combo;
