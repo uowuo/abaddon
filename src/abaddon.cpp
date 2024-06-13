@@ -24,6 +24,7 @@
 #include "notifications/notifications.hpp"
 #include "remoteauth/remoteauthdialog.hpp"
 #include "util.hpp"
+#include <glibmm/i18n.h>
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -211,7 +212,7 @@ int Abaddon::StartGTK() {
 
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg("css failed parsing (" + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(_("css failed parsing (") + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
@@ -227,13 +228,13 @@ int Abaddon::StartGTK() {
     }
 
     if (!png_found) {
-        Gtk::MessageDialog dlg("The PNG pixbufloader wasn't detected. Abaddon may not work as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(_("The PNG pixbufloader wasn't detected. Abaddon may not work as a result."), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 
     if (!gif_found) {
-        Gtk::MessageDialog dlg("The GIF pixbufloader wasn't detected. Animations may not display as a result.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(_("The GIF pixbufloader wasn't detected. Animations may not display as a result."), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
@@ -248,19 +249,19 @@ int Abaddon::StartGTK() {
 #endif
 
     if (!m_settings.IsValid()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The settings file could not be opened!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("The settings file could not be opened!"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 
     if (!m_emojis.Load()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The emoji file couldn't be loaded!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("The emoji file couldn't be loaded!"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
 
     if (!m_discord.IsStoreValid()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The Discord cache could not be created!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("The Discord cache could not be created!"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
         return 1;
@@ -268,7 +269,7 @@ int Abaddon::StartGTK() {
 
 #ifdef WITH_VOICE
     if (!m_audio.OK()) {
-        Gtk::MessageDialog dlg(*m_main_window, "The audio engine could not be initialized!", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("The audio engine could not be initialized!"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
@@ -329,7 +330,7 @@ int Abaddon::StartGTK() {
         m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
     }
     m_tray_menu = Gtk::make_managed<Gtk::Menu>();
-    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit", false);
+    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>(_("Quit"), false);
 
     m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
 
@@ -464,12 +465,12 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
     m_main_window->UpdateComponents();
 
     if (close_code == GatewayCloseCode::AuthenticationFailed) {
-        Gtk::MessageDialog dlg(*m_main_window, "Discord rejected your token", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("Discord rejected your token"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     } else if (close_code != GatewayCloseCode::Normal) {
         Gtk::MessageDialog dlg(*m_main_window,
-                               "Lost connection with Discord's gateway. Try reconnecting (code " + std::to_string(static_cast<unsigned>(close_code)) + ")",
+                               _("Lost connection with Discord's gateway. Try reconnecting (code ") + std::to_string(static_cast<unsigned>(close_code)) + ")",
                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
@@ -479,7 +480,7 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
 void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
     if (data.Thread.ID == m_main_window->GetChatActiveChannel()) {
         if (data.Thread.ThreadMetadata->IsArchived)
-            m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+            m_main_window->GetChatWindow()->SetTopic(_("This thread is archived. Sending a message will unarchive it"));
         else
             m_main_window->GetChatWindow()->SetTopic("");
     }
@@ -622,7 +623,7 @@ void Abaddon::RunFirstTimeDiscordStartup() {
             m_discord.SetCookie(*cookie);
         } else {
             ConfirmDialog confirm(*m_main_window);
-            confirm.SetConfirmText("Cookies could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetConfirmText(_("Cookies could not be fetched. This may increase your chances of being flagged by Discord's anti-spam"));
             confirm.SetAcceptOnly(true);
             confirm.run();
         }
@@ -631,7 +632,7 @@ void Abaddon::RunFirstTimeDiscordStartup() {
             m_discord.SetBuildNumber(*build_number);
         } else {
             ConfirmDialog confirm(*m_main_window);
-            confirm.SetConfirmText("Build number could not be fetched. This may increase your chances of being flagged by Discord's anti-spam");
+            confirm.SetConfirmText(_("Build number could not be fetched. This may increase your chances of being flagged by Discord's anti-spam"));
             confirm.SetAcceptOnly(true);
             confirm.run();
         }
@@ -648,7 +649,7 @@ void Abaddon::ShowGuildVerificationGateDialog(Snowflake guild_id) {
     if (dlg.run() == Gtk::RESPONSE_OK) {
         const auto cb = [this](DiscordError code) {
             if (code != DiscordError::NONE) {
-                Gtk::MessageDialog dlg(*m_main_window, "Failed to accept the verification gate.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(*m_main_window, _("Failed to accept the verification gate."), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
@@ -673,14 +674,14 @@ void Abaddon::CheckMessagesForMembers(const ChannelData &chan, const std::vector
 
 void Abaddon::SetupUserMenu() {
     m_user_menu = Gtk::manage(new Gtk::Menu);
-    m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem("Insert Mention"));
-    m_user_menu_ban = Gtk::manage(new Gtk::MenuItem("Ban"));
-    m_user_menu_kick = Gtk::manage(new Gtk::MenuItem("Kick"));
-    m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem("Copy ID"));
-    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem("Go to DM"));
-    m_user_menu_roles = Gtk::manage(new Gtk::MenuItem("Roles"));
-    m_user_menu_info = Gtk::manage(new Gtk::MenuItem("View Profile"));
-    m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem("Remove From Group"));
+    m_user_menu_insert_mention = Gtk::manage(new Gtk::MenuItem(_("Insert Mention")));
+    m_user_menu_ban = Gtk::manage(new Gtk::MenuItem(_("Ban")));
+    m_user_menu_kick = Gtk::manage(new Gtk::MenuItem(_("Kick")));
+    m_user_menu_copy_id = Gtk::manage(new Gtk::MenuItem(_("Copy ID")));
+    m_user_menu_open_dm = Gtk::manage(new Gtk::MenuItem(_("Go to DM")));
+    m_user_menu_roles = Gtk::manage(new Gtk::MenuItem(_("Roles")));
+    m_user_menu_info = Gtk::manage(new Gtk::MenuItem(_("View Profile")));
+    m_user_menu_remove_recipient = Gtk::manage(new Gtk::MenuItem(_("Remove From Group")));
     m_user_menu_roles_submenu = Gtk::manage(new Gtk::Menu);
     m_user_menu_roles->set_submenu(*m_user_menu_roles_submenu);
     m_user_menu_insert_mention->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_user_menu_insert_mention));
@@ -922,7 +923,7 @@ void Abaddon::ActionChannelOpened(Snowflake id, bool expand_to) {
         if (channel->IsThread()) {
             m_discord.SendThreadLazyLoad(id);
             if (channel->ThreadMetadata->IsArchived)
-                m_main_window->GetChatWindow()->SetTopic("This thread is archived. Sending a message will unarchive it");
+                m_main_window->GetChatWindow()->SetTopic(_("This thread is archived. Sending a message will unarchive it"));
         } else if (channel->Type != ChannelType::DM && channel->Type != ChannelType::GROUP_DM && channel->GuildID.has_value()) {
             m_discord.SendLazyLoad(id);
 
@@ -998,7 +999,7 @@ void Abaddon::ActionLeaveGuild(Snowflake id) {
     ConfirmDialog dlg(*m_main_window);
     const auto guild = m_discord.GetGuild(id);
     if (guild.has_value())
-        dlg.SetConfirmText("Are you sure you want to leave " + guild->Name + "?");
+        dlg.SetConfirmText(_("Are you sure you want to leave ") + guild->Name + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.LeaveGuild(id);
@@ -1008,7 +1009,7 @@ void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to kick " + user->GetUsername() + "?");
+        dlg.SetConfirmText(_("Are you sure you want to kick ") + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.KickUser(user_id, guild_id);
@@ -1018,7 +1019,7 @@ void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText("Are you sure you want to ban " + user->GetUsername() + "?");
+        dlg.SetConfirmText(_("Are you sure you want to ban ") + user->GetUsername() + "?");
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.BanUser(user_id, guild_id);
@@ -1115,7 +1116,7 @@ void Abaddon::ActionReloadCSS() {
         m_css_provider->load_from_path(GetCSSPath("/" + GetSettings().MainCSS));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     } catch (Glib::Error &e) {
-        Gtk::MessageDialog dlg(*m_main_window, "css failed to load (" + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, _("css failed to load (") + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }
@@ -1170,6 +1171,9 @@ int main(int argc, char **argv) {
             }
         } catch (...) {}
     }
+
+    bindtextdomain("abaddon", "./locale/");
+    textdomain("abaddon");
 
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };

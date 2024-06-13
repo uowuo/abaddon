@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include <glibmm/i18n.h>
+
 #include <gdkmm/pixbufloader.h>
 #include <gtkmm/filechoosernative.h>
 #include <gtkmm/messagedialog.h>
@@ -10,7 +12,7 @@
 #include "util.hpp"
 
 GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
-    : m_guild_name_label("Guild name")
+    : m_guild_name_label(_("Guild name"))
     , GuildID(id) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto guild = *discord.GetGuild(id);
@@ -32,7 +34,7 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
         // clang-format off
     }, false);
     // clang-format on
-    m_guild_name.set_tooltip_text("Press enter or lose focus to submit");
+    m_guild_name.set_tooltip_text(_("Press enter or lose focus to submit"));
     m_guild_name.show();
     m_guild_name_label.show();
 
@@ -48,7 +50,7 @@ GuildSettingsInfoPane::GuildSettingsInfoPane(Snowflake id)
 
     m_guild_icon.set_margin_bottom(10);
     if (can_modify) {
-        m_guild_icon_ev.set_tooltip_text("Click to choose a file, right click to paste");
+        m_guild_icon_ev.set_tooltip_text(_("Click to choose a file, right click to paste"));
 
         m_guild_icon_ev.signal_button_press_event().connect([this](GdkEventButton *event) -> bool {
             if (event->type == GDK_BUTTON_PRESS && event->button == GDK_BUTTON_PRIMARY) {
@@ -104,7 +106,7 @@ void GuildSettingsInfoPane::UpdateGuildName() {
     auto cb = [this](DiscordError code) {
         if (code != DiscordError::NONE) {
             m_guild_name.set_text(Abaddon::Get().GetDiscordClient().GetGuild(GuildID)->Name);
-            Gtk::MessageDialog dlg("Failed to set guild name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            Gtk::MessageDialog dlg(_("Failed to set guild name"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
@@ -118,7 +120,7 @@ void GuildSettingsInfoPane::UpdateGuildIconFromData(const std::vector<uint8_t> &
 
     auto cb = [](DiscordError code) {
         if (code != DiscordError::NONE) {
-            Gtk::MessageDialog dlg("Failed to set guild icon", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            Gtk::MessageDialog dlg(_("Failed to set guild icon"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
@@ -142,7 +144,7 @@ void GuildSettingsInfoPane::UpdateGuildIconFromPixbuf(Glib::RefPtr<Gdk::Pixbuf> 
 }
 
 void GuildSettingsInfoPane::UpdateGuildIconPicker() {
-    auto dlg = Gtk::FileChooserNative::create("Choose new guild icon", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    auto dlg = Gtk::FileChooserNative::create(_("Choose new guild icon"), Gtk::FILE_CHOOSER_ACTION_OPEN);
     dlg->set_modal(true);
     dlg->signal_response().connect([this, dlg](int response) {
         if (response == Gtk::RESPONSE_ACCEPT) {
@@ -165,11 +167,12 @@ void GuildSettingsInfoPane::UpdateGuildIconPicker() {
     });
 
     auto filter_images = Gtk::FileFilter::create();
+    std::string supported_images_text = _("Supported images");
     if (const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(GuildID); guild.has_value() && guild->HasFeature("ANIMATED_ICON")) {
-        filter_images->set_name("Supported images (*.jpg, *.jpeg, *.png, *.gif)");
+        filter_images->set_name(supported_images_text + " (*.jpg, *.jpeg, *.png, *.gif)");
         filter_images->add_pattern("*.gif");
     } else {
-        filter_images->set_name("Supported images (*.jpg, *.jpeg, *.png)");
+        filter_images->set_name(supported_images_text + " (*.jpg, *.jpeg, *.png)");
     }
     filter_images->add_pattern("*.jpg");
     filter_images->add_pattern("*.jpeg");
@@ -177,7 +180,7 @@ void GuildSettingsInfoPane::UpdateGuildIconPicker() {
     dlg->add_filter(filter_images);
 
     auto filter_all = Gtk::FileFilter::create();
-    filter_all->set_name("All files (*.*)");
+    filter_all->set_name(std::string{_("All files")} + " (*.*)");
     filter_all->add_pattern("*.*");
     dlg->add_filter(filter_all);
 

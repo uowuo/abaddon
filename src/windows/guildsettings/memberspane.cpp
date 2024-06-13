@@ -1,5 +1,8 @@
 #include "memberspane.hpp"
 
+#include <glibmm/i18n.h>
+#include <fmt/format.h>
+
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -15,7 +18,7 @@ GuildSettingsMembersPane::GuildSettingsMembersPane(Snowflake id)
 
     m_member_list.signal_member_select().connect(sigc::mem_fun(m_member_info, &GuildSettingsMembersPaneInfo::SetUser));
 
-    m_note.set_label("Some members may not be shown if the client is not aware of them");
+    m_note.set_label(_("Some members may not be shown if the client is not aware of them"));
     m_note.set_single_line_mode(true);
     m_note.set_ellipsize(Pango::ELLIPSIZE_END);
 
@@ -59,7 +62,7 @@ GuildSettingsMembersPaneMembers::GuildSettingsMembersPaneMembers(Snowflake id)
             m_signal_member_select.emit(selected->UserID);
     });
 
-    m_search.set_placeholder_text("Filter");
+    m_search.set_placeholder_text(_("Filter"));
     m_search.signal_changed().connect([this] {
         m_list.invalidate_filter();
     });
@@ -173,7 +176,7 @@ GuildSettingsMembersPaneInfo::GuildSettingsMembersPaneInfo(Snowflake guild_id)
         lbl.show();
     };
 
-    m_bot.set_text("User is a bot");
+    m_bot.set_text(_("User is a bot"));
 
     label(m_bot);
     label(m_id);
@@ -208,16 +211,16 @@ void GuildSettingsMembersPaneInfo::SetUser(Snowflake user_id) {
 
     m_bot.set_visible(member.User->IsABot());
 
-    m_id.set_text("User ID: " + std::to_string(user_id));
-    m_created.set_text("Account created: " + user_id.GetLocalTimestamp());
+    m_id.set_text(_("User ID: ") + std::to_string(user_id));
+    m_created.set_text(_("Account created: ") + user_id.GetLocalTimestamp());
     if (!member.JoinedAt.empty())
-        m_joined.set_text("Joined server: " + FormatISO8601(member.JoinedAt));
+        m_joined.set_text(_("Joined server: ") + FormatISO8601(member.JoinedAt));
     else
-        m_joined.set_text("Joined server: Unknown");
-    m_nickname.set_text("Nickname: " + member.Nickname);
+        m_joined.set_text(_("Joined server: Unknown"));
+    m_nickname.set_text(_("Nickname: ") + member.Nickname);
     m_nickname.set_visible(!member.Nickname.empty());
     if (member.PremiumSince.has_value()) {
-        m_boosting.set_text("Boosting since " + FormatISO8601(*member.PremiumSince));
+        m_boosting.set_text(fmt::format(_("Boosting since {}"), FormatISO8601(*member.PremiumSince)));
         m_boosting.show();
     } else
         m_boosting.hide();

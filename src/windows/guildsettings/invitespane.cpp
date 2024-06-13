@@ -1,5 +1,6 @@
 #include "invitespane.hpp"
 
+#include <glibmm/i18n.h>
 #include <gtkmm/messagedialog.h>
 
 #include "abaddon.hpp"
@@ -8,7 +9,7 @@
 GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
     : GuildID(id)
     , m_model(Gtk::ListStore::create(m_columns))
-    , m_menu_delete("Delete") {
+    , m_menu_delete(_("Delete")) {
     signal_map().connect(sigc::mem_fun(*this, &GuildSettingsInvitesPane::OnMap));
     set_name("guild-invites-pane");
     set_hexpand(true);
@@ -30,12 +31,12 @@ GuildSettingsInvitesPane::GuildSettingsInvitesPane(Snowflake id)
 
     m_view.set_enable_search(false);
     m_view.set_model(m_model);
-    m_view.append_column("Code", m_columns.m_col_code);
-    m_view.append_column("Expires", m_columns.m_col_expires);
-    m_view.append_column("Created by", m_columns.m_col_inviter);
-    m_view.append_column("Uses", m_columns.m_col_uses);
-    m_view.append_column("Max uses", m_columns.m_col_max_uses);
-    m_view.append_column("Grants temporary membership", m_columns.m_col_temporary);
+    m_view.append_column(_("Code"), m_columns.m_col_code);
+    m_view.append_column(_("Expires"), m_columns.m_col_expires);
+    m_view.append_column(_("Created by"), m_columns.m_col_inviter);
+    m_view.append_column(_("Uses"), m_columns.m_col_uses);
+    m_view.append_column(_("Max uses"), m_columns.m_col_max_uses);
+    m_view.append_column(_("Grants temporary membership"), m_columns.m_col_temporary);
 
     for (const auto column : m_view.get_columns())
         column->set_resizable(true);
@@ -60,18 +61,18 @@ void GuildSettingsInvitesPane::AppendInvite(const InviteData &invite) {
 
     if (invite.MaxAge.has_value()) {
         if (*invite.MaxAge == 0)
-            row[m_columns.m_col_expires] = "Never";
+            row[m_columns.m_col_expires] = _("Never");
         else
             row[m_columns.m_col_expires] = FormatISO8601(*invite.CreatedAt, *invite.MaxAge);
     }
 
     row[m_columns.m_col_uses] = *invite.Uses;
     if (*invite.MaxUses == 0)
-        row[m_columns.m_col_max_uses] = "Unlimited";
+        row[m_columns.m_col_max_uses] = _("Unlimited");
     else
         row[m_columns.m_col_max_uses] = std::to_string(*invite.MaxUses);
 
-    row[m_columns.m_col_temporary] = *invite.IsTemporary ? "Yes" : "No";
+    row[m_columns.m_col_temporary] = *invite.IsTemporary ? _("Yes") : _("No");
 }
 
 void GuildSettingsInvitesPane::OnInviteFetch(const std::optional<InviteData> &invite) {
@@ -102,7 +103,7 @@ void GuildSettingsInvitesPane::OnMenuDelete() {
         auto code = static_cast<Glib::ustring>(selected_row[m_columns.m_col_code]);
         auto cb = [](DiscordError code) {
             if (code != DiscordError::NONE) {
-                Gtk::MessageDialog dlg("Failed to delete invite", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(_("Failed to delete invite"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }

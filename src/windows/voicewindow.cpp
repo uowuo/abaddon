@@ -2,11 +2,14 @@
 
 // clang-format off
 
+#include "voicewindow.hpp"
+
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "components/lazyimage.hpp"
 #include "voicesettingswindow.hpp"
-#include "voicewindow.hpp"
 
 // clang-format on
 
@@ -16,7 +19,7 @@ public:
         : m_main(Gtk::ORIENTATION_VERTICAL)
         , m_horz(Gtk::ORIENTATION_HORIZONTAL)
         , m_avatar(32, 32)
-        , m_mute("Mute") {
+        , m_mute(_("Mute")) {
         m_name.set_halign(Gtk::ALIGN_START);
         m_name.set_hexpand(true);
         m_mute.set_halign(Gtk::ALIGN_END);
@@ -43,7 +46,7 @@ public:
             m_name.set_text(user->GetUsername());
             m_avatar.SetURL(user->GetAvatarURL("png", "32"));
         } else {
-            m_name.set_text("Unknown user");
+            m_name.set_text(_("Unknown User"));
         }
 
         m_mute.signal_toggled().connect([this]() {
@@ -87,13 +90,13 @@ private:
 VoiceWindow::VoiceWindow(Snowflake channel_id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
     , m_controls(Gtk::ORIENTATION_HORIZONTAL)
-    , m_mute("Mute")
-    , m_deafen("Deafen")
-    , m_noise_suppression("Suppress Noise")
-    , m_mix_mono("Mix Mono")
+    , m_mute(_("Mute"))
+    , m_deafen(_("Deafen"))
+    , m_noise_suppression(_("Suppress Noise"))
+    , m_mix_mono(_("Mix Mono"))
     , m_channel_id(channel_id)
-    , m_menu_view("View")
-    , m_menu_view_settings("More _Settings", true) {
+    , m_menu_view(_("View"))
+    , m_menu_view_settings(_("More _Settings"), true) {
     get_style_context()->add_class("app-window");
 
     set_default_size(300, 300);
@@ -152,12 +155,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_combo.set_hexpand(true);
     m_vad_combo.set_halign(Gtk::ALIGN_FILL);
     m_vad_combo.set_tooltip_text(
-        "Voice Activation Detection method\n"
+        _("Voice Activation Detection method\n"
         "Gate - Simple volume threshold. Slider changes threshold\n"
-        "RNNoise - Heavier on CPU. Slider changes probability threshold");
-    m_vad_combo.append("gate", "Gate");
+        "RNNoise - Heavier on CPU. Slider changes probability threshold"));
+    m_vad_combo.append("gate", _("Gate"));
 #ifdef WITH_RNNOISE
-    m_vad_combo.append("rnnoise", "RNNoise");
+    m_vad_combo.append("rnnoise", _("RNNoise"));
 #endif
     if (!m_vad_combo.set_active_id(Abaddon::Get().GetSettings().VAD)) {
 #ifdef WITH_RNNOISE
@@ -231,8 +234,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto *sliders_sliders = Gtk::make_managed<Gtk::VBox>();
     sliders_container->pack_start(*sliders_labels, false, true, 2);
     sliders_container->pack_start(*sliders_sliders);
-    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Threshold", Gtk::ALIGN_END));
-    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Gain", Gtk::ALIGN_END));
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Threshold"), Gtk::ALIGN_END));
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Gain"), Gtk::ALIGN_END));
     sliders_sliders->pack_start(m_vad_param);
     sliders_sliders->pack_start(m_capture_gain);
 
@@ -241,9 +244,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto *combos_combos = Gtk::make_managed<Gtk::VBox>();
     combos_container->pack_start(*combos_labels, false, true, 6);
     combos_container->pack_start(*combos_combos, Gtk::PACK_EXPAND_WIDGET, 6);
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("VAD Method", Gtk::ALIGN_END));
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Output Device", Gtk::ALIGN_END));
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Input Device", Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("VAD Method"), Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Output Device"), Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Input Device"), Gtk::ALIGN_END));
     combos_combos->pack_start(m_vad_combo);
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
@@ -256,7 +259,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(m_menu_bar, false, true);
     m_main.pack_start(m_controls, false, true);
     m_main.pack_start(m_vad_value, false, true);
-    m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
+    m_main.pack_start(*Gtk::make_managed<Gtk::Label>(_("Input Settings")), false, true);
     m_main.pack_start(*sliders_container, false, true);
     m_main.pack_start(m_scroll);
     m_main.pack_start(*combos_container, false, true, 2);

@@ -1,16 +1,18 @@
 #include "confirm.hpp"
 
+#include <glibmm/i18n.h>
+
 ConfirmDialog::ConfirmDialog(Gtk::Window &parent)
-    : Gtk::Dialog("Confirm", parent, true)
+    : Gtk::Dialog(_("Confirm"), parent, true)
     , m_layout(Gtk::ORIENTATION_VERTICAL)
     , m_ok("OK")
-    , m_cancel("Cancel")
+    , m_cancel(_("Cancel"))
     , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
 
-    m_label.set_text("Are you sure?");
+    m_label.set_text(_("Are you sure?"));
 
     m_ok.signal_clicked().connect([&]() {
         response(Gtk::RESPONSE_OK);

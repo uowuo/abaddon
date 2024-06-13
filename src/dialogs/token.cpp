@@ -1,5 +1,7 @@
 #include "token.hpp"
 
+#include <glibmm/i18n.h>
+
 std::string trim(const std::string &str) {
     const auto first = str.find_first_not_of(' ');
     if (first == std::string::npos) return str;
@@ -8,10 +10,10 @@ std::string trim(const std::string &str) {
 }
 
 TokenDialog::TokenDialog(Gtk::Window &parent)
-    : Gtk::Dialog("Set Token", parent, true)
+    : Gtk::Dialog(_("Set Token"), parent, true)
     , m_layout(Gtk::ORIENTATION_VERTICAL)
     , m_ok("OK")
-    , m_cancel("Cancel")
+    , m_cancel(_("Cancel"))
     , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 50);
     get_style_context()->add_class("app-window");

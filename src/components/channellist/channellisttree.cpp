@@ -4,6 +4,7 @@
 #include <map>
 #include <unordered_map>
 
+#include <glibmm/i18n.h>
 #include <gtkmm/main.h>
 
 #include "abaddon.hpp"
@@ -15,32 +16,32 @@ ChannelListTree::ChannelListTree()
     , m_model(Gtk::TreeStore::create(m_columns))
     , m_filter_model(Gtk::TreeModelFilter::create(m_model))
     , m_sort_model(Gtk::TreeModelSort::create(m_filter_model))
-    , m_menu_guild_copy_id("_Copy ID", true)
-    , m_menu_guild_settings("View _Settings", true)
-    , m_menu_guild_leave("_Leave", true)
-    , m_menu_guild_mark_as_read("Mark as _Read", true)
-    , m_menu_category_copy_id("_Copy ID", true)
-    , m_menu_channel_copy_id("_Copy ID", true)
-    , m_menu_channel_mark_as_read("Mark as _Read", true)
+    , m_menu_guild_copy_id(_("_Copy ID"), true)
+    , m_menu_guild_settings(_("View _Settings"), true)
+    , m_menu_guild_leave(_("_Leave"), true)
+    , m_menu_guild_mark_as_read(_("Mark as _Read"), true)
+    , m_menu_category_copy_id(_("_Copy ID"), true)
+    , m_menu_channel_copy_id(_("_Copy ID"), true)
+    , m_menu_channel_mark_as_read(_("Mark as _Read"), true)
 #ifdef WITH_LIBHANDY
-    , m_menu_channel_open_tab("Open in New _Tab", true)
-    , m_menu_dm_open_tab("Open in New _Tab", true)
+    , m_menu_channel_open_tab(_("Open in New _Tab"), true)
+    , m_menu_dm_open_tab(_("Open in New _Tab"), true)
 #endif
 #ifdef WITH_VOICE
-    , m_menu_voice_channel_join("_Join", true)
-    , m_menu_voice_channel_disconnect("_Disconnect", true)
+    , m_menu_voice_channel_join(_("_Join"), true)
+    , m_menu_voice_channel_disconnect(_("_Disconnect"), true)
 #endif
-    , m_menu_dm_copy_id("_Copy ID", true)
+    , m_menu_dm_copy_id(_("_Copy ID"), true)
     , m_menu_dm_close("") // changes depending on if group or not
 #ifdef WITH_VOICE
-    , m_menu_dm_join_voice("Join _Voice", true)
-    , m_menu_dm_disconnect_voice("_Disconnect Voice", true)
+    , m_menu_dm_join_voice(_("Join _Voice"), true)
+    , m_menu_dm_disconnect_voice(_("_Disconnect Voice"), true)
 #endif
-    , m_menu_thread_copy_id("_Copy ID", true)
-    , m_menu_thread_leave("_Leave", true)
-    , m_menu_thread_archive("_Archive", true)
-    , m_menu_thread_unarchive("_Unarchive", true)
-    , m_menu_thread_mark_as_read("Mark as _Read", true) {
+    , m_menu_thread_copy_id(_("_Copy ID"), true)
+    , m_menu_thread_leave(_("_Leave"), true)
+    , m_menu_thread_archive(_("_Archive"), true)
+    , m_menu_thread_unarchive(_("_Unarchive"), true)
+    , m_menu_thread_mark_as_read(_("Mark as _Read"), true) {
     get_style_context()->add_class("channel-list");
 
     // Filter iters
@@ -225,7 +226,7 @@ ChannelListTree::ChannelListTree()
 
         if (channel->Type == ChannelType::DM)
             discord.CloseDM(id);
-        else if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this group DM?"))
+        else if (Abaddon::Get().ShowConfirm(_("Are you sure you want to leave this group DM?")))
             Abaddon::Get().GetDiscordClient().CloseDM(id);
     });
     m_menu_dm_toggle_mute.signal_activate().connect([this] {
@@ -263,7 +264,7 @@ ChannelListTree::ChannelListTree()
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
     m_menu_thread_leave.signal_activate().connect([this] {
-        if (Abaddon::Get().ShowConfirm("Are you sure you want to leave this thread?"))
+        if (Abaddon::Get().ShowConfirm(_("Are you sure you want to leave this thread?")))
             Abaddon::Get().GetDiscordClient().LeaveThread(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), "Context%20Menu", [](...) {});
     });
     m_menu_thread_archive.signal_activate().connect([this] {
@@ -1180,7 +1181,7 @@ void ChannelListTree::AddPrivateChannels() {
     auto header_row = *m_model->append();
     header_row[m_columns.m_type] = RenderType::DMHeader;
     header_row[m_columns.m_sort] = -1;
-    header_row[m_columns.m_name] = "<b>Direct Messages</b>";
+    header_row[m_columns.m_name] = fmt::format("<b>{}</b>", _("Direct Messages"));
     m_dm_header = m_model->get_path(header_row);
 
     auto &discord = Abaddon::Get().GetDiscordClient();
@@ -1352,7 +1353,7 @@ bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
                     OnDMSubmenuPopup();
                     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
                     if (channel.has_value()) {
-                        m_menu_dm_close.set_label(channel->Type == ChannelType::DM ? "Close" : "Leave");
+                        m_menu_dm_close.set_label(channel->Type == ChannelType::DM ? _("Close") : _("Leave"));
                         m_menu_dm_close.show();
                     } else
                         m_menu_dm_close.hide();
@@ -1406,9 +1407,9 @@ void ChannelListTree::OnGuildSubmenuPopup() {
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (discord.IsGuildMuted(id))
-        m_menu_guild_toggle_mute.set_label("Unmute");
+        m_menu_guild_toggle_mute.set_label(_("Unmute"));
     else
-        m_menu_guild_toggle_mute.set_label("Mute");
+        m_menu_guild_toggle_mute.set_label(_("Mute"));
 
     const auto guild = discord.GetGuild(id);
     const auto self_id = discord.GetUserData().ID;
@@ -1420,9 +1421,9 @@ void ChannelListTree::OnCategorySubmenuPopup() {
     if (!iter) return;
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     if (Abaddon::Get().GetDiscordClient().IsChannelMuted(id))
-        m_menu_category_toggle_mute.set_label("Unmute");
+        m_menu_category_toggle_mute.set_label(_("Unmute"));
     else
-        m_menu_category_toggle_mute.set_label("Mute");
+        m_menu_category_toggle_mute.set_label(_("Mute"));
 }
 
 void ChannelListTree::OnChannelSubmenuPopup() {
@@ -1435,9 +1436,9 @@ void ChannelListTree::OnChannelSubmenuPopup() {
     m_menu_channel_open_tab.set_sensitive(perms);
 #endif
     if (discord.IsChannelMuted(id))
-        m_menu_channel_toggle_mute.set_label("Unmute");
+        m_menu_channel_toggle_mute.set_label(("Unmute"));
     else
-        m_menu_channel_toggle_mute.set_label("Mute");
+        m_menu_channel_toggle_mute.set_label(("Mute"));
 }
 
 #ifdef WITH_VOICE
@@ -1462,9 +1463,9 @@ void ChannelListTree::OnDMSubmenuPopup() {
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     auto &discord = Abaddon::Get().GetDiscordClient();
     if (discord.IsChannelMuted(id))
-        m_menu_dm_toggle_mute.set_label("Unmute");
+        m_menu_dm_toggle_mute.set_label(_("Unmute"));
     else
-        m_menu_dm_toggle_mute.set_label("Mute");
+        m_menu_dm_toggle_mute.set_label(_("Mute"));
 
 #ifdef WITH_VOICE
     if (discord.IsVoiceConnected() || discord.IsVoiceConnecting()) {
@@ -1487,9 +1488,9 @@ void ChannelListTree::OnThreadSubmenuPopup() {
     const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
 
     if (discord.IsChannelMuted(id))
-        m_menu_thread_toggle_mute.set_label("Unmute");
+        m_menu_thread_toggle_mute.set_label(_("Unmute"));
     else
-        m_menu_thread_toggle_mute.set_label("Mute");
+        m_menu_thread_toggle_mute.set_label(_("Mute"));
 
     auto channel = discord.GetChannel(id);
     if (!channel.has_value() || !channel->ThreadMetadata.has_value()) return;

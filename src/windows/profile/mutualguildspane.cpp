@@ -1,5 +1,8 @@
 #include "mutualguildspane.hpp"
 
+#include <glibmm/i18n.h>
+#include <spdlog/fmt/fmt.h>
+
 #include "abaddon.hpp"
 
 MutualGuildItem::MutualGuildItem(const MutualGuildData &guild)
@@ -33,7 +36,7 @@ MutualGuildItem::MutualGuildItem(const MutualGuildData &guild)
         m_name.set_markup("<b>" + Glib::Markup::escape_text(data->Name) + "</b>");
     } else {
         m_icon.property_pixbuf() = Abaddon::Get().GetImageManager().GetPlaceholder(24);
-        m_name.set_markup("<b>Unknown server</b>");
+        m_name.set_markup(fmt::format("<b>{}</b>", _("Unknown Server")));
     }
 
     if (guild.Nick.has_value()) {

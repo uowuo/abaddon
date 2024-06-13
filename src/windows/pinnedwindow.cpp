@@ -1,5 +1,8 @@
 #include "pinnedwindow.hpp"
 
+#include <glibmm/i18n.h>
+#include <spdlog/fmt/fmt.h>
+
 #include "abaddon.hpp"
 
 PinnedWindow::PinnedWindow(const ChannelData &data)
@@ -10,9 +13,9 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
     set_name("pinned-messages");
     set_default_size(450, 375);
     if (data.Name.has_value())
-        set_title("#" + *data.Name + " - Pinned Messages");
+        set_title(fmt::format("#{} - Pinned Messages", (*data.Name).c_str()));
     else
-        set_title("Pinned Messages");
+        set_title(_("Pinned Messages"));
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");

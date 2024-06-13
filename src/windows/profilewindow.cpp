@@ -1,5 +1,7 @@
 #include "profilewindow.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -74,9 +76,9 @@ ProfileWindow::ProfileWindow(Snowflake user_id)
     m_switcher.set_halign(Gtk::ALIGN_START);
     m_switcher.set_hexpand(true);
 
-    m_stack.add(m_pane_info, "info", "User Info");
-    m_stack.add(m_pane_guilds, "guilds", "Mutual Servers");
-    m_stack.add(m_pane_friends, "friends", "Mutual Friends");
+    m_stack.add(m_pane_info, "info", _("User Info"));
+    m_stack.add(m_pane_guilds, "guilds", _("Mutual Servers"));
+    m_stack.add(m_pane_friends, "friends", _("Mutual Friends"));
 
     m_badges.set_valign(Gtk::ALIGN_CENTER);
     m_badges_scroll.set_hexpand(true);
@@ -107,7 +109,7 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
     if (data.LegacyUsername.has_value()) {
-        m_username.set_tooltip_text("Originally known as " + *data.LegacyUsername);
+        m_username.set_tooltip_text(fmt::format(_("Originally known as {}"), (*data.LegacyUsername).c_str()));
     }
 
     for (auto child : m_badges.get_children()) {

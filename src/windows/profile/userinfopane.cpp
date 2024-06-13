@@ -2,6 +2,8 @@
 
 #include <unordered_set>
 
+#include <glibmm/i18n.h>
+#include <spdlog/fmt/fmt.h>
 #include <gtkmm/messagedialog.h>
 
 #include "abaddon.hpp"
@@ -140,7 +142,7 @@ NotesContainer::NotesContainer()
     m_label.get_style_context()->add_class("profile-notes-label");
     m_note.get_style_context()->add_class("profile-notes-text");
 
-    m_label.set_markup("<b>NOTE</b>");
+    m_label.set_markup(fmt::format("<b>{}</b>", _("NOTE")));
     m_label.set_halign(Gtk::ALIGN_START);
 
     m_note.set_wrap_mode(Gtk::WRAP_WORD_CHAR);
@@ -186,7 +188,7 @@ NotesContainer::type_signal_update_note NotesContainer::signal_update_note() {
 
 BioContainer::BioContainer()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL) {
-    m_label.set_markup("<b>ABOUT ME</b>");
+    m_label.set_markup(fmt::format("<b>{}</b>", _("ABOUT ME")));
     m_label.set_halign(Gtk::ALIGN_START);
     m_bio.set_halign(Gtk::ALIGN_START);
     m_bio.set_line_wrap(true);
@@ -212,7 +214,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
     m_note.signal_update_note().connect([this](const Glib::ustring &note) {
         auto cb = [](DiscordError code) {
             if (code != DiscordError::NONE) {
-                Gtk::MessageDialog dlg("Failed to set note", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(_("Failed to set note"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
@@ -234,7 +236,7 @@ ProfileUserInfoPane::ProfileUserInfoPane(Snowflake ID)
 
     m_created.set_halign(Gtk::ALIGN_START);
     m_created.set_margin_top(5);
-    m_created.set_text("Account created: " + ID.GetLocalTimestamp());
+    m_created.set_text(_("Account created: ") + ID.GetLocalTimestamp());
 
     m_conns.set_halign(Gtk::ALIGN_START);
     m_conns.set_hexpand(true);

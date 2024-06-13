@@ -2,6 +2,9 @@
 
 #include <filesystem>
 
+#include <spdlog/fmt/fmt.h>
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -82,15 +85,15 @@ bool RateLimitIndicator::UpdateIndicator() {
 
         auto &discord = Abaddon::Get().GetDiscordClient();
         if (discord.HasAnyChannelPermission(discord.GetUserData().ID, m_active_channel, Permission::MANAGE_MESSAGES | Permission::MANAGE_CHANNELS)) {
-            m_label.set_text("You may bypass slowmode.");
+            m_label.set_text(_("You may bypass slowmode."));
             set_has_tooltip(false);
         } else {
             const auto time_left = GetTimeLeft();
             if (time_left > 0)
-                m_label.set_text(std::to_string(time_left) + "s");
+                m_label.set_text(fmt::format(_("{}s"), std::to_string(time_left).c_str()));
             else
                 m_label.set_text("");
-            set_tooltip_text("Slowmode is enabled. Members can send one message every " + std::to_string(rate_limit) + " seconds.");
+            set_tooltip_text(fmt::format(_("Slowmode is enabled. Members can send one message every {} seconds"), std::to_string(rate_limit).c_str()));
         }
     } else {
         m_img.hide();
