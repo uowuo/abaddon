@@ -46,8 +46,8 @@ std::optional<Glib::ustring> GetJavascriptFileFromAppPage(const Glib::ustring &c
         start_position += str.size();
     }
 
-    if (matches.size() >= 7) {
-        return matches[matches.size() - 7];
+    if (matches.size() >= 8) {
+        return matches[matches.size() - 8];
     }
 
     return {};
