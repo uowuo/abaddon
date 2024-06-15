@@ -90,6 +90,10 @@ std::string Platform::FindStateCacheFolder() {
     return ".";
 }
 
+std::string Platform::FindLocaleFolder() {
+    return "./locale/";
+}
+
 #elif defined(__linux__)
 std::string Platform::FindResourceFolder() {
     static std::string found_path;
@@ -157,6 +161,21 @@ std::string Platform::FindStateCacheFolder() {
     return ".";
 }
 
+// !!!
+std::string Platform::FindLocaleFolder() {
+    const auto home_env = std::getenv("HOME");
+    if (home_env) {
+        if (std::filesystem::exists("/usr/share/locale/abaddon/")) {
+            return "/usr/share/locale/abaddon/";
+        } else if (std::filesystem::exists(home_env + "/.local/share/abaddon/locale/"s)) {
+            return home_env + "/.local/share/abaddon/locale/"s;
+        }
+    }
+
+    spdlog::get("discord")->warn("can't find locale folder!");
+    return "./locale/";
+}
+
 #elif defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
 #include <pwd.h>
@@ -221,6 +240,11 @@ std::string Platform::FindStateCacheFolder() {
     return home_path;
 }
 
+std::string Platform::FindLocaleFolder() {
+    // TODO: Add thorough locale folder resolution code (Apple)
+    return "./locale/"
+}
+
 
 #else
 std::string Platform::FindResourceFolder() {
@@ -239,5 +263,10 @@ std::string Platform::FindConfigFile() {
 std::string Platform::FindStateCacheFolder() {
     spdlog::get("discord")->warn("unknown OS, setting state cache folder to cwd");
     return ".";
+}
+
+std::string Platform::FindLocaleFolder() {
+    spdlog::get("discord")->warn("unknown OS, setting locale folder to cwd");
+    return "./locale/";
 }
 #endif

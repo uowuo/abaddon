@@ -1172,9 +1172,6 @@ int main(int argc, char **argv) {
         } catch (...) {}
     }
 
-    bindtextdomain("abaddon", "./locale/");
-    textdomain("abaddon");
-
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };
     GetEnvironmentVariableA("GTK_CSD", buf, sizeof(buf));
@@ -1188,6 +1185,9 @@ int main(int argc, char **argv) {
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");
     auto log_ra = spdlog::stdout_color_mt("remote-auth");
+
+    bindtextdomain("abaddon", Platform::FindLocaleFolder().c_str());
+    textdomain("abaddon");
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();
