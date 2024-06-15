@@ -1,3 +1,5 @@
+#include <gtkmm/overlay.h>
+
 #include "guildlist.hpp"
 
 #include "abaddon.hpp"
