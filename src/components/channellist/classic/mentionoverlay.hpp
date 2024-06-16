@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include <gtkmm/drawingarea.h>
 #include <pangomm/fontdescription.h>
 
