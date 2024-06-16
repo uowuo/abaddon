@@ -1,7 +1,7 @@
 #include "pinnedwindow.hpp"
 
+#include <fmt/format.h>
 #include <glibmm/i18n.h>
-#include <spdlog/fmt/fmt.h>
 
 #include "abaddon.hpp"
 

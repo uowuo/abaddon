@@ -1,8 +1,7 @@
-#include <format>
 #include "chatmessage.hpp"
 #include <unordered_map>
+#include <fmt/format.h>
 #include <glibmm/i18n.h>
-#include <spdlog/fmt/fmt.h>
 #include <gtkmm/flowbox.h>
 #include "abaddon.hpp"
 #include "constants.hpp"

@@ -5,7 +5,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #include <algorithm>
+#include <fmt/format.h>
 #include <gtkmm.h>
+#include <glibmm/i18n.h>
 #include "platform.hpp"
 #include "audio/manager.hpp"
 #include "discord/discord.hpp"
@@ -24,7 +26,6 @@
 #include "notifications/notifications.hpp"
 #include "remoteauth/remoteauthdialog.hpp"
 #include "util.hpp"
-#include <glibmm/i18n.h>
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -212,7 +213,7 @@ int Abaddon::StartGTK() {
 
     m_css_provider = Gtk::CssProvider::create();
     m_css_provider->signal_parsing_error().connect([](const Glib::RefPtr<const Gtk::CssSection> &section, const Glib::Error &error) {
-        Gtk::MessageDialog dlg(_("css failed parsing (") + error.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(fmt::format(_("css failed parsing ({})"), error.what().c_str()), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     });
@@ -470,7 +471,7 @@ void Abaddon::DiscordOnDisconnect(bool is_reconnecting, GatewayCloseCode close_c
         dlg.run();
     } else if (close_code != GatewayCloseCode::Normal) {
         Gtk::MessageDialog dlg(*m_main_window,
-                               _("Lost connection with Discord's gateway. Try reconnecting (code ") + std::to_string(static_cast<unsigned>(close_code)) + ")",
+                               fmt::format(_("Lost connection with Discord's gateway. Try reconnecting (code {})"), static_cast<unsigned>(close_code)),
                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
@@ -999,7 +1000,7 @@ void Abaddon::ActionLeaveGuild(Snowflake id) {
     ConfirmDialog dlg(*m_main_window);
     const auto guild = m_discord.GetGuild(id);
     if (guild.has_value())
-        dlg.SetConfirmText(_("Are you sure you want to leave ") + guild->Name + "?");
+        dlg.SetConfirmText(fmt::format(_("Are you sure you want to leave {}?"), guild->Name.c_str()));
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.LeaveGuild(id);
@@ -1009,7 +1010,7 @@ void Abaddon::ActionKickMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText(_("Are you sure you want to kick ") + user->GetUsername() + "?");
+        dlg.SetConfirmText(fmt::format(_("Are you sure you want to kick {}?"), user->GetUsername().c_str()));
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.KickUser(user_id, guild_id);
@@ -1019,7 +1020,7 @@ void Abaddon::ActionBanMember(Snowflake user_id, Snowflake guild_id) {
     ConfirmDialog dlg(*m_main_window);
     const auto user = m_discord.GetUser(user_id);
     if (user.has_value())
-        dlg.SetConfirmText(_("Are you sure you want to ban ") + user->GetUsername() + "?");
+        dlg.SetConfirmText(fmt::format(_("Are you sure you want to ban {}?"), user->GetUsername().c_str()));
     auto response = dlg.run();
     if (response == Gtk::RESPONSE_OK)
         m_discord.BanUser(user_id, guild_id);
@@ -1116,7 +1117,7 @@ void Abaddon::ActionReloadCSS() {
         m_css_provider->load_from_path(GetCSSPath("/" + GetSettings().MainCSS));
         Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), m_css_provider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     } catch (Glib::Error &e) {
-        Gtk::MessageDialog dlg(*m_main_window, _("css failed to load (") + e.what() + ")", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+        Gtk::MessageDialog dlg(*m_main_window, fmt::format(_("css failed to load ({})"), e.what().c_str()), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
         dlg.set_position(Gtk::WIN_POS_CENTER);
         dlg.run();
     }

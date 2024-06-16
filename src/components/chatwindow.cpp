@@ -1,6 +1,6 @@
 #include "chatwindow.hpp"
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"

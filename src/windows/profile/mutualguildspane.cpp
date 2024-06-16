@@ -1,7 +1,7 @@
 #include "mutualguildspane.hpp"
 
 #include <glibmm/i18n.h>
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
 #include "abaddon.hpp"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-13 09:57-0300\n"
+"POT-Creation-Date: 2024-06-16 20:01-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,115 +17,115 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/abaddon.cpp:215
-msgid "css failed parsing ("
+#: src/abaddon.cpp:216
+msgid "css failed parsing ({})"
 msgstr ""
 
-#: src/abaddon.cpp:231
+#: src/abaddon.cpp:232
 msgid "The PNG pixbufloader wasn't detected. Abaddon may not work as a result."
 msgstr ""
 
-#: src/abaddon.cpp:237
+#: src/abaddon.cpp:238
 msgid ""
 "The GIF pixbufloader wasn't detected. Animations may not display as a result."
 msgstr ""
 
-#: src/abaddon.cpp:252
+#: src/abaddon.cpp:253
 msgid "The settings file could not be opened!"
 msgstr ""
 
-#: src/abaddon.cpp:258
+#: src/abaddon.cpp:259
 msgid "The emoji file couldn't be loaded!"
 msgstr ""
 
-#: src/abaddon.cpp:264
+#: src/abaddon.cpp:265
 msgid "The Discord cache could not be created!"
 msgstr ""
 
-#: src/abaddon.cpp:272
+#: src/abaddon.cpp:273
 msgid "The audio engine could not be initialized!"
 msgstr ""
 
-#: src/abaddon.cpp:333
+#: src/abaddon.cpp:334
 msgid "Quit"
 msgstr ""
 
-#: src/abaddon.cpp:468
+#: src/abaddon.cpp:469
 msgid "Discord rejected your token"
 msgstr ""
 
-#: src/abaddon.cpp:473
-msgid "Lost connection with Discord's gateway. Try reconnecting (code "
+#: src/abaddon.cpp:474
+msgid "Lost connection with Discord's gateway. Try reconnecting (code {})"
 msgstr ""
 
-#: src/abaddon.cpp:483 src/abaddon.cpp:926
+#: src/abaddon.cpp:484 src/abaddon.cpp:927
 msgid "This thread is archived. Sending a message will unarchive it"
 msgstr ""
 
-#: src/abaddon.cpp:626
+#: src/abaddon.cpp:627
 msgid ""
 "Cookies could not be fetched. This may increase your chances of being "
 "flagged by Discord's anti-spam"
 msgstr ""
 
-#: src/abaddon.cpp:635
+#: src/abaddon.cpp:636
 msgid ""
 "Build number could not be fetched. This may increase your chances of being "
 "flagged by Discord's anti-spam"
 msgstr ""
 
-#: src/abaddon.cpp:652
+#: src/abaddon.cpp:653
 msgid "Failed to accept the verification gate."
 msgstr ""
 
-#: src/abaddon.cpp:677
+#: src/abaddon.cpp:678
 msgid "Insert Mention"
 msgstr ""
 
-#: src/abaddon.cpp:678
+#: src/abaddon.cpp:679
 msgid "Ban"
 msgstr ""
 
-#: src/abaddon.cpp:679
+#: src/abaddon.cpp:680
 msgid "Kick"
 msgstr ""
 
-#: src/abaddon.cpp:680 src/components/chatlist.cpp:298
+#: src/abaddon.cpp:681 src/components/chatlist.cpp:298
 #: src/windows/guildsettings/banspane.cpp:14
 #: src/windows/guildsettings/emojispane.cpp:19
 msgid "Copy ID"
 msgstr ""
 
-#: src/abaddon.cpp:681
+#: src/abaddon.cpp:682
 msgid "Go to DM"
 msgstr ""
 
-#: src/abaddon.cpp:682 src/windows/guildsettingswindow.cpp:66
+#: src/abaddon.cpp:683 src/windows/guildsettingswindow.cpp:66
 msgid "Roles"
 msgstr ""
 
-#: src/abaddon.cpp:683
+#: src/abaddon.cpp:684
 msgid "View Profile"
 msgstr ""
 
-#: src/abaddon.cpp:684
+#: src/abaddon.cpp:685
 msgid "Remove From Group"
 msgstr ""
 
-#: src/abaddon.cpp:1002
-msgid "Are you sure you want to leave "
+#: src/abaddon.cpp:1003
+msgid "Are you sure you want to leave {}?"
 msgstr ""
 
-#: src/abaddon.cpp:1012
-msgid "Are you sure you want to kick "
+#: src/abaddon.cpp:1013
+msgid "Are you sure you want to kick {}?"
 msgstr ""
 
-#: src/abaddon.cpp:1022
-msgid "Are you sure you want to ban "
+#: src/abaddon.cpp:1023
+msgid "Are you sure you want to ban {}?"
 msgstr ""
 
-#: src/abaddon.cpp:1119
-msgid "css failed to load ("
+#: src/abaddon.cpp:1120
+msgid "css failed to load ({})"
 msgstr ""
 
 #: src/dialogs/confirm.cpp:6
@@ -658,7 +658,7 @@ msgstr ""
 msgid "Connect"
 msgstr ""
 
-#: src/windows/mainwindow.cpp:260
+#: src/windows/mainwindow.cpp:260 src/windows/voicewindow.cpp:97
 msgid "Disconnect"
 msgstr ""
 
@@ -690,7 +690,7 @@ msgstr ""
 msgid "Dump ready message"
 msgstr ""
 
-#: src/windows/mainwindow.cpp:288 src/windows/voicewindow.cpp:98
+#: src/windows/mainwindow.cpp:288 src/windows/voicewindow.cpp:99
 msgid "View"
 msgstr ""
 
@@ -722,19 +722,19 @@ msgstr ""
 msgid "Pinned Messages"
 msgstr ""
 
-#: src/windows/profilewindow.cpp:79
+#: src/windows/profilewindow.cpp:80
 msgid "User Info"
 msgstr ""
 
-#: src/windows/profilewindow.cpp:80
+#: src/windows/profilewindow.cpp:81
 msgid "Mutual Servers"
 msgstr ""
 
-#: src/windows/profilewindow.cpp:81
+#: src/windows/profilewindow.cpp:82
 msgid "Mutual Friends"
 msgstr ""
 
-#: src/windows/profilewindow.cpp:112
+#: src/windows/profilewindow.cpp:113
 msgid "Originally known as {}"
 msgstr ""
 
@@ -804,7 +804,7 @@ msgstr ""
 msgid "Bitrate"
 msgstr ""
 
-#: src/windows/voicesettingswindow.cpp:133 src/windows/voicewindow.cpp:238
+#: src/windows/voicesettingswindow.cpp:133 src/windows/voicewindow.cpp:243
 msgid "Gain"
 msgstr ""
 
@@ -820,42 +820,42 @@ msgstr ""
 msgid "Mix Mono"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:99
+#: src/windows/voicewindow.cpp:100
 msgid "More _Settings"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:158
+#: src/windows/voicewindow.cpp:159
 msgid ""
 "Voice Activation Detection method\n"
 "Gate - Simple volume threshold. Slider changes threshold\n"
 "RNNoise - Heavier on CPU. Slider changes probability threshold"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:161
+#: src/windows/voicewindow.cpp:162
 msgid "Gate"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:163
+#: src/windows/voicewindow.cpp:164
 msgid "RNNoise"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:237
+#: src/windows/voicewindow.cpp:242
 msgid "Threshold"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:247
+#: src/windows/voicewindow.cpp:252
 msgid "VAD Method"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:248
+#: src/windows/voicewindow.cpp:253
 msgid "Output Device"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:249
+#: src/windows/voicewindow.cpp:254
 msgid "Input Device"
 msgstr ""
 
-#: src/windows/voicewindow.cpp:262
+#: src/windows/voicewindow.cpp:268
 msgid "Input Settings"
 msgstr ""
 
