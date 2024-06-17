@@ -28,6 +28,7 @@ ChannelListTree::ChannelListTree()
 #endif
     , m_menu_voice_channel_join("_Join", true)
     , m_menu_voice_channel_disconnect("_Disconnect", true)
+    , m_menu_voice_channel_mark_as_read("Mark as _Read", true)
     , m_menu_voice_open_chat("Open _Chat", true)
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
@@ -209,6 +210,10 @@ ChannelListTree::ChannelListTree()
     });
 #endif
 
+    m_menu_voice_channel_mark_as_read.signal_activate().connect([this]() {
+        Abaddon::Get().GetDiscordClient().MarkChannelAsRead(static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]), NOOP_CALLBACK);
+    });
+
     m_menu_voice_open_chat.signal_activate().connect([this]() {
         const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
         m_signal_action_channel_item_select.emit(id);
@@ -216,6 +221,7 @@ ChannelListTree::ChannelListTree()
 
     m_menu_voice_channel.append(m_menu_voice_channel_join);
     m_menu_voice_channel.append(m_menu_voice_channel_disconnect);
+    m_menu_voice_channel.append(m_menu_voice_channel_mark_as_read);
     m_menu_voice_channel.append(m_menu_voice_open_chat);
     m_menu_voice_channel.show_all();
 

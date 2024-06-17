@@ -162,6 +162,7 @@ protected:
     Gtk::Menu m_menu_voice_channel;
     Gtk::MenuItem m_menu_voice_channel_join;
     Gtk::MenuItem m_menu_voice_channel_disconnect;
+    Gtk::MenuItem m_menu_voice_channel_mark_as_read;
     Gtk::MenuItem m_menu_voice_open_chat;
 
     Gtk::Menu m_menu_dm;
