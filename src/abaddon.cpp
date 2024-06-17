@@ -1188,6 +1188,10 @@ int main(int argc, char **argv) {
     auto log_ra = spdlog::stdout_color_mt("remote-auth");
 
     bindtextdomain("abaddon", Platform::FindLocaleFolder().c_str());
+
+    // Necessary for correct utf-8 text rendering
+    bind_textdomain_codeset("abaddon", "utf-8");
+
     textdomain("abaddon");
 
     Gtk::Main::init_gtkmm_internals(); // why???
