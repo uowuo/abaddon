@@ -1,5 +1,6 @@
 src/abaddon.cpp
 src/startup.cpp
+src/discord/permissions.cpp
 src/dialogs/confirm.cpp
 src/dialogs/friendpicker.cpp
 src/dialogs/setstatus.cpp

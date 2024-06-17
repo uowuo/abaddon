@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-17 12:21-0300\n"
+"POT-Creation-Date: 2024-06-17 13:07-0300\n"
 "PO-Revision-Date: 2024-06-17 11:45-0300\n"
 "Last-Translator: Gabriel de Moura <smolblackcat@proton.me>\n"
 "Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
@@ -141,6 +141,455 @@ msgstr "CSS falhou em ser carregado ({})"
 #: src/startup.cpp:14
 msgid "Getting connection info..."
 msgstr "Obtendo informações sobre a conexão..."
+
+#: src/discord/permissions.cpp:16
+msgid "None"
+msgstr "Nenhum"
+
+#: src/discord/permissions.cpp:18
+msgid "Create Invite"
+msgstr "Criar Convite"
+
+#: src/discord/permissions.cpp:20
+msgid "Kick Members"
+msgstr "Expulsar Membros"
+
+#: src/discord/permissions.cpp:22
+msgid "Ban Members"
+msgstr "Banir Membros"
+
+#: src/discord/permissions.cpp:24
+msgid "Administrator"
+msgstr "Administrador"
+
+#: src/discord/permissions.cpp:26
+msgid "Manage Channels"
+msgstr "Gerenciar Canais"
+
+#: src/discord/permissions.cpp:28
+msgid "Manage Server"
+msgstr "Gerenciar Servidor"
+
+#: src/discord/permissions.cpp:30
+msgid "Add Reactions"
+msgstr "Adicionar Reações"
+
+#: src/discord/permissions.cpp:32
+msgid "View Audit Log"
+msgstr "Visualizar Registro de Auditoria"
+
+#: src/discord/permissions.cpp:34
+msgid "Use Priority Speaker"
+msgstr "Usar Orador Prioritário"
+
+#: src/discord/permissions.cpp:36
+msgid "Video"
+msgstr "Vídeo"
+
+#: src/discord/permissions.cpp:38
+msgid "View Channels"
+msgstr "Visualizar Canais"
+
+#: src/discord/permissions.cpp:40
+msgid "Send Messages"
+msgstr "Enviar Mensagens"
+
+#: src/discord/permissions.cpp:42
+msgid "Use TTS"
+msgstr "Usar TTS"
+
+#: src/discord/permissions.cpp:44
+msgid "Manage Messages"
+msgstr "Gerenciar Mensagens"
+
+#: src/discord/permissions.cpp:46
+msgid "Embed Links"
+msgstr "Incorporar Links"
+
+#: src/discord/permissions.cpp:48
+msgid "Attach Files"
+msgstr "Anexar Arquivos"
+
+#: src/discord/permissions.cpp:50
+msgid "Read Message History"
+msgstr "Ler Histórico de Mensagens"
+
+#: src/discord/permissions.cpp:52
+msgid "Mention @everyone"
+msgstr "Mencionar @everyone"
+
+#: src/discord/permissions.cpp:54
+msgid "Use External Emojis"
+msgstr "Usar Emojis Externos"
+
+#: src/discord/permissions.cpp:56
+msgid "View Server Insights"
+msgstr "Visualizar Insights do Servidor"
+
+#: src/discord/permissions.cpp:58
+msgid "Connect to Voice"
+msgstr "Conectar ao Voz"
+
+#: src/discord/permissions.cpp:60
+msgid "Speak in Voice"
+msgstr "Falar no Voz"
+
+#: src/discord/permissions.cpp:62
+msgid "Mute Members"
+msgstr "Silenciar Membros"
+
+#: src/discord/permissions.cpp:64
+msgid "Deafen Members"
+msgstr "Ensurdecer Membros"
+
+#: src/discord/permissions.cpp:66
+msgid "Move Members"
+msgstr "Mover Membros"
+
+#: src/discord/permissions.cpp:68
+msgid "Use Voice Activation"
+msgstr "Usar Ativação por Voz"
+
+#: src/discord/permissions.cpp:70
+msgid "Change Nickname"
+msgstr "Mudar Apelido"
+
+#: src/discord/permissions.cpp:72
+msgid "Manage Nicknames"
+msgstr "Gerenciar Apelidos"
+
+#: src/discord/permissions.cpp:74
+msgid "Manage Roles"
+msgstr "Gerenciar Cargos"
+
+#: src/discord/permissions.cpp:76
+msgid "Manage Webhooks"
+msgstr "Gerenciar Webhooks"
+
+#: src/discord/permissions.cpp:78
+msgid "Manage Expressions"
+msgstr "Gerenciar Expressões"
+
+#: src/discord/permissions.cpp:80
+msgid "Use Application Commands"
+msgstr "Usar Comandos de Aplicativos"
+
+#: src/discord/permissions.cpp:82
+msgid "Manage Events"
+msgstr "Gerenciar Eventos"
+
+#: src/discord/permissions.cpp:84
+msgid "Manage Threads"
+msgstr "Gerenciar Tópicos"
+
+#: src/discord/permissions.cpp:86
+msgid "Create Public Threads"
+msgstr "Criar Tópicos Públicos"
+
+#: src/discord/permissions.cpp:88
+msgid "Create Private Threads"
+msgstr "Criar Tópicos Privados"
+
+#: src/discord/permissions.cpp:90
+msgid "Use External Stickers"
+msgstr "Usar Figurinhas Externas"
+
+#: src/discord/permissions.cpp:92
+msgid "Send Messages In Threads"
+msgstr "Enviar Mensagens em Tópicos"
+
+#: src/discord/permissions.cpp:94
+msgid "Use Activities"
+msgstr "Usar Atividades"
+
+#: src/discord/permissions.cpp:96
+msgid "Timeout Members"
+msgstr "Punição Temporária de Membros"
+
+#: src/discord/permissions.cpp:100
+msgid "Use Soundboard"
+msgstr "Usar Mesa de Som"
+
+#: src/discord/permissions.cpp:102
+msgid "Create Expressions"
+msgstr "Criar Expressões"
+
+#: src/discord/permissions.cpp:104
+msgid "Create Events"
+msgstr "Criar Eventos"
+
+#: src/discord/permissions.cpp:106
+msgid "Use External Sounds"
+msgstr "Usar Sons Externos"
+
+#: src/discord/permissions.cpp:108
+msgid "Send Voice Messages"
+msgstr "Enviar Mensagens de Voz"
+
+#: src/discord/permissions.cpp:112
+msgid "Set Voice Channel Status"
+msgstr "Definir Status do Canal de Voz"
+
+#: src/discord/permissions.cpp:114
+msgid "Unknown Permission"
+msgstr "Permissão Desconhecida"
+
+#: src/discord/permissions.cpp:123
+msgid "Allows members to invite new people to this server."
+msgstr "Permite que os membros convidem novas pessoas para este servidor."
+
+#: src/discord/permissions.cpp:125
+msgid "Allows members to remove other members from this server. Kicked members will be able to rejoin if they have another invite."
+msgstr "Permite que os membros removam outros membros deste servidor. Membros expulsos poderão se juntar novamente se tiverem outro convite."
+
+#: src/discord/permissions.cpp:127
+msgid "Allows members to permanently ban other members from this server."
+msgstr "Permite que os membros banam permanentemente outros membros deste servidor."
+
+#: src/discord/permissions.cpp:129
+msgid "Members with this permission will have every permission and will also bypass all channel specific permissions or restrictions (for example, these members would get access to all private channels). This is a dangerous permission to grant."
+msgstr "Membros com esta permissão terão todas as permissões e também ignorarão todas as permissões ou restrições específicas de canal (por exemplo, esses membros terão acesso a todos os canais privados). Esta é uma permissão perigosa de conceder."
+
+#: src/discord/permissions.cpp:131
+msgid "Allows members to create, edit, or delete channels."
+msgstr "Permite que os membros criem, editem ou excluam canais."
+
+#: src/discord/permissions.cpp:133
+msgid "Allows members to change this server's name, switch regions, and add bots to this server."
+msgstr "Permite que os membros mudem o nome deste servidor, alterem regiões e adicionem bots a este servidor."
+
+#: src/discord/permissions.cpp:135
+msgid "Allows members to add new emoji reactions to a message. If this permission is disabled, members can still react using any existing reactions on a message."
+msgstr "Permite que os membros adicionem novas reações de emoji a uma mensagem. Se esta permissão estiver desativada, os membros ainda poderão reagir usando qualquer reação existente em uma mensagem."
+
+#: src/discord/permissions.cpp:137
+msgid "Allows members to view a record of who made which changes in this server."
+msgstr "Permite que os membros vejam um registro de quem fez quais mudanças neste servidor."
+
+#: src/discord/permissions.cpp:139
+msgid "Allows members to be more easily heard in voice channels. When activated, the volume of others without this permission will be automatically lowered. Priority Speaker is activated by using the Push to Talk (Priority) keybind."
+msgstr "Permite que os membros sejam mais facilmente ouvidos em canais de voz. Quando ativado, o volume dos outros sem essa permissão será automaticamente reduzido. O Orador Prioritário é ativado usando a tecla de atalho Push to Talk (Prioridade)."
+
+#: src/discord/permissions.cpp:141
+msgid "Allows members to share their video, screen share, or stream a game in this server."
+msgstr "Permite que os membros compartilhem seu vídeo, compartilhem a tela ou façam streaming de um jogo neste servidor."
+
+#: src/discord/permissions.cpp:143
+msgid "Allows members to view channels by default (excluding private channels)."
+msgstr "Permite que os membros visualizem canais por padrão (excluindo canais privados)."
+
+#: src/discord/permissions.cpp:145
+msgid "Allows members to send messages in text channels."
+msgstr "Permite que os membros enviem mensagens em canais de texto."
+
+#: src/discord/permissions.cpp:147
+msgid "Allows members to send text-to-speech messages by starting a message with /tts. These messages can be heard by anyone focused on this channel."
+msgstr "Permite que os membros enviem mensagens de texto para fala começando uma mensagem com /tts. Essas mensagens podem ser ouvidas por qualquer pessoa focada nesse canal."
+
+#: src/discord/permissions.cpp:149
+msgid "Allows members to delete messages by other members or pin any message."
+msgstr "Permite que os membros excluam mensagens de outros membros ou fixem qualquer mensagem."
+
+#: src/discord/permissions.cpp:151
+msgid "Allows links that members share to show embedded content in text channels."
+msgstr "Permite que os links compartilhados pelos membros mostrem conteúdo incorporado nos canais de texto."
+
+#: src/discord/permissions.cpp:153
+msgid "Allows members to upload files or media in text channels."
+msgstr "Permite que os membros enviem arquivos ou mídia em canais de texto."
+
+#: src/discord/permissions.cpp:155
+msgid ""
+"Allows members to read previous messages sent in channels. If this "
+"permission is disabled, members only see messages sent when they are online "
+"and focused on that channel."
+msgstr ""
+"Permite que os membros leiam mensagens anteriores enviadas nos canais. Se "
+"esta permissão estiver desativada, os membros só verão as mensagens enviadas "
+"quando estiverem online e focados naquele canal."
+
+#: src/discord/permissions.cpp:157
+msgid ""
+"Allows members to use @everyone (everyone in the server) or @here (only "
+"online members in that channel). They can also @mention all roles, even if "
+"the role's \"Allow anyone to mention this role\" permission is disabled."
+msgstr ""
+"Permite que os membros usem @everyone (todos no servidor) ou @here (apenas "
+"membros online naquele canal). Eles também podem mencionar todas as funções, "
+"mesmo que a permissão \"Permitir que qualquer um mencione esta função\" esteja desativada."
+
+#: src/discord/permissions.cpp:159
+msgid ""
+"Allows members to use emoji from other servers, if they're a Discord Nitro "
+"member."
+msgstr ""
+"Permite que os membros usem emojis de outros servidores, se forem membros do Discord Nitro."
+
+#: src/discord/permissions.cpp:161
+msgid ""
+"Allows members to view Server Insights, which shows data on community "
+"growth, engagement, and more."
+msgstr ""
+"Permite que os membros visualizem os Insights do Servidor, que mostram dados sobre o crescimento da comunidade, engajamento e mais."
+
+#: src/discord/permissions.cpp:163
+msgid "Allows members to join voice channels and hear others."
+msgstr "Permite que os membros entrem em canais de voz e ouçam os outros."
+
+#: src/discord/permissions.cpp:165
+msgid ""
+"Allows members to talk in voice channels. If this permission is disabled, "
+"members are default muted until somebody with the \"Mute Members\" "
+"permission unmutes them."
+msgstr ""
+"Permite que os membros falem em canais de voz. Se esta permissão estiver "
+"desativada, os membros serão silenciados por padrão até que alguém com a permissão de "
+"\"Silenciar Membros\" os ative."
+
+#: src/discord/permissions.cpp:167
+msgid "Allows members to mute other members in voice channels for everyone."
+msgstr "Permite que os membros silenciem outros membros em canais de voz para todos."
+
+#: src/discord/permissions.cpp:169
+msgid ""
+"Allows members to deafen other members in voice channels, which means they "
+"won't be able to speak or hear others."
+msgstr ""
+"Permite que os membros ensurdecam outros membros em canais de voz, o que significa que eles não "
+"poderão falar ou ouvir os outros."
+
+#: src/discord/permissions.cpp:171
+msgid ""
+"Allows members to move other members between voice channels that the member "
+"with the permission has access to."
+msgstr ""
+"Permite que os membros movam outros membros entre canais de voz aos quais o membro com a permissão tem acesso."
+
+#: src/discord/permissions.cpp:173
+msgid ""
+"Allows members to speak in voice channels by simply talking. If this "
+"permission is disabled, members are required to use Push-to-talk. Good for "
+"controlling background noise or noisy members."
+msgstr ""
+"Permite que os membros falem em canais de voz simplesmente falando. Se esta "
+"permissão estiver desativada, os membros precisam usar o Push-to-talk. Bom para "
+"controlar o ruído de fundo ou membros barulhentos."
+
+#: src/discord/permissions.cpp:175
+msgid ""
+"Allows members to change their own nickname, a custom name for just this "
+"server."
+msgstr "Permite que os membros mudem seus próprios apelidos, um nome personalizado apenas para este servidor."
+
+#: src/discord/permissions.cpp:177
+msgid "Allows members to change the nicknames of other members."
+msgstr "Permite que os membros mudem os apelidos de outros membros."
+
+#: src/discord/permissions.cpp:179
+msgid ""
+"Allows members to create new roles and edit or delete roles lower than their "
+"highest role. Also allows members to change permissions of individual "
+"channels that they have access to."
+msgstr ""
+"Permite que os membros criem novas funções e editem ou excluam funções abaixo de sua "
+"função mais alta. Também permite que os membros alterem permissões de canais individuais "
+"que eles têm acesso."
+
+#: src/discord/permissions.cpp:181
+msgid ""
+"Allows members to create, edit, or delete webhooks, which can post messages "
+"from other apps or sites into this server."
+msgstr ""
+"Permite que os membros criem, editem ou excluam webhooks, que podem postar mensagens "
+"de outros aplicativos ou sites neste servidor."
+
+#: src/discord/permissions.cpp:183
+msgid ""
+"Allows members to add or remove custom emoji, stickers, and sounds in this "
+"server."
+msgstr ""
+"Permite que os membros adicionem ou removam emojis, figurinhas e sons personalizados neste "
+"servidor."
+
+#: src/discord/permissions.cpp:185
+msgid ""
+"Allows members to use commands from applications, including slash commands "
+"and context menu commands."
+msgstr ""
+"Permite que os membros usem comandos de aplicativos, incluindo comandos de barra "
+"e comandos do menu de contexto."
+
+#: src/discord/permissions.cpp:187
+msgid "Allows members to edit and cancel events."
+msgstr "Permite que os membros editem e cancelem eventos."
+
+#: src/discord/permissions.cpp:189
+msgid ""
+"Allows members to rename, delete, close, and turn on slow mode for threads. "
+"They can also view private threads."
+msgstr ""
+"Permite que os membros renomeiem, excluam, fechem e ativem o modo lento para tópicos. "
+"Também permite que vejam tópicos privados."
+
+#: src/discord/permissions.cpp:191
+msgid "Allows members to create threads that everyone in a channel can view."
+msgstr "Permite que os membros criem tópicos que todos em um canal possam visualizar."
+
+#: src/discord/permissions.cpp:193
+msgid "Allows members to create invite-only threads."
+msgstr "Permite que os membros criem tópicos apenas por convite."
+
+#: src/discord/permissions.cpp:195
+msgid ""
+"Allows members to use stickers from other servers, if they're a Discord "
+"Nitro member."
+msgstr ""
+"Permite que os membros usem figurinhas de outros servidores, se forem membros do Discord Nitro."
+
+#: src/discord/permissions.cpp:197
+msgid "Allows members to send messages in threads."
+msgstr "Permite que os membros enviem mensagens em tópicos."
+
+#: src/discord/permissions.cpp:199
+msgid "Allows members to use Activities in this server."
+msgstr "Permite que os membros usem Atividades neste servidor."
+
+#: src/discord/permissions.cpp:201
+msgid ""
+"When you put a user in timeout they will not be able to send messages in "
+"chat, reply within threads, react to messages, or speak in voice or Stage "
+"channels."
+msgstr ""
+"Quando você coloca um usuário em timeout, ele não poderá enviar mensagens no "
+"chat, responder em tópicos, reagir a mensagens ou falar em canais de voz ou Stage."
+
+#: src/discord/permissions.cpp:205
+msgid "Allows members to send sounds from server soundboard."
+msgstr "Permite que os membros enviem sons da mesa de som do servidor."
+
+#: src/discord/permissions.cpp:207
+msgid ""
+"Allows members to add custom emoji, stickers, and sounds in this server."
+msgstr "Permite que os membros adicionem emojis, figurinhas e sons personalizados neste servidor."
+
+#: src/discord/permissions.cpp:209
+msgid "Allows members to create events."
+msgstr "Permite que os membros criem eventos."
+
+#: src/discord/permissions.cpp:211
+msgid ""
+"Allows members to use sounds from other servers, if they're a Discord Nitro "
+"member."
+msgstr ""
+"Permite que os membros usem sons de outros servidores, se forem membros do Discord Nitro."
+
+#: src/discord/permissions.cpp:213
+msgid "Allows members to send voice messages."
+msgstr "Permite que os membros enviem mensagens de voz."
+
+#: src/discord/permissions.cpp:217
+msgid "Allows members to create and edit voice channel status."
+msgstr "Permite que os membros criem e editem o status do canal de voz."
 
 #: src/dialogs/confirm.cpp:6
 msgid "Confirm"
