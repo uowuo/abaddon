@@ -122,12 +122,10 @@ void CellRendererChannels::get_preferred_width_vfunc(Gtk::Widget &widget, int &m
             return get_preferred_width_vfunc_channel(widget, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_vfunc_thread(widget, minimum_width, natural_width);
-#ifdef WITH_VOICE
         case RenderType::VoiceChannel:
             return get_preferred_width_vfunc_voice_channel(widget, minimum_width, natural_width);
         case RenderType::VoiceParticipant:
             return get_preferred_width_vfunc_voice_participant(widget, minimum_width, natural_width);
-#endif
         case RenderType::DMHeader:
             return get_preferred_width_vfunc_dmheader(widget, minimum_width, natural_width);
         case RenderType::DM:
@@ -147,12 +145,10 @@ void CellRendererChannels::get_preferred_width_for_height_vfunc(Gtk::Widget &wid
             return get_preferred_width_for_height_vfunc_channel(widget, height, minimum_width, natural_width);
         case RenderType::Thread:
             return get_preferred_width_for_height_vfunc_thread(widget, height, minimum_width, natural_width);
-#ifdef WITH_VOICE
         case RenderType::VoiceChannel:
             return get_preferred_width_for_height_vfunc_voice_channel(widget, height, minimum_width, natural_width);
         case RenderType::VoiceParticipant:
             return get_preferred_width_for_height_vfunc_voice_participant(widget, height, minimum_width, natural_width);
-#endif
         case RenderType::DMHeader:
             return get_preferred_width_for_height_vfunc_dmheader(widget, height, minimum_width, natural_width);
         case RenderType::DM:
@@ -172,12 +168,10 @@ void CellRendererChannels::get_preferred_height_vfunc(Gtk::Widget &widget, int &
             return get_preferred_height_vfunc_channel(widget, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_vfunc_thread(widget, minimum_height, natural_height);
-#ifdef WITH_VOICE
         case RenderType::VoiceChannel:
             return get_preferred_height_vfunc_voice_channel(widget, minimum_height, natural_height);
         case RenderType::VoiceParticipant:
             return get_preferred_height_vfunc_voice_participant(widget, minimum_height, natural_height);
-#endif
         case RenderType::DMHeader:
             return get_preferred_height_vfunc_dmheader(widget, minimum_height, natural_height);
         case RenderType::DM:
@@ -197,12 +191,10 @@ void CellRendererChannels::get_preferred_height_for_width_vfunc(Gtk::Widget &wid
             return get_preferred_height_for_width_vfunc_channel(widget, width, minimum_height, natural_height);
         case RenderType::Thread:
             return get_preferred_height_for_width_vfunc_thread(widget, width, minimum_height, natural_height);
-#ifdef WITH_VOICE
         case RenderType::VoiceChannel:
             return get_preferred_height_for_width_vfunc_voice_channel(widget, width, minimum_height, natural_height);
         case RenderType::VoiceParticipant:
             return get_preferred_height_for_width_vfunc_voice_participant(widget, width, minimum_height, natural_height);
-#endif
         case RenderType::DMHeader:
             return get_preferred_height_for_width_vfunc_dmheader(widget, width, minimum_height, natural_height);
         case RenderType::DM:
@@ -222,12 +214,10 @@ void CellRendererChannels::render_vfunc(const Cairo::RefPtr<Cairo::Context> &cr,
             return render_vfunc_channel(cr, widget, background_area, cell_area, flags);
         case RenderType::Thread:
             return render_vfunc_thread(cr, widget, background_area, cell_area, flags);
-#ifdef WITH_VOICE
         case RenderType::VoiceChannel:
             return render_vfunc_voice_channel(cr, widget, background_area, cell_area, flags);
         case RenderType::VoiceParticipant:
             return render_vfunc_voice_participant(cr, widget, background_area, cell_area, flags);
-#endif
         case RenderType::DMHeader:
             return render_vfunc_dmheader(cr, widget, background_area, cell_area, flags);
         case RenderType::DM:
@@ -563,8 +553,6 @@ void CellRendererChannels::render_vfunc_thread(const Cairo::RefPtr<Cairo::Contex
     }
 }
 
-#ifdef WITH_VOICE
-
 // voice channel
 
 void CellRendererChannels::get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const {
@@ -713,8 +701,6 @@ void CellRendererChannels::render_vfunc_voice_participant(const Cairo::RefPtr<Ca
         }
     }
 }
-
-#endif
 
 // dm header
 
