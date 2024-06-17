@@ -459,10 +459,12 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::THREAD_UPDATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
-                markup = fmt::format(_("{} made changes to the thread <b></b>"), (channel.has_value()
-                                                                                      ? Glib::Markup::escape_text(*channel->Name)
-                                                                                      : Glib::ustring(entry.TargetID))
-                                                                                     .c_str());
+                markup = fmt::format(_("{} made changes to the thread <b>{}</b>"),
+                                     user_markup.c_str(),
+                                     (channel.has_value()
+                                          ? Glib::Markup::escape_text(*channel->Name)
+                                          : Glib::ustring(entry.TargetID))
+                                         .c_str());
                 for (const auto &change : *entry.Changes) {
                     if (change.Key == "name")
                         extra_markup.push_back(fmt::format(_("Changed the name from <b>{}</b> to <b>{}</b>"),

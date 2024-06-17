@@ -263,7 +263,7 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
-            std::string user_premium_guild_subscription_text = fmt::format(_("<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has achieved <b>Level {}}!</b></span></i>"),
+            std::string user_premium_guild_subscription_text = fmt::format(_("<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has achieved <b>Level {}!</b></span></i>"),
                                                                            author->GetDisplayNameEscapedBold().c_str(),
                                                                            Glib::Markup::escape_text(data->Content).c_str(),
                                                                            Glib::Markup::escape_text(guild->Name).c_str(),

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-17 09:59-0300\n"
+"POT-Creation-Date: 2024-06-17 11:30-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -347,7 +347,7 @@ msgstr ""
 #: src/components/chatmessage.cpp:266
 msgid ""
 "<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has "
-"achieved <b>Level {}}!</b></span></i>"
+"achieved <b>Level {}!</b></span></i>"
 msgstr ""
 
 #: src/components/chatmessage.cpp:276
@@ -928,7 +928,7 @@ msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:114
 #: src/windows/guildsettings/auditlogpane.cpp:356
-#: src/windows/guildsettings/auditlogpane.cpp:468
+#: src/windows/guildsettings/auditlogpane.cpp:470
 msgid "Changed the name from <b>{}</b> to <b>{}</b>"
 msgstr ""
 
@@ -948,13 +948,13 @@ msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:136
 #: src/windows/guildsettings/auditlogpane.cpp:452
-#: src/windows/guildsettings/auditlogpane.cpp:476
+#: src/windows/guildsettings/auditlogpane.cpp:478
 msgid "Disabled slowmode"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:138
 #: src/windows/guildsettings/auditlogpane.cpp:454
-#: src/windows/guildsettings/auditlogpane.cpp:478
+#: src/windows/guildsettings/auditlogpane.cpp:480
 msgid "Set slowmode to <b>{} seconds</b>"
 msgstr ""
 
@@ -1213,43 +1213,43 @@ msgid "{} created a thread <b>{}</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:446
-#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:484
 msgid "Archived the thread"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:446
-#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:484
 msgid "Unarchived the thread"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:448
-#: src/windows/guildsettings/auditlogpane.cpp:472
+#: src/windows/guildsettings/auditlogpane.cpp:474
 msgid "Set auto archive duration to <b>{} minutes</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:456
-#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:482
 msgid "Locked the thread, restricting it to only be unarchived by moderators"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:456
-#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:482
 msgid "Unlocked the thread, allowing it to be unarchived by non-moderators"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:462
-msgid "{} made changes to the thread <b></b>"
+msgid "{} made changes to the thread <b>{}</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:486
+#: src/windows/guildsettings/auditlogpane.cpp:488
 msgid "{} deleted the thread <b>{}</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:490
+#: src/windows/guildsettings/auditlogpane.cpp:492
 msgid "Unknown action"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:498
+#: src/windows/guildsettings/auditlogpane.cpp:500
 msgid "Reason: <b>{}</b>"
 msgstr ""
 
