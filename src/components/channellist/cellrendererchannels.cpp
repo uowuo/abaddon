@@ -600,6 +600,21 @@ void CellRendererChannels::render_vfunc_voice_channel(const Cairo::RefPtr<Cairo:
     layout->show_in_cairo_context(cr);
 
     RenderExpander(24, cr, widget, background_area, property_expanded());
+
+    // unread
+    if (!Abaddon::Get().GetSettings().Unreads) return;
+
+    const auto id = m_property_id.get_value();
+    const auto unread_state = Abaddon::Get().GetDiscordClient().GetUnreadStateForChannel(id);
+
+    if (unread_state < 1) return;
+
+    auto *paned = dynamic_cast<Gtk::Paned *>(widget.get_ancestor(Gtk::Paned::get_type()));
+    if (paned != nullptr) {
+        const auto edge = std::min(paned->get_position(), cell_area.get_width());
+
+        unread_render_mentions(cr, widget, unread_state, edge, cell_area);
+    }
 }
 
 // voice participant
