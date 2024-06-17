@@ -1,4 +1,5 @@
 src/abaddon.cpp
+src/startup.cpp
 src/dialogs/confirm.cpp
 src/dialogs/friendpicker.cpp
 src/dialogs/setstatus.cpp

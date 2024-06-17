@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-16 20:01-0300\n"
+"POT-Creation-Date: 2024-06-17 09:59-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -126,6 +126,10 @@ msgstr ""
 
 #: src/abaddon.cpp:1120
 msgid "css failed to load ({})"
+msgstr ""
+
+#: src/startup.cpp:14
+msgid "Getting connection info..."
 msgstr ""
 
 #: src/dialogs/confirm.cpp:6
@@ -247,24 +251,19 @@ msgstr ""
 msgid "Enter alt-text"
 msgstr ""
 
-#: src/components/chatinputindicator.cpp:118
-msgid " is typing..."
+#: src/components/chatinputindicator.cpp:119
+msgid "{} is typing..."
 msgstr ""
 
-#: src/components/chatinputindicator.cpp:120
-msgid " and "
-msgstr ""
-
-#: src/components/chatinputindicator.cpp:120
-#: src/components/chatinputindicator.cpp:125
-msgid " are typing..."
+#: src/components/chatinputindicator.cpp:121
+msgid "{} and {} are typing"
 msgstr ""
 
 #: src/components/chatinputindicator.cpp:125
-msgid "and "
+msgid "{}, {}, {} and {} are typing..."
 msgstr ""
 
-#: src/components/chatinputindicator.cpp:127
+#: src/components/chatinputindicator.cpp:132
 msgid "Several people are typing..."
 msgstr ""
 
@@ -292,130 +291,130 @@ msgstr ""
 msgid "Pin"
 msgstr ""
 
-#: src/components/chatmessage.cpp:17
+#: src/components/chatmessage.cpp:16
 msgid "Copy Link"
 msgstr ""
 
-#: src/components/chatmessage.cpp:148
+#: src/components/chatmessage.cpp:147
 msgid "deleted"
 msgstr ""
 
-#: src/components/chatmessage.cpp:150
+#: src/components/chatmessage.cpp:149
 msgid "edited"
 msgstr ""
 
-#: src/components/chatmessage.cpp:204
+#: src/components/chatmessage.cpp:203
 msgid "boosted server"
 msgstr ""
 
-#: src/components/chatmessage.cpp:207
+#: src/components/chatmessage.cpp:206
 msgid "user joined"
 msgstr ""
 
-#: src/components/chatmessage.cpp:210
+#: src/components/chatmessage.cpp:209
 msgid "message pinned"
 msgstr ""
 
-#: src/components/chatmessage.cpp:220
+#: src/components/chatmessage.cpp:219
 msgid "<i>used <span color='#697ec4'>{}</span> with {}</i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:235
+#: src/components/chatmessage.cpp:234
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> added <span "
 "color='#eeeeee'>{}</span></span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:245
+#: src/components/chatmessage.cpp:244
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> left</span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:247
+#: src/components/chatmessage.cpp:246
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> removed <span "
 "color='#eeeeee'>{}</span></span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:254
+#: src/components/chatmessage.cpp:253
 msgid "<i><span color='#999999'>{} changed the name to <b>{}</b></span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:259
+#: src/components/chatmessage.cpp:258
 msgid "<i><span color='#999999'>{} changed the channel icon</span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:267
+#: src/components/chatmessage.cpp:266
 msgid ""
 "<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has "
 "achieved <b>Level {}}!</b></span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:277
+#: src/components/chatmessage.cpp:276
 msgid ""
 "<i><span color='#999999'>{} has added <b>{}</b> to this channel. Its most "
 "important updates will show up here.</span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:283
+#: src/components/chatmessage.cpp:282
 msgid "started a call"
 msgstr ""
 
-#: src/components/chatmessage.cpp:286
+#: src/components/chatmessage.cpp:285
 msgid ""
 "This server has been removed from Server Discovery because it no longer "
 "passes all the requirements."
 msgstr ""
 
-#: src/components/chatmessage.cpp:289
+#: src/components/chatmessage.cpp:288
 msgid ""
 "This server is eligible for Server Discovery again and has been "
 "automatically relisted!"
 msgstr ""
 
-#: src/components/chatmessage.cpp:292
+#: src/components/chatmessage.cpp:291
 msgid ""
 "This server has failed Discovery activity requirements for 1 week. If this "
 "server fails for 4 weeks in a row, it will be automatically removed from "
 "Discovery."
 msgstr ""
 
-#: src/components/chatmessage.cpp:295
+#: src/components/chatmessage.cpp:294
 msgid ""
 "This server has failed Discovery activity requirements for 3 weeks in a row. "
 "If this server fails for 1 more week, it will be removed from Discovery."
 msgstr ""
 
-#: src/components/chatmessage.cpp:301
+#: src/components/chatmessage.cpp:300
 msgid "<i><span color='#999999'>{} started a thread: </span></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:308
+#: src/components/chatmessage.cpp:307
 msgid "<i><span color='#999999'>{} started a thread: </span><b>{}</b></i>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:715 src/components/chatmessage.cpp:738
+#: src/components/chatmessage.cpp:714 src/components/chatmessage.cpp:737
 #: src/windows/voicewindow.cpp:49 src/windows/guildsettings/auditlogpane.cpp:45
 msgid "Unknown User"
 msgstr ""
 
-#: src/components/chatmessage.cpp:731
+#: src/components/chatmessage.cpp:730
 msgid "{} used <span color='#697ec4'>/{}</span>"
 msgstr ""
 
-#: src/components/chatmessage.cpp:742
+#: src/components/chatmessage.cpp:741
 msgid "deleted message"
 msgstr ""
 
-#: src/components/chatmessage.cpp:748
+#: src/components/chatmessage.cpp:747
 msgid "attachment"
 msgstr ""
 
-#: src/components/chatmessage.cpp:750
+#: src/components/chatmessage.cpp:749
 msgid "embed"
 msgstr ""
 
-#: src/components/chatmessage.cpp:770
+#: src/components/chatmessage.cpp:769
 msgid "reply unavailable"
 msgstr ""
 
