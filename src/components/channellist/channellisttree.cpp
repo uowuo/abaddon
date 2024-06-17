@@ -34,6 +34,7 @@ ChannelListTree::ChannelListTree()
     , m_menu_voice_open_chat(_("Open _Chat"), true)
     , m_menu_dm_copy_id(_("_Copy ID"), true)
     , m_menu_dm_close("") // changes depending on if group or not
+#endif
 #ifdef WITH_VOICE
     , m_menu_dm_join_voice(_("Join _Voice"), true)
     , m_menu_dm_disconnect_voice(_("_Disconnect Voice"), true)

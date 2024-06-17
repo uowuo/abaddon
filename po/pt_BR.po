@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-17 11:30-0300\n"
+"POT-Creation-Date: 2024-06-17 12:21-0300\n"
 "PO-Revision-Date: 2024-06-17 11:45-0300\n"
 "Last-Translator: Gabriel de Moura <smolblackcat@proton.me>\n"
 "Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
@@ -363,8 +363,9 @@ msgstr "<i><span color='#999999'>{} alterou o ícone do canal</span></i>"
 msgid ""
 "<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has "
 "achieved <b>Level {}!</b></span></i>"
-msgstr "<i><span color='#999999'>{} acabou de impulsionar o servidor <b>{}</b> vezes! {} atingiu "
-"<b>Nível {}!</b></span></i>"
+msgstr ""
+"<i><span color='#999999'>{} acabou de impulsionar o servidor <b>{}</b> "
+"vezes! {} atingiu <b>Nível {}!</b></span></i>"
 
 #: src/components/chatmessage.cpp:276
 msgid ""
@@ -391,8 +392,8 @@ msgid ""
 "This server is eligible for Server Discovery again and has been "
 "automatically relisted!"
 msgstr ""
-"Este servidor é elegível para o \"Server Discovery\" novamente e "
-"foi automaticamente recadastrado"
+"Este servidor é elegível para o \"Server Discovery\" novamente e foi "
+"automaticamente recadastrado"
 
 #: src/components/chatmessage.cpp:291
 msgid ""
@@ -575,8 +576,8 @@ msgstr "Desconhecido"
 #: src/components/channellist/channellisttree.cpp:19
 #: src/components/channellist/channellisttree.cpp:23
 #: src/components/channellist/channellisttree.cpp:24
-#: src/components/channellist/channellisttree.cpp:34
-#: src/components/channellist/channellisttree.cpp:40
+#: src/components/channellist/channellisttree.cpp:35
+#: src/components/channellist/channellisttree.cpp:42
 msgid "_Copy ID"
 msgstr "_Copiar ID"
 
@@ -585,13 +586,14 @@ msgid "View _Settings"
 msgstr "Ver _Configurações"
 
 #: src/components/channellist/channellisttree.cpp:21
-#: src/components/channellist/channellisttree.cpp:41
+#: src/components/channellist/channellisttree.cpp:43
 msgid "_Leave"
 msgstr "_Sair"
 
 #: src/components/channellist/channellisttree.cpp:22
 #: src/components/channellist/channellisttree.cpp:25
-#: src/components/channellist/channellisttree.cpp:44
+#: src/components/channellist/channellisttree.cpp:33
+#: src/components/channellist/channellisttree.cpp:46
 msgid "Mark as _Read"
 msgstr "Marcar como _Lido"
 
@@ -608,53 +610,57 @@ msgstr "_Entrar"
 msgid "_Disconnect"
 msgstr "_Desconectar"
 
-#: src/components/channellist/channellisttree.cpp:37
+#: src/components/channellist/channellisttree.cpp:34
+msgid "Open _Chat"
+msgstr "Abrir _Chat"
+
+#: src/components/channellist/channellisttree.cpp:39
 msgid "Join _Voice"
 msgstr "Entrar em _Voz"
 
-#: src/components/channellist/channellisttree.cpp:38
+#: src/components/channellist/channellisttree.cpp:40
 msgid "_Disconnect Voice"
 msgstr "_Desconectar da Voz"
 
-#: src/components/channellist/channellisttree.cpp:42
+#: src/components/channellist/channellisttree.cpp:44
 msgid "_Archive"
 msgstr "_Arquivar"
 
-#: src/components/channellist/channellisttree.cpp:43
+#: src/components/channellist/channellisttree.cpp:45
 msgid "_Unarchive"
 msgstr "_Desarquivar"
 
-#: src/components/channellist/channellisttree.cpp:229
+#: src/components/channellist/channellisttree.cpp:242
 msgid "Are you sure you want to leave this group DM?"
 msgstr "Você tem certeza de que quer sair deste grupo de DM?"
 
-#: src/components/channellist/channellisttree.cpp:267
+#: src/components/channellist/channellisttree.cpp:280
 msgid "Are you sure you want to leave this thread?"
 msgstr "Você tem certeza de que quer sair desta thread?"
 
-#: src/components/channellist/channellisttree.cpp:1184
+#: src/components/channellist/channellisttree.cpp:1170
 msgid "Direct Messages"
 msgstr "Mensagems Diretas"
 
-#: src/components/channellist/channellisttree.cpp:1356
+#: src/components/channellist/channellisttree.cpp:1338
 msgid "Close"
 msgstr "Fechar"
 
-#: src/components/channellist/channellisttree.cpp:1356
+#: src/components/channellist/channellisttree.cpp:1338
 msgid "Leave"
 msgstr "Sair"
 
-#: src/components/channellist/channellisttree.cpp:1410
-#: src/components/channellist/channellisttree.cpp:1424
-#: src/components/channellist/channellisttree.cpp:1466
-#: src/components/channellist/channellisttree.cpp:1491
+#: src/components/channellist/channellisttree.cpp:1392
+#: src/components/channellist/channellisttree.cpp:1406
+#: src/components/channellist/channellisttree.cpp:1451
+#: src/components/channellist/channellisttree.cpp:1476
 msgid "Unmute"
 msgstr "Desmutar"
 
-#: src/components/channellist/channellisttree.cpp:1412
-#: src/components/channellist/channellisttree.cpp:1426
-#: src/components/channellist/channellisttree.cpp:1468
-#: src/components/channellist/channellisttree.cpp:1493
+#: src/components/channellist/channellisttree.cpp:1394
+#: src/components/channellist/channellisttree.cpp:1408
+#: src/components/channellist/channellisttree.cpp:1453
+#: src/components/channellist/channellisttree.cpp:1478
 #: src/windows/voicewindow.cpp:22 src/windows/voicewindow.cpp:93
 msgid "Mute"
 msgstr "Mutar"
