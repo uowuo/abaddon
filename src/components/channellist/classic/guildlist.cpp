@@ -1,3 +1,5 @@
+#include <gtkmm/overlay.h>
+
 #include "guildlist.hpp"
 
 #include "abaddon.hpp"
@@ -99,7 +101,26 @@ static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, Snowflake guild_id) {
     overlay->add(*widget);
     auto *mention_overlay = Gtk::make_managed<MentionOverlay>(guild_id);
     overlay->add_overlay(*mention_overlay);
-    overlay->show_all();
+    overlay->set_overlay_pass_through(*mention_overlay, true);
+    mention_overlay->signal_realize().connect([mention_overlay]() {
+        mention_overlay->get_window()->set_pass_through(true);
+    });
+    mention_overlay->show();
+    overlay->show();
+    return overlay;
+}
+
+static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, const UserSettingsGuildFoldersEntry &folder) {
+    auto *overlay = Gtk::make_managed<Gtk::Overlay>();
+    overlay->add(*widget);
+    auto *mention_overlay = Gtk::make_managed<MentionOverlay>(folder);
+    overlay->add_overlay(*mention_overlay);
+    overlay->set_overlay_pass_through(*mention_overlay, true);
+    mention_overlay->signal_realize().connect([mention_overlay]() {
+        mention_overlay->get_window()->set_pass_through(true);
+    });
+    mention_overlay->show();
+    overlay->show();
     return overlay;
 }
 
@@ -147,7 +168,7 @@ void GuildList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
     }
 
     folder_widget->show();
-    add(*folder_widget);
+    add(*AddMentionOverlay(folder_widget, folder));
 }
 
 void GuildList::Clear() {

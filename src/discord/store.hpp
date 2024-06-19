@@ -50,7 +50,7 @@ public:
     std::vector<Message> GetMessagesBefore(Snowflake channel_id, Snowflake message_id, size_t limit) const;
     std::vector<Message> GetPinnedMessages(Snowflake channel_id) const;
     std::vector<ChannelData> GetActiveThreads(Snowflake channel_id) const; // public
-    std::vector<Snowflake> GetChannelIDsWithParentID(Snowflake channel_id) const;
+    std::vector<std::pair<Snowflake, ChannelType>> GetChannelIDsWithParentID(Snowflake channel_id) const;
     std::unordered_set<Snowflake> GetMembersInGuild(Snowflake guild_id) const;
     // ^ not the same as GetUsersInGuild since users in a guild may include users who do not have retrieved member data
 

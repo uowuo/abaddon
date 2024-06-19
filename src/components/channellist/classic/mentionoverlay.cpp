@@ -5,7 +5,16 @@
 #include "abaddon.hpp"
 
 MentionOverlay::MentionOverlay(Snowflake guild_id)
-    : m_guild_id(guild_id) {
+    : m_guild_ids({ guild_id }) {
+    Init();
+}
+
+MentionOverlay::MentionOverlay(const UserSettingsGuildFoldersEntry &folder)
+    : m_guild_ids({ folder.GuildIDs.begin(), folder.GuildIDs.end() }) {
+    Init();
+}
+
+void MentionOverlay::Init() {
     m_font.set_family("sans 14");
     m_layout = create_pango_layout("12");
     m_layout->set_font_description(m_font);
@@ -24,20 +33,24 @@ MentionOverlay::MentionOverlay(Snowflake guild_id)
     });
 
     Abaddon::Get().GetDiscordClient().signal_message_create().connect([this](const Message &msg) {
-        if (msg.GuildID.has_value() && *msg.GuildID != m_guild_id) return;
+        if (msg.GuildID.has_value() && m_guild_ids.find(*msg.GuildID) == m_guild_ids.end()) return;
         if (!msg.DoesMentionEveryone && msg.Mentions.empty() && msg.MentionRoles.empty()) return;
         queue_draw();
     });
 }
 
 bool MentionOverlay::OnDraw(const Cairo::RefPtr<Cairo::Context> &cr) {
-    int mentions;
-    Abaddon::Get().GetDiscordClient().GetUnreadStateForGuild(m_guild_id, mentions);
-    if (mentions == 0) return true;
-    m_layout->set_text(std::to_string(mentions));
+    int total_mentions = 0;
+    for (auto guild_id : m_guild_ids) {
+        int mentions;
+        Abaddon::Get().GetDiscordClient().GetUnreadStateForGuild(guild_id, mentions);
+        total_mentions += mentions;
+    }
+    if (total_mentions == 0) return true;
+    m_layout->set_text(std::to_string(total_mentions));
 
     const int width = get_allocated_width();
-    const int height = get_allocated_height();
+    const int height = std::min(get_allocated_height(), 48); // cope
 
     int lw, lh;
     m_layout->get_pixel_size(lw, lh);
