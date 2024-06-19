@@ -1,6 +1,7 @@
 #include "profilewindow.hpp"
 
 #include "abaddon.hpp"
+#include "discord/user.hpp"
 #include "util.hpp"
 
 ProfileWindow::ProfileWindow(Snowflake user_id)
@@ -116,13 +117,13 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
 
     if (!data.User.PublicFlags.has_value()) return;
     const auto x = *data.User.PublicFlags;
-    for (uint64_t i = 1; i <= UserData::MaxFlag; i <<= 1) {
+    for (uint64_t i = 1; i <= static_cast<uint64_t>(UserData::EFlags::MaxFlag); i <<= 1) {
         if (!(x & i)) continue;
         const std::string name = UserData::GetFlagName(i);
         if (name == "unknown") continue;
         Glib::RefPtr<Gdk::Pixbuf> pixbuf;
         try {
-            if (name == "verifiedbot")
+            if (i == static_cast<uint64_t>(UserData::EFlags::VerifiedBot))
                 pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/checkmark.png"), 24, 24);
             else
                 pixbuf = Gdk::Pixbuf::create_from_file(Abaddon::GetResPath("/" + name + ".png"), 24, 24);
