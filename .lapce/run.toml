@@ -3,7 +3,7 @@
 [[configs]]
 name = "cmake-debug"
 program = "sh"
-args = ["gen_compile_commands.sh"]
+args = [".lapce/gen_compile_commands.sh"]
 
 [configs.env]
 CC = "/usr/bin/clang"
