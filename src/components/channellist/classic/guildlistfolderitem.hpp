@@ -24,7 +24,7 @@ class GuildListFolderItem : public Gtk::VBox {
 public:
     GuildListFolderItem(const UserSettingsGuildFoldersEntry &folder);
 
-    void AddGuildWidget(GuildListGuildItem *widget);
+    void AddGuildWidget(Gtk::Widget *widget);
 
 private:
     void OnMessageCreate(const Message &msg);

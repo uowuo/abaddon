@@ -20,12 +20,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_deafen("Deafen")
     , m_noise_suppression("Suppress Noise")
     , m_mix_mono("Mix Mono")
+    , m_disconnect("Disconnect")
     , m_channel_id(channel_id)
     , m_menu_view("View")
     , m_menu_view_settings("More _Settings", true) {
     get_style_context()->add_class("app-window");
 
-    set_default_size(300, 300);
+    set_default_size(300, 400);
 
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &audio = Abaddon::Get().GetAudio();
@@ -116,6 +117,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_mix_mono.set_active(audio.GetMixMono());
     m_mix_mono.signal_toggled().connect([this]() {
         Abaddon::Get().GetAudio().SetMixMono(m_mix_mono.get_active());
+    });
+
+    m_disconnect.signal_clicked().connect([this]() {
+        Abaddon::Get().GetDiscordClient().DisconnectFromVoice();
     });
 
     auto *playback_renderer = Gtk::make_managed<Gtk::CellRendererText>();
@@ -216,6 +221,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
+    m_controls.pack_end(m_disconnect, false, true);
     m_main.pack_start(m_menu_bar, false, true);
     m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);

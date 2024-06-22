@@ -220,34 +220,34 @@ void UserData::update_from_json(const nlohmann::json &j) {
 }
 
 const char *UserData::GetFlagName(uint64_t flag) {
-    switch (flag) {
-        case DiscordEmployee:
+    switch (static_cast<UserData::EFlags>(flag)) {
+        case UserData::EFlags::DiscordEmployee:
             return "discordstaff";
-        case PartneredServerOwner:
+        case UserData::EFlags::PartneredServerOwner:
             return "partneredowner";
-        case HypeSquadEvents:
+        case UserData::EFlags::HypeSquadEvents:
             return "hypesquadevents";
-        case BugHunterLevel1:
+        case UserData::EFlags::BugHunterLevel1:
             return "discordbughunter";
-        case HouseBravery:
+        case UserData::EFlags::HouseBravery:
             return "hypesquadbravery";
-        case HouseBrilliance:
+        case UserData::EFlags::HouseBrilliance:
             return "hypesquadbrilliance";
-        case HouseBalance:
+        case UserData::EFlags::HouseBalance:
             return "hypesquadbalance";
-        case EarlySupporter:
+        case UserData::EFlags::EarlySupporter:
             return "earlysupporter";
-        case TeamUser:
+        case UserData::EFlags::TeamUser:
             return "teamuser";
-        case System:
+        case UserData::EFlags::System:
             return "system";
-        case BugHunterLevel2:
+        case UserData::EFlags::BugHunterLevel2:
             return "discordbughunter2";
-        case VerifiedBot:
+        case UserData::EFlags::VerifiedBot:
             return "verifiedbot";
-        case EarlyVerifiedBotDeveloper:
+        case UserData::EFlags::EarlyVerifiedBotDeveloper:
             return "earlyverifiedbotdeveloper";
-        case CertifiedModerator:
+        case UserData::EFlags::CertifiedModerator:
             return "certifiedmoderator";
         default:
             return "unknown";
@@ -255,34 +255,34 @@ const char *UserData::GetFlagName(uint64_t flag) {
 }
 
 const char *UserData::GetFlagReadableName(uint64_t flag) {
-    switch (flag) {
-        case DiscordEmployee:
+    switch (static_cast<UserData::EFlags>(flag)) {
+        case UserData::EFlags::DiscordEmployee:
             return "Discord Staff";
-        case PartneredServerOwner:
+        case UserData::EFlags::PartneredServerOwner:
             return "Partnered Server Owner";
-        case HypeSquadEvents:
+        case UserData::EFlags::HypeSquadEvents:
             return "HypeSquad Events";
-        case BugHunterLevel1:
+        case UserData::EFlags::BugHunterLevel1:
             return "Discord Bug Hunter";
-        case HouseBravery:
+        case UserData::EFlags::HouseBravery:
             return "HypeSquad Bravery";
-        case HouseBrilliance:
+        case UserData::EFlags::HouseBrilliance:
             return "HypeSquad Brilliance";
-        case HouseBalance:
+        case UserData::EFlags::HouseBalance:
             return "HypeSquad Balance";
-        case EarlySupporter:
+        case UserData::EFlags::EarlySupporter:
             return "Early Supporter";
-        case TeamUser:
+        case UserData::EFlags::TeamUser:
             return "Team User"; // ???
-        case System:
+        case UserData::EFlags::System:
             return "System";
-        case BugHunterLevel2:
+        case UserData::EFlags::BugHunterLevel2:
             return "Discord Bug Hunter Level 2";
-        case VerifiedBot:
+        case UserData::EFlags::VerifiedBot:
             return "Verified Bot";
-        case EarlyVerifiedBotDeveloper:
+        case UserData::EFlags::EarlyVerifiedBotDeveloper:
             return "Early Verified Bot Developer";
-        case CertifiedModerator:
+        case UserData::EFlags::CertifiedModerator:
             return "Discord Certified Moderator";
         default:
             return "";

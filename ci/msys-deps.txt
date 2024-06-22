@@ -40,6 +40,7 @@
 /bin/libjpeg-8.dll
 /bin/liblzma-5.dll
 /bin/libnghttp2-14.dll
+/bin/libnghttp3-9.dll
 /bin/libopus-0.dll
 /bin/libpango-1.0-0.dll
 /bin/libpangocairo-1.0-0.dll

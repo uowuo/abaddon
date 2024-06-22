@@ -638,16 +638,16 @@ std::vector<ChannelData> Store::GetActiveThreads(Snowflake channel_id) const {
     return ret;
 }
 
-std::vector<Snowflake> Store::GetChannelIDsWithParentID(Snowflake channel_id) const {
+std::vector<std::pair<Snowflake, ChannelType>> Store::GetChannelIDsWithParentID(Snowflake channel_id) const {
     auto &s = m_stmt_get_chan_ids_parent;
 
     s->Bind(1, channel_id);
 
-    std::vector<Snowflake> ret;
+    std::vector<std::pair<Snowflake, ChannelType>> ret;
     while (s->FetchOne()) {
-        Snowflake x;
-        s->Get(0, x);
-        ret.push_back(x);
+        auto &p = ret.emplace_back();
+        s->Get(0, p.first);
+        s->Get(1, p.second);
     }
 
     s->Reset();
@@ -2315,7 +2315,7 @@ bool Store::CreateStatements() {
     }
 
     m_stmt_get_chan_ids_parent = std::make_unique<Statement>(m_db, R"(
-        SELECT id FROM channels WHERE parent_id = ?
+        SELECT id, type FROM channels WHERE parent_id = ?
     )");
     if (!m_stmt_get_chan_ids_parent->OK()) {
         fprintf(stderr, "failed to prepare get channel ids for parent statement: %s\n", m_db.ErrStr());

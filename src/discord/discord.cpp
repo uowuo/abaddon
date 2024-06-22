@@ -351,7 +351,9 @@ void DiscordClient::GetArchivedPrivateThreads(Snowflake channel_id, const sigc::
 }
 
 std::vector<Snowflake> DiscordClient::GetChildChannelIDs(Snowflake parent_id) const {
-    return m_store.GetChannelIDsWithParentID(parent_id);
+    std::vector<Snowflake> ids;
+    for (auto [id, type] : m_store.GetChannelIDsWithParentID(parent_id)) ids.push_back(id);
+    return ids;
 }
 
 std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake message_id) const {
@@ -1290,19 +1292,8 @@ Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
     return m_voice_channel_id;
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetUsersInVoiceChannel(Snowflake channel_id) {
-    return m_voice_state_channel_users[channel_id];
-}
-
 std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
     return m_voice.GetSSRCOfUser(id);
-}
-
-std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
-    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
-        return it->second;
-    }
-    return std::nullopt;
 }
 
 bool DiscordClient::IsUserSpeaker(Snowflake user_id) const {
@@ -1324,6 +1315,17 @@ void DiscordClient::SetVoiceDeafened(bool is_deaf) {
     SendVoiceStateUpdate();
 }
 #endif
+
+std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
+    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetUsersInVoiceChannel(Snowflake channel_id) {
+    return m_voice_state_channel_users[channel_id];
+}
 
 void DiscordClient::SetReferringChannel(Snowflake id) {
     if (!id.IsValid()) {
@@ -1384,7 +1386,8 @@ int DiscordClient::GetUnreadStateForChannel(Snowflake id) const noexcept {
 
 int DiscordClient::GetUnreadChannelsCountForCategory(Snowflake id) const noexcept {
     int result = 0;
-    for (Snowflake channel_id : m_store.GetChannelIDsWithParentID(id)) {
+    for (auto [channel_id, channel_type] : m_store.GetChannelIDsWithParentID(id)) {
+        if (!ShouldChannelTypeCountInUnread(channel_type)) continue;
         if (IsChannelMuted(channel_id)) continue;
         const auto iter = m_unread.find(channel_id);
         if (iter == m_unread.end()) continue;
@@ -1405,6 +1408,9 @@ bool DiscordClient::GetUnreadStateForGuild(Snowflake id, int &total_mentions) co
         // channels under muted categories wont contribute to unread state
         if (const auto iter = m_channel_muted_parent.find(channel_id); iter != m_channel_muted_parent.end())
             continue;
+
+        const auto channel = GetChannel(channel_id);
+        if (channel.has_value() && !ShouldChannelTypeCountInUnread(channel->Type)) continue;
 
         if (!has_any_unread && channel_unread > -1 && !IsChannelMuted(channel_id))
             has_any_unread = true;
@@ -1668,10 +1674,10 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::STAGE_INSTANCE_DELETE: {
                         HandleGatewayStageInstanceDelete(m);
                     } break;
-#ifdef WITH_VOICE
                     case GatewayEvent::VOICE_STATE_UPDATE: {
                         HandleGatewayVoiceStateUpdate(m);
                     } break;
+#ifdef WITH_VOICE
                     case GatewayEvent::VOICE_SERVER_UPDATE: {
                         HandleGatewayVoiceServerUpdate(m);
                     } break;
@@ -2383,12 +2389,6 @@ void DiscordClient::HandleGatewayStageInstanceDelete(const GatewayMessage &msg) 
  *
  */
 
-void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
-    spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
-
-    CheckVoiceState(msg.Data);
-}
-
 void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
 
@@ -2418,8 +2418,17 @@ void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     }
 }
 
+#endif
+
+void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
+
+    CheckVoiceState(msg.Data);
+}
+
 void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.UserID == m_user_data.ID) {
+#ifdef WITH_VOICE
         spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
 
@@ -2430,6 +2439,7 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
             m_voice_channel_id = *data.ChannelID;
             m_signal_voice_channel_changed.emit(m_voice_channel_id);
         }
+#endif
     } else {
         if (data.GuildID.has_value() && data.Member.has_value()) {
             if (data.Member->User.has_value()) {
@@ -2461,7 +2471,6 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
         }
     }
 }
-#endif
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
@@ -2811,6 +2820,14 @@ bool DiscordClient::CheckCode(const http::response_type &r, int expected) {
     return true;
 }
 
+bool DiscordClient::ShouldChannelTypeCountInUnread(ChannelType type) {
+    return type != ChannelType::GUILD_VOICE &&
+           type != ChannelType::GUILD_FORUM &&
+           type != ChannelType::GUILD_MEDIA &&
+           type != ChannelType::GUILD_STORE &&
+           type != ChannelType::GUILD_DIRECTORY;
+}
+
 void DiscordClient::StoreMessageData(Message &msg) {
     const auto chan = m_store.GetChannel(msg.ChannelID);
     if (chan.has_value() && chan->GuildID.has_value())
@@ -2973,6 +2990,15 @@ void DiscordClient::SendVoiceStateUpdate() {
     m_websocket.Send(msg);
 }
 
+void DiscordClient::OnVoiceConnected() {
+    m_signal_voice_connected.emit();
+}
+
+void DiscordClient::OnVoiceDisconnected() {
+    m_signal_voice_disconnected.emit();
+}
+#endif
+
 void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
     if (!state.ChannelID.has_value()) {
         spdlog::get("discord")->error("SetVoiceState called with missing channel ID");
@@ -3002,15 +3028,6 @@ void DiscordClient::ClearVoiceState(Snowflake user_id) {
         m_voice_states.erase(user_id);
     }
 }
-
-void DiscordClient::OnVoiceConnected() {
-    m_signal_voice_connected.emit();
-}
-
-void DiscordClient::OnVoiceDisconnected() {
-    m_signal_voice_disconnected.emit();
-}
-#endif
 
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
@@ -3302,14 +3319,6 @@ DiscordClient::type_signal_voice_speaking DiscordClient::signal_voice_speaking()
     return m_signal_voice_speaking;
 }
 
-DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
-    return m_signal_voice_user_disconnect;
-}
-
-DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
-    return m_signal_voice_user_connect;
-}
-
 DiscordClient::type_signal_voice_requested_connect DiscordClient::signal_voice_requested_connect() {
     return m_signal_voice_requested_connect;
 }
@@ -3325,6 +3334,15 @@ DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice
 DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
     return m_signal_voice_channel_changed;
 }
+#endif
+
+DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
+    return m_signal_voice_user_disconnect;
+}
+
+DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
+    return m_signal_voice_user_connect;
+}
 
 DiscordClient::type_signal_voice_state_set DiscordClient::signal_voice_state_set() {
     return m_signal_voice_state_set;
@@ -3333,4 +3351,3 @@ DiscordClient::type_signal_voice_state_set DiscordClient::signal_voice_state_set
 DiscordClient::type_signal_voice_speaker_state_changed DiscordClient::signal_voice_speaker_state_changed() {
     return m_signal_voice_speaker_state_changed;
 }
-#endif

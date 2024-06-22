@@ -201,9 +201,7 @@ public:
     [[nodiscard]] bool IsVoiceConnected() const noexcept;
     [[nodiscard]] bool IsVoiceConnecting() const noexcept;
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
-    [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
-    [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
     [[nodiscard]] bool IsUserSpeaker(Snowflake user_id) const;
 
     DiscordVoiceClient &GetVoiceClient();
@@ -211,6 +209,9 @@ public:
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);
 #endif
+
+    [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
 
     void SetReferringChannel(Snowflake id);
 
@@ -304,13 +305,13 @@ private:
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
 
 #ifdef WITH_VOICE
-    void
-    HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayCallCreate(const GatewayMessage &msg);
+#endif
+
+    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
 
     void CheckVoiceState(const VoiceState &data);
-#endif
 
     void HeartbeatThread();
     void SendIdentify();
@@ -326,6 +327,8 @@ private:
     static bool CheckCode(const http::response_type &r, int expected);
 
     void StoreMessageData(Message &msg);
+
+    static bool ShouldChannelTypeCountInUnread(ChannelType type);
 
     void HandleReadyReadState(const ReadyEventData &data);
     void HandleReadyGuildSettings(const ReadyEventData &data);
@@ -381,18 +384,19 @@ private:
     bool m_deaf_requested = false;
 
     Snowflake m_voice_channel_id;
-    // todo sql i guess
-    std::unordered_map<Snowflake, std::pair<Snowflake, PackedVoiceState>> m_voice_states;
-    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     void SendVoiceStateUpdate();
-
-    void SetVoiceState(Snowflake user_id, const VoiceState &state);
-    void ClearVoiceState(Snowflake user_id);
 
     void OnVoiceConnected();
     void OnVoiceDisconnected();
 #endif
+
+    void SetVoiceState(Snowflake user_id, const VoiceState &state);
+    void ClearVoiceState(Snowflake user_id);
+
+    // todo sql i guess
+    std::unordered_map<Snowflake, std::pair<Snowflake, PackedVoiceState>> m_voice_states;
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     mutable std::mutex m_msg_mutex;
     Glib::Dispatcher m_msg_dispatch;
@@ -474,15 +478,16 @@ public:
     using type_signal_voice_connected = sigc::signal<void()>;
     using type_signal_voice_disconnected = sigc::signal<void()>;
     using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
-    using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
-    using type_signal_voice_user_connect = sigc::signal<void(Snowflake, Snowflake)>;
     using type_signal_voice_requested_connect = sigc::signal<void(Snowflake)>;
     using type_signal_voice_requested_disconnect = sigc::signal<void()>;
     using type_signal_voice_client_state_update = sigc::signal<void(DiscordVoiceClient::State)>;
     using type_signal_voice_channel_changed = sigc::signal<void(Snowflake)>;
+#endif
+
+    using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
+    using type_signal_voice_user_connect = sigc::signal<void(Snowflake, Snowflake)>;
     using type_signal_voice_state_set = sigc::signal<void(Snowflake, Snowflake, VoiceStateFlags)>;
     using type_signal_voice_speaker_state_changed = sigc::signal<void(Snowflake /* channel_id */, Snowflake /* user_id */, bool /* is_speaker */)>;
-#endif
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_gateway_ready_supplemental signal_gateway_ready_supplemental();
@@ -546,15 +551,16 @@ public:
     type_signal_voice_connected signal_voice_connected();
     type_signal_voice_disconnected signal_voice_disconnected();
     type_signal_voice_speaking signal_voice_speaking();
-    type_signal_voice_user_disconnect signal_voice_user_disconnect();
-    type_signal_voice_user_connect signal_voice_user_connect();
     type_signal_voice_requested_connect signal_voice_requested_connect();
     type_signal_voice_requested_disconnect signal_voice_requested_disconnect();
     type_signal_voice_client_state_update signal_voice_client_state_update();
     type_signal_voice_channel_changed signal_voice_channel_changed();
+#endif
+
+    type_signal_voice_user_disconnect signal_voice_user_disconnect();
+    type_signal_voice_user_connect signal_voice_user_connect();
     type_signal_voice_state_set signal_voice_state_set();
     type_signal_voice_speaker_state_changed signal_voice_speaker_state_changed();
-#endif
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -619,13 +625,14 @@ protected:
     type_signal_voice_connected m_signal_voice_connected;
     type_signal_voice_disconnected m_signal_voice_disconnected;
     type_signal_voice_speaking m_signal_voice_speaking;
-    type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
-    type_signal_voice_user_connect m_signal_voice_user_connect;
     type_signal_voice_requested_connect m_signal_voice_requested_connect;
     type_signal_voice_requested_disconnect m_signal_voice_requested_disconnect;
     type_signal_voice_client_state_update m_signal_voice_client_state_update;
     type_signal_voice_channel_changed m_signal_voice_channel_changed;
+#endif
+
+    type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
+    type_signal_voice_user_connect m_signal_voice_user_connect;
     type_signal_voice_state_set m_signal_voice_state_set;
     type_signal_voice_speaker_state_changed m_signal_voice_speaker_state_changed;
-#endif
 };

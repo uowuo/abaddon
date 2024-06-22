@@ -1,8 +1,11 @@
+#include <gtkmm/overlay.h>
+
 #include "guildlist.hpp"
 
 #include "abaddon.hpp"
 #include "util.hpp"
 #include "guildlistfolderitem.hpp"
+#include "mentionoverlay.hpp"
 
 class GuildListDMsButton : public Gtk::EventBox {
 public:
@@ -93,10 +96,38 @@ void GuildList::UpdateListing() {
     }
 }
 
+static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, Snowflake guild_id) {
+    auto *overlay = Gtk::make_managed<Gtk::Overlay>();
+    overlay->add(*widget);
+    auto *mention_overlay = Gtk::make_managed<MentionOverlay>(guild_id);
+    overlay->add_overlay(*mention_overlay);
+    overlay->set_overlay_pass_through(*mention_overlay, true);
+    mention_overlay->signal_realize().connect([mention_overlay]() {
+        mention_overlay->get_window()->set_pass_through(true);
+    });
+    mention_overlay->show();
+    overlay->show();
+    return overlay;
+}
+
+static Gtk::Widget *AddMentionOverlay(Gtk::Widget *widget, const UserSettingsGuildFoldersEntry &folder) {
+    auto *overlay = Gtk::make_managed<Gtk::Overlay>();
+    overlay->add(*widget);
+    auto *mention_overlay = Gtk::make_managed<MentionOverlay>(folder);
+    overlay->add_overlay(*mention_overlay);
+    overlay->set_overlay_pass_through(*mention_overlay, true);
+    mention_overlay->signal_realize().connect([mention_overlay]() {
+        mention_overlay->get_window()->set_pass_through(true);
+    });
+    mention_overlay->show();
+    overlay->show();
+    return overlay;
+}
+
 void GuildList::AddGuild(Snowflake id) {
     if (auto item = CreateGuildWidget(id)) {
         item->show();
-        add(*item);
+        add(*AddMentionOverlay(item, id));
     }
 }
 
@@ -132,12 +163,12 @@ void GuildList::AddFolder(const UserSettingsGuildFoldersEntry &folder) {
     for (const auto guild_id : folder.GuildIDs) {
         if (auto *guild_widget = CreateGuildWidget(guild_id)) {
             guild_widget->show();
-            folder_widget->AddGuildWidget(guild_widget);
+            folder_widget->AddGuildWidget(AddMentionOverlay(guild_widget, guild_id));
         }
     }
 
     folder_widget->show();
-    add(*folder_widget);
+    add(*AddMentionOverlay(folder_widget, folder));
 }
 
 void GuildList::Clear() {
