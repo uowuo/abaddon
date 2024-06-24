@@ -1159,6 +1159,10 @@ int main(int argc, char **argv) {
     if (std::getenv("ABADDON_NO_FC") == nullptr)
         Platform::SetupFonts();
 
+// Mac building workaround
+#ifdef setlocale
+#undef setlocale
+#endif
     char *systemLocale = std::setlocale(LC_ALL, "");
     try {
         if (systemLocale != nullptr) {
