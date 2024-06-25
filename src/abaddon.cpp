@@ -1,5 +1,4 @@
 #include "abaddon.hpp"
-#include <cstdlib>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
@@ -1154,35 +1153,15 @@ void Abaddon::on_window_hide() {
     }
 }
 
-// clang-format off
-
-#ifdef __GLIBC__
-    #ifndef _GNU_SOURCE
-        #define _GNU_SOURCE
-        #include <features.h>
-        #ifndef __USE_GNU
-            #define __MUSL__
-        #endif
-        #undef _GNU_SOURCE
-    #else
-        #include <features.h>
-        #ifndef __USE_GNU
-            #define __MUSL__
-        #endif
-    #endif
-#endif
-
-// clang-format on
-
 int main(int argc, char **argv) {
-#ifdef __MUSL__
-    char env[] = "LANG=C";
-    putenv(env);
-#endif
-
-    if (std::getenv("ABADDON_NO_FC") == nullptr)
+    if (std::getenv("ABADDON_NO_FC") == nullptr) {
         Platform::SetupFonts();
+    }
 
+    // windows doesnt have langinfo.h so some localization falls back to translation strings
+    // i dont like the default translation so this lets us use strftime
+
+#ifdef _WIN32
     char *systemLocale = std::setlocale(LC_ALL, "");
     try {
         if (systemLocale != nullptr) {
@@ -1196,6 +1175,7 @@ int main(int argc, char **argv) {
             }
         } catch (...) {}
     }
+#endif
 
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };

@@ -11,6 +11,7 @@
 #include <regex>
 #include <mutex>
 #include <condition_variable>
+#include <glibconfig.h>
 #include <optional>
 #include <type_traits>
 
@@ -50,7 +51,8 @@ std::string GetExtension(std::string url);
 bool IsURLViewableImage(const std::string &url);
 std::vector<uint8_t> ReadWholeFile(const std::string &path);
 std::string HumanReadableBytes(uint64_t bytes);
-std::string FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
+Glib::ustring FormatUnixEpoch(gint64 time, const std::string &fmt = "%x %X");
+Glib::ustring FormatISO8601(const std::string &in, int extra_offset = 0, const std::string &fmt = "%x %X");
 void AddPointerCursor(Gtk::Widget &widget);
 
 template<typename T>

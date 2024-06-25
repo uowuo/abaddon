@@ -1179,8 +1179,11 @@ bool ChannelListTree::SelectionFunc(const Glib::RefPtr<Gtk::TreeModel> &model, c
         }
     }
 
-    const auto type = (*model->get_iter(path))[m_columns.m_type];
-    const auto id = static_cast<Snowflake>((*model->get_iter(path))[m_columns.m_id]);
+    const auto iter = model->get_iter(path);
+    if (!iter) return false;
+
+    const auto type = (*iter)[m_columns.m_type];
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
     // todo maybe just keep this last check?
     if (type == RenderType::TextChannel || type == RenderType::DM || type == RenderType::Thread || (id == m_active_channel)) return true;
     return is_currently_selected;
