@@ -1485,9 +1485,10 @@ void ChannelListTree::OnVoiceStageSubmenuPopup() {
         m_menu_voice_stage_join.set_sensitive(true);
         m_menu_voice_stage_disconnect.set_sensitive(false);
     }
-#endif
+#else
     m_menu_voice_stage_join.set_sensitive(false);
     m_menu_voice_stage_disconnect.set_sensitive(false);
+#endif
 }
 
 void ChannelListTree::OnDMSubmenuPopup() {
