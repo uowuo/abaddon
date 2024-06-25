@@ -63,27 +63,33 @@ int GetTimezoneOffset() {
     return static_cast<int>(local_secs - gmt_secs);
 }
 
-std::string FormatISO8601(const std::string &in, int extra_offset, const std::string &fmt) {
-    int yr, mon, day, hr, min, sec, tzhr, tzmin;
-    float milli;
-    std::sscanf(in.c_str(), "%d-%d-%dT%d:%d:%d%f+%d:%d",
-                &yr, &mon, &day, &hr, &min, &sec, &milli, &tzhr, &tzmin);
+Glib::ustring FormatUnixEpoch(gint64 time, const std::string &fmt) {
+    auto dt = Glib::wrap(g_date_time_new_from_unix_utc(time));
+
+#ifdef _WIN32
     std::tm tm {};
-    tm.tm_year = yr - 1900;
-    tm.tm_mon = mon - 1;
-    tm.tm_mday = day;
-    tm.tm_hour = hr;
-    tm.tm_min = min;
-    tm.tm_sec = sec;
+    tm.tm_year = dt.get_year() - 1900;
+    tm.tm_mon = dt.get_month() - 1;
+    tm.tm_mday = dt.get_day_of_month();
+    tm.tm_hour = dt.get_hour() + 1;
+    tm.tm_min = dt.get_minute();
+    tm.tm_sec = dt.get_second();
     tm.tm_wday = 0;
     tm.tm_yday = 0;
     tm.tm_isdst = -1;
-    int offset = GetTimezoneOffset();
-    tm.tm_sec += offset + extra_offset;
+    tm.tm_sec += GetTimezoneOffset();
     mktime(&tm);
     std::array<char, 512> tmp {};
     std::strftime(tmp.data(), sizeof(tmp), fmt.c_str(), &tm);
     return tmp.data();
+#else
+    return dt.format(fmt);
+#endif
+}
+
+Glib::ustring FormatISO8601(const std::string &in, int extra_offset, const std::string &fmt) {
+    const auto epoch = Glib::DateTime::create_from_iso8601(in).add_seconds(extra_offset).to_unix();
+    return FormatUnixEpoch(epoch);
 }
 
 void ScrollListBoxToSelected(Gtk::ListBox &list) {

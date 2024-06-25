@@ -1156,13 +1156,19 @@ void Abaddon::on_window_hide() {
 }
 
 int main(int argc, char **argv) {
-    if (std::getenv("ABADDON_NO_FC") == nullptr)
+    if (std::getenv("ABADDON_NO_FC") == nullptr) {
         Platform::SetupFonts();
+    }
+
+    // windows doesnt have langinfo.h so some localization falls back to translation strings
+    // i dont like the default translation so this lets us use strftime
 
 // Mac building workaround
 #ifdef setlocale
 #undef setlocale
 #endif
+
+#ifdef _WIN32
     char *systemLocale = std::setlocale(LC_ALL, "");
     try {
         if (systemLocale != nullptr) {
@@ -1176,6 +1182,7 @@ int main(int argc, char **argv) {
             }
         } catch (...) {}
     }
+#endif
 
 #if defined(_WIN32) && defined(_MSC_VER)
     TCHAR buf[2] { 0 };
