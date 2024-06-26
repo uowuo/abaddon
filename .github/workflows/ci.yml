@@ -145,7 +145,6 @@ jobs:
       - name: Fetch dependencies
         run: |
           brew install pkg-config
-          brew install gettext
           brew install gtkmm3
           brew install nlohmann-json
           brew install jpeg

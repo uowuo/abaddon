@@ -124,10 +124,10 @@ target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
 target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
 # Sincerely, there ought be a better solution
-if (LINUX)
-    target_link_libraries(abaddon ${INTL_LIBRARIES})
-else()
+if (MINGW)
     target_link_libraries(abaddon intl)
+else()
+    target_link_libraries(abaddon ${INTL_LIBRARIES})
 endif()
 
 target_link_libraries(abaddon CURL::libcurl)
