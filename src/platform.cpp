@@ -245,7 +245,7 @@ std::string Platform::FindStateCacheFolder() {
 
 std::string Platform::FindLocaleFolder() {
     // TODO: Add thorough locale folder resolution code (Apple)
-    return "./locale/"
+    return "./locale/";
 }
 
 
