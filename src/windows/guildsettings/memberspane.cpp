@@ -220,7 +220,7 @@ void GuildSettingsMembersPaneInfo::SetUser(Snowflake user_id) {
     m_nickname.set_text(_("Nickname: ") + member.Nickname);
     m_nickname.set_visible(!member.Nickname.empty());
     if (member.PremiumSince.has_value()) {
-        m_boosting.set_text(fmt::format(_("Boosting since {}"), FormatISO8601(*member.PremiumSince)));
+        m_boosting.set_text(fmt::format(_("Boosting since {}"), FormatISO8601(*member.PremiumSince).c_str()));
         m_boosting.show();
     } else
         m_boosting.hide();
