@@ -203,6 +203,9 @@ public:
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
     [[nodiscard]] bool IsUserSpeaker(Snowflake user_id) const;
+    [[nodiscard]] bool HasUserRequestedToSpeak(Snowflake user_id) const;
+
+    void RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
 
     DiscordVoiceClient &GetVoiceClient();
 

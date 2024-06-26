@@ -1,4 +1,5 @@
 #pragma once
+#include "discord/voicestate.hpp"
 #ifdef WITH_VOICE
 // clang-format off
 
@@ -29,6 +30,7 @@ private:
     void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
     void OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker);
+    void OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags);
 
     void OnMuteChanged();
     void OnDeafenChanged();
@@ -61,7 +63,11 @@ private:
     Gtk::CheckButton m_noise_suppression;
     Gtk::CheckButton m_mix_mono;
 
+    Gtk::HBox m_buttons;
     Gtk::Button m_disconnect;
+    Gtk::Button m_request_to_speak;
+
+    bool m_has_requested_to_speak = false;
 
     Gtk::ComboBoxText m_vad_combo;
     Gtk::ComboBox m_playback_combo;

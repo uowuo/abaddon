@@ -957,4 +957,12 @@ struct CallCreateData {
 
     friend void from_json(const nlohmann::json &j, CallCreateData &m);
 };
+
+struct ModifyCurrentUserVoiceStateObject {
+    std::optional<Snowflake> ChannelID;
+    std::optional<bool> Suppress;
+    std::optional<std::string> RequestToSpeakTimestamp;
+
+    friend void to_json(nlohmann::json &j, const ModifyCurrentUserVoiceStateObject &m);
+};
 #endif

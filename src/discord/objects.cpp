@@ -699,6 +699,18 @@ void from_json(const nlohmann::json &j, CallCreateData &m) {
     JS_D("channel_id", m.ChannelID);
     JS_ON("voice_states", m.VoiceStates);
 }
+
+void to_json(nlohmann::json &j, const ModifyCurrentUserVoiceStateObject &m) {
+    JS_IF("channel_id", m.ChannelID);
+    JS_IF("suppress", m.Suppress);
+    if (m.RequestToSpeakTimestamp.has_value()) {
+        if (m.RequestToSpeakTimestamp->empty()) {
+            j["request_to_speak_timestamp"] = nullptr;
+        } else {
+            j["request_to_speak_timestamp"] = *m.RequestToSpeakTimestamp;
+        }
+    }
+}
 #endif
 
 void from_json(const nlohmann::json &j, VoiceState &m) {

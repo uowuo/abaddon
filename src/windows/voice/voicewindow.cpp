@@ -1,3 +1,4 @@
+#include "util.hpp"
 #ifdef WITH_VOICE
 
 // clang-format off
@@ -20,6 +21,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_deafen("Deafen")
     , m_noise_suppression("Suppress Noise")
     , m_mix_mono("Mix Mono")
+    , m_request_to_speak("Request to Speak")
     , m_disconnect("Disconnect")
     , m_channel_id(channel_id)
     , m_menu_view("View")
@@ -39,6 +41,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
     discord.signal_voice_speaker_state_changed().connect(sigc::mem_fun(*this, &VoiceWindow::OnSpeakerStateChanged));
+    discord.signal_voice_state_set().connect(sigc::mem_fun(*this, &VoiceWindow::OnVoiceStateUpdate));
 
     if (const auto self_state = discord.GetVoiceState(discord.GetUserData().ID); self_state.has_value()) {
         m_mute.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfMute));
@@ -210,6 +213,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     },
                                                                    *this));
 
+    m_request_to_speak.signal_clicked().connect([this]() {
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const bool requested = discord.HasUserRequestedToSpeak(discord.GetUserData().ID);
+        Abaddon::Get().GetDiscordClient().RequestToSpeak(m_channel_id, !requested, NOOP_CALLBACK);
+    });
+
     m_TMP_speakers_label.set_markup("<b>Speakers</b>");
     m_listing.pack_start(m_TMP_speakers_label, false, true);
     m_listing.pack_start(m_speakers_list, false, true);
@@ -221,10 +230,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
-    m_controls.pack_end(m_disconnect, false, true);
+    m_buttons.set_halign(Gtk::ALIGN_CENTER);
+    m_buttons.pack_start(m_request_to_speak, false, true);
+    m_buttons.pack_start(m_disconnect, false, true);
     m_main.pack_start(m_menu_bar, false, true);
     m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);
+    m_main.pack_start(m_buttons, false, true);
     m_main.pack_start(m_vad_value, false, true);
     m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
     m_main.pack_start(*sliders_container, false, true);
@@ -232,7 +244,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(*combos_container, false, true, 2);
     add(m_main);
     show_all_children();
-    
+
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
 }
 
@@ -347,6 +359,12 @@ void VoiceWindow::OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id,
     } else {
         m_audience_list.add(*CreateAudienceRow(user_id));
     }
+}
+
+void VoiceWindow::OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    m_has_requested_to_speak = discord.HasUserRequestedToSpeak(discord.GetUserData().ID);
+    m_request_to_speak.set_label(m_has_requested_to_speak ? "Cancel Request" : "Request to Speak");
 }
 
 VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {
