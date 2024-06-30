@@ -1,5 +1,7 @@
 #include "guildsettingswindow.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 
 GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
@@ -59,15 +61,15 @@ GuildSettingsWindow::GuildSettingsWindow(Snowflake id)
 
     const auto self_id = discord.GetUserData().ID;
 
-    m_stack.add(m_pane_info, "info", "Info");
-    m_stack.add(m_pane_members, "members", "Members");
-    m_stack.add(m_pane_roles, "roles", "Roles");
-    m_stack.add(m_pane_bans, "bans", "Bans");
+    m_stack.add(m_pane_info, "info", _("Info"));
+    m_stack.add(m_pane_members, "members", _("Members"));
+    m_stack.add(m_pane_roles, "roles", _("Roles"));
+    m_stack.add(m_pane_bans, "bans", _("Bans"));
     if (discord.HasGuildPermission(self_id, GuildID, Permission::MANAGE_GUILD))
-        m_stack.add(m_pane_invites, "invites", "Invites");
-    m_stack.add(m_pane_emojis, "emojis", "Emojis");
+        m_stack.add(m_pane_invites, "invites", _("Invites"));
+    m_stack.add(m_pane_emojis, "emojis", _("Emojis"));
     if (discord.HasGuildPermission(self_id, GuildID, Permission::VIEW_AUDIT_LOG))
-        m_stack.add(m_pane_audit_log, "audit-log", "Audit Log");
+        m_stack.add(m_pane_audit_log, "audit-log", _("Audit Log"));
     m_stack.show();
 
     m_main.add(m_switcher);
