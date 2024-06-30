@@ -87,6 +87,7 @@ public:
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
+    bool IsStageModerator(Snowflake user_id, Snowflake channel_id) const;
 
     void ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError code)> &callback);
     void SendChatMessageNoAttachments(const ChatSubmitParams &params, const sigc::slot<void(DiscordError code)> &callback);
@@ -204,8 +205,10 @@ public:
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
     [[nodiscard]] bool IsUserSpeaker(Snowflake user_id) const;
     [[nodiscard]] bool HasUserRequestedToSpeak(Snowflake user_id) const;
+    [[nodiscard]] bool IsUserInvitedToSpeak(Snowflake user_id) const;
 
     void RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
+    void SetStageSpeaking(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
 
     DiscordVoiceClient &GetVoiceClient();
 

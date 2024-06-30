@@ -21,7 +21,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_deafen("Deafen")
     , m_noise_suppression("Suppress Noise")
     , m_mix_mono("Mix Mono")
-    , m_request_to_speak("Request to Speak")
+    , m_stage_command("Request to Speak")
     , m_disconnect("Disconnect")
     , m_channel_id(channel_id)
     , m_menu_view("View")
@@ -213,10 +213,21 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     },
                                                                    *this));
 
-    m_request_to_speak.signal_clicked().connect([this]() {
+    m_stage_command.signal_clicked().connect([this]() {
         auto &discord = Abaddon::Get().GetDiscordClient();
-        const bool requested = discord.HasUserRequestedToSpeak(discord.GetUserData().ID);
-        Abaddon::Get().GetDiscordClient().RequestToSpeak(m_channel_id, !requested, NOOP_CALLBACK);
+        const auto user_id = discord.GetUserData().ID;
+        const bool is_moderator = discord.IsStageModerator(user_id, m_channel_id);
+        const bool is_speaker = discord.IsUserSpeaker(user_id);
+        const bool is_invited_to_speak = discord.IsUserInvitedToSpeak(user_id);
+
+        if (is_speaker) {
+            discord.SetStageSpeaking(m_channel_id, false, NOOP_CALLBACK);
+        } else if (is_moderator || is_invited_to_speak) {
+            discord.SetStageSpeaking(m_channel_id, true, NOOP_CALLBACK);
+        } else {
+            const bool requested = discord.HasUserRequestedToSpeak(user_id);
+            discord.RequestToSpeak(m_channel_id, !requested, NOOP_CALLBACK);
+        }
     });
 
     m_TMP_speakers_label.set_markup("<b>Speakers</b>");
@@ -231,7 +242,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
     m_buttons.set_halign(Gtk::ALIGN_CENTER);
-    m_buttons.pack_start(m_request_to_speak, false, true);
+    m_buttons.pack_start(m_stage_command, false, true);
     m_buttons.pack_start(m_disconnect, false, true);
     m_main.pack_start(m_menu_bar, false, true);
     m_main.pack_start(m_TMP_stagelabel, false, true);
@@ -246,6 +257,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     show_all_children();
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
+
+    UpdateStageCommand();
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
@@ -335,6 +348,26 @@ void VoiceWindow::UpdateVADParamValue() {
     }
 }
 
+void VoiceWindow::UpdateStageCommand() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto user_id = discord.GetUserData().ID;
+
+    m_has_requested_to_speak = discord.HasUserRequestedToSpeak(user_id);
+    const bool is_moderator = discord.IsStageModerator(user_id, m_channel_id);
+    const bool is_speaker = discord.IsUserSpeaker(user_id);
+    const bool is_invited_to_speak = discord.IsUserInvitedToSpeak(user_id);
+
+    if (is_speaker) {
+        m_stage_command.set_label("Leave the Stage");
+    } else if (is_moderator || is_invited_to_speak) {
+        m_stage_command.set_label("Speak on Stage");
+    } else if (m_has_requested_to_speak) {
+        m_stage_command.set_label("Cancel Request");
+    } else {
+        m_stage_command.set_label("Request to Speak");
+    }
+}
+
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
     if (m_channel_id == to_channel_id) {
         if (auto it = m_rows.find(user_id); it == m_rows.end()) {
@@ -363,8 +396,9 @@ void VoiceWindow::OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id,
 
 void VoiceWindow::OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
     auto &discord = Abaddon::Get().GetDiscordClient();
-    m_has_requested_to_speak = discord.HasUserRequestedToSpeak(discord.GetUserData().ID);
-    m_request_to_speak.set_label(m_has_requested_to_speak ? "Cancel Request" : "Request to Speak");
+    if (user_id != discord.GetUserData().ID) return;
+
+    UpdateStageCommand();
 }
 
 VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {

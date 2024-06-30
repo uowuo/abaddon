@@ -470,6 +470,10 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     return actor_highest->Position > target_highest->Position;
 }
 
+bool DiscordClient::IsStageModerator(Snowflake user_id, Snowflake channel_id) const {
+    return HasChannelPermission(user_id, channel_id, Permission::MANAGE_CHANNELS | Permission::MOVE_MEMBERS | Permission::MUTE_MEMBERS);
+}
+
 void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError)> &callback) {
     if (!CheckCode(response)) {
         if (response.status_code == http::TooManyRequests) {
@@ -1306,6 +1310,11 @@ bool DiscordClient::HasUserRequestedToSpeak(Snowflake user_id) const {
     return state.has_value() && state->second.RequestToSpeakTimestamp.has_value() && util::FlagSet(state->second.Flags, VoiceStateFlags::Suppressed);
 }
 
+bool DiscordClient::IsUserInvitedToSpeak(Snowflake user_id) const {
+    const auto state = GetVoiceState(user_id);
+    return state.has_value() && state->second.RequestToSpeakTimestamp.has_value() && !util::FlagSet(state->second.Flags, VoiceStateFlags::Suppressed);
+}
+
 void DiscordClient::RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback) {
     if (want && !HasSelfChannelPermission(channel_id, Permission::REQUEST_TO_SPEAK)) return;
     const auto channel = GetChannel(channel_id);
@@ -1316,6 +1325,25 @@ void DiscordClient::RequestToSpeak(Snowflake channel_id, bool want, const sigc::
     if (want) {
         d.RequestToSpeakTimestamp = Glib::DateTime::create_now_utc().format_iso8601();
     } else {
+        d.RequestToSpeakTimestamp = "";
+    }
+    m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(DiscordError::NONE);
+        } else {
+            callback(GetCodeFromResponse(response));
+        }
+    });
+}
+
+void DiscordClient::SetStageSpeaking(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+
+    ModifyCurrentUserVoiceStateObject d;
+    d.ChannelID = channel_id;
+    d.Suppress = !want;
+    if (want) {
         d.RequestToSpeakTimestamp = "";
     }
     m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {

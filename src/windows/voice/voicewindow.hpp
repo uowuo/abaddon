@@ -36,10 +36,9 @@ private:
     void OnDeafenChanged();
 
     void TryDeleteRow(Snowflake id);
-
     bool UpdateVoiceMeters();
-
     void UpdateVADParamValue();
+    void UpdateStageCommand();
 
     Gtk::Box m_main;
     Gtk::Box m_controls;
@@ -65,7 +64,7 @@ private:
 
     Gtk::HBox m_buttons;
     Gtk::Button m_disconnect;
-    Gtk::Button m_request_to_speak;
+    Gtk::Button m_stage_command;
 
     bool m_has_requested_to_speak = false;
 
