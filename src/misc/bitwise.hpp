@@ -1,6 +1,13 @@
 #pragma once
 #include <type_traits>
 
+namespace util {
+template<typename T>
+bool FlagSet(T flags, T value) {
+    return (flags & value) == value;
+}
+} // namespace util
+
 template<typename T>
 struct Bitwise {
     static const bool enable = false;

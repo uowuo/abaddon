@@ -27,22 +27,6 @@ enum class ChannelType : int {
     GUILD_MEDIA = 16,
 };
 
-enum class StagePrivacy {
-    PUBLIC = 1,
-    GUILD_ONLY = 2,
-};
-
-constexpr const char *GetStagePrivacyDisplayString(StagePrivacy e) {
-    switch (e) {
-        case StagePrivacy::PUBLIC:
-            return "Public";
-        case StagePrivacy::GUILD_ONLY:
-            return "Guild Only";
-        default:
-            return "Unknown";
-    }
-}
-
 // should be moved somewhere?
 
 struct ThreadMetadataData {

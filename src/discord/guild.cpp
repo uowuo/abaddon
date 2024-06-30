@@ -54,6 +54,7 @@ void from_json(const nlohmann::json &j, GuildData &m) {
     JS_O("preferred_locale", m.PreferredLocale);
     JS_ON("public_updates_channel_id", m.PublicUpdatesChannelID);
     JS_O("max_video_channel_users", m.MaxVideoChannelUsers);
+    JS_ON("stage_instances", m.StageInstances);
     JS_O("approximate_member_count", tmp);
     if (tmp.has_value())
         m.ApproximateMemberCount = std::stol(*tmp);

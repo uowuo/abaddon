@@ -1,88 +1,18 @@
+#include "util.hpp"
 #ifdef WITH_VOICE
 
 // clang-format off
 
+#include "voicewindow.hpp"
+
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "components/lazyimage.hpp"
-#include "voicesettingswindow.hpp"
-#include "voicewindow.hpp"
+#include "voicewindowaudiencelistentry.hpp"
+#include "voicewindowspeakerlistentry.hpp"
+#include "windows/voicesettingswindow.hpp"
 
 // clang-format on
-
-class VoiceWindowUserListEntry : public Gtk::ListBoxRow {
-public:
-    VoiceWindowUserListEntry(Snowflake id)
-        : m_main(Gtk::ORIENTATION_VERTICAL)
-        , m_horz(Gtk::ORIENTATION_HORIZONTAL)
-        , m_avatar(32, 32)
-        , m_mute("Mute") {
-        m_name.set_halign(Gtk::ALIGN_START);
-        m_name.set_hexpand(true);
-        m_mute.set_halign(Gtk::ALIGN_END);
-
-        m_volume.set_range(0.0, 200.0);
-        m_volume.set_value_pos(Gtk::POS_LEFT);
-        m_volume.set_value(100.0);
-        m_volume.signal_value_changed().connect([this]() {
-            m_signal_volume.emit(m_volume.get_value() * 0.01);
-        });
-
-        m_horz.add(m_avatar);
-        m_horz.add(m_name);
-        m_horz.add(m_mute);
-        m_main.add(m_horz);
-        m_main.add(m_volume);
-        m_main.add(m_meter);
-        add(m_main);
-        show_all_children();
-
-        auto &discord = Abaddon::Get().GetDiscordClient();
-        const auto user = discord.GetUser(id);
-        if (user.has_value()) {
-            m_name.set_text(user->GetUsername());
-            m_avatar.SetURL(user->GetAvatarURL("png", "32"));
-        } else {
-            m_name.set_text("Unknown user");
-        }
-
-        m_mute.signal_toggled().connect([this]() {
-            m_signal_mute_cs.emit(m_mute.get_active());
-        });
-    }
-
-    void SetVolumeMeter(double frac) {
-        m_meter.SetVolume(frac);
-    }
-
-    void RestoreGain(double frac) {
-        m_volume.set_value(frac * 100.0);
-    }
-
-private:
-    Gtk::Box m_main;
-    Gtk::Box m_horz;
-    LazyImage m_avatar;
-    Gtk::Label m_name;
-    Gtk::CheckButton m_mute;
-    Gtk::Scale m_volume;
-    VolumeMeter m_meter;
-
-public:
-    using type_signal_mute_cs = sigc::signal<void(bool)>;
-    using type_signal_volume = sigc::signal<void(double)>;
-    type_signal_mute_cs signal_mute_cs() {
-        return m_signal_mute_cs;
-    }
-
-    type_signal_volume signal_volume() {
-        return m_signal_volume;
-    }
-
-private:
-    type_signal_mute_cs m_signal_mute_cs;
-    type_signal_volume m_signal_volume;
-};
 
 VoiceWindow::VoiceWindow(Snowflake channel_id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
@@ -91,6 +21,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_deafen("Deafen")
     , m_noise_suppression("Suppress Noise")
     , m_mix_mono("Mix Mono")
+    , m_stage_command("Request to Speak")
     , m_disconnect("Disconnect")
     , m_channel_id(channel_id)
     , m_menu_view("View")
@@ -102,14 +33,19 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto &discord = Abaddon::Get().GetDiscordClient();
     auto &audio = Abaddon::Get().GetAudio();
 
+    const auto channel = discord.GetChannel(m_channel_id);
+    m_is_stage = channel.has_value() && channel->Type == ChannelType::GUILD_STAGE_VOICE;
+
     SetUsers(discord.GetUsersInVoiceChannel(m_channel_id));
 
     discord.signal_voice_user_disconnect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserDisconnect));
     discord.signal_voice_user_connect().connect(sigc::mem_fun(*this, &VoiceWindow::OnUserConnect));
+    discord.signal_voice_speaker_state_changed().connect(sigc::mem_fun(*this, &VoiceWindow::OnSpeakerStateChanged));
+    discord.signal_voice_state_set().connect(sigc::mem_fun(*this, &VoiceWindow::OnVoiceStateUpdate));
 
     if (const auto self_state = discord.GetVoiceState(discord.GetUserData().ID); self_state.has_value()) {
-        m_mute.set_active((self_state->second & VoiceStateFlags::SelfMute) == VoiceStateFlags::SelfMute);
-        m_deafen.set_active((self_state->second & VoiceStateFlags::SelfDeaf) == VoiceStateFlags::SelfDeaf);
+        m_mute.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfMute));
+        m_deafen.set_active(util::FlagSet(self_state->second.Flags, VoiceStateFlags::SelfDeaf));
     }
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
@@ -253,14 +189,65 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
 
-    m_scroll.add(m_user_list);
+    if (const auto instance = discord.GetStageInstanceFromChannel(channel_id); instance.has_value()) {
+        printf("%s\n", instance->Topic.c_str());
+        m_TMP_stagelabel.show();
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance->Topic + "</span>");
+    } else {
+        m_TMP_stagelabel.hide();
+    }
+
+    discord.signal_stage_instance_create().connect(sigc::track_obj([this](const StageInstance &instance) {
+        m_TMP_stagelabel.show();
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
+    },
+                                                                   *this));
+
+    discord.signal_stage_instance_update().connect(sigc::track_obj([this](const StageInstance &instance) {
+        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
+    },
+                                                                   *this));
+
+    discord.signal_stage_instance_delete().connect(sigc::track_obj([this](const StageInstance &instance) {
+        m_TMP_stagelabel.hide();
+    },
+                                                                   *this));
+
+    m_stage_command.signal_clicked().connect([this]() {
+        auto &discord = Abaddon::Get().GetDiscordClient();
+        const auto user_id = discord.GetUserData().ID;
+        const bool is_moderator = discord.IsStageModerator(user_id, m_channel_id);
+        const bool is_speaker = discord.IsUserSpeaker(user_id);
+        const bool is_invited_to_speak = discord.IsUserInvitedToSpeak(user_id);
+
+        if (is_speaker) {
+            discord.SetStageSpeaking(m_channel_id, false, NOOP_CALLBACK);
+        } else if (is_moderator || is_invited_to_speak) {
+            discord.SetStageSpeaking(m_channel_id, true, NOOP_CALLBACK);
+        } else {
+            const bool requested = discord.HasUserRequestedToSpeak(user_id);
+            discord.RequestToSpeak(m_channel_id, !requested, NOOP_CALLBACK);
+        }
+    });
+
+    m_TMP_speakers_label.set_markup("<b>Speakers</b>");
+    m_listing.pack_start(m_TMP_speakers_label, false, true);
+    m_listing.pack_start(m_speakers_list, false, true);
+    m_TMP_audience_label.set_markup("<b>Audience</b>");
+    m_listing.pack_start(m_TMP_audience_label, false, true);
+    m_listing.pack_start(m_audience_list, false, true);
+    m_scroll.add(m_listing);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
-    m_controls.pack_end(m_disconnect, false, true);
+    m_buttons.set_halign(Gtk::ALIGN_CENTER);
+    m_buttons.pack_start(m_stage_command, false, true);
+    m_buttons.pack_start(m_disconnect, false, true);
     m_main.pack_start(m_menu_bar, false, true);
+    m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);
+    m_main.pack_start(m_buttons, false, true);
     m_main.pack_start(m_vad_value, false, true);
     m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
     m_main.pack_start(*sliders_container, false, true);
@@ -270,18 +257,24 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     show_all_children();
 
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
+
+    UpdateStageCommand();
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
-    const auto me = Abaddon::Get().GetDiscordClient().GetUserData().ID;
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto me = discord.GetUserData().ID;
     for (auto id : user_ids) {
-        if (id == me) continue;
-        m_user_list.add(*CreateRow(id));
+        if (discord.IsUserSpeaker(id)) {
+            if (id != me) m_speakers_list.add(*CreateSpeakerRow(id));
+        } else {
+            m_audience_list.add(*CreateAudienceRow(id));
+        }
     }
 }
 
-Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
-    auto *row = Gtk::make_managed<VoiceWindowUserListEntry>(id);
+Gtk::ListBoxRow *VoiceWindow::CreateSpeakerRow(Snowflake id) {
+    auto *row = Gtk::make_managed<VoiceWindowSpeakerListEntry>(id);
     m_rows[id] = row;
     auto &vc = Abaddon::Get().GetDiscordClient().GetVoiceClient();
     row->RestoreGain(vc.GetUserVolume(id));
@@ -291,7 +284,14 @@ Gtk::ListBoxRow *VoiceWindow::CreateRow(Snowflake id) {
     row->signal_volume().connect([this, id](double volume) {
         m_signal_user_volume_changed.emit(id, volume);
     });
-    row->show_all();
+    row->show();
+    return row;
+}
+
+Gtk::ListBoxRow *VoiceWindow::CreateAudienceRow(Snowflake id) {
+    auto *row = Gtk::make_managed<VoiceWindowAudienceListEntry>(id);
+    m_rows[id] = row;
+    row->show();
     return row;
 }
 
@@ -301,6 +301,13 @@ void VoiceWindow::OnMuteChanged() {
 
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
+}
+
+void VoiceWindow::TryDeleteRow(Snowflake id) {
+    if (auto it = m_rows.find(id); it != m_rows.end()) {
+        delete it->second;
+        m_rows.erase(it);
+    }
 }
 
 bool VoiceWindow::UpdateVoiceMeters() {
@@ -319,7 +326,9 @@ bool VoiceWindow::UpdateVoiceMeters() {
     for (auto [id, row] : m_rows) {
         const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
         if (ssrc.has_value()) {
-            row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
+            if (auto *speaker_row = dynamic_cast<VoiceWindowSpeakerListEntry *>(row)) {
+                speaker_row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
+            }
         }
     }
     return true;
@@ -339,21 +348,57 @@ void VoiceWindow::UpdateVADParamValue() {
     }
 }
 
+void VoiceWindow::UpdateStageCommand() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto user_id = discord.GetUserData().ID;
+
+    m_has_requested_to_speak = discord.HasUserRequestedToSpeak(user_id);
+    const bool is_moderator = discord.IsStageModerator(user_id, m_channel_id);
+    const bool is_speaker = discord.IsUserSpeaker(user_id);
+    const bool is_invited_to_speak = discord.IsUserInvitedToSpeak(user_id);
+
+    if (is_speaker) {
+        m_stage_command.set_label("Leave the Stage");
+    } else if (is_moderator || is_invited_to_speak) {
+        m_stage_command.set_label("Speak on Stage");
+    } else if (m_has_requested_to_speak) {
+        m_stage_command.set_label("Cancel Request");
+    } else {
+        m_stage_command.set_label("Request to Speak");
+    }
+}
+
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
     if (m_channel_id == to_channel_id) {
         if (auto it = m_rows.find(user_id); it == m_rows.end()) {
-            m_user_list.add(*CreateRow(user_id));
+            if (Abaddon::Get().GetDiscordClient().IsUserSpeaker(user_id)) {
+                m_speakers_list.add(*CreateSpeakerRow(user_id));
+            } else {
+                m_audience_list.add(*CreateAudienceRow(user_id));
+            }
         }
     }
 }
 
 void VoiceWindow::OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id) {
-    if (m_channel_id == from_channel_id) {
-        if (auto it = m_rows.find(user_id); it != m_rows.end()) {
-            delete it->second;
-            m_rows.erase(it);
-        }
+    if (m_channel_id == from_channel_id) TryDeleteRow(user_id);
+}
+
+void VoiceWindow::OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker) {
+    if (m_channel_id != channel_id) return;
+    TryDeleteRow(user_id);
+    if (is_speaker) {
+        m_speakers_list.add(*CreateSpeakerRow(user_id));
+    } else {
+        m_audience_list.add(*CreateAudienceRow(user_id));
     }
+}
+
+void VoiceWindow::OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags) {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (user_id != discord.GetUserData().ID) return;
+
+    UpdateStageCommand();
 }
 
 VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {
