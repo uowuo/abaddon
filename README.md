@@ -338,10 +338,11 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 
 #### voice
 
-| Setting    | Type   | Default                            | Description                                                                                                                |
-|------------|--------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `vad`      | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
-| `backends` | string | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
+| Setting            | Type    | Default                            | Description                                                                                                                |
+|--------------------|---------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `vad`              | string  | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
+| `backends`         | string  | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
+| `separate_sources` | boolean | false                              | Spawn separate audio sources for each user in voice call, useful for multitrack recording on Linux                         |
 
 #### windows
 
