@@ -1222,6 +1222,83 @@ std::unordered_set<Snowflake> Store::GetGuilds() const {
     return r;
 }
 
+std::vector<ChannelData> Store::GetAllChannelData() const {
+    auto &s = m_stmt_get_all_chans;
+    std::vector<ChannelData> r;
+
+    while (s->FetchOne()) {
+        auto &c = r.emplace_back();
+        s->Get(0, c.ID);
+        s->Get(1, c.Type);
+        s->Get(2, c.GuildID);
+        s->Get(3, c.Position);
+        s->Get(4, c.Name);
+        s->Get(5, c.Topic);
+        s->Get(6, c.IsNSFW);
+        s->Get(7, c.LastMessageID);
+        s->Get(10, c.RateLimitPerUser);
+        s->Get(11, c.Icon);
+        s->Get(12, c.OwnerID);
+        s->Get(14, c.ParentID);
+        if (!s->IsNull(16)) {
+            c.ThreadMetadata.emplace();
+            s->Get(16, c.ThreadMetadata->IsArchived);
+            s->Get(17, c.ThreadMetadata->AutoArchiveDuration);
+            s->Get(18, c.ThreadMetadata->ArchiveTimestamp);
+        }
+    }
+
+    s->Reset();
+
+    return r;
+}
+
+std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>> Store::GetAllPermissionOverwriteData() const {
+    auto &s = m_stmt_get_all_perms;
+    std::unordered_map<Snowflake, std::unordered_map<Snowflake, PermissionOverwrite>> r;
+
+    while (s->FetchOne()) {
+        PermissionOverwrite d;
+        Snowflake channel_id;
+        s->Get(0, d.ID);
+        s->Get(1, channel_id);
+        s->Get(2, d.Type);
+        s->Get(3, d.Allow);
+        s->Get(4, d.Deny);
+        r[channel_id][d.ID] = d;
+    }
+
+    s->Reset();
+
+    return r;
+}
+
+std::unordered_map<Snowflake, std::vector<RoleData>> Store::GetAllMemberRoles(Snowflake user_id) const {
+    auto &s = m_stmt_get_self_member_roles;
+    std::unordered_map<Snowflake, std::vector<RoleData>> r;
+
+    s->Bind(1, user_id);
+
+    while (s->FetchOne()) {
+        Snowflake guild_id;
+        RoleData role;
+        s->Get(0, role.ID);
+        s->Get(1, guild_id);
+        s->Get(2, role.Name);
+        s->Get(3, role.Color);
+        s->Get(4, role.IsHoisted);
+        s->Get(5, role.Position);
+        s->Get(6, role.Permissions);
+        s->Get(7, role.IsManaged);
+        s->Get(8, role.IsMentionable);
+        r[guild_id].push_back(std::move(role));
+    }
+
+    s->Reset();
+
+    return r;
+}
+
 void Store::ClearAll() {
     if (m_db.Execute(R"(
         DELETE FROM attachments;
@@ -1739,6 +1816,14 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_stmt_get_all_chans = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM channels
+    )");
+    if (!m_stmt_get_all_chans->OK()) {
+        fprintf(stderr, "failed to prepare get channels statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
     m_stmt_clr_chan = std::make_unique<Statement>(m_db, R"(
         DELETE FROM channels WHERE id = ?
     )");
@@ -1944,6 +2029,14 @@ bool Store::CreateStatements() {
         return false;
     }
 
+    m_stmt_get_all_perms = std::make_unique<Statement>(m_db, R"(
+        SELECT * FROM permissions
+    )");
+    if (!m_stmt_get_all_perms->OK()) {
+        fprintf(stderr, "failed to prepare get all permissions statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
     m_stmt_set_ban = std::make_unique<Statement>(m_db, R"(
         REPLACE INTO bans VALUES (
             ?, ?, ?
@@ -2020,6 +2113,18 @@ bool Store::CreateStatements() {
     )");
     if (!m_stmt_clr_member_roles->OK()) {
         fprintf(stderr, "failed to prepare clear member roles statement: %s\n", m_db.ErrStr());
+        return false;
+    }
+
+    m_stmt_get_self_member_roles = std::make_unique<Statement>(m_db, R"(
+        SELECT DISTINCT roles.*
+        FROM member_roles, roles
+        WHERE (member_roles.user = ?
+        AND member_roles.role = roles.id)
+        OR roles.id = roles.guild /* @everyone */
+    )");
+    if (!m_stmt_get_self_member_roles->OK()) {
+        fprintf(stderr, "failed to prepare get self member roles statement: %s\n", m_db.ErrStr());
         return false;
     }
 

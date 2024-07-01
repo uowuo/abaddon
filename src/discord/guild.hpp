@@ -104,4 +104,5 @@ struct GuildData {
     bool HasIcon() const;
     bool HasAnimatedIcon() const;
     std::string GetIconURL(const std::string &ext = "png", const std::string &size = "32") const;
+    std::optional<Snowflake> GetDefaultTextChannel() const;
 };

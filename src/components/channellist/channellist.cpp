@@ -33,7 +33,7 @@ void ChannelList::UpdateListing() {
 }
 
 void ChannelList::SetActiveChannel(Snowflake id, bool expand_to) {
-    if (Abaddon::Get().GetSettings().ClassicChangeGuildOnOpen) {
+    if (Abaddon::Get().GetSettings().ClassicChannels && Abaddon::Get().GetSettings().ClassicChangeGuildOnOpen) {
         if (const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(id); channel.has_value() && channel->GuildID.has_value()) {
             m_tree.SetSelectedGuild(*channel->GuildID);
         } else {

@@ -1,29 +1,32 @@
 #include "abaddon.hpp"
+
+#include "platform.hpp"
+#include "startup.hpp"
+#include "util.hpp"
+#include "audio/manager.hpp"
+#include "dialogs/confirm.hpp"
+#include "dialogs/friendpicker.hpp"
+#include "dialogs/setstatus.hpp"
+#include "dialogs/textinput.hpp"
+#include "dialogs/token.hpp"
+#include "dialogs/verificationgate.hpp"
+#include "dialogs/quickswitcher/quickswitcher.hpp"
+#include "discord/discord.hpp"
+#include "notifications/notifications.hpp"
+#include "remoteauth/remoteauthdialog.hpp"
+#include "windows/guildsettingswindow.hpp"
+#include "windows/pinnedwindow.hpp"
+#include "windows/profilewindow.hpp"
+#include "windows/threadswindow.hpp"
+#include "windows/voicewindow.hpp"
+
+#include <algorithm>
+#include <gtkmm.h>
 #include <memory>
+#include <string>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <string>
-#include <algorithm>
-#include <gtkmm.h>
-#include "platform.hpp"
-#include "audio/manager.hpp"
-#include "discord/discord.hpp"
-#include "dialogs/token.hpp"
-#include "dialogs/confirm.hpp"
-#include "dialogs/setstatus.hpp"
-#include "dialogs/friendpicker.hpp"
-#include "dialogs/verificationgate.hpp"
-#include "dialogs/textinput.hpp"
-#include "windows/guildsettingswindow.hpp"
-#include "windows/profilewindow.hpp"
-#include "windows/pinnedwindow.hpp"
-#include "windows/threadswindow.hpp"
-#include "windows/voicewindow.hpp"
-#include "startup.hpp"
-#include "notifications/notifications.hpp"
-#include "remoteauth/remoteauthdialog.hpp"
-#include "util.hpp"
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -1107,6 +1110,11 @@ bool Abaddon::ShowConfirm(const Glib::ustring &prompt, Gtk::Window *window) {
     ConfirmDialog dlg(window != nullptr ? *window : *m_main_window);
     dlg.SetConfirmText(prompt);
     return dlg.run() == Gtk::RESPONSE_OK;
+}
+
+void Abaddon::ShowQuickSwitcher(Gtk::Window *window) {
+    QuickSwitcher dlg(*window);
+    dlg.run();
 }
 
 void Abaddon::ActionReloadCSS() {

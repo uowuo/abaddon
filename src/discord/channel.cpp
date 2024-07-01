@@ -96,13 +96,46 @@ bool ChannelData::HasIcon() const noexcept {
 std::string ChannelData::GetIconURL() const {
     if (HasIcon()) {
         return "https://cdn.discordapp.com/channel-icons/" + std::to_string(ID) + "/" + *Icon + ".png";
-    } else {
+    } else if (Type == ChannelType::DM) {
         const auto recipients = GetDMRecipients();
-        if (!recipients.empty())
+        if (!recipients.empty()) {
             return recipients[0].GetAvatarURL("png", "32");
-        else
+        } else {
             return "https://cdn.discordapp.com/embed/avatars/0.png";
+        }
+    } else if (Type == ChannelType::GROUP_DM) {
+        std::string hash;
+        switch (ID.GetUnixMilliseconds() % 8) {
+            case 0:
+                hash = "ee9275c5a437f7dc7f9430ba95f12ebd";
+                break;
+            case 1:
+                hash = "9baf45aac2a0ec2e2dab288333acb9d9";
+                break;
+            case 2:
+                hash = "7ba11ffb1900fa2b088cb31324242047";
+                break;
+            case 3:
+                hash = "f90fca70610c4898bc57b58bce92f587";
+                break;
+            case 4:
+                hash = "e2779af34b8d9126b77420e5f09213ce";
+                break;
+            case 5:
+                hash = "c6851bd0b03f1cca5a8c1e720ea6ea17";
+                break;
+            case 6:
+                hash = "f7e38ac976a2a696161c923502a8345b";
+                break;
+            case 7:
+            default:
+                hash = "3cb840d03313467838d658bbec801fcd";
+                break;
+        }
+        return "https://discord.com/assets/" + hash + ".png";
     }
+
+    return "https://cdn.discordapp.com/embed/avatars/0.png";
 }
 
 std::string ChannelData::GetDisplayName() const {

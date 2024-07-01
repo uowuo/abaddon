@@ -94,6 +94,7 @@ private:
     Gtk::MenuItem m_menu_view_mark_guild_as_read;
     Gtk::CheckMenuItem m_menu_view_channels;
     Gtk::CheckMenuItem m_menu_view_members;
+    Gtk::MenuItem m_menu_view_quick_switcher;
 #ifdef WITH_LIBHANDY
     Gtk::MenuItem m_menu_view_go_back;
     Gtk::MenuItem m_menu_view_go_forward;
