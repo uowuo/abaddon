@@ -66,6 +66,12 @@ private:
     Gtk::Button m_disconnect;
     Gtk::Button m_stage_command;
 
+    Gtk::VBox m_stage_invite_box;
+    Gtk::Label m_stage_invite_lbl;
+    Gtk::HBox m_stage_invite_btns;
+    Gtk::Button m_stage_accept;
+    Gtk::Button m_stage_decline;
+
     bool m_has_requested_to_speak = false;
 
     Gtk::ComboBoxText m_vad_combo;

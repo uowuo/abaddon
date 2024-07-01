@@ -209,6 +209,7 @@ public:
 
     void RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
     void SetStageSpeaking(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
+    void DeclineInviteToSpeak(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
 
     DiscordVoiceClient &GetVoiceClient();
 

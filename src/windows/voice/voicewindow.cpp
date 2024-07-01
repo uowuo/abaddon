@@ -23,6 +23,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_mix_mono("Mix Mono")
     , m_stage_command("Request to Speak")
     , m_disconnect("Disconnect")
+    , m_stage_invite_lbl("You've been invited to speak")
+    , m_stage_accept("Accept")
+    , m_stage_decline("Decline")
     , m_channel_id(channel_id)
     , m_menu_view("View")
     , m_menu_view_settings("More _Settings", true) {
@@ -222,12 +225,22 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
         if (is_speaker) {
             discord.SetStageSpeaking(m_channel_id, false, NOOP_CALLBACK);
-        } else if (is_moderator || is_invited_to_speak) {
+        } else if (is_moderator) {
             discord.SetStageSpeaking(m_channel_id, true, NOOP_CALLBACK);
+        } else if (is_invited_to_speak) {
+            discord.DeclineInviteToSpeak(m_channel_id, NOOP_CALLBACK);
         } else {
             const bool requested = discord.HasUserRequestedToSpeak(user_id);
             discord.RequestToSpeak(m_channel_id, !requested, NOOP_CALLBACK);
         }
+    });
+
+    m_stage_accept.signal_clicked().connect([this]() {
+        Abaddon::Get().GetDiscordClient().SetStageSpeaking(m_channel_id, true, NOOP_CALLBACK);
+    });
+
+    m_stage_decline.signal_clicked().connect([this]() {
+        Abaddon::Get().GetDiscordClient().DeclineInviteToSpeak(m_channel_id, NOOP_CALLBACK);
     });
 
     m_TMP_speakers_label.set_markup("<b>Speakers</b>");
@@ -244,10 +257,16 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_buttons.set_halign(Gtk::ALIGN_CENTER);
     m_buttons.pack_start(m_stage_command, false, true);
     m_buttons.pack_start(m_disconnect, false, true);
+    m_stage_invite_box.pack_start(m_stage_invite_lbl, false, true);
+    m_stage_invite_box.pack_start(m_stage_invite_btns);
+    m_stage_invite_btns.set_halign(Gtk::ALIGN_CENTER);
+    m_stage_invite_btns.pack_start(m_stage_accept, false, true);
+    m_stage_invite_btns.pack_start(m_stage_decline, false, true);
     m_main.pack_start(m_menu_bar, false, true);
     m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);
     m_main.pack_start(m_buttons, false, true);
+    m_main.pack_start(m_stage_invite_box, false, true);
     m_main.pack_start(m_vad_value, false, true);
     m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
     m_main.pack_start(*sliders_container, false, true);
@@ -357,12 +376,16 @@ void VoiceWindow::UpdateStageCommand() {
     const bool is_speaker = discord.IsUserSpeaker(user_id);
     const bool is_invited_to_speak = discord.IsUserInvitedToSpeak(user_id);
 
+    m_stage_invite_box.set_visible(is_invited_to_speak);
+
     if (is_speaker) {
         m_stage_command.set_label("Leave the Stage");
-    } else if (is_moderator || is_invited_to_speak) {
+    } else if (is_moderator) {
         m_stage_command.set_label("Speak on Stage");
     } else if (m_has_requested_to_speak) {
         m_stage_command.set_label("Cancel Request");
+    } else if (is_invited_to_speak) {
+        m_stage_command.set_label("Decline Invite");
     } else {
         m_stage_command.set_label("Request to Speak");
     }

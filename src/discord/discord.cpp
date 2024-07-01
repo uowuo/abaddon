@@ -1355,6 +1355,23 @@ void DiscordClient::SetStageSpeaking(Snowflake channel_id, bool want, const sigc
     });
 }
 
+void DiscordClient::DeclineInviteToSpeak(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+
+    ModifyCurrentUserVoiceStateObject d;
+    d.ChannelID = channel_id;
+    d.Suppress = true;
+    d.RequestToSpeakTimestamp = "";
+    m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(DiscordError::NONE);
+        } else {
+            callback(GetCodeFromResponse(response));
+        }
+    });
+}
+
 DiscordVoiceClient &DiscordClient::GetVoiceClient() {
     return m_voice;
 }
