@@ -89,8 +89,8 @@ private:
     Gtk::MenuItem m_menu_view_settings;
 
     Gtk::Label m_TMP_stagelabel;
-    Gtk::Label m_TMP_speakers_label;
-    Gtk::Label m_TMP_audience_label;
+    Gtk::Label m_speakers_label;
+    Gtk::Label m_audience_label;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;

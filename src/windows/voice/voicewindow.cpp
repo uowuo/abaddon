@@ -243,19 +243,19 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         Abaddon::Get().GetDiscordClient().DeclineInviteToSpeak(m_channel_id, NOOP_CALLBACK);
     });
 
-    m_TMP_speakers_label.set_markup("<b>Speakers</b>");
-    m_listing.pack_start(m_TMP_speakers_label, false, true);
+    m_speakers_label.set_markup("<b>Speakers</b>");
+    if (m_is_stage) m_listing.pack_start(m_speakers_label, false, true);
     m_listing.pack_start(m_speakers_list, false, true);
-    m_TMP_audience_label.set_markup("<b>Audience</b>");
-    m_listing.pack_start(m_TMP_audience_label, false, true);
-    m_listing.pack_start(m_audience_list, false, true);
+    m_audience_label.set_markup("<b>Audience</b>");
+    if (m_is_stage) m_listing.pack_start(m_audience_label, false, true);
+    if (m_is_stage) m_listing.pack_start(m_audience_list, false, true);
     m_scroll.add(m_listing);
     m_controls.add(m_mute);
     m_controls.add(m_deafen);
     m_controls.add(m_noise_suppression);
     m_controls.add(m_mix_mono);
     m_buttons.set_halign(Gtk::ALIGN_CENTER);
-    m_buttons.pack_start(m_stage_command, false, true);
+    if (m_is_stage) m_buttons.pack_start(m_stage_command, false, true);
     m_buttons.pack_start(m_disconnect, false, true);
     m_stage_invite_box.pack_start(m_stage_invite_lbl, false, true);
     m_stage_invite_box.pack_start(m_stage_invite_btns);
@@ -284,7 +284,7 @@ void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto me = discord.GetUserData().ID;
     for (auto id : user_ids) {
-        if (discord.IsUserSpeaker(id)) {
+        if (!m_is_stage || discord.IsUserSpeaker(id)) {
             if (id != me) m_speakers_list.add(*CreateSpeakerRow(id));
         } else {
             m_audience_list.add(*CreateAudienceRow(id));
