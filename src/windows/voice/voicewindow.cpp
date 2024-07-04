@@ -193,28 +193,15 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     combos_combos->pack_start(m_capture_combo);
 
     if (const auto instance = discord.GetStageInstanceFromChannel(channel_id); instance.has_value()) {
-        printf("%s\n", instance->Topic.c_str());
-        m_TMP_stagelabel.show();
-        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance->Topic + "</span>");
+        m_stage_topic_label.show();
+        UpdateStageTopicLabel(instance->Topic);
     } else {
-        m_TMP_stagelabel.hide();
+        m_stage_topic_label.hide();
     }
 
-    discord.signal_stage_instance_create().connect(sigc::track_obj([this](const StageInstance &instance) {
-        m_TMP_stagelabel.show();
-        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
-    },
-                                                                   *this));
-
-    discord.signal_stage_instance_update().connect(sigc::track_obj([this](const StageInstance &instance) {
-        m_TMP_stagelabel.set_markup("<span foreground='green'>" + instance.Topic + "</span>");
-    },
-                                                                   *this));
-
-    discord.signal_stage_instance_delete().connect(sigc::track_obj([this](const StageInstance &instance) {
-        m_TMP_stagelabel.hide();
-    },
-                                                                   *this));
+    discord.signal_stage_instance_create().connect(sigc::mem_fun(*this, &VoiceWindow::OnStageInstanceCreate));
+    discord.signal_stage_instance_update().connect(sigc::mem_fun(*this, &VoiceWindow::OnStageInstanceUpdate));
+    discord.signal_stage_instance_delete().connect(sigc::mem_fun(*this, &VoiceWindow::OnStageInstanceDelete));
 
     m_stage_command.signal_clicked().connect([this]() {
         auto &discord = Abaddon::Get().GetDiscordClient();
@@ -263,7 +250,6 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_stage_invite_btns.pack_start(m_stage_accept, false, true);
     m_stage_invite_btns.pack_start(m_stage_decline, false, true);
     m_main.pack_start(m_menu_bar, false, true);
-    m_main.pack_start(m_TMP_stagelabel, false, true);
     m_main.pack_start(m_controls, false, true);
     m_main.pack_start(m_buttons, false, true);
     m_main.pack_start(m_stage_invite_box, false, true);
@@ -271,6 +257,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
     m_main.pack_start(*sliders_container, false, true);
     m_main.pack_start(m_scroll);
+    m_stage_topic_label.set_ellipsize(Pango::ELLIPSIZE_END);
+    m_stage_topic_label.set_halign(Gtk::ALIGN_CENTER);
+    m_main.pack_start(m_stage_topic_label, false, true);
     m_main.pack_start(*combos_container, false, true, 2);
     add(m_main);
     show_all_children();
@@ -391,6 +380,10 @@ void VoiceWindow::UpdateStageCommand() {
     }
 }
 
+void VoiceWindow::UpdateStageTopicLabel(const std::string &topic) {
+    m_stage_topic_label.set_markup("Topic: " + topic);
+}
+
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
     if (m_channel_id == to_channel_id) {
         if (auto it = m_rows.find(user_id); it == m_rows.end()) {
@@ -422,6 +415,19 @@ void VoiceWindow::OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, Vo
     if (user_id != discord.GetUserData().ID) return;
 
     UpdateStageCommand();
+}
+
+void VoiceWindow::OnStageInstanceCreate(const StageInstance &instance) {
+    m_stage_topic_label.show();
+    UpdateStageTopicLabel(instance.Topic);
+}
+
+void VoiceWindow::OnStageInstanceUpdate(const StageInstance &instance) {
+    UpdateStageTopicLabel(instance.Topic);
+}
+
+void VoiceWindow::OnStageInstanceDelete(const StageInstance &instance) {
+    m_stage_topic_label.hide();
 }
 
 VoiceWindow::type_signal_mute VoiceWindow::signal_mute() {

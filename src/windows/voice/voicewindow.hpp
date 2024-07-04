@@ -1,4 +1,5 @@
 #pragma once
+#include "discord/stage.hpp"
 #include "discord/voicestate.hpp"
 #ifdef WITH_VOICE
 // clang-format off
@@ -31,6 +32,9 @@ private:
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
     void OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker);
     void OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags);
+    void OnStageInstanceCreate(const StageInstance &instance);
+    void OnStageInstanceUpdate(const StageInstance &instance);
+    void OnStageInstanceDelete(const StageInstance &instance);
 
     void OnMuteChanged();
     void OnDeafenChanged();
@@ -39,6 +43,7 @@ private:
     bool UpdateVoiceMeters();
     void UpdateVADParamValue();
     void UpdateStageCommand();
+    void UpdateStageTopicLabel(const std::string &topic);
 
     Gtk::Box m_main;
     Gtk::Box m_controls;
@@ -88,7 +93,7 @@ private:
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_settings;
 
-    Gtk::Label m_TMP_stagelabel;
+    Gtk::Label m_stage_topic_label;
     Gtk::Label m_speakers_label;
     Gtk::Label m_audience_label;
 
