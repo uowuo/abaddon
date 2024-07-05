@@ -28,6 +28,8 @@ ChannelListTree::ChannelListTree()
 #endif
     , m_menu_voice_channel_join("_Join", true)
     , m_menu_voice_channel_disconnect("_Disconnect", true)
+    , m_menu_voice_stage_join("_Join", true)
+    , m_menu_voice_stage_disconnect("_Disconnect", true)
     , m_menu_voice_channel_mark_as_read("Mark as _Read", true)
     , m_menu_voice_open_chat("Open _Chat", true)
     , m_menu_dm_copy_id("_Copy ID", true)
@@ -225,6 +227,21 @@ ChannelListTree::ChannelListTree()
     m_menu_voice_channel.append(m_menu_voice_open_chat);
     m_menu_voice_channel.show_all();
 
+#ifdef WITH_VOICE
+    m_menu_voice_stage_join.signal_activate().connect([this]() {
+        const auto id = static_cast<Snowflake>((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]);
+        m_signal_action_join_voice_channel.emit(id);
+    });
+
+    m_menu_voice_stage_disconnect.signal_activate().connect([this]() {
+        m_signal_action_disconnect_voice.emit();
+    });
+#endif
+
+    m_menu_voice_stage.append(m_menu_voice_stage_join);
+    m_menu_voice_stage.append(m_menu_voice_stage_disconnect);
+    m_menu_voice_stage.show_all();
+
     m_menu_dm_copy_id.signal_activate().connect([this] {
         Gtk::Clipboard::get()->set_text(std::to_string((*m_model->get_iter(m_path_for_menu))[m_columns.m_id]));
     });
@@ -366,8 +383,8 @@ int ChannelListTree::SortFunc(const Gtk::TreeModel::iterator &a, const Gtk::Tree
     const int64_t b_sort = (*b)[m_columns.m_sort];
     if (a_type == RenderType::DMHeader) return -1;
     if (b_type == RenderType::DMHeader) return 1;
-    if (a_type == RenderType::TextChannel && b_type == RenderType::VoiceChannel) return -1;
-    if (b_type == RenderType::TextChannel && a_type == RenderType::VoiceChannel) return 1;
+    if (a_type == RenderType::TextChannel && (b_type == RenderType::VoiceChannel || b_type == RenderType::VoiceStage)) return -1;
+    if (b_type == RenderType::TextChannel && (a_type == RenderType::VoiceChannel || a_type == RenderType::VoiceStage)) return 1;
     return static_cast<int>(std::clamp(a_sort - b_sort, int64_t(-1), int64_t(1)));
 }
 
@@ -634,6 +651,7 @@ void ChannelListTree::OnThreadListSync(const ThreadListSyncData &data) {
 
 void ChannelListTree::OnVoiceUserConnect(Snowflake user_id, Snowflake channel_id) {
     auto parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::VoiceChannel);
+    if (!parent_iter) parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::VoiceStage);
     if (!parent_iter) parent_iter = GetIteratorForRowFromIDOfType(channel_id, RenderType::DM);
     if (!parent_iter) return;
     const auto user = Abaddon::Get().GetDiscordClient().GetUser(user_id);
@@ -914,7 +932,7 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
     for (const auto &channel_ : *guild.Channels) {
         const auto channel = discord.GetChannel(channel_.ID);
         if (!channel.has_value()) continue;
-        if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS || channel->Type == ChannelType::GUILD_VOICE) {
+        if (channel->Type == ChannelType::GUILD_TEXT || channel->Type == ChannelType::GUILD_NEWS || channel->Type == ChannelType::GUILD_VOICE || channel->Type == ChannelType::GUILD_STAGE_VOICE) {
             if (channel->ParentID.has_value())
                 categories[*channel->ParentID].push_back(*channel);
             else
@@ -954,6 +972,10 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
         if (IsTextChannel(channel.Type)) {
             channel_row[m_columns.m_type] = RenderType::TextChannel;
             channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+        } else if (channel.Type == ChannelType::GUILD_STAGE_VOICE) {
+            channel_row[m_columns.m_type] = RenderType::VoiceStage;
+            channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+            add_voice_participants(channel, channel_row->children());
         } else {
             channel_row[m_columns.m_type] = RenderType::VoiceChannel;
             channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
@@ -983,6 +1005,10 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
             if (IsTextChannel(channel.Type)) {
                 channel_row[m_columns.m_type] = RenderType::TextChannel;
                 channel_row[m_columns.m_name] = "#" + Glib::Markup::escape_text(*channel.Name);
+            } else if (channel.Type == ChannelType::GUILD_STAGE_VOICE) {
+                channel_row[m_columns.m_type] = RenderType::VoiceStage;
+                channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
+                add_voice_participants(channel, channel_row->children());
             } else {
                 channel_row[m_columns.m_type] = RenderType::VoiceChannel;
                 channel_row[m_columns.m_name] = Glib::Markup::escape_text(*channel.Name);
@@ -1033,7 +1059,7 @@ Gtk::TreeModel::iterator ChannelListTree::CreateVoiceParticipantRow(const UserDa
 
     const auto voice_state = Abaddon::Get().GetDiscordClient().GetVoiceState(user.ID);
     if (voice_state.has_value()) {
-        row[m_columns.m_voice_flags] = voice_state->second;
+        row[m_columns.m_voice_flags] = voice_state->second.Flags;
     }
 
     auto &img = Abaddon::Get().GetImageManager();
@@ -1331,6 +1357,10 @@ bool ChannelListTree::OnButtonPressEvent(GdkEventButton *ev) {
                     OnVoiceChannelSubmenuPopup();
                     m_menu_voice_channel.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
                     break;
+                case RenderType::VoiceStage:
+                    OnVoiceStageSubmenuPopup();
+                    m_menu_voice_stage.popup_at_pointer(reinterpret_cast<GdkEvent *>(ev));
+                    break;
                 case RenderType::DM: {
                     OnDMSubmenuPopup();
                     const auto channel = Abaddon::Get().GetDiscordClient().GetChannel(static_cast<Snowflake>(row[m_columns.m_id]));
@@ -1439,6 +1469,25 @@ void ChannelListTree::OnVoiceChannelSubmenuPopup() {
 #else
     m_menu_voice_channel_join.set_sensitive(false);
     m_menu_voice_channel_disconnect.set_sensitive(false);
+#endif
+}
+
+void ChannelListTree::OnVoiceStageSubmenuPopup() {
+#ifdef WITH_VOICE
+    const auto iter = m_model->get_iter(m_path_for_menu);
+    if (!iter) return;
+    const auto id = static_cast<Snowflake>((*iter)[m_columns.m_id]);
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    if (discord.IsVoiceConnected() || discord.IsVoiceConnecting()) {
+        m_menu_voice_stage_join.set_sensitive(false);
+        m_menu_voice_stage_disconnect.set_sensitive(discord.GetVoiceChannelID() == id);
+    } else {
+        m_menu_voice_stage_join.set_sensitive(true);
+        m_menu_voice_stage_disconnect.set_sensitive(false);
+    }
+#else
+    m_menu_voice_stage_join.set_sensitive(false);
+    m_menu_voice_stage_disconnect.set_sensitive(false);
 #endif
 }
 
