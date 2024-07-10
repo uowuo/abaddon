@@ -1406,27 +1406,27 @@ msgid "{} removed <b>#{}</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:150
-msgid "{} created channel overrides for </b>#{}</b>"
+msgid "{} created channel overrides for <b>#{}</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:152
-msgid "{} created channel overrides for </b>&lt;#{}&gt;</b>"
+msgid "{} created channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:159
-msgid "{} updated channel overrides for </b>#{}</b>"
+msgid "{} updated channel overrides for <b>#{}</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:161
-msgid "{} updated channel overrides for </b>&lt;#{}&gt;</b>"
+msgid "{} updated channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:168
-msgid "{} removed channel overrides for </b>#{}</b>"
+msgid "{} removed channel overrides for <b>#{}</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:170
-msgid "{} removed channel overrides for </b>&lt;#{}&gt;</b>"
+msgid "{} removed channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:175

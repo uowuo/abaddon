@@ -147,27 +147,27 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
                     auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} created channel overrides for </b>#{}</b>"), user_markup.c_str(), channel_name);
+                    markup = fmt::format(_("{} created channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
                 } else {
-                    markup = fmt::format(_("{} created channel overrides for </b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = fmt::format(_("{} created channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
                 }
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_UPDATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
                     auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} updated channel overrides for </b>#{}</b>"), user_markup.c_str(), channel_name);
+                    markup = fmt::format(_("{} updated channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
                 } else {
-                    markup = fmt::format(_("{} updated channel overrides for </b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = fmt::format(_("{} updated channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
                 }
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_DELETE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
                     auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} removed channel overrides for </b>#{}</b>"), user_markup.c_str(), channel_name);
+                    markup = fmt::format(_("{} removed channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
                 } else {
-                    markup = fmt::format(_("{} removed channel overrides for </b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = fmt::format(_("{} removed channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
                 }
             } break;
             case AuditLogActionType::MEMBER_KICK: {
