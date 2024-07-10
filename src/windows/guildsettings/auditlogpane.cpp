@@ -141,7 +141,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::CHANNEL_DELETE: {
                 auto deleted_channel_name = Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str();
-                markup = fmt::format(_("{} removed <b>#{}</b>"), deleted_channel_name);
+                markup = fmt::format(_("{} removed <b>#{}</b>"), user_markup.c_str(), deleted_channel_name);
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_CREATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);

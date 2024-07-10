@@ -21,7 +21,7 @@
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
 #include "windows/threadswindow.hpp"
-#include "windows/voicewindow.hpp"
+#include "windows/voice/voicewindow.hpp"
 #include "startup.hpp"
 #include "notifications/notifications.hpp"
 #include "remoteauth/remoteauthdialog.hpp"

@@ -6,7 +6,7 @@
 #include <gtkmm/cellrendererpixbuf.h>
 #include <gtkmm/cellrenderertext.h>
 #include "discord/snowflake.hpp"
-#include "discord/voicestateflags.hpp"
+#include "discord/voicestate.hpp"
 #include "misc/bitwise.hpp"
 
 enum class RenderType : uint8_t {
@@ -16,6 +16,7 @@ enum class RenderType : uint8_t {
     TextChannel,
     Thread,
     VoiceChannel,
+    VoiceStage, // identical to non-stage except for icon
     VoiceParticipant,
 
     DMHeader,
@@ -112,7 +113,8 @@ protected:
                                     Gtk::Widget &widget,
                                     const Gdk::Rectangle &background_area,
                                     const Gdk::Rectangle &cell_area,
-                                    Gtk::CellRendererState flags);
+                                    Gtk::CellRendererState flags,
+                                    const char *emoji);
 
     // voice participant
     void get_preferred_width_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;

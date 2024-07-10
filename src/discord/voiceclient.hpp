@@ -43,6 +43,23 @@ enum class VoiceGatewayOp : int {
     Hello = 8,
     Resumed = 9,
     ClientDisconnect = 13,
+    SessionUpdate = 14,
+    MediaSinkWants = 15,
+    VoiceBackendVersion = 16,
+    ChannelOptionsUpdate = 17,
+    Flags = 18,
+    SpeedTest = 19,
+    Platform = 20,
+    SecureFramesPrepareProtocolTransition = 21,
+    SecureFramesExecuteTransition = 22,
+    SecureFramesReadyForTransition = 23,
+    SecureFramesPrepareEpoch = 24,
+    MlsExternalSenderPackage = 25,
+    MlsKeyPackage = 26,
+    MlsProposals = 27,
+    MlsCommitWelcome = 28,
+    MlsPrepareCommitTransition = 29,
+    MlsWelcome = 30,
 };
 
 struct VoiceGatewayMessage {
@@ -156,11 +173,11 @@ public:
 private:
     void ReadThread();
 
-    #ifdef _WIN32
+#ifdef _WIN32
     SOCKET m_socket;
-    #else
+#else
     int m_socket;
-    #endif
+#endif
     sockaddr_in m_server;
 
     std::atomic<bool> m_running = false;

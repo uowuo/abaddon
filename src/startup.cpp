@@ -34,22 +34,11 @@ std::optional<std::pair<std::string, std::string>> ParseCookie(const Glib::ustri
 }
 
 std::optional<Glib::ustring> GetJavascriptFileFromAppPage(const Glib::ustring &contents) {
-    auto regex = Glib::Regex::create(R"(/assets/\w+\.?\w{20}\.js)");
-    std::vector<Glib::ustring> matches;
+    auto regex = Glib::Regex::create(R"(/assets/sentry.*?\.js)");
 
-    // regex->match_all doesnt work for some reason
-    int start_position = 0;
     Glib::MatchInfo match;
-    while (regex->match(contents, start_position, match)) {
-        const auto str = match.fetch(0);
-        matches.push_back(str);
-        int foo;
-        match.fetch_pos(0, start_position, foo);
-        start_position += str.size();
-    }
-
-    if (matches.size() >= 9) {
-        return matches[matches.size() - 9];
+    if (regex->match(contents, match)) {
+        return match.fetch(0);
     }
 
     return {};
@@ -69,7 +58,7 @@ std::optional<uint32_t> GetBuildNumberFromJSURL(const Glib::ustring &url, const 
     auto res = req.execute();
     if (res.error) return {};
 
-    auto regex = Glib::Regex::create(R"(Build Number: "\).concat\("(\d+))");
+    auto regex = Glib::Regex::create(R"(buildNumber",\(.="(\d+))");
     Glib::MatchInfo match;
     Glib::ustring string = res.text;
     if (regex->match(string, match)) {
@@ -132,6 +121,9 @@ void DiscordStartupDialog::RunAsync() {
             auto js_url = GetJavascriptFileFromAppPage(app_page);
             if (js_url.has_value()) {
                 m_build_number = GetBuildNumberFromJSURL(*js_url, *opt_cookie);
+                if (m_build_number.has_value()) {
+                    spdlog::get("discord")->debug("Found build number: {}", *m_build_number);
+                }
             }
         }
         m_dispatcher.emit();

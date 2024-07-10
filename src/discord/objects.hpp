@@ -20,6 +20,7 @@
 #include "auditlog.hpp"
 #include "relationship.hpp"
 #include "errors.hpp"
+#include "stage.hpp"
 
 // most stuff below should just be objects that get processed and thrown away immediately
 
@@ -110,6 +111,9 @@ enum class GatewayEvent : int {
     VOICE_STATE_UPDATE,
     VOICE_SERVER_UPDATE,
     CALL_CREATE,
+    STAGE_INSTANCE_CREATE,
+    STAGE_INSTANCE_UPDATE,
+    STAGE_INSTANCE_DELETE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -917,6 +921,7 @@ struct VoiceState {
     std::string SessionID;
     bool IsSuppressed;
     Snowflake UserID;
+    std::optional<std::string> RequestToSpeakTimestamp;
 
     friend void from_json(const nlohmann::json &j, VoiceState &m);
 };
@@ -951,5 +956,13 @@ struct CallCreateData {
     // std::vector<?> EmbeddedActivities;
 
     friend void from_json(const nlohmann::json &j, CallCreateData &m);
+};
+
+struct ModifyCurrentUserVoiceStateObject {
+    std::optional<Snowflake> ChannelID;
+    std::optional<bool> Suppress;
+    std::optional<std::string> RequestToSpeakTimestamp;
+
+    friend void to_json(nlohmann::json &j, const ModifyCurrentUserVoiceStateObject &m);
 };
 #endif

@@ -1,0 +1,24 @@
+# The run config is used for both run mode and debug mode
+
+[[configs]]
+name = "cmake-debug"
+program = "sh"
+args = [".lapce/gen_compile_commands.sh"]
+
+[configs.env]
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+
+[[configs]]
+name = "cmake"
+program = "cmake"
+args = ["--build", "build"]
+
+[configs.env]
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+
+[[configs]]
+name = "run"
+type = "lldb"
+program = "build/abaddon"

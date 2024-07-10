@@ -250,6 +250,7 @@ bool DiscordVoiceClient::IsConnecting() const noexcept {
 }
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
+    m_log->trace("IN: {}", str);
     VoiceGatewayMessage msg = nlohmann::json::parse(str);
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello:
@@ -462,6 +463,19 @@ void DiscordVoiceClient::SetState(State state) {
     m_signal_state_update.emit(state);
 }
 
+size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
+    const bool has_extension_header = (buf[0] & 0b00010000) != 0;
+    const int csrc_count = buf[0] & 0b00001111;
+
+    size_t offset = 12 + csrc_count * 4;
+
+    if (has_extension_header && num_bytes > 4) {
+        offset += 4 + 4 * ((buf[offset + 2] << 8) | buf[offset + 3]);
+    }
+
+    return offset;
+}
+
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     uint8_t *payload = data.data() + 12;
     uint32_t ssrc = (data[8] << 24) |
@@ -473,7 +487,9 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
         // spdlog::get("voice")->trace("UDP payload decryption failure");
     } else {
-        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
+        size_t opus_offset = GetPayloadOffset(data.data(), data.size());
+        payload = data.data() + opus_offset;
+        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - opus_offset - crypto_box_MACBYTES });
     }
 }
 

@@ -15,17 +15,6 @@
 #include <cstring>
 // clang-format on
 
-const uint8_t *StripRTPExtensionHeader(const uint8_t *buf, int num_bytes, size_t &outlen) {
-    if (buf[0] == 0xbe && buf[1] == 0xde && num_bytes > 4) {
-        uint64_t offset = 4 + 4 * ((buf[2] << 8) | buf[3]);
-
-        outlen = num_bytes - offset;
-        return buf + offset;
-    }
-    outlen = num_bytes;
-    return buf;
-}
-
 void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
     AudioManager *mgr = reinterpret_cast<AudioManager *>(pDevice->pUserData);
     if (mgr == nullptr) return;
@@ -233,11 +222,9 @@ void AudioManager::FeedMeOpus(uint32_t ssrc, const std::vector<uint8_t> &data) {
     std::lock_guard<std::mutex> _(m_mutex);
     if (m_muted_ssrcs.find(ssrc) != m_muted_ssrcs.end()) return;
 
-    size_t payload_size = 0;
-    const auto *opus_encoded = StripRTPExtensionHeader(data.data(), static_cast<int>(data.size()), payload_size);
     static std::array<opus_int16, 120 * 48 * 2> pcm;
     if (auto it = m_sources.find(ssrc); it != m_sources.end()) {
-        int decoded = opus_decode(it->second.second, opus_encoded, static_cast<opus_int32>(payload_size), pcm.data(), 120 * 48, 0);
+        int decoded = opus_decode(it->second.second, data.data(), static_cast<opus_int32>(data.size()), pcm.data(), 120 * 48, 0);
         if (decoded <= 0) {
         } else {
             UpdateReceiveVolume(ssrc, pcm.data(), decoded);
