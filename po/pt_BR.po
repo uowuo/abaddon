@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-17 13:07-0300\n"
+"POT-Creation-Date: 2024-07-10 20:59-0300\n"
 "PO-Revision-Date: 2024-06-17 11:45-0300\n"
 "Last-Translator: Gabriel de Moura <smolblackcat@proton.me>\n"
 "Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
@@ -20,6 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: src/abaddon.cpp:216
+#, c++-format
 msgid "css failed parsing ({})"
 msgstr "CSS falhou em ser lido ({})"
 
@@ -61,6 +62,7 @@ msgid "Discord rejected your token"
 msgstr "O Discord rejeitou o seu token de autenticação"
 
 #: src/abaddon.cpp:474
+#, c++-format
 msgid "Lost connection with Discord's gateway. Try reconnecting (code {})"
 msgstr "Conexão com o gateway do Discord perdida. Tente novamente (code {})"
 
@@ -123,18 +125,22 @@ msgid "Remove From Group"
 msgstr "Remover do Grupo"
 
 #: src/abaddon.cpp:1003
+#, c++-format
 msgid "Are you sure you want to leave {}?"
 msgstr "Você tem certeza de que quer sair {}?"
 
 #: src/abaddon.cpp:1013
+#, c++-format
 msgid "Are you sure you want to kick {}?"
 msgstr "Você tem certeza de que quer expulsar {}?"
 
 #: src/abaddon.cpp:1023
+#, c++-format
 msgid "Are you sure you want to ban {}?"
 msgstr "Você tem certeza de que quer banir {}?"
 
 #: src/abaddon.cpp:1120
+#, c++-format
 msgid "css failed to load ({})"
 msgstr "CSS falhou em ser carregado ({})"
 
@@ -718,6 +724,7 @@ msgid "Competing in"
 msgstr "Competindo em"
 
 #: src/dialogs/setstatus.cpp:57
+#, c++-format
 msgid "How are you, {}?"
 msgstr "Como você está, {}?"
 
@@ -738,6 +745,7 @@ msgid "Verification Required"
 msgstr "Verificação Necessária"
 
 #: src/dialogs/verificationgate.cpp:14 src/components/friendslist.cpp:258
+#: src/windows/voice/voicewindow.cpp:30
 msgid "Accept"
 msgstr "Aceitar"
 
@@ -774,14 +782,17 @@ msgid "Enter alt-text"
 msgstr "Inserir texto alternativo"
 
 #: src/components/chatinputindicator.cpp:119
+#, c++-format
 msgid "{} is typing..."
 msgstr "{} está digitando..."
 
 #: src/components/chatinputindicator.cpp:121
+#, c++-format
 msgid "{} and {} are typing"
 msgstr "{} e {} estão digitando"
 
 #: src/components/chatinputindicator.cpp:125
+#, c++-format
 msgid "{}, {}, {} and {} are typing..."
 msgstr "{}, {}, {} e {} estão digitando"
 
@@ -838,10 +849,12 @@ msgid "message pinned"
 msgstr "mensagem fixada"
 
 #: src/components/chatmessage.cpp:219
+#, c++-format
 msgid "<i>used <span color='#697ec4'>{}</span> with {}</i>"
 msgstr "<i>usou <span color='#697ec4'>{}</span> com {}</i>"
 
 #: src/components/chatmessage.cpp:234
+#, c++-format
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> added <span "
 "color='#eeeeee'>{}</span></span></i>"
@@ -850,12 +863,14 @@ msgstr ""
 "color='#eeeeee'>{}</span></span></i>"
 
 #: src/components/chatmessage.cpp:244
+#, c++-format
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> left</span></i>"
 msgstr ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> saiu</span></i>"
 
 #: src/components/chatmessage.cpp:246
+#, c++-format
 msgid ""
 "<i><span color='#999999'><span color='#eeeeee'>{}</span> removed <span "
 "color='#eeeeee'>{}</span></span></i>"
@@ -864,14 +879,17 @@ msgstr ""
 "color='#eeeeee'>{}</span></span></i>"
 
 #: src/components/chatmessage.cpp:253
+#, c++-format
 msgid "<i><span color='#999999'>{} changed the name to <b>{}</b></span></i>"
 msgstr "<i><span color='#999999'>{} alterou o nome para <b>{}</b></span></i>"
 
 #: src/components/chatmessage.cpp:258
+#, c++-format
 msgid "<i><span color='#999999'>{} changed the channel icon</span></i>"
 msgstr "<i><span color='#999999'>{} alterou o ícone do canal</span></i>"
 
 #: src/components/chatmessage.cpp:266
+#, c++-format
 msgid ""
 "<i><span color='#999999'>{} just boosted the server <b>{}</b> times! {} has "
 "achieved <b>Level {}!</b></span></i>"
@@ -880,12 +898,13 @@ msgstr ""
 "vezes! {} atingiu <b>Nível {}!</b></span></i>"
 
 #: src/components/chatmessage.cpp:276
+#, c++-format
 msgid ""
 "<i><span color='#999999'>{} has added <b>{}</b> to this channel. Its most "
 "important updates will show up here.</span></i>"
 msgstr ""
-"<i><span color='#999999'>{} acabou de impulsionar o servidor <b>{}</b> "
-"vezes! {} atingiu <b>nível {}}!</b></span></i>"
+"<i><span color='#999999'>{} adicionou <b>{}</b> para este canal"
+"Suas atualizações mais importantes vão aparecer aqui.</span></i>"
 
 #: src/components/chatmessage.cpp:282
 msgid "started a call"
@@ -927,19 +946,22 @@ msgstr ""
 "automaticamente removido do \"Server Discovery\""
 
 #: src/components/chatmessage.cpp:300
+#, c++-format
 msgid "<i><span color='#999999'>{} started a thread: </span></i>"
 msgstr "<i><span color='#999999'>{} iniciou uma thread: </span></i>"
 
 #: src/components/chatmessage.cpp:307
+#, c++-format
 msgid "<i><span color='#999999'>{} started a thread: </span><b>{}</b></i>"
 msgstr "<i><span color='#999999'>{} iniciou uma thread: </span><b>{}</b></i>"
 
 #: src/components/chatmessage.cpp:714 src/components/chatmessage.cpp:737
-#: src/windows/voicewindow.cpp:49 src/windows/guildsettings/auditlogpane.cpp:45
+#: src/windows/guildsettings/auditlogpane.cpp:45
 msgid "Unknown User"
 msgstr "Usuário Desconhecido"
 
 #: src/components/chatmessage.cpp:730
+#, c++-format
 msgid "{} used <span color='#697ec4'>/{}</span>"
 msgstr "{} usou <span color='#697ec4'>/{}</span>"
 
@@ -960,6 +982,7 @@ msgid "reply unavailable"
 msgstr "resposta indisponível"
 
 #: src/components/chatwindow.cpp:334
+#, c++-format
 msgid "Replying to {}"
 msgstr "Respondendo {}"
 
@@ -988,18 +1011,22 @@ msgid "Failed to accept"
 msgstr "Falhou em aceitar"
 
 #: src/components/friendslist.cpp:129
+#, c++-format
 msgid "Are you sure you want to unblock {}?"
 msgstr "Você tem certeza de que quer desbloquear {}?"
 
 #: src/components/friendslist.cpp:132
+#, c++-format
 msgid "Are you sure you want to remove {}?"
 msgstr "Você tem certeza de que quer remover {}?"
 
 #: src/components/friendslist.cpp:135
+#, c++-format
 msgid "Are you sure you want to ignore {}?"
 msgstr "Você tem certeza de que quer ignorar {}?"
 
 #: src/components/friendslist.cpp:138
+#, c++-format
 msgid "Are you sure you want to cancel your request to {}?"
 msgstr "Você tem certeza de que quer cancelar pedido de amizade para {}?"
 
@@ -1032,6 +1059,7 @@ msgid "Success!"
 msgstr "Sucesso!"
 
 #: src/components/friendslist.cpp:237
+#, c++-format
 msgid "Failed: {}"
 msgstr "Falhou: {}"
 
@@ -1052,10 +1080,12 @@ msgid "You may bypass slowmode."
 msgstr "Você é imune ao modo lento"
 
 #: src/components/ratelimitindicator.cpp:93
+#, c++-format
 msgid "{}s"
 msgstr "{}s"
 
 #: src/components/ratelimitindicator.cpp:96
+#, c++-format
 msgid "Slowmode is enabled. Members can send one message every {} seconds"
 msgstr ""
 "Modo lento está ativo. Membros podem enviar apenas uma mensagem a cada {} "
@@ -1088,8 +1118,8 @@ msgstr "Desconhecido"
 #: src/components/channellist/channellisttree.cpp:19
 #: src/components/channellist/channellisttree.cpp:23
 #: src/components/channellist/channellisttree.cpp:24
-#: src/components/channellist/channellisttree.cpp:35
-#: src/components/channellist/channellisttree.cpp:42
+#: src/components/channellist/channellisttree.cpp:37
+#: src/components/channellist/channellisttree.cpp:44
 msgid "_Copy ID"
 msgstr "_Copiar ID"
 
@@ -1098,14 +1128,14 @@ msgid "View _Settings"
 msgstr "Ver _Configurações"
 
 #: src/components/channellist/channellisttree.cpp:21
-#: src/components/channellist/channellisttree.cpp:43
+#: src/components/channellist/channellisttree.cpp:45
 msgid "_Leave"
 msgstr "_Sair"
 
 #: src/components/channellist/channellisttree.cpp:22
 #: src/components/channellist/channellisttree.cpp:25
-#: src/components/channellist/channellisttree.cpp:33
-#: src/components/channellist/channellisttree.cpp:46
+#: src/components/channellist/channellisttree.cpp:35
+#: src/components/channellist/channellisttree.cpp:48
 msgid "Mark as _Read"
 msgstr "Marcar como _Lido"
 
@@ -1115,65 +1145,67 @@ msgid "Open in New _Tab"
 msgstr "Abrir em Nova _Aba"
 
 #: src/components/channellist/channellisttree.cpp:31
+#: src/components/channellist/channellisttree.cpp:33
 msgid "_Join"
 msgstr "_Entrar"
 
 #: src/components/channellist/channellisttree.cpp:32
+#: src/components/channellist/channellisttree.cpp:34
 msgid "_Disconnect"
 msgstr "_Desconectar"
 
-#: src/components/channellist/channellisttree.cpp:34
+#: src/components/channellist/channellisttree.cpp:36
 msgid "Open _Chat"
 msgstr "Abrir _Chat"
 
-#: src/components/channellist/channellisttree.cpp:39
+#: src/components/channellist/channellisttree.cpp:41
 msgid "Join _Voice"
 msgstr "Entrar em _Voz"
 
-#: src/components/channellist/channellisttree.cpp:40
+#: src/components/channellist/channellisttree.cpp:42
 msgid "_Disconnect Voice"
 msgstr "_Desconectar da Voz"
 
-#: src/components/channellist/channellisttree.cpp:44
+#: src/components/channellist/channellisttree.cpp:46
 msgid "_Archive"
 msgstr "_Arquivar"
 
-#: src/components/channellist/channellisttree.cpp:45
+#: src/components/channellist/channellisttree.cpp:47
 msgid "_Unarchive"
 msgstr "_Desarquivar"
 
-#: src/components/channellist/channellisttree.cpp:242
+#: src/components/channellist/channellisttree.cpp:259
 msgid "Are you sure you want to leave this group DM?"
 msgstr "Você tem certeza de que quer sair deste grupo de DM?"
 
-#: src/components/channellist/channellisttree.cpp:280
+#: src/components/channellist/channellisttree.cpp:297
 msgid "Are you sure you want to leave this thread?"
 msgstr "Você tem certeza de que quer sair desta thread?"
 
-#: src/components/channellist/channellisttree.cpp:1170
+#: src/components/channellist/channellisttree.cpp:1199
 msgid "Direct Messages"
 msgstr "Mensagems Diretas"
 
-#: src/components/channellist/channellisttree.cpp:1338
+#: src/components/channellist/channellisttree.cpp:1371
 msgid "Close"
 msgstr "Fechar"
 
-#: src/components/channellist/channellisttree.cpp:1338
+#: src/components/channellist/channellisttree.cpp:1371
 msgid "Leave"
 msgstr "Sair"
 
-#: src/components/channellist/channellisttree.cpp:1392
-#: src/components/channellist/channellisttree.cpp:1406
-#: src/components/channellist/channellisttree.cpp:1451
-#: src/components/channellist/channellisttree.cpp:1476
+#: src/components/channellist/channellisttree.cpp:1425
+#: src/components/channellist/channellisttree.cpp:1439
+#: src/components/channellist/channellisttree.cpp:1503
+#: src/components/channellist/channellisttree.cpp:1528
 msgid "Unmute"
 msgstr "Desmutar"
 
-#: src/components/channellist/channellisttree.cpp:1394
-#: src/components/channellist/channellisttree.cpp:1408
-#: src/components/channellist/channellisttree.cpp:1453
-#: src/components/channellist/channellisttree.cpp:1478
-#: src/windows/voicewindow.cpp:22 src/windows/voicewindow.cpp:93
+#: src/components/channellist/channellisttree.cpp:1427
+#: src/components/channellist/channellisttree.cpp:1441
+#: src/components/channellist/channellisttree.cpp:1505
+#: src/components/channellist/channellisttree.cpp:1530
+#: src/windows/voice/voicewindow.cpp:23
 msgid "Mute"
 msgstr "Mutar"
 
@@ -1205,7 +1237,7 @@ msgstr "Registros de Auditoria"
 msgid "Connect"
 msgstr "Conectar"
 
-#: src/windows/mainwindow.cpp:260 src/windows/voicewindow.cpp:97
+#: src/windows/mainwindow.cpp:260 src/windows/voice/voicewindow.cpp:28
 msgid "Disconnect"
 msgstr "Desconectar"
 
@@ -1237,7 +1269,7 @@ msgstr "Limpar cache de arquivo"
 msgid "Dump ready message"
 msgstr "Descarregar mensagem de pronto"
 
-#: src/windows/mainwindow.cpp:288 src/windows/voicewindow.cpp:99
+#: src/windows/mainwindow.cpp:288 src/windows/voice/voicewindow.cpp:33
 msgid "View"
 msgstr "Ver"
 
@@ -1282,6 +1314,7 @@ msgid "Mutual Friends"
 msgstr "Amigos Mútuos"
 
 #: src/windows/profilewindow.cpp:113
+#, c++-format
 msgid "Originally known as {}"
 msgstr "Originalmente conhecido como {}"
 
@@ -1294,6 +1327,7 @@ msgid "Private"
 msgstr "Privado"
 
 #: src/windows/threadswindow.cpp:16
+#, c++-format
 msgid "#{} - Threads"
 msgstr "#{} - Threads"
 
@@ -1359,64 +1393,10 @@ msgstr "Tipo de Sinal"
 msgid "Bitrate"
 msgstr "Taxa de bits"
 
-#: src/windows/voicesettingswindow.cpp:133 src/windows/voicewindow.cpp:243
+#: src/windows/voicesettingswindow.cpp:133
+#: src/windows/voice/voicewindow.cpp:182
 msgid "Gain"
 msgstr "Ganho"
-
-#: src/windows/voicewindow.cpp:94
-msgid "Deafen"
-msgstr "Ensurdecer"
-
-#: src/windows/voicewindow.cpp:95
-msgid "Suppress Noise"
-msgstr "Suprimir Ruído"
-
-#: src/windows/voicewindow.cpp:96
-msgid "Mix Mono"
-msgstr "Mixagem Mono"
-
-#: src/windows/voicewindow.cpp:100
-msgid "More _Settings"
-msgstr "Mais _Configurações"
-
-#: src/windows/voicewindow.cpp:159
-msgid ""
-"Voice Activation Detection method\n"
-"Gate - Simple volume threshold. Slider changes threshold\n"
-"RNNoise - Heavier on CPU. Slider changes probability threshold"
-msgstr ""
-"Método de detecção de ativação de voz\n"
-"Gate - Limite de volume simples. O controle deslizante altera o limite\n"
-"RNNoise - Mais pesado na CPU. O controle deslizante altera o limite de "
-"probabilidade"
-
-#: src/windows/voicewindow.cpp:162
-msgid "Gate"
-msgstr "Gate"
-
-#: src/windows/voicewindow.cpp:164
-msgid "RNNoise"
-msgstr "RNNoise"
-
-#: src/windows/voicewindow.cpp:242
-msgid "Threshold"
-msgstr "Limite"
-
-#: src/windows/voicewindow.cpp:252
-msgid "VAD Method"
-msgstr "Método VAD"
-
-#: src/windows/voicewindow.cpp:253
-msgid "Output Device"
-msgstr "Dispositivo de Saída"
-
-#: src/windows/voicewindow.cpp:254
-msgid "Input Device"
-msgstr "Dispositivo de Entrada"
-
-#: src/windows/voicewindow.cpp:268
-msgid "Input Settings"
-msgstr "Configurações de Entrada"
 
 #: src/windows/profile/mutualguildspane.cpp:39
 msgid "Unknown Server"
@@ -1440,6 +1420,7 @@ msgid "Account created: "
 msgstr "Conta criada: "
 
 #: src/windows/guildsettings/auditlogpane.cpp:56
+#, c++-format
 msgid "{} made changes to <b>{}</b>"
 msgstr "{} fez mudanças em <b>{}</b>"
 
@@ -1448,6 +1429,7 @@ msgid "Set the server icon"
 msgstr "Definiu o ícone do servidor"
 
 #: src/windows/guildsettings/auditlogpane.cpp:67
+#, c++-format
 msgid "Set the server name to <b>{}</b>"
 msgstr "Definiu o nome do servidor como <b>{}</b>"
 
@@ -1456,15 +1438,18 @@ msgid "Set the server name"
 msgstr "Definiu o nome do servidor"
 
 #: src/windows/guildsettings/auditlogpane.cpp:77
+#, c++-format
 msgid "{} created a voice channel <b>#{}</b>"
 msgstr "{} criou um canal de voz <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:80
+#, c++-format
 msgid "{} created a text channel <b>#{}</b>"
 msgstr "{} criou um canal de texto <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:88
 #: src/windows/guildsettings/auditlogpane.cpp:443
+#, c++-format
 msgid "Set the name to <b>{}</b>"
 msgstr "Mudou o nome para <b>{}</b>"
 
@@ -1479,26 +1464,31 @@ msgid "Unmarked the channel as NSFW"
 msgstr "Desmarcou o canal como NSFW"
 
 #: src/windows/guildsettings/auditlogpane.cpp:101
+#, c++-format
 msgid "{} made changes to <b>#{}</b>"
 msgstr "{} fez mudanças em <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:104
+#, c++-format
 msgid "{} made changes to <b>&lt;#{}&gt;</b>"
 msgstr "{} fez mudanças em <b>&lt;#{}&gt;</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:114
 #: src/windows/guildsettings/auditlogpane.cpp:356
 #: src/windows/guildsettings/auditlogpane.cpp:470
+#, c++-format
 msgid "Changed the name from <b>{}</b> to <b>{}</b>"
 msgstr "Alterou o nome de <b>{}</b> para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:118
 #: src/windows/guildsettings/auditlogpane.cpp:249
 #: src/windows/guildsettings/auditlogpane.cpp:327
+#, c++-format
 msgid "Changed the name to <b>{}</b>"
 msgstr "Alterou o nome para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:123
+#, c++-format
 msgid "Changed the topic to <b>{}</b>"
 msgstr "Mudou o tópico para <b>{}</b>"
 
@@ -1515,58 +1505,72 @@ msgstr "Desativou modo câmera lenta"
 #: src/windows/guildsettings/auditlogpane.cpp:138
 #: src/windows/guildsettings/auditlogpane.cpp:454
 #: src/windows/guildsettings/auditlogpane.cpp:480
+#, c++-format
 msgid "Set slowmode to <b>{} seconds</b>"
 msgstr "Definiu o temporizador do câmera lenta para <b>{} segundos</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:144
+#, c++-format
 msgid "{} removed <b>#{}</b>"
 msgstr "{} removeu <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:150
+#, c++-format
 msgid "{} created channel overrides for <b>#{}</b>"
 msgstr "{} criou substituições de canal para <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:152
+#, c++-format
 msgid "{} created channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr "{} criou substituições de canal para <b>&lt;#{}&gt;</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:159
+#, c++-format
 msgid "{} updated channel overrides for <b>#{}</b>"
 msgstr "{} atualizou substituições de canal para <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:161
+#, c++-format
 msgid "{} updated channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr "{} atualizou substituições de canal para <b>&lt;#{}&gt;</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:168
+#, c++-format
 msgid "{} removed channel overrides for <b>#{}</b>"
 msgstr "{} removeu substituições de canal para <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:170
+#, c++-format
 msgid "{} removed channel overrides for <b>&lt;#{}&gt;</b>"
 msgstr "{} removeu substituições de canal para <b>&lt;#{}&gt;</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:175
+#, c++-format
 msgid "{} kicked <b>{}</b>"
 msgstr "{} expulsou <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:178
+#, c++-format
 msgid "{} pruned <b>{}</b> members"
 msgstr "{} podou <b>{}</b> membros"
 
 #: src/windows/guildsettings/auditlogpane.cpp:179
+#, c++-format
 msgid "For <b>{} days</b> of inactivity"
 msgstr "Por <b>{} dias</b> de inatividade"
 
 #: src/windows/guildsettings/auditlogpane.cpp:183
+#, c++-format
 msgid "{} banned <b>{}</b>"
 msgstr "{} baniu <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:187
+#, c++-format
 msgid "{} removed the ban for <b>{}</b>"
 msgstr "{} removeu o banimento de <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:191
+#, c++-format
 msgid "{} updated <b>{}</b>"
 msgstr "{} atualizou <b>{}</b>"
 
@@ -1587,42 +1591,52 @@ msgid "<b>Unmuted</b> them"
 msgstr "<b>Desmutou</b> eles"
 
 #: src/windows/guildsettings/auditlogpane.cpp:200
+#, c++-format
 msgid "Set their nickname to <b>{}</b>"
 msgstr "Definiu o apelido para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:206
+#, c++-format
 msgid "{} updated roles for <b>{}</b>"
 msgstr "{} atualizou os cargos de <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:211
+#, c++-format
 msgid "<b>Removed</b> a role <b>{}</b>"
 msgstr "<b>Removeu</b> o cargo <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:213
+#, c++-format
 msgid "<b>Added</b> a role <b>{}</b>"
 msgstr "<b>Adicionou</b> o cargo <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:221
+#, c++-format
 msgid "{} moved <b>a user</b> to <b>{}</b>"
 msgstr "{} moveu <b>um usuário</b> para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:224
+#, c++-format
 msgid "{} moved <b>{} users</b> to <b>{}</b>"
 msgstr "{} moveu <b>{} usuários</b> para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:229
+#, c++-format
 msgid "{} disconnected <b>{} users</b> from voice"
 msgstr "{} desconectou <b>{} usuários</b> de canais de voz"
 
 #: src/windows/guildsettings/auditlogpane.cpp:234
+#, c++-format
 msgid "{} added <b>{}</b> to the server"
 msgstr "{} adicionou <b>{}</b> ao servidor"
 
 #: src/windows/guildsettings/auditlogpane.cpp:238
+#, c++-format
 msgid "{} created the role <b>{}</b>"
 msgstr "{} criou o cargo <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:242
+#, c++-format
 msgid "{} updated the role <b>{}</b>"
 msgstr "{} atualizou o cargo <b>{}</b>"
 
@@ -1631,6 +1645,7 @@ msgid "Removed the color"
 msgstr "Removeu a cor"
 
 #: src/windows/guildsettings/auditlogpane.cpp:255
+#, c++-format
 msgid "Set the color to <b>{}</b>"
 msgstr "Definiu a cor para <b>{}</b>"
 
@@ -1655,14 +1670,17 @@ msgid "Hoisted"
 msgstr "Içado"
 
 #: src/windows/guildsettings/auditlogpane.cpp:267
+#, c++-format
 msgid "{} deleted the role <b>{}</b>"
 msgstr "{} deletou o cargo <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:271
+#, c++-format
 msgid "{} created an invite <b>{}</b>"
 msgstr "{} criou um convite <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:277
+#, c++-format
 msgid "For channel <b>{}</b>"
 msgstr "Para o canal <b>{}</b>"
 
@@ -1671,6 +1689,7 @@ msgid "Which has <b>unlimited</b> uses"
 msgstr "O qual possui usos <b>ilimitados</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:283
+#, c++-format
 msgid "Which has <b>{}</b> uses"
 msgstr "O qual possui <b>{}</b> usos"
 
@@ -1683,22 +1702,27 @@ msgid "With temporary <b>off</b>"
 msgstr "Com modo temporário <b>desligado</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:294
+#, c++-format
 msgid "{} deleted an invite <b>{}</b>"
 msgstr "{} apagou um convite <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:299
+#, c++-format
 msgid "{} created the webhook <b>{}</b>"
 msgstr "{} criou um webhook <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:306
+#, c++-format
 msgid "With channel <b>#{}</b>"
 msgstr "Com o canal <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:319
+#, c++-format
 msgid "{} updated the webhook <b>{}</b>"
 msgstr "{} atualizou o webhook <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:322
+#, c++-format
 msgid "{} updated a webhook"
 msgstr "{} atualizou um webhook"
 
@@ -1707,6 +1731,7 @@ msgid "Changed the avatar"
 msgstr "Mudou o avatar"
 
 #: src/windows/guildsettings/auditlogpane.cpp:334
+#, c++-format
 msgid "Changed the channel to <b>#{}</b>"
 msgstr "Mudou o canal para <b>#{}</b>"
 
@@ -1715,60 +1740,74 @@ msgid "Changed the channel"
 msgstr "Mudou o canal"
 
 #: src/windows/guildsettings/auditlogpane.cpp:343
+#, c++-format
 msgid "{} deleted the webhook <b>{}</b>"
 msgstr "{} apagou o webhook <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:348
+#, c++-format
 msgid "{} created the emoji <b>{}</b>"
 msgstr "{} criou o emoji <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:353
+#, c++-format
 msgid "{} updated the emoji <b>{}</b>"
 msgstr "{} atualizou o emoji <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:361
+#, c++-format
 msgid "{} deleted the emoji <b>{}</b>"
 msgstr "{} apagou o emoji <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:370
+#, c++-format
 msgid "{} deleted <b>{}</b> messages in <b>#{}</b>"
 msgstr "{} apagou <b>{}</b> mensagens em <b>#{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:374
+#, c++-format
 msgid "{} deleted <b>{}</b> messages"
 msgstr "{} apagou <b>{}</b> mensagens"
 
 #: src/windows/guildsettings/auditlogpane.cpp:380
+#, c++-format
 msgid "{} pinned a message by <b>{}</b>"
 msgstr "{} fixou uma mensagem de <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:384
+#, c++-format
 msgid "{} unpinned a message by <b>{}</b>"
 msgstr "{} desafixar uma mensagem de <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:388
+#, c++-format
 msgid "{} started the stage for <b>{}</b>"
 msgstr "{} iniciou o palco para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:396
 #: src/windows/guildsettings/auditlogpane.cpp:416
+#, c++-format
 msgid "Set the topic to <b>{}</b>"
 msgstr "Definiu o tópico para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:401
 #: src/windows/guildsettings/auditlogpane.cpp:421
+#, c++-format
 msgid "Set the privacy level to <b>{}</b>"
 msgstr "Definiu o nível de privacidade para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:408
+#, c++-format
 msgid "{} updated the stage for <b>{}</b>"
 msgstr "{} atualizou o palco para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:428
+#, c++-format
 msgid "{} ended the stage for <b>{}</b>"
 msgstr "{} encerrou o palco para <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:434
+#, c++-format
 msgid "{} created a thread <b>{}</b>"
 msgstr "{} criou uma thread <b>{}</b>"
 
@@ -1784,6 +1823,7 @@ msgstr "Desarquivou a thread"
 
 #: src/windows/guildsettings/auditlogpane.cpp:448
 #: src/windows/guildsettings/auditlogpane.cpp:474
+#, c++-format
 msgid "Set auto archive duration to <b>{} minutes</b>"
 msgstr ""
 "Definiu o intervalo para o arquivamento automático para <b>{} minutos</b>"
@@ -1801,10 +1841,12 @@ msgstr ""
 "Desbloqueou a thread, permitindo-a ser desarquivada por não-moderadores "
 
 #: src/windows/guildsettings/auditlogpane.cpp:462
+#, c++-format
 msgid "{} made changes to the thread <b>{}</b>"
 msgstr "{} fez mudanças na thread <b>{}</b>"
 
 #: src/windows/guildsettings/auditlogpane.cpp:488
+#, c++-format
 msgid "{} deleted the thread <b>{}</b>"
 msgstr "{} apagou a thread <b>{}</b>"
 
@@ -1813,6 +1855,7 @@ msgid "Unknown action"
 msgstr "Ação desconhecida"
 
 #: src/windows/guildsettings/auditlogpane.cpp:500
+#, c++-format
 msgid "Reason: <b>{}</b>"
 msgstr "Motivo: <b>{}</b>"
 
@@ -1897,6 +1940,7 @@ msgid "Failed to set emoji name"
 msgstr "Falhou em definir um nome para o emoji"
 
 #: src/windows/guildsettings/emojispane.cpp:207
+#, c++-format
 msgid "Are you sure you want to delete {}?"
 msgstr "Você tem certeza de que quer deletar {}?"
 
@@ -1999,6 +2043,7 @@ msgid "Nickname: "
 msgstr "Apelido: "
 
 #: src/windows/guildsettings/memberspane.cpp:223
+#, c++-format
 msgid "Boosting since {}"
 msgstr "Impulsionando desde {}"
 
@@ -2041,6 +2086,99 @@ msgstr "Eventos"
 #: src/windows/guildsettings/rolespane.cpp:412
 msgid "Failed to set role name"
 msgstr "Falhou em definir o nome de um cargo"
+
+#: src/windows/voice/voicewindow.cpp:24
+msgid "Deafen"
+msgstr "Ensurdecer"
+
+#: src/windows/voice/voicewindow.cpp:25
+msgid "Suppress Noise"
+msgstr "Suprimir Ruído"
+
+#: src/windows/voice/voicewindow.cpp:26
+msgid "Mix Mono"
+msgstr "Mixagem Mono"
+
+#: src/windows/voice/voicewindow.cpp:27 src/windows/voice/voicewindow.cpp:382
+msgid "Request to Speak"
+msgstr "Pedir para Falar"
+
+#: src/windows/voice/voicewindow.cpp:29
+msgid "You've been invited to speak"
+msgstr "Voce foi convidado para subir no palco"
+
+#: src/windows/voice/voicewindow.cpp:31
+msgid "Decline"
+msgstr "Recusar"
+
+#: src/windows/voice/voicewindow.cpp:34
+msgid "More _Settings"
+msgstr "Mais _Configurações"
+
+#: src/windows/voice/voicewindow.cpp:98
+msgid ""
+"Voice Activation Detection method\n"
+"Gate - Simple volume threshold. Slider changes threshold\n"
+"RNNoise - Heavier on CPU. Slider changes probability threshold"
+msgstr ""
+"Método de detecção de ativação de voz\n"
+"Gate - Limite de volume simples. O controle deslizante altera o limite\n"
+"RNNoise - Mais pesado na CPU. O controle deslizante altera o limite de "
+"probabilidade"
+
+#: src/windows/voice/voicewindow.cpp:181
+msgid "Threshold"
+msgstr "Limite"
+
+#: src/windows/voice/voicewindow.cpp:191
+msgid "VAD Method"
+msgstr "Método VAD"
+
+#: src/windows/voice/voicewindow.cpp:192
+msgid "Output Device"
+msgstr "Dispositivo de Saída"
+
+#: src/windows/voice/voicewindow.cpp:193
+msgid "Input Device"
+msgstr "Dispositivo de Entrada"
+
+#: src/windows/voice/voicewindow.cpp:236
+msgid "Speakers"
+msgstr "Falantes"
+
+#: src/windows/voice/voicewindow.cpp:239
+msgid "Audience"
+msgstr "Audiência"
+
+#: src/windows/voice/voicewindow.cpp:260
+msgid "Input Settings"
+msgstr "Configurações de Entrada"
+
+#: src/windows/voice/voicewindow.cpp:374
+msgid "Leave the Stage"
+msgstr "Sair do Palco"
+
+#: src/windows/voice/voicewindow.cpp:376
+msgid "Speak on Stage"
+msgstr "Falar no Palco"
+
+#: src/windows/voice/voicewindow.cpp:378
+msgid "Cancel Request"
+msgstr "Cancelar Pedido"
+
+#: src/windows/voice/voicewindow.cpp:380
+msgid "Decline Invite"
+msgstr "Recusar Convite"
+
+#: src/windows/voice/voicewindow.cpp:387
+msgid "Topic: "
+msgstr "Tópico: "
+
+#~ msgid "Gate"
+#~ msgstr "Gate"
+
+#~ msgid "RNNoise"
+#~ msgstr "RNNoise"
 
 #~ msgid "{} created channel overrides for </b>#{}</b>"
 #~ msgstr "{} criou subsituições de canal para </b>#{}</b>"

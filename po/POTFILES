@@ -22,7 +22,6 @@ src/windows/pinnedwindow.cpp
 src/windows/profilewindow.cpp
 src/windows/threadswindow.cpp
 src/windows/voicesettingswindow.cpp
-src/windows/voicewindow.cpp
 src/windows/profile/mutualguildspane.cpp
 src/windows/profile/userinfopane.cpp
 src/windows/guildsettings/auditlogpane.cpp
@@ -32,3 +31,4 @@ src/windows/guildsettings/infopane.cpp
 src/windows/guildsettings/invitespane.cpp
 src/windows/guildsettings/memberspane.cpp
 src/windows/guildsettings/rolespane.cpp
+src/windows/voice/voicewindow.cpp
