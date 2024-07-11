@@ -17,19 +17,6 @@
 #endif
 // clang-format on
 
-size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
-    const bool has_extension_header = (buf[0] & 0b00010000) != 0;
-    const int csrc_count = buf[0] & 0b00001111;
-
-    size_t offset = 12 + csrc_count * 4;
-
-    if (has_extension_header && num_bytes > 4) {
-        offset += 4 + 4 * ((buf[offset + 2] << 8) | buf[offset + 3]);
-    }
-
-    return offset;
-}
-
 UDPSocket::UDPSocket()
     : m_socket(-1) {
 }
