@@ -6,6 +6,8 @@
 
 #include "util.hpp"
 
+#include <glibmm/datetime.h>
+
 constexpr static uint64_t DiscordEpochSeconds = 1420070400;
 
 const Snowflake Snowflake::Invalid = -1ULL;
@@ -56,11 +58,8 @@ bool Snowflake::IsValid() const {
 }
 
 Glib::ustring Snowflake::GetLocalTimestamp() const {
-    const time_t secs_since_epoch = (m_num / SecondsInterval) + DiscordEpochSeconds;
-    const std::tm tm = *localtime(&secs_since_epoch);
-    std::array<char, 256> tmp {};
-    std::strftime(tmp.data(), sizeof(tmp), "%X %x", &tm);
-    return tmp.data();
+    const gint64 secs_since_epoch = (m_num / SecondsInterval) + DiscordEpochSeconds;
+    return FormatUnixEpoch(secs_since_epoch);
 }
 
 uint64_t Snowflake::GetUnixMilliseconds() const noexcept {

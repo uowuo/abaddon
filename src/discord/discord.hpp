@@ -5,7 +5,7 @@
 #include "objects.hpp"
 #include "store.hpp"
 #include "voiceclient.hpp"
-#include "voicestateflags.hpp"
+#include "voicestate.hpp"
 #include "websocket.hpp"
 #include <gdkmm/rgba.h>
 #include <sigc++/sigc++.h>
@@ -65,6 +65,7 @@ public:
     void GetArchivedPrivateThreads(Snowflake channel_id, const sigc::slot<void(DiscordError, const ArchivedThreadsResponseData &)> &callback);
     std::vector<Snowflake> GetChildChannelIDs(Snowflake parent_id) const;
     std::optional<WebhookMessageData> GetWebhookMessageData(Snowflake message_id) const;
+    std::optional<StageInstance> GetStageInstanceFromChannel(Snowflake channel_id) const;
 
     // get ids of given list of members for who we do not have the member data
     template<typename Iter>
@@ -86,6 +87,7 @@ public:
     Permission ComputePermissions(Snowflake member_id, Snowflake guild_id) const;
     Permission ComputeOverwrites(Permission base, Snowflake member_id, Snowflake channel_id) const;
     bool CanManageMember(Snowflake guild_id, Snowflake actor, Snowflake target) const; // kick, ban, edit nickname (cant think of a better name)
+    bool IsStageModerator(Snowflake user_id, Snowflake channel_id) const;
 
     void ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError code)> &callback);
     void SendChatMessageNoAttachments(const ChatSubmitParams &params, const sigc::slot<void(DiscordError code)> &callback);
@@ -200,15 +202,23 @@ public:
     [[nodiscard]] bool IsVoiceConnected() const noexcept;
     [[nodiscard]] bool IsVoiceConnecting() const noexcept;
     [[nodiscard]] Snowflake GetVoiceChannelID() const noexcept;
-    [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
     [[nodiscard]] std::optional<uint32_t> GetSSRCOfUser(Snowflake id) const;
-    [[nodiscard]] std::optional<std::pair<Snowflake, VoiceStateFlags>> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] bool IsUserSpeaker(Snowflake user_id) const;
+    [[nodiscard]] bool HasUserRequestedToSpeak(Snowflake user_id) const;
+    [[nodiscard]] bool IsUserInvitedToSpeak(Snowflake user_id) const;
+
+    void RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
+    void SetStageSpeaking(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback);
+    void DeclineInviteToSpeak(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback);
 
     DiscordVoiceClient &GetVoiceClient();
 
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);
 #endif
+
+    [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
+    [[nodiscard]] std::unordered_set<Snowflake> GetUsersInVoiceChannel(Snowflake channel_id);
 
     void SetReferringChannel(Snowflake id);
 
@@ -294,17 +304,21 @@ private:
     void HandleGatewayMessageAck(const GatewayMessage &msg);
     void HandleGatewayUserGuildSettingsUpdate(const GatewayMessage &msg);
     void HandleGatewayGuildMembersChunk(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceCreate(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceUpdate(const GatewayMessage &msg);
+    void HandleGatewayStageInstanceDelete(const GatewayMessage &msg);
     void HandleGatewayReadySupplemental(const GatewayMessage &msg);
     void HandleGatewayReconnect(const GatewayMessage &msg);
     void HandleGatewayInvalidSession(const GatewayMessage &msg);
 
 #ifdef WITH_VOICE
-    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayCallCreate(const GatewayMessage &msg);
+#endif
+
+    void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
 
     void CheckVoiceState(const VoiceState &data);
-#endif
 
     void HeartbeatThread();
     void SendIdentify();
@@ -343,6 +357,8 @@ private:
     std::unordered_set<Snowflake> m_muted_channels;
     std::unordered_map<Snowflake, int> m_unread;
     std::unordered_set<Snowflake> m_channel_muted_parent;
+    std::map<Snowflake, StageInstance> m_stage_instances;
+    std::map<Snowflake, Snowflake> m_channel_to_stage_instance;
 
     UserData m_user_data;
     UserSettings m_user_settings;
@@ -375,18 +391,19 @@ private:
     bool m_deaf_requested = false;
 
     Snowflake m_voice_channel_id;
-    // todo sql i guess
-    std::unordered_map<Snowflake, std::pair<Snowflake, VoiceStateFlags>> m_voice_states;
-    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     void SendVoiceStateUpdate();
-
-    void SetVoiceState(Snowflake user_id, const VoiceState &state);
-    void ClearVoiceState(Snowflake user_id);
 
     void OnVoiceConnected();
     void OnVoiceDisconnected();
 #endif
+
+    void SetVoiceState(Snowflake user_id, const VoiceState &state);
+    void ClearVoiceState(Snowflake user_id);
+
+    // todo sql i guess
+    std::unordered_map<Snowflake, std::pair<Snowflake, PackedVoiceState>> m_voice_states;
+    std::unordered_map<Snowflake, std::unordered_set<Snowflake>> m_voice_state_channel_users;
 
     mutable std::mutex m_msg_mutex;
     Glib::Dispatcher m_msg_dispatch;
@@ -443,6 +460,9 @@ public:
     typedef sigc::signal<void, ThreadMemberListUpdateData> type_signal_thread_member_list_update;
     typedef sigc::signal<void, MessageAckData> type_signal_message_ack;
     typedef sigc::signal<void, GuildMembersChunkData> type_signal_guild_members_chunk;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_create;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_update;
+    typedef sigc::signal<void, StageInstance> type_signal_stage_instance_delete;
 
     // not discord dispatch events
     typedef sigc::signal<void, Snowflake> type_signal_added_to_thread;
@@ -465,14 +485,16 @@ public:
     using type_signal_voice_connected = sigc::signal<void()>;
     using type_signal_voice_disconnected = sigc::signal<void()>;
     using type_signal_voice_speaking = sigc::signal<void(VoiceSpeakingData)>;
-    using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
-    using type_signal_voice_user_connect = sigc::signal<void(Snowflake, Snowflake)>;
     using type_signal_voice_requested_connect = sigc::signal<void(Snowflake)>;
     using type_signal_voice_requested_disconnect = sigc::signal<void()>;
     using type_signal_voice_client_state_update = sigc::signal<void(DiscordVoiceClient::State)>;
     using type_signal_voice_channel_changed = sigc::signal<void(Snowflake)>;
-    using type_signal_voice_state_set = sigc::signal<void(Snowflake, Snowflake, VoiceStateFlags)>;
 #endif
+
+    using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
+    using type_signal_voice_user_connect = sigc::signal<void(Snowflake, Snowflake)>;
+    using type_signal_voice_state_set = sigc::signal<void(Snowflake, Snowflake, VoiceStateFlags)>;
+    using type_signal_voice_speaker_state_changed = sigc::signal<void(Snowflake /* channel_id */, Snowflake /* user_id */, bool /* is_speaker */)>;
 
     type_signal_gateway_ready signal_gateway_ready();
     type_signal_gateway_ready_supplemental signal_gateway_ready_supplemental();
@@ -515,6 +537,9 @@ public:
     type_signal_thread_member_list_update signal_thread_member_list_update();
     type_signal_message_ack signal_message_ack();
     type_signal_guild_members_chunk signal_guild_members_chunk();
+    type_signal_stage_instance_create signal_stage_instance_create();
+    type_signal_stage_instance_update signal_stage_instance_update();
+    type_signal_stage_instance_delete signal_stage_instance_delete();
 
     type_signal_added_to_thread signal_added_to_thread();
     type_signal_removed_from_thread signal_removed_from_thread();
@@ -533,14 +558,16 @@ public:
     type_signal_voice_connected signal_voice_connected();
     type_signal_voice_disconnected signal_voice_disconnected();
     type_signal_voice_speaking signal_voice_speaking();
-    type_signal_voice_user_disconnect signal_voice_user_disconnect();
-    type_signal_voice_user_connect signal_voice_user_connect();
     type_signal_voice_requested_connect signal_voice_requested_connect();
     type_signal_voice_requested_disconnect signal_voice_requested_disconnect();
     type_signal_voice_client_state_update signal_voice_client_state_update();
     type_signal_voice_channel_changed signal_voice_channel_changed();
-    type_signal_voice_state_set signal_voice_state_set();
 #endif
+
+    type_signal_voice_user_disconnect signal_voice_user_disconnect();
+    type_signal_voice_user_connect signal_voice_user_connect();
+    type_signal_voice_state_set signal_voice_state_set();
+    type_signal_voice_speaker_state_changed signal_voice_speaker_state_changed();
 
 protected:
     type_signal_gateway_ready m_signal_gateway_ready;
@@ -584,6 +611,9 @@ protected:
     type_signal_thread_member_list_update m_signal_thread_member_list_update;
     type_signal_message_ack m_signal_message_ack;
     type_signal_guild_members_chunk m_signal_guild_members_chunk;
+    type_signal_stage_instance_create m_signal_stage_instance_create;
+    type_signal_stage_instance_update m_signal_stage_instance_update;
+    type_signal_stage_instance_delete m_signal_stage_instance_delete;
 
     type_signal_removed_from_thread m_signal_removed_from_thread;
     type_signal_added_to_thread m_signal_added_to_thread;
@@ -602,12 +632,14 @@ protected:
     type_signal_voice_connected m_signal_voice_connected;
     type_signal_voice_disconnected m_signal_voice_disconnected;
     type_signal_voice_speaking m_signal_voice_speaking;
-    type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
-    type_signal_voice_user_connect m_signal_voice_user_connect;
     type_signal_voice_requested_connect m_signal_voice_requested_connect;
     type_signal_voice_requested_disconnect m_signal_voice_requested_disconnect;
     type_signal_voice_client_state_update m_signal_voice_client_state_update;
     type_signal_voice_channel_changed m_signal_voice_channel_changed;
-    type_signal_voice_state_set m_signal_voice_state_set;
 #endif
+
+    type_signal_voice_user_disconnect m_signal_voice_user_disconnect;
+    type_signal_voice_user_connect m_signal_voice_user_connect;
+    type_signal_voice_state_set m_signal_voice_state_set;
+    type_signal_voice_speaker_state_changed m_signal_voice_speaker_state_changed;
 };

@@ -360,6 +360,14 @@ std::optional<WebhookMessageData> DiscordClient::GetWebhookMessageData(Snowflake
     return m_store.GetWebhookMessage(message_id);
 }
 
+std::optional<StageInstance> DiscordClient::GetStageInstanceFromChannel(Snowflake channel_id) const {
+    const auto iter1 = m_channel_to_stage_instance.find(channel_id);
+    if (iter1 == m_channel_to_stage_instance.end()) return {};
+    const auto iter2 = m_stage_instances.find(iter1->second);
+    if (iter2 == m_stage_instances.end()) return {};
+    return iter2->second;
+}
+
 bool DiscordClient::IsThreadJoined(Snowflake thread_id) const {
     return std::find(m_joined_threads.begin(), m_joined_threads.end(), thread_id) != m_joined_threads.end();
 }
@@ -460,6 +468,10 @@ bool DiscordClient::CanManageMember(Snowflake guild_id, Snowflake actor, Snowfla
     if (!actor_highest.has_value()) return false;
     if (!target_highest.has_value()) return true;
     return actor_highest->Position > target_highest->Position;
+}
+
+bool DiscordClient::IsStageModerator(Snowflake user_id, Snowflake channel_id) const {
+    return HasChannelPermission(user_id, channel_id, Permission::MANAGE_CHANNELS | Permission::MOVE_MEMBERS | Permission::MUTE_MEMBERS);
 }
 
 void DiscordClient::ChatMessageCallback(const std::string &nonce, const http::response_type &response, const sigc::slot<void(DiscordError)> &callback) {
@@ -1284,19 +1296,80 @@ Snowflake DiscordClient::GetVoiceChannelID() const noexcept {
     return m_voice_channel_id;
 }
 
-std::unordered_set<Snowflake> DiscordClient::GetUsersInVoiceChannel(Snowflake channel_id) {
-    return m_voice_state_channel_users[channel_id];
-}
-
 std::optional<uint32_t> DiscordClient::GetSSRCOfUser(Snowflake id) const {
     return m_voice.GetSSRCOfUser(id);
 }
 
-std::optional<std::pair<Snowflake, VoiceStateFlags>> DiscordClient::GetVoiceState(Snowflake user_id) const {
-    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
-        return it->second;
+bool DiscordClient::IsUserSpeaker(Snowflake user_id) const {
+    const auto state = GetVoiceState(user_id);
+    return state.has_value() && state->second.IsSpeaker();
+}
+
+bool DiscordClient::HasUserRequestedToSpeak(Snowflake user_id) const {
+    const auto state = GetVoiceState(user_id);
+    return state.has_value() && state->second.RequestToSpeakTimestamp.has_value() && util::FlagSet(state->second.Flags, VoiceStateFlags::Suppressed);
+}
+
+bool DiscordClient::IsUserInvitedToSpeak(Snowflake user_id) const {
+    const auto state = GetVoiceState(user_id);
+    return state.has_value() && state->second.RequestToSpeakTimestamp.has_value() && !util::FlagSet(state->second.Flags, VoiceStateFlags::Suppressed);
+}
+
+void DiscordClient::RequestToSpeak(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback) {
+    if (want && !HasSelfChannelPermission(channel_id, Permission::REQUEST_TO_SPEAK)) return;
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+
+    ModifyCurrentUserVoiceStateObject d;
+    d.ChannelID = channel_id;
+    if (want) {
+        d.RequestToSpeakTimestamp = Glib::DateTime::create_now_utc().format_iso8601();
+    } else {
+        d.RequestToSpeakTimestamp = "";
     }
-    return std::nullopt;
+    m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(DiscordError::NONE);
+        } else {
+            callback(GetCodeFromResponse(response));
+        }
+    });
+}
+
+void DiscordClient::SetStageSpeaking(Snowflake channel_id, bool want, const sigc::slot<void(DiscordError code)> &callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+
+    ModifyCurrentUserVoiceStateObject d;
+    d.ChannelID = channel_id;
+    d.Suppress = !want;
+    if (want) {
+        d.RequestToSpeakTimestamp = "";
+    }
+    m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(DiscordError::NONE);
+        } else {
+            callback(GetCodeFromResponse(response));
+        }
+    });
+}
+
+void DiscordClient::DeclineInviteToSpeak(Snowflake channel_id, const sigc::slot<void(DiscordError code)> &callback) {
+    const auto channel = GetChannel(channel_id);
+    if (!channel.has_value() || !channel->GuildID.has_value()) return;
+
+    ModifyCurrentUserVoiceStateObject d;
+    d.ChannelID = channel_id;
+    d.Suppress = true;
+    d.RequestToSpeakTimestamp = "";
+    m_http.MakePATCH("/guilds/" + std::to_string(*channel->GuildID) + "/voice-states/@me", nlohmann::json(d).dump(), [callback](const http::response_type &response) {
+        if (CheckCode(response, 204)) {
+            callback(DiscordError::NONE);
+        } else {
+            callback(GetCodeFromResponse(response));
+        }
+    });
 }
 
 DiscordVoiceClient &DiscordClient::GetVoiceClient() {
@@ -1313,6 +1386,17 @@ void DiscordClient::SetVoiceDeafened(bool is_deaf) {
     SendVoiceStateUpdate();
 }
 #endif
+
+std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
+    if (const auto it = m_voice_states.find(user_id); it != m_voice_states.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+std::unordered_set<Snowflake> DiscordClient::GetUsersInVoiceChannel(Snowflake channel_id) {
+    return m_voice_state_channel_users[channel_id];
+}
 
 void DiscordClient::SetReferringChannel(Snowflake id) {
     if (!id.IsValid()) {
@@ -1652,10 +1736,19 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     case GatewayEvent::GUILD_MEMBERS_CHUNK: {
                         HandleGatewayGuildMembersChunk(m);
                     } break;
-#ifdef WITH_VOICE
+                    case GatewayEvent::STAGE_INSTANCE_CREATE: {
+                        HandleGatewayStageInstanceCreate(m);
+                    } break;
+                    case GatewayEvent::STAGE_INSTANCE_UPDATE: {
+                        HandleGatewayStageInstanceUpdate(m);
+                    } break;
+                    case GatewayEvent::STAGE_INSTANCE_DELETE: {
+                        HandleGatewayStageInstanceDelete(m);
+                    } break;
                     case GatewayEvent::VOICE_STATE_UPDATE: {
                         HandleGatewayVoiceStateUpdate(m);
                     } break;
+#ifdef WITH_VOICE
                     case GatewayEvent::VOICE_SERVER_UPDATE: {
                         HandleGatewayVoiceServerUpdate(m);
                     } break;
@@ -1710,6 +1803,14 @@ void DiscordClient::ProcessNewGuild(GuildData &guild) {
     if (guild.IsUnavailable) {
         printf("guild (%" PRIu64 ") unavailable\n", static_cast<uint64_t>(guild.ID));
         return;
+    }
+
+    if (guild.StageInstances.has_value()) {
+        for (const auto &stage : *guild.StageInstances) {
+            spdlog::get("discord")->debug("storing stage {} in channel {}", stage.ID, stage.ChannelID);
+            m_stage_instances[stage.ID] = stage;
+            m_channel_to_stage_instance[stage.ChannelID] = stage.ID;
+        }
     }
 
     m_store.BeginTransaction();
@@ -2302,6 +2403,29 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
     m_store.EndTransaction();
 }
 
+void DiscordClient::HandleGatewayStageInstanceCreate(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_CREATE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances[data.ID] = data;
+    m_channel_to_stage_instance[data.ChannelID] = data.ID;
+    m_signal_stage_instance_create.emit(data);
+}
+
+void DiscordClient::HandleGatewayStageInstanceUpdate(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_UPDATE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances[data.ID] = data;
+    m_signal_stage_instance_update.emit(data);
+}
+
+void DiscordClient::HandleGatewayStageInstanceDelete(const GatewayMessage &msg) {
+    StageInstance data = msg.Data;
+    spdlog::get("discord")->debug("STAGE_INSTANCE_DELETE: {} in {}", data.ID, data.ChannelID);
+    m_stage_instances.erase(data.ID);
+    m_channel_to_stage_instance.erase(data.ChannelID);
+    m_signal_stage_instance_delete.emit(data);
+}
+
 #ifdef WITH_VOICE
 
 /*
@@ -2336,12 +2460,6 @@ void DiscordClient::HandleGatewayGuildMembersChunk(const GatewayMessage &msg) {
  *
  */
 
-void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
-    spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
-
-    CheckVoiceState(msg.Data);
-}
-
 void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
     spdlog::get("discord")->trace("VOICE_SERVER_UPDATE");
 
@@ -2371,8 +2489,17 @@ void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     }
 }
 
+#endif
+
+void DiscordClient::HandleGatewayVoiceStateUpdate(const GatewayMessage &msg) {
+    spdlog::get("discord")->trace("VOICE_STATE_UPDATE");
+
+    CheckVoiceState(msg.Data);
+}
+
 void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.UserID == m_user_data.ID) {
+#ifdef WITH_VOICE
         spdlog::get("discord")->debug("Voice session ID: {}", data.SessionID);
         m_voice.SetSessionID(data.SessionID);
 
@@ -2383,6 +2510,7 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
             m_voice_channel_id = *data.ChannelID;
             m_signal_voice_channel_changed.emit(m_voice_channel_id);
         }
+#endif
     } else {
         if (data.GuildID.has_value() && data.Member.has_value()) {
             if (data.Member->User.has_value()) {
@@ -2395,9 +2523,14 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
     if (data.ChannelID.has_value()) {
         const auto old_state = GetVoiceState(data.UserID);
         SetVoiceState(data.UserID, data);
-        if (old_state.has_value() && old_state->first != *data.ChannelID) {
-            m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
-            m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
+        const auto new_state = GetVoiceState(data.UserID);
+        if (old_state.has_value()) {
+            if (old_state->first != *data.ChannelID) {
+                m_signal_voice_user_disconnect.emit(data.UserID, old_state->first);
+                m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
+            } else if (old_state->second.IsSpeaker() != new_state.value().second.IsSpeaker()) {
+                m_signal_voice_speaker_state_changed.emit(*data.ChannelID, data.UserID, new_state->second.IsSpeaker());
+            }
         } else if (!old_state.has_value()) {
             m_signal_voice_user_connect.emit(data.UserID, *data.ChannelID);
         }
@@ -2409,7 +2542,6 @@ void DiscordClient::CheckVoiceState(const VoiceState &data) {
         }
     }
 }
-#endif
 
 void DiscordClient::HandleGatewayReadySupplemental(const GatewayMessage &msg) {
     ReadySupplementalData data = msg.Data;
@@ -2929,6 +3061,15 @@ void DiscordClient::SendVoiceStateUpdate() {
     m_websocket.Send(msg);
 }
 
+void DiscordClient::OnVoiceConnected() {
+    m_signal_voice_connected.emit();
+}
+
+void DiscordClient::OnVoiceDisconnected() {
+    m_signal_voice_disconnected.emit();
+}
+#endif
+
 void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
     if (!state.ChannelID.has_value()) {
         spdlog::get("discord")->error("SetVoiceState called with missing channel ID");
@@ -2942,8 +3083,9 @@ void DiscordClient::SetVoiceState(Snowflake user_id, const VoiceState &state) {
     if (state.IsDeafened) flags |= VoiceStateFlags::Deaf;
     if (state.IsSelfStream) flags |= VoiceStateFlags::SelfStream;
     if (state.IsSelfVideo) flags |= VoiceStateFlags::SelfVideo;
+    if (state.IsSuppressed) flags |= VoiceStateFlags::Suppressed;
 
-    m_voice_states[user_id] = std::make_pair(*state.ChannelID, flags);
+    m_voice_states[user_id] = std::make_pair(*state.ChannelID, PackedVoiceState { flags, state.RequestToSpeakTimestamp });
     m_voice_state_channel_users[*state.ChannelID].insert(user_id);
 
     m_signal_voice_state_set.emit(user_id, *state.ChannelID, flags);
@@ -2957,15 +3099,6 @@ void DiscordClient::ClearVoiceState(Snowflake user_id) {
         m_voice_states.erase(user_id);
     }
 }
-
-void DiscordClient::OnVoiceConnected() {
-    m_signal_voice_connected.emit();
-}
-
-void DiscordClient::OnVoiceDisconnected() {
-    m_signal_voice_disconnected.emit();
-}
-#endif
 
 void DiscordClient::LoadEventMap() {
     m_event_map["READY"] = GatewayEvent::READY;
@@ -3015,6 +3148,9 @@ void DiscordClient::LoadEventMap() {
     m_event_map["VOICE_STATE_UPDATE"] = GatewayEvent::VOICE_STATE_UPDATE;
     m_event_map["VOICE_SERVER_UPDATE"] = GatewayEvent::VOICE_SERVER_UPDATE;
     m_event_map["CALL_CREATE"] = GatewayEvent::CALL_CREATE;
+    m_event_map["STAGE_INSTANCE_CREATE"] = GatewayEvent::STAGE_INSTANCE_CREATE;
+    m_event_map["STAGE_INSTANCE_UPDATE"] = GatewayEvent::STAGE_INSTANCE_UPDATE;
+    m_event_map["STAGE_INSTANCE_DELETE"] = GatewayEvent::STAGE_INSTANCE_DELETE;
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -3193,6 +3329,18 @@ DiscordClient::type_signal_guild_members_chunk DiscordClient::signal_guild_membe
     return m_signal_guild_members_chunk;
 }
 
+DiscordClient::type_signal_stage_instance_create DiscordClient::signal_stage_instance_create() {
+    return m_signal_stage_instance_create;
+}
+
+DiscordClient::type_signal_stage_instance_update DiscordClient::signal_stage_instance_update() {
+    return m_signal_stage_instance_update;
+}
+
+DiscordClient::type_signal_stage_instance_delete DiscordClient::signal_stage_instance_delete() {
+    return m_signal_stage_instance_delete;
+}
+
 DiscordClient::type_signal_added_to_thread DiscordClient::signal_added_to_thread() {
     return m_signal_added_to_thread;
 }
@@ -3242,14 +3390,6 @@ DiscordClient::type_signal_voice_speaking DiscordClient::signal_voice_speaking()
     return m_signal_voice_speaking;
 }
 
-DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
-    return m_signal_voice_user_disconnect;
-}
-
-DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
-    return m_signal_voice_user_connect;
-}
-
 DiscordClient::type_signal_voice_requested_connect DiscordClient::signal_voice_requested_connect() {
     return m_signal_voice_requested_connect;
 }
@@ -3265,8 +3405,20 @@ DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice
 DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
     return m_signal_voice_channel_changed;
 }
+#endif
+
+DiscordClient::type_signal_voice_user_disconnect DiscordClient::signal_voice_user_disconnect() {
+    return m_signal_voice_user_disconnect;
+}
+
+DiscordClient::type_signal_voice_user_connect DiscordClient::signal_voice_user_connect() {
+    return m_signal_voice_user_connect;
+}
 
 DiscordClient::type_signal_voice_state_set DiscordClient::signal_voice_state_set() {
     return m_signal_voice_state_set;
 }
-#endif
+
+DiscordClient::type_signal_voice_speaker_state_changed DiscordClient::signal_voice_speaker_state_changed() {
+    return m_signal_voice_speaker_state_changed;
+}

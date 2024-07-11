@@ -104,10 +104,7 @@ protected:
     Gtk::TreeModel::iterator AddGuild(const GuildData &guild, const Gtk::TreeNodeChildren &root);
     Gtk::TreeModel::iterator UpdateCreateChannelCategory(const ChannelData &channel);
     Gtk::TreeModel::iterator CreateThreadRow(const Gtk::TreeNodeChildren &children, const ChannelData &channel);
-
-#ifdef WITH_VOICE
     Gtk::TreeModel::iterator CreateVoiceParticipantRow(const UserData &user, const Gtk::TreeNodeChildren &parent);
-#endif
 
     void UpdateChannelCategory(const ChannelData &channel);
 
@@ -162,11 +159,15 @@ protected:
     Gtk::MenuItem m_menu_channel_open_tab;
 #endif
 
-#ifdef WITH_VOICE
     Gtk::Menu m_menu_voice_channel;
     Gtk::MenuItem m_menu_voice_channel_join;
     Gtk::MenuItem m_menu_voice_channel_disconnect;
-#endif
+
+    Gtk::Menu m_menu_voice_stage;
+    Gtk::MenuItem m_menu_voice_stage_join;
+    Gtk::MenuItem m_menu_voice_stage_disconnect;
+    Gtk::MenuItem m_menu_voice_channel_mark_as_read;
+    Gtk::MenuItem m_menu_voice_open_chat;
 
     Gtk::Menu m_menu_dm;
     Gtk::MenuItem m_menu_dm_copy_id;
@@ -194,10 +195,8 @@ protected:
     void OnChannelSubmenuPopup();
     void OnDMSubmenuPopup();
     void OnThreadSubmenuPopup();
-
-#ifdef WITH_VOICE
     void OnVoiceChannelSubmenuPopup();
-#endif
+    void OnVoiceStageSubmenuPopup();
 
     bool m_updating_listing = false;
 

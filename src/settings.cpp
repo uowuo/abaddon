@@ -96,7 +96,7 @@ void SettingsManager::DefineSettings() {
     AddSetting("gui", "stock_emojis", false, &Settings::ShowStockEmojis);
     AddSetting("gui", "unreads", true, &Settings::Unreads);
     AddSetting("gui", "alt_menu", false, &Settings::AltMenu);
-    AddSetting("gui", "hide_to_try", false, &Settings::HideToTray);
+    AddSetting("gui", "hide_to_tray", false, &Settings::HideToTray);
     AddSetting("gui", "show_deleted_indicator", true, &Settings::ShowDeletedIndicator);
     AddSetting("gui", "font_scale", -1.0, &Settings::FontScale);
     AddSetting("gui", "folder_icon_only", false, &Settings::FolderIconOnly);

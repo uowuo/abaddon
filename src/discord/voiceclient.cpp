@@ -258,6 +258,7 @@ bool DiscordVoiceClient::IsConnecting() const noexcept {
 }
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
+    m_log->trace("IN: {}", str);
     VoiceGatewayMessage msg = nlohmann::json::parse(str);
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello:
@@ -468,6 +469,19 @@ void DiscordVoiceClient::SetState(State state) {
     m_log->debug("Changing state to {}", state_name);
     m_state = state;
     m_signal_state_update.emit(state);
+}
+
+size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
+    const bool has_extension_header = (buf[0] & 0b00010000) != 0;
+    const int csrc_count = buf[0] & 0b00001111;
+
+    size_t offset = 12 + csrc_count * 4;
+
+    if (has_extension_header && num_bytes > 4) {
+        offset += 4 + 4 * ((buf[offset + 2] << 8) | buf[offset + 3]);
+    }
+
+    return offset;
 }
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {

@@ -6,7 +6,7 @@
 #include <gtkmm/cellrendererpixbuf.h>
 #include <gtkmm/cellrenderertext.h>
 #include "discord/snowflake.hpp"
-#include "discord/voicestateflags.hpp"
+#include "discord/voicestate.hpp"
 #include "misc/bitwise.hpp"
 
 enum class RenderType : uint8_t {
@@ -15,12 +15,9 @@ enum class RenderType : uint8_t {
     Category,
     TextChannel,
     Thread,
-
-// TODO: maybe enable anyways but without ability to join if no voice support
-#ifdef WITH_VOICE
     VoiceChannel,
+    VoiceStage, // identical to non-stage except for icon
     VoiceParticipant,
-#endif
 
     DMHeader,
     DM,
@@ -107,7 +104,6 @@ protected:
                              const Gdk::Rectangle &cell_area,
                              Gtk::CellRendererState flags);
 
-#ifdef WITH_VOICE
     // voice channel
     void get_preferred_width_vfunc_voice_channel(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
     void get_preferred_width_for_height_vfunc_voice_channel(Gtk::Widget &widget, int height, int &minimum_width, int &natural_width) const;
@@ -117,7 +113,8 @@ protected:
                                     Gtk::Widget &widget,
                                     const Gdk::Rectangle &background_area,
                                     const Gdk::Rectangle &cell_area,
-                                    Gtk::CellRendererState flags);
+                                    Gtk::CellRendererState flags,
+                                    const char *emoji);
 
     // voice participant
     void get_preferred_width_vfunc_voice_participant(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;
@@ -129,7 +126,6 @@ protected:
                                         const Gdk::Rectangle &background_area,
                                         const Gdk::Rectangle &cell_area,
                                         Gtk::CellRendererState flags);
-#endif
 
     // dm header
     void get_preferred_width_vfunc_dmheader(Gtk::Widget &widget, int &minimum_width, int &natural_width) const;

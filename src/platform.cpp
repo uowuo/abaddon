@@ -8,6 +8,9 @@
 #ifdef __APPLE__
     #include <unistd.h>
 #endif
+#ifdef __linux__
+    #include "util.hpp"
+#endif
 
 #include <spdlog/spdlog.h>
 

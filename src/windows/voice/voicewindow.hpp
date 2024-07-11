@@ -1,4 +1,6 @@
 #pragma once
+#include "discord/stage.hpp"
+#include "discord/voicestate.hpp"
 #ifdef WITH_VOICE
 // clang-format off
 
@@ -16,7 +18,6 @@
 #include <unordered_set>
 // clang-format on
 
-class VoiceWindowUserListEntry;
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
@@ -24,17 +25,25 @@ public:
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
-    Gtk::ListBoxRow *CreateRow(Snowflake id);
+    Gtk::ListBoxRow *CreateSpeakerRow(Snowflake id);
+    Gtk::ListBoxRow *CreateAudienceRow(Snowflake id);
 
     void OnUserConnect(Snowflake user_id, Snowflake to_channel_id);
     void OnUserDisconnect(Snowflake user_id, Snowflake from_channel_id);
+    void OnSpeakerStateChanged(Snowflake channel_id, Snowflake user_id, bool is_speaker);
+    void OnVoiceStateUpdate(Snowflake user_id, Snowflake channel_id, VoiceStateFlags flags);
+    void OnStageInstanceCreate(const StageInstance &instance);
+    void OnStageInstanceUpdate(const StageInstance &instance);
+    void OnStageInstanceDelete(const StageInstance &instance);
 
     void OnMuteChanged();
     void OnDeafenChanged();
 
+    void TryDeleteRow(Snowflake id);
     bool UpdateVoiceMeters();
-
     void UpdateVADParamValue();
+    void UpdateStageCommand();
+    void UpdateStageTopicLabel(const std::string &topic);
 
     Gtk::Box m_main;
     Gtk::Box m_controls;
@@ -43,7 +52,9 @@ private:
     Gtk::CheckButton m_deafen;
 
     Gtk::ScrolledWindow m_scroll;
-    Gtk::ListBox m_user_list;
+    Gtk::VBox m_listing;
+    Gtk::ListBox m_speakers_list;
+    Gtk::ListBox m_audience_list;
 
     // Shows volume for gate VAD method
     // Shows probability for RNNoise VAD method
@@ -56,20 +67,35 @@ private:
     Gtk::CheckButton m_noise_suppression;
     Gtk::CheckButton m_mix_mono;
 
+    Gtk::HBox m_buttons;
     Gtk::Button m_disconnect;
+    Gtk::Button m_stage_command;
+
+    Gtk::VBox m_stage_invite_box;
+    Gtk::Label m_stage_invite_lbl;
+    Gtk::HBox m_stage_invite_btns;
+    Gtk::Button m_stage_accept;
+    Gtk::Button m_stage_decline;
+
+    bool m_has_requested_to_speak = false;
 
     Gtk::ComboBoxText m_vad_combo;
     Gtk::ComboBox m_playback_combo;
     Gtk::ComboBox m_capture_combo;
 
     Snowflake m_channel_id;
+    bool m_is_stage;
 
-    std::unordered_map<Snowflake, VoiceWindowUserListEntry *> m_rows;
+    std::unordered_map<Snowflake, Gtk::ListBoxRow *> m_rows;
 
     Gtk::MenuBar m_menu_bar;
     Gtk::MenuItem m_menu_view;
     Gtk::Menu m_menu_view_sub;
     Gtk::MenuItem m_menu_view_settings;
+
+    Gtk::Label m_stage_topic_label;
+    Gtk::Label m_speakers_label;
+    Gtk::Label m_audience_label;
 
 public:
     using type_signal_mute = sigc::signal<void(bool)>;
