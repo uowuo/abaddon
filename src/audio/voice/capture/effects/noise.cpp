@@ -19,11 +19,18 @@ void Noise::Denoise(OutputBuffer buffer) noexcept {
         start = 1;
     }
 
+    // Denoise required channels
     auto channels = m_channels.Lock();
     for (size_t channel = start; channel < channels->size(); channel++) {
         auto& channel_buffer = channels[channel];
 
         channel_buffer.DenoiseChannel(buffer, channel);
+    }
+
+    // Write them back
+    for (size_t channel = 0; channel < channels->size(); channel++) {
+        auto& channel_buffer = channels[channel];
+
         channel_buffer.WriteChannel(buffer, channel);
     }
 }
