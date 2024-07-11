@@ -38,7 +38,7 @@ private:
     using ClientMap = std::unordered_map<ClientID, Client>;
 
     // Keep these two private and expose through VoicePlayback
-    void DecodeFromRTP(ClientID id, std::vector<uint8_t> &&data) noexcept;
+    void Decode(ClientID id, std::vector<uint8_t> &&data) noexcept;
     void WriteMixed(OutputBuffer buffer) noexcept;
 
     DecodePool m_decode_pool;

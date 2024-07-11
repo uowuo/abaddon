@@ -15,13 +15,13 @@ public:
     DecodePool() noexcept;
 
     struct DecodeData {
-        std::vector<uint8_t> rtp;
+        std::vector<uint8_t> opus;
 
         SharedDecoder decoder;
         SharedBuffer buffer;
     };
 
-    void DecodeFromRTP(DecodeData &&decode_data) noexcept;
+    void Decode(DecodeData &&decode_data) noexcept;
 
     void AddDecoder() noexcept;
     void RemoveDecoder() noexcept;

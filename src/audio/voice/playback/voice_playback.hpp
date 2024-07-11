@@ -20,7 +20,7 @@ public:
 
     VoicePlayback(Context &context, DiscordClient &discord) noexcept;
 
-    void OnRTPData(ClientID id, std::vector<uint8_t> &&data) noexcept;
+    void OnOpusData(ClientID id, std::vector<uint8_t> &&data) noexcept;
 
     void Start() noexcept;
     void Stop() noexcept;

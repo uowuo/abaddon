@@ -29,7 +29,7 @@ Client::Client(Context &context, Opus::OpusDecoder &&decoder, VoiceBuffer &&buff
     }
 }
 
-void Client::DecodeFromRTP(std::vector<uint8_t> &&rtp) noexcept {
+void Client::Decode(std::vector<uint8_t> &&rtp) noexcept {
     if (m_muted) {
         return;
     }
@@ -40,7 +40,7 @@ void Client::DecodeFromRTP(std::vector<uint8_t> &&rtp) noexcept {
         m_buffer,
     };
 
-    m_decode_pool.DecodeFromRTP(std::move(decode_data));
+    m_decode_pool.Decode(std::move(decode_data));
 }
 
 void Client::WriteAudio(OutputBuffer buffer) noexcept {

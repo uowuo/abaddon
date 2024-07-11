@@ -56,7 +56,7 @@ void ClientStore::Clear() noexcept {
     m_clients.Lock()->clear();
 }
 
-void ClientStore::DecodeFromRTP(ClientID id, std::vector<uint8_t> &&data) noexcept {
+void ClientStore::Decode(ClientID id, std::vector<uint8_t> &&data) noexcept {
     auto clients = m_clients.Lock();
     auto client = clients->find(id);
 
@@ -65,7 +65,7 @@ void ClientStore::DecodeFromRTP(ClientID id, std::vector<uint8_t> &&data) noexce
         return;
     }
 
-    client->second.DecodeFromRTP(std::move(data));
+    client->second.Decode(std::move(data));
 }
 
 void ClientStore::WriteMixed(OutputBuffer buffer) noexcept {

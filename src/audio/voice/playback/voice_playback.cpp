@@ -26,9 +26,9 @@ VoicePlayback::VoicePlayback(Context &context, DiscordClient &discord) noexcept 
         .connect(sigc::mem_fun(*this, &VoicePlayback::OnUserDisconnect));
 }
 
-void VoicePlayback::OnRTPData(ClientID id, std::vector<uint8_t> &&data) noexcept {
+void VoicePlayback::OnOpusData(ClientID id, std::vector<uint8_t> &&data) noexcept {
     if (m_active) {
-        m_clients.DecodeFromRTP(id, std::move(data));
+        m_clients.Decode(id, std::move(data));
     }
 }
 

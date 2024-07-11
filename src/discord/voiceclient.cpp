@@ -17,6 +17,19 @@
 #endif
 // clang-format on
 
+size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
+    const bool has_extension_header = (buf[0] & 0b00010000) != 0;
+    const int csrc_count = buf[0] & 0b00001111;
+
+    size_t offset = 12 + csrc_count * 4;
+
+    if (has_extension_header && num_bytes > 4) {
+        offset += 4 + 4 * ((buf[offset + 2] << 8) | buf[offset + 3]);
+    }
+
+    return offset;
+}
+
 UDPSocket::UDPSocket()
     : m_socket(-1) {
 }
@@ -465,11 +478,16 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
                     (data[11] << 0);
     static std::array<uint8_t, 24> nonce = {};
     std::memcpy(nonce.data(), data.data(), 12);
-    if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
-        // spdlog::get("voice")->trace("UDP payload decryption failure");
-    } else {
-        Abaddon::Get().GetAudio().GetVoice().GetPlayback().OnRTPData(ssrc, { payload, payload + data.size() - 12 - crypto_box_MACBYTES });
+
+    const int error = crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data());
+    if (error) {
+        return;
     }
+
+    const size_t opus_offset = GetPayloadOffset(data.data(), data.size());
+    payload = data.data() + opus_offset;
+
+    Abaddon::Get().GetAudio().GetVoice().GetPlayback().OnOpusData(ssrc, { payload, payload + data.size() - opus_offset - crypto_box_MACBYTES });
 }
 
 void DiscordVoiceClient::OnDispatch() {

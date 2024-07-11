@@ -5,20 +5,12 @@
 
 namespace AbaddonClient::Audio::Voice::Playback {
 
-// I have no idea what this does, I just copied it from AudioManager
-Opus::OpusInput StripRTPExtensionHeader(ConstSlice<uint8_t> rtp) {
-    if (rtp[0] == 0xbe && rtp[1] == 0xde && rtp.size() > 4) {
-        uint64_t offset = 4 + 4 * ((rtp[2] << 8) | rtp[3]);
 
-        return Opus::OpusInput(rtp.data() + offset, rtp.size() - offset);
-    }
-    return rtp;
-}
 
 DecodePool::DecodePool() noexcept :
     m_pool(Pool(&DecodePool::DecodeThread, 20)) {}
 
-void DecodePool::DecodeFromRTP(DecodeData &&decode_data) noexcept {
+void DecodePool::Decode(DecodeData &&decode_data) noexcept {
     m_pool.SendToPool(std::move(decode_data));
 }
 
@@ -51,10 +43,9 @@ void DecodePool::DecodeThread(Channel<Pool::ThreadMessage> &channel) noexcept {
 }
 
 void DecodePool::OnDecodeMessage(DecodeData &&message) noexcept {
-    auto& [rtp, decoder, buffer] = message;
+    auto& [opus, decoder, buffer] = message;
 
     static std::array<float, RTP_OPUS_MAX_BUFFER_SIZE> pcm;
-    const auto opus = StripRTPExtensionHeader(rtp);
 
     int frames = decoder->Lock()->Decode(opus, pcm, RTP_OPUS_FRAME_SIZE);
     if (frames < 0) {
