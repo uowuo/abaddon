@@ -14,6 +14,10 @@
 #include "notifications/notifications.hpp"
 #include "audio/manager.hpp"
 
+#ifdef WITH_APPINDICATOR
+#include <libappindicator/app-indicator.h>
+#endif
+
 #define APP_TITLE "Abaddon"
 
 class AudioManager;
@@ -149,6 +153,7 @@ protected:
     Gtk::Menu *m_user_menu_roles_submenu;
     Gtk::Menu *m_tray_menu;
     Gtk::MenuItem *m_tray_exit;
+    Gtk::MenuItem *m_tray_show;
 
     void on_user_menu_insert_mention();
     void on_user_menu_ban();
@@ -156,10 +161,13 @@ protected:
     void on_user_menu_copy_id();
     void on_user_menu_open_dm();
     void on_user_menu_remove_recipient();
-    void on_tray_click();
-    void on_tray_popup_menu(int button, int activate_time);
-    void on_tray_menu_click();
+    void on_tray_show();
+    void on_tray_exit();
     void on_window_hide();
+#ifndef WITH_APPINDICATOR
+    void on_tray_popup_menu(int button, int activate_time);
+#endif
+
 
 private:
     SettingsManager m_settings;
@@ -182,7 +190,11 @@ private:
     mutable std::mutex m_mutex;
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     Glib::RefPtr<Gtk::CssProvider> m_css_provider;
+#ifdef WITH_APPINDICATOR
+    AppIndicator* m_tray;
+#else
     Glib::RefPtr<Gtk::StatusIcon> m_tray;
+#endif
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
 
     Notifications m_notifications;
