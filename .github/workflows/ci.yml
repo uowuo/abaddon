@@ -1,6 +1,6 @@
 name: Abaddon CI
 
-on: [ push, pull_request ]
+on: [push, pull_request]
 
 jobs:
   msys2:
@@ -8,8 +8,8 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
-        mindeps: [ false ]
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+        mindeps: [false]
         include:
           - buildtype: RelWithDebInfo
             mindeps: true
@@ -123,7 +123,7 @@ jobs:
           if_false: "${{ matrix.buildtype }}"
 
       - name: Upload build (2)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-windows-msys2-${{ steps.buildname.outputs.value }}
           path: build/artifactdir
@@ -133,7 +133,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo ]
+        buildtype: [Debug, RelWithDebInfo]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -168,7 +168,7 @@ jobs:
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-macos-${{ matrix.buildtype }}
           path: build/artifactdir
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -228,7 +228,7 @@ jobs:
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-linux-${{ matrix.buildtype }}
           path: ${{ runner.workspace }}/artifactdir
