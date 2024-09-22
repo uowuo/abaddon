@@ -57,7 +57,7 @@ target_include_directories(abaddon PUBLIC ${GTKMM_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_include_directories(abaddon PUBLIC ${NLOHMANN_JSON_INCLUDE_DIRS})
-target_include_directories(abaddon PUBLIC ${INTL_INCLUDE_DIRS})
+target_include_directories(abaddon PUBLIC ${Intl_INCLUDE_DIRS})
 
 add_subdirectory(po)
 
@@ -123,11 +123,8 @@ target_link_libraries(abaddon ${ZLIB_LIBRARY})
 target_link_libraries(abaddon ${NLOHMANN_JSON_LIBRARIES})
 target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
-# Sincerely, there ought be a better solution
-if (MINGW)
-    target_link_libraries(abaddon intl)
-elseif(APPLE)
-    target_link_libraries(abaddon /opt/homebrew/lib/libintl.dylib)
+if (MINGW OR APPLE)
+    target_link_libraries(abaddon ${Intl_LIBRARIES})
 endif()
 
 target_link_libraries(abaddon CURL::libcurl)
