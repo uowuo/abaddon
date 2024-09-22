@@ -107,6 +107,15 @@ the result of fundamental issues with Discord's thread implementation.
 5. `make`
 6. [Copy resources](#resources)
 
+#### FreeBSD:
+
+1. `pkg install git cmake nlohmann-json spdlog gtkmm30 libhandy libsodium`
+2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
+3. `mkdir build && cd build`
+4. `cmake ..`
+5. `make`
+6. [Copy resources](#resources)
+
 ### Downloads:
 
 Latest release version: https://github.com/uowuo/abaddon/releases/latest
