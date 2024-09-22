@@ -10,9 +10,6 @@
 [submodule "subprojects/keychain"]
 	path = subprojects/keychain
 	url = https://github.com/hrantzsch/keychain
-[submodule "subprojects/miniaudio"]
-	path = subprojects/miniaudio
-	url = https://github.com/mackron/miniaudio
 [submodule "subprojects/rnnoise"]
 	path = subprojects/rnnoise
 	url = https://github.com/xiph/rnnoise
