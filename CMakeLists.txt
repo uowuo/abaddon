@@ -126,8 +126,8 @@ target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 # Sincerely, there ought be a better solution
 if (MINGW)
     target_link_libraries(abaddon intl)
-else()
-    target_link_libraries(abaddon ${INTL_LIBRARIES})
+elseif(APPLE)
+    target_link_libraries(abaddon /opt/homebrew/lib/libintl.dylib)
 endif()
 
 target_link_libraries(abaddon CURL::libcurl)
