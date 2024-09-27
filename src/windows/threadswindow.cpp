@@ -13,7 +13,7 @@ ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     , m_archived(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc)) {
     set_name("threads-window");
     set_default_size(450, 375);
-    set_title(fmt::format(_("#{} - Threads"), (*channel.Name).c_str()));
+    set_title(Glib::ustring::compose(_("#%1 - Threads"), *channel.Name));
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");

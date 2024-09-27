@@ -5,7 +5,6 @@
 
 #include "voicewindow.hpp"
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"
@@ -233,10 +232,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         Abaddon::Get().GetDiscordClient().DeclineInviteToSpeak(m_channel_id, NOOP_CALLBACK);
     });
 
-    m_speakers_label.set_markup(fmt::format("<b>{}</b>", _("Speakers")));
+    m_speakers_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("Speakers")));
     if (m_is_stage) m_listing.pack_start(m_speakers_label, false, true);
     m_listing.pack_start(m_speakers_list, false, true);
-    m_audience_label.set_markup(fmt::format("<b>{}</b>", _("Audience")));
+    m_audience_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("Audience")));
     if (m_is_stage) m_listing.pack_start(m_audience_label, false, true);
     if (m_is_stage) m_listing.pack_start(m_audience_list, false, true);
     m_scroll.add(m_listing);

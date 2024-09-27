@@ -1,7 +1,6 @@
 #include "banspane.hpp"
 
 #include <glibmm/i18n.h>
-#include <fmt/format.h>
 #include <gtkmm/messagedialog.h>
 
 #include "abaddon.hpp"

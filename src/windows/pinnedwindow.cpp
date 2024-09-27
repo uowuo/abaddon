@@ -1,6 +1,5 @@
 #include "pinnedwindow.hpp"
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"
@@ -13,7 +12,7 @@ PinnedWindow::PinnedWindow(const ChannelData &data)
     set_name("pinned-messages");
     set_default_size(450, 375);
     if (data.Name.has_value())
-        set_title(fmt::format("#{} - Pinned Messages", (*data.Name).c_str()));
+        set_title(Glib::ustring::compose(_("#%1 - Pinned Messages"), *data.Name));
     else
         set_title(_("Pinned Messages"));
     set_position(Gtk::WIN_POS_CENTER);

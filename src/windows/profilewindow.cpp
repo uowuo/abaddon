@@ -110,7 +110,7 @@ void ProfileWindow::OnFetchProfile(const UserProfileData &data) {
     m_pane_guilds.SetMutualGuilds(data.MutualGuilds);
 
     if (data.LegacyUsername.has_value()) {
-        m_username.set_tooltip_text(fmt::format(_("Originally known as {}"), (*data.LegacyUsername).c_str()));
+        m_username.set_tooltip_text(Glib::ustring::compose(_("Originally known as %1"), *data.LegacyUsername));
     }
 
     for (auto child : m_badges.get_children()) {

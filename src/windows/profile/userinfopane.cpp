@@ -2,7 +2,6 @@
 
 #include <unordered_set>
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 #include <gtkmm/messagedialog.h>
 
@@ -142,7 +141,7 @@ NotesContainer::NotesContainer()
     m_label.get_style_context()->add_class("profile-notes-label");
     m_note.get_style_context()->add_class("profile-notes-text");
 
-    m_label.set_markup(fmt::format("<b>{}</b>", _("NOTE")));
+    m_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("NOTE")));
     m_label.set_halign(Gtk::ALIGN_START);
 
     m_note.set_wrap_mode(Gtk::WRAP_WORD_CHAR);
@@ -188,7 +187,7 @@ NotesContainer::type_signal_update_note NotesContainer::signal_update_note() {
 
 BioContainer::BioContainer()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL) {
-    m_label.set_markup(fmt::format("<b>{}</b>", _("ABOUT ME")));
+    m_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("ABOUT ME")));
     m_label.set_halign(Gtk::ALIGN_START);
     m_bio.set_halign(Gtk::ALIGN_START);
     m_bio.set_line_wrap(true);

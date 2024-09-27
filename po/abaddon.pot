@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-26 21:32-0300\n"
+"POT-Creation-Date: 2024-09-27 18:08-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -93,8 +93,8 @@ msgid "Kick"
 msgstr ""
 
 #: src/abaddon.cpp:681 src/components/chatlist.cpp:298
-#: src/windows/guildsettings/banspane.cpp:14
-#: src/windows/guildsettings/emojispane.cpp:19
+#: src/windows/guildsettings/banspane.cpp:13
+#: src/windows/guildsettings/emojispane.cpp:18
 msgid "Copy ID"
 msgstr ""
 
@@ -661,7 +661,7 @@ msgid "Verification Required"
 msgstr ""
 
 #: src/dialogs/verificationgate.cpp:14 src/components/friendslist.cpp:258
-#: src/windows/voice/voicewindow.cpp:30
+#: src/windows/voice/voicewindow.cpp:29
 msgid "Accept"
 msgstr ""
 
@@ -1100,7 +1100,7 @@ msgstr ""
 #: src/components/channellist/channellisttree.cpp:1441
 #: src/components/channellist/channellisttree.cpp:1505
 #: src/components/channellist/channellisttree.cpp:1530
-#: src/windows/voice/voicewindow.cpp:23
+#: src/windows/voice/voicewindow.cpp:22
 msgid "Mute"
 msgstr ""
 
@@ -1132,7 +1132,7 @@ msgstr ""
 msgid "Connect"
 msgstr ""
 
-#: src/windows/mainwindow.cpp:260 src/windows/voice/voicewindow.cpp:28
+#: src/windows/mainwindow.cpp:260 src/windows/voice/voicewindow.cpp:27
 msgid "Disconnect"
 msgstr ""
 
@@ -1164,7 +1164,7 @@ msgstr ""
 msgid "Dump ready message"
 msgstr ""
 
-#: src/windows/mainwindow.cpp:288 src/windows/voice/voicewindow.cpp:33
+#: src/windows/mainwindow.cpp:288 src/windows/voice/voicewindow.cpp:32
 msgid "View"
 msgstr ""
 
@@ -1192,7 +1192,11 @@ msgstr ""
 msgid "Go Forward"
 msgstr ""
 
-#: src/windows/pinnedwindow.cpp:18
+#: src/windows/pinnedwindow.cpp:15
+msgid "#%1 - Pinned Messages"
+msgstr ""
+
+#: src/windows/pinnedwindow.cpp:17
 msgid "Pinned Messages"
 msgstr ""
 
@@ -1209,8 +1213,7 @@ msgid "Mutual Friends"
 msgstr ""
 
 #: src/windows/profilewindow.cpp:113
-#, c++-format
-msgid "Originally known as {}"
+msgid "Originally known as %1"
 msgstr ""
 
 #: src/windows/threadswindow.cpp:9
@@ -1222,8 +1225,7 @@ msgid "Private"
 msgstr ""
 
 #: src/windows/threadswindow.cpp:16
-#, c++-format
-msgid "#{} - Threads"
+msgid "#%1 - Threads"
 msgstr ""
 
 #: src/windows/threadswindow.cpp:32
@@ -1281,28 +1283,28 @@ msgid "Bitrate"
 msgstr ""
 
 #: src/windows/voicesettingswindow.cpp:133
-#: src/windows/voice/voicewindow.cpp:182
+#: src/windows/voice/voicewindow.cpp:181
 msgid "Gain"
 msgstr ""
 
-#: src/windows/profile/mutualguildspane.cpp:39
+#: src/windows/profile/mutualguildspane.cpp:38
 msgid "Unknown Server"
 msgstr ""
 
-#: src/windows/profile/userinfopane.cpp:145
+#: src/windows/profile/userinfopane.cpp:144
 msgid "NOTE"
 msgstr ""
 
-#: src/windows/profile/userinfopane.cpp:191
+#: src/windows/profile/userinfopane.cpp:190
 msgid "ABOUT ME"
 msgstr ""
 
-#: src/windows/profile/userinfopane.cpp:217
+#: src/windows/profile/userinfopane.cpp:216
 msgid "Failed to set note"
 msgstr ""
 
-#: src/windows/profile/userinfopane.cpp:239
-#: src/windows/guildsettings/memberspane.cpp:215
+#: src/windows/profile/userinfopane.cpp:238
+#: src/windows/guildsettings/memberspane.cpp:214
 msgid "Account created: "
 msgstr ""
 
@@ -1680,90 +1682,89 @@ msgstr ""
 msgid "Reason: <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/banspane.cpp:13
+#: src/windows/guildsettings/banspane.cpp:12
 msgid "Unban"
 msgstr ""
 
-#: src/windows/guildsettings/banspane.cpp:32
+#: src/windows/guildsettings/banspane.cpp:31
 msgid ""
 "You do not have permission to see bans. However, bans made while you are "
 "connected will appear here"
 msgstr ""
 
-#: src/windows/guildsettings/banspane.cpp:56
+#: src/windows/guildsettings/banspane.cpp:55
 msgid "User"
 msgstr ""
 
-#: src/windows/guildsettings/banspane.cpp:57
+#: src/windows/guildsettings/banspane.cpp:56
 msgid "Reason"
 msgstr ""
 
-#: src/windows/guildsettings/banspane.cpp:101
+#: src/windows/guildsettings/banspane.cpp:100
 msgid "Failed to unban user"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:18
+#: src/windows/guildsettings/emojispane.cpp:17
 #: src/windows/guildsettings/invitespane.cpp:12
 msgid "Delete"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:20
+#: src/windows/guildsettings/emojispane.cpp:19
 msgid "Copy Emoji URL"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:21
+#: src/windows/guildsettings/emojispane.cpp:20
 msgid "Open in Browser"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:49
-#: src/windows/guildsettings/memberspane.cpp:65
+#: src/windows/guildsettings/emojispane.cpp:48
+#: src/windows/guildsettings/memberspane.cpp:64
 #: src/windows/guildsettings/rolespane.cpp:118
 msgid "Filter"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:69
+#: src/windows/guildsettings/emojispane.cpp:68
 msgid "Emoji"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:77
-#: src/windows/guildsettings/emojispane.cpp:99
+#: src/windows/guildsettings/emojispane.cpp:76
+#: src/windows/guildsettings/emojispane.cpp:98
 msgid "Name"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:101
+#: src/windows/guildsettings/emojispane.cpp:100
 msgid "Creator"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:102
+#: src/windows/guildsettings/emojispane.cpp:101
 msgid "Is Animated?"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:133
-#: src/windows/guildsettings/emojispane.cpp:137
-#: src/windows/guildsettings/emojispane.cpp:139
-#: src/windows/guildsettings/emojispane.cpp:223
-#: src/windows/guildsettings/emojispane.cpp:231
+#: src/windows/guildsettings/emojispane.cpp:132
+#: src/windows/guildsettings/emojispane.cpp:136
+#: src/windows/guildsettings/emojispane.cpp:138
+#: src/windows/guildsettings/emojispane.cpp:222
+#: src/windows/guildsettings/emojispane.cpp:230
 #: src/windows/guildsettings/invitespane.cpp:75
 msgid "Yes"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:133
-#: src/windows/guildsettings/emojispane.cpp:135
-#: src/windows/guildsettings/emojispane.cpp:137
+#: src/windows/guildsettings/emojispane.cpp:132
+#: src/windows/guildsettings/emojispane.cpp:134
+#: src/windows/guildsettings/emojispane.cpp:136
 #: src/windows/guildsettings/invitespane.cpp:75
 msgid "No"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:187
+#: src/windows/guildsettings/emojispane.cpp:186
 msgid "Failed to set emoji name"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:207
-#, c++-format
-msgid "Are you sure you want to delete {}?"
+#: src/windows/guildsettings/emojispane.cpp:206
+msgid "Are you sure you want to delete %1?"
 msgstr ""
 
-#: src/windows/guildsettings/emojispane.cpp:210
+#: src/windows/guildsettings/emojispane.cpp:209
 msgid "Failed to delete emoji"
 msgstr ""
 
@@ -1835,33 +1836,32 @@ msgstr ""
 msgid "Failed to delete invite"
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:21
+#: src/windows/guildsettings/memberspane.cpp:20
 msgid "Some members may not be shown if the client is not aware of them"
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:179
+#: src/windows/guildsettings/memberspane.cpp:178
 msgid "User is a bot"
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:214
+#: src/windows/guildsettings/memberspane.cpp:213
 msgid "User ID: "
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:217
+#: src/windows/guildsettings/memberspane.cpp:216
 msgid "Joined server: "
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:219
+#: src/windows/guildsettings/memberspane.cpp:218
 msgid "Joined server: Unknown"
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:220
+#: src/windows/guildsettings/memberspane.cpp:219
 msgid "Nickname: "
 msgstr ""
 
-#: src/windows/guildsettings/memberspane.cpp:223
-#, c++-format
-msgid "Boosting since {}"
+#: src/windows/guildsettings/memberspane.cpp:222
+msgid "Boosting since %1"
 msgstr ""
 
 #: src/windows/guildsettings/rolespane.cpp:71
@@ -1904,85 +1904,85 @@ msgstr ""
 msgid "Failed to set role name"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:24
+#: src/windows/voice/voicewindow.cpp:23
 msgid "Deafen"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:25
+#: src/windows/voice/voicewindow.cpp:24
 msgid "Suppress Noise"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:26
+#: src/windows/voice/voicewindow.cpp:25
 msgid "Mix Mono"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:27 src/windows/voice/voicewindow.cpp:382
+#: src/windows/voice/voicewindow.cpp:26 src/windows/voice/voicewindow.cpp:381
 msgid "Request to Speak"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:29
+#: src/windows/voice/voicewindow.cpp:28
 msgid "You've been invited to speak"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:31
+#: src/windows/voice/voicewindow.cpp:30
 msgid "Decline"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:34
+#: src/windows/voice/voicewindow.cpp:33
 msgid "More _Settings"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:98
+#: src/windows/voice/voicewindow.cpp:97
 msgid ""
 "Voice Activation Detection method\n"
 "Gate - Simple volume threshold. Slider changes threshold\n"
 "RNNoise - Heavier on CPU. Slider changes probability threshold"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:181
+#: src/windows/voice/voicewindow.cpp:180
 msgid "Threshold"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:191
+#: src/windows/voice/voicewindow.cpp:190
 msgid "VAD Method"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:192
+#: src/windows/voice/voicewindow.cpp:191
 msgid "Output Device"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:193
+#: src/windows/voice/voicewindow.cpp:192
 msgid "Input Device"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:236
+#: src/windows/voice/voicewindow.cpp:235
 msgid "Speakers"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:239
+#: src/windows/voice/voicewindow.cpp:238
 msgid "Audience"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:260
+#: src/windows/voice/voicewindow.cpp:259
 msgid "Input Settings"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:374
+#: src/windows/voice/voicewindow.cpp:373
 msgid "Leave the Stage"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:376
+#: src/windows/voice/voicewindow.cpp:375
 msgid "Speak on Stage"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:378
+#: src/windows/voice/voicewindow.cpp:377
 msgid "Cancel Request"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:380
+#: src/windows/voice/voicewindow.cpp:379
 msgid "Decline Invite"
 msgstr ""
 
-#: src/windows/voice/voicewindow.cpp:387
+#: src/windows/voice/voicewindow.cpp:386
 msgid "Topic: "
 msgstr ""

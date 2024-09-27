@@ -1,7 +1,6 @@
 #include "emojispane.hpp"
 
 #include <glibmm/i18n.h>
-#include <fmt/format.h>
 
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/treemodelfilter.h>
@@ -204,7 +203,7 @@ void GuildSettingsEmojisPane::OnMenuDelete() {
         const auto name = static_cast<Glib::ustring>(selected_row[m_columns.m_col_name]);
         const auto id = static_cast<Snowflake>(selected_row[m_columns.m_col_id]);
         if (auto *window = dynamic_cast<Gtk::Window *>(get_toplevel()))
-            if (Abaddon::Get().ShowConfirm(fmt::format(_("Are you sure you want to delete {}?"), name.c_str()), window)) {
+            if (Abaddon::Get().ShowConfirm(Glib::ustring::compose(_("Are you sure you want to delete %1?"), name), window)) {
                 const auto cb = [](DiscordError code) {
                     if (code != DiscordError::NONE) {
                         Gtk::MessageDialog dlg(_("Failed to delete emoji"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
