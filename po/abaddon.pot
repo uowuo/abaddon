@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-10 20:59-0300\n"
+"POT-Creation-Date: 2024-09-26 21:32-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -853,7 +853,7 @@ msgid "<i><span color='#999999'>{} started a thread: </span><b>{}</b></i>"
 msgstr ""
 
 #: src/components/chatmessage.cpp:714 src/components/chatmessage.cpp:737
-#: src/windows/guildsettings/auditlogpane.cpp:45
+#: src/windows/guildsettings/auditlogpane.cpp:44
 msgid "Unknown User"
 msgstr ""
 
@@ -1306,441 +1306,378 @@ msgstr ""
 msgid "Account created: "
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:56
-#, c++-format
-msgid "{} made changes to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:55
+msgid "%1 made changes to <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:62
+#: src/windows/guildsettings/auditlogpane.cpp:61
 msgid "Set the server icon"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:67
-#, c++-format
-msgid "Set the server name to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:66
+msgid "Set the server name to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:70
+#: src/windows/guildsettings/auditlogpane.cpp:69
 msgid "Set the server name"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:77
-#, c++-format
-msgid "{} created a voice channel <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:76
+msgid "%1 created a voice channel <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:80
-#, c++-format
-msgid "{} created a text channel <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:79
+msgid "%1 created a text channel <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:88
-#: src/windows/guildsettings/auditlogpane.cpp:443
-#, c++-format
-msgid "Set the name to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:87
+#: src/windows/guildsettings/auditlogpane.cpp:477
+msgid "Set the name to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:92
-#: src/windows/guildsettings/auditlogpane.cpp:129
+#: src/windows/guildsettings/auditlogpane.cpp:91
+#: src/windows/guildsettings/auditlogpane.cpp:128
 msgid "Marked the channel as NSFW"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:94
-#: src/windows/guildsettings/auditlogpane.cpp:131
+#: src/windows/guildsettings/auditlogpane.cpp:93
+#: src/windows/guildsettings/auditlogpane.cpp:130
 msgid "Unmarked the channel as NSFW"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:101
-#, c++-format
-msgid "{} made changes to <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:100
+msgid "%1 made changes to <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:104
-#, c++-format
-msgid "{} made changes to <b>&lt;#{}&gt;</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:103
+msgid "%1 made changes to <b>&lt;#%2&gt;</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:114
-#: src/windows/guildsettings/auditlogpane.cpp:356
-#: src/windows/guildsettings/auditlogpane.cpp:470
-#, c++-format
-msgid "Changed the name from <b>{}</b> to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:113
+#: src/windows/guildsettings/auditlogpane.cpp:384
+#: src/windows/guildsettings/auditlogpane.cpp:503
+msgid "Changed the name from <b>%1</b> to <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:118
-#: src/windows/guildsettings/auditlogpane.cpp:249
-#: src/windows/guildsettings/auditlogpane.cpp:327
-#, c++-format
-msgid "Changed the name to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:117
+#: src/windows/guildsettings/auditlogpane.cpp:254
+#: src/windows/guildsettings/auditlogpane.cpp:346
+msgid "Changed the name to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:123
-#, c++-format
-msgid "Changed the topic to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:122
+msgid "Changed the topic to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:125
+#: src/windows/guildsettings/auditlogpane.cpp:124
 msgid "Cleared the topic"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:136
-#: src/windows/guildsettings/auditlogpane.cpp:452
-#: src/windows/guildsettings/auditlogpane.cpp:478
+#: src/windows/guildsettings/auditlogpane.cpp:135
+#: src/windows/guildsettings/auditlogpane.cpp:486
+#: src/windows/guildsettings/auditlogpane.cpp:511
 msgid "Disabled slowmode"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:138
-#: src/windows/guildsettings/auditlogpane.cpp:454
-#: src/windows/guildsettings/auditlogpane.cpp:480
-#, c++-format
-msgid "Set slowmode to <b>{} seconds</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:137
+#: src/windows/guildsettings/auditlogpane.cpp:488
+#: src/windows/guildsettings/auditlogpane.cpp:513
+msgid "Set slowmode to <b>%1 seconds</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:144
-#, c++-format
-msgid "{} removed <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:143
+msgid "%1 removed <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:150
-#, c++-format
-msgid "{} created channel overrides for <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:149
+msgid "%1 created channel overrides for <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:152
-#, c++-format
-msgid "{} created channel overrides for <b>&lt;#{}&gt;</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:151
+msgid "%1 created channel overrides for <b>&lt;#%2&gt;</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:159
-#, c++-format
-msgid "{} updated channel overrides for <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:158
+msgid "%1 updated channel overrides for <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:161
-#, c++-format
-msgid "{} updated channel overrides for <b>&lt;#{}&gt;</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:160
+msgid "%1 updated channel overrides for <b>&lt;#%2&gt;</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:168
-#, c++-format
-msgid "{} removed channel overrides for <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:167
+msgid "%1 removed channel overrides for <b>#%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:170
-#, c++-format
-msgid "{} removed channel overrides for <b>&lt;#{}&gt;</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:169
+msgid "%1 removed channel overrides for <b>&lt;#%2&gt;</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:175
-#, c++-format
-msgid "{} kicked <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:174
+msgid "%1 kicked <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:177
+msgid "%1 pruned <b>%2</b> members"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:178
-#, c++-format
-msgid "{} pruned <b>{}</b> members"
+msgid "For <b>%1 days</b> of inactivity"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:179
-#, c++-format
-msgid "For <b>{} days</b> of inactivity"
+#: src/windows/guildsettings/auditlogpane.cpp:182
+msgid "%1 banned <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:183
-#, c++-format
-msgid "{} banned <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:186
+msgid "%1 removed the ban for <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:187
-#, c++-format
-msgid "{} removed the ban for <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:190
+msgid "%1 updated <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:191
-#, c++-format
-msgid "{} updated <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:196
+#: src/windows/guildsettings/auditlogpane.cpp:195
 msgid "<b>Deafened</b> them"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:196
+#: src/windows/guildsettings/auditlogpane.cpp:195
 msgid "<b>Undeafened</b> them"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:198
+#: src/windows/guildsettings/auditlogpane.cpp:197
 msgid "<b>Muted</b> them"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:198
+#: src/windows/guildsettings/auditlogpane.cpp:197
 msgid "<b>Unmuted</b> them"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:200
-#, c++-format
-msgid "Set their nickname to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:199
+msgid "Set their nickname to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:206
-#, c++-format
-msgid "{} updated roles for <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:205
+msgid "%1 updated roles for <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:211
-#, c++-format
-msgid "<b>Removed</b> a role <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:210
+msgid "<b>Removed</b> a role <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:213
-#, c++-format
-msgid "<b>Added</b> a role <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:212
+msgid "<b>Added</b> a role <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:221
-#, c++-format
-msgid "{} moved <b>a user</b> to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:222
+msgid "%1 moved <b>a user</b> to <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:224
-#, c++-format
-msgid "{} moved <b>{} users</b> to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:225
+msgid "%1 moved <b>%2 users</b> to <b>%3</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:229
-#, c++-format
-msgid "{} disconnected <b>{} users</b> from voice"
+#: src/windows/guildsettings/auditlogpane.cpp:231
+msgid "%1 disconnected <b>%2 users</b> from voice"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:234
-#, c++-format
-msgid "{} added <b>{}</b> to the server"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:238
-#, c++-format
-msgid "{} created the role <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:237
+msgid "%1 added <b>%2</b> to the server"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:242
-#, c++-format
-msgid "{} updated the role <b>{}</b>"
+msgid "%1 created the role <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:253
+#: src/windows/guildsettings/auditlogpane.cpp:247
+msgid "%1 updated the role <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:258
 msgid "Removed the color"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:255
-#, c++-format
-msgid "Set the color to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:260
+msgid "Set the color to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:257
+#: src/windows/guildsettings/auditlogpane.cpp:263
 msgid "Updated the permissions"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:259
+#: src/windows/guildsettings/auditlogpane.cpp:265
 msgid "Mentionable"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:259
+#: src/windows/guildsettings/auditlogpane.cpp:265
 msgid "Not mentionable"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:261
+#: src/windows/guildsettings/auditlogpane.cpp:267
 msgid "Not hoisted"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:261
+#: src/windows/guildsettings/auditlogpane.cpp:267
 msgid "Hoisted"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:267
-#, c++-format
-msgid "{} deleted the role <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:275
+msgid "%1 deleted the role <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:271
-#, c++-format
-msgid "{} created an invite <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:277
-#, c++-format
-msgid "For channel <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:281
-msgid "Which has <b>unlimited</b> uses"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:283
-#, c++-format
-msgid "Which has <b>{}</b> uses"
+#: src/windows/guildsettings/auditlogpane.cpp:280
+msgid "%1 created an invite <b>%2</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:286
+msgid "For channel <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:291
+msgid "Which has <b>unlimited</b> uses"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:293
+msgid "Which has <b>%1</b> uses"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:297
 msgid "With temporary <b>on</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:288
+#: src/windows/guildsettings/auditlogpane.cpp:299
 msgid "With temporary <b>off</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:294
-#, c++-format
-msgid "{} deleted an invite <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:307
+msgid "%1 deleted an invite <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:299
-#, c++-format
-msgid "{} created the webhook <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:312
+msgid "%1 created the webhook <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:306
-#, c++-format
-msgid "With channel <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:320
+msgid "With channel <b>#%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:319
-#, c++-format
-msgid "{} updated the webhook <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:335
+msgid "%1 updated the webhook <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:322
-#, c++-format
-msgid "{} updated a webhook"
+#: src/windows/guildsettings/auditlogpane.cpp:340
+msgid "%1 updated a webhook"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:330
+#: src/windows/guildsettings/auditlogpane.cpp:349
 msgid "Changed the avatar"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:334
-#, c++-format
-msgid "Changed the channel to <b>#{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:354
+msgid "Changed the channel to <b>#%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:337
+#: src/windows/guildsettings/auditlogpane.cpp:357
 msgid "Changed the channel"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:343
-#, c++-format
-msgid "{} deleted the webhook <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:366
+msgid "%1 deleted the webhook <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:348
-#, c++-format
-msgid "{} created the emoji <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:353
-#, c++-format
-msgid "{} updated the emoji <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:361
-#, c++-format
-msgid "{} deleted the emoji <b>{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:370
-#, c++-format
-msgid "{} deleted <b>{}</b> messages in <b>#{}</b>"
-msgstr ""
-
-#: src/windows/guildsettings/auditlogpane.cpp:374
-#, c++-format
-msgid "{} deleted <b>{}</b> messages"
+#: src/windows/guildsettings/auditlogpane.cpp:373
+msgid "%1 created the emoji <b>%2</b>"
 msgstr ""
 
 #: src/windows/guildsettings/auditlogpane.cpp:380
-#, c++-format
-msgid "{} pinned a message by <b>{}</b>"
+msgid "%1 updated the emoji <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:384
-#, c++-format
-msgid "{} unpinned a message by <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:391
+msgid "%1 deleted the emoji <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:388
-#, c++-format
-msgid "{} started the stage for <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:402
+msgid "%1 deleted <b>%2</b> messages in <b>#%3</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:396
-#: src/windows/guildsettings/auditlogpane.cpp:416
-#, c++-format
-msgid "Set the topic to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:406
+msgid "%1 deleted <b>%2</b> messages"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:401
-#: src/windows/guildsettings/auditlogpane.cpp:421
-#, c++-format
-msgid "Set the privacy level to <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:414
+msgid "%1 pinned a message by <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:408
-#, c++-format
-msgid "{} updated the stage for <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:420
+msgid "%1 unpinned a message by <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:428
-#, c++-format
-msgid "{} ended the stage for <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:425
+msgid "%1 started the stage for <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:434
-#, c++-format
-msgid "{} created a thread <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:433
+#: src/windows/guildsettings/auditlogpane.cpp:453
+msgid "Set the topic to <b>%1</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:446
-#: src/windows/guildsettings/auditlogpane.cpp:484
+#: src/windows/guildsettings/auditlogpane.cpp:438
+#: src/windows/guildsettings/auditlogpane.cpp:458
+msgid "Set the privacy level to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:445
+msgid "%1 updated the stage for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:465
+msgid "%1 ended the stage for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:471
+msgid "%1 created a thread <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:517
 msgid "Archived the thread"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:446
-#: src/windows/guildsettings/auditlogpane.cpp:484
+#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:517
 msgid "Unarchived the thread"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:448
-#: src/windows/guildsettings/auditlogpane.cpp:474
-#, c++-format
-msgid "Set auto archive duration to <b>{} minutes</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:507
+msgid "Set auto archive duration to <b>%1 minutes</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:456
-#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:490
+#: src/windows/guildsettings/auditlogpane.cpp:515
 msgid "Locked the thread, restricting it to only be unarchived by moderators"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:456
-#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:490
+#: src/windows/guildsettings/auditlogpane.cpp:515
 msgid "Unlocked the thread, allowing it to be unarchived by non-moderators"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:462
-#, c++-format
-msgid "{} made changes to the thread <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:496
+msgid "%1 made changes to the thread <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:488
-#, c++-format
-msgid "{} deleted the thread <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:521
+msgid "%1 deleted the thread <b>%2</b>"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:492
+#: src/windows/guildsettings/auditlogpane.cpp:525
 msgid "Unknown action"
 msgstr ""
 
-#: src/windows/guildsettings/auditlogpane.cpp:500
-#, c++-format
-msgid "Reason: <b>{}</b>"
+#: src/windows/guildsettings/auditlogpane.cpp:533
+msgid "Reason: <b>%1</b>"
 msgstr ""
 
 #: src/windows/guildsettings/banspane.cpp:13

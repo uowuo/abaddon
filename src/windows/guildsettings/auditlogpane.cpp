@@ -1,6 +1,5 @@
 #include "auditlogpane.hpp"
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 #include <gtkmm/expander.h>
 
@@ -42,7 +41,7 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         auto label = Gtk::manage(new Gtk::Label);
         label->set_ellipsize(Pango::ELLIPSIZE_END);
 
-        Glib::ustring user_markup = fmt::format("<b>{}</b>", _("Unknown User"));
+        Glib::ustring user_markup = Glib::ustring::compose("<b>%1</b>", _("Unknown User"));
         if (entry.UserID.has_value()) {
             if (auto user = discord.GetUser(*entry.UserID); user.has_value())
                 user_markup = discord.GetUser(*entry.UserID)->GetUsernameEscapedBold();
@@ -53,8 +52,8 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         std::vector<Glib::ustring> extra_markup;
         switch (entry.Type) {
             case AuditLogActionType::GUILD_UPDATE: {
-                markup = fmt::format(_("{} made changes to <b>{}</b>"),
-                                     user_markup.c_str(), Glib::Markup::escape_text(guild.Name).c_str());
+                markup = Glib::ustring::compose(_("%1 made changes to <b>%2</b>"),
+                                                user_markup, Glib::Markup::escape_text(guild.Name));
 
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
@@ -64,8 +63,8 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                             auto new_name = change.NewValue;
                             if (new_name.has_value())
                                 extra_markup.push_back(
-                                    fmt::format(_("Set the server name to <b>{}</b>"),
-                                                Glib::Markup::escape_text(new_name->get<std::string>()).c_str()));
+                                    Glib::ustring::compose(_("Set the server name to <b>%1</b>"),
+                                                           Glib::Markup::escape_text(new_name->get<std::string>())));
                             else
                                 extra_markup.emplace_back(_("Set the server name"));
                         }
@@ -74,19 +73,19 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_CREATE: {
                 const auto type = *entry.GetNewFromKey<ChannelType>("type");
                 if (type == ChannelType::GUILD_VOICE) {
-                    markup = fmt::format(_("{} created a voice channel <b>#{}</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")).c_str());
+                    markup = Glib::ustring::compose(_("%1 created a voice channel <b>#%2</b>"),
+                                                    user_markup, Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")));
                 } else {
-                    markup = fmt::format(_("{} created a text channel <b>#{}</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")).c_str());
+                    markup = Glib::ustring::compose(_("%1 created a text channel <b>#%2</b>"),
+                                                    user_markup, Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")));
                 }
 
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "name" && change.NewValue.has_value())
                             extra_markup.push_back(
-                                fmt::format(_("Set the name to <b>{}</b>"),
-                                            Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                                Glib::ustring::compose(_("Set the name to <b>%1</b>"),
+                                                       Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                         else if (change.Key == "nsfw" && change.NewValue.has_value())
                             if (*change.NewValue) {
                                 extra_markup.emplace_back(_("Marked the channel as NSFW"));
@@ -98,29 +97,29 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             case AuditLogActionType::CHANNEL_UPDATE: {
                 const auto target_channel = discord.GetChannel(entry.TargetID);
                 if (target_channel.has_value()) {
-                    markup = fmt::format(_("{} made changes to <b>#{}</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(*target_channel->Name).c_str());
+                    markup = Glib::ustring::compose(_("%1 made changes to <b>#%2</b>"),
+                                                    user_markup, Glib::Markup::escape_text(*target_channel->Name));
                 } else {
-                    markup = fmt::format(_("{} made changes to <b>&lt;#{}&gt;</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(*target_channel->Name).c_str());
+                    markup = Glib::ustring::compose(_("%1 made changes to <b>&lt;#%2&gt;</b>"),
+                                                    user_markup, Glib::Markup::escape_text(*target_channel->Name));
                 }
 
                 if (entry.Changes.has_value())
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "name" && change.NewValue.has_value()) {
                             if (change.OldValue.has_value()) {
-                                auto old_name = Glib::Markup::escape_text(change.OldValue->get<std::string>()).c_str();
-                                auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str();
-                                extra_markup.push_back(fmt::format(_("Changed the name from <b>{}</b> to <b>{}</b>"),
-                                                                   old_name, new_name));
+                                auto old_name = Glib::Markup::escape_text(change.OldValue->get<std::string>());
+                                auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>());
+                                extra_markup.push_back(Glib::ustring::compose(_("Changed the name from <b>%1</b> to <b>%2</b>"),
+                                                                              old_name, new_name));
                             } else {
-                                auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str();
-                                extra_markup.push_back(fmt::format(_("Changed the name to <b>{}</b>"), new_name));
+                                auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>());
+                                extra_markup.push_back(Glib::ustring::compose(_("Changed the name to <b>%1</b>"), new_name));
                             }
                         } else if (change.Key == "topic") {
                             if (change.NewValue.has_value()) {
-                                auto new_topic = Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str();
-                                extra_markup.push_back(fmt::format(_("Changed the topic to <b>{}</b>"), new_topic));
+                                auto new_topic = Glib::Markup::escape_text(change.NewValue->get<std::string>());
+                                extra_markup.push_back(Glib::ustring::compose(_("Changed the topic to <b>%1</b>"), new_topic));
                             } else {
                                 extra_markup.emplace_back(_("Cleared the topic"));
                             }
@@ -135,124 +134,131 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                             if (secs == 0)
                                 extra_markup.emplace_back(_("Disabled slowmode"));
                             else
-                                extra_markup.emplace_back(fmt::format(_("Set slowmode to <b>{} seconds</b>"), secs));
+                                extra_markup.emplace_back(Glib::ustring::compose(_("Set slowmode to <b>%1 seconds</b>"), secs));
                         }
                     }
             } break;
             case AuditLogActionType::CHANNEL_DELETE: {
-                auto deleted_channel_name = Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str();
-                markup = fmt::format(_("{} removed <b>#{}</b>"), user_markup.c_str(), deleted_channel_name);
+                auto deleted_channel_name = Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name"));
+                markup = Glib::ustring::compose(_("%1 removed <b>#%2</b>"), user_markup, deleted_channel_name);
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_CREATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} created channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
+                    auto channel_name = Glib::Markup::escape_text(*channel->Name);
+                    markup = Glib::ustring::compose(_("%1 created channel overrides for <b>#%2</b>"), user_markup, channel_name);
                 } else {
-                    markup = fmt::format(_("{} created channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = Glib::ustring::compose(_("%1 created channel overrides for <b>&lt;#%2&gt;</b>"), user_markup, entry.TargetID);
                 }
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_UPDATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} updated channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
+                    auto channel_name = Glib::Markup::escape_text(*channel->Name);
+                    markup = Glib::ustring::compose(_("%1 updated channel overrides for <b>#%2</b>"), user_markup, channel_name);
                 } else {
-                    markup = fmt::format(_("{} updated channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = Glib::ustring::compose(_("%1 updated channel overrides for <b>&lt;#%2&gt;</b>"), user_markup, entry.TargetID);
                 }
             } break;
             case AuditLogActionType::CHANNEL_OVERWRITE_DELETE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
                 if (channel.has_value()) {
-                    auto channel_name = Glib::Markup::escape_text(*channel->Name).c_str();
-                    markup = fmt::format(_("{} removed channel overrides for <b>#{}</b>"), user_markup.c_str(), channel_name);
+                    auto channel_name = Glib::Markup::escape_text(*channel->Name);
+                    markup = Glib::ustring::compose(_("%1 removed channel overrides for <b>#%2</b>"), user_markup, channel_name);
                 } else {
-                    markup = fmt::format(_("{} removed channel overrides for <b>&lt;#{}&gt;</b>"), entry.TargetID.c_str());
+                    markup = Glib::ustring::compose(_("%1 removed channel overrides for <b>&lt;#%2&gt;</b>"), user_markup, entry.TargetID);
                 }
             } break;
             case AuditLogActionType::MEMBER_KICK: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} kicked <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(_("%1 kicked <b>%2</b>"), user_markup, target_user);
             } break;
             case AuditLogActionType::MEMBER_PRUNE: {
-                markup = fmt::format(_("{} pruned <b>{}</b> members"), user_markup.c_str(), *entry.Options->MembersRemoved->c_str());
-                extra_markup.emplace_back(fmt::format(_("For <b>{} days</b> of inactivity"), *entry.Options->DeleteMemberDays->c_str()));
+                markup = Glib::ustring::compose(_("%1 pruned <b>%2</b> members"), user_markup, *entry.Options->MembersRemoved);
+                extra_markup.emplace_back(Glib::ustring::compose(_("For <b>%1 days</b> of inactivity"), *entry.Options->DeleteMemberDays));
             } break;
             case AuditLogActionType::MEMBER_BAN_ADD: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} banned <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(_("%1 banned <b>%2</b>"), user_markup, target_user);
             } break;
             case AuditLogActionType::MEMBER_BAN_REMOVE: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} removed the ban for <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(_("%1 removed the ban for <b>%2</b>"), user_markup, target_user);
             } break;
             case AuditLogActionType::MEMBER_UPDATE: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsername().c_str();
-                markup = fmt::format(_("{} updated <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsername();
+                markup = Glib::ustring::compose(_("%1 updated <b>%2</b>"), user_markup, target_user);
 
-                if (entry.Changes.has_value())
+                if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "deaf" && change.NewValue.has_value())
-                            extra_markup.emplace_back((change.NewValue->get<bool>() ? _("<b>Deafened</b> them") : _("<b>Undeafened</b> them")));
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? _("<b>Deafened</b> them") : _("<b>Undeafened</b> them"));
                         else if (change.Key == "mute" && change.NewValue.has_value())
-                            extra_markup.emplace_back((change.NewValue->get<bool>() ? _("<b>Muted</b> them") : _("<b>Unmuted</b> them")));
+                            extra_markup.emplace_back(change.NewValue->get<bool>() ? _("<b>Muted</b> them") : _("<b>Unmuted</b> them"));
                         else if (change.Key == "nick" && change.NewValue.has_value())
-                            extra_markup.push_back(fmt::format(_("Set their nickname to <b>{}</b>"),
-                                                               Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                            extra_markup.push_back(Glib::ustring::compose(_("Set their nickname to <b>%1</b>"), Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                     }
+                }
             } break;
             case AuditLogActionType::MEMBER_ROLE_UPDATE: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} updated roles for <b>{}</b>"), user_markup.c_str(), target_user);
-                if (entry.Changes.has_value())
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(_("%1 updated roles for <b>%2</b>"), user_markup, target_user);
+                if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
-                        auto role_name = Glib::Markup::escape_text(change.NewValue.value()[0].at("name").get<std::string>()).c_str();
+                        auto role_name = Glib::Markup::escape_text(change.NewValue.value()[0].at("name").get<std::string>());
                         if (change.Key == "$remove" && change.NewValue.has_value()) {
-                            extra_markup.push_back(fmt::format(_("<b>Removed</b> a role <b>{}</b>"), role_name));
+                            extra_markup.push_back(Glib::ustring::compose(_("<b>Removed</b> a role <b>%1</b>"), role_name));
                         } else if (change.Key == "$add" && change.NewValue.has_value()) {
-                            extra_markup.push_back(fmt::format(_("<b>Added</b> a role <b>{}</b>"), role_name));
+                            extra_markup.push_back(Glib::ustring::compose(_("<b>Added</b> a role <b>%1</b>"), role_name));
                         }
                     }
+                }
             } break;
+
             case AuditLogActionType::MEMBER_MOVE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
 
                 if (*entry.Options->Count == "1") {
-                    markup = fmt::format(_("{} moved <b>a user</b> to <b>{}</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(*channel->Name).c_str());
+                    markup = Glib::ustring::compose(_("%1 moved <b>a user</b> to <b>%2</b>"),
+                                                    user_markup, Glib::Markup::escape_text(*channel->Name));
                 } else {
-                    markup = fmt::format(_("{} moved <b>{} users</b> to <b>{}</b>"),
-                                         user_markup.c_str(), *entry.Options->Count->c_str(), Glib::Markup::escape_text(*channel->Name).c_str());
+                    markup = Glib::ustring::compose(_("%1 moved <b>%2 users</b> to <b>%3</b>"),
+                                                    user_markup, *entry.Options->Count, Glib::Markup::escape_text(*channel->Name));
                 }
             } break;
+
             case AuditLogActionType::MEMBER_DISCONNECT: {
-                markup = fmt::format(_("{} disconnected <b>{} users</b> from voice"),
-                                     user_markup.c_str(), *entry.Options->Count->c_str());
+                markup = Glib::ustring::compose(_("%1 disconnected <b>%2 users</b> from voice"),
+                                                user_markup, *entry.Options->Count);
             } break;
+
             case AuditLogActionType::BOT_ADD: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} added <b>{}</b> to the server"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(_("%1 added <b>%2</b> to the server"), user_markup, target_user);
             } break;
+
             case AuditLogActionType::ROLE_CREATE: {
-                auto role_name = *entry.GetNewFromKey<std::string>("name")->c_str();
-                markup = fmt::format(_("{} created the role <b>{}</b>"), user_markup.c_str(), role_name);
+                auto role_name = *entry.GetNewFromKey<std::string>("name");
+                markup = Glib::ustring::compose(_("%1 created the role <b>%2</b>"), user_markup, role_name);
             } break;
+
             case AuditLogActionType::ROLE_UPDATE: {
                 const auto role = discord.GetRole(entry.TargetID);
-                markup = fmt::format(_("{} updated the role <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (role.has_value() ? Glib::Markup::escape_text(role->Name) : Glib::ustring(entry.TargetID)).c_str());
-                if (entry.Changes.has_value())
+                markup = Glib::ustring::compose(_("%1 updated the role <b>%2</b>"),
+                                                user_markup,
+                                                (role.has_value() ? Glib::Markup::escape_text(role->Name) : Glib::ustring(entry.TargetID)));
+                if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "name" && change.NewValue.has_value()) {
-                            auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str();
-                            extra_markup.push_back(fmt::format(_("Changed the name to <b>{}</b>"), new_name));
+                            auto new_name = Glib::Markup::escape_text(change.NewValue->get<std::string>());
+                            extra_markup.push_back(Glib::ustring::compose(_("Changed the name to <b>%1</b>"), new_name));
                         } else if (change.Key == "color" && change.NewValue.has_value()) {
                             const auto col = change.NewValue->get<int>();
-                            if (col == 0)
+                            if (col == 0) {
                                 extra_markup.emplace_back(_("Removed the color"));
-                            else
-                                extra_markup.emplace_back(fmt::format(_("Set the color to <b>{}</b>"), IntToCSSColor(col)));
+                            } else {
+                                extra_markup.emplace_back(Glib::ustring::compose(_("Set the color to <b>%1</b>"), IntToCSSColor(col)));
+                            }
                         } else if (change.Key == "permissions") {
                             extra_markup.emplace_back(_("Updated the permissions"));
                         } else if (change.Key == "mentionable" && change.NewValue.has_value()) {
@@ -261,54 +267,63 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                             extra_markup.emplace_back(change.NewValue->get<bool>() ? _("Not hoisted") : _("Hoisted"));
                         }
                     }
+                }
             } break;
+
             case AuditLogActionType::ROLE_DELETE: {
-                auto role_name = *entry.GetOldFromKey<std::string>("name")->c_str();
-                markup = fmt::format(_("{} deleted the role <b>{}</b>"), user_markup.c_str(), role_name);
+                auto role_name = *entry.GetOldFromKey<std::string>("name");
+                markup = Glib::ustring::compose(_("%1 deleted the role <b>%2</b>"), user_markup, role_name);
             } break;
+
             case AuditLogActionType::INVITE_CREATE: {
-                auto code = *entry.GetNewFromKey<std::string>("code")->c_str();
-                markup = fmt::format(_("{} created an invite <b>{}</b>"), user_markup.c_str(), code);
-                if (entry.Changes.has_value())
+                auto code = *entry.GetNewFromKey<std::string>("code");
+                markup = Glib::ustring::compose(_("%1 created an invite <b>%2</b>"), user_markup, code);
+                if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "channel_id" && change.NewValue.has_value()) {
                             const auto channel = discord.GetChannel(change.NewValue->get<Snowflake>());
-                            if (!channel.has_value()) continue;
-                            extra_markup.push_back(fmt::format(_("For channel <b>{}</b>"), Glib::Markup::escape_text(*channel->Name).c_str()));
+                            if (channel.has_value()) {
+                                extra_markup.push_back(Glib::ustring::compose(_("For channel <b>%1</b>"), Glib::Markup::escape_text(*channel->Name)));
+                            }
                         } else if (change.Key == "max_uses" && change.NewValue.has_value()) {
                             const auto uses = change.NewValue->get<int>();
-                            if (uses == 0)
+                            if (uses == 0) {
                                 extra_markup.emplace_back(_("Which has <b>unlimited</b> uses"));
-                            else
-                                extra_markup.emplace_back(fmt::format(_("Which has <b>{}</b> uses"), uses));
+                            } else {
+                                extra_markup.emplace_back(Glib::ustring::compose(_("Which has <b>%1</b> uses"), uses));
+                            }
                         } else if (change.Key == "temporary" && change.NewValue.has_value()) {
                             if (change.NewValue->get<bool>()) {
                                 extra_markup.emplace_back(_("With temporary <b>on</b>"));
                             } else {
                                 extra_markup.emplace_back(_("With temporary <b>off</b>"));
                             }
-                        } // no max_age cuz fuck time
-                    }
-            } break;
-            case AuditLogActionType::INVITE_DELETE: {
-                markup = fmt::format(_("{} deleted an invite <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     *entry.GetOldFromKey<std::string>("code")->c_str());
-            } break;
-            case AuditLogActionType::WEBHOOK_CREATE: {
-                markup = fmt::format(_("{} created the webhook <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")).c_str());
-                for (const auto &change : *entry.Changes) {
-                    if (change.Key == "channel_id" && change.NewValue.has_value()) {
-                        const auto channel = discord.GetChannel(change.NewValue->get<Snowflake>());
-                        if (channel.has_value()) {
-                            extra_markup.push_back(fmt::format(_("With channel <b>#{}</b>"),
-                                                               Glib::Markup::escape_text(*channel->Name).c_str()));
                         }
                     }
                 }
             } break;
+
+            case AuditLogActionType::INVITE_DELETE: {
+                markup = Glib::ustring::compose(_("%1 deleted an invite <b>%2</b>"), user_markup, *entry.GetOldFromKey<std::string>("code"));
+            } break;
+
+            case AuditLogActionType::WEBHOOK_CREATE: {
+                markup = Glib::ustring::compose(
+                    _("%1 created the webhook <b>%2</b>"),
+                    user_markup,
+                    Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")));
+                for (const auto &change : *entry.Changes) {
+                    if (change.Key == "channel_id" && change.NewValue.has_value()) {
+                        const auto channel = discord.GetChannel(change.NewValue->get<Snowflake>());
+                        if (channel.has_value()) {
+                            extra_markup.push_back(Glib::ustring::compose(
+                                _("With channel <b>#%1</b>"),
+                                Glib::Markup::escape_text(*channel->Name)));
+                        }
+                    }
+                }
+            } break;
+
             case AuditLogActionType::WEBHOOK_UPDATE: {
                 const WebhookData *webhookptr = nullptr;
                 for (const auto &webhook : data.Webhooks) {
@@ -316,142 +331,161 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                         webhookptr = &webhook;
                 }
                 if (webhookptr != nullptr) {
-                    markup = fmt::format(_("{} updated the webhook <b>{}</b>"),
-                                         user_markup.c_str(), Glib::Markup::escape_text(webhookptr->Name).c_str());
+                    markup = Glib::ustring::compose(
+                        _("%1 updated the webhook <b>%2</b>"),
+                        user_markup,
+                        Glib::Markup::escape_text(webhookptr->Name));
                 } else {
-                    markup = fmt::format(_("{} updated a webhook"), user_markup.c_str());
+                    markup = Glib::ustring::compose(
+                        _("%1 updated a webhook"), user_markup);
                 }
-                if (entry.Changes.has_value())
+                if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "name" && change.NewValue.has_value()) {
-                            extra_markup.push_back(fmt::format(_("Changed the name to <b>{}</b>"),
-                                                               Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                            extra_markup.push_back(Glib::ustring::compose(
+                                _("Changed the name to <b>%1</b>"),
+                                Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                         } else if (change.Key == "avatar_hash") {
                             extra_markup.emplace_back(_("Changed the avatar"));
                         } else if (change.Key == "channel_id" && change.NewValue.has_value()) {
                             const auto channel = discord.GetChannel(change.NewValue->get<Snowflake>());
                             if (channel.has_value()) {
-                                extra_markup.push_back(fmt::format(_("Changed the channel to <b>#{}</b>"),
-                                                                   Glib::Markup::escape_text(*channel->Name).c_str()));
+                                extra_markup.push_back(Glib::ustring::compose(
+                                    _("Changed the channel to <b>#%1</b>"),
+                                    Glib::Markup::escape_text(*channel->Name)));
                             } else {
                                 extra_markup.emplace_back(_("Changed the channel"));
                             }
                         }
                     }
+                }
             } break;
+
             case AuditLogActionType::WEBHOOK_DELETE: {
-                markup = fmt::format(_("{} deleted the webhook <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str());
+                markup = Glib::ustring::compose(
+                    _("%1 deleted the webhook <b>%2</b>"),
+                    user_markup,
+                    Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")));
             } break;
+
             case AuditLogActionType::EMOJI_CREATE: {
-                markup = fmt::format(_("{} created the emoji <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")).c_str());
+                markup = Glib::ustring::compose(
+                    _("%1 created the emoji <b>%2</b>"),
+                    user_markup,
+                    Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")));
             } break;
+
             case AuditLogActionType::EMOJI_UPDATE: {
-                markup = fmt::format(_("{} updated the emoji <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str());
-                extra_markup.push_back(fmt::format(_("Changed the name from <b>{}</b> to <b>{}</b>"),
-                                                   Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str(),
-                                                   Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name")).c_str()));
+                markup = Glib::ustring::compose(
+                    _("%1 updated the emoji <b>%2</b>"),
+                    user_markup,
+                    Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")));
+                extra_markup.push_back(Glib::ustring::compose(
+                    _("Changed the name from <b>%1</b> to <b>%2</b>"),
+                    Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")),
+                    Glib::Markup::escape_text(*entry.GetNewFromKey<std::string>("name"))));
             } break;
+
             case AuditLogActionType::EMOJI_DELETE: {
-                markup = fmt::format(_("{} deleted the emoji <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str());
+                markup = Glib::ustring::compose(
+                    _("%1 deleted the emoji <b>%2</b>"),
+                    user_markup,
+                    Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")));
             } break;
+
             case AuditLogActionType::MESSAGE_BULK_DELETE:
             case AuditLogActionType::MESSAGE_DELETE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
                 const auto count = *entry.Options->Count;
                 if (channel.has_value()) {
-                    markup = fmt::format(_("{} deleted <b>{}</b> messages in <b>#{}</b>"),
-                                         user_markup.c_str(), count.c_str(),
-                                         Glib::Markup::escape_text(*channel->Name).c_str());
+                    markup = Glib::ustring::compose(
+                        _("%1 deleted <b>%2</b> messages in <b>#%3</b>"),
+                        user_markup, count, Glib::Markup::escape_text(*channel->Name));
                 } else {
-                    markup = fmt::format(_("{} deleted <b>{}</b> messages"),
-                                         user_markup.c_str(), count.c_str());
+                    markup = Glib::ustring::compose(
+                        _("%1 deleted <b>%2</b> messages"),
+                        user_markup, count);
                 }
             } break;
+
             case AuditLogActionType::MESSAGE_PIN: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} pinned a message by <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(
+                    _("%1 pinned a message by <b>%2</b>"), user_markup, target_user);
             } break;
+
             case AuditLogActionType::MESSAGE_UNPIN: {
-                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped().c_str();
-                markup = fmt::format(_("{} unpinned a message by <b>{}</b>"), user_markup.c_str(), target_user);
+                const auto target_user = discord.GetUser(entry.TargetID)->GetUsernameEscaped();
+                markup = Glib::ustring::compose(
+                    _("%1 unpinned a message by <b>%2</b>"), user_markup, target_user);
             } break;
+
             case AuditLogActionType::STAGE_INSTANCE_CREATE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
-                markup = fmt::format(_("{} started the stage for <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (channel.has_value() ? Glib::Markup::escape_text(*channel->Name).c_str() : std::to_string(*entry.Options->ChannelID).c_str()));
+                markup = Glib::ustring::compose(_("%1 started the stage for <b>%2</b>"),
+                                                user_markup,
+                                                (channel.has_value() ? Glib::Markup::escape_text(*channel->Name) : Glib::ustring { std::to_string(*entry.Options->ChannelID) }));
 
                 if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "topic" && change.NewValue.has_value()) {
                             extra_markup.push_back(
-                                fmt::format(_("Set the topic to <b>{}</b>"),
-                                            Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                                Glib::ustring::compose(_("Set the topic to <b>%1</b>"),
+                                                       Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                         } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
                             Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
                             extra_markup.push_back(
-                                fmt::format(_("Set the privacy level to <b>{}</b>"), str.c_str()));
+                                Glib::ustring::compose(_("Set the privacy level to <b>%1</b>"), str));
                         }
                     }
                 }
             } break;
             case AuditLogActionType::STAGE_INSTANCE_UPDATE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
-                markup = fmt::format(_("{} updated the stage for <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (channel.has_value() ? Glib::Markup::escape_text(*channel->Name).c_str() : std::to_string(*entry.Options->ChannelID).c_str()));
+                markup = Glib::ustring::compose(_("%1 updated the stage for <b>%2</b>"),
+                                                user_markup,
+                                                (channel.has_value() ? Glib::Markup::escape_text(*channel->Name) : Glib::ustring { std::to_string(*entry.Options->ChannelID) }));
 
                 if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "topic" && change.NewValue.has_value()) {
                             extra_markup.push_back(
-                                fmt::format(_("Set the topic to <b>{}</b>"),
-                                            Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                                Glib::ustring::compose(_("Set the topic to <b>%1</b>"),
+                                                       Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                         } else if (change.Key == "privacy_level" && change.NewValue.has_value()) {
                             Glib::ustring str = Glib::Markup::escape_text(GetStagePrivacyDisplayString(change.NewValue->get<StagePrivacy>()));
                             extra_markup.push_back(
-                                fmt::format(_("Set the privacy level to <b>{}</b>"), str.c_str()));
+                                Glib::ustring::compose(_("Set the privacy level to <b>%1</b>"), str));
                         }
                     }
                 }
             } break;
             case AuditLogActionType::STAGE_INSTANCE_DELETE: {
                 const auto channel = discord.GetChannel(*entry.Options->ChannelID);
-                markup = fmt::format(_("{} ended the stage for <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (channel.has_value() ? Glib::Markup::escape_text(*channel->Name).c_str() : std::to_string(*entry.Options->ChannelID).c_str()));
+                markup = Glib::ustring::compose(_("%1 ended the stage for <b>%2</b>"),
+                                                user_markup,
+                                                (channel.has_value() ? Glib::Markup::escape_text(*channel->Name) : Glib::ustring { std::to_string(*entry.Options->ChannelID) }));
             } break;
             case AuditLogActionType::THREAD_CREATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
-                markup = fmt::format(_("{} created a thread <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (channel.has_value()
-                                          ? Glib::Markup::escape_text(*channel->Name)
-                                          : Glib::ustring(*entry.GetNewFromKey<std::string>("name")))
-                                         .c_str());
+                markup = Glib::ustring::compose(_("%1 created a thread <b>%2</b>"),
+                                                user_markup.c_str(),
+                                                channel.has_value() ? Glib::Markup::escape_text(*channel->Name) : Glib::ustring(*entry.GetNewFromKey<std::string>("name")));
                 if (entry.Changes.has_value()) {
                     for (const auto &change : *entry.Changes) {
                         if (change.Key == "name")
-                            extra_markup.push_back(fmt::format(_("Set the name to <b>{}</b>"),
-                                                               Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                            extra_markup.push_back(Glib::ustring::compose(_("Set the name to <b>%1</b>"),
+                                                                          Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                         else if (change.Key == "archived")
                             extra_markup.emplace_back(change.NewValue->get<bool>() ? _("Archived the thread") : _("Unarchived the thread"));
                         else if (change.Key == "auto_archive_duration")
-                            extra_markup.emplace_back(fmt::format(_("Set auto archive duration to <b>{} minutes</b>"), change.NewValue->get<int>()));
+                            extra_markup.emplace_back(Glib::ustring::compose(_("Set auto archive duration to <b>%1 minutes</b>"), change.NewValue->get<int>()));
                         else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
                             const int secs = change.NewValue->get<int>();
                             if (secs == 0)
                                 extra_markup.emplace_back(_("Disabled slowmode"));
                             else
-                                extra_markup.emplace_back(fmt::format(_("Set slowmode to <b>{} seconds</b>"), secs));
+                                extra_markup.emplace_back(Glib::ustring::compose(_("Set slowmode to <b>%1 seconds</b>"), secs));
                         } else if (change.Key == "locked")
                             extra_markup.emplace_back(change.NewValue->get<bool>() ? _("Locked the thread, restricting it to only be unarchived by moderators") : _("Unlocked the thread, allowing it to be unarchived by non-moderators"));
                     }
@@ -459,25 +493,24 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
             } break;
             case AuditLogActionType::THREAD_UPDATE: {
                 const auto channel = discord.GetChannel(entry.TargetID);
-                markup = fmt::format(_("{} made changes to the thread <b>{}</b>"),
-                                     user_markup.c_str(),
-                                     (channel.has_value()
-                                          ? Glib::Markup::escape_text(*channel->Name)
-                                          : Glib::ustring(entry.TargetID))
-                                         .c_str());
+                markup = Glib::ustring::compose(_("%1 made changes to the thread <b>%2</b>"),
+                                                user_markup,
+                                                (channel.has_value()
+                                                     ? Glib::Markup::escape_text(*channel->Name)
+                                                     : Glib::ustring(entry.TargetID)));
                 for (const auto &change : *entry.Changes) {
                     if (change.Key == "name")
-                        extra_markup.push_back(fmt::format(_("Changed the name from <b>{}</b> to <b>{}</b>"),
-                                                           Glib::Markup::escape_text(change.OldValue->get<std::string>()).c_str(),
-                                                           Glib::Markup::escape_text(change.NewValue->get<std::string>()).c_str()));
+                        extra_markup.push_back(Glib::ustring::compose(_("Changed the name from <b>%1</b> to <b>%2</b>"),
+                                                                      Glib::Markup::escape_text(change.OldValue->get<std::string>()),
+                                                                      Glib::Markup::escape_text(change.NewValue->get<std::string>())));
                     else if (change.Key == "auto_archive_duration")
-                        extra_markup.emplace_back(fmt::format(_("Set auto archive duration to <b>{} minutes</b>"), change.NewValue->get<int>()));
+                        extra_markup.emplace_back(Glib::ustring::compose(_("Set auto archive duration to <b>%1 minutes</b>"), change.NewValue->get<int>()));
                     else if (change.Key == "rate_limit_per_user" && change.NewValue.has_value()) {
                         const int secs = change.NewValue->get<int>();
                         if (secs == 0)
                             extra_markup.emplace_back(_("Disabled slowmode"));
                         else
-                            extra_markup.emplace_back(fmt::format(_("Set slowmode to <b>{} seconds</b>"), secs));
+                            extra_markup.emplace_back(Glib::ustring::compose(_("Set slowmode to <b>%1 seconds</b>"), secs));
                     } else if (change.Key == "locked")
                         extra_markup.emplace_back(change.NewValue->get<bool>() ? _("Locked the thread, restricting it to only be unarchived by moderators") : _("Unlocked the thread, allowing it to be unarchived by non-moderators"));
                     else if (change.Key == "archived")
@@ -485,11 +518,11 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
                 }
             } break;
             case AuditLogActionType::THREAD_DELETE: {
-                markup = fmt::format(_("{} deleted the thread <b>{}</b>"),
-                                     user_markup.c_str(), Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")).c_str());
+                markup = Glib::ustring::compose(_("%1 deleted the thread <b>%2</b>"),
+                                                user_markup, Glib::Markup::escape_text(*entry.GetOldFromKey<std::string>("name")));
             } break;
             default:
-                markup = fmt::format("<i>{}</i>", _("Unknown action"));
+                markup = Glib::ustring::compose("<i>%1</i>", _("Unknown action"));
                 break;
         }
 
@@ -497,8 +530,8 @@ void GuildSettingsAuditLogPane::OnAuditLogFetch(const AuditLogData &data) {
         expander->set_label_widget(*label);
 
         if (entry.Reason.has_value()) {
-            extra_markup.push_back(fmt::format(_("Reason: <b>{}</b>"),
-                                               Glib::Markup::escape_text(*entry.Reason).c_str()));
+            extra_markup.push_back(Glib::ustring::compose(_("Reason: <b>%1</b>"),
+                                                          Glib::Markup::escape_text(*entry.Reason)));
         }
 
         expander->set_expanded(true);
