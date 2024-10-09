@@ -122,7 +122,7 @@ jobs:
           if_false: "${{ matrix.buildtype }}"
 
       - name: Upload build (2)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-windows-msys2-${{ steps.buildname.outputs.value }}
           path: build/artifactdir
@@ -167,7 +167,7 @@ jobs:
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-macos-${{ matrix.buildtype }}
           path: build/artifactdir
@@ -225,7 +225,7 @@ jobs:
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
       - name: Upload build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build-linux-${{ matrix.buildtype }}
           path: ${{ runner.workspace }}/artifactdir
