@@ -4,6 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "voicesettingswindow.hpp"
@@ -16,45 +18,45 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     get_style_context()->add_class("voice-settings-window");
     set_default_size(300, 300);
 
-    m_encoding_mode.append("Voice");
-    m_encoding_mode.append("Music");
-    m_encoding_mode.append("Restricted");
+    m_encoding_mode.append("voice", _("Voice"));
+    m_encoding_mode.append("music", _("Music"));
+    m_encoding_mode.append("restricted", _("Restricted"));
     m_encoding_mode.set_tooltip_text(
-        "Sets the coding mode for the Opus encoder\n"
+        _("Sets the coding mode for the Opus encoder\n"
         "Voice - Optimize for voice quality\n"
         "Music - Optimize for non-voice signals incl. music\n"
-        "Restricted - Optimize for non-voice, low latency. Not recommended");
+        "Restricted - Optimize for non-voice, low latency. Not recommended"));
 
     const auto mode = Abaddon::Get().GetAudio().GetEncodingApplication();
     if (mode == OPUS_APPLICATION_VOIP) {
-        m_encoding_mode.set_active(0);
+        m_encoding_mode.set_active_id("voice");
     } else if (mode == OPUS_APPLICATION_AUDIO) {
-        m_encoding_mode.set_active(1);
+        m_encoding_mode.set_active_id("music");
     } else if (mode == OPUS_APPLICATION_RESTRICTED_LOWDELAY) {
-        m_encoding_mode.set_active(2);
+        m_encoding_mode.set_active_id("restricted");
     }
 
     m_encoding_mode.signal_changed().connect([this]() {
-        const auto mode = m_encoding_mode.get_active_text();
+        const auto mode = m_encoding_mode.get_active_id();
         auto &audio = Abaddon::Get().GetAudio();
-        if (mode == "Voice") {
+        if (mode == "voice") {
             audio.SetEncodingApplication(OPUS_APPLICATION_VOIP);
-        } else if (mode == "Music") {
+        } else if (mode == "music") {
             spdlog::get("audio")->debug("music/audio");
             audio.SetEncodingApplication(OPUS_APPLICATION_AUDIO);
-        } else if (mode == "Restricted") {
+        } else if (mode == "restricted") {
             audio.SetEncodingApplication(OPUS_APPLICATION_RESTRICTED_LOWDELAY);
         }
     });
 
-    m_signal.append("Auto");
-    m_signal.append("Voice");
-    m_signal.append("Music");
+    m_signal.append("auto", _("Auto"));
+    m_signal.append("voice", _("Voice"));
+    m_signal.append("music", _("Music"));
     m_signal.set_tooltip_text(
-        "Signal hint. Tells Opus what the current signal is\n"
+        _("Signal hint. Tells Opus what the current signal is\n"
         "Auto - Let Opus figure it out\n"
         "Voice - Tell Opus it's a voice signal\n"
-        "Music - Tell Opus it's a music signal");
+        "Music - Tell Opus it's a music signal"));
 
     const auto signal = Abaddon::Get().GetAudio().GetSignalHint();
     if (signal == OPUS_AUTO) {
@@ -66,13 +68,13 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     }
 
     m_signal.signal_changed().connect([this]() {
-        const auto signal = m_signal.get_active_text();
+        const auto signal = m_signal.get_active_id();
         auto &audio = Abaddon::Get().GetAudio();
-        if (signal == "Auto") {
+        if (signal == "auto") {
             audio.SetSignalHint(OPUS_AUTO);
-        } else if (signal == "Voice") {
+        } else if (signal == "voice") {
             audio.SetSignalHint(OPUS_SIGNAL_VOICE);
-        } else if (signal == "Music") {
+        } else if (signal == "music") {
             audio.SetSignalHint(OPUS_SIGNAL_MUSIC);
         }
     });
@@ -125,10 +127,10 @@ VoiceSettingsWindow::VoiceSettingsWindow()
     auto *widgets = Gtk::make_managed<Gtk::VBox>();
     layout->pack_start(*labels, false, true, 5);
     layout->pack_start(*widgets);
-    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Coding Mode", Gtk::ALIGN_END));
-    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Signal Hint", Gtk::ALIGN_END));
-    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Bitrate", Gtk::ALIGN_END));
-    labels->pack_start(*Gtk::make_managed<Gtk::Label>("Gain", Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Coding Mode"), Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Signal Hint"), Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Bitrate"), Gtk::ALIGN_END));
+    labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Gain"), Gtk::ALIGN_END));
     widgets->pack_start(m_encoding_mode);
     widgets->pack_start(m_signal);
     widgets->pack_start(m_bitrate);
