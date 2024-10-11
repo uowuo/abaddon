@@ -1,6 +1,5 @@
 #include "setstatus.hpp"
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"
@@ -54,7 +53,7 @@ SetStatusDialog::SetStatusDialog(Gtk::Window &parent)
         response(Gtk::RESPONSE_CANCEL);
     });
 
-    m_layout.pack_start(*Gtk::make_managed<Gtk::Label>(fmt::format(_("How are you, {}?"), Abaddon::Get().GetDiscordClient().GetUserData().GetDisplayName().c_str()), Gtk::ALIGN_START));
+    m_layout.pack_start(*Gtk::make_managed<Gtk::Label>(Glib::ustring::compose(_("How are you, %1?"), Abaddon::Get().GetDiscordClient().GetUserData().GetDisplayName()), Gtk::ALIGN_START));
     m_layout.pack_start(m_text);
     m_layout.pack_start(*Gtk::make_managed<Gtk::Label>(_("Status"), Gtk::ALIGN_START));
     m_layout.pack_start(m_status_combo);

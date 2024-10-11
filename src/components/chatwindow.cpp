@@ -1,6 +1,5 @@
 #include "chatwindow.hpp"
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"
@@ -331,7 +330,7 @@ void ChatWindow::StartReplying(Snowflake message_id) {
     m_is_replying = true;
     m_input->StartReplying();
     if (author.has_value()) {
-        m_input_indicator->SetCustomMarkup(fmt::format(_("Replying to {}"), author->GetUsernameEscapedBold().c_str()));
+        m_input_indicator->SetCustomMarkup(Glib::ustring::format(_("Replying to %1"), author->GetUsernameEscapedBold()));
     } else {
         m_input_indicator->SetCustomMarkup(_("Replying..."));
     }

@@ -2,7 +2,6 @@
 
 #include <filesystem>
 
-#include <fmt/format.h>
 #include <glibmm/i18n.h>
 
 #include "abaddon.hpp"
@@ -90,10 +89,10 @@ bool RateLimitIndicator::UpdateIndicator() {
         } else {
             const auto time_left = GetTimeLeft();
             if (time_left > 0)
-                m_label.set_text(fmt::format(_("{}s"), std::to_string(time_left).c_str()));
+                m_label.set_text(Glib::ustring::compose(_("%1s"), std::to_string(time_left)));
             else
                 m_label.set_text("");
-            set_tooltip_text(fmt::format(_("Slowmode is enabled. Members can send one message every {} seconds"), std::to_string(rate_limit).c_str()));
+            set_tooltip_text(Glib::ustring::compose(_("Slowmode is enabled. Members can send one message every %1 seconds"), std::to_string(rate_limit)));
         }
     } else {
         m_img.hide();

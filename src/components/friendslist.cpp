@@ -126,16 +126,16 @@ void FriendsList::OnActionRemove(Snowflake id) {
         Glib::ustring str;
         switch (*discord.GetRelationship(id)) {
             case RelationshipType::Blocked:
-                str = fmt::format(_("Are you sure you want to unblock {}?"), user->GetUsername().c_str());
+                str = Glib::ustring::compose(_("Are you sure you want to unblock %1?"), user->GetUsername());
                 break;
             case RelationshipType::Friend:
-                str = fmt::format(_("Are you sure you want to remove {}?"), user->GetUsername().c_str());
+                str = Glib::ustring::compose(_("Are you sure you want to remove %1?"), user->GetUsername());
                 break;
             case RelationshipType::PendingIncoming:
-                str = fmt::format(_("Are you sure you want to ignore {}?"), user->GetUsername().c_str());
+                str = Glib::ustring::compose(_("Are you sure you want to ignore %1?"), user->GetUsername());
                 break;
             case RelationshipType::PendingOutgoing:
-                str = fmt::format(_("Are you sure you want to cancel your request to {}?"), user->GetUsername().c_str());
+                str = Glib::ustring::compose(_("Are you sure you want to cancel your request to %1?"), user->GetUsername());
                 break;
             default:
                 break;
@@ -234,7 +234,7 @@ void FriendsListAddComponent::Submit() {
         if (code == DiscordError::NONE) {
             m_label.set_text(_("Success!"));
         } else {
-            m_label.set_text(fmt::format(_("Failed: {}"), GetDiscordErrorDisplayString(code)));
+            m_label.set_text(Glib::ustring::compose(_("Failed: %1"), GetDiscordErrorDisplayString(code)));
         }
     };
     Abaddon::Get().GetDiscordClient().SendFriendRequest(username,

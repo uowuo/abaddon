@@ -116,17 +116,18 @@ void ChatInputIndicator::ComputeTypingString() {
     if (typers.empty()) {
         SetTypingString("");
     } else if (typers.size() == 1) {
-        SetTypingString(fmt::format(_("{} is typing..."), typers[0].GetDisplayName(m_active_guild).c_str()));
+        SetTypingString(Glib::ustring::compose(_("%1 is typing..."), typers[0].GetDisplayName(m_active_guild)));
     } else if (typers.size() == 2) {
-        SetTypingString(fmt::format(_("{} and {} are typing"),
-                                    typers[0].GetDisplayName(m_active_guild).c_str(),
-                                    typers[1].GetDisplayName(m_active_guild).c_str()));
+        SetTypingString(Glib::ustring::compose(_("%1 and %2 are typing"),
+                                               typers[0].GetDisplayName(m_active_guild),
+                                               typers[1].GetDisplayName(m_active_guild)));
     } else if (typers.size() > 2 && typers.size() <= MaxUsersInIndicator) {
-        Glib::ustring str = fmt::format(_("{}, {}, {} and {} are typing..."),
-                                        typers[0].GetDisplayName(m_active_guild).c_str(),
-                                        typers[1].GetDisplayName(m_active_guild).c_str(),
-                                        typers[2].GetDisplayName(m_active_guild).c_str(),
-                                        typers[3].GetDisplayName(m_active_guild).c_str());
+        // FIXME: Just because this suffice the case where 4 are typing, does not necessarily mean that there are exactly 4 people typing
+        Glib::ustring str = Glib::ustring::compose(_("%1, %2, %3 and %4 are typing..."),
+                                                   typers[0].GetDisplayName(m_active_guild),
+                                                   typers[1].GetDisplayName(m_active_guild),
+                                                   typers[2].GetDisplayName(m_active_guild),
+                                                   typers[3].GetDisplayName(m_active_guild));
         SetTypingString(str);
     } else { // size() > MaxUsersInIndicator
         SetTypingString(_("Several people are typing..."));
