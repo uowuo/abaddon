@@ -14,7 +14,7 @@
 /bin/libdeflate.dll
 /bin/libepoxy-0.dll
 /bin/libexpat-1.dll
-/bin/libffi-8.dll
+/bin/libffi-11.dll
 /bin/libfmt.dll
 /bin/libfontconfig-1.dll
 /bin/libfreetype-6.dll
