@@ -1,15 +1,17 @@
 #include "verificationgate.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 
 VerificationGateDialog::VerificationGateDialog(Gtk::Window &parent, Snowflake guild_id)
-    : Gtk::Dialog("Verification Required", parent, true)
+    : Gtk::Dialog(_("Verification Required"), parent, true)
     , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 300);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
 
-    m_ok_button = add_button("Accept", Gtk::RESPONSE_OK);
+    m_ok_button = add_button(_("Accept"), Gtk::RESPONSE_OK);
 
     m_scroll_rules.set_vexpand(true);
     m_scroll_rules.set_hexpand(true);
