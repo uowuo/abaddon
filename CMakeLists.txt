@@ -49,6 +49,14 @@ file(GLOB_RECURSE ABADDON_SOURCES
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_gio\\.cpp$")
 list(FILTER ABADDON_SOURCES EXCLUDE REGEX ".*notifier_fallback\\.cpp$")
 
+if (NOT ENABLE_VOICE)
+    list(FILTER ABADDON_SOURCES EXCLUDE REGEX "src/audio/voice/.*")
+endif ()
+
+if (NOT (ENABLE_VOICE OR ENABLE_NOTIFICATION_SOUNDS))
+    list(FILTER ABADDON_SOURCES EXCLUDE REGEX "src/audio/.*")
+endif ()
+
 add_executable(abaddon ${ABADDON_SOURCES})
 target_include_directories(abaddon PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(abaddon PUBLIC ${PROJECT_BINARY_DIR})
@@ -220,3 +228,10 @@ set(ABADDON_COMPILER_DEFS "" CACHE STRING "Additional compiler definitions")
 foreach (COMPILER_DEF IN LISTS ABADDON_COMPILER_DEFS)
     target_compile_definitions(abaddon PRIVATE "${COMPILER_DEF}")
 endforeach ()
+
+# LTO breaks on Windows
+# Due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108383
+# And other weirdness
+if (NOT WIN32)
+    set_property(TARGET abaddon PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()

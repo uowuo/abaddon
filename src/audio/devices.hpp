@@ -1,5 +1,4 @@
 #pragma once
-#ifdef WITH_VOICE
 
 // clang-format off
 
@@ -13,10 +12,7 @@ class AudioDevices {
 public:
     AudioDevices();
 
-    Glib::RefPtr<Gtk::ListStore> GetPlaybackDeviceModel();
-    Glib::RefPtr<Gtk::ListStore> GetCaptureDeviceModel();
-
-    void SetDevices(ma_device_info *pPlayback, ma_uint32 playback_count, ma_device_info *pCapture, ma_uint32 capture_count);
+    void SetDevices(const ma_device_info *pPlayback, ma_uint32 playback_count, const ma_device_info *pCapture, ma_uint32 capture_count);
 
     [[nodiscard]] std::optional<ma_device_id> GetPlaybackDeviceIDFromModel(const Gtk::TreeModel::iterator &iter) const;
     [[nodiscard]] std::optional<ma_device_id> GetCaptureDeviceIDFromModel(const Gtk::TreeModel::iterator &iter) const;
@@ -24,11 +20,17 @@ public:
     [[nodiscard]] std::optional<ma_device_id> GetDefaultPlayback() const;
     [[nodiscard]] std::optional<ma_device_id> GetDefaultCapture() const;
 
-    void SetActivePlaybackDevice(const Gtk::TreeModel::iterator &iter);
-    void SetActiveCaptureDevice(const Gtk::TreeModel::iterator &iter);
+    [[nodiscard]] std::optional<ma_device_id> GetActivePlayback() const;
+    [[nodiscard]] std::optional<ma_device_id> GetActiveCapture() const;
 
-    Gtk::TreeModel::iterator GetActivePlaybackDevice();
-    Gtk::TreeModel::iterator GetActiveCaptureDevice();
+    void SetActivePlaybackDeviceIter(const Gtk::TreeModel::iterator &iter);
+    void SetActiveCaptureDeviceIter(const Gtk::TreeModel::iterator &iter);
+
+    [[nodiscard]]  Gtk::TreeModel::iterator GetActivePlaybackDeviceIter() const;
+    [[nodiscard]]  Gtk::TreeModel::iterator GetActiveCaptureDeviceIter() const;
+
+    [[nodiscard]] Glib::RefPtr<Gtk::ListStore> GetPlaybackDeviceModel() const;
+    [[nodiscard]] Glib::RefPtr<Gtk::ListStore> GetCaptureDeviceModel() const;
 
 private:
     class PlaybackColumns : public Gtk::TreeModel::ColumnRecord {
@@ -55,4 +57,3 @@ private:
     Gtk::TreeModel::iterator m_active_capture_iter;
     Gtk::TreeModel::iterator m_default_capture_iter;
 };
-#endif

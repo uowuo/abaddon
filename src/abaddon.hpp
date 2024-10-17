@@ -12,11 +12,12 @@
 #include "imgmanager.hpp"
 #include "emojis.hpp"
 #include "notifications/notifications.hpp"
+
+#ifdef WITH_MINIAUDIO
 #include "audio/manager.hpp"
+#endif
 
 #define APP_TITLE "Abaddon"
-
-class AudioManager;
 
 class Abaddon {
 private:
@@ -72,7 +73,7 @@ public:
     ImageManager &GetImageManager();
     EmojiResource &GetEmojis();
 
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
     AudioManager &GetAudio();
 #endif
 
@@ -174,8 +175,11 @@ private:
     ImageManager m_img_mgr;
     EmojiResource m_emojis;
 
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
     AudioManager m_audio;
+#endif
+
+#ifdef WITH_VOICE
     Gtk::Window *m_voice_window = nullptr;
 #endif
 

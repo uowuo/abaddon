@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <gtkmm.h>
 #include "platform.hpp"
-#include "audio/manager.hpp"
 #include "discord/discord.hpp"
 #include "dialogs/token.hpp"
 #include "dialogs/confirm.hpp"
@@ -50,12 +49,16 @@ void macOSThemeChangedCallback(CFNotificationCenterRef center, void *observer, C
 #pragma comment(lib, "crypt32.lib")
 #endif
 
+#ifdef WITH_MINIAUDIO
+#include "audio/manager.hpp"
+#endif
+
 Abaddon::Abaddon()
     : m_settings(Platform::FindConfigFile())
     , m_discord(GetSettings().UseMemoryDB) // stupid but easy
     , m_emojis(GetResPath("/emojis.db"))
-#ifdef WITH_VOICE
-    , m_audio(GetSettings().Backends)
+#ifdef WITH_MINIAUDIO
+    , m_audio(GetSettings().Backends, m_discord)
 #endif
 {
     LoadFromSettings();
@@ -81,10 +84,6 @@ Abaddon::Abaddon()
 #ifdef WITH_VOICE
     m_discord.signal_voice_connected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceConnected));
     m_discord.signal_voice_disconnected().connect(sigc::mem_fun(*this, &Abaddon::OnVoiceDisconnected));
-    m_discord.signal_voice_speaking().connect([this](const VoiceSpeakingData &m) {
-        spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
-        m_audio.AddSSRC(m.SSRC);
-    });
 #endif
 
     m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
@@ -103,7 +102,7 @@ Abaddon::Abaddon()
     }
 
 #ifdef WITH_VOICE
-    m_audio.SetVADMethod(GetSettings().VAD);
+    m_audio.GetVoice().GetCapture().GetEffects().SetVADMethod(GetSettings().VAD);
 #endif
 }
 
@@ -487,19 +486,18 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 
 #ifdef WITH_VOICE
 void Abaddon::OnVoiceConnected() {
-    m_audio.StartCaptureDevice();
     ShowVoiceWindow();
 }
 
 void Abaddon::OnVoiceDisconnected() {
-    m_audio.StopCaptureDevice();
-    m_audio.RemoveAllSSRCs();
     if (m_voice_window != nullptr) {
         m_voice_window->close();
     }
 }
 
 void Abaddon::ShowVoiceWindow() {
+    using SystemSound = AbaddonClient::Audio::SystemAudio::SystemSound;
+
     if (m_voice_window != nullptr) return;
 
     auto *wnd = new VoiceWindow(m_discord.GetVoiceChannelID());
@@ -507,23 +505,53 @@ void Abaddon::ShowVoiceWindow() {
 
     wnd->signal_mute().connect([this](bool is_mute) {
         m_discord.SetVoiceMuted(is_mute);
-        m_audio.SetCapture(!is_mute);
+        m_audio.GetVoice().GetCapture().SetActive(!is_mute);
+
+        auto sound = is_mute ? SystemSound::VoiceMuted : SystemSound::VoiceUnmuted;
+        m_audio.GetSystem().PlaySound(sound);
     });
 
     wnd->signal_deafen().connect([this](bool is_deaf) {
         m_discord.SetVoiceDeafened(is_deaf);
-        m_audio.SetPlayback(!is_deaf);
+        m_audio.GetVoice().GetPlayback().SetActive(!is_deaf);
+
+        auto sound = is_deaf ? SystemSound::VoiceDeafened : SystemSound::VoiceUndeafened;
+        m_audio.GetSystem().PlaySound(sound);
     });
 
     wnd->signal_mute_user_cs().connect([this](Snowflake id, bool is_mute) {
         if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
-            m_audio.SetMuteSSRC(*ssrc, is_mute);
+            m_audio.GetVoice().GetPlayback().GetClientStore().SetClientMute(*ssrc, is_mute);
         }
     });
 
     wnd->signal_user_volume_changed().connect([this](Snowflake id, double volume) {
         auto &vc = m_discord.GetVoiceClient();
         vc.SetUserVolume(id, volume);
+
+        if (const auto ssrc = m_discord.GetSSRCOfUser(id); ssrc.has_value()) {
+            m_audio.GetVoice().GetPlayback().GetClientStore().SetClientVolume(*ssrc, volume);
+        }
+    });
+
+    wnd->signal_playback_device_changed().connect([this](const Gtk::TreeModel::iterator &iter) {
+        auto device_id = m_audio.GetDevices().GetPlaybackDeviceIDFromModel(iter);
+        if (!device_id) {
+            spdlog::get("audio")->error("Requested ID from iterator is invalid");
+            return;
+        }
+
+        m_audio.GetVoice().GetPlayback().SetPlaybackDevice(*device_id);
+    });
+
+    wnd->signal_capture_device_changed().connect([this](const Gtk::TreeModel::iterator &iter) {
+        auto device_id = m_audio.GetDevices().GetCaptureDeviceIDFromModel(iter);
+        if (!device_id) {
+            spdlog::get("audio")->error("Requested ID from iterator is invalid");
+            return;
+        }
+
+        m_audio.GetVoice().GetCapture().SetCaptureDevice(*device_id);
     });
 
     wnd->set_position(Gtk::WIN_POS_CENTER);
@@ -1129,7 +1157,7 @@ EmojiResource &Abaddon::GetEmojis() {
     return m_emojis;
 }
 
-#ifdef WITH_VOICE
+#ifdef WITH_MINIAUDIO
 AudioManager &Abaddon::GetAudio() {
     return m_audio;
 }

@@ -63,29 +63,18 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_param.set_range(0.0, 100.0);
     m_vad_param.set_value_pos(Gtk::POS_LEFT);
     m_vad_param.signal_value_changed().connect([this]() {
-        auto &audio = Abaddon::Get().GetAudio();
         const double val = m_vad_param.get_value() * 0.01;
-        switch (audio.GetVADMethod()) {
-            case AudioManager::VADMethod::Gate:
-                audio.SetCaptureGate(val);
-                m_vad_value.SetTick(val);
-                break;
-#ifdef WITH_RNNOISE
-            case AudioManager::VADMethod::RNNoise:
-                audio.SetRNNProbThreshold(val);
-                m_vad_value.SetTick(val);
-                break;
-#endif
-        };
+        Abaddon::Get().GetAudio().GetVoice().GetCapture()
+            .GetEffects().SetCurrentThreshold(val);
     });
     UpdateVADParamValue();
 
     m_capture_gain.set_range(0.0, 200.0);
     m_capture_gain.set_value_pos(Gtk::POS_LEFT);
-    m_capture_gain.set_value(audio.GetCaptureGain() * 100.0);
+    m_capture_gain.set_value(audio.GetVoice().GetCapture().Gain * 100.0);
     m_capture_gain.signal_value_changed().connect([this]() {
         const double val = m_capture_gain.get_value() / 100.0;
-        Abaddon::Get().GetAudio().SetCaptureGain(val);
+        Abaddon::Get().GetAudio().GetVoice().GetCapture().Gain = val;
     });
 
     m_vad_combo.set_valign(Gtk::ALIGN_END);
@@ -107,22 +96,22 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 #endif
     }
     m_vad_combo.signal_changed().connect([this]() {
-        auto &audio = Abaddon::Get().GetAudio();
         const auto id = m_vad_combo.get_active_id();
+        auto &abaddon = Abaddon::Get();
 
-        audio.SetVADMethod(id);
-        Abaddon::Get().GetSettings().VAD = id;
+        abaddon.GetAudio().GetVoice().GetCapture().GetEffects().SetVADMethod(id);
+        abaddon.GetSettings().VAD = id;
         UpdateVADParamValue();
     });
 
-    m_noise_suppression.set_active(audio.GetSuppressNoise());
+    m_noise_suppression.set_active(audio.GetVoice().GetCapture().SuppressNoise);
     m_noise_suppression.signal_toggled().connect([this]() {
-        Abaddon::Get().GetAudio().SetSuppressNoise(m_noise_suppression.get_active());
+        Abaddon::Get().GetAudio().GetVoice().GetCapture().SuppressNoise = m_noise_suppression.get_active();
     });
 
-    m_mix_mono.set_active(audio.GetMixMono());
+    m_mix_mono.set_active(audio.GetVoice().GetCapture().MixMono);
     m_mix_mono.signal_toggled().connect([this]() {
-        Abaddon::Get().GetAudio().SetMixMono(m_mix_mono.get_active());
+        Abaddon::Get().GetAudio().GetVoice().GetCapture().MixMono = m_mix_mono.get_active();
     });
 
     m_disconnect.signal_clicked().connect([this]() {
@@ -134,13 +123,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_playback_combo.set_hexpand(true);
     m_playback_combo.set_halign(Gtk::ALIGN_FILL);
     m_playback_combo.set_model(audio.GetDevices().GetPlaybackDeviceModel());
-    if (const auto iter = audio.GetDevices().GetActivePlaybackDevice()) {
+    if (const auto iter = audio.GetDevices().GetActivePlaybackDeviceIter()) {
         m_playback_combo.set_active(iter);
     }
     m_playback_combo.pack_start(*playback_renderer);
     m_playback_combo.add_attribute(*playback_renderer, "text", 0);
     m_playback_combo.signal_changed().connect([this]() {
-        Abaddon::Get().GetAudio().SetPlaybackDevice(m_playback_combo.get_active());
+        m_signal_playback_device_changed.emit(m_playback_combo.get_active());
     });
 
     auto *capture_renderer = Gtk::make_managed<Gtk::CellRendererText>();
@@ -148,13 +137,13 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_capture_combo.set_hexpand(true);
     m_capture_combo.set_halign(Gtk::ALIGN_FILL);
     m_capture_combo.set_model(Abaddon::Get().GetAudio().GetDevices().GetCaptureDeviceModel());
-    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDevice()) {
+    if (const auto iter = Abaddon::Get().GetAudio().GetDevices().GetActiveCaptureDeviceIter()) {
         m_capture_combo.set_active(iter);
     }
     m_capture_combo.pack_start(*capture_renderer);
     m_capture_combo.add_attribute(*capture_renderer, "text", 0);
     m_capture_combo.signal_changed().connect([this]() {
-        Abaddon::Get().GetAudio().SetCaptureDevice(m_capture_combo.get_active());
+        m_signal_capture_device_changed.emit(m_capture_combo.get_active());
     });
 
     m_menu_bar.append(m_menu_view);
@@ -164,7 +153,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         auto *window = new VoiceSettingsWindow;
         const auto cb = [this](double gain) {
             m_capture_gain.set_value(gain * 100.0);
-            Abaddon::Get().GetAudio().SetCaptureGain(gain);
+            Abaddon::Get().GetAudio().GetVoice().GetCapture().Gain = gain;
         };
         window->signal_gain().connect(sigc::track_obj(cb, *this));
         window->show();
@@ -319,14 +308,20 @@ void VoiceWindow::TryDeleteRow(Snowflake id) {
 }
 
 bool VoiceWindow::UpdateVoiceMeters() {
-    auto &audio = Abaddon::Get().GetAudio();
-    switch (audio.GetVADMethod()) {
-        case AudioManager::VADMethod::Gate:
-            m_vad_value.SetVolume(audio.GetCaptureVolumeLevel());
+    using VADMethod = AbaddonClient::Audio::Voice::Capture::VADMethod;
+
+    auto& voice = Abaddon::Get().GetAudio().GetVoice();
+    auto& playback = voice.GetPlayback();
+    auto& capture = voice.GetCapture();
+    auto& effects = capture.GetEffects();
+
+    switch (effects.GetVADMethod()) {
+        case VADMethod::Gate:
+            m_vad_value.SetVolume(capture.GetPeakMeter().GetPeak());
             break;
 #ifdef WITH_RNNOISE
-        case AudioManager::VADMethod::RNNoise:
-            m_vad_value.SetVolume(audio.GetCurrentVADProbability());
+        case VADMethod::RNNoise:
+            m_vad_value.SetVolume(effects.GetNoise().GetPeakMeter().GetPeak());
             break;
 #endif
     }
@@ -335,7 +330,7 @@ bool VoiceWindow::UpdateVoiceMeters() {
         const auto ssrc = Abaddon::Get().GetDiscordClient().GetSSRCOfUser(id);
         if (ssrc.has_value()) {
             if (auto *speaker_row = dynamic_cast<VoiceWindowSpeakerListEntry *>(row)) {
-                speaker_row->SetVolumeMeter(audio.GetSSRCVolumeLevel(*ssrc));
+                speaker_row->SetVolumeMeter(playback.GetClientStore().GetClientPeakVolume(*ssrc));
             }
         }
     }
@@ -343,17 +338,8 @@ bool VoiceWindow::UpdateVoiceMeters() {
 }
 
 void VoiceWindow::UpdateVADParamValue() {
-    auto &audio = Abaddon::Get().GetAudio();
-    switch (audio.GetVADMethod()) {
-        case AudioManager::VADMethod::Gate:
-            m_vad_param.set_value(audio.GetCaptureGate() * 100.0);
-            break;
-#ifdef WITH_RNNOISE
-        case AudioManager::VADMethod::RNNoise:
-            m_vad_param.set_value(audio.GetRNNProbThreshold() * 100.0);
-            break;
-#endif
-    }
+    auto &effects = Abaddon::Get().GetAudio().GetVoice().GetCapture().GetEffects();
+    m_vad_param.set_value(effects.GetCurrentThreshold() * 100.0);
 }
 
 void VoiceWindow::UpdateStageCommand() {
@@ -444,5 +430,13 @@ VoiceWindow::type_signal_mute_user_cs VoiceWindow::signal_mute_user_cs() {
 
 VoiceWindow::type_signal_user_volume_changed VoiceWindow::signal_user_volume_changed() {
     return m_signal_user_volume_changed;
+}
+
+VoiceWindow::type_signal_playback_device_changed VoiceWindow::signal_playback_device_changed() {
+    return m_signal_playback_device_changed;
+}
+
+VoiceWindow::type_signal_capture_device_changed VoiceWindow::signal_capture_device_changed() {
+    return m_signal_capture_device_changed;
 }
 #endif

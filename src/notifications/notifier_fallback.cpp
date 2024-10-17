@@ -7,24 +7,13 @@
   maybe it can be LoadLibrary'd in :s
 */
 
-Notifier::Notifier() {
-#ifdef ENABLE_NOTIFICATION_SOUNDS
-    if (ma_engine_init(nullptr, &m_engine) != MA_SUCCESS) {
-        printf("failed to initialize miniaudio engine\n");
-    }
-#endif
-}
-
-Notifier::~Notifier() {
-#ifdef ENABLE_NOTIFICATION_SOUNDS
-    ma_engine_uninit(&m_engine);
-#endif
-}
-
 void Notifier::Notify(const Glib::ustring &id, const Glib::ustring &title, const Glib::ustring &text, const Glib::ustring &default_action, const std::string &icon_path) {
 #ifdef ENABLE_NOTIFICATION_SOUNDS
-    if (Abaddon::Get().GetSettings().NotificationsPlaySound) {
-        ma_engine_play_sound(&m_engine, Abaddon::Get().GetResPath("/sound/message.mp3").c_str(), nullptr);
+    using SystemSound = AbaddonClient::Audio::SystemAudio::SystemSound;
+
+    auto& abaddon = Abaddon::Get();
+    if (abaddon.GetSettings().NotificationsPlaySound) {
+        abaddon.GetAudio().GetSystem().PlaySound(SystemSound::Notification);
     }
 #endif
 }
