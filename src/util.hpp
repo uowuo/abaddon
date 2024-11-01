@@ -11,7 +11,7 @@
 #include <regex>
 #include <mutex>
 #include <condition_variable>
-#include <glibconfig.h>
+#include <glib.h>
 #include <optional>
 #include <type_traits>
 
