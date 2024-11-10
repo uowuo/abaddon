@@ -110,6 +110,16 @@ if (Fontconfig_FOUND)
     target_link_libraries(abaddon Fontconfig::Fontconfig)
 endif ()
 
+pkg_check_modules(APPINDICATOR QUIET appindicator3-0.1)
+if (APPINDICATOR_FOUND)
+    message("AppIndicator was found")
+    target_compile_definitions(abaddon PRIVATE WITH_APPINDICATOR)
+    target_include_directories(abaddon PUBLIC ${APPINDICATOR_INCLUDE_DIRS})
+    target_link_libraries(abaddon ${APPINDICATOR_LIBRARIES})
+else ()
+    message("AppIndicator not found. Falling back to GTK StatusIcon")
+endif ()
+
 find_package(spdlog REQUIRED)
 target_link_libraries(abaddon spdlog::spdlog)
 
