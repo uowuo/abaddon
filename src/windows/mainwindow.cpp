@@ -1,5 +1,7 @@
 #include "mainwindow.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -253,19 +255,19 @@ MemberList *MainWindow::GetMemberList() {
 void MainWindow::SetupMenu() {
     m_menu_discord.set_label("Discord");
     m_menu_discord.set_submenu(m_menu_discord_sub);
-    m_menu_discord_connect.set_label("Connect");
+    m_menu_discord_connect.set_label(_("Connect"));
     m_menu_discord_connect.set_sensitive(false);
-    m_menu_discord_disconnect.set_label("Disconnect");
+    m_menu_discord_disconnect.set_label(_("Disconnect"));
     m_menu_discord_disconnect.set_sensitive(false);
-    m_menu_discord_set_token.set_label("Set Token");
-    m_menu_discord_login_qr.set_label("Login with QR Code");
+    m_menu_discord_set_token.set_label(_("Set Token"));
+    m_menu_discord_login_qr.set_label(_("Login with QR Code"));
 #ifndef WITH_QRLOGIN
     m_menu_discord_login_qr.set_sensitive(false);
-    m_menu_discord_login_qr.set_tooltip_text("Not compiled with support");
+    m_menu_discord_login_qr.set_tooltip_text(_("Not compiled with support"));
 #endif
-    m_menu_discord_set_status.set_label("Set Status");
+    m_menu_discord_set_status.set_label(_("Set Status"));
     m_menu_discord_set_status.set_sensitive(false);
-    m_menu_discord_add_recipient.set_label("Add user to DM");
+    m_menu_discord_add_recipient.set_label(_("Add user to DM"));
     m_menu_discord_sub.append(m_menu_discord_connect);
     m_menu_discord_sub.append(m_menu_discord_disconnect);
     m_menu_discord_sub.append(m_menu_discord_set_token);
@@ -274,31 +276,31 @@ void MainWindow::SetupMenu() {
     m_menu_discord_sub.append(m_menu_discord_add_recipient);
     m_menu_discord.set_submenu(m_menu_discord_sub);
 
-    m_menu_file.set_label("File");
+    m_menu_file.set_label(_("File"));
     m_menu_file.set_submenu(m_menu_file_sub);
-    m_menu_file_reload_css.set_label("Reload CSS");
-    m_menu_file_clear_cache.set_label("Clear file cache");
-    m_menu_file_dump_ready.set_label("Dump ready message");
+    m_menu_file_reload_css.set_label(_("Reload CSS"));
+    m_menu_file_clear_cache.set_label(_("Clear file cache"));
+    m_menu_file_dump_ready.set_label(_("Dump ready message"));
     m_menu_file_sub.append(m_menu_file_reload_css);
     m_menu_file_sub.append(m_menu_file_clear_cache);
     m_menu_file_sub.append(m_menu_file_dump_ready);
 
-    m_menu_view.set_label("View");
+    m_menu_view.set_label(_("View"));
     m_menu_view.set_submenu(m_menu_view_sub);
-    m_menu_view_friends.set_label("Friends");
-    m_menu_view_pins.set_label("Pins");
-    m_menu_view_threads.set_label("Threads");
-    m_menu_view_mark_guild_as_read.set_label("Mark Server as Read");
+    m_menu_view_friends.set_label(_("Friends"));
+    m_menu_view_pins.set_label(_("Pins"));
+    m_menu_view_threads.set_label(_("Threads"));
+    m_menu_view_mark_guild_as_read.set_label(_("Mark Server as Read"));
     m_menu_view_mark_guild_as_read.add_accelerator("activate", m_accels, GDK_KEY_Escape, Gdk::SHIFT_MASK, Gtk::ACCEL_VISIBLE);
-    m_menu_view_channels.set_label("Channels");
+    m_menu_view_channels.set_label(_("Channels"));
     m_menu_view_channels.add_accelerator("activate", m_accels, GDK_KEY_L, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
     m_menu_view_channels.set_active(true);
-    m_menu_view_members.set_label("Members");
+    m_menu_view_members.set_label(_("Members"));
     m_menu_view_members.add_accelerator("activate", m_accels, GDK_KEY_M, Gdk::CONTROL_MASK, Gtk::ACCEL_VISIBLE);
     m_menu_view_members.set_active(true);
 #ifdef WITH_LIBHANDY
-    m_menu_view_go_back.set_label("Go Back");
-    m_menu_view_go_forward.set_label("Go Forward");
+    m_menu_view_go_back.set_label(_("Go Back"));
+    m_menu_view_go_forward.set_label(_("Go Forward"));
     m_menu_view_go_back.add_accelerator("activate", m_accels, GDK_KEY_Left, Gdk::MOD1_MASK, Gtk::ACCEL_VISIBLE);
     m_menu_view_go_forward.add_accelerator("activate", m_accels, GDK_KEY_Right, Gdk::MOD1_MASK, Gtk::ACCEL_VISIBLE);
 #endif

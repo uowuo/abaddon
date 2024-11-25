@@ -5,6 +5,8 @@
 
 #include "voicewindow.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "components/lazyimage.hpp"
@@ -17,18 +19,18 @@
 VoiceWindow::VoiceWindow(Snowflake channel_id)
     : m_main(Gtk::ORIENTATION_VERTICAL)
     , m_controls(Gtk::ORIENTATION_HORIZONTAL)
-    , m_mute("Mute")
-    , m_deafen("Deafen")
-    , m_noise_suppression("Suppress Noise")
-    , m_mix_mono("Mix Mono")
-    , m_stage_command("Request to Speak")
-    , m_disconnect("Disconnect")
-    , m_stage_invite_lbl("You've been invited to speak")
-    , m_stage_accept("Accept")
-    , m_stage_decline("Decline")
+    , m_mute(_("Mute"))
+    , m_deafen(_("Deafen"))
+    , m_noise_suppression(_("Suppress Noise"))
+    , m_mix_mono(_("Mix Mono"))
+    , m_stage_command(_("Request to Speak"))
+    , m_disconnect(_("Disconnect"))
+    , m_stage_invite_lbl(_("You've been invited to speak"))
+    , m_stage_accept(_("Accept"))
+    , m_stage_decline(_("Decline"))
     , m_channel_id(channel_id)
-    , m_menu_view("View")
-    , m_menu_view_settings("More _Settings", true) {
+    , m_menu_view(_("View"))
+    , m_menu_view_settings(_("More _Settings"), true) {
     get_style_context()->add_class("app-window");
 
     set_default_size(300, 400);
@@ -91,10 +93,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_vad_combo.set_valign(Gtk::ALIGN_END);
     m_vad_combo.set_hexpand(true);
     m_vad_combo.set_halign(Gtk::ALIGN_FILL);
-    m_vad_combo.set_tooltip_text(
+    m_vad_combo.set_tooltip_text(_(
         "Voice Activation Detection method\n"
         "Gate - Simple volume threshold. Slider changes threshold\n"
-        "RNNoise - Heavier on CPU. Slider changes probability threshold");
+        "RNNoise - Heavier on CPU. Slider changes probability threshold"));
     m_vad_combo.append("gate", "Gate");
 #ifdef WITH_RNNOISE
     m_vad_combo.append("rnnoise", "RNNoise");
@@ -177,8 +179,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto *sliders_sliders = Gtk::make_managed<Gtk::VBox>();
     sliders_container->pack_start(*sliders_labels, false, true, 2);
     sliders_container->pack_start(*sliders_sliders);
-    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Threshold", Gtk::ALIGN_END));
-    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Gain", Gtk::ALIGN_END));
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Threshold"), Gtk::ALIGN_END));
+    sliders_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Gain"), Gtk::ALIGN_END));
     sliders_sliders->pack_start(m_vad_param);
     sliders_sliders->pack_start(m_capture_gain);
 
@@ -187,9 +189,9 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     auto *combos_combos = Gtk::make_managed<Gtk::VBox>();
     combos_container->pack_start(*combos_labels, false, true, 6);
     combos_container->pack_start(*combos_combos, Gtk::PACK_EXPAND_WIDGET, 6);
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("VAD Method", Gtk::ALIGN_END));
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Output Device", Gtk::ALIGN_END));
-    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>("Input Device", Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("VAD Method"), Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Output Device"), Gtk::ALIGN_END));
+    combos_labels->pack_start(*Gtk::make_managed<Gtk::Label>(_("Input Device"), Gtk::ALIGN_END));
     combos_combos->pack_start(m_vad_combo);
     combos_combos->pack_start(m_playback_combo);
     combos_combos->pack_start(m_capture_combo);
@@ -232,10 +234,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         Abaddon::Get().GetDiscordClient().DeclineInviteToSpeak(m_channel_id, NOOP_CALLBACK);
     });
 
-    m_speakers_label.set_markup("<b>Speakers</b>");
+    m_speakers_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("Speakers")));
     if (m_is_stage) m_listing.pack_start(m_speakers_label, false, true);
     m_listing.pack_start(m_speakers_list, false, true);
-    m_audience_label.set_markup("<b>Audience</b>");
+    m_audience_label.set_markup(Glib::ustring::compose("<b>%1</b>", _("Audience")));
     if (m_is_stage) m_listing.pack_start(m_audience_label, false, true);
     if (m_is_stage) m_listing.pack_start(m_audience_list, false, true);
     m_scroll.add(m_listing);
@@ -256,7 +258,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_main.pack_start(m_buttons, false, true);
     m_main.pack_start(m_stage_invite_box, false, true);
     m_main.pack_start(m_vad_value, false, true);
-    m_main.pack_start(*Gtk::make_managed<Gtk::Label>("Input Settings"), false, true);
+    m_main.pack_start(*Gtk::make_managed<Gtk::Label>(_("Input Settings")), false, true);
     m_main.pack_start(*sliders_container, false, true);
     m_main.pack_start(m_scroll);
     m_stage_topic_label.set_ellipsize(Pango::ELLIPSIZE_END);
@@ -370,20 +372,20 @@ void VoiceWindow::UpdateStageCommand() {
     m_stage_invite_box.set_visible(is_invited_to_speak);
 
     if (is_speaker) {
-        m_stage_command.set_label("Leave the Stage");
+        m_stage_command.set_label(_("Leave the Stage"));
     } else if (is_moderator) {
-        m_stage_command.set_label("Speak on Stage");
+        m_stage_command.set_label(_("Speak on Stage"));
     } else if (m_has_requested_to_speak) {
-        m_stage_command.set_label("Cancel Request");
+        m_stage_command.set_label(_("Cancel Request"));
     } else if (is_invited_to_speak) {
-        m_stage_command.set_label("Decline Invite");
+        m_stage_command.set_label(_("Decline Invite"));
     } else {
-        m_stage_command.set_label("Request to Speak");
+        m_stage_command.set_label(_("Request to Speak"));
     }
 }
 
 void VoiceWindow::UpdateStageTopicLabel(const std::string &topic) {
-    m_stage_topic_label.set_markup("Topic: " + topic);
+    m_stage_topic_label.set_markup(_("Topic: ") + topic);
 }
 
 void VoiceWindow::OnUserConnect(Snowflake user_id, Snowflake to_channel_id) {
