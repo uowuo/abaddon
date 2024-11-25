@@ -117,10 +117,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
         UpdateVADParamValue();
     });
 
+#ifdef WITH_RNNOISE
     m_noise_suppression.set_active(audio.GetSuppressNoise());
     m_noise_suppression.signal_toggled().connect([this]() {
         Abaddon::Get().GetAudio().SetSuppressNoise(m_noise_suppression.get_active());
     });
+#endif
 
     m_mix_mono.set_active(audio.GetMixMono());
     m_mix_mono.signal_toggled().connect([this]() {
