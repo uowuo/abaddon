@@ -44,3 +44,25 @@ for:
 # This snippet assumes that the current directory is the build directory
 LANGUAGE=pt_BR ./abaddon
 ```
+
+## Adding new strings to be translated
+
+When expanding the software, there might be some text that will be shown to
+the user (this does not include log messages as these are meant to be read
+by any developer) that needs to be translated as well. Marking a string for
+translation is as easy as closing the target string with `_(<your_string>)`.
+It may look like this
+
+```cpp
+some_label->set_text(_("I will appear in the user's native language"))
+```
+
+Make sure that the file where the marked strings are is registered in the
+**POTFILES** file, so the main pot file can be updated by calling gettext
+functions. After that, the main .pot file has to be updated so the
+remaining translation files can be synchronised with the new strings.
+
+```sh
+    xgettext -f po/POTFILES -o po/abaddon.pot --from-code=UTF-8 --keyword=_
+    cmake --build build_dir/
+```
