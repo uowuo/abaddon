@@ -39,6 +39,10 @@
     color: #FAA61A;
 }
 
+.message-container {
+    margin-bottom: 8px;
+}
+
 .message-input textview, .message-input textview text {
     background-color: inherit;
 }
