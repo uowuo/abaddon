@@ -396,6 +396,7 @@ struct IdentifyProperties {
     std::string Browser;
     std::string Device;
     std::string SystemLocale;
+    bool HasClientMods;
     std::string BrowserUserAgent;
     std::string BrowserVersion;
     std::string OSVersion;

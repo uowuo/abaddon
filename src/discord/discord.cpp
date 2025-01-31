@@ -2791,6 +2791,7 @@ void DiscordClient::SendIdentify() {
     msg.Properties.Browser = "Chrome";
     msg.Properties.Device = "";
     msg.Properties.SystemLocale = "en-US";
+    msg.Properties.HasClientMods = false;
     msg.Properties.BrowserUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36";
     msg.Properties.BrowserVersion = "67.0.3396.87";
     msg.Properties.OSVersion = "10";

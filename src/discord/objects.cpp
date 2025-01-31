@@ -264,6 +264,7 @@ void to_json(nlohmann::json &j, const IdentifyProperties &m) {
     j["browser"] = m.Browser;
     j["device"] = m.Device;
     j["system_locale"] = m.SystemLocale;
+    j["has_client_mods"] = m.HasClientMods;
     j["browser_user_agent"] = m.BrowserUserAgent;
     j["browser_version"] = m.BrowserVersion;
     j["os_version"] = m.OSVersion;
