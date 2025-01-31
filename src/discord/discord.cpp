@@ -2837,6 +2837,7 @@ void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identi
     j["browser"] = identity.Properties.Browser;
     j["device"] = identity.Properties.Device;
     j["system_locale"] = identity.Properties.SystemLocale;
+    j["has_client_mods"] = identity.Properties.HasClientMods;
     j["browser_user_agent"] = identity.Properties.BrowserUserAgent;
     j["browser_version"] = identity.Properties.BrowserVersion;
     j["os_version"] = identity.Properties.OSVersion;
