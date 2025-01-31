@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(abaddon)
 
-set(ABADDON_RESOURCE_DIR "/usr/share/abaddon" CACHE PATH "Fallback directory for resources on Linux")
+set(ABADDON_RESOURCE_DIR "${CMAKE_INSTALL_PREFIX}/share/abaddon" CACHE PATH "Fallback directory for resources on Linux")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -220,3 +220,9 @@ set(ABADDON_COMPILER_DEFS "" CACHE STRING "Additional compiler definitions")
 foreach (COMPILER_DEF IN LISTS ABADDON_COMPILER_DEFS)
     target_compile_definitions(abaddon PRIVATE "${COMPILER_DEF}")
 endforeach ()
+
+install(TARGETS abaddon RUNTIME)
+install(DIRECTORY res/css DESTINATION ${ABADDON_RESOURCE_DIR})
+install(DIRECTORY res/fonts DESTINATION ${ABADDON_RESOURCE_DIR})
+install(DIRECTORY res/res DESTINATION ${ABADDON_RESOURCE_DIR})
+
