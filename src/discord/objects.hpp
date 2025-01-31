@@ -448,6 +448,8 @@ struct CreateMessageAttachmentObject {
 struct CreateMessageObject {
     std::string Content;
     MessageFlags Flags = MessageFlags::NONE;
+    bool IsTTS = false;
+    std::string MobileNetworkType = "unknown";
     std::optional<MessageReferenceData> MessageReference;
     std::optional<std::string> Nonce;
     std::optional<std::vector<CreateMessageAttachmentObject>> Attachments;

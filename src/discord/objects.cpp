@@ -315,6 +315,8 @@ void to_json(nlohmann::json &j, const CreateMessageAttachmentObject &m) {
 void to_json(nlohmann::json &j, const CreateMessageObject &m) {
     j["content"] = m.Content;
     j["flags"] = m.Flags;
+    j["mobile_network_type"] = m.MobileNetworkType;
+    j["tts"] = m.IsTTS;
     JS_IF("attachments", m.Attachments);
     JS_IF("message_reference", m.MessageReference);
     JS_IF("nonce", m.Nonce);
