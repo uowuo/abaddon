@@ -90,6 +90,8 @@ std::pair<std::optional<std::string>, std::string> GetCookieTask() {
 
     std::string dcfduid;
     std::string sdcfduid;
+    std::string cfruid;
+    std::string cfuvid;
 
     for (auto *cur = slist; cur != nullptr; cur = cur->next) {
         const auto cookie = ParseCookie(cur->data);
@@ -98,13 +100,17 @@ std::pair<std::optional<std::string>, std::string> GetCookieTask() {
                 dcfduid = cookie->second;
             } else if (cookie->first == "__sdcfduid") {
                 sdcfduid = cookie->second;
+            } else if (cookie->first == "__cfruid") {
+                cfruid = cookie->second;
+            } else if (cookie->first == "_cfuvid") {
+                cfuvid = cookie->second;
             }
         }
     }
     curl_slist_free_all(slist);
 
     if (!dcfduid.empty() && !sdcfduid.empty()) {
-        return { "__dcfduid=" + dcfduid + "; __sdcfduid=" + sdcfduid, res.text };
+        return { "__dcfduid=" + dcfduid + "; __sdcfduid=" + sdcfduid + "; __cfruid=" + cfruid + "; _cfuvid=" + cfuvid, res.text };
     }
 
     return {};
