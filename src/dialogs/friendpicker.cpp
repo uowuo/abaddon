@@ -1,16 +1,18 @@
 #include "friendpicker.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 
 FriendPickerDialog::FriendPickerDialog(Gtk::Window &parent)
-    : Gtk::Dialog("Pick a friend", parent, true)
+    : Gtk::Dialog(_("Pick a friend"), parent, true)
     , m_bbox(Gtk::ORIENTATION_HORIZONTAL) {
     set_default_size(300, 300);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
 
     m_ok_button = add_button("OK", Gtk::RESPONSE_OK);
-    m_cancel_button = add_button("Cancel", Gtk::RESPONSE_CANCEL);
+    m_cancel_button = add_button(_("Cancel"), Gtk::RESPONSE_CANCEL);
 
     m_ok_button->set_sensitive(false);
 

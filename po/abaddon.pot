@@ -1,0 +1,1960 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-11 12:21-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/abaddon.cpp:215
+msgid "css failed parsing (%1)"
+msgstr ""
+
+#: src/abaddon.cpp:231
+msgid "The PNG pixbufloader wasn't detected. Abaddon may not work as a result."
+msgstr ""
+
+#: src/abaddon.cpp:237
+msgid ""
+"The GIF pixbufloader wasn't detected. Animations may not display as a result."
+msgstr ""
+
+#: src/abaddon.cpp:252
+msgid "The settings file could not be opened!"
+msgstr ""
+
+#: src/abaddon.cpp:258
+msgid "The emoji file couldn't be loaded!"
+msgstr ""
+
+#: src/abaddon.cpp:264
+msgid "The Discord cache could not be created!"
+msgstr ""
+
+#: src/abaddon.cpp:272
+msgid "The audio engine could not be initialized!"
+msgstr ""
+
+#: src/abaddon.cpp:333
+msgid "Quit"
+msgstr ""
+
+#: src/abaddon.cpp:468
+msgid "Discord rejected your token"
+msgstr ""
+
+#: src/abaddon.cpp:473
+msgid "Lost connection with Discord's gateway. Try reconnecting (code %1)"
+msgstr ""
+
+#: src/abaddon.cpp:483 src/abaddon.cpp:926
+msgid "This thread is archived. Sending a message will unarchive it"
+msgstr ""
+
+#: src/abaddon.cpp:626
+msgid ""
+"Cookies could not be fetched. This may increase your chances of being "
+"flagged by Discord's anti-spam"
+msgstr ""
+
+#: src/abaddon.cpp:635
+msgid ""
+"Build number could not be fetched. This may increase your chances of being "
+"flagged by Discord's anti-spam"
+msgstr ""
+
+#: src/abaddon.cpp:652
+msgid "Failed to accept the verification gate."
+msgstr ""
+
+#: src/abaddon.cpp:677
+msgid "Insert Mention"
+msgstr ""
+
+#: src/abaddon.cpp:678
+msgid "Ban"
+msgstr ""
+
+#: src/abaddon.cpp:679
+msgid "Kick"
+msgstr ""
+
+#: src/abaddon.cpp:680 src/components/chatlist.cpp:298
+#: src/windows/guildsettings/banspane.cpp:13
+#: src/windows/guildsettings/emojispane.cpp:18
+msgid "Copy ID"
+msgstr ""
+
+#: src/abaddon.cpp:681
+msgid "Go to DM"
+msgstr ""
+
+#: src/abaddon.cpp:682 src/windows/guildsettingswindow.cpp:66
+msgid "Roles"
+msgstr ""
+
+#: src/abaddon.cpp:683
+msgid "View Profile"
+msgstr ""
+
+#: src/abaddon.cpp:684
+msgid "Remove From Group"
+msgstr ""
+
+#: src/abaddon.cpp:1002
+msgid "Are you sure you want to leave %1?"
+msgstr ""
+
+#: src/abaddon.cpp:1012
+msgid "Are you sure you want to kick %1?"
+msgstr ""
+
+#: src/abaddon.cpp:1022
+msgid "Are you sure you want to ban %1?"
+msgstr ""
+
+#: src/abaddon.cpp:1119
+msgid "css failed to load (%1)"
+msgstr ""
+
+#: src/startup.cpp:14
+msgid "Getting connection info..."
+msgstr ""
+
+#: src/discord/permissions.cpp:16
+msgid "None"
+msgstr ""
+
+#: src/discord/permissions.cpp:18
+msgid "Create Invite"
+msgstr ""
+
+#: src/discord/permissions.cpp:20
+msgid "Kick Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:22
+msgid "Ban Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:24
+msgid "Administrator"
+msgstr ""
+
+#: src/discord/permissions.cpp:26
+msgid "Manage Channels"
+msgstr ""
+
+#: src/discord/permissions.cpp:28
+msgid "Manage Server"
+msgstr ""
+
+#: src/discord/permissions.cpp:30
+msgid "Add Reactions"
+msgstr ""
+
+#: src/discord/permissions.cpp:32
+msgid "View Audit Log"
+msgstr ""
+
+#: src/discord/permissions.cpp:34
+msgid "Use Priority Speaker"
+msgstr ""
+
+#: src/discord/permissions.cpp:36
+msgid "Video"
+msgstr ""
+
+#: src/discord/permissions.cpp:38
+msgid "View Channels"
+msgstr ""
+
+#: src/discord/permissions.cpp:40
+msgid "Send Messages"
+msgstr ""
+
+#: src/discord/permissions.cpp:42
+msgid "Use TTS"
+msgstr ""
+
+#: src/discord/permissions.cpp:44
+msgid "Manage Messages"
+msgstr ""
+
+#: src/discord/permissions.cpp:46
+msgid "Embed Links"
+msgstr ""
+
+#: src/discord/permissions.cpp:48
+msgid "Attach Files"
+msgstr ""
+
+#: src/discord/permissions.cpp:50
+msgid "Read Message History"
+msgstr ""
+
+#: src/discord/permissions.cpp:52
+msgid "Mention @everyone"
+msgstr ""
+
+#: src/discord/permissions.cpp:54
+msgid "Use External Emojis"
+msgstr ""
+
+#: src/discord/permissions.cpp:56
+msgid "View Server Insights"
+msgstr ""
+
+#: src/discord/permissions.cpp:58
+msgid "Connect to Voice"
+msgstr ""
+
+#: src/discord/permissions.cpp:60
+msgid "Speak in Voice"
+msgstr ""
+
+#: src/discord/permissions.cpp:62
+msgid "Mute Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:64
+msgid "Deafen Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:66
+msgid "Move Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:68
+msgid "Use Voice Activation"
+msgstr ""
+
+#: src/discord/permissions.cpp:70
+msgid "Change Nickname"
+msgstr ""
+
+#: src/discord/permissions.cpp:72
+msgid "Manage Nicknames"
+msgstr ""
+
+#: src/discord/permissions.cpp:74
+msgid "Manage Roles"
+msgstr ""
+
+#: src/discord/permissions.cpp:76
+msgid "Manage Webhooks"
+msgstr ""
+
+#: src/discord/permissions.cpp:78
+msgid "Manage Expressions"
+msgstr ""
+
+#: src/discord/permissions.cpp:80
+msgid "Use Application Commands"
+msgstr ""
+
+#: src/discord/permissions.cpp:82
+msgid "Manage Events"
+msgstr ""
+
+#: src/discord/permissions.cpp:84
+msgid "Manage Threads"
+msgstr ""
+
+#: src/discord/permissions.cpp:86
+msgid "Create Public Threads"
+msgstr ""
+
+#: src/discord/permissions.cpp:88
+msgid "Create Private Threads"
+msgstr ""
+
+#: src/discord/permissions.cpp:90
+msgid "Use External Stickers"
+msgstr ""
+
+#: src/discord/permissions.cpp:92
+msgid "Send Messages In Threads"
+msgstr ""
+
+#: src/discord/permissions.cpp:94
+msgid "Use Activities"
+msgstr ""
+
+#: src/discord/permissions.cpp:96
+msgid "Timeout Members"
+msgstr ""
+
+#: src/discord/permissions.cpp:100
+msgid "Use Soundboard"
+msgstr ""
+
+#: src/discord/permissions.cpp:102
+msgid "Create Expressions"
+msgstr ""
+
+#: src/discord/permissions.cpp:104
+msgid "Create Events"
+msgstr ""
+
+#: src/discord/permissions.cpp:106
+msgid "Use External Sounds"
+msgstr ""
+
+#: src/discord/permissions.cpp:108
+msgid "Send Voice Messages"
+msgstr ""
+
+#: src/discord/permissions.cpp:112
+msgid "Set Voice Channel Status"
+msgstr ""
+
+#: src/discord/permissions.cpp:114
+msgid "Unknown Permission"
+msgstr ""
+
+#: src/discord/permissions.cpp:123
+msgid "Allows members to invite new people to this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:125
+msgid ""
+"Allows members to remove other members from this server. Kicked members will "
+"be able to rejoin if they have another invite."
+msgstr ""
+
+#: src/discord/permissions.cpp:127
+msgid "Allows members to permanently ban other members from this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:129
+msgid ""
+"Members with this permission will have every permission and will also bypass "
+"all channel specific permissions or restrictions (for example, these members "
+"would get access to all private channels). This is a dangerous permission to "
+"grant."
+msgstr ""
+
+#: src/discord/permissions.cpp:131
+msgid "Allows members to create, edit, or delete channels."
+msgstr ""
+
+#: src/discord/permissions.cpp:133
+msgid ""
+"Allows members to change this server's name, switch regions, and add bots to "
+"this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:135
+msgid ""
+"Allows members to add new emoji reactions to a message. If this permission "
+"is disabled, members can still react using any existing reactions on a "
+"message."
+msgstr ""
+
+#: src/discord/permissions.cpp:137
+msgid ""
+"Allows members to view a record of who made which changes in this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:139
+msgid ""
+"Allows members to be more easily heard in voice channels. When activated, "
+"the volume of others without this permission will be automatically lowered. "
+"Priority Speaker is activated by using the Push to Talk (Priority) keybind."
+msgstr ""
+
+#: src/discord/permissions.cpp:141
+msgid ""
+"Allows members to share their video, screen share, or stream a game in this "
+"server."
+msgstr ""
+
+#: src/discord/permissions.cpp:143
+msgid ""
+"Allows members to view channels by default (excluding private channels)."
+msgstr ""
+
+#: src/discord/permissions.cpp:145
+msgid "Allows members to send messages in text channels."
+msgstr ""
+
+#: src/discord/permissions.cpp:147
+msgid ""
+"Allows members to send text-to-speech messages by starting a message with /"
+"tts. These messages can be heard by anyone focused on this channel."
+msgstr ""
+
+#: src/discord/permissions.cpp:149
+msgid "Allows members to delete messages by other members or pin any message."
+msgstr ""
+
+#: src/discord/permissions.cpp:151
+msgid ""
+"Allows links that members share to show embedded content in text channels."
+msgstr ""
+
+#: src/discord/permissions.cpp:153
+msgid "Allows members to upload files or media in text channels."
+msgstr ""
+
+#: src/discord/permissions.cpp:155
+msgid ""
+"Allows members to read previous messages sent in channels. If this "
+"permission is disabled, members only see messages sent when they are online "
+"and focused on that channel."
+msgstr ""
+
+#: src/discord/permissions.cpp:157
+msgid ""
+"Allows members to use @everyone (everyone in the server) or @here (only "
+"online members in that channel). They can also @mention all roles, even if "
+"the role's \"Allow anyone to mention this role\" permission is disabled."
+msgstr ""
+
+#: src/discord/permissions.cpp:159
+msgid ""
+"Allows members to use emoji from other servers, if they're a Discord Nitro "
+"member."
+msgstr ""
+
+#: src/discord/permissions.cpp:161
+msgid ""
+"Allows members to view Server Insights, which shows data on community "
+"growth, engagement, and more."
+msgstr ""
+
+#: src/discord/permissions.cpp:163
+msgid "Allows members to join voice channels and hear others."
+msgstr ""
+
+#: src/discord/permissions.cpp:165
+msgid ""
+"Allows members to talk in voice channels. If this permission is disabled, "
+"members are default muted until somebody with the \"Mute Members\" "
+"permission unmutes them."
+msgstr ""
+
+#: src/discord/permissions.cpp:167
+msgid "Allows members to mute other members in voice channels for everyone."
+msgstr ""
+
+#: src/discord/permissions.cpp:169
+msgid ""
+"Allows members to deafen other members in voice channels, which means they "
+"won't be able to speak or hear others."
+msgstr ""
+
+#: src/discord/permissions.cpp:171
+msgid ""
+"Allows members to move other members between voice channels that the member "
+"with the permission has access to."
+msgstr ""
+
+#: src/discord/permissions.cpp:173
+msgid ""
+"Allows members to speak in voice channels by simply talking. If this "
+"permission is disabled, members are required to use Push-to-talk. Good for "
+"controlling background noise or noisy members."
+msgstr ""
+
+#: src/discord/permissions.cpp:175
+msgid ""
+"Allows members to change their own nickname, a custom name for just this "
+"server."
+msgstr ""
+
+#: src/discord/permissions.cpp:177
+msgid "Allows members to change the nicknames of other members."
+msgstr ""
+
+#: src/discord/permissions.cpp:179
+msgid ""
+"Allows members to create new roles and edit or delete roles lower than their "
+"highest role. Also allows members to change permissions of individual "
+"channels that they have access to."
+msgstr ""
+
+#: src/discord/permissions.cpp:181
+msgid ""
+"Allows members to create, edit, or delete webhooks, which can post messages "
+"from other apps or sites into this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:183
+msgid ""
+"Allows members to add or remove custom emoji, stickers, and sounds in this "
+"server."
+msgstr ""
+
+#: src/discord/permissions.cpp:185
+msgid ""
+"Allows members to use commands from applications, including slash commands "
+"and context menu commands."
+msgstr ""
+
+#: src/discord/permissions.cpp:187
+msgid "Allows members to edit and cancel events."
+msgstr ""
+
+#: src/discord/permissions.cpp:189
+msgid ""
+"Allows members to rename, delete, close, and turn on slow mode for threads. "
+"They can also view private threads."
+msgstr ""
+
+#: src/discord/permissions.cpp:191
+msgid "Allows members to create threads that everyone in a channel can view."
+msgstr ""
+
+#: src/discord/permissions.cpp:193
+msgid "Allows members to create invite-only threads."
+msgstr ""
+
+#: src/discord/permissions.cpp:195
+msgid ""
+"Allows members to use stickers from other servers, if they're a Discord "
+"Nitro member."
+msgstr ""
+
+#: src/discord/permissions.cpp:197
+msgid "Allows members to send messages in threads."
+msgstr ""
+
+#: src/discord/permissions.cpp:199
+msgid "Allows members to use Activities in this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:201
+msgid ""
+"When you put a user in timeout they will not be able to send messages in "
+"chat, reply within threads, react to messages, or speak in voice or Stage "
+"channels."
+msgstr ""
+
+#: src/discord/permissions.cpp:205
+msgid "Allows members to send sounds from server soundboard."
+msgstr ""
+
+#: src/discord/permissions.cpp:207
+msgid ""
+"Allows members to add custom emoji, stickers, and sounds in this server."
+msgstr ""
+
+#: src/discord/permissions.cpp:209
+msgid "Allows members to create events."
+msgstr ""
+
+#: src/discord/permissions.cpp:211
+msgid ""
+"Allows members to use sounds from other servers, if they're a Discord Nitro "
+"member."
+msgstr ""
+
+#: src/discord/permissions.cpp:213
+msgid "Allows members to send voice messages."
+msgstr ""
+
+#: src/discord/permissions.cpp:217
+msgid "Allows members to create and edit voice channel status."
+msgstr ""
+
+#: src/dialogs/confirm.cpp:6
+msgid "Confirm"
+msgstr ""
+
+#: src/dialogs/confirm.cpp:9 src/dialogs/friendpicker.cpp:15
+#: src/dialogs/setstatus.cpp:26 src/dialogs/textinput.cpp:12
+#: src/dialogs/token.cpp:16 src/components/friendslist.cpp:293
+msgid "Cancel"
+msgstr ""
+
+#: src/dialogs/confirm.cpp:15
+msgid "Are you sure?"
+msgstr ""
+
+#: src/dialogs/friendpicker.cpp:8
+msgid "Pick a friend"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:23 src/windows/mainwindow.cpp:268
+msgid "Set Status"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:34 src/dialogs/setstatus.cpp:38
+#: src/components/friendslist.cpp:27
+msgid "Online"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:35
+msgid "Do Not Disturb"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:36
+msgid "Away"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:37
+msgid "Invisible"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:40
+msgid "Playing"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:41
+msgid "Streaming"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:42
+msgid "Listening to"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:43
+msgid "Watching"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:44 src/dialogs/setstatus.cpp:46
+msgid "Custom"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:45
+msgid "Competing in"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:56
+msgid "How are you, %1?"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:58
+msgid "Status"
+msgstr ""
+
+#: src/dialogs/setstatus.cpp:60
+msgid "Activity"
+msgstr ""
+
+#: src/dialogs/token.cpp:13 src/windows/mainwindow.cpp:262
+msgid "Set Token"
+msgstr ""
+
+#: src/dialogs/verificationgate.cpp:8
+msgid "Verification Required"
+msgstr ""
+
+#: src/dialogs/verificationgate.cpp:14 src/components/friendslist.cpp:258
+#: src/windows/voice/voicewindow.cpp:29
+msgid "Accept"
+msgstr ""
+
+#: src/components/chatinput.cpp:143
+msgid "Choose file"
+msgstr ""
+
+#: src/components/chatinput.cpp:389 src/components/friendslist.cpp:287
+msgid "Remove"
+msgstr ""
+
+#: src/components/chatinput.cpp:394
+msgid "Change Filename"
+msgstr ""
+
+#: src/components/chatinput.cpp:396
+msgid "Enter new filename for attachment"
+msgstr ""
+
+#: src/components/chatinput.cpp:396
+msgid "Enter filename"
+msgstr ""
+
+#: src/components/chatinput.cpp:404
+msgid "Change Alt-Text"
+msgstr ""
+
+#: src/components/chatinput.cpp:406
+msgid "Enter description (alt-text) for attachment"
+msgstr ""
+
+#: src/components/chatinput.cpp:406
+msgid "Enter alt-text"
+msgstr ""
+
+#: src/components/chatinputindicator.cpp:119
+msgid "%1 is typing..."
+msgstr ""
+
+#: src/components/chatinputindicator.cpp:121
+msgid "%1 and %2 are typing"
+msgstr ""
+
+#: src/components/chatinputindicator.cpp:126
+msgid "%1, %2, %3 and %4 are typing..."
+msgstr ""
+
+#: src/components/chatinputindicator.cpp:133
+msgid "Several people are typing..."
+msgstr ""
+
+#: src/components/chatlist.cpp:305
+msgid "Delete Message"
+msgstr ""
+
+#: src/components/chatlist.cpp:312
+msgid "Edit Message"
+msgstr ""
+
+#: src/components/chatlist.cpp:319
+msgid "Copy Content"
+msgstr ""
+
+#: src/components/chatlist.cpp:328
+msgid "Reply To"
+msgstr ""
+
+#: src/components/chatlist.cpp:335
+msgid "Unpin"
+msgstr ""
+
+#: src/components/chatlist.cpp:341
+msgid "Pin"
+msgstr ""
+
+#: src/components/chatmessage.cpp:15
+msgid "Copy Link"
+msgstr ""
+
+#: src/components/chatmessage.cpp:146
+msgid "deleted"
+msgstr ""
+
+#: src/components/chatmessage.cpp:148
+msgid "edited"
+msgstr ""
+
+#: src/components/chatmessage.cpp:202
+msgid "boosted server"
+msgstr ""
+
+#: src/components/chatmessage.cpp:205
+msgid "user joined"
+msgstr ""
+
+#: src/components/chatmessage.cpp:208
+msgid "message pinned"
+msgstr ""
+
+#: src/components/chatmessage.cpp:218
+msgid "<i>used <span color='#697ec4'>%1</span> with %2</i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:233
+msgid ""
+"<i><span color='#999999'><span color='#eeeeee'>%1</span> added <span "
+"color='#eeeeee'>%2</span></span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:243
+msgid ""
+"<i><span color='#999999'><span color='#eeeeee'>%1</span> left</span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:245
+msgid ""
+"<i><span color='#999999'><span color='#eeeeee'>%1</span> removed <span "
+"color='#eeeeee'>%2</span></span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:252
+msgid "<i><span color='#999999'>%1 changed the name to <b>%2</b></span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:257
+msgid "<i><span color='#999999'>%1 changed the channel icon</span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:265
+msgid ""
+"<i><span color='#999999'>%1 just boosted the server <b>%2</b> times! %3 has "
+"achieved <b>Level %4!</b></span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:275
+msgid ""
+"<i><span color='#999999'>%1 has added <b>%2</b> to this channel. Its most "
+"important updates will show up here.</span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:281
+msgid "started a call"
+msgstr ""
+
+#: src/components/chatmessage.cpp:284
+msgid ""
+"This server has been removed from Server Discovery because it no longer "
+"passes all the requirements."
+msgstr ""
+
+#: src/components/chatmessage.cpp:287
+msgid ""
+"This server is eligible for Server Discovery again and has been "
+"automatically relisted!"
+msgstr ""
+
+#: src/components/chatmessage.cpp:290
+msgid ""
+"This server has failed Discovery activity requirements for 1 week. If this "
+"server fails for 4 weeks in a row, it will be automatically removed from "
+"Discovery."
+msgstr ""
+
+#: src/components/chatmessage.cpp:293
+msgid ""
+"This server has failed Discovery activity requirements for 3 weeks in a row. "
+"If this server fails for 1 more week, it will be removed from Discovery."
+msgstr ""
+
+#: src/components/chatmessage.cpp:299
+msgid "<i><span color='#999999'>%1 started a thread: </span></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:306
+msgid "<i><span color='#999999'>%1 started a thread: </span><b>%2</b></i>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:713 src/components/chatmessage.cpp:736
+#: src/windows/guildsettings/auditlogpane.cpp:44
+msgid "Unknown User"
+msgstr ""
+
+#: src/components/chatmessage.cpp:729
+msgid "%1 used <span color='#697ec4'>/%2</span>"
+msgstr ""
+
+#: src/components/chatmessage.cpp:740
+msgid "deleted message"
+msgstr ""
+
+#: src/components/chatmessage.cpp:746
+msgid "attachment"
+msgstr ""
+
+#: src/components/chatmessage.cpp:748
+msgid "embed"
+msgstr ""
+
+#: src/components/chatmessage.cpp:768
+msgid "reply unavailable"
+msgstr ""
+
+#: src/components/chatwindow.cpp:333
+msgid "Replying to %1"
+msgstr ""
+
+#: src/components/chatwindow.cpp:335
+msgid "Replying..."
+msgstr ""
+
+#: src/components/chatwindow.cpp:355
+msgid "Editing..."
+msgstr ""
+
+#: src/components/friendslist.cpp:26 src/windows/mainwindow.cpp:290
+msgid "Friends"
+msgstr ""
+
+#: src/components/friendslist.cpp:28
+msgid "Pending"
+msgstr ""
+
+#: src/components/friendslist.cpp:29
+msgid "Blocked"
+msgstr ""
+
+#: src/components/friendslist.cpp:114
+msgid "Failed to accept"
+msgstr ""
+
+#: src/components/friendslist.cpp:129
+msgid "Are you sure you want to unblock %1?"
+msgstr ""
+
+#: src/components/friendslist.cpp:132
+msgid "Are you sure you want to remove %1?"
+msgstr ""
+
+#: src/components/friendslist.cpp:135
+msgid "Are you sure you want to ignore %1?"
+msgstr ""
+
+#: src/components/friendslist.cpp:138
+msgid "Are you sure you want to cancel your request to %1?"
+msgstr ""
+
+#: src/components/friendslist.cpp:146
+msgid "Failed to remove user"
+msgstr ""
+
+#: src/components/friendslist.cpp:195
+msgid "Add a Friend"
+msgstr ""
+
+#: src/components/friendslist.cpp:197
+msgid "Add"
+msgstr ""
+
+#: src/components/friendslist.cpp:207
+msgid "Enter a Username#1234"
+msgstr ""
+
+#: src/components/friendslist.cpp:220
+msgid "Invalid input"
+msgstr ""
+
+#: src/components/friendslist.cpp:230
+msgid "Hang on..."
+msgstr ""
+
+#: src/components/friendslist.cpp:235
+msgid "Success!"
+msgstr ""
+
+#: src/components/friendslist.cpp:237
+msgid "Failed: %1"
+msgstr ""
+
+#: src/components/friendslist.cpp:290
+msgid "Ignore"
+msgstr ""
+
+#: src/components/friendslist.cpp:331
+msgid "Incoming Friend Request"
+msgstr ""
+
+#: src/components/friendslist.cpp:334
+msgid "Outgoing Friend Request"
+msgstr ""
+
+#: src/components/ratelimitindicator.cpp:87
+msgid "You may bypass slowmode."
+msgstr ""
+
+#: src/components/ratelimitindicator.cpp:92
+#, c-format
+msgid "%1s"
+msgstr ""
+
+#: src/components/ratelimitindicator.cpp:95
+msgid "Slowmode is enabled. Members can send one message every %1 seconds"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:33 src/components/voiceinfobox.cpp:34
+msgid "You shouldn't see me"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:49
+msgid "Connecting"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:52
+msgid "Establishing connection"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:55
+msgid "Connected"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:59
+msgid "Disconnected"
+msgstr ""
+
+#: src/components/voiceinfobox.cpp:62 src/components/voiceinfobox.cpp:118
+msgid "Unknown"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:19
+#: src/components/channellist/channellisttree.cpp:23
+#: src/components/channellist/channellisttree.cpp:24
+#: src/components/channellist/channellisttree.cpp:37
+#: src/components/channellist/channellisttree.cpp:44
+msgid "_Copy ID"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:20
+msgid "View _Settings"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:21
+#: src/components/channellist/channellisttree.cpp:45
+msgid "_Leave"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:22
+#: src/components/channellist/channellisttree.cpp:25
+#: src/components/channellist/channellisttree.cpp:35
+#: src/components/channellist/channellisttree.cpp:48
+msgid "Mark as _Read"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:27
+#: src/components/channellist/channellisttree.cpp:28
+msgid "Open in New _Tab"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:31
+#: src/components/channellist/channellisttree.cpp:33
+msgid "_Join"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:32
+#: src/components/channellist/channellisttree.cpp:34
+msgid "_Disconnect"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:36
+msgid "Open _Chat"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:41
+msgid "Join _Voice"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:42
+msgid "_Disconnect Voice"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:46
+msgid "_Archive"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:47
+msgid "_Unarchive"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:259
+msgid "Are you sure you want to leave this group DM?"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:297
+msgid "Are you sure you want to leave this thread?"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:1199
+msgid "Direct Messages"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:1371
+msgid "Close"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:1371
+msgid "Leave"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:1425
+#: src/components/channellist/channellisttree.cpp:1439
+#: src/components/channellist/channellisttree.cpp:1503
+#: src/components/channellist/channellisttree.cpp:1528
+msgid "Unmute"
+msgstr ""
+
+#: src/components/channellist/channellisttree.cpp:1427
+#: src/components/channellist/channellisttree.cpp:1441
+#: src/components/channellist/channellisttree.cpp:1505
+#: src/components/channellist/channellisttree.cpp:1530
+#: src/windows/voice/voicewindow.cpp:22
+msgid "Mute"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:64
+msgid "Info"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:65 src/windows/mainwindow.cpp:298
+msgid "Members"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:67
+msgid "Bans"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:69
+msgid "Invites"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:70
+msgid "Emojis"
+msgstr ""
+
+#: src/windows/guildsettingswindow.cpp:72
+msgid "Audit Log"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:258
+msgid "Connect"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:260 src/windows/voice/voicewindow.cpp:27
+msgid "Disconnect"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:263
+msgid "Login with QR Code"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:266
+msgid "Not compiled with support"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:270
+msgid "Add user to DM"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:279
+msgid "File"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:281
+msgid "Reload CSS"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:282
+msgid "Clear file cache"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:283
+msgid "Dump ready message"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:288 src/windows/voice/voicewindow.cpp:32
+msgid "View"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:291
+msgid "Pins"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:292
+msgid "Threads"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:293
+msgid "Mark Server as Read"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:295
+msgid "Channels"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:302
+msgid "Go Back"
+msgstr ""
+
+#: src/windows/mainwindow.cpp:303
+msgid "Go Forward"
+msgstr ""
+
+#: src/windows/pinnedwindow.cpp:15
+msgid "#%1 - Pinned Messages"
+msgstr ""
+
+#: src/windows/pinnedwindow.cpp:17
+msgid "Pinned Messages"
+msgstr ""
+
+#: src/windows/profilewindow.cpp:80
+msgid "User Info"
+msgstr ""
+
+#: src/windows/profilewindow.cpp:81
+msgid "Mutual Servers"
+msgstr ""
+
+#: src/windows/profilewindow.cpp:82
+msgid "Mutual Friends"
+msgstr ""
+
+#: src/windows/profilewindow.cpp:113
+msgid "Originally known as %1"
+msgstr ""
+
+#: src/windows/threadswindow.cpp:9
+msgid "Public"
+msgstr ""
+
+#: src/windows/threadswindow.cpp:10
+msgid "Private"
+msgstr ""
+
+#: src/windows/threadswindow.cpp:16
+msgid "#%1 - Threads"
+msgstr ""
+
+#: src/windows/threadswindow.cpp:32
+msgid "Active Threads"
+msgstr ""
+
+#: src/windows/threadswindow.cpp:33
+msgid "Archived Threads"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:21
+#: src/windows/voicesettingswindow.cpp:53
+msgid "Voice"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:22
+#: src/windows/voicesettingswindow.cpp:54
+msgid "Music"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:23
+msgid "Restricted"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:25
+msgid ""
+"Sets the coding mode for the Opus encoder\n"
+"Voice - Optimize for voice quality\n"
+"Music - Optimize for non-voice signals incl. music\n"
+"Restricted - Optimize for non-voice, low latency. Not recommended"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:52
+msgid "Auto"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:56
+msgid ""
+"Signal hint. Tells Opus what the current signal is\n"
+"Auto - Let Opus figure it out\n"
+"Voice - Tell Opus it's a voice signal\n"
+"Music - Tell Opus it's a music signal"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:130
+msgid "Coding Mode"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:131
+msgid "Signal Hint"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:132
+msgid "Bitrate"
+msgstr ""
+
+#: src/windows/voicesettingswindow.cpp:133
+#: src/windows/voice/voicewindow.cpp:181
+msgid "Gain"
+msgstr ""
+
+#: src/windows/profile/mutualguildspane.cpp:38
+msgid "Unknown Server"
+msgstr ""
+
+#: src/windows/profile/userinfopane.cpp:144
+msgid "NOTE"
+msgstr ""
+
+#: src/windows/profile/userinfopane.cpp:190
+msgid "ABOUT ME"
+msgstr ""
+
+#: src/windows/profile/userinfopane.cpp:216
+msgid "Failed to set note"
+msgstr ""
+
+#: src/windows/profile/userinfopane.cpp:238
+#: src/windows/guildsettings/memberspane.cpp:214
+msgid "Account created: "
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:55
+msgid "%1 made changes to <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:61
+msgid "Set the server icon"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:66
+msgid "Set the server name to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:69
+msgid "Set the server name"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:76
+msgid "%1 created a voice channel <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:79
+msgid "%1 created a text channel <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:87
+#: src/windows/guildsettings/auditlogpane.cpp:477
+msgid "Set the name to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:91
+#: src/windows/guildsettings/auditlogpane.cpp:128
+msgid "Marked the channel as NSFW"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:93
+#: src/windows/guildsettings/auditlogpane.cpp:130
+msgid "Unmarked the channel as NSFW"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:100
+msgid "%1 made changes to <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:103
+msgid "%1 made changes to <b>&lt;#%2&gt;</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:113
+#: src/windows/guildsettings/auditlogpane.cpp:384
+#: src/windows/guildsettings/auditlogpane.cpp:503
+msgid "Changed the name from <b>%1</b> to <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:117
+#: src/windows/guildsettings/auditlogpane.cpp:254
+#: src/windows/guildsettings/auditlogpane.cpp:346
+msgid "Changed the name to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:122
+msgid "Changed the topic to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:124
+msgid "Cleared the topic"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:135
+#: src/windows/guildsettings/auditlogpane.cpp:486
+#: src/windows/guildsettings/auditlogpane.cpp:511
+msgid "Disabled slowmode"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:137
+#: src/windows/guildsettings/auditlogpane.cpp:488
+#: src/windows/guildsettings/auditlogpane.cpp:513
+msgid "Set slowmode to <b>%1 seconds</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:143
+msgid "%1 removed <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:149
+msgid "%1 created channel overrides for <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:151
+msgid "%1 created channel overrides for <b>&lt;#%2&gt;</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:158
+msgid "%1 updated channel overrides for <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:160
+msgid "%1 updated channel overrides for <b>&lt;#%2&gt;</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:167
+msgid "%1 removed channel overrides for <b>#%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:169
+msgid "%1 removed channel overrides for <b>&lt;#%2&gt;</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:174
+msgid "%1 kicked <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:177
+msgid "%1 pruned <b>%2</b> members"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:178
+msgid "For <b>%1 days</b> of inactivity"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:182
+msgid "%1 banned <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:186
+msgid "%1 removed the ban for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:190
+msgid "%1 updated <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:195
+msgid "<b>Deafened</b> them"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:195
+msgid "<b>Undeafened</b> them"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:197
+msgid "<b>Muted</b> them"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:197
+msgid "<b>Unmuted</b> them"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:199
+msgid "Set their nickname to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:205
+msgid "%1 updated roles for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:210
+msgid "<b>Removed</b> a role <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:212
+msgid "<b>Added</b> a role <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:222
+msgid "%1 moved <b>a user</b> to <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:225
+msgid "%1 moved <b>%2 users</b> to <b>%3</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:231
+msgid "%1 disconnected <b>%2 users</b> from voice"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:237
+msgid "%1 added <b>%2</b> to the server"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:242
+msgid "%1 created the role <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:247
+msgid "%1 updated the role <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:258
+msgid "Removed the color"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:260
+msgid "Set the color to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:263
+msgid "Updated the permissions"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:265
+msgid "Mentionable"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:265
+msgid "Not mentionable"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:267
+msgid "Not hoisted"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:267
+msgid "Hoisted"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:275
+msgid "%1 deleted the role <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:280
+msgid "%1 created an invite <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:286
+msgid "For channel <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:291
+msgid "Which has <b>unlimited</b> uses"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:293
+msgid "Which has <b>%1</b> uses"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:297
+msgid "With temporary <b>on</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:299
+msgid "With temporary <b>off</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:307
+msgid "%1 deleted an invite <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:312
+msgid "%1 created the webhook <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:320
+msgid "With channel <b>#%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:335
+msgid "%1 updated the webhook <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:340
+msgid "%1 updated a webhook"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:349
+msgid "Changed the avatar"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:354
+msgid "Changed the channel to <b>#%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:357
+msgid "Changed the channel"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:366
+msgid "%1 deleted the webhook <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:373
+msgid "%1 created the emoji <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:380
+msgid "%1 updated the emoji <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:391
+msgid "%1 deleted the emoji <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:402
+msgid "%1 deleted <b>%2</b> messages in <b>#%3</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:406
+msgid "%1 deleted <b>%2</b> messages"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:414
+msgid "%1 pinned a message by <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:420
+msgid "%1 unpinned a message by <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:425
+msgid "%1 started the stage for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:433
+#: src/windows/guildsettings/auditlogpane.cpp:453
+msgid "Set the topic to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:438
+#: src/windows/guildsettings/auditlogpane.cpp:458
+msgid "Set the privacy level to <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:445
+msgid "%1 updated the stage for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:465
+msgid "%1 ended the stage for <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:471
+msgid "%1 created a thread <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:517
+msgid "Archived the thread"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:480
+#: src/windows/guildsettings/auditlogpane.cpp:517
+msgid "Unarchived the thread"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:482
+#: src/windows/guildsettings/auditlogpane.cpp:507
+msgid "Set auto archive duration to <b>%1 minutes</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:490
+#: src/windows/guildsettings/auditlogpane.cpp:515
+msgid "Locked the thread, restricting it to only be unarchived by moderators"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:490
+#: src/windows/guildsettings/auditlogpane.cpp:515
+msgid "Unlocked the thread, allowing it to be unarchived by non-moderators"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:496
+msgid "%1 made changes to the thread <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:521
+msgid "%1 deleted the thread <b>%2</b>"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:525
+msgid "Unknown action"
+msgstr ""
+
+#: src/windows/guildsettings/auditlogpane.cpp:533
+msgid "Reason: <b>%1</b>"
+msgstr ""
+
+#: src/windows/guildsettings/banspane.cpp:12
+msgid "Unban"
+msgstr ""
+
+#: src/windows/guildsettings/banspane.cpp:31
+msgid ""
+"You do not have permission to see bans. However, bans made while you are "
+"connected will appear here"
+msgstr ""
+
+#: src/windows/guildsettings/banspane.cpp:55
+msgid "User"
+msgstr ""
+
+#: src/windows/guildsettings/banspane.cpp:56
+msgid "Reason"
+msgstr ""
+
+#: src/windows/guildsettings/banspane.cpp:100
+msgid "Failed to unban user"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:17
+#: src/windows/guildsettings/invitespane.cpp:12
+msgid "Delete"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:19
+msgid "Copy Emoji URL"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:20
+msgid "Open in Browser"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:48
+#: src/windows/guildsettings/memberspane.cpp:64
+#: src/windows/guildsettings/rolespane.cpp:118
+msgid "Filter"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:68
+msgid "Emoji"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:76
+#: src/windows/guildsettings/emojispane.cpp:98
+msgid "Name"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:100
+msgid "Creator"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:101
+msgid "Is Animated?"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:132
+#: src/windows/guildsettings/emojispane.cpp:136
+#: src/windows/guildsettings/emojispane.cpp:138
+#: src/windows/guildsettings/emojispane.cpp:222
+#: src/windows/guildsettings/emojispane.cpp:230
+#: src/windows/guildsettings/invitespane.cpp:75
+msgid "Yes"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:132
+#: src/windows/guildsettings/emojispane.cpp:134
+#: src/windows/guildsettings/emojispane.cpp:136
+#: src/windows/guildsettings/invitespane.cpp:75
+msgid "No"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:186
+msgid "Failed to set emoji name"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:206
+msgid "Are you sure you want to delete %1?"
+msgstr ""
+
+#: src/windows/guildsettings/emojispane.cpp:209
+msgid "Failed to delete emoji"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:15
+msgid "Guild name"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:37
+msgid "Press enter or lose focus to submit"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:53
+msgid "Click to choose a file, right click to paste"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:109
+msgid "Failed to set guild name"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:123
+msgid "Failed to set guild icon"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:147
+msgid "Choose new guild icon"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:170
+msgid "Supported images"
+msgstr ""
+
+#: src/windows/guildsettings/infopane.cpp:183
+msgid "All files"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:34
+msgid "Code"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:35
+msgid "Expires"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:36
+msgid "Created by"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:37
+msgid "Uses"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:38
+msgid "Max uses"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:39
+msgid "Grants temporary membership"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:64
+msgid "Never"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:71
+msgid "Unlimited"
+msgstr ""
+
+#: src/windows/guildsettings/invitespane.cpp:106
+msgid "Failed to delete invite"
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:20
+msgid "Some members may not be shown if the client is not aware of them"
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:178
+msgid "User is a bot"
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:213
+msgid "User ID: "
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:216
+msgid "Joined server: "
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:218
+msgid "Joined server: Unknown"
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:219
+msgid "Nickname: "
+msgstr ""
+
+#: src/windows/guildsettings/memberspane.cpp:222
+msgid "Boosting since %1"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:71
+msgid "Failed to set role position"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:217
+msgid "Press enter to submit"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:236
+msgid "Failed to set role color"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:267
+msgid "General"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:277
+msgid "Text Channels"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:295
+msgid "Membership"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:303
+msgid "Advanced"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:305
+msgid "Voice Channels"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:319
+msgid "Events"
+msgstr ""
+
+#: src/windows/guildsettings/rolespane.cpp:412
+msgid "Failed to set role name"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:23
+msgid "Deafen"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:24
+msgid "Suppress Noise"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:25
+msgid "Mix Mono"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:26 src/windows/voice/voicewindow.cpp:381
+msgid "Request to Speak"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:28
+msgid "You've been invited to speak"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:30
+msgid "Decline"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:33
+msgid "More _Settings"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:97
+msgid ""
+"Voice Activation Detection method\n"
+"Gate - Simple volume threshold. Slider changes threshold\n"
+"RNNoise - Heavier on CPU. Slider changes probability threshold"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:180
+msgid "Threshold"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:190
+msgid "VAD Method"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:191
+msgid "Output Device"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:192
+msgid "Input Device"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:235
+msgid "Speakers"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:238
+msgid "Audience"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:259
+msgid "Input Settings"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:373
+msgid "Leave the Stage"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:375
+msgid "Speak on Stage"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:377
+msgid "Cancel Request"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:379
+msgid "Decline Invite"
+msgstr ""
+
+#: src/windows/voice/voicewindow.cpp:386
+msgid "Topic: "
+msgstr ""

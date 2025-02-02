@@ -1,5 +1,6 @@
 #include "chatmessage.hpp"
 #include <unordered_map>
+#include <glibmm/i18n.h>
 #include <gtkmm/flowbox.h>
 #include "abaddon.hpp"
 #include "constants.hpp"
@@ -11,7 +12,7 @@ ChatMessageItemContainer::ChatMessageItemContainer()
     : m_main(Gtk::ORIENTATION_VERTICAL) {
     add(m_main);
 
-    m_link_menu_copy = Gtk::manage(new Gtk::MenuItem("Copy Link"));
+    m_link_menu_copy = Gtk::manage(new Gtk::MenuItem(_("Copy Link")));
     m_link_menu_copy->signal_activate().connect(sigc::mem_fun(*this, &ChatMessageItemContainer::on_link_menu_copy));
     m_link_menu.append(*m_link_menu_copy);
 
@@ -142,9 +143,9 @@ void ChatMessageItemContainer::UpdateAttributes() {
     }
 
     if (deleted)
-        m_attrib_label->set_markup("<span color='#ff0000'>[deleted]</span>");
+        m_attrib_label->set_markup("<span color='#ff0000'>[" + std::string { _("deleted") } + "]</span>");
     else if (edited)
-        m_attrib_label->set_markup("<span color='#999999'>[edited]</span>");
+        m_attrib_label->set_markup("<span color='#999999'>[" + std::string { _("edited") } + "]</span>");
 }
 
 void ChatMessageItemContainer::AddClickHandler(Gtk::Widget *widget, const std::string &url) {
@@ -198,13 +199,13 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
             ChatUtil::HandleEmojis(*tv);
             break;
         case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION:
-            b->insert_markup(s, "<span color='#999999'><i>[boosted server]</i></span>");
+            b->insert_markup(s, "<span color='#999999'><i>[" + std::string { _("boosted server") } + "]</i></span>");
             break;
         case MessageType::GUILD_MEMBER_JOIN:
-            b->insert_markup(s, "<span color='#999999'><i>[user joined]</i></span>");
+            b->insert_markup(s, "<span color='#999999'><i>[" + std::string { _("user joined") } + "]</i></span>");
             break;
         case MessageType::CHANNEL_PINNED_MESSAGE:
-            b->insert_markup(s, "<span color='#999999'><i>[message pinned]</i></span>");
+            b->insert_markup(s, "<span color='#999999'><i>[" + std::string { _("message pinned") } + "]</i></span>");
             break;
         case MessageType::APPLICATION_COMMAND: {
             if (data->Application.has_value()) {
@@ -214,7 +215,8 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
                 if (regex->match(string, match)) {
                     const auto cmd = match.fetch(1);
                     const auto app = data->Application->Name;
-                    b->insert_markup(s, "<i>used <span color='#697ec4'>" + cmd + "</span> with " + app + "</i>");
+                    auto app_command_text = Glib::ustring::compose(_("<i>used <span color='#697ec4'>%1</span> with %2</i>"), cmd, app);
+                    b->insert_markup(s, app_command_text);
                 }
             } else {
                 b->insert(s, data->Content);
@@ -226,64 +228,85 @@ void ChatMessageItemContainer::UpdateTextComponent(Gtk::TextView *tv) {
         } break;
         case MessageType::RECIPIENT_ADD: {
             if (data->Mentions.empty()) break;
-            const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
-            const auto &added = data->Mentions[0];
-            b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> added <span color='#eeeeee'>" + added.GetUsername() + "</span></span></i>");
+            const auto &adder_username = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID)->GetUsername();
+            const auto &added_username = data->Mentions[0].GetUsername();
+            auto recipient_add_text = Glib::ustring::compose(_("<i><span color='#999999'><span color='#eeeeee'>%1</span> added <span color='#eeeeee'>%2</span></span></i>"), adder_username, added_username);
+            b->insert_markup(s, recipient_add_text);
         } break;
         case MessageType::RECIPIENT_REMOVE: {
             if (data->Mentions.empty()) break;
+
             const auto &adder = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto &added = data->Mentions[0];
-            if (adder->ID == added.ID)
-                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> left</span></i>");
-            else
-                b->insert_markup(s, "<i><span color='#999999'><span color='#eeeeee'>" + adder->GetUsername() + "</span> removed <span color='#eeeeee'>" + added.GetUsername() + "</span></span></i>");
+            Glib::ustring recipient_remove;
+            if (adder->ID == added.ID) {
+                recipient_remove = Glib::ustring::compose(_("<i><span color='#999999'><span color='#eeeeee'>%1</span> left</span></i>"), adder->GetUsername());
+            } else {
+                recipient_remove = Glib::ustring::compose(_("<i><span color='#999999'><span color='#eeeeee'>%1</span> removed <span color='#eeeeee'>%2</span></span></i>"),
+                                                          adder->GetUsername(), added.GetUsername());
+            }
+            b->insert_markup(s, recipient_remove);
         } break;
         case MessageType::CHANNEL_NAME_CHANGE: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
-            b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " changed the name to <b>" + Glib::Markup::escape_text(data->Content) + "</b></span></i>");
+            auto channel_name_change_text = Glib::ustring::compose(_("<i><span color='#999999'>%1 changed the name to <b>%2</b></span></i>"), author->GetDisplayNameEscapedBold(), Glib::Markup::escape_text(data->Content));
+            b->insert_markup(s, channel_name_change_text);
         } break;
         case MessageType::CHANNEL_ICON_CHANGE: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
-            b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " changed the channel icon</span></i>");
+            auto channel_icon_change_text = Glib::ustring::compose(_("<i><span color='#999999'>%1 changed the channel icon</span></i>"), author->GetDisplayNameEscapedBold());
+            b->insert_markup(s, channel_icon_change_text);
         } break;
         case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_1:
         case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_2:
         case MessageType::USER_PREMIUM_GUILD_SUBSCRIPTION_TIER_3: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
             const auto guild = Abaddon::Get().GetDiscordClient().GetGuild(*data->GuildID);
-            b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " just boosted the server <b>" + Glib::Markup::escape_text(data->Content) + "</b> times! " +
-                                    Glib::Markup::escape_text(guild->Name) + " has achieved <b>Level " + std::to_string(static_cast<int>(data->Type) - 8) + "!</b></span></i>"); // oo cheeky me !!!
+            auto user_premium_guild_subscription_text = Glib::ustring::compose(_("<i><span color='#999999'>%1 just boosted the server <b>%2</b> times! %3 has achieved <b>Level %4!</b></span></i>"),
+                                                                               author->GetDisplayNameEscapedBold(),
+                                                                               Glib::Markup::escape_text(data->Content),
+                                                                               Glib::Markup::escape_text(guild->Name),
+                                                                               (static_cast<int>(data->Type) - 8));
+            b->insert_markup(s, user_premium_guild_subscription_text); // oo cheeky me !!!
         } break;
         case MessageType::CHANNEL_FOLLOW_ADD: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
-            b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " has added <b>" + Glib::Markup::escape_text(data->Content) + "</b> to this channel. Its most important updates will show up here.</span></i>");
+            auto channel_follow_add_text = Glib::ustring::compose(
+                _("<i><span color='#999999'>%1 has added <b>%2</b> to this channel. Its most important updates will show up here.</span></i>"),
+                author->GetDisplayNameEscapedBold(),
+                Glib::Markup::escape_text(data->Content));
+            b->insert_markup(s, channel_follow_add_text);
         } break;
         case MessageType::CALL: {
-            b->insert_markup(s, "<span color='#999999'><i>[started a call]</i></span>");
+            b->insert_markup(s, "<span color='#999999'><i>[" + std::string { _("started a call") } + "]</i></span>");
         } break;
         case MessageType::GUILD_DISCOVERY_DISQUALIFIED: {
-            b->insert_markup(s, "<i><span color='#999999'>This server has been removed from Server Discovery because it no longer passes all the requirements.</span></i>");
+            b->insert_markup(s, "<i><span color='#999999'>" + std::string { _("This server has been removed from Server Discovery because it no longer passes all the requirements.") } + "</span></i>");
         } break;
         case MessageType::GUILD_DISCOVERY_REQUALIFIED: {
-            b->insert_markup(s, "<i><span color='#999999'>This server is eligible for Server Discovery again and has been automatically relisted!</span></i>");
+            b->insert_markup(s, "<i><span color='#999999'>" + std::string { _("This server is eligible for Server Discovery again and has been automatically relisted!") } + "</span></i>");
         } break;
         case MessageType::GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING: {
-            b->insert_markup(s, "<i><span color='#999999'>This server has failed Discovery activity requirements for 1 week. If this server fails for 4 weeks in a row, it will be automatically removed from Discovery.</span></i>");
+            b->insert_markup(s, "<i><span color='#999999'>" + std::string { _("This server has failed Discovery activity requirements for 1 week. If this server fails for 4 weeks in a row, it will be automatically removed from Discovery.") } + "</span></i>");
         } break;
         case MessageType::GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING: {
-            b->insert_markup(s, "<i><span color='#999999'>This server has failed Discovery activity requirements for 3 weeks in a row. If this server fails for 1 more week, it will be removed from Discovery.</span></i>");
+            b->insert_markup(s, "<i><span color='#999999'>" + std::string { _("This server has failed Discovery activity requirements for 3 weeks in a row. If this server fails for 1 more week, it will be removed from Discovery.") } + "</span></i>");
         } break;
         case MessageType::THREAD_CREATED: {
             const auto author = Abaddon::Get().GetDiscordClient().GetUser(data->Author.ID);
+            Glib::ustring thread_created_text;
             if (data->MessageReference.has_value() && data->MessageReference->ChannelID.has_value()) {
-                auto iter = b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " started a thread: </span></i>");
+                thread_created_text = Glib::ustring::compose(_("<i><span color='#999999'>%1 started a thread: </span></i>"), author->GetDisplayNameEscapedBold());
+                auto iter = b->insert_markup(s, thread_created_text);
                 auto tag = b->create_tag();
                 tag->property_weight() = Pango::WEIGHT_BOLD;
                 m_channel_tagmap[tag] = *data->MessageReference->ChannelID;
                 b->insert_with_tag(iter, data->Content, tag);
             } else {
-                b->insert_markup(s, "<i><span color='#999999'>" + author->GetDisplayNameEscapedBold() + " started a thread: </span><b>" + Glib::Markup::escape_text(data->Content) + "</b></i>");
+                thread_created_text = Glib::ustring::compose(_("<i><span color='#999999'>%1 started a thread: </span><b>%2</b></i>"),
+                                                             author->GetDisplayNameEscapedBold(),
+                                                             Glib::Markup::escape_text(data->Content));
+                b->insert_markup(s, thread_created_text);
             }
         } break;
         default: break;
@@ -687,7 +710,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             return author->GetDisplayNameEscapedBold(guild_id);
         }
 
-        return "<b>Unknown User</b>";
+        return Glib::ustring::compose("<b>%1</b>", _("Unknown User"));
     };
 
     // if the message wasnt fetched from store it might have an un-fetched reference
@@ -701,26 +724,28 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
 
     if (data.Interaction.has_value()) {
         if (data.GuildID.has_value()) {
-            lbl->set_markup(get_author_markup(data.Interaction->User.ID, *data.GuildID) +
-                            " used <span color='#697ec4'>/" +
-                            Glib::Markup::escape_text(data.Interaction->Name) +
-                            "</span>");
+            auto interaction_user_from_guild_text =
+                Glib::ustring::compose(
+                    _("%1 used <span color='#697ec4'>/%2</span>"),
+                    get_author_markup(data.Interaction->User.ID, *data.GuildID),
+                    Glib::Markup::escape_text(data.Interaction->Name));
+            lbl->set_markup(interaction_user_from_guild_text);
         } else if (const auto user = discord.GetUser(data.Interaction->User.ID); user.has_value()) {
             lbl->set_markup(user->GetDisplayNameEscapedBold());
         } else {
-            lbl->set_markup("<b>Unknown User</b>");
+            lbl->set_markup(Glib::ustring::compose("<b>%1</b>", _("Unknown User")));
         }
     } else if (referenced_message.has_value()) {
         if (referenced_message.value() == nullptr) {
-            lbl->set_markup("<i>deleted message</i>");
+            lbl->set_markup(Glib::ustring::compose("<i>%1</i>", _("deleted message")));
         } else {
             const auto &referenced = *referenced_message.value();
             Glib::ustring text;
             if (referenced.Content.empty()) {
                 if (!referenced.Attachments.empty()) {
-                    text = "<i>attachment</i>";
+                    text = Glib::ustring::compose("<i>%1</i>", _("attachment"));
                 } else if (!referenced.Embeds.empty()) {
-                    text = "<i>embed</i>";
+                    text = Glib::ustring::compose("<i>%1</i>", _("embed"));
                 }
             } else {
                 auto buf = Gtk::TextBuffer::create();
@@ -740,7 +765,7 @@ Gtk::Widget *ChatMessageItemContainer::CreateReplyComponent(const Message &data)
             }
         }
     } else {
-        lbl->set_markup("<i>reply unavailable</i>");
+        lbl->set_markup(Glib::ustring::compose("<i>%1</i>", _("reply unavailable")));
     }
 
     return box;
