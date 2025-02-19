@@ -414,11 +414,11 @@ void DiscordVoiceClient::OnWebsocketOpen() {
     SetState(State::EstablishingConnection);
 }
 
-void DiscordVoiceClient::OnWebsocketClose(const ix::WebSocketCloseInfo &info) {
-    if (info.remote) {
-        m_log->debug("Websocket closed (remote): {} ({})", info.code, info.reason);
+void DiscordVoiceClient::OnWebsocketClose(const Websocket::CloseInfo &info) {
+    if (info.Remote) {
+        m_log->debug("Websocket closed (remote): {} ({})", info.Code, info.Reason);
     } else {
-        m_log->debug("Websocket closed (local): {} ({})", info.code, info.reason);
+        m_log->debug("Websocket closed (local): {} ({})", info.Code, info.Reason);
     }
 }
 

@@ -242,7 +242,7 @@ private:
     void SelectProtocol(const char *ip, uint16_t port);
 
     void OnWebsocketOpen();
-    void OnWebsocketClose(const ix::WebSocketCloseInfo &info);
+    void OnWebsocketClose(const Websocket::CloseInfo &info);
     void OnWebsocketMessage(const std::string &str);
 
     void HeartbeatThread();
