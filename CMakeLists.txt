@@ -4,7 +4,7 @@ project(abaddon)
 
 set(ABADDON_RESOURCE_DIR "${CMAKE_INSTALL_PREFIX}/share/abaddon" CACHE PATH "Fallback directory for resources on Linux")
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(USE_LIBHANDY "Enable features that require libhandy (default)" ON)

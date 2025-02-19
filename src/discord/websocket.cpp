@@ -145,7 +145,7 @@ void Websocket::OnMessage(const WebSocketMessage &message) {
     }
 }
 
-std::expected<Websocket::WebSocketMessage, Websocket::Error> Websocket::ReceiveMessage() {
+std::optional<Websocket::WebSocketMessage> Websocket::ReceiveMessage() {
     WebSocketMessage message;
 
     curl_socket_t socket;
@@ -157,7 +157,7 @@ std::expected<Websocket::WebSocketMessage, Websocket::Error> Websocket::ReceiveM
     while (m_state == State::Open || m_state == State::Closing) {
         if (m_state == State::Closing && !m_sent_close) {
             // if were closing and we didnt send the close then server already did
-            return std::unexpected(Error::closing);
+            return {};
         }
 
         fd_set rfds;
@@ -169,7 +169,7 @@ std::expected<Websocket::WebSocketMessage, Websocket::Error> Websocket::ReceiveM
         tv.tv_usec = 0;
 
         if (select(socket + 1, &rfds, nullptr, nullptr, &tv) == -1) {
-            return std::unexpected(Websocket::Error::select_error);
+            return {};
         }
 
         size_t rlen;
@@ -183,7 +183,7 @@ std::expected<Websocket::WebSocketMessage, Websocket::Error> Websocket::ReceiveM
             if (code == CURLE_AGAIN) {
                 continue;
             } else {
-                return std::unexpected(Websocket::Error::recv_error);
+                return {};
             }
         }
 

@@ -1,5 +1,4 @@
 #pragma once
-#include <expected>
 #include <string>
 #include <glibmm.h>
 #include <nlohmann/json.hpp>
@@ -20,12 +19,6 @@ public:
     void Send(const nlohmann::json &j);
     void Stop();
     void Stop(uint16_t code);
-
-    enum class Error {
-        recv_error,
-        select_error,
-        closing,
-    };
 
     enum class State {
         Closed,
@@ -58,7 +51,7 @@ private:
     State m_state = State::Closed;
 
     void OnMessage(const WebSocketMessage &message);
-    std::expected<WebSocketMessage, Error> ReceiveMessage();
+    std::optional<WebSocketMessage> ReceiveMessage();
     void Task();
 
     mutable std::mutex m_mutex;
