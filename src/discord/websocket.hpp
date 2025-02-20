@@ -42,7 +42,7 @@ private:
             close,
         };
 
-        CloseInfo CloseInfo {};
+        CloseInfo Close {};
 
         std::vector<uint8_t> Data;
         MessageType Type;

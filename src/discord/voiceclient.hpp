@@ -13,6 +13,12 @@
 #include <sigc++/sigc++.h>
 #include <spdlog/logger.h>
 #include <unordered_map>
+
+#ifndef _WIN32
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#endif
 // clang-format on
 
 enum class VoiceGatewayCloseCode : uint16_t {

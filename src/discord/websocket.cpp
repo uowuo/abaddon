@@ -128,14 +128,14 @@ void Websocket::OnMessage(const WebSocketMessage &message) {
             break;
         }
         case WebSocketMessage::MessageType::close: {
-            m_close_info = message.CloseInfo;
+            m_close_info = message.Close;
             m_close_info.Remote = !m_sent_close;
 
             m_log->debug(
                 "Received close frame{}, dispatching. {} ({})",
                 m_close_info.Remote ? " (Remote)" : "",
-                message.CloseInfo.Code,
-                message.CloseInfo.Reason);
+                message.Close.Code,
+                message.Close.Reason);
             m_close_cv.notify_all();
             m_close_dispatcher.emit();
             break;
@@ -195,8 +195,8 @@ std::optional<Websocket::WebSocketMessage> Websocket::ReceiveMessage() {
             message.Type = WebSocketMessage::MessageType::binary;
         } else if (meta->flags & CURLWS_CLOSE) {
             message.Type = WebSocketMessage::MessageType::close;
-            message.CloseInfo.Code = (static_cast<uint16_t>(buffer[0]) << 8) | static_cast<uint8_t>(buffer[1]);
-            message.CloseInfo.Reason = std::string(buffer + 2, rlen - 2);
+            message.Close.Code = (static_cast<uint16_t>(buffer[0]) << 8) | static_cast<uint8_t>(buffer[1]);
+            message.Close.Reason = std::string(buffer + 2, rlen - 2);
             if (m_sent_close) {
                 m_state = State::Closed;
             } else {
