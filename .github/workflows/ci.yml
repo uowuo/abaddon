@@ -193,18 +193,27 @@ jobs:
           cd deps
           git clone https://github.com/nlohmann/json
           cd json
-          git checkout bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d
+          git checkout 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
           mkdir build
           cd build
-          cmake ..
+          cmake -DJSON_BuildTests=OFF ..
           make
           sudo make install
           sudo apt-get install libgtkmm-3.0-dev
-          sudo apt-get install libcurl4-gnutls-dev
           sudo apt-get install libopus-dev
           sudo apt-get install libsodium-dev
           sudo apt-get install libspdlog-dev
           sudo apt-get install libhandy-1-dev
+
+      - name: Build curl from source
+        run: |
+          sudo apt-get install libbrotli-dev libidn2-dev libnghttp2-dev libpsl-dev libzstd-dev zlib1g-dev libidn-dev
+          wget https://github.com/curl/curl/releases/download/curl-8_12_1/curl-8.12.1.tar.xz
+          tar -xf curl-8.12.1.tar.xz
+          cd curl-8.12.1
+          cmake .
+          make
+          sudo make install
 
       - name: Build
         uses: lukka/run-cmake@v3
