@@ -2768,7 +2768,7 @@ EPremiumType DiscordClient::GetSelfPremiumType() const {
 void DiscordClient::HeartbeatThread() {
     while (m_client_connected) {
         if (!m_heartbeat_acked) {
-            printf("wow! a heartbeat wasn't acked! how could this happen?");
+            spdlog::get("discord")->warn("Heartbeat not acked");
         }
 
         m_heartbeat_acked = false;
@@ -2855,8 +2855,8 @@ void DiscordClient::SetSuperPropertiesFromIdentity(const IdentifyMessage &identi
 void DiscordClient::HandleSocketOpen() {
 }
 
-void DiscordClient::HandleSocketClose(const ix::WebSocketCloseInfo &info) {
-    auto close_code = static_cast<GatewayCloseCode>(info.code);
+void DiscordClient::HandleSocketClose(const Websocket::CloseInfo &info) {
+    auto close_code = static_cast<GatewayCloseCode>(info.Code);
     auto cb = [this, close_code]() {
         m_heartbeat_waiter.kill();
         if (m_heartbeat_thread.joinable()) m_heartbeat_thread.join();

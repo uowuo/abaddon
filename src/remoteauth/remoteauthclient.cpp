@@ -10,7 +10,6 @@
 #include "abaddon.hpp"
 #include "http.hpp"
 
-
 // clang-format on
 
 RemoteAuthClient::RemoteAuthClient()
@@ -280,16 +279,16 @@ void RemoteAuthClient::OnWebsocketOpen() {
     m_log->info("Websocket opened");
 }
 
-void RemoteAuthClient::OnWebsocketClose(const ix::WebSocketCloseInfo &info) {
-    if (info.remote) {
-        m_log->debug("Websocket closed (remote): {} ({})", info.code, info.reason);
+void RemoteAuthClient::OnWebsocketClose(const Websocket::CloseInfo &info) {
+    if (info.Remote) {
+        m_log->debug("Websocket closed (remote): {} ({})", info.Code, info.Reason);
         if (m_connected) {
-            m_signal_error.emit("Error. Websocket closed (remote): " + std::to_string(info.code) + " (" + info.reason + ")");
+            m_signal_error.emit("Error. Websocket closed (remote): " + std::to_string(info.Code) + " (" + info.Reason + ")");
         }
     } else {
-        m_log->debug("Websocket closed (local): {} ({})", info.code, info.reason);
+        m_log->debug("Websocket closed (local): {} ({})", info.Code, info.Reason);
         if (m_connected) {
-            m_signal_error.emit("Error. Websocket closed (local): " + std::to_string(info.code) + " (" + info.reason + ")");
+            m_signal_error.emit("Error. Websocket closed (local): " + std::to_string(info.Code) + " (" + info.Reason + ")");
         }
     }
 }
