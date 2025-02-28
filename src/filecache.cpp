@@ -12,7 +12,10 @@ std::string GetCachedName(const std::string &str) {
 }
 
 Cache::Cache() {
-    m_tmp_path = std::filesystem::temp_directory_path() / "abaddon-cache";
+    gchar *rand = g_uuid_string_random();
+    std::string randstr = rand;
+    g_free(rand);
+    m_tmp_path = std::filesystem::temp_directory_path() / ("abaddon-cache-" + randstr);
     std::filesystem::create_directories(m_tmp_path);
     m_worker.set_file_path(m_tmp_path);
 }

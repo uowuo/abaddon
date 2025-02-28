@@ -3,10 +3,19 @@
 
 using namespace std::literals::string_literals;
 
-// hopefully the casting between signed and unsigned int64 doesnt cause issues
+static std::filesystem::path MakeDBPath(bool mem_store) {
+    if (mem_store) {
+        return ":memory:";
+    } else {
+        gchar *rand = g_uuid_string_random();
+        std::string randstr = rand;
+        g_free(rand);
+        return std::filesystem::temp_directory_path() / ("abaddon-store-"s + randstr + ".db"s);
+    }
+}
 
 Store::Store(bool mem_store)
-    : m_db_path(mem_store ? ":memory:" : std::filesystem::temp_directory_path() / "abaddon-store.db")
+    : m_db_path(MakeDBPath(mem_store))
     , m_db(m_db_path.string().c_str()) {
     if (!m_db.OK()) {
         fprintf(stderr, "error opening database: %s\n", m_db.ErrStr());
