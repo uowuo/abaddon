@@ -1,5 +1,6 @@
 #include "chatinput.hpp"
 #include <filesystem>
+#include <glibmm/i18n.h>
 #include <gtkmm/dialog.h>
 #include <gtkmm/filechoosernative.h>
 #include "abaddon.hpp"
@@ -139,7 +140,7 @@ ChatInputTextContainer::ChatInputTextContainer() {
 }
 
 void ChatInputTextContainer::ShowFileChooser() {
-    auto dlg = Gtk::FileChooserNative::create("Choose file", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    auto dlg = Gtk::FileChooserNative::create(_("Choose file"), Gtk::FILE_CHOOSER_ACTION_OPEN);
     dlg->set_select_multiple(true);
     dlg->set_modal(true);
 
@@ -385,14 +386,14 @@ void ChatInputAttachmentItem::SetFilenameFromFile() {
 }
 
 void ChatInputAttachmentItem::SetupMenu() {
-    m_menu_remove.set_label("Remove");
+    m_menu_remove.set_label(_("Remove"));
     m_menu_remove.signal_activate().connect([this] {
         m_signal_item_removed.emit();
     });
 
-    m_menu_set_filename.set_label("Change Filename");
+    m_menu_set_filename.set_label(_("Change Filename"));
     m_menu_set_filename.signal_activate().connect([this] {
-        const auto name = Abaddon::Get().ShowTextPrompt("Enter new filename for attachment", "Enter filename", m_filename);
+        const auto name = Abaddon::Get().ShowTextPrompt(_("Enter new filename for attachment"), _("Enter filename"), m_filename);
         if (name.has_value()) {
             m_filename = *name;
             m_label.set_text(m_filename);
@@ -400,9 +401,9 @@ void ChatInputAttachmentItem::SetupMenu() {
         }
     });
 
-    m_menu_set_alt_text.set_label("Change Alt-Text");
+    m_menu_set_alt_text.set_label(_("Change Alt-Text"));
     m_menu_set_alt_text.signal_activate().connect([this]() {
-        const auto description = Abaddon::Get().ShowTextPrompt("Enter description (alt-text) for attachment", "Enter alt-text", m_description);
+        const auto description = Abaddon::Get().ShowTextPrompt(_("Enter description (alt-text) for attachment"), _("Enter alt-text"), m_description);
         if (description.has_value()) {
             m_description = *description;
         }

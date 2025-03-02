@@ -1,5 +1,6 @@
 #include "rolespane.hpp"
 
+#include <glibmm/i18n.h>
 #include <gtkmm/messagedialog.h>
 
 #include "abaddon.hpp"
@@ -67,7 +68,7 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
             if (!discord.CanModifyRole(GuildID, row->RoleID)) return false;
             const auto cb = [](DiscordError code) {
                 if (code != DiscordError::NONE) {
-                    Gtk::MessageDialog dlg("Failed to set role position", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                    Gtk::MessageDialog dlg(_("Failed to set role position"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                     dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
                     dlg.run();
                 }
@@ -114,7 +115,7 @@ GuildSettingsRolesPaneRoles::GuildSettingsRolesPaneRoles(Snowflake guild_id)
         return true;
     });
 
-    m_search.set_placeholder_text("Filter");
+    m_search.set_placeholder_text(_("Filter"));
     m_search.signal_changed().connect([this] {
         m_list.invalidate_filter();
     });
@@ -213,7 +214,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
     };
     m_role_name.signal_key_press_event().connect(cb, false);
 
-    m_role_name.set_tooltip_text("Press enter to submit");
+    m_role_name.set_tooltip_text(_("Press enter to submit"));
 
     m_role_name.set_max_length(100);
 
@@ -232,7 +233,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         const auto cb = [this, &discord](DiscordError code) {
             if (code != DiscordError::NONE) {
                 m_color_button.set_rgba(IntToRGBA(discord.GetRole(RoleID)->Color));
-                Gtk::MessageDialog dlg("Failed to set role color", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(_("Failed to set role color"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
                 dlg.run();
             }
@@ -263,7 +264,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
 
     // fuck you clang-format you suck
     // clang-format off
-    add_perms("General", RIGHT, {
+    add_perms(_("General"), RIGHT, {
         Permission::VIEW_CHANNEL,
         Permission::MANAGE_CHANNELS,
         Permission::MANAGE_ROLES,
@@ -273,7 +274,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::MANAGE_WEBHOOKS,
         Permission::MANAGE_GUILD });
 
-    add_perms("Text Channels", LEFT, {
+    add_perms(_("Text Channels"), LEFT, {
         Permission::SEND_MESSAGES,
         Permission::SEND_MESSAGES_IN_THREADS,
         Permission::CREATE_PUBLIC_THREADS,
@@ -291,7 +292,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::USE_APPLICATION_COMMANDS,
         Permission::SEND_VOICE_MESSAGES, });
 
-    add_perms("Membership", LEFT, {
+    add_perms(_("Membership"), LEFT, {
         Permission::CREATE_INSTANT_INVITE,
         Permission::CHANGE_NICKNAME,
         Permission::MANAGE_NICKNAMES,
@@ -299,9 +300,9 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::BAN_MEMBERS,
         Permission::MODERATE_MEMBERS });
 
-    add_perms("Advanced", LEFT, { Permission::ADMINISTRATOR });
+    add_perms(_("Advanced"), LEFT, { Permission::ADMINISTRATOR });
 
-    add_perms("Voice Channels", RIGHT, {
+    add_perms(_("Voice Channels"), RIGHT, {
         Permission::CONNECT,
         Permission::SPEAK,
         Permission::STREAM,
@@ -315,7 +316,7 @@ GuildSettingsRolesPaneInfo::GuildSettingsRolesPaneInfo(Snowflake guild_id)
         Permission::MOVE_MEMBERS,
         Permission::SET_VOICE_CHANNEL_STATUS });
 
-    add_perms("Events", RIGHT, {
+    add_perms(_("Events"), RIGHT, {
         Permission::CREATE_EVENTS,
         Permission::MANAGE_EVENTS, });
 
@@ -408,7 +409,7 @@ void GuildSettingsRolesPaneInfo::UpdateRoleName() {
     const auto cb = [this, &discord](DiscordError code) {
         if (code != DiscordError::NONE) {
             m_role_name.set_text(discord.GetRole(RoleID)->Name);
-            Gtk::MessageDialog dlg("Failed to set role name", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            Gtk::MessageDialog dlg(_("Failed to set role name"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
             dlg.run();
         }
