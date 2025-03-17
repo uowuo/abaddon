@@ -35,6 +35,7 @@ Current features:
 * Emojis<sup>2</sup>
 * Thread support<sup>3</sup>
 * Animated avatars, server icons, emojis (can be turned off)
+* Global hotkeys support
 
 1 - Abaddon tries its best (though is not perfect) to make Discord think it's a legitimate web client. Some of the
 things done to do this
@@ -173,6 +174,7 @@ spam filter's wrath:
 * [libopus](https://opus-codec.org/) (optional, required for voice)
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 * [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
+* [libuiohook](https://github.com/kwhat/libuiohook) (provided as submodule, global hotkeys)
 
 ### TODO:
 

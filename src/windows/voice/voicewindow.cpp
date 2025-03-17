@@ -1,3 +1,5 @@
+#include "misc/GlobalHotkeyManager.hpp"
+#include "uiohook.h"
 #include "util.hpp"
 #ifdef WITH_VOICE
 
@@ -11,6 +13,7 @@
 #include "voicewindowaudiencelistentry.hpp"
 #include "voicewindowspeakerlistentry.hpp"
 #include "windows/voicesettingswindow.hpp"
+#include "misc/GlobalHotkeyManager.hpp"
 
 // clang-format on
 
@@ -53,6 +56,16 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
+
+    // TODO: Load shortcuts from config file
+    m_mute_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_M, MASK_ALT, [this]() {
+        // This is probably stupid there is for sure some way to call event
+        // but I'm not really familiar with gtk and this works well.
+        m_mute.set_active( !m_mute.get_active() );
+    });
+    m_deafen_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_D, MASK_ALT, [this]() {
+        m_deafen.set_active( !m_deafen.get_active() );
+    });
 
     m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_scroll.set_hexpand(true);
@@ -269,6 +282,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &VoiceWindow::UpdateVoiceMeters), 40);
 
     UpdateStageCommand();
+}
+
+VoiceWindow::~VoiceWindow() {
+    GlobalHotkeyManager::instance().unregisterHotkey(m_mute_hotkey);
+    GlobalHotkeyManager::instance().unregisterHotkey(m_deafen_hotkey);
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
