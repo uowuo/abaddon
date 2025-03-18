@@ -47,7 +47,7 @@ private:
     std::vector<uint8_t> Decrypt(const unsigned char *in, size_t inlen) const;
 
     void OnWebsocketOpen();
-    void OnWebsocketClose(const ix::WebSocketCloseInfo &info);
+    void OnWebsocketClose(const Websocket::CloseInfo &info);
     void OnWebsocketMessage(const std::string &str);
 
     void HeartbeatThread();
