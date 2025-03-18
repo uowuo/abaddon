@@ -1,5 +1,4 @@
 #include "misc/GlobalHotkeyManager.hpp"
-#include "uiohook.h"
 #include "util.hpp"
 #ifdef WITH_VOICE
 
@@ -13,7 +12,11 @@
 #include "voicewindowaudiencelistentry.hpp"
 #include "voicewindowspeakerlistentry.hpp"
 #include "windows/voicesettingswindow.hpp"
+
+#ifdef WITH_HOTKEYS
 #include "misc/GlobalHotkeyManager.hpp"
+#include "uiohook.h"
+#endif
 
 // clang-format on
 
@@ -57,6 +60,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
 
+#ifdef WITH_HOTKEYS
     // TODO: Load shortcuts from config file
     m_mute_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_M, MASK_ALT, [this]() {
         // This is probably stupid there is for sure some way to call event
@@ -66,6 +70,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_deafen_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_D, MASK_ALT, [this]() {
         m_deafen.set_active( !m_deafen.get_active() );
     });
+#endif
 
     m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_scroll.set_hexpand(true);
@@ -285,8 +290,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 }
 
 VoiceWindow::~VoiceWindow() {
+#ifdef WITH_HOTKEYS
     GlobalHotkeyManager::instance().unregisterHotkey(m_mute_hotkey);
     GlobalHotkeyManager::instance().unregisterHotkey(m_deafen_hotkey);
+#endif
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {

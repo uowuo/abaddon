@@ -50,9 +50,12 @@ private:
     Gtk::Box m_controls;
 
     Gtk::CheckButton m_mute;
-    int m_mute_hotkey;
     Gtk::CheckButton m_deafen;
+    
+#ifdef WITH_HOTKEYS
+    int m_mute_hotkey;
     int m_deafen_hotkey;
+#endif
 
     Gtk::ScrolledWindow m_scroll;
     Gtk::VBox m_listing;

@@ -2,10 +2,12 @@
 #define GLOBALHOTKEYMANAGER_H
 
 #pragma once
+#ifdef WITH_HOTKEYS
 
 #include <map>
 #include <functional>
 #include <mutex>
+#include <glibmm/dispatcher.h>
 #include "uiohook.h"
 
 // hotkey callback type
@@ -31,10 +33,16 @@ private:
 
     static void hook_callback(uiohook_event* const event);
     void handleEvent(uiohook_event* const event);
+    void processCallbacks();
+
+    Glib::Dispatcher m_dispatcher;
+    std::queue<HotkeyCallback> m_pendingCallbacks;
+    std::mutex m_queueMutex;
 
     std::mutex m_mutex;
     std::map<int, Hotkey> m_callbacks;
     int m_nextId;
 };
 
+#endif
 #endif
