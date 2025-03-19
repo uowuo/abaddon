@@ -1,4 +1,3 @@
-#include "misc/GlobalHotkeyManager.hpp"
 #include "util.hpp"
 #ifdef WITH_VOICE
 
@@ -12,11 +11,6 @@
 #include "voicewindowaudiencelistentry.hpp"
 #include "voicewindowspeakerlistentry.hpp"
 #include "windows/voicesettingswindow.hpp"
-
-#ifdef WITH_HOTKEYS
-#include "misc/GlobalHotkeyManager.hpp"
-#include "uiohook.h"
-#endif
 
 // clang-format on
 
@@ -59,18 +53,6 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
-
-#ifdef WITH_HOTKEYS
-    // TODO: Load shortcuts from config file
-    m_mute_hotkey = Abaddon::HotkeyManager().registerHotkey("<Alt>M", [this]() {
-        // This is probably stupid there is for sure some way to call event
-        // but I'm not really familiar with gtk and this works well.
-        m_mute.set_active( !m_mute.get_active() );
-    });
-    m_deafen_hotkey = Abaddon::HotkeyManager().registerHotkey(VC_D, MASK_ALT, [this]() {
-        m_deafen.set_active( !m_deafen.get_active() );
-    });
-#endif
 
     m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_scroll.set_hexpand(true);
@@ -289,11 +271,20 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     UpdateStageCommand();
 }
 
-VoiceWindow::~VoiceWindow() {
-#ifdef WITH_HOTKEYS
-    Abaddon::HotkeyManager().unregisterHotkey(m_mute_hotkey);
-    Abaddon::HotkeyManager().unregisterHotkey(m_deafen_hotkey);
-#endif
+void VoiceWindow::SetMute(bool is_mute) {
+    m_mute.set_active(is_mute);
+}
+
+void VoiceWindow::SetDeaf(bool is_deaf) {
+    m_deafen.set_active(is_deaf);
+}
+
+bool VoiceWindow::GetMute() {
+    return m_mute.get_active();
+}
+
+bool VoiceWindow::GetDeaf() {
+    return m_deafen.get_active();
 }
 
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {

@@ -492,6 +492,37 @@ void Abaddon::DiscordOnThreadUpdate(const ThreadUpdateData &data) {
 void Abaddon::OnVoiceConnected() {
     m_audio.StartCaptureDevice();
     ShowVoiceWindow();
+
+#ifdef WITH_HOTKEYS
+    // TODO: load hotkeys from config
+    m_mute_hotkey_id = m_HotkeyManager.registerHotkey("<Alt>M", [this]() {
+        if (m_voice_window != nullptr) {
+            auto voice_window = dynamic_cast<VoiceWindow*>(m_voice_window);
+            if (voice_window) {
+                m_is_mute = !voice_window->GetMute();
+                voice_window->SetMute( m_is_mute );
+                return;
+            }
+        }
+        m_is_mute = !m_is_mute;
+        m_discord.SetVoiceMuted( m_is_mute );
+        m_audio.SetCapture(!m_is_mute);
+    });
+
+    m_deafen_hotkey_id = m_HotkeyManager.registerHotkey(VC_D, MASK_ALT, [this]() {
+        if (m_voice_window != nullptr) {
+            auto voice_window = dynamic_cast<VoiceWindow*>(m_voice_window);
+            if (voice_window) {
+                m_is_deaf = !voice_window->GetDeaf();
+                voice_window->SetDeaf( m_is_deaf );
+                return;
+            }
+        }
+        m_is_deaf = !m_is_deaf;
+        m_discord.SetVoiceDeafened( m_is_deaf );
+        m_audio.SetPlayback(!m_is_deaf);
+    });
+#endif
 }
 
 void Abaddon::OnVoiceDisconnected() {
@@ -500,6 +531,11 @@ void Abaddon::OnVoiceDisconnected() {
     if (m_voice_window != nullptr) {
         m_voice_window->close();
     }
+
+#ifdef WITH_HOTKEYS
+    HotkeyManager().unregisterHotkey(m_mute_hotkey_id);
+    HotkeyManager().unregisterHotkey(m_deafen_hotkey_id);
+#endif
 }
 
 void Abaddon::ShowVoiceWindow() {
@@ -509,11 +545,17 @@ void Abaddon::ShowVoiceWindow() {
     m_voice_window = wnd;
 
     wnd->signal_mute().connect([this](bool is_mute) {
+#ifdef WITH_HOTKEYS
+        m_is_mute = is_mute;
+#endif
         m_discord.SetVoiceMuted(is_mute);
         m_audio.SetCapture(!is_mute);
     });
 
     wnd->signal_deafen().connect([this](bool is_deaf) {
+#ifdef WITH_HOTKEYS
+        m_is_deaf = is_deaf;
+#endif
         m_discord.SetVoiceDeafened(is_deaf);
         m_audio.SetPlayback(!is_deaf);
     });

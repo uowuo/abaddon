@@ -21,8 +21,11 @@
 class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
-    ~VoiceWindow();
 
+    void SetMute(bool is_mute);
+    void SetDeaf(bool is_deaf);
+    bool GetMute();
+    bool GetDeaf();
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
@@ -51,11 +54,6 @@ private:
 
     Gtk::CheckButton m_mute;
     Gtk::CheckButton m_deafen;
-    
-#ifdef WITH_HOTKEYS
-    int m_mute_hotkey;
-    int m_deafen_hotkey;
-#endif
 
     Gtk::ScrolledWindow m_scroll;
     Gtk::VBox m_listing;
