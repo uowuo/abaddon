@@ -494,8 +494,7 @@ void Abaddon::OnVoiceConnected() {
     ShowVoiceWindow();
 
 #ifdef WITH_HOTKEYS
-    // TODO: load hotkeys from config
-    m_mute_hotkey_id = m_HotkeyManager.registerHotkey("<Alt>M", [this]() {
+    m_mute_hotkey_id = m_HotkeyManager.registerHotkey(GetSettings().ToggleMute.c_str(), [this]() {
         if (m_voice_window != nullptr) {
             auto voice_window = dynamic_cast<VoiceWindow*>(m_voice_window);
             if (voice_window) {
@@ -509,7 +508,7 @@ void Abaddon::OnVoiceConnected() {
         m_audio.SetCapture(!m_is_mute);
     });
 
-    m_deafen_hotkey_id = m_HotkeyManager.registerHotkey(VC_D, MASK_ALT, [this]() {
+    m_deafen_hotkey_id = m_HotkeyManager.registerHotkey(GetSettings().ToggleDeafen.c_str(), [this]() {
         if (m_voice_window != nullptr) {
             auto voice_window = dynamic_cast<VoiceWindow*>(m_voice_window);
             if (voice_window) {

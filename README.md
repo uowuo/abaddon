@@ -174,7 +174,7 @@ spam filter's wrath:
 * [libopus](https://opus-codec.org/) (optional, required for voice)
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 * [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
-* [libuiohook](https://github.com/kwhat/libuiohook) (provided as submodule, global hotkeys)
+* [libuiohook](https://github.com/kwhat/libuiohook) (optional, provided as submodule, global hotkeys)
 
 ### TODO:
 
@@ -353,6 +353,13 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 |------------|--------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `vad`      | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
 | `backends` | string | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
+
+#### hotkeys
+
+| Setting  | Type   | Default   | Description                               |
+|----------|--------|-----------|-------------------------------------------|
+| `mute`   | string | \<Alt\>M  | Shortcut to mute microphone in voice call |
+| `deafen` | string | \<Alt\>D  | Shortcut to deafen audio in voice call    |
 
 #### windows
 

@@ -86,6 +86,7 @@ int GlobalHotkeyManager::registerHotkey(const char *shortcut_str, HotkeyCallback
 }
 
 GlobalHotkeyManager::Hotkey* GlobalHotkeyManager::find_hotkey(uint16_t keycode, uint32_t modifiers) {
+    // FIXME: When using multiple modifiers it does not care if just one is pressed or both
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
         [keycode, modifiers](const auto& pair) {
@@ -102,6 +103,59 @@ GlobalHotkeyManager::Hotkey* GlobalHotkeyManager::find_hotkey(uint16_t keycode, 
 void GlobalHotkeyManager::unregisterHotkey(int id) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_callbacks.erase(id);
+}
+
+void GlobalHotkeyManager::hook_callback(uiohook_event* const event) {
+    if (s_instance) {
+        s_instance->handleEvent(event);
+    }
+}
+
+void GlobalHotkeyManager::handleEvent(uiohook_event* const event) {
+    if (event->type == EVENT_KEY_PRESSED) {
+        Hotkey *hk = find_hotkey(event->data.keyboard.keycode, event->mask);
+        if (hk != nullptr) {
+            {
+                std::lock_guard<std::mutex> lock(m_queueMutex);
+                m_pendingCallbacks.push(hk->callback);
+            }
+            m_dispatcher.emit();
+        }
+    }
+}
+
+std::optional<std::tuple<uint16_t, uint32_t>> GlobalHotkeyManager::parse_and_convert_shortcut(const char *shortcut_str) {
+    guint gdk_key = 0;
+    GdkModifierType gdk_mods;
+
+    gtk_accelerator_parse(shortcut_str, &gdk_key, &gdk_mods);
+
+    if (gdk_key == 0) {
+        spdlog::get("ui")->warn("Failed to parse shortcut: {}", shortcut_str);
+        return std::nullopt;
+    }
+
+    uint16_t key  = convert_gdk_keyval_to_uihooks_key(gdk_key);
+    uint32_t mods = convert_gdk_modifiers_to_uihooks(gdk_mods);
+
+    if (key == VC_UNDEFINED) {
+        spdlog::get("ui")->warn("Failed to parse key code: {}", gdk_key);
+        return std::nullopt;
+    }
+
+    return std::make_tuple(key, mods);
+}
+
+uint32_t GlobalHotkeyManager::convert_gdk_modifiers_to_uihooks(GdkModifierType mods) {
+    uint16_t hook_modifiers = 0;
+
+    if (mods & GDK_SHIFT_MASK)   hook_modifiers |= MASK_SHIFT;
+    if (mods & GDK_CONTROL_MASK) hook_modifiers |= MASK_CTRL;
+    if (mods & GDK_MOD1_MASK)    hook_modifiers |= MASK_ALT;
+    if (mods & GDK_META_MASK)    hook_modifiers |= MASK_META;
+    // I don't think more masks would be necesary
+
+    return hook_modifiers;
 }
 
 uint16_t GlobalHotkeyManager::convert_gdk_keyval_to_uihooks_key(guint keyval) {
@@ -265,59 +319,6 @@ uint16_t GlobalHotkeyManager::convert_gdk_keyval_to_uihooks_key(guint keyval) {
         case GDK_KEY_AudioNext:         return VC_MEDIA_NEXT;
 
         default:                        return VC_UNDEFINED;
-    }
-}
-
-uint32_t GlobalHotkeyManager::convert_gdk_modifiers_to_uihooks(GdkModifierType mods) {
-    uint16_t hook_modifiers = 0;
-
-    if (mods & GDK_SHIFT_MASK)   hook_modifiers |= MASK_SHIFT;
-    if (mods & GDK_CONTROL_MASK) hook_modifiers |= MASK_CTRL;
-    if (mods & GDK_MOD1_MASK)    hook_modifiers |= MASK_ALT;
-    if (mods & GDK_META_MASK)    hook_modifiers |= MASK_META;
-    // I don't think more masks would be necesary
-
-    return hook_modifiers;
-}
-
-std::optional<std::tuple<uint16_t, uint32_t>> GlobalHotkeyManager::parse_and_convert_shortcut(const char *shortcut_str) {
-    guint gdk_key = 0;
-    GdkModifierType gdk_mods;
-
-    gtk_accelerator_parse(shortcut_str, &gdk_key, &gdk_mods);
-
-    if (gdk_key == 0) {
-        spdlog::get("ui")->warn("Failed to parse shortcut: {}", shortcut_str);
-        return std::nullopt;
-    }
-
-    uint16_t key  = convert_gdk_keyval_to_uihooks_key(gdk_key);
-    uint32_t mods = convert_gdk_modifiers_to_uihooks(gdk_mods);
-
-    if (key == VC_UNDEFINED) {
-        spdlog::get("ui")->warn("Failed to parse key code: {}", gdk_key);
-        return std::nullopt;
-    }
-
-    return std::make_tuple(key, mods);
-}
-
-void GlobalHotkeyManager::hook_callback(uiohook_event* const event) {
-    if (s_instance) {
-        s_instance->handleEvent(event);
-    }
-}
-
-void GlobalHotkeyManager::handleEvent(uiohook_event* const event) {
-    if (event->type == EVENT_KEY_PRESSED) {
-        Hotkey *hk = find_hotkey(event->data.keyboard.keycode, event->mask);
-        if (hk != nullptr) {
-            {
-                std::lock_guard<std::mutex> lock(m_queueMutex);
-                m_pendingCallbacks.push(hk->callback);
-            }
-            m_dispatcher.emit();
-        }
     }
 }
 #endif

@@ -130,6 +130,8 @@ void SettingsManager::DefineSettings() {
     AddSetting("voice", "vad", "gate"s, &Settings::VAD);
 #endif
     AddSetting("voice", "backends", ""s, &Settings::Backends);
+    AddSetting("hotkeys", "mute", "<Alt>M"s, &Settings::ToggleMute);
+    AddSetting("hotkeys", "deafen", "<Alt>D"s, &Settings::ToggleDeafen);
 }
 
 void SettingsManager::ReadSettings() {
