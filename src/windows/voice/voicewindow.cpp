@@ -62,12 +62,12 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
 #ifdef WITH_HOTKEYS
     // TODO: Load shortcuts from config file
-    m_mute_hotkey = GlobalHotkeyManager::instance().registerHotkey("<Alt>M", [this]() {
+    m_mute_hotkey = Abaddon::HotkeyManager().registerHotkey("<Alt>M", [this]() {
         // This is probably stupid there is for sure some way to call event
         // but I'm not really familiar with gtk and this works well.
         m_mute.set_active( !m_mute.get_active() );
     });
-    m_deafen_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_D, MASK_ALT, [this]() {
+    m_deafen_hotkey = Abaddon::HotkeyManager().registerHotkey(VC_D, MASK_ALT, [this]() {
         m_deafen.set_active( !m_deafen.get_active() );
     });
 #endif
@@ -291,8 +291,8 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
 VoiceWindow::~VoiceWindow() {
 #ifdef WITH_HOTKEYS
-    GlobalHotkeyManager::instance().unregisterHotkey(m_mute_hotkey);
-    GlobalHotkeyManager::instance().unregisterHotkey(m_deafen_hotkey);
+    Abaddon::HotkeyManager().unregisterHotkey(m_mute_hotkey);
+    Abaddon::HotkeyManager().unregisterHotkey(m_deafen_hotkey);
 #endif
 }
 

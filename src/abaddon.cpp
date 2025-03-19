@@ -57,6 +57,9 @@ Abaddon::Abaddon()
 #ifdef WITH_VOICE
     , m_audio(GetSettings().Backends)
 #endif
+#ifdef WITH_HOTKEYS
+    , m_HotkeyManager()
+#endif
 {
     LoadFromSettings();
 
@@ -1133,6 +1136,12 @@ EmojiResource &Abaddon::GetEmojis() {
 AudioManager &Abaddon::GetAudio() {
     return m_audio;
 }
+#endif
+
+#ifdef WITH_HOTKEYS
+    GlobalHotkeyManager& Abaddon::HotkeyManager() {
+        return Get().m_HotkeyManager;
+    }
 #endif
 
 void Abaddon::on_tray_click() {

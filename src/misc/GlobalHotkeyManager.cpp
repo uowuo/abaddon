@@ -5,15 +5,13 @@
 #include "gdk/gdkkeysyms.h"
 #include "uiohook.h"
 
-// Singleton instance
-GlobalHotkeyManager& GlobalHotkeyManager::instance() {
-    static GlobalHotkeyManager instance;
-    return instance;
-}
+// Linker will complain otherwise
+GlobalHotkeyManager* GlobalHotkeyManager::s_instance = nullptr;
 
 GlobalHotkeyManager::GlobalHotkeyManager() : m_nextId(1) {
     m_dispatcher.connect(sigc::mem_fun(*this, &GlobalHotkeyManager::processCallbacks));
 
+    s_instance = this;
     hook_set_dispatch_proc(&GlobalHotkeyManager::hook_callback);
 
     // Run hook in separate thread to not block gtk
@@ -38,16 +36,22 @@ void GlobalHotkeyManager::processCallbacks()
     }
 }
 
-GlobalHotkeyManager::~GlobalHotkeyManager()
-{
-    hook_stop();
-}
-
 struct GlobalHotkeyManager::Hotkey {
     uint16_t keycode;
     uint32_t modifiers;
     HotkeyCallback callback;
 };
+
+GlobalHotkeyManager::~GlobalHotkeyManager()
+{   
+    // hook_stop() stop event processing
+    // but I will leave this to prevent dangling references
+    for (std::pair<const int, GlobalHotkeyManager::Hotkey> callback : m_callbacks) {
+        unregisterHotkey(callback.first);
+    }
+    hook_stop();
+    s_instance = nullptr;
+}
 
 int GlobalHotkeyManager::registerHotkey(uint16_t keycode, uint32_t modifiers, HotkeyCallback callback) {
     if (find_hotkey(keycode, modifiers) != nullptr) {
@@ -299,7 +303,9 @@ std::optional<std::tuple<uint16_t, uint32_t>> GlobalHotkeyManager::parse_and_con
 }
 
 void GlobalHotkeyManager::hook_callback(uiohook_event* const event) {
-    GlobalHotkeyManager::instance().handleEvent(event);
+    if (s_instance) {
+        s_instance->handleEvent(event);
+    }
 }
 
 void GlobalHotkeyManager::handleEvent(uiohook_event* const event) {
