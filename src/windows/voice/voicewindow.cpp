@@ -62,7 +62,7 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
 #ifdef WITH_HOTKEYS
     // TODO: Load shortcuts from config file
-    m_mute_hotkey = GlobalHotkeyManager::instance().registerHotkey(VC_M, MASK_ALT, [this]() {
+    m_mute_hotkey = GlobalHotkeyManager::instance().registerHotkey("<Alt>M", [this]() {
         // This is probably stupid there is for sure some way to call event
         // but I'm not really familiar with gtk and this works well.
         m_mute.set_active( !m_mute.get_active() );

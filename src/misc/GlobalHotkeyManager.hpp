@@ -6,6 +6,8 @@
 
 #include <map>
 #include <functional>
+#include <optional>
+#include <tuple>
 #include <mutex>
 #include <glibmm/dispatcher.h>
 #include "uiohook.h"
@@ -18,6 +20,7 @@ class GlobalHotkeyManager
 public:
     static GlobalHotkeyManager& instance();
     int registerHotkey(uint16_t keycode, uint32_t modifiers, HotkeyCallback callback);
+    int registerHotkey(const char *shortcut_str, HotkeyCallback callback);
     void unregisterHotkey(int id);
 
 private:
@@ -34,6 +37,11 @@ private:
     static void hook_callback(uiohook_event* const event);
     void handleEvent(uiohook_event* const event);
     void processCallbacks();
+
+    // Converting gtk to uiohook codes
+    uint16_t convert_gdk_keyval_to_uihooks_key(guint keyval);
+    uint32_t convert_gdk_modifiers_to_uihooks(GdkModifierType mods);
+    std::optional<std::tuple<uint16_t, uint32_t>> parse_and_convert_shortcut(const char *shortcut_str);
 
     Glib::Dispatcher m_dispatcher;
     std::queue<HotkeyCallback> m_pendingCallbacks;
