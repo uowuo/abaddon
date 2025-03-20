@@ -86,11 +86,11 @@ int GlobalHotkeyManager::registerHotkey(const char *shortcut_str, HotkeyCallback
 }
 
 GlobalHotkeyManager::Hotkey* GlobalHotkeyManager::find_hotkey(uint16_t keycode, uint32_t modifiers) {
-    // FIXME: When using multiple modifiers it does not care if just one is pressed or both
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
         [keycode, modifiers](const auto& pair) {
-            return pair.second.keycode == keycode && (modifiers & pair.second.modifiers);
+            return (pair.second.keycode == keycode) &&
+                   ((modifiers & 0x0F) == (pair.second.modifiers & 0x0F)); 
         });
 
     if (it != m_callbacks.end()) {
