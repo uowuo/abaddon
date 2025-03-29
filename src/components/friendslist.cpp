@@ -1,4 +1,6 @@
 #include "friendslist.hpp"
+
+#include <glibmm/i18n.h>
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/radiobutton.h>
 #include "abaddon.hpp"
@@ -20,34 +22,37 @@ FriendsList::FriendsList()
     PopulateRelationships();
     signal_map().connect(sigc::mem_fun(*this, &FriendsList::PopulateRelationships));
 
-    constexpr static std::array<const char *, 4> strs = {
-        "Friends",
-        "Online",
-        "Pending",
-        "Blocked",
+    static std::array<const char *, 4> strs = {
+        _("Friends"),
+        _("Online"),
+        _("Pending"),
+        _("Blocked"),
     };
+    // The counter assumes that strs won't be reordered whatsoever
+    int c = 0;
     for (const auto &x : strs) {
         auto *btn = Gtk::manage(new Gtk::RadioButton(m_group, x));
         m_buttons.add(*btn);
         btn->show();
-        btn->signal_toggled().connect([this, btn, str = x] {
+        btn->signal_toggled().connect([this, btn, c] {
             if (!btn->get_active()) return;
-            switch (str[0]) { // hehe
-                case 'F':
+            switch (c) {
+                case 0:
                     m_filter_mode = FILTER_FRIENDS;
                     break;
-                case 'O':
+                case 1:
                     m_filter_mode = FILTER_ONLINE;
                     break;
-                case 'P':
+                case 2:
                     m_filter_mode = FILTER_PENDING;
                     break;
-                case 'B':
+                case 3:
                     m_filter_mode = FILTER_BLOCKED;
                     break;
             }
             m_list.invalidate_filter();
         });
+        c++;
     }
     m_buttons.set_homogeneous(true);
     m_buttons.set_halign(Gtk::ALIGN_CENTER);
@@ -106,7 +111,7 @@ void FriendsList::OnRelationshipRemove(Snowflake id, RelationshipType type) {
 void FriendsList::OnActionAccept(Snowflake id) {
     const auto cb = [this](DiscordError code) {
         if (code != DiscordError::NONE) {
-            Gtk::MessageDialog dlg(*dynamic_cast<Gtk::Window *>(get_toplevel()), "Failed to accept", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+            Gtk::MessageDialog dlg(*dynamic_cast<Gtk::Window *>(get_toplevel()), _("Failed to accept"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
             dlg.set_position(Gtk::WIN_POS_CENTER);
             dlg.run();
         }
@@ -121,16 +126,16 @@ void FriendsList::OnActionRemove(Snowflake id) {
         Glib::ustring str;
         switch (*discord.GetRelationship(id)) {
             case RelationshipType::Blocked:
-                str = "Are you sure you want to unblock " + user->GetUsername() + "?";
+                str = Glib::ustring::compose(_("Are you sure you want to unblock %1?"), user->GetUsername());
                 break;
             case RelationshipType::Friend:
-                str = "Are you sure you want to remove " + user->GetUsername() + "?";
+                str = Glib::ustring::compose(_("Are you sure you want to remove %1?"), user->GetUsername());
                 break;
             case RelationshipType::PendingIncoming:
-                str = "Are you sure you want to ignore " + user->GetUsername() + "?";
+                str = Glib::ustring::compose(_("Are you sure you want to ignore %1?"), user->GetUsername());
                 break;
             case RelationshipType::PendingOutgoing:
-                str = "Are you sure you want to cancel your request to " + user->GetUsername() + "?";
+                str = Glib::ustring::compose(_("Are you sure you want to cancel your request to %1?"), user->GetUsername());
                 break;
             default:
                 break;
@@ -138,7 +143,7 @@ void FriendsList::OnActionRemove(Snowflake id) {
         if (Abaddon::Get().ShowConfirm(str, window)) {
             const auto cb = [window](DiscordError code) {
                 if (code == DiscordError::NONE) return;
-                Gtk::MessageDialog dlg(*window, "Failed to remove user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(*window, _("Failed to remove user"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             };
@@ -187,9 +192,9 @@ bool FriendsList::ListFilterFunc(Gtk::ListBoxRow *row_) {
 
 FriendsListAddComponent::FriendsListAddComponent()
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
-    , m_label("Add a Friend", Gtk::ALIGN_START)
+    , m_label(_("Add a Friend"), Gtk::ALIGN_START)
     , m_status("", Gtk::ALIGN_START)
-    , m_add("Add")
+    , m_add(_("Add"))
     , m_box(Gtk::ORIENTATION_HORIZONTAL) {
     m_box.add(m_entry);
     m_box.add(m_add);
@@ -199,7 +204,7 @@ FriendsListAddComponent::FriendsListAddComponent()
 
     m_label.set_halign(Gtk::ALIGN_CENTER);
 
-    m_entry.set_placeholder_text("Enter a Username#1234");
+    m_entry.set_placeholder_text(_("Enter a Username#1234"));
     m_entry.signal_key_press_event().connect(sigc::mem_fun(*this, &FriendsListAddComponent::OnKeyPress), false);
 
     add(m_label);
@@ -212,7 +217,7 @@ void FriendsListAddComponent::Submit() {
     if (m_requesting) return;
 
     auto text = m_entry.get_text();
-    m_label.set_text("Invalid input"); // cheeky !!
+    m_label.set_text(_("Invalid input")); // cheeky !!
     m_entry.set_text("");
     const auto hashpos = text.find("#");
     if (hashpos == Glib::ustring::npos) return;
@@ -222,14 +227,14 @@ void FriendsListAddComponent::Submit() {
     if (discriminator.find_first_not_of("0123456789") != Glib::ustring::npos) return;
 
     m_requesting = true;
-    m_label.set_text("Hang on...");
+    m_label.set_text(_("Hang on..."));
 
     const auto cb = [this](DiscordError code) {
         m_requesting = false;
         if (code == DiscordError::NONE) {
-            m_label.set_text("Success!");
+            m_label.set_text(_("Success!"));
         } else {
-            m_label.set_text("Failed: "s + GetDiscordErrorDisplayString(code));
+            m_label.set_text(Glib::ustring::compose(_("Failed: %1"), GetDiscordErrorDisplayString(code)));
         }
     };
     Abaddon::Get().GetDiscordClient().SendFriendRequest(username,
@@ -250,7 +255,7 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
     , Type(type)
     , Name(data.GetUsername())
     , Status(Abaddon::Get().GetDiscordClient().GetUserStatus(data.ID))
-    , m_accept("Accept") {
+    , m_accept(_("Accept")) {
     auto *ev = Gtk::manage(new Gtk::EventBox);
     auto *box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL));
     auto *img = Gtk::manage(new LazyImage(32, 32, true));
@@ -279,13 +284,13 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
         switch (Type) {
             case RelationshipType::Blocked:
             case RelationshipType::Friend:
-                m_remove.set_label("Remove");
+                m_remove.set_label(_("Remove"));
                 break;
             case RelationshipType::PendingIncoming:
-                m_remove.set_label("Ignore");
+                m_remove.set_label(_("Ignore"));
                 break;
             case RelationshipType::PendingOutgoing:
-                m_remove.set_label("Cancel");
+                m_remove.set_label(_("Cancel"));
                 break;
             default:
                 break;
@@ -323,10 +328,10 @@ FriendsListFriendRow::FriendsListFriendRow(RelationshipType type, const UserData
 void FriendsListFriendRow::UpdatePresenceLabel() {
     switch (Type) {
         case RelationshipType::PendingIncoming:
-            m_status_lbl->set_text("Incoming Friend Request");
+            m_status_lbl->set_text(_("Incoming Friend Request"));
             break;
         case RelationshipType::PendingOutgoing:
-            m_status_lbl->set_text("Outgoing Friend Request");
+            m_status_lbl->set_text(_("Outgoing Friend Request"));
             break;
         default:
             m_status_lbl->set_text(GetPresenceDisplayString(Status));

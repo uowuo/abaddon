@@ -1,5 +1,7 @@
 #include "textinput.hpp"
 
+#include <glibmm/i18n.h>
+
 TextInputDialog::TextInputDialog(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window &parent)
     : Gtk::Dialog(title, parent, true)
     , m_label(prompt) {
@@ -7,7 +9,7 @@ TextInputDialog::TextInputDialog(const Glib::ustring &prompt, const Glib::ustrin
     get_style_context()->add_class("app-popup");
 
     auto ok = add_button("OK", Gtk::RESPONSE_OK);
-    auto cancel = add_button("Cancel", Gtk::RESPONSE_CANCEL);
+    auto cancel = add_button(_("Cancel"), Gtk::RESPONSE_CANCEL);
 
     get_content_area()->add(m_label);
     get_content_area()->add(m_entry);

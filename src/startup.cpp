@@ -1,5 +1,7 @@
 #include "startup.hpp"
 
+#include <glibmm/i18n.h>
+
 #include <future>
 #include <memory>
 
@@ -9,7 +11,7 @@ DiscordStartupDialog::DiscordStartupDialog(Gtk::Window &window)
     : Gtk::MessageDialog(window, "", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_NONE, true) {
     m_dispatcher.connect(sigc::mem_fun(*this, &DiscordStartupDialog::DispatchCallback));
 
-    property_text() = "Getting connection info...";
+    property_text() = _("Getting connection info...");
 
     RunAsync();
 }

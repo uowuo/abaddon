@@ -1,17 +1,19 @@
 #include "threadswindow.hpp"
 
+#include <glibmm/i18n.h>
+
 #include "abaddon.hpp"
 
 ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     : m_channel_id(channel.ID)
-    , m_filter_public(m_group, "Public")
-    , m_filter_private(m_group, "Private")
+    , m_filter_public(m_group, _("Public"))
+    , m_filter_private(m_group, _("Private"))
     , m_box(Gtk::ORIENTATION_VERTICAL)
     , m_active(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc))
     , m_archived(channel, sigc::mem_fun(*this, &ThreadsWindow::ListFilterFunc)) {
     set_name("threads-window");
     set_default_size(450, 375);
-    set_title("#" + *channel.Name + " - Threads");
+    set_title(Glib::ustring::compose(_("#%1 - Threads"), *channel.Name));
     set_position(Gtk::WIN_POS_CENTER);
     get_style_context()->add_class("app-window");
     get_style_context()->add_class("app-popup");
@@ -27,8 +29,8 @@ ThreadsWindow::ThreadsWindow(const ChannelData &channel)
     m_switcher.set_halign(Gtk::ALIGN_CENTER);
     m_switcher.set_stack(m_stack);
 
-    m_stack.add(m_active, "active", "Active Threads");
-    m_stack.add(m_archived, "archived", "Archived Threads");
+    m_stack.add(m_active, "active", _("Active Threads"));
+    m_stack.add(m_archived, "archived", _("Archived Threads"));
 
     m_filter_buttons.set_homogeneous(true);
     m_filter_buttons.set_halign(Gtk::ALIGN_CENTER);

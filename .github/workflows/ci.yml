@@ -1,6 +1,6 @@
 name: Abaddon CI
 
-on: [ push, pull_request ]
+on: [push, pull_request]
 
 jobs:
   msys2:
@@ -8,8 +8,8 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
-        mindeps: [ false ]
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
+        mindeps: [false]
         include:
           - buildtype: RelWithDebInfo
             mindeps: true
@@ -84,6 +84,7 @@ jobs:
           mkdir -p ${artifact_dir}/bin ${artifact_dir}/etc/ssl/certs ${artifact_dir}/lib ${artifact_dir}/share/glib-2.0/schemas
           cd build
           cp *.exe ../${artifact_dir}/bin
+          cp -r ./locale/ ../${artifact_dir}/bin
           cd ..
           cp /mingw64/etc/ssl/certs/ca-bundle.crt ${artifact_dir}/etc/ssl/certs
           cp -r /mingw64/lib/gdk-pixbuf-2.0 ${artifact_dir}/lib
@@ -132,7 +133,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo ]
+        buildtype: [Debug, RelWithDebInfo]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -177,7 +178,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        buildtype: [ Debug, RelWithDebInfo, MinSizeRel ]
+        buildtype: [Debug, RelWithDebInfo, MinSizeRel]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -199,6 +200,7 @@ jobs:
           cmake ..
           make
           sudo make install
+          sudo apt-get install gettext
           sudo apt-get install libgtkmm-3.0-dev
           sudo apt-get install libcurl4-gnutls-dev
           sudo apt-get install libopus-dev
@@ -221,6 +223,7 @@ jobs:
           artifact_dir=${{ runner.workspace }}/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
           mkdir -p "${artifact_dir}"
           cp "${{runner.workspace}}/build/abaddon" "${artifact_dir}/abaddon"
+          cp -r "${{runner.workspace}}/build/locale" "${artifact_dir}/locale"
           cp -r "${{ github.workspace }}/res/css" "${artifact_dir}/css"
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 

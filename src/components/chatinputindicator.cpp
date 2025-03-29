@@ -1,6 +1,8 @@
 #include "chatinputindicator.hpp"
 #include <filesystem>
+#include <fmt/format.h>
 #include <gdkmm/pixbufloader.h>
+#include <glibmm/i18n.h>
 #include "abaddon.hpp"
 #include "util.hpp"
 
@@ -114,15 +116,20 @@ void ChatInputIndicator::ComputeTypingString() {
     if (typers.empty()) {
         SetTypingString("");
     } else if (typers.size() == 1) {
-        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " is typing...");
+        SetTypingString(Glib::ustring::compose(_("%1 is typing..."), typers[0].GetDisplayName(m_active_guild)));
     } else if (typers.size() == 2) {
-        SetTypingString(typers[0].GetDisplayName(m_active_guild) + " and " + typers[1].GetDisplayName(m_active_guild) + " are typing...");
+        SetTypingString(Glib::ustring::compose(_("%1 and %2 are typing"),
+                                               typers[0].GetDisplayName(m_active_guild),
+                                               typers[1].GetDisplayName(m_active_guild)));
     } else if (typers.size() > 2 && typers.size() <= MaxUsersInIndicator) {
-        Glib::ustring str;
-        for (size_t i = 0; i < typers.size() - 1; i++)
-            str += typers[i].GetDisplayName(m_active_guild) + ", ";
-        SetTypingString(str + "and " + typers[typers.size() - 1].GetDisplayName(m_active_guild) + " are typing...");
+        // FIXME: Just because this suffice the case where 4 are typing, does not necessarily mean that there are exactly 4 people typing
+        Glib::ustring str = Glib::ustring::compose(_("%1, %2, %3 and %4 are typing..."),
+                                                   typers[0].GetDisplayName(m_active_guild),
+                                                   typers[1].GetDisplayName(m_active_guild),
+                                                   typers[2].GetDisplayName(m_active_guild),
+                                                   typers[3].GetDisplayName(m_active_guild));
+        SetTypingString(str);
     } else { // size() > MaxUsersInIndicator
-        SetTypingString("Several people are typing...");
+        SetTypingString(_("Several people are typing..."));
     }
 }

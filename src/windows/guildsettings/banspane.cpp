@@ -1,5 +1,6 @@
 #include "banspane.hpp"
 
+#include <glibmm/i18n.h>
 #include <gtkmm/messagedialog.h>
 
 #include "abaddon.hpp"
@@ -8,8 +9,8 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL)
     , GuildID(id)
     , m_model(Gtk::ListStore::create(m_columns))
-    , m_menu_unban("Unban")
-    , m_menu_copy_id("Copy ID") {
+    , m_menu_unban(_("Unban"))
+    , m_menu_copy_id(_("Copy ID")) {
     signal_map().connect(sigc::mem_fun(*this, &GuildSettingsBansPane::OnMap));
     set_name("guild-bans-pane");
     set_hexpand(true);
@@ -27,7 +28,7 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
         for (const auto &ban : discord.GetBansInGuild(id))
             OnGuildBanFetch(ban);
 
-        m_no_perms_note = Gtk::manage(new Gtk::Label("You do not have permission to see bans. However, bans made while you are connected will appear here"));
+        m_no_perms_note = Gtk::manage(new Gtk::Label(_("You do not have permission to see bans. However, bans made while you are connected will appear here")));
         m_no_perms_note->set_single_line_mode(true);
         m_no_perms_note->set_ellipsize(Pango::ELLIPSIZE_END);
         m_no_perms_note->set_halign(Gtk::ALIGN_START);
@@ -51,8 +52,8 @@ GuildSettingsBansPane::GuildSettingsBansPane(Snowflake id)
 
     m_view.set_enable_search(false);
     m_view.set_model(m_model);
-    m_view.append_column("User", m_columns.m_col_user);
-    m_view.append_column("Reason", m_columns.m_col_reason);
+    m_view.append_column(_("User"), m_columns.m_col_user);
+    m_view.append_column(_("Reason"), m_columns.m_col_reason);
 }
 
 void GuildSettingsBansPane::OnMap() {
@@ -96,7 +97,7 @@ void GuildSettingsBansPane::OnMenuUnban() {
         Snowflake id = selected_row[m_columns.m_col_id];
         auto cb = [](DiscordError code) {
             if (code != DiscordError::NONE) {
-                Gtk::MessageDialog dlg("Failed to unban user", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                Gtk::MessageDialog dlg(_("Failed to unban user"), false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
                 dlg.set_position(Gtk::WIN_POS_CENTER);
                 dlg.run();
             }
