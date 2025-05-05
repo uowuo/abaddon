@@ -153,10 +153,9 @@ jobs:
           brew install libhandy
 
       - name: Build
-        uses: lukka/run-cmake@v10
-        with:
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
 
       - name: Setup artifact files
         run: |
@@ -207,14 +206,12 @@ jobs:
           sudo apt-get install libhandy-1-dev
 
       - name: Build
-        uses: lukka/run-cmake@v10
         env:
           CC: gcc-9
           CXX: g++-9
-        with:
-          cmakeAppendedArgs: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
 
       - name: Setup artifact files
         run: |
