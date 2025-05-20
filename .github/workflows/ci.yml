@@ -139,7 +139,7 @@ jobs:
           submodules: true
 
       - name: Fetch CMake
-        uses: lukka/get-cmake@v3.21.2
+        uses: lukka/get-cmake@latest
 
       - name: Fetch dependencies
         run: |
@@ -153,16 +153,15 @@ jobs:
           brew install libhandy
 
       - name: Build
-        uses: lukka/run-cmake@v3
-        with:
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
 
       - name: Setup artifact files
         run: |
           artifact_dir=build/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
           mkdir -p "${artifact_dir}"
-          cp "${{runner.workspace}}/build/abaddon" "${artifact_dir}/abaddon"
+          cp "${{ github.workspace }}/build/abaddon" "${artifact_dir}/abaddon"
           cp -r "${{ github.workspace }}/res/css" "${artifact_dir}/css"
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
@@ -184,7 +183,7 @@ jobs:
           submodules: true
 
       - name: Fetch CMake
-        uses: lukka/get-cmake@v3.21.2
+        uses: lukka/get-cmake@latest
 
       - name: Fetch dependencies
         run: |
@@ -193,7 +192,7 @@ jobs:
           cd deps
           git clone https://github.com/nlohmann/json
           cd json
-          git checkout bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d
+          git checkout 55f93686c01528224f448c19128836e7df245f72
           mkdir build
           cd build
           cmake ..
@@ -207,20 +206,18 @@ jobs:
           sudo apt-get install libhandy-1-dev
 
       - name: Build
-        uses: lukka/run-cmake@v3
         env:
           CC: gcc-9
           CXX: g++-9
-        with:
-          cmakeAppendedArgs: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
-          buildDirectory: ${{ runner.workspace }}/build
-          cmakeBuildType: ${{ matrix.buildtype }}
+        run: |
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake --build build
 
       - name: Setup artifact files
         run: |
           artifact_dir=${{ runner.workspace }}/artifactdir/abaddon-${{ matrix.buildtype }}-${GITHUB_SHA::7}
           mkdir -p "${artifact_dir}"
-          cp "${{runner.workspace}}/build/abaddon" "${artifact_dir}/abaddon"
+          cp "${{ github.workspace }}/build/abaddon" "${artifact_dir}/abaddon"
           cp -r "${{ github.workspace }}/res/css" "${artifact_dir}/css"
           cp -r "${{ github.workspace }}/res/res" "${artifact_dir}/res"
 
