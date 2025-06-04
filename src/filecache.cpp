@@ -40,6 +40,9 @@ void Cache::ClearCache() {
     for (const auto &path : std::filesystem::directory_iterator(m_tmp_path))
         std::filesystem::remove_all(path);
 }
+std::filesystem::path Cache::GetCachePath() const {
+    return m_tmp_path;
+}
 
 void Cache::RespondFromPath(const std::filesystem::path &path, const callback_type &cb) {
     cb(path.string());

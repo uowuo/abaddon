@@ -62,6 +62,7 @@ public:
     void GetFileFromURL(const std::string &url, const callback_type &cb);
     std::string GetPathIfCached(const std::string &url);
     void ClearCache();
+    [[nodiscard]] std::filesystem::path GetCachePath() const;
 
 private:
     void CleanupFutures();

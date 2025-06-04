@@ -204,7 +204,8 @@ bool ChatInputAttachmentContainer::AddImage(const Glib::RefPtr<Gdk::Pixbuf> &pb)
 
     static unsigned go_up = 0;
     std::string dest_name = "pasted-image-" + std::to_string(go_up++);
-    const auto path = (std::filesystem::temp_directory_path() / "abaddon-cache" / dest_name).string();
+    const auto cache_path = Abaddon::Get().GetImageManager().GetCache().GetCachePath();
+    const auto path = (cache_path / dest_name).string();
 
     try {
         pb->save(path, "png");
