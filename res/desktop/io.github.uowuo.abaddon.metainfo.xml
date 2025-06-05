@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.uowuo.abaddon</id>
+
+  <name>Abaddon</name>
+  <summary>An alternative Discord client with voice support made with C++ and GTK 3</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <description>
+    <p>Abaddon offers a fast and minimalist way to use Discord. It supports voice calls, threads, messages, and replies.</p>
+  </description>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">intense</content_attribute>
+    <content_attribute id="social-info">mild</content_attribute>
+    <content_attribute id="social-audio">intense</content_attribute>
+    <content_attribute id="social-contacts">intense</content_attribute>
+  </content_rating>
+
+
+  <url type="homepage">https://github.com/uowuo/abaddon/</url>
+
+  <releases>
+    <release version="0.2.1-ci" date="2025-01-30"/>
+  </releases>
+
+  <developer id="io.github.uowuo">
+    <name>ouwou</name>
+    <name>Abaddon Contributors</name>
+  </developer>
+
+  <launchable type="desktop-id">io.github.uowuo.abaddon.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/uowuo/abaddon/4c79ae6a69ee42cfa4892aae3e105b404b9a29c1/.readme/s5.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/uowuo/abaddon/raw/4c79ae6a69ee42cfa4892aae3e105b404b9a29c1/.readme/s6.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/uowuo/abaddon/raw/4c79ae6a69ee42cfa4892aae3e105b404b9a29c1/.readme/s7.png</image>
+    </screenshot>
+  </screenshots>
+</component>

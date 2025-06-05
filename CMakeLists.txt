@@ -70,7 +70,7 @@ if (NOT (APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
     target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
 endif ()
 
-if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND
 (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 ((CMAKE_SYSTEM_NAME STREQUAL "Linux") OR (CMAKE_CXX_COMPILER_VERSION LESS 9))))
     target_link_libraries(abaddon stdc++fs)

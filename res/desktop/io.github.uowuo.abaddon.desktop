@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.5
+Type=Application
+
+Name=Abaddon
+Comment=An alternative Discord client with voice support made with C++ and GTK 3
+Categories=Network;Chat;
+
+Icon=io.github.uowuo.abaddon
+Exec=abaddon
+Terminal=false
