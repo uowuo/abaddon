@@ -84,6 +84,8 @@ the result of fundamental issues with Discord's thread implementation.
 5. `make`
 6. [Copy resources](#resources)
 
+For an unbundled build (i.e., a standalone unix executable instead of a macOS .app), pass `cmake -DBUNDLE_MACOSX_APP=OFF ..` for step 4 instead.
+
 #### Linux:
 
 1. Install dependencies
@@ -133,8 +135,8 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 #### Resources
 
 The two folders within the `res` folder (`res/res` and `res/css`) are necessary. Windows also uses the `fonts` folder.
-You can put them directly next to the executable. On Linux, `css` and `res` can also be loaded from
-`~/.local/share/abaddon` or `/usr/share/abaddon`
+On Windows & Linux, you can put them directly next to the executable. On Linux, `css` and `res` can also be loaded from
+`~/.local/share/abaddon` or `/usr/share/abaddon`. On a bundled macOS build, you can put them inside of `abaddon.app/Contents/Resources/`.
 
 `abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is
 no `abaddon.ini` in the working directory
