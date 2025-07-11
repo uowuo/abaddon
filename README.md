@@ -99,6 +99,10 @@ the result of fundamental issues with Discord's thread implementation.
       ```Shell
       $ sudo dnf install g++ cmake gtkmm3.0-devel libcurl-devel sqlite-devel openssl-devel json-devel libsecret-devel libhandy-devel opus-devel libsodium-devel spdlog-devel
       ```
+    * On Void Linux:
+      ```Shell
+      $ sudo xbps-install gcc cmake gtkmm-devel libcurl-devel sqlite-devel openssl-devel libsecret-devel libhandy-devel opus-devel libsodium-devel json-c++ libspdlog spdlog libhandy1 libhandy1-devel
+      ```
       > **Note:** On older versions of fedora you might need to install gtkmm30-devel instead of gtkmm3.0-devel.
       Use `dnf search gtkmm3` to see available packages.
 2. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
