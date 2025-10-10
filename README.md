@@ -134,7 +134,7 @@ Latest release version: https://github.com/uowuo/abaddon/releases/latest
 
 The two folders within the `res` folder (`res/res` and `res/css`) are necessary. Windows also uses the `fonts` folder.
 You can put them directly next to the executable. On Linux, `css` and `res` can also be loaded from
-`~/.local/share/abaddon` or `/usr/share/abaddon`
+`~/.local/share/abaddon` or `/usr/local/share/abaddon`
 
 `abaddon.ini` will also be automatically used if located at `~/.config/abaddon/abaddon.ini` and there is
 no `abaddon.ini` in the working directory
