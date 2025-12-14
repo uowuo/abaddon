@@ -64,20 +64,18 @@ int GetTimezoneOffset() {
 }
 
 Glib::ustring FormatUnixEpoch(gint64 time, const std::string &fmt) {
-    auto dt = Glib::wrap(g_date_time_new_from_unix_utc(time));
+    auto dt = Glib::wrap(g_date_time_new_from_unix_local(time));
 
 #ifdef _WIN32
     std::tm tm {};
-    tm.tm_year = dt.get_year() - 1900;
-    tm.tm_mon = dt.get_month() - 1;
+    tm.tm_year = dt.get_year() - 1900; // tm_year is years since 1900
+    tm.tm_mon = dt.get_month() - 1;    // tm_mon is 0-based
     tm.tm_mday = dt.get_day_of_month();
-    tm.tm_hour = dt.get_hour() + 1;
+    tm.tm_hour = dt.get_hour();
     tm.tm_min = dt.get_minute();
     tm.tm_sec = dt.get_second();
-    tm.tm_wday = 0;
-    tm.tm_yday = 0;
     tm.tm_isdst = -1;
-    tm.tm_sec += GetTimezoneOffset();
+
     mktime(&tm);
     std::array<char, 512> tmp {};
     std::strftime(tmp.data(), sizeof(tmp), fmt.c_str(), &tm);
