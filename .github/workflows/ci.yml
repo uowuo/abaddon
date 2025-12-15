@@ -206,9 +206,6 @@ jobs:
           sudo apt-get install libhandy-1-dev
 
       - name: Build
-        env:
-          CC: gcc-9
-          CXX: g++-9
         run: |
           cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
           cmake --build build
