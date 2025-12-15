@@ -195,7 +195,7 @@ jobs:
           git checkout 55f93686c01528224f448c19128836e7df245f72
           mkdir build
           cd build
-          cmake ..
+          cmake .. -DJSON_BuildTests=OFF
           make
           sudo make install
           sudo apt-get install libgtkmm-3.0-dev
