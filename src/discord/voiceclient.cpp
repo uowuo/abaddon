@@ -52,7 +52,7 @@ void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
 
     const uint32_t timestamp = Abaddon::Get().GetAudio().GetRTPTimestamp();
 
-    std::vector<uint8_t> rtp(12 + len + crypto_secretbox_MACBYTES, 0);
+    std::vector<uint8_t> rtp(12 + len + crypto_aead_xchacha20poly1305_ietf_ABYTES + sizeof(uint32_t), 0);
     rtp[0] = 0x80; // ver 2
     rtp[1] = 0x78; // payload type 0x78
     rtp[2] = (m_sequence >> 8) & 0xFF;
@@ -66,9 +66,22 @@ void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
     rtp[10] = (m_ssrc >> 8) & 0xFF;
     rtp[11] = (m_ssrc >> 0) & 0xFF;
 
-    static std::array<uint8_t, 24> nonce = {};
-    std::memcpy(nonce.data(), rtp.data(), 12);
-    crypto_secretbox_easy(rtp.data() + 12, data, len, nonce.data(), m_secret_key.data());
+    std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> nonce_bytes = {};
+    static uint32_t nonce = 0;
+    nonce++;
+    std::memcpy(nonce_bytes.data(), &nonce, sizeof(uint32_t));
+
+    unsigned long long ciphertext_len;
+    crypto_aead_xchacha20poly1305_ietf_encrypt(
+        rtp.data() + 12, &ciphertext_len,
+        data, len,
+        rtp.data(), 12,
+        nullptr,
+        nonce_bytes.data(),
+        m_secret_key.data());
+
+    rtp.resize(12 + ciphertext_len + 4);
+    std::memcpy(rtp.data() + rtp.size() - sizeof(uint32_t), &nonce, sizeof(uint32_t));
 
     Send(rtp.data(), rtp.size());
 }
@@ -310,8 +323,8 @@ void DiscordVoiceClient::HandleGatewayReady(const VoiceGatewayMessage &m) {
     m_port = d.Port;
     m_ssrc = d.SSRC;
 
-    if (std::find(d.Modes.begin(), d.Modes.end(), "xsalsa20_poly1305") == d.Modes.end()) {
-        m_log->warn("xsalsa20_poly1305 not in modes");
+    if (std::find(d.Modes.begin(), d.Modes.end(), "aead_xchacha20_poly1305_rtpsize") == d.Modes.end()) {
+        m_log->warn("aead_xchacha20_poly1305_rtpsize not in modes");
     }
 
     m_udp.Connect(m_ip, m_port);
@@ -401,7 +414,7 @@ void DiscordVoiceClient::Discovery() {
 
 void DiscordVoiceClient::SelectProtocol(const char *ip, uint16_t port) {
     VoiceSelectProtocolMessage msg;
-    msg.Mode = "xsalsa20_poly1305";
+    msg.Mode = "aead_xchacha20_poly1305_rtpsize";
     msg.Address = ip;
     msg.Port = port;
     msg.Protocol = "udp";
@@ -477,19 +490,21 @@ size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
 }
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
-    uint8_t *payload = data.data() + 12;
     uint32_t ssrc = (data[8] << 24) |
                     (data[9] << 16) |
                     (data[10] << 8) |
                     (data[11] << 0);
-    static std::array<uint8_t, 24> nonce = {};
-    std::memcpy(nonce.data(), data.data(), 12);
-    if (crypto_secretbox_open_easy(payload, payload, data.size() - 12, nonce.data(), m_secret_key.data())) {
+    std::array<uint8_t, 24> nonce = {};
+    std::memcpy(nonce.data(), data.data() + data.size() - sizeof(uint32_t), sizeof(uint32_t));
+
+    const bool has_extension_header = (data[0] & 0b00010000) != 0;
+    size_t ext_size = has_extension_header ? 4 : 0;
+
+    if (crypto_aead_xchacha20poly1305_ietf_decrypt(data.data() + 12 + ext_size, nullptr, nullptr, data.data() + 12 + ext_size, data.size() - 12 - ext_size - sizeof(uint32_t), data.data(), 12 + ext_size, nonce.data(), m_secret_key.data())) {
         // spdlog::get("voice")->trace("UDP payload decryption failure");
     } else {
-        size_t opus_offset = GetPayloadOffset(data.data(), data.size());
-        payload = data.data() + opus_offset;
-        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload, payload + data.size() - opus_offset - crypto_box_MACBYTES });
+        const auto opus_offset = GetPayloadOffset(data.data(), data.size());
+        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { data.data() + opus_offset, data.data() + data.size() - sizeof(uint32_t) });
     }
 }
 
