@@ -44,7 +44,7 @@
 /bin/libnghttp2-14.dll
 /bin/libnghttp3-9.dll
 /bin/libngtcp2-16.dll
-/bin/libngtcp2_crypto_ossl.dll
+/bin/libngtcp2_crypto_ossl-0.dll
 /bin/libopus-0.dll
 /bin/libpango-1.0-0.dll
 /bin/libpangocairo-1.0-0.dll
