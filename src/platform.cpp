@@ -168,18 +168,11 @@ std::string Platform::FindResourceFolder() {
     static bool found = false;
     if (found) return found_path;
 
-    // Try bundle resources first (used when running as an .app bundle)
     CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle());
     char resourcePath[PATH_MAX];
     if (CFURLGetFileSystemRepresentation(resourceURL, true, (UInt8 *)resourcePath, PATH_MAX)) {
         if (resourceURL != NULL) {
             CFRelease(resourceURL);
-        }
-        // Only accept bundle path if it actually contains the expected resource layout
-        if (util::IsFolder(std::string(resourcePath) + "/res") && util::IsFolder(std::string(resourcePath) + "/css")) {
-            found_path = resourcePath;
-            found = true;
-            return found_path;
         }
     }
 
@@ -188,7 +181,7 @@ std::string Platform::FindResourceFolder() {
     if (home_env != nullptr) {
         const static std::string home_path = std::string(home_env) + "/.local/share/abaddon";
 
-        for (const auto &path : {"."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR)}) {
+        for (const auto &path : {std::string(resourcePath), "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR)}) {
             if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
                 found_path = path;
                 found = true;
