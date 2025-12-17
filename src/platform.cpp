@@ -7,9 +7,7 @@
 #ifdef __APPLE__
     #include <unistd.h>
 #endif
-#ifdef __linux__
-    #include "util.hpp"
-#endif
+#include "util.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -176,9 +174,20 @@ std::string Platform::FindResourceFolder() {
         if (resourceURL != NULL) {
             CFRelease(resourceURL);
         }
-        found_path = resourcePath;
-        found = true;
-        return found_path;
+    }
+
+    // Fall back to cwd, user dir or install prefix (e.g. Homebrew installs into share/abaddon)
+    const auto home_env = std::getenv("HOME");
+    if (home_env != nullptr) {
+        const static std::string home_path = std::string(home_env) + "/.local/share/abaddon";
+
+        for (const auto &path : {std::string(resourcePath), "."s, home_path, std::string(ABADDON_DEFAULT_RESOURCE_DIR)}) {
+            if (util::IsFolder(path + "/res") && util::IsFolder(path + "/css")) {
+                found_path = path;
+                found = true;
+                return found_path;
+            }
+        }
     }
 
     spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
