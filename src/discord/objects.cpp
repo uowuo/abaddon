@@ -703,6 +703,13 @@ void from_json(const nlohmann::json &j, CallCreateData &m) {
     JS_ON("voice_states", m.VoiceStates);
 }
 
+void to_json(nlohmann::json &j, const CallConnectMessage &m) {
+    j["op"] = GatewayOp::CallConnect;
+    j["d"] = nlohmann::json::object();
+    j["d"]["channel_id"] = m.ChannelID;
+    j["d"]["ringing"] = m.Ringing;
+}
+
 void to_json(nlohmann::json &j, const ModifyCurrentUserVoiceStateObject &m) {
     JS_IF("channel_id", m.ChannelID);
     JS_IF("suppress", m.Suppress);

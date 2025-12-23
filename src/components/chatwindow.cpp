@@ -47,6 +47,22 @@ ChatWindow::ChatWindow() {
     m_topic_text.set_halign(Gtk::ALIGN_START);
     m_topic_text.show();
 
+#ifdef WITH_VOICE
+    m_call_button.set_label("Start Call");
+    m_call_button.set_tooltip_text("Start a voice call");
+    m_call_button.set_halign(Gtk::ALIGN_START);
+    m_call_button.set_margin_start(5);
+    m_call_button.set_margin_end(5);
+    m_call_button.set_margin_top(2);
+    m_call_button.set_margin_bottom(2);
+    m_call_button.signal_clicked().connect([this]() {
+        if (m_active_channel.IsValid()) {
+            m_signal_action_start_call.emit(m_active_channel);
+        }
+    });
+    m_call_button.hide();
+#endif
+
     m_input->set_valign(Gtk::ALIGN_END);
 
     m_input->signal_submit().connect(sigc::mem_fun(*this, &ChatWindow::OnInputSubmit));
@@ -104,6 +120,9 @@ ChatWindow::ChatWindow() {
     m_tab_switcher->show();
 #endif
     m_main->add(m_topic);
+#ifdef WITH_VOICE
+    m_main->add(m_call_button);
+#endif
     m_main->add(*m_chat);
     m_main->add(m_completer);
     m_main->add(*m_input);
@@ -141,6 +160,16 @@ void ChatWindow::SetActiveChannel(Snowflake id) {
     m_rate_limit_indicator->SetActiveChannel(id);
     if (m_is_replying) StopReplying();
     if (m_is_editing) StopEditing();
+
+#ifdef WITH_VOICE
+    const auto &discord = Abaddon::Get().GetDiscordClient();
+    const auto channel = discord.GetChannel(id);
+    if (channel.has_value() && (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM)) {
+        m_call_button.show();
+    } else {
+        m_call_button.hide();
+    }
+#endif
 
 #ifdef WITH_LIBHANDY
     m_tab_switcher->ReplaceActiveTab(id);
@@ -396,3 +425,9 @@ ChatWindow::type_signal_action_reaction_add ChatWindow::signal_action_reaction_a
 ChatWindow::type_signal_action_reaction_remove ChatWindow::signal_action_reaction_remove() {
     return m_signal_action_reaction_remove;
 }
+
+#ifdef WITH_VOICE
+ChatWindow::type_signal_action_start_call ChatWindow::signal_action_start_call() {
+    return m_signal_action_start_call;
+}
+#endif

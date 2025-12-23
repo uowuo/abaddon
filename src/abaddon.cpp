@@ -15,6 +15,7 @@
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
 #include "dialogs/textinput.hpp"
+#include "dialogs/call.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
@@ -85,6 +86,7 @@ Abaddon::Abaddon()
         spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
         m_audio.AddSSRC(m.SSRC);
     });
+    m_discord.signal_call_create().connect(sigc::mem_fun(*this, &Abaddon::ActionCallCreate));
 #endif
 
     m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
@@ -319,6 +321,10 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_insert_mention().connect(sigc::mem_fun(*this, &Abaddon::ActionInsertMention));
     m_main_window->GetChatWindow()->signal_action_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionAdd));
     m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
+
+#ifdef WITH_VOICE
+    m_main_window->GetChatWindow()->signal_action_start_call().connect(sigc::mem_fun(*this, &Abaddon::ActionStartCall));
+#endif
 
     ActionReloadCSS();
     AttachCSSMonitor();
@@ -863,6 +869,7 @@ void Abaddon::ActionSetToken() {
         m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
         GetSettings().DiscordToken = m_discord_token;
+        m_settings.Save(); // Save immediately so token persists
     }
     m_main_window->UpdateMenus();
 }
@@ -1091,6 +1098,35 @@ void Abaddon::ActionJoinVoiceChannel(Snowflake channel_id) {
 
 void Abaddon::ActionDisconnectVoice() {
     m_discord.DisconnectFromVoice();
+}
+
+void Abaddon::ActionCallCreate(CallCreateData data) {
+    const auto channel = m_discord.GetChannel(data.ChannelID);
+    if (!channel.has_value()) return;
+
+    bool is_group_call = (channel->Type == ChannelType::GROUP_DM);
+
+    CallDialog dlg(*m_main_window, data.ChannelID, is_group_call);
+    const auto response = dlg.run();
+
+    if (response == Gtk::RESPONSE_OK && dlg.GetAccepted()) {
+        if (is_group_call) {
+            m_discord.JoinCall(data.ChannelID);
+        } else {
+            m_discord.AcceptCall(data.ChannelID);
+        }
+    } else {
+        m_discord.RejectCall(data.ChannelID);
+    }
+}
+
+void Abaddon::ActionStartCall(Snowflake channel_id) {
+    const auto channel = m_discord.GetChannel(channel_id);
+    if (!channel.has_value()) return;
+
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) {
+        m_discord.StartCall(channel_id);
+    }
 }
 #endif
 

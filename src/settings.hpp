@@ -60,6 +60,7 @@ public:
     SettingsManager(const std::string &filename);
 
     void Close();
+    void Save(); // Save settings immediately without closing
     [[nodiscard]] bool IsValid() const;
     Settings &GetSettings();
 

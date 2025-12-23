@@ -961,6 +961,13 @@ struct CallCreateData {
     friend void from_json(const nlohmann::json &j, CallCreateData &m);
 };
 
+struct CallConnectMessage {
+    Snowflake ChannelID;
+    bool Ringing; // true to accept, false to reject
+
+    friend void to_json(nlohmann::json &j, const CallConnectMessage &m);
+};
+
 struct ModifyCurrentUserVoiceStateObject {
     std::optional<Snowflake> ChannelID;
     std::optional<bool> Suppress;

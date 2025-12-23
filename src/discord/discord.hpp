@@ -215,6 +215,11 @@ public:
 
     void SetVoiceMuted(bool is_mute);
     void SetVoiceDeafened(bool is_deaf);
+
+    void AcceptCall(Snowflake channel_id);
+    void RejectCall(Snowflake channel_id);
+    void JoinCall(Snowflake channel_id);
+    void StartCall(Snowflake channel_id); // Start a call in DM/Group DM
 #endif
 
     [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
@@ -489,6 +494,7 @@ public:
     using type_signal_voice_requested_disconnect = sigc::signal<void()>;
     using type_signal_voice_client_state_update = sigc::signal<void(DiscordVoiceClient::State)>;
     using type_signal_voice_channel_changed = sigc::signal<void(Snowflake)>;
+    using type_signal_call_create = sigc::signal<void(CallCreateData)>;
 #endif
 
     using type_signal_voice_user_disconnect = sigc::signal<void(Snowflake, Snowflake)>;
@@ -562,6 +568,7 @@ public:
     type_signal_voice_requested_disconnect signal_voice_requested_disconnect();
     type_signal_voice_client_state_update signal_voice_client_state_update();
     type_signal_voice_channel_changed signal_voice_channel_changed();
+    type_signal_call_create signal_call_create();
 #endif
 
     type_signal_voice_user_disconnect signal_voice_user_disconnect();
@@ -636,6 +643,7 @@ protected:
     type_signal_voice_requested_disconnect m_signal_voice_requested_disconnect;
     type_signal_voice_client_state_update m_signal_voice_client_state_update;
     type_signal_voice_channel_changed m_signal_voice_channel_changed;
+    type_signal_call_create m_signal_call_create;
 #endif
 
     type_signal_voice_user_disconnect m_signal_voice_user_disconnect;

@@ -35,7 +35,7 @@ ChannelListTree::ChannelListTree()
     , m_menu_dm_copy_id("_Copy ID", true)
     , m_menu_dm_close("") // changes depending on if group or not
 #ifdef WITH_VOICE
-    , m_menu_dm_join_voice("Join _Voice", true)
+    , m_menu_dm_join_voice("Start _Call", true)
     , m_menu_dm_disconnect_voice("_Disconnect Voice", true)
 #endif
     , m_menu_thread_copy_id("_Copy ID", true)
@@ -943,10 +943,12 @@ Gtk::TreeModel::iterator ChannelListTree::AddGuild(const GuildData &guild, const
     }
 
     std::map<Snowflake, std::vector<ChannelData>> threads;
-    for (const auto &tmp : *guild.Threads) {
-        const auto thread = discord.GetChannel(tmp.ID);
-        if (thread.has_value())
-            threads[*thread->ParentID].push_back(*thread);
+    if (guild.Threads.has_value()) {
+        for (const auto &tmp : *guild.Threads) {
+            const auto thread = discord.GetChannel(tmp.ID);
+            if (thread.has_value())
+                threads[*thread->ParentID].push_back(*thread);
+        }
     }
     const auto add_threads = [&](const ChannelData &channel, const Gtk::TreeRow &row) {
         row[m_columns.m_expanded] = true;

@@ -1385,6 +1385,36 @@ void DiscordClient::SetVoiceDeafened(bool is_deaf) {
     m_deaf_requested = is_deaf;
     SendVoiceStateUpdate();
 }
+
+void DiscordClient::AcceptCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = true;
+    m_websocket.Send(msg);
+    ConnectToVoice(channel_id);
+}
+
+void DiscordClient::RejectCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = false;
+    m_websocket.Send(msg);
+}
+
+void DiscordClient::JoinCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = true;
+    m_websocket.Send(msg);
+    ConnectToVoice(channel_id);
+}
+
+void DiscordClient::StartCall(Snowflake channel_id) {
+    // To start a new call, we just connect to voice.
+    // Discord will automatically create CALL_CREATE when someone connects to voice in a DM/Group DM.
+    // CallConnectMessage with Ringing=true is only used when accepting/joining an EXISTING call.
+    ConnectToVoice(channel_id);
+}
 #endif
 
 std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
@@ -2487,6 +2517,8 @@ void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     for (const auto &state : data.VoiceStates) {
         CheckVoiceState(state);
     }
+
+    m_signal_call_create.emit(data);
 }
 
 #endif
@@ -2987,17 +3019,19 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &guild : data.Guilds) {
         if (!guild.JoinedAt.has_value()) continue; // doubt this can happen but whatever
         const auto joined_at = Snowflake::FromISO8601(*guild.JoinedAt);
-        for (const auto &channel : *guild.Channels) {
-            if (channel.LastMessageID.has_value()) {
-                // unread messages from before you joined dont count as unread
-                if (*channel.LastMessageID < joined_at) continue;
-                if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
-                        return e.ID == id;
-                    }) == data.ReadState.Entries.end()) {
-                    // cant be unread if u cant even see the channel
-                    // better to check here since HasChannelPermission hits the store
-                    if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
-                        m_unread[channel.ID] = 0;
+        if (guild.Channels.has_value()) {
+            for (const auto &channel : *guild.Channels) {
+                if (channel.LastMessageID.has_value()) {
+                    // unread messages from before you joined dont count as unread
+                    if (*channel.LastMessageID < joined_at) continue;
+                    if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
+                            return e.ID == id;
+                        }) == data.ReadState.Entries.end()) {
+                        // cant be unread if u cant even see the channel
+                        // better to check here since HasChannelPermission hits the store
+                        if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
+                            m_unread[channel.ID] = 0;
+                    }
                 }
             }
         }
@@ -3009,12 +3043,16 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
 
     std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
     for (const auto &guild : data.Guilds) {
-        for (const auto &channel : *guild.Channels)
-            if (channel.ParentID.has_value() && !channel.IsThread())
-                category_children[*channel.ParentID].push_back(channel.ID);
-        for (const auto &thread : *guild.Threads)
-            if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
-                m_muted_channels.insert(thread.ID);
+        if (guild.Channels.has_value()) {
+            for (const auto &channel : *guild.Channels)
+                if (channel.ParentID.has_value() && !channel.IsThread())
+                    category_children[*channel.ParentID].push_back(channel.ID);
+        }
+        if (guild.Threads.has_value()) {
+            for (const auto &thread : *guild.Threads)
+                if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
+                    m_muted_channels.insert(thread.ID);
+        }
     }
 
     const auto now = Snowflake::FromNow();
@@ -3406,6 +3444,10 @@ DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice
 
 DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
     return m_signal_voice_channel_changed;
+}
+
+DiscordClient::type_signal_call_create DiscordClient::signal_call_create() {
+    return m_signal_call_create;
 }
 #endif
 
