@@ -116,6 +116,111 @@ the result of fundamental issues with Discord's thread implementation.
 5. `make`
 6. [Copy resources](#resources)
 
+#### Nix Flakes:
+
+Abaddon provides a Nix flake with NixOS and Home Manager modules.
+
+<details>
+    <summary>Show Nix installation options</summary>
+
+##### Using the NixOS Module (system-wide)
+
+Add abaddon to your flake inputs and import the NixOS module:
+
+```nix
+# flake.nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    abaddon.url = "github:uowuo/abaddon";
+  };
+
+  outputs = { self, nixpkgs, abaddon, ... }: {
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        abaddon.nixosModules.default
+        {
+          programs.abaddon.enable = true;
+        }
+      ];
+    };
+  };
+}
+```
+
+##### Using the Home Manager Module (per-user)
+
+For user-level configuration with Home Manager:
+
+```nix
+# flake.nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    home-manager.url = "github:nix-community/home-manager";
+    abaddon.url = "github:uowuo/abaddon";
+  };
+
+  outputs = { self, nixpkgs, home-manager, abaddon, ... }: {
+    homeConfigurations.youruser = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      modules = [
+        abaddon.homeManagerModules.default
+        {
+          programs.abaddon = {
+            enable = true;
+            settings = {
+              discord = {
+                autoconnect = true;
+              };
+              gui = {
+                animations = true;
+                font_scale = 1.0;
+              };
+            };
+            # Optional: custom CSS
+            css = ''
+              .embed {
+                border-radius: 10px;
+              }
+            '';
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+##### Using the Overlay
+
+You can also use the overlay to add abaddon to your pkgs:
+
+```nix
+{
+  inputs.abaddon.url = "github:uowuo/abaddon";
+
+  outputs = { self, nixpkgs, abaddon, ... }: {
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [{
+        nixpkgs.overlays = [ abaddon.overlays.default ];
+        environment.systemPackages = [ pkgs.abaddon ];
+      }];
+    };
+  };
+}
+```
+
+##### Run directly with Nix
+
+```bash
+nix run github:uowuo/abaddon
+```
+
+</details>
+
 ### Downloads:
 
 Latest release version: https://github.com/uowuo/abaddon/releases/latest
