@@ -228,9 +228,12 @@ install(DIRECTORY res/css DESTINATION ${ABADDON_RESOURCE_DIR})
 install(DIRECTORY res/fonts DESTINATION ${ABADDON_RESOURCE_DIR})
 install(DIRECTORY res/res DESTINATION ${ABADDON_RESOURCE_DIR})
 
-install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.desktop
-  ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
-  ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications
-)
+
+if (NOT (APPLE OR WIN32))
+    install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.desktop
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications
+    )
+endif()
