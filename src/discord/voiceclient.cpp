@@ -536,6 +536,15 @@ DiscordVoiceClient::type_signal_state_update DiscordVoiceClient::signal_state_up
     return m_signal_state_update;
 }
 
+void DiscordVoiceClient::SetVideoStatus(bool active) {
+    m_video_active.store(active);
+    m_signal_video_state_changed.emit(active);
+}
+
+bool DiscordVoiceClient::IsVideoActive() const noexcept {
+    return m_video_active.load();
+}
+
 void from_json(const nlohmann::json &j, VoiceGatewayMessage &m) {
     JS_D("op", m.Opcode);
     m.Data = j.at("d");

@@ -114,6 +114,9 @@ enum class GatewayEvent : int {
     STAGE_INSTANCE_CREATE,
     STAGE_INSTANCE_UPDATE,
     STAGE_INSTANCE_DELETE,
+    STREAM_CREATE,
+    STREAM_SERVER_UPDATE,
+    STREAM_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {

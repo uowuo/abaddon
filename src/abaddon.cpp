@@ -500,8 +500,17 @@ void Abaddon::OnVoiceConnected() {
 void Abaddon::OnVoiceDisconnected() {
     m_audio.StopCaptureDevice();
     m_audio.RemoveAllSSRCs();
+
+    // Don't close the voice window if we're still in a voice channel
+    // This handles the case where we reconnect (e.g., for screen share mode change)
+    // The window should only close when we actually leave the channel
     if (m_voice_window != nullptr) {
-        m_voice_window->close();
+        const auto channel_id = m_discord.GetVoiceChannelID();
+        if (!channel_id.IsValid() || static_cast<uint64_t>(channel_id) == 0) {
+            // We're not in a channel anymore, close the window
+            m_voice_window->close();
+        }
+        // Otherwise, we're still in a channel, just reconnecting - keep the window open
     }
 }
 
@@ -1226,6 +1235,9 @@ int main(int argc, char **argv) {
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");
     auto log_ra = spdlog::stdout_color_mt("remote-auth");
+#ifdef WITH_VIDEO
+    auto log_video = spdlog::stdout_color_mt("video");
+#endif
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();

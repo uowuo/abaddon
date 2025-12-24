@@ -220,6 +220,12 @@ public:
     void RejectCall(Snowflake channel_id);
     void JoinCall(Snowflake channel_id);
     void StartCall(Snowflake channel_id); // Start a call in DM/Group DM
+
+    void StartScreenShare(Snowflake guild_id, Snowflake channel_id,
+                          int x = 0, int y = 0, int width = 0, int height = 0);
+    void StopScreenShare();
+    void StartCamera();
+    void StopCamera();
 #endif
 
     [[nodiscard]] std::optional<std::pair<Snowflake, PackedVoiceState>> GetVoiceState(Snowflake user_id) const;
@@ -319,6 +325,9 @@ private:
 #ifdef WITH_VOICE
     void HandleGatewayVoiceServerUpdate(const GatewayMessage &msg);
     void HandleGatewayCallCreate(const GatewayMessage &msg);
+    void HandleGatewayStreamCreate(const GatewayMessage &msg);
+    void HandleGatewayStreamServerUpdate(const GatewayMessage &msg);
+    void HandleGatewayStreamUpdate(const GatewayMessage &msg);
 #endif
 
     void HandleGatewayVoiceStateUpdate(const GatewayMessage &msg);
@@ -391,6 +400,22 @@ private:
 
 #ifdef WITH_VOICE
     DiscordVoiceClient m_voice;
+
+#ifdef WITH_VIDEO
+    enum class PendingVideoStart {
+        None,
+        ScreenShare,
+        Camera,
+    };
+
+    PendingVideoStart m_pending_video_start = PendingVideoStart::None;
+    // Geometry parameters for screen share (stored when StartScreenShare is called)
+    int m_screen_share_x = 0;
+    int m_screen_share_y = 0;
+    int m_screen_share_width = 0;
+    int m_screen_share_height = 0;
+    void StartPendingVideo();
+#endif
 
     bool m_mute_requested = false;
     bool m_deaf_requested = false;

@@ -38,6 +38,10 @@ private:
 
     void OnMuteChanged();
     void OnDeafenChanged();
+#ifdef WITH_VIDEO
+    void OnCameraClicked();
+    void OnScreenShareClicked();
+#endif
 
     void TryDeleteRow(Snowflake id);
     bool UpdateVoiceMeters();
@@ -70,6 +74,12 @@ private:
     Gtk::HBox m_buttons;
     Gtk::Button m_disconnect;
     Gtk::Button m_stage_command;
+#ifdef WITH_VIDEO
+    Gtk::Button m_camera_button;
+    Gtk::Button m_screen_share_button;
+    bool m_camera_active = false;
+    bool m_screen_share_active = false;
+#endif
 
     Gtk::VBox m_stage_invite_box;
     Gtk::Label m_stage_invite_lbl;

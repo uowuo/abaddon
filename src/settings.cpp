@@ -41,23 +41,34 @@ void SettingsManager::HandleReadToken() {
 
     if (!m_settings.UseKeychain) return;
 
-    // Move to keychain if present in .ini
-    std::string token = m_settings.DiscordToken;
+    // Keep whatever was read from the config file as a fallback. If the keychain
+    // backend isn't available (e.g. Secret Service not running), we must not
+    // clobber the token in memory.
+    const std::string token_in_config = m_settings.DiscordToken;
 
-    if (!token.empty()) {
+    // Move to keychain if present in .ini
+    if (!token_in_config.empty()) {
         keychain::Error error {};
-        keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, token, error);
+        keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, token_in_config, error);
         if (error) {
             spdlog::get("ui")->error("Keychain error setting token: {}", error.message);
+            return;
         } else {
             m_file.remove_key("discord", "token");
+            return;
         }
     }
 
     keychain::Error error {};
-    m_settings.DiscordToken = keychain::getPassword(KeychainPackage, KeychainService, KeychainUser, error);
+    const auto token = keychain::getPassword(KeychainPackage, KeychainService, KeychainUser, error);
     if (error && error.type != keychain::ErrorType::NotFound) {
         spdlog::get("ui")->error("Keychain error reading token: {} ({})", error.message, error.code);
+        return;
+    }
+    if (!error) {
+        m_settings.DiscordToken = token;
+    } else {
+        m_settings.DiscordToken = token_in_config;
     }
 #endif
 }
