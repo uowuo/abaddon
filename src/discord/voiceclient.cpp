@@ -52,7 +52,7 @@ void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
 
     const uint32_t timestamp = Abaddon::Get().GetAudio().GetRTPTimestamp();
 
-    std::vector<uint8_t> rtp(12 + len + crypto_aead_xchacha20poly1305_ietf_ABYTES + sizeof(uint32_t), 0);
+    std::vector<uint8_t> rtp(12 + len + crypto_aead_xchacha20poly1305_ietf_ABYTES + sizeof(uint64_t), 0);
     rtp[0] = 0x80; // ver 2
     rtp[1] = 0x78; // payload type 0x78
     rtp[2] = (m_sequence >> 8) & 0xFF;
@@ -67,9 +67,8 @@ void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
     rtp[11] = (m_ssrc >> 0) & 0xFF;
 
     std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> nonce_bytes = {};
-    static uint32_t nonce = 0;
-    nonce++;
-    std::memcpy(nonce_bytes.data(), &nonce, sizeof(uint32_t));
+    const uint64_t nonce = m_nonce_counter.fetch_add(1, std::memory_order_relaxed);
+    std::memcpy(nonce_bytes.data(), &nonce, sizeof(uint64_t));
 
     unsigned long long ciphertext_len;
     crypto_aead_xchacha20poly1305_ietf_encrypt(
@@ -80,8 +79,8 @@ void UDPSocket::SendEncrypted(const uint8_t *data, size_t len) {
         nonce_bytes.data(),
         m_secret_key.data());
 
-    rtp.resize(12 + ciphertext_len + 4);
-    std::memcpy(rtp.data() + rtp.size() - sizeof(uint32_t), &nonce, sizeof(uint32_t));
+    rtp.resize(12 + ciphertext_len + sizeof(uint64_t));
+    std::memcpy(rtp.data() + rtp.size() - sizeof(uint64_t), &nonce, sizeof(uint64_t));
 
     Send(rtp.data(), rtp.size());
 }
@@ -501,7 +500,8 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     size_t ext_size = has_extension_header ? 4 : 0;
 
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(data.data() + 12 + ext_size, nullptr, nullptr, data.data() + 12 + ext_size, data.size() - 12 - ext_size - sizeof(uint32_t), data.data(), 12 + ext_size, nonce.data(), m_secret_key.data())) {
-        // spdlog::get("voice")->trace("UDP payload decryption failure");
+        m_log->warn("UDP payload decryption failure (ssrc: {}, packet size: {} bytes)", ssrc, data.size());
+        return;
     } else {
         const auto opus_offset = GetPayloadOffset(data.data(), data.size());
         Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { data.data() + opus_offset, data.data() + data.size() - sizeof(uint32_t) });

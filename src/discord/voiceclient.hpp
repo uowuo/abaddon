@@ -226,6 +226,7 @@ private:
     std::atomic<uint32_t> m_packet_counter{0};
 
     std::atomic<uint16_t> m_sequence{0};
+    std::atomic<uint64_t> m_nonce_counter{0};
 
 public:
     using type_signal_data = sigc::signal<void, std::vector<uint8_t>>;
