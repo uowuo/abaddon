@@ -91,9 +91,21 @@ the result of fundamental issues with Discord's thread implementation.
       ```Shell
       $ sudo apt install g++ cmake libgtkmm-3.0-dev libcurl4-gnutls-dev libsqlite3-dev libssl-dev nlohmann-json3-dev libhandy-1-dev libsecret-1-dev libopus-dev libsodium-dev libspdlog-dev
       ```
-    * On Arch Linux
+    * On Arch Linux:
       ```Shell
       $ sudo pacman -S gcc cmake gtkmm3 libcurl-gnutls lib32-sqlite lib32-openssl nlohmann-json libhandy opus libsodium spdlog
+      ```
+    * On Void Linux:
+      ```Shell
+      $ # Install core dependencies
+      $ sudo xbps-install cmake make meson pkg-config gcc libcurl libcurl-devel libsecret libsecret-devel gtkmm gtkmm-devel sqlite sqlite-devel openssl openssl-devel libhandy1 libhandy1-devel opus opus-devel libsodium libsodium-devel spdlog libspdlog
+      $ # Clone and install nlohmann json:
+      $ git clone https://github.com/nlohmann/json && cd json
+      $ mkdir build
+      $ meson build
+      $ cd build
+      $ sudo meson install
+      $ cd ../..
       ```
     * On Fedora Linux:
       ```Shell
