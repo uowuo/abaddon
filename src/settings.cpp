@@ -41,23 +41,34 @@ void SettingsManager::HandleReadToken() {
 
     if (!m_settings.UseKeychain) return;
 
-    // Move to keychain if present in .ini
-    std::string token = m_settings.DiscordToken;
+    // Keep whatever was read from the config file as a fallback. If the keychain
+    // backend isn't available (e.g. Secret Service not running), we must not
+    // clobber the token in memory.
+    const std::string token_in_config = m_settings.DiscordToken;
 
-    if (!token.empty()) {
+    // Move to keychain if present in .ini
+    if (!token_in_config.empty()) {
         keychain::Error error {};
-        keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, token, error);
+        keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, token_in_config, error);
         if (error) {
             spdlog::get("ui")->error("Keychain error setting token: {}", error.message);
+            return;
         } else {
             m_file.remove_key("discord", "token");
+            return;
         }
     }
 
     keychain::Error error {};
-    m_settings.DiscordToken = keychain::getPassword(KeychainPackage, KeychainService, KeychainUser, error);
+    const auto token = keychain::getPassword(KeychainPackage, KeychainService, KeychainUser, error);
     if (error && error.type != keychain::ErrorType::NotFound) {
         spdlog::get("ui")->error("Keychain error reading token: {} ({})", error.message, error.code);
+        return;
+    }
+    if (!error) {
+        m_settings.DiscordToken = token;
+    } else {
+        m_settings.DiscordToken = token_in_config;
     }
 #endif
 }
@@ -70,10 +81,19 @@ void SettingsManager::HandleWriteToken() {
         keychain::setPassword(KeychainPackage, KeychainService, KeychainUser, m_settings.DiscordToken, error);
         if (error) {
             spdlog::get("ui")->error("Keychain error setting token: {}", error.message);
+            // If keychain fails, fall back to saving in config file
+            m_file.set_string("discord", "token", m_settings.DiscordToken);
+            return;
         }
+        // If keychain succeeds, remove token from config file for security
+        if (m_file.has_key("discord", "token")) {
+            m_file.remove_key("discord", "token");
+        }
+        return;
     }
 #endif
-    // else it will get enumerated over as part of definitions
+    // If keychain is disabled, save token in config file
+    m_file.set_string("discord", "token", m_settings.DiscordToken);
 }
 
 void SettingsManager::DefineSettings() {
@@ -171,11 +191,15 @@ SettingsManager::Settings &SettingsManager::GetSettings() {
     return m_settings;
 }
 
-void SettingsManager::Close() {
+void SettingsManager::Save() {
     if (m_ok) {
         for (auto &[k, setting] : m_definitions) {
             switch (setting.Type) {
                 case SettingDefinition::TypeString:
+                    // Skip token here - it's handled by HandleWriteToken()
+                    if (setting.Section == "discord" && setting.Name == "token") {
+                        break;
+                    }
                     if (m_settings.*(setting.Ptr.String) != m_read_settings.*(setting.Ptr.String)) {
                         m_file.set_string(setting.Section, setting.Name, m_settings.*(setting.Ptr.String));
                     }
@@ -208,4 +232,8 @@ void SettingsManager::Close() {
             spdlog::get("ui")->error("Failed to save settings Keyfile: {}", e.what().c_str());
         }
     }
+}
+
+void SettingsManager::Close() {
+    Save();
 }

@@ -79,6 +79,10 @@ protected:
     Gtk::EventBox m_topic; // todo probably make everything else go on the stack
     Gtk::Label m_topic_text;
 
+#ifdef WITH_VOICE
+    Gtk::Button m_call_button;
+#endif
+
     ChatList *m_chat;
 
     ChatInput *m_input;
@@ -110,6 +114,11 @@ public:
     type_signal_action_reaction_add signal_action_reaction_add();
     type_signal_action_reaction_remove signal_action_reaction_remove();
 
+#ifdef WITH_VOICE
+    using type_signal_action_start_call = sigc::signal<void, Snowflake>;
+    type_signal_action_start_call signal_action_start_call();
+#endif
+
 private:
     type_signal_action_message_edit m_signal_action_message_edit;
     type_signal_action_chat_submit m_signal_action_chat_submit;
@@ -118,4 +127,8 @@ private:
     type_signal_action_insert_mention m_signal_action_insert_mention;
     type_signal_action_reaction_add m_signal_action_reaction_add;
     type_signal_action_reaction_remove m_signal_action_reaction_remove;
+
+#ifdef WITH_VOICE
+    type_signal_action_start_call m_signal_action_start_call;
+#endif
 };

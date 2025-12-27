@@ -15,6 +15,7 @@
 #include "dialogs/friendpicker.hpp"
 #include "dialogs/verificationgate.hpp"
 #include "dialogs/textinput.hpp"
+#include "dialogs/call.hpp"
 #include "windows/guildsettingswindow.hpp"
 #include "windows/profilewindow.hpp"
 #include "windows/pinnedwindow.hpp"
@@ -85,6 +86,7 @@ Abaddon::Abaddon()
         spdlog::get("voice")->debug("{} SSRC: {}", m.UserID, m.SSRC);
         m_audio.AddSSRC(m.SSRC);
     });
+    m_discord.signal_call_create().connect(sigc::mem_fun(*this, &Abaddon::ActionCallCreate));
 #endif
 
     m_discord.signal_channel_accessibility_changed().connect([this](Snowflake id, bool accessible) {
@@ -320,6 +322,10 @@ int Abaddon::StartGTK() {
     m_main_window->GetChatWindow()->signal_action_reaction_add().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionAdd));
     m_main_window->GetChatWindow()->signal_action_reaction_remove().connect(sigc::mem_fun(*this, &Abaddon::ActionReactionRemove));
 
+#ifdef WITH_VOICE
+    m_main_window->GetChatWindow()->signal_action_start_call().connect(sigc::mem_fun(*this, &Abaddon::ActionStartCall));
+#endif
+
     ActionReloadCSS();
     AttachCSSMonitor();
 
@@ -494,8 +500,17 @@ void Abaddon::OnVoiceConnected() {
 void Abaddon::OnVoiceDisconnected() {
     m_audio.StopCaptureDevice();
     m_audio.RemoveAllSSRCs();
+
+    // Don't close the voice window if we're still in a voice channel
+    // This handles the case where we reconnect (e.g., for screen share mode change)
+    // The window should only close when we actually leave the channel
     if (m_voice_window != nullptr) {
-        m_voice_window->close();
+        const auto channel_id = m_discord.GetVoiceChannelID();
+        if (!channel_id.IsValid() || static_cast<uint64_t>(channel_id) == 0) {
+            // We're not in a channel anymore, close the window
+            m_voice_window->close();
+        }
+        // Otherwise, we're still in a channel, just reconnecting - keep the window open
     }
 }
 
@@ -863,6 +878,7 @@ void Abaddon::ActionSetToken() {
         m_discord.UpdateToken(m_discord_token);
         m_main_window->UpdateComponents();
         GetSettings().DiscordToken = m_discord_token;
+        m_settings.Save(); // Save immediately so token persists
     }
     m_main_window->UpdateMenus();
 }
@@ -1092,6 +1108,35 @@ void Abaddon::ActionJoinVoiceChannel(Snowflake channel_id) {
 void Abaddon::ActionDisconnectVoice() {
     m_discord.DisconnectFromVoice();
 }
+
+void Abaddon::ActionCallCreate(CallCreateData data) {
+    const auto channel = m_discord.GetChannel(data.ChannelID);
+    if (!channel.has_value()) return;
+
+    bool is_group_call = (channel->Type == ChannelType::GROUP_DM);
+
+    CallDialog dlg(*m_main_window, data.ChannelID, is_group_call);
+    const auto response = dlg.run();
+
+    if (response == Gtk::RESPONSE_OK && dlg.GetAccepted()) {
+        if (is_group_call) {
+            m_discord.JoinCall(data.ChannelID);
+        } else {
+            m_discord.AcceptCall(data.ChannelID);
+        }
+    } else {
+        m_discord.RejectCall(data.ChannelID);
+    }
+}
+
+void Abaddon::ActionStartCall(Snowflake channel_id) {
+    const auto channel = m_discord.GetChannel(channel_id);
+    if (!channel.has_value()) return;
+
+    if (channel->Type == ChannelType::DM || channel->Type == ChannelType::GROUP_DM) {
+        m_discord.StartCall(channel_id);
+    }
+}
 #endif
 
 std::optional<Glib::ustring> Abaddon::ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder, Gtk::Window *window) {
@@ -1190,6 +1235,9 @@ int main(int argc, char **argv) {
     auto log_voice = spdlog::stdout_color_mt("voice");
     auto log_discord = spdlog::stdout_color_mt("discord");
     auto log_ra = spdlog::stdout_color_mt("remote-auth");
+#ifdef WITH_VIDEO
+    auto log_video = spdlog::stdout_color_mt("video");
+#endif
 
     Gtk::Main::init_gtkmm_internals(); // why???
     return Abaddon::Get().StartGTK();

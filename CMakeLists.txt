@@ -168,6 +168,18 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
+    # FFmpeg for video support
+    find_package(PkgConfig QUIET)
+    pkg_check_modules(FFMPEG QUIET libavcodec libavformat libavdevice libswscale libavutil)
+    if (FFMPEG_FOUND)
+        target_compile_definitions(abaddon PRIVATE WITH_VIDEO)
+        target_include_directories(abaddon PUBLIC ${FFMPEG_INCLUDE_DIRS})
+        target_link_libraries(abaddon ${FFMPEG_LIBRARIES})
+        target_link_directories(abaddon PUBLIC ${FFMPEG_LIBRARY_DIRS})
+    else()
+        message(WARNING "FFmpeg not found - video calling and screen sharing will be disabled")
+    endif()
+
     if (ENABLE_RNNOISE)
         target_compile_definitions(abaddon PRIVATE WITH_RNNOISE)
 
@@ -227,4 +239,3 @@ install(TARGETS abaddon RUNTIME)
 install(DIRECTORY res/css DESTINATION ${ABADDON_RESOURCE_DIR})
 install(DIRECTORY res/fonts DESTINATION ${ABADDON_RESOURCE_DIR})
 install(DIRECTORY res/res DESTINATION ${ABADDON_RESOURCE_DIR})
-

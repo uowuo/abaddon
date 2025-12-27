@@ -6,8 +6,63 @@
 #include <spdlog/spdlog.h>
 
 #include "abaddon.hpp"
+#ifdef WITH_VIDEO
+#include "video/capture.hpp"
+#include "discord/rtppacketizer.hpp"
+#include <fstream>
+#include <chrono>
+#endif
 
 using namespace std::string_literals;
+
+#ifdef WITH_VIDEO
+namespace {
+using NalSpan = std::pair<const uint8_t *, size_t>;
+
+size_t FindAnnexBStartCode(const uint8_t *data, size_t len, size_t offset) {
+    for (size_t i = offset; i + 3 < len; ++i) {
+        if (data[i] != 0 || data[i + 1] != 0) continue;
+        if (data[i + 2] == 1) return i;
+        if (data[i + 2] == 0 && data[i + 3] == 1) return i;
+    }
+    return len;
+}
+
+void ExtractH264NalUnits(const uint8_t *data, size_t len, std::vector<NalSpan> &out) {
+    out.clear();
+    if (len == 0) return;
+
+    const size_t first_sc = FindAnnexBStartCode(data, len, 0);
+    if (first_sc != len) {
+        size_t sc = first_sc;
+        while (sc != len) {
+            const size_t sc_len = (data[sc + 2] == 1) ? 3 : 4;
+            const size_t nal_start = sc + sc_len;
+            const size_t next_sc = FindAnnexBStartCode(data, len, nal_start);
+            const size_t nal_end = (next_sc == len) ? len : next_sc;
+            if (nal_end > nal_start) {
+                out.emplace_back(data + nal_start, nal_end - nal_start);
+            }
+            sc = next_sc;
+        }
+        return;
+    }
+
+    // AVCC length-prefixed NAL units (assume 4-byte lengths).
+    size_t offset = 0;
+    while (offset + 4 <= len) {
+        const uint32_t nal_len = (static_cast<uint32_t>(data[offset]) << 24) |
+                                 (static_cast<uint32_t>(data[offset + 1]) << 16) |
+                                 (static_cast<uint32_t>(data[offset + 2]) << 8) |
+                                 (static_cast<uint32_t>(data[offset + 3]) << 0);
+        offset += 4;
+        if (nal_len == 0 || offset + nal_len > len) break;
+        out.emplace_back(data + offset, nal_len);
+        offset += nal_len;
+    }
+}
+} // namespace
+#endif
 
 DiscordClient::DiscordClient(bool mem_store)
     : m_decompress_buf(InflateChunkSize)
@@ -38,6 +93,24 @@ DiscordClient::DiscordClient(bool mem_store)
         m_signal_voice_client_state_update.emit(state);
     };
     m_voice.signal_state_update().connect(sigc::track_obj(signal_state_update_cb, m_signal_voice_client_state_update));
+
+#ifdef WITH_VIDEO
+    const auto voice_video_state_cb = [this](DiscordVoiceClient::State state) {
+        if (state == DiscordVoiceClient::State::Connected) {
+            spdlog::get("discord")->debug("Voice connected, checking for pending video start");
+            StartPendingVideo();
+        }
+    };
+    m_voice.signal_state_update().connect(sigc::track_obj(voice_video_state_cb, m_signal_voice_client_state_update));
+
+    // CRITICAL: Connect video state changed signal to update main gateway
+    // This sends Opcode 4 (Voice State Update) with self_video=true/false
+    // Without this, Discord ignores all video packets sent via UDP
+    const auto video_state_changed_cb = [this](bool active) {
+        SendVoiceStateUpdate();
+    };
+    m_voice.signal_video_state_changed().connect(sigc::track_obj(video_state_changed_cb, m_signal_voice_client_state_update));
+#endif
 #endif
 
     LoadEventMap();
@@ -1385,6 +1458,36 @@ void DiscordClient::SetVoiceDeafened(bool is_deaf) {
     m_deaf_requested = is_deaf;
     SendVoiceStateUpdate();
 }
+
+void DiscordClient::AcceptCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = true;
+    m_websocket.Send(msg);
+    ConnectToVoice(channel_id);
+}
+
+void DiscordClient::RejectCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = false;
+    m_websocket.Send(msg);
+}
+
+void DiscordClient::JoinCall(Snowflake channel_id) {
+    CallConnectMessage msg;
+    msg.ChannelID = channel_id;
+    msg.Ringing = true;
+    m_websocket.Send(msg);
+    ConnectToVoice(channel_id);
+}
+
+void DiscordClient::StartCall(Snowflake channel_id) {
+    // To start a new call, we just connect to voice.
+    // Discord will automatically create CALL_CREATE when someone connects to voice in a DM/Group DM.
+    // CallConnectMessage with Ringing=true is only used when accepting/joining an EXISTING call.
+    ConnectToVoice(channel_id);
+}
 #endif
 
 std::optional<std::pair<Snowflake, PackedVoiceState>> DiscordClient::GetVoiceState(Snowflake user_id) const {
@@ -1754,6 +1857,15 @@ void DiscordClient::HandleGatewayMessage(std::string str) {
                     } break;
                     case GatewayEvent::CALL_CREATE: {
                         HandleGatewayCallCreate(m);
+                    } break;
+                    case GatewayEvent::STREAM_CREATE: {
+                        HandleGatewayStreamCreate(m);
+                    } break;
+                    case GatewayEvent::STREAM_SERVER_UPDATE: {
+                        HandleGatewayStreamServerUpdate(m);
+                    } break;
+                    case GatewayEvent::STREAM_UPDATE: {
+                        HandleGatewayStreamUpdate(m);
                     } break;
 #endif
                 }
@@ -2487,6 +2599,304 @@ void DiscordClient::HandleGatewayCallCreate(const GatewayMessage &msg) {
     for (const auto &state : data.VoiceStates) {
         CheckVoiceState(state);
     }
+
+    m_signal_call_create.emit(data);
+}
+
+void DiscordClient::HandleGatewayStreamCreate(const GatewayMessage &msg) {
+    const auto log = spdlog::get("discord");
+    if (log && log->should_log(spdlog::level::debug)) {
+        log->debug("STREAM_CREATE received: {}", msg.Data.dump());
+    }
+
+    const auto &data = msg.Data;
+    if (!data.is_object()) return;
+
+    if (const auto it = data.find("stream_key"); it != data.end() && it->is_string()) {
+        m_voice.SetStreamKey(it->get_ref<const std::string &>());
+    }
+}
+
+void DiscordClient::HandleGatewayStreamServerUpdate(const GatewayMessage &msg) {
+    const auto log = spdlog::get("discord");
+    if (log && log->should_log(spdlog::level::debug)) {
+        log->debug("STREAM_SERVER_UPDATE received: {}", msg.Data.dump());
+    }
+
+    const auto &data = msg.Data;
+    if (!data.is_object()) return;
+
+    if (const auto it = data.find("token"); it != data.end() && it->is_string()) {
+        m_voice.SetStreamToken(it->get_ref<const std::string &>());
+    }
+
+    if (const auto it = data.find("endpoint"); it != data.end() && it->is_string()) {
+        m_voice.SetStreamEndpoint(it->get_ref<const std::string &>());
+    }
+}
+
+void DiscordClient::HandleGatewayStreamUpdate(const GatewayMessage &msg) {
+    const auto log = spdlog::get("discord");
+    if (log && log->should_log(spdlog::level::debug)) {
+        log->debug("STREAM_UPDATE received: {}", msg.Data.dump());
+    }
+
+    const auto &data = msg.Data;
+    if (!data.is_object()) return;
+
+    if (const auto it = data.find("paused"); it != data.end() && it->is_boolean()) {
+        m_voice.SetStreamPaused(it->get<bool>());
+    }
+}
+
+#ifdef WITH_VIDEO
+void DiscordClient::StartPendingVideo() {
+    if (m_pending_video_start == PendingVideoStart::None) {
+        spdlog::get("discord")->debug("StartPendingVideo: no pending video start");
+        return;
+    }
+    if (!m_voice.IsConnected()) {
+        spdlog::get("discord")->debug("StartPendingVideo: voice not connected yet");
+        return;
+    }
+
+    spdlog::get("discord")->info("StartPendingVideo: starting {} (is_screenshare={})",
+                                  m_pending_video_start == PendingVideoStart::ScreenShare ? "screen share" : "camera",
+                                  m_voice.IsScreenShareMode());
+
+    if (!m_voice.m_video_capture) {
+        m_voice.m_video_capture = std::make_unique<VideoCapture>();
+    }
+
+    if (m_voice.m_video_packet_connection.connected()) {
+        m_voice.m_video_packet_connection.disconnect();
+    }
+
+    m_voice.m_video_sequence.store(0, std::memory_order_relaxed);
+
+    // Must be connected before activating video (Opcode 12).
+    m_voice.SetVideoStatus(true);
+
+    m_voice.m_video_packet_connection = m_voice.m_video_capture->signal_packet().connect([this](const std::vector<uint8_t> &packet_data, uint32_t timestamp_pts) {
+        // CRITICAL: Convert encoder PTS (in codec time_base units) to RTP timestamp (90000 Hz)
+        // Encoder uses time_base = 1/30, so timestamp_pts is in 1/30 second units
+        // RTP video uses 90000 Hz clock, so we multiply by 90000/30 = 3000
+        // But timestamp_pts is already incremented by 3000 per frame, so it should be correct
+        // However, we need to ensure it's in 90000 Hz units, not codec time_base units
+        const uint32_t rtp_timestamp = timestamp_pts; // timestamp_pts is already in 90000 Hz units (3000 per frame)
+        // #region agent log
+        {
+            std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+            log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Lambda received packet\",\"data\":{\"packet_size\":" << packet_data.size() << ",\"rtp_timestamp\":" << rtp_timestamp << ",\"is_connected\":" << (m_voice.IsConnected() ? "true" : "false") << ",\"is_paused\":" << (m_voice.IsStreamPaused() ? "true" : "false") << ",\"video_ssrc\":" << m_voice.m_video_ssrc << "},\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+        }
+        // #endregion
+        if (!m_voice.IsConnected()) {
+            // #region agent log
+            {
+                std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+                log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Rejected: not connected\",\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+            }
+            // #endregion
+            return;
+        }
+        if (m_voice.IsStreamPaused()) {
+            // #region agent log
+            {
+                std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+                log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Rejected: stream paused\",\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+            }
+            // #endregion
+            return;
+        }
+        if (m_voice.m_video_ssrc == 0) {
+            // #region agent log
+            {
+                std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+                log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Rejected: video_ssrc is 0\",\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+            }
+            // #endregion
+            return;
+        }
+
+        std::vector<NalSpan> nals;
+        nals.reserve(8);
+        ExtractH264NalUnits(packet_data.data(), packet_data.size(), nals);
+        if (nals.empty()) {
+            nals.emplace_back(packet_data.data(), packet_data.size());
+        }
+
+        uint16_t seq = m_voice.m_video_sequence.load(std::memory_order_relaxed);
+        size_t total_rtp_packets = 0;
+        for (size_t i = 0; i < nals.size(); ++i) {
+            const auto &[nal_data, nal_len] = nals[i];
+            if (nal_len == 0) continue;
+
+            auto rtp_packets = RTPPacketizer::PacketizeH264(
+                nal_data, nal_len,
+                m_voice.m_video_ssrc,
+                static_cast<uint16_t>(seq + 1),
+                rtp_timestamp,
+                105
+            );
+
+            if (rtp_packets.empty()) continue;
+
+            const bool last_nal = (i + 1) == nals.size();
+            rtp_packets.back().Marker = last_nal;
+
+            for (auto &rtp_packet : rtp_packets) {
+                rtp_packet.Data[1] = static_cast<uint8_t>((rtp_packet.Marker ? 0x80 : 0x00) | 105);
+                // #region agent log
+                {
+                    std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+                    log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"D\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Sending RTP packet\",\"data\":{\"rtp_size\":" << rtp_packet.Data.size() << ",\"sequence\":" << (seq + 1) << "},\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+                }
+                // #endregion
+                m_voice.m_udp.SendEncryptedRTP(rtp_packet.Data.data(), rtp_packet.Data.size());
+                total_rtp_packets++;
+            }
+
+            seq = static_cast<uint16_t>(seq + rtp_packets.size());
+        }
+        // #region agent log
+        {
+            std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+            log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C,D\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Processed packet\",\"data\":{\"nals_count\":" << nals.size() << ",\"total_rtp_packets\":" << total_rtp_packets << "},\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+        }
+        // #endregion
+        m_voice.m_video_sequence.store(seq, std::memory_order_relaxed);
+    });
+
+    bool started = false;
+    if (m_pending_video_start == PendingVideoStart::ScreenShare) {
+        spdlog::get("discord")->debug("Starting screen capture with geometry: {}x{} @ {},{}",
+                                     m_screen_share_width, m_screen_share_height,
+                                     m_screen_share_x, m_screen_share_y);
+        started = m_voice.m_video_capture->StartScreenCapture(m_screen_share_x, m_screen_share_y,
+                                                              m_screen_share_width, m_screen_share_height);
+    } else if (m_pending_video_start == PendingVideoStart::Camera) {
+        spdlog::get("discord")->debug("Starting camera capture...");
+        started = m_voice.m_video_capture->StartCameraCapture();
+    }
+
+    if (started) {
+        m_voice.m_video_capture->ForceKeyframe();
+        spdlog::get("discord")->info("Video capture started");
+    } else {
+        spdlog::get("discord")->error("Failed to start video capture");
+        m_voice.SetVideoStatus(false);
+    }
+
+    m_pending_video_start = PendingVideoStart::None;
+}
+#endif
+
+void DiscordClient::StartScreenShare(Snowflake guild_id, Snowflake channel_id,
+                                     int x, int y, int width, int height) {
+#ifdef WITH_VIDEO
+    spdlog::get("discord")->info("StartScreenShare called (guild_id: {}, channel_id: {}, geometry: {}x{} @ {},{})",
+                                 guild_id, channel_id, width, height, x, y);
+
+    // Store geometry parameters for later use in StartPendingVideo
+    m_screen_share_x = x;
+    m_screen_share_y = y;
+    m_screen_share_width = width;
+    m_screen_share_height = height;
+    if (!m_voice.IsConnected()) {
+        spdlog::get("discord")->warn("Cannot start screen share: not connected to voice");
+        return;
+    }
+
+    // IMPORTANT: Differentiate between DM and Guild
+    // If guild_id is 0 or invalid, it's a private call ("call")
+    // If there's a guild_id, it's a guild ("guild")
+    const bool is_dm = !guild_id.IsValid() || static_cast<uint64_t>(guild_id) == 0;
+
+    if (!is_dm) {
+        nlohmann::json payload;
+        payload["op"] = static_cast<int>(GatewayOp::StreamCreate);
+        payload["d"] = nlohmann::json::object();
+        payload["d"]["type"] = "guild";
+        payload["d"]["guild_id"] = guild_id;
+        payload["d"]["channel_id"] = channel_id;
+        payload["d"]["preferred_region"] = nullptr;
+
+        m_websocket.Send(payload.dump());
+        spdlog::get("discord")->debug("Sent STREAM_CREATE opcode 18 for guild");
+    }
+
+    // CRITICAL: Set screen share mode BEFORE checking or reconnecting
+    // This ensures Identify() will send the correct type
+    m_voice.SetScreenShareMode(true);
+    m_pending_video_start = PendingVideoStart::ScreenShare;
+
+    spdlog::get("discord")->debug("Set screen share mode, current identified_as_screenshare: {}",
+                                  m_voice.IsIdentifiedAsScreenShare());
+
+    // DM: reconnect immediately to re-identify with `type: "screen"`.
+    // Guild: STREAM_CREATE is still required so others can watch.
+    if (!m_voice.IsIdentifiedAsScreenShare()) {
+        spdlog::get("discord")->info("Reconnecting voice to send Opcode 0 with type=screen");
+        m_voice.Reconnect();
+        return;
+    }
+
+    spdlog::get("discord")->debug("Already identified as screen share, starting video immediately");
+    StartPendingVideo();
+#endif
+}
+
+void DiscordClient::StopScreenShare() {
+#ifdef WITH_VIDEO
+    m_pending_video_start = PendingVideoStart::None;
+    // Reset geometry
+    m_screen_share_x = 0;
+    m_screen_share_y = 0;
+    m_screen_share_width = 0;
+    m_screen_share_height = 0;
+    if (m_voice.m_video_packet_connection.connected()) {
+        m_voice.m_video_packet_connection.disconnect();
+    }
+    if (m_voice.m_video_capture) {
+        m_voice.m_video_capture->Stop();
+    }
+    m_voice.SetVideoStatus(false);
+    // Reset screen share mode when stopping
+    m_voice.SetScreenShareMode(false);
+#endif
+}
+
+void DiscordClient::StartCamera() {
+#ifdef WITH_VIDEO
+    spdlog::get("discord")->info("StartCamera called");
+    if (!m_voice.IsConnected()) {
+        spdlog::get("discord")->warn("Cannot start camera: not connected to voice");
+        return;
+    }
+
+    m_voice.SetScreenShareMode(false);
+    m_pending_video_start = PendingVideoStart::Camera;
+
+    if (m_voice.IsIdentifiedAsScreenShare()) {
+        m_voice.Reconnect();
+        return;
+    }
+
+    StartPendingVideo();
+#endif
+}
+
+void DiscordClient::StopCamera() {
+#ifdef WITH_VIDEO
+    m_pending_video_start = PendingVideoStart::None;
+    if (m_voice.m_video_packet_connection.connected()) {
+        m_voice.m_video_packet_connection.disconnect();
+    }
+    if (m_voice.m_video_capture) {
+        m_voice.m_video_capture->Stop();
+    }
+    m_voice.SetVideoStatus(false);
+#endif
 }
 
 #endif
@@ -2987,17 +3397,19 @@ void DiscordClient::HandleReadyReadState(const ReadyEventData &data) {
     for (const auto &guild : data.Guilds) {
         if (!guild.JoinedAt.has_value()) continue; // doubt this can happen but whatever
         const auto joined_at = Snowflake::FromISO8601(*guild.JoinedAt);
-        for (const auto &channel : *guild.Channels) {
-            if (channel.LastMessageID.has_value()) {
-                // unread messages from before you joined dont count as unread
-                if (*channel.LastMessageID < joined_at) continue;
-                if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
-                        return e.ID == id;
-                    }) == data.ReadState.Entries.end()) {
-                    // cant be unread if u cant even see the channel
-                    // better to check here since HasChannelPermission hits the store
-                    if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
-                        m_unread[channel.ID] = 0;
+        if (guild.Channels.has_value()) {
+            for (const auto &channel : *guild.Channels) {
+                if (channel.LastMessageID.has_value()) {
+                    // unread messages from before you joined dont count as unread
+                    if (*channel.LastMessageID < joined_at) continue;
+                    if (std::find_if(data.ReadState.Entries.begin(), data.ReadState.Entries.end(), [id = channel.ID](const ReadStateEntry &e) {
+                            return e.ID == id;
+                        }) == data.ReadState.Entries.end()) {
+                        // cant be unread if u cant even see the channel
+                        // better to check here since HasChannelPermission hits the store
+                        if (HasChannelPermission(GetUserData().ID, channel.ID, Permission::VIEW_CHANNEL))
+                            m_unread[channel.ID] = 0;
+                    }
                 }
             }
         }
@@ -3009,12 +3421,16 @@ void DiscordClient::HandleReadyGuildSettings(const ReadyEventData &data) {
 
     std::unordered_map<Snowflake, std::vector<Snowflake>> category_children;
     for (const auto &guild : data.Guilds) {
-        for (const auto &channel : *guild.Channels)
-            if (channel.ParentID.has_value() && !channel.IsThread())
-                category_children[*channel.ParentID].push_back(channel.ID);
-        for (const auto &thread : *guild.Threads)
-            if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
-                m_muted_channels.insert(thread.ID);
+        if (guild.Channels.has_value()) {
+            for (const auto &channel : *guild.Channels)
+                if (channel.ParentID.has_value() && !channel.IsThread())
+                    category_children[*channel.ParentID].push_back(channel.ID);
+        }
+        if (guild.Threads.has_value()) {
+            for (const auto &thread : *guild.Threads)
+                if (thread.ThreadMember.has_value() && thread.ThreadMember->IsMuted.has_value() && *thread.ThreadMember->IsMuted)
+                    m_muted_channels.insert(thread.ID);
+        }
     }
 
     const auto now = Snowflake::FromNow();
@@ -3058,9 +3474,20 @@ void DiscordClient::SendVoiceStateUpdate() {
 
     msg.SelfMute = m_mute_requested;
     msg.SelfDeaf = m_deaf_requested;
-    msg.SelfVideo = false;
+    // CRITICAL: Set self_video to true when video/camera is active
+    // This tells Discord's main gateway that we're transmitting video
+    // Without this, Discord ignores all video packets sent via UDP
+    msg.SelfVideo = m_voice.IsVideoActive();
+
+    // #region agent log
+    {
+        std::ofstream log_file("/home/klepto/programacion/abaddon/.cursor/debug.log", std::ios::app);
+        log_file << "{\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\",\"location\":\"discord.cpp:" << __LINE__ << "\",\"message\":\"Sending Voice State Update (Opcode 4)\",\"data\":{\"self_video\":" << (msg.SelfVideo ? "true" : "false") << ",\"self_mute\":" << (msg.SelfMute ? "true" : "false") << ",\"self_deaf\":" << (msg.SelfDeaf ? "true" : "false") << ",\"channel_id\":" << (msg.ChannelID.has_value() ? std::to_string(static_cast<uint64_t>(*msg.ChannelID)) : "null") << "},\"timestamp\":" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "}\n";
+    }
+    // #endregion
 
     m_websocket.Send(msg);
+    spdlog::get("discord")->debug("Sent Voice State Update (Opcode 4): self_video={}", msg.SelfVideo);
 }
 
 void DiscordClient::OnVoiceConnected() {
@@ -3153,6 +3580,11 @@ void DiscordClient::LoadEventMap() {
     m_event_map["STAGE_INSTANCE_CREATE"] = GatewayEvent::STAGE_INSTANCE_CREATE;
     m_event_map["STAGE_INSTANCE_UPDATE"] = GatewayEvent::STAGE_INSTANCE_UPDATE;
     m_event_map["STAGE_INSTANCE_DELETE"] = GatewayEvent::STAGE_INSTANCE_DELETE;
+#ifdef WITH_VIDEO
+    m_event_map["STREAM_CREATE"] = GatewayEvent::STREAM_CREATE;
+    m_event_map["STREAM_SERVER_UPDATE"] = GatewayEvent::STREAM_SERVER_UPDATE;
+    m_event_map["STREAM_UPDATE"] = GatewayEvent::STREAM_UPDATE;
+#endif
 }
 
 DiscordClient::type_signal_gateway_ready DiscordClient::signal_gateway_ready() {
@@ -3406,6 +3838,10 @@ DiscordClient::type_signal_voice_client_state_update DiscordClient::signal_voice
 
 DiscordClient::type_signal_voice_channel_changed DiscordClient::signal_voice_channel_changed() {
     return m_signal_voice_channel_changed;
+}
+
+DiscordClient::type_signal_call_create DiscordClient::signal_call_create() {
+    return m_signal_call_create;
 }
 #endif
 
