@@ -78,7 +78,7 @@ the result of fundamental issues with Discord's thread implementation.
 #### Mac:
 
 1. `git clone https://github.com/uowuo/abaddon --recurse-submodules="subprojects" && cd abaddon`
-2. `brew install gtkmm3 nlohmann-json libhandy opus libsodium spdlog adwaita-icon-theme`
+2. `brew install gtkmm3 nlohmann-json libhandy opus libsodium spdlog adwaita-icon-theme cmake pkgconf`
 3. `mkdir build && cd build`
 4. `cmake ..`
 5. `make`
