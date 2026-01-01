@@ -14,6 +14,10 @@
 #include "notifications/notifications.hpp"
 #include "audio/manager.hpp"
 
+#ifdef WITH_HOTKEYS
+#include "misc/GlobalHotkeyManager.hpp"
+#endif
+
 #define APP_TITLE "Abaddon"
 
 class AudioManager;
@@ -101,6 +105,10 @@ public:
     void ShowVoiceWindow();
 #endif
 
+#ifdef WITH_HOTKEYS
+    static GlobalHotkeyManager& HotkeyManager();
+#endif
+
     SettingsManager::Settings &GetSettings();
 
     Glib::RefPtr<Gtk::CssProvider> GetStyleProvider();
@@ -177,6 +185,16 @@ private:
 #ifdef WITH_VOICE
     AudioManager m_audio;
     Gtk::Window *m_voice_window = nullptr;
+#ifdef WITH_HOTKEYS
+    int m_mute_hotkey_id;
+    int m_deafen_hotkey_id;
+    bool m_is_mute = false;
+    bool m_is_deaf = false;
+#endif
+#endif
+
+#ifdef WITH_HOTKEYS
+    GlobalHotkeyManager m_HotkeyManager;
 #endif
 
     mutable std::mutex m_mutex;

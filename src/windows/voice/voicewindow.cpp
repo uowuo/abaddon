@@ -271,6 +271,22 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     UpdateStageCommand();
 }
 
+void VoiceWindow::SetMute(bool is_mute) {
+    m_mute.set_active(is_mute);
+}
+
+void VoiceWindow::SetDeaf(bool is_deaf) {
+    m_deafen.set_active(is_deaf);
+}
+
+bool VoiceWindow::GetMute() {
+    return m_mute.get_active();
+}
+
+bool VoiceWindow::GetDeaf() {
+    return m_deafen.get_active();
+}
+
 void VoiceWindow::SetUsers(const std::unordered_set<Snowflake> &user_ids) {
     auto &discord = Abaddon::Get().GetDiscordClient();
     const auto me = discord.GetUserData().ID;

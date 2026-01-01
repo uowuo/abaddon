@@ -53,6 +53,10 @@ public:
         std::string VAD;
         std::string Backends;
 
+        // [hotkeys]
+        std::string ToggleMute;
+        std::string ToggleDeafen;
+
         // [windows]
         bool HideConsole;
     };

@@ -22,6 +22,10 @@ class VoiceWindow : public Gtk::Window {
 public:
     VoiceWindow(Snowflake channel_id);
 
+    void SetMute(bool is_mute);
+    void SetDeaf(bool is_deaf);
+    bool GetMute();
+    bool GetDeaf();
 private:
     void SetUsers(const std::unordered_set<Snowflake> &user_ids);
 
