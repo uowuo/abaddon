@@ -7,17 +7,16 @@
    GLOBAL WINDOW & BASE STYLES
    ============================================ */
 
-/* Main application window - DARKER/BLACKER */
+/* Main application window */
 .app-window,
 window {
-    background-color: #1a1a1d;
+    background-color: #313338;
     color: #dbdee1;
 }
 
-/* General text styling - LARGER FONT */
+/* General text styling */
 * {
     font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 15px;
 }
 
 /* Remove default GTK borders/outlines */
@@ -32,39 +31,31 @@ window {
 
 .classic-guild-list,
 .guild-list-scroll {
-    background-color: #0f0f10;
+    background-color: #1e1f22;
 }
 
-/* Make guild icons larger via padding */
-.classic-guild-list image {
-    min-width: 48px;
-    min-height: 48px;
-}
-
-.guild-list-scroll>scrollbar {
+.guild-list-scroll > scrollbar {
     border: none;
     background: transparent;
 }
 
-.guild-list-scroll>scrollbar slider {
+.guild-list-scroll > scrollbar slider {
     border: none;
     margin: 0px;
-    min-width: 8px;
-    min-height: 30px;
-    background-color: #27282c;
+    min-width: 4px;
+    min-height: 20px;
+    background-color: #1a1b1e;
     border-radius: 4px;
 }
 
-.classic-guild-list>row {
+.classic-guild-list > row {
     padding-left: 0px;
-    padding-top: 4px;
-    padding-bottom: 4px;
     box-shadow: none;
     border: none;
     outline: none;
 }
 
-.classic-guild-list>row:hover {
+.classic-guild-list > row:hover {
     background: none;
 }
 
@@ -88,55 +79,54 @@ window {
 
 .channel-list,
 .channel-list .view {
-    background-color: #18181b;
-    color: #b5bac1;
-    font-size: 15px;
+    background-color: #2b2d31;
+    color: #949ba4;
 }
 
 .channel-list .view:selected {
-    background-color: #35373c;
+    background-color: #404249;
     color: #f2f3f5;
 }
 
 .channel-list .view:hover {
-    background-color: #2a2a2e;
+    background-color: #35373c;
     color: #dbdee1;
 }
 
 /* Category headers */
 .channel-list label {
     color: #949ba4;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 /* ============================================
    MAIN CHAT AREA
    ============================================ */
 
-/* Chat background - DARKER */
+/* Chat background */
 scrolledwindow,
 .message-container-outer {
-    background-color: #1a1a1d;
+    background-color: #313338;
 }
 
 /* Individual messages */
 .message-container {
     margin-bottom: 0px;
-    padding: 8px 16px 8px 72px;
-    background-color: #1a1a1d;
+    padding: 2px 16px 2px 72px;
+    background-color: #313338;
 }
 
 .message-container:hover {
-    background-color: #1e1e21;
+    background-color: #2e3035;
 }
 
-/* Message text - LARGER */
+/* Message text */
 .message-text,
 .message-text text {
     background: inherit;
     color: #dbdee1;
-    font-size: 16px;
 }
 
 .message-text.pending {
@@ -158,27 +148,24 @@ scrolledwindow,
 }
 
 /* ============================================
-   MESSAGE INPUT BOX - FIXED OFFSET
+   MESSAGE INPUT BOX
    ============================================ */
 
 .message-input {
-    background-color: #27282c;
+    background-color: #383a40;
     border-radius: 8px;
-    margin: 0 16px 16px 16px;
+    margin: 0 16px 24px 16px;
 }
 
 .message-input textview,
 .message-input textview text {
-    background-color: #27282c;
+    background-color: #383a40;
     color: #dbdee1;
     border-radius: 8px;
-    font-size: 16px;
 }
 
-/* TEXT INPUT PADDING - OFFSET FROM EDGE */
 .message-input textview {
-    padding: 14px 20px;
-    margin: 4px 8px;
+    padding: 12px 16px;
 }
 
 .message-input scrollbar.vertical slider {
@@ -186,35 +173,30 @@ scrolledwindow,
 }
 
 /* ============================================
-   MEMBER LIST (Right Sidebar) - LARGER
+   MEMBER LIST (Right Sidebar)
    ============================================ */
 
 .member-list,
 treeview {
-    background-color: #18181b;
-    color: #b5bac1;
-    font-size: 15px;
+    background-color: #2b2d31;
+    color: #949ba4;
 }
 
 treeview:selected {
-    background-color: #2a2a2e;
+    background-color: #35373c;
 }
 
 treeview:hover {
-    background-color: #2a2a2e;
+    background-color: #35373c;
 }
 
-/* Increase row height for larger avatars */
-treeview.view {
-    -GtkTreeView-vertical-separator: 8;
-}
-
-/* Role headers in member list - LARGER */
+/* Role headers in member list */
 .member-list-role {
     color: #949ba4;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
-    padding: 20px 8px 8px 16px;
+    text-transform: uppercase;
+    padding: 16px 8px 4px 16px;
 }
 
 /* ============================================
@@ -244,19 +226,19 @@ treeview.view {
 .embed {
     border-radius: 4px;
     padding: 8px 16px 16px 12px;
-    background-color: #18181b;
+    background-color: #2b2d31;
     border-left: 4px solid #5865f2;
 }
 
 .embed-footer {
     margin-top: 8px;
-    font-size: 13px;
+    font-size: 12px;
     color: #949ba4;
 }
 
 .embed-author {
     margin-bottom: 8px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: #f2f3f5;
 }
@@ -269,7 +251,7 @@ treeview.view {
     border: 1px solid #4e5058;
     border-radius: 8px;
     padding: 10px;
-    background-color: #18181b;
+    background-color: #2b2d31;
 }
 
 .message-attachment-box label {
@@ -285,7 +267,7 @@ treeview.view {
     padding: 4px 8px;
     border-radius: 8px;
     border: none;
-    background-color: #27282c;
+    background-color: #2b2d31;
     margin-right: 4px;
 }
 
@@ -304,12 +286,12 @@ treeview.view {
 
 .profile-main-container {
     padding: 20px;
-    background-color: #111113;
+    background-color: #232428;
 }
 
 .profile-username {
     margin-left: 10px;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
     color: #f2f3f5;
 }
@@ -349,7 +331,7 @@ treeview.view {
     padding: 8px 12px;
     border-radius: 8px;
     border: none;
-    background-color: #0f0f10;
+    background-color: #1e1f22;
 }
 
 .profile-connection-image {
@@ -362,7 +344,7 @@ treeview.view {
 
 .set-status-dialog .dialog-vbox {
     padding: 16px;
-    background-color: #1a1a1d;
+    background-color: #313338;
 }
 
 .set-status-dialog .dialog-action-area {
@@ -371,7 +353,7 @@ treeview.view {
 
 dialog,
 messagedialog {
-    background-color: #1a1a1d;
+    background-color: #313338;
     color: #dbdee1;
 }
 
@@ -379,9 +361,9 @@ messagedialog {
    VOICE SETTINGS
    ============================================ */
 
-.voice-settings-window>box {
+.voice-settings-window > box {
     padding: 16px;
-    background-color: #1a1a1d;
+    background-color: #313338;
 }
 
 .voice-settings-window scale {
@@ -399,7 +381,7 @@ messagedialog {
 }
 
 /* ============================================
-   SCROLLBARS - LARGER
+   SCROLLBARS (Discord-style thin scrollbars)
    ============================================ */
 
 scrollbar {
@@ -407,22 +389,22 @@ scrollbar {
 }
 
 scrollbar slider {
-    background-color: #3a3a3f;
-    border-radius: 6px;
-    min-width: 12px;
-    min-height: 50px;
+    background-color: #1a1b1e;
+    border-radius: 4px;
+    min-width: 8px;
+    min-height: 40px;
 }
 
 scrollbar slider:hover {
-    background-color: #4a4a50;
+    background-color: #27282c;
 }
 
 scrollbar.vertical slider {
-    min-width: 12px;
+    min-width: 8px;
 }
 
 scrollbar.horizontal slider {
-    min-height: 12px;
+    min-height: 8px;
 }
 
 /* ============================================
@@ -430,34 +412,34 @@ scrollbar.horizontal slider {
    ============================================ */
 
 menubar {
-    background-color: #18181b;
+    background-color: #2b2d31;
     color: #dbdee1;
     padding: 4px 8px;
 }
 
-menubar>menuitem {
+menubar > menuitem {
     padding: 4px 12px;
     border-radius: 4px;
 }
 
-menubar>menuitem:hover {
-    background-color: #27282c;
+menubar > menuitem:hover {
+    background-color: #35373c;
 }
 
 menu {
-    background-color: #0f0f10;
+    background-color: #111214;
     color: #dbdee1;
     border-radius: 4px;
     padding: 6px 8px;
     border: none;
 }
 
-menu>menuitem {
+menu > menuitem {
     padding: 6px 8px;
     border-radius: 4px;
 }
 
-menu>menuitem:hover {
+menu > menuitem:hover {
     background-color: #5865f2;
     color: #ffffff;
 }
@@ -505,11 +487,11 @@ button.destructive-action:hover {
    ============================================ */
 
 entry {
-    background-color: #111113;
+    background-color: #1e1f22;
     color: #dbdee1;
     border: none;
     border-radius: 3px;
-    padding: 10px 14px;
+    padding: 8px 12px;
 }
 
 entry:focus {
@@ -521,18 +503,8 @@ entry:focus {
    PANED SEPARATORS
    ============================================ */
 
-paned>separator {
-    background-color: #0f0f10;
+paned > separator {
+    background-color: #1e1f22;
     min-width: 1px;
     min-height: 1px;
-}
-
-/* ============================================
-   ADDITIONAL SIZING
-   ============================================ */
-
-/* Larger avatar/icon containers */
-image {
-    min-width: 40px;
-    min-height: 40px;
 }
