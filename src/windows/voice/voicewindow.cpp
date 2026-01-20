@@ -8,9 +8,13 @@
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
 #include "components/lazyimage.hpp"
+#include "dialogs/screensharedialog.hpp"
 #include "voicewindowaudiencelistentry.hpp"
 #include "voicewindowspeakerlistentry.hpp"
 #include "windows/voicesettingswindow.hpp"
+#include <spdlog/spdlog.h>
+#include <fstream>
+#include <chrono>
 
 // clang-format on
 
@@ -23,6 +27,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     , m_mix_mono("Mix Mono")
     , m_stage_command("Request to Speak")
     , m_disconnect("Disconnect")
+#ifdef WITH_VIDEO
+    , m_camera_button("Start Camera")
+    , m_screen_share_button("Share Screen")
+#endif
     , m_stage_invite_lbl("You've been invited to speak")
     , m_stage_accept("Accept")
     , m_stage_decline("Decline")
@@ -53,6 +61,11 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
 
     m_mute.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnMuteChanged));
     m_deafen.signal_toggled().connect(sigc::mem_fun(*this, &VoiceWindow::OnDeafenChanged));
+
+#ifdef WITH_VIDEO
+    m_camera_button.signal_clicked().connect(sigc::mem_fun(*this, &VoiceWindow::OnCameraClicked));
+    m_screen_share_button.signal_clicked().connect(sigc::mem_fun(*this, &VoiceWindow::OnScreenShareClicked));
+#endif
 
     m_scroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_scroll.set_hexpand(true);
@@ -245,6 +258,10 @@ VoiceWindow::VoiceWindow(Snowflake channel_id)
     m_controls.add(m_mix_mono);
     m_buttons.set_halign(Gtk::ALIGN_CENTER);
     if (m_is_stage) m_buttons.pack_start(m_stage_command, false, true);
+#ifdef WITH_VIDEO
+    m_buttons.pack_start(m_camera_button, false, true);
+    m_buttons.pack_start(m_screen_share_button, false, true);
+#endif
     m_buttons.pack_start(m_disconnect, false, true);
     m_stage_invite_box.pack_start(m_stage_invite_lbl, false, true);
     m_stage_invite_box.pack_start(m_stage_invite_btns);
@@ -312,6 +329,59 @@ void VoiceWindow::OnMuteChanged() {
 void VoiceWindow::OnDeafenChanged() {
     m_signal_deafen.emit(m_deafen.get_active());
 }
+
+#ifdef WITH_VIDEO
+void VoiceWindow::OnCameraClicked() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    spdlog::get("ui")->info("Camera button clicked, current state: {}", m_camera_active);
+    if (!m_camera_active) {
+        discord.StartCamera();
+        m_camera_button.set_label("Stop Camera");
+        m_camera_active = true;
+    } else {
+        discord.StopCamera();
+        m_camera_button.set_label("Start Camera");
+        m_camera_active = false;
+    }
+}
+
+void VoiceWindow::OnScreenShareClicked() {
+    auto &discord = Abaddon::Get().GetDiscordClient();
+    spdlog::get("ui")->info("Screen share button clicked, current state: {}", m_screen_share_active);
+    const auto channel = discord.GetChannel(m_channel_id);
+    if (!channel.has_value()) {
+        spdlog::get("ui")->warn("Channel not found for screen share");
+        return;
+    }
+
+    if (!m_screen_share_active) {
+        // Show dialog to select screen source
+        ScreenShareDialog dialog(*this);
+        int res = dialog.run();
+
+        if (res == Gtk::RESPONSE_OK) {
+            auto source = dialog.get_selected_source();
+            if (source) {
+                Snowflake guild_id = 0;
+                if (channel->GuildID.has_value()) {
+                    guild_id = *channel->GuildID;
+                }
+                // Pass geometry to StartScreenShare
+                discord.StartScreenShare(guild_id, m_channel_id,
+                                       source->x, source->y,
+                                       source->width, source->height);
+                m_screen_share_button.set_label("Stop Sharing");
+                m_screen_share_active = true;
+            }
+        }
+        // If user cancelled, do nothing
+    } else {
+        discord.StopScreenShare();
+        m_screen_share_button.set_label("Share Screen");
+        m_screen_share_active = false;
+    }
+}
+#endif
 
 void VoiceWindow::TryDeleteRow(Snowflake id) {
     if (auto it = m_rows.find(id); it != m_rows.end()) {

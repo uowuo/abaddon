@@ -114,6 +114,9 @@ enum class GatewayEvent : int {
     STAGE_INSTANCE_CREATE,
     STAGE_INSTANCE_UPDATE,
     STAGE_INSTANCE_DELETE,
+    STREAM_CREATE,
+    STREAM_SERVER_UPDATE,
+    STREAM_UPDATE,
 };
 
 enum class GatewayCloseCode : uint16_t {
@@ -959,6 +962,13 @@ struct CallCreateData {
     // std::vector<?> EmbeddedActivities;
 
     friend void from_json(const nlohmann::json &j, CallCreateData &m);
+};
+
+struct CallConnectMessage {
+    Snowflake ChannelID;
+    bool Ringing; // true to accept, false to reject
+
+    friend void to_json(nlohmann::json &j, const CallConnectMessage &m);
 };
 
 struct ModifyCurrentUserVoiceStateObject {

@@ -62,6 +62,8 @@ public:
 #ifdef WITH_VOICE
     void ActionJoinVoiceChannel(Snowflake channel_id);
     void ActionDisconnectVoice();
+    void ActionCallCreate(CallCreateData data);
+    void ActionStartCall(Snowflake channel_id);
 #endif
 
     std::optional<Glib::ustring> ShowTextPrompt(const Glib::ustring &prompt, const Glib::ustring &title, const Glib::ustring &placeholder = "", Gtk::Window *window = nullptr);
