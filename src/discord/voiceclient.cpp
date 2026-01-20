@@ -499,12 +499,12 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
     const bool has_extension_header = (data[0] & 0b00010000) != 0;
     size_t ext_size = has_extension_header ? 4 : 0;
 
-    if (crypto_aead_xchacha20poly1305_ietf_decrypt(data.data() + 12 + ext_size, nullptr, nullptr, data.data() + 12 + ext_size, data.size() - 12 - ext_size - sizeof(uint32_t), data.data(), 12 + ext_size, nonce.data(), m_secret_key.data())) {
-        m_log->warn("UDP payload decryption failure (ssrc: {}, packet size: {} bytes)", ssrc, data.size());
-        return;
+    unsigned long long mlen = 0;
+    if (crypto_aead_xchacha20poly1305_ietf_decrypt(data.data() + 12 + ext_size, &mlen, nullptr, data.data() + 12 + ext_size, data.size() - 12 - ext_size - sizeof(uint32_t), data.data(), 12 + ext_size, nonce.data(), m_secret_key.data())) {
+        // spdlog::get("voice")->trace("UDP payload decryption failure");
     } else {
         const auto opus_offset = GetPayloadOffset(data.data(), data.size());
-        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { data.data() + opus_offset, data.data() + data.size() - sizeof(uint32_t) });
+        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { data.data() + opus_offset, data.data() + 12 + ext_size + mlen });
     }
 }
 
