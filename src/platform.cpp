@@ -93,7 +93,7 @@ std::string Platform::FindStateCacheFolder() {
     return ".";
 }
 
-#elif defined(__linux__) || defined(__FreeBSD__)
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 std::string Platform::FindResourceFolder() {
     static std::string found_path;
     static bool found = false;
