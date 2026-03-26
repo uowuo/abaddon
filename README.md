@@ -35,6 +35,7 @@ Current features:
 * Emojis<sup>2</sup>
 * Thread support<sup>3</sup>
 * Animated avatars, server icons, emojis (can be turned off)
+* Global hotkeys support
 
 1 - Abaddon tries its best (though is not perfect) to make Discord think it's a legitimate web client. Some of the
 things done to do this
@@ -185,6 +186,7 @@ spam filter's wrath:
 * [libopus](https://opus-codec.org/) (optional, required for voice)
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 * [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
+* [libuiohook](https://github.com/kwhat/libuiohook) (optional, provided as submodule, global hotkeys)
 
 ### TODO:
 
@@ -363,6 +365,13 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 |------------|--------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `vad`      | string | rnnoise if enabled, gate otherwise | Method used for voice activity detection. Changeable in UI                                                                 |
 | `backends` | string | empty                              | Change backend priority when initializing miniaudio: `wasapi;dsound;winmm;coreaudio;sndio;audio4;oss;pulseaudio;alsa;jack` |
+
+#### hotkeys
+
+| Setting  | Type   | Default   | Description                               |
+|----------|--------|-----------|-------------------------------------------|
+| `mute`   | string | \<Alt\>M  | Shortcut to mute microphone in voice call |
+| `deafen` | string | \<Alt\>D  | Shortcut to deafen audio in voice call    |
 
 #### windows
 
