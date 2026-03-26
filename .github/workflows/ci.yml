@@ -54,6 +54,7 @@ jobs:
             mingw-w64-x86_64-libhandy
             mingw-w64-x86_64-opus
             mingw-w64-x86_64-libsodium
+            mingw-w64-x86_64-openssl
             mingw-w64-x86_64-spdlog
 
       - name: Setup MSYS2 (2)
@@ -62,6 +63,23 @@ jobs:
           msystem: mingw64
           update: true
           install: ${{ steps.setupmsys.outputs.value }}
+
+      - name: Build mlspp
+        if: ${{ matrix.mindeps != true }}
+        run: |
+          git clone https://github.com/cisco/mlspp /tmp/mlspp
+          cd /tmp/mlspp
+          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
+          mkdir build && cd build
+          cmake .. -G "MinGW Makefiles" \
+            -DCMAKE_INSTALL_PREFIX=/mingw64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTESTING=OFF \
+            -DDISABLE_GREASE=ON \
+            -DMLS_CXX_NAMESPACE="mlspp" \
+            -DCMAKE_CXX_FLAGS="-Wno-error"
+          cmake --build .
+          cmake --install .
 
       - name: Build (1)
         uses: haya14busa/action-cond@v1
@@ -151,10 +169,26 @@ jobs:
           brew install libsodium
           brew install spdlog
           brew install libhandy
+          brew install openssl@3
+
+      - name: Build mlspp
+        run: |
+          git clone https://github.com/cisco/mlspp /tmp/mlspp
+          cd /tmp/mlspp
+          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTESTING=OFF \
+            -DDISABLE_GREASE=ON \
+            -DMLS_CXX_NAMESPACE="mlspp" \
+            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
+          cmake --build .
+          sudo cmake --install .
 
       - name: Build
         run: |
-          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
           cmake --build build
 
       - name: Setup artifact files
@@ -188,22 +222,30 @@ jobs:
       - name: Fetch dependencies
         run: |
           sudo apt-get update
-          mkdir deps
-          cd deps
+          sudo apt-get install -y libgtkmm-3.0-dev libcurl4-gnutls-dev libopus-dev libsodium-dev libspdlog-dev libhandy-1-dev libssl-dev
+          mkdir deps && cd deps
           git clone https://github.com/nlohmann/json
           cd json
           git checkout 55f93686c01528224f448c19128836e7df245f72
-          mkdir build
-          cd build
+          mkdir build && cd build
           cmake .. -DJSON_BuildTests=OFF
           make
           sudo make install
-          sudo apt-get install libgtkmm-3.0-dev
-          sudo apt-get install libcurl4-gnutls-dev
-          sudo apt-get install libopus-dev
-          sudo apt-get install libsodium-dev
-          sudo apt-get install libspdlog-dev
-          sudo apt-get install libhandy-1-dev
+
+      - name: Build mlspp
+        run: |
+          git clone https://github.com/cisco/mlspp /tmp/mlspp
+          cd /tmp/mlspp
+          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTESTING=OFF \
+            -DDISABLE_GREASE=ON \
+            -DMLS_CXX_NAMESPACE="mlspp" \
+            -DCMAKE_CXX_FLAGS="-Wno-error"
+          cmake --build .
+          sudo cmake --install .
 
       - name: Build
         run: |
