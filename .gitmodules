@@ -16,3 +16,6 @@
 [submodule "subprojects/qrcodegen"]
 	path = subprojects/qrcodegen
 	url = https://github.com/nayuki/QR-Code-generator
+[submodule "subprojects/libdave"]
+	path = subprojects/libdave
+	url = https://github.com/discord/libdave.git

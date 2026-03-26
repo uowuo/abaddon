@@ -8,6 +8,8 @@
 #include <spdlog/fmt/bin_to_hex.h>
 #include "abaddon.hpp"
 #include "audio/manager.hpp"
+#include <dave/dave_interfaces.h>
+#include <dave/array_view.h>
 
 #ifdef _WIN32
     #define S_ADDR(var) (var).sin_addr.S_un.S_addr
@@ -157,18 +159,40 @@ DiscordVoiceClient::DiscordVoiceClient()
         OnUDPData(data);
     });
 
+    m_ws.SetSeparateBinaryMessages(true);
     m_ws.signal_open().connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnWebsocketOpen));
     m_ws.signal_close().connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnWebsocketClose));
     m_ws.signal_message().connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnWebsocketMessage));
+    m_ws.signal_binary_message().connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnWebsocketBinaryMessage));
 
     m_dispatcher.connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnDispatch));
+    m_binary_dispatcher.connect(sigc::mem_fun(*this, &DiscordVoiceClient::OnBinaryDispatch));
 
     // idle or else singleton deadlock
     Glib::signal_idle().connect_once([this]() {
         auto &audio = Abaddon::Get().GetAudio();
         audio.SetOpusBuffer(m_opus_buffer.data());
         audio.signal_opus_packet().connect([this](int payload_size) {
-            if (IsConnected()) {
+            if (!IsConnected()) return;
+
+            if (m_dave && m_dave->IsEnabled()) {
+                auto *enc = m_dave->GetEncryptor();
+                if (!enc) return;
+                auto max_size = enc->GetMaxCiphertextByteSize(discord::dave::MediaType::Audio, payload_size);
+                std::vector<uint8_t> dave_encrypted(max_size);
+                size_t bytes_written = 0;
+                auto result = enc->Encrypt(
+                    discord::dave::MediaType::Audio,
+                    m_ssrc,
+                    discord::dave::MakeArrayView(const_cast<const uint8_t *>(m_opus_buffer.data()), static_cast<size_t>(payload_size)),
+                    discord::dave::MakeArrayView(dave_encrypted.data(), dave_encrypted.size()),
+                    &bytes_written);
+                if (result == discord::dave::IEncryptor::Success) {
+                    m_udp.SendEncrypted(dave_encrypted.data(), bytes_written);
+                } else {
+                    m_log->warn("DAVE encrypt failed: result={}", static_cast<int>(result));
+                }
+            } else {
                 m_udp.SendEncrypted(m_opus_buffer.data(), payload_size);
             }
         });
@@ -186,9 +210,12 @@ void DiscordVoiceClient::Start() {
 
     SetState(State::ConnectingToWebsocket);
     m_ssrc_map.clear();
+    m_ssrc_user_map.clear();
+    m_connected_users.clear();
+    m_dave.reset();
     m_heartbeat_waiter.revive();
     m_keepalive_waiter.revive();
-    m_ws.StartConnection("wss://" + m_endpoint + "/?v=7");
+    m_ws.StartConnection("wss://" + m_endpoint + "/?v=9");
 
     m_signal_connected.emit();
 }
@@ -209,6 +236,9 @@ void DiscordVoiceClient::Stop() {
     if (m_keepalive_thread.joinable()) m_keepalive_thread.join();
 
     m_ssrc_map.clear();
+    m_ssrc_user_map.clear();
+    m_connected_users.clear();
+    m_dave.reset();
 
     m_signal_disconnected.emit();
 }
@@ -227,6 +257,10 @@ void DiscordVoiceClient::SetToken(std::string_view token) {
 
 void DiscordVoiceClient::SetServerID(Snowflake id) {
     m_server_id = id;
+}
+
+void DiscordVoiceClient::SetChannelID(Snowflake id) {
+    m_channel_id = id;
 }
 
 void DiscordVoiceClient::SetUserID(Snowflake id) {
@@ -264,7 +298,10 @@ bool DiscordVoiceClient::IsConnecting() const noexcept {
 
 void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
     m_log->trace("IN: {}", str);
-    VoiceGatewayMessage msg = nlohmann::json::parse(str);
+    auto j = nlohmann::json::parse(str);
+    if (j.contains("seq") && !j["seq"].is_null())
+        m_last_received_seq = j["seq"].get<int>();
+    VoiceGatewayMessage msg = j;
     switch (msg.Opcode) {
         case VoiceGatewayOp::Hello:
             HandleGatewayHello(msg);
@@ -280,6 +317,24 @@ void DiscordVoiceClient::OnGatewayMessage(const std::string &str) {
             break;
         case VoiceGatewayOp::HeartbeatAck:
             break; // stfu
+        case VoiceGatewayOp::SecureFramesPrepareProtocolTransition:
+            HandleGatewayDavePrepareTransition(msg);
+            break;
+        case VoiceGatewayOp::SecureFramesExecuteTransition:
+            HandleGatewayDaveExecuteTransition(msg);
+            break;
+        case VoiceGatewayOp::SecureFramesPrepareEpoch:
+            HandleGatewayDavePrepareEpoch(msg);
+            break;
+        case VoiceGatewayOp::ClientConnect:
+            HandleGatewayClientConnect(msg);
+            break;
+        case VoiceGatewayOp::ClientDisconnect:
+            HandleGatewayClientDisconnect(msg);
+            break;
+        case VoiceGatewayOp::SessionUpdate:
+            HandleGatewaySessionUpdate(msg);
+            break;
         default:
             const auto opcode_int = static_cast<int>(msg.Opcode);
             m_log->warn("Unhandled opcode: {}", opcode_int);
@@ -339,15 +394,20 @@ void DiscordVoiceClient::HandleGatewaySessionDescription(const VoiceGatewayMessa
     const auto key_hex = spdlog::to_hex(d.SecretKey.begin(), d.SecretKey.end());
     m_log->debug("Received session description (mode: {}) (key: {:ns}) ", d.Mode, key_hex);
 
+    m_secret_key = d.SecretKey;
+    m_udp.SetSSRC(m_ssrc);
+    m_udp.SetSecretKey(m_secret_key);
+
+    m_log->info("dave_protocol_version={}", d.DaveProtocolVersion);
+    if (d.DaveProtocolVersion > 0)
+        EnsureDaveSession(static_cast<uint16_t>(d.DaveProtocolVersion));
+
     VoiceSpeakingMessage msg;
     msg.Delay = 0;
     msg.SSRC = m_ssrc;
     msg.Speaking = VoiceSpeakingType::Microphone;
     m_ws.Send(msg);
 
-    m_secret_key = d.SecretKey;
-    m_udp.SetSSRC(m_ssrc);
-    m_udp.SetSecretKey(m_secret_key);
     m_udp.SendEncrypted({ 0xF8, 0xFF, 0xFE });
     m_udp.Run();
 
@@ -365,6 +425,18 @@ void DiscordVoiceClient::HandleGatewaySpeaking(const VoiceGatewayMessage &m) {
     }
 
     m_ssrc_map[d.UserID] = d.SSRC;
+
+    // track for DAVE
+    if (d.SSRC != 0) {
+        m_ssrc_user_map[d.SSRC] = d.UserID;
+        std::string uid_str = std::to_string(static_cast<uint64_t>(d.UserID));
+        m_connected_users.insert(uid_str);
+        if (m_dave) {
+            m_dave->AddConnectedUser(uid_str);
+            m_dave->ApplyKeyRatchetForSSRC(d.SSRC, d.UserID);
+        }
+    }
+
     m_signal_speaking.emit(d);
 }
 
@@ -452,9 +524,11 @@ void DiscordVoiceClient::HeartbeatThread() {
 
         m_log->trace("Heartbeat: {}", ms);
 
-        VoiceHeartbeatMessage msg;
-        msg.Nonce = ms;
-        m_ws.Send(msg);
+        nlohmann::json hb;
+        hb["op"] = VoiceGatewayOp::Heartbeat;
+        hb["d"]["t"] = ms;
+        hb["d"]["seq_ack"] = m_last_received_seq.load();
+        m_ws.Send(hb);
     }
 }
 
@@ -490,10 +564,21 @@ size_t GetPayloadOffset(const uint8_t *buf, size_t num_bytes) {
 }
 
 void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
+    if (data.size() < 44) return;
+
+    // RTP version must be 2
+    if (((data[0] >> 6) & 0x03) != 2) return;
+
+    // only opus (payload type 120)
+    if ((data[1] & 0x7F) != 120) return;
+
     uint32_t ssrc = (data[8] << 24) |
                     (data[9] << 16) |
                     (data[10] << 8) |
                     (data[11] << 0);
+
+    // ignore our own packets
+    if (ssrc == m_ssrc) return;
     std::array<uint8_t, 24> nonce = {};
     std::memcpy(nonce.data(), data.data() + data.size() - sizeof(uint32_t), sizeof(uint32_t));
 
@@ -502,11 +587,51 @@ void DiscordVoiceClient::OnUDPData(std::vector<uint8_t> data) {
 
     unsigned long long mlen = 0;
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(data.data() + 12 + ext_size, &mlen, nullptr, data.data() + 12 + ext_size, data.size() - 12 - ext_size - sizeof(uint32_t), data.data(), 12 + ext_size, nonce.data(), m_secret_key.data())) {
-        // spdlog::get("voice")->trace("UDP payload decryption failure");
-    } else {
-        const auto opus_offset = GetPayloadOffset(data.data(), data.size());
-        Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { data.data() + opus_offset, data.data() + 12 + ext_size + mlen });
+        return;
     }
+
+    const auto opus_offset = GetPayloadOffset(data.data(), data.size());
+    const uint8_t *payload_start = data.data() + opus_offset;
+    size_t payload_size = static_cast<size_t>(12 + ext_size + mlen) - opus_offset;
+
+    static const uint8_t OPUS_SILENCE[] = { 0xF8, 0xFF, 0xFE };
+
+    if (m_dave) {
+        // silence packets bypass DAVE per spec
+        if (payload_size == sizeof(OPUS_SILENCE) &&
+            std::memcmp(payload_start, OPUS_SILENCE, sizeof(OPUS_SILENCE)) == 0) {
+            Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload_start, payload_start + payload_size });
+            return;
+        }
+
+        if (m_dave->IsEnabled()) {
+            Snowflake uid;
+            if (auto it = m_ssrc_user_map.find(ssrc); it != m_ssrc_user_map.end())
+                uid = it->second;
+
+            auto *dec = m_dave->GetOrCreateDecryptor(ssrc, uid);
+            auto max_size = dec->GetMaxPlaintextByteSize(discord::dave::MediaType::Audio, payload_size);
+            std::vector<uint8_t> plaintext(max_size);
+            size_t bytes_written = 0;
+            auto result = dec->Decrypt(
+                discord::dave::MediaType::Audio,
+                discord::dave::MakeArrayView(payload_start, payload_size),
+                discord::dave::MakeArrayView(plaintext.data(), plaintext.size()),
+                &bytes_written);
+
+            if (result == discord::dave::IDecryptor::Success) {
+                Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { plaintext.data(), plaintext.data() + bytes_written });
+            }
+            return;
+        } else if (m_dave->IsDowngraded()) {
+            // passthrough
+        } else {
+            // DAVE session exists but not yet enabled, drop
+            return;
+        }
+    }
+
+    Abaddon::Get().GetAudio().FeedMeOpus(ssrc, { payload_start, payload_start + payload_size });
 }
 
 void DiscordVoiceClient::OnDispatch() {
@@ -519,6 +644,169 @@ void DiscordVoiceClient::OnDispatch() {
     m_dispatch_queue.pop();
     m_dispatch_mutex.unlock();
     OnGatewayMessage(msg);
+}
+
+void DiscordVoiceClient::OnWebsocketBinaryMessage(const std::string &data) {
+    m_binary_dispatch_mutex.lock();
+    m_binary_dispatch_queue.push(data);
+    m_binary_dispatcher.emit();
+    m_binary_dispatch_mutex.unlock();
+}
+
+void DiscordVoiceClient::OnBinaryDispatch() {
+    m_binary_dispatch_mutex.lock();
+    if (m_binary_dispatch_queue.empty()) {
+        m_binary_dispatch_mutex.unlock();
+        return;
+    }
+    auto msg = std::move(m_binary_dispatch_queue.front());
+    m_binary_dispatch_queue.pop();
+    m_binary_dispatch_mutex.unlock();
+
+    // voice gateway v9 binary format: [2-byte seq BE][1-byte opcode][payload...]
+    if (msg.size() < 3) return;
+
+    const auto *raw = reinterpret_cast<const uint8_t *>(msg.data());
+    int opcode = raw[2];
+    const uint8_t *payload = raw + 3;
+    size_t payload_size = msg.size() - 3;
+
+    if (!m_dave) return;
+
+    switch (opcode) {
+        case static_cast<int>(VoiceGatewayOp::MlsExternalSenderPackage):
+            m_dave->OnExternalSenderPackage(payload, payload_size);
+            break;
+        case static_cast<int>(VoiceGatewayOp::MlsProposals):
+            m_dave->OnProposals(payload, payload_size);
+            break;
+        case static_cast<int>(VoiceGatewayOp::MlsPrepareCommitTransition):
+            m_dave->OnAnnounceCommitTransition(payload, payload_size);
+            break;
+        case static_cast<int>(VoiceGatewayOp::MlsWelcome):
+            m_dave->OnWelcome(payload, payload_size);
+            break;
+        default:
+            m_log->debug("Unhandled DAVE binary opcode: {}", opcode);
+            break;
+    }
+}
+
+void DiscordVoiceClient::SendBinaryPayload(int opcode, const std::vector<uint8_t> &data) {
+    std::string frame(1 + data.size(), '\0');
+    frame[0] = static_cast<char>(opcode);
+    std::memcpy(frame.data() + 1, data.data(), data.size());
+    m_ws.SendBinary(frame);
+}
+
+void DiscordVoiceClient::SendDaveReadyForTransition(int transitionId) {
+    nlohmann::json j;
+    j["op"] = VoiceGatewayOp::SecureFramesReadyForTransition;
+    j["d"]["transition_id"] = transitionId;
+    m_ws.Send(j);
+}
+
+void DiscordVoiceClient::SendDaveInvalidCommitWelcome(int transitionId) {
+    nlohmann::json j;
+    j["op"] = VoiceGatewayOp::MlsInvalidCommitWelcome;
+    j["d"]["transition_id"] = transitionId;
+    m_ws.Send(j);
+}
+
+void DiscordVoiceClient::HandleGatewayDavePrepareTransition(const VoiceGatewayMessage &m) {
+    if (!m_dave) return;
+    int version = m.Data.value("protocol_version", 0);
+    int transitionId = m.Data.value("transition_id", 0);
+    m_dave->OnPrepareTransition(version, transitionId);
+}
+
+void DiscordVoiceClient::HandleGatewayDaveExecuteTransition(const VoiceGatewayMessage &m) {
+    if (!m_dave) return;
+    int transitionId = m.Data.value("transition_id", 0);
+    m_dave->OnExecuteTransition(transitionId);
+}
+
+void DiscordVoiceClient::HandleGatewayDavePrepareEpoch(const VoiceGatewayMessage &m) {
+    int version = m.Data.value("protocol_version", 0);
+    int epoch = m.Data.value("epoch", 0);
+    if (!m_dave && version > 0)
+        EnsureDaveSession(static_cast<uint16_t>(version));
+    if (m_dave)
+        m_dave->OnPrepareEpoch(version, epoch);
+}
+
+void DiscordVoiceClient::HandleGatewayClientConnect(const VoiceGatewayMessage &m) {
+    if (!m.Data.contains("user_ids")) return;
+    for (const auto &val : m.Data["user_ids"]) {
+        std::string uid_str = val.get<std::string>();
+        m_connected_users.insert(uid_str);
+        if (m_dave)
+            m_dave->AddConnectedUser(uid_str);
+    }
+}
+
+void DiscordVoiceClient::HandleGatewaySessionUpdate(const VoiceGatewayMessage &m) {
+    if (!m.Data.contains("user_id")) return;
+    Snowflake uid = m.Data["user_id"].get<Snowflake>();
+    if (!uid.IsValid()) return;
+
+    std::string uid_str = std::to_string(static_cast<uint64_t>(uid));
+    m_connected_users.insert(uid_str);
+
+    uint32_t audio_ssrc = m.Data.value("audio_ssrc", 0u);
+    if (audio_ssrc != 0) {
+        m_ssrc_map[uid] = audio_ssrc;
+        m_ssrc_user_map[audio_ssrc] = uid;
+    }
+
+    if (m_dave)
+        m_dave->AddConnectedUser(uid_str);
+}
+
+void DiscordVoiceClient::HandleGatewayClientDisconnect(const VoiceGatewayMessage &m) {
+    if (!m.Data.contains("user_id")) return;
+    Snowflake uid = m.Data["user_id"].get<Snowflake>();
+    if (!uid.IsValid()) return;
+
+    std::string uid_str = std::to_string(static_cast<uint64_t>(uid));
+    m_connected_users.erase(uid_str);
+    if (m_dave)
+        m_dave->RemoveConnectedUser(uid_str);
+
+    // clean up ssrc mappings
+    for (auto it = m_ssrc_user_map.begin(); it != m_ssrc_user_map.end(); ++it) {
+        if (it->second == uid) {
+            m_ssrc_user_map.erase(it);
+            break;
+        }
+    }
+}
+
+void DiscordVoiceClient::EnsureDaveSession(uint16_t protocolVersion) {
+    if (m_dave) return;
+
+    m_log->info("Creating DAVE session, protocol version={}", protocolVersion);
+
+    m_dave = std::make_unique<DaveSession>(m_channel_id, m_user_id, m_ssrc_user_map);
+    m_dave->SetLocalSSRC(m_ssrc);
+
+    for (const auto &uid : m_connected_users)
+        m_dave->AddConnectedUser(uid);
+
+    m_dave->signal_send_binary().connect(
+        sigc::mem_fun(*this, &DiscordVoiceClient::SendBinaryPayload));
+    m_dave->signal_send_ready_for_transition().connect(
+        sigc::mem_fun(*this, &DiscordVoiceClient::SendDaveReadyForTransition));
+    m_dave->signal_send_invalid_commit_welcome().connect(
+        sigc::mem_fun(*this, &DiscordVoiceClient::SendDaveInvalidCommitWelcome));
+    m_dave->signal_dave_state_changed().connect([this](bool enabled) {
+        if (enabled)
+            m_log->info("DAVE E2EE active");
+        else
+            m_log->info("DAVE E2EE disabled");
+    });
+
+    m_dave->Init(protocolVersion);
 }
 
 DiscordVoiceClient::type_signal_disconnected DiscordVoiceClient::signal_connected() {
@@ -551,6 +839,14 @@ void to_json(nlohmann::json &j, const VoiceHeartbeatMessage &m) {
     j["d"] = m.Nonce;
 }
 
+static nlohmann::json MakeHeartbeatV9(uint64_t nonce, int seq_ack) {
+    nlohmann::json j;
+    j["op"] = VoiceGatewayOp::Heartbeat;
+    j["d"]["t"] = nonce;
+    j["d"]["seq_ack"] = seq_ack;
+    return j;
+}
+
 void to_json(nlohmann::json &j, const VoiceIdentifyMessage &m) {
     j["op"] = VoiceGatewayOp::Identify;
     j["d"]["server_id"] = m.ServerID;
@@ -561,6 +857,7 @@ void to_json(nlohmann::json &j, const VoiceIdentifyMessage &m) {
     j["d"]["streams"][0]["type"] = "video";
     j["d"]["streams"][0]["rid"] = "100";
     j["d"]["streams"][0]["quality"] = 100;
+    j["d"]["max_dave_protocol_version"] = 1;
 }
 
 void from_json(const nlohmann::json &j, VoiceReadyData::VoiceStream &m) {
@@ -595,6 +892,7 @@ void to_json(nlohmann::json &j, const VoiceSelectProtocolMessage &m) {
 void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m) {
     JS_D("mode", m.Mode);
     JS_D("secret_key", m.SecretKey);
+    JS_ON("dave_protocol_version", m.DaveProtocolVersion);
 }
 
 void to_json(nlohmann::json &j, const VoiceSpeakingMessage &m) {

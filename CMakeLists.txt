@@ -168,6 +168,16 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
+    find_package(libdave QUIET)
+    if (libdave_FOUND)
+        message(STATUS "Found system libdave")
+        target_link_libraries(abaddon libdave)
+    else ()
+        message(STATUS "libdave not found, using subproject")
+        add_subdirectory(subprojects/libdave/cpp EXCLUDE_FROM_ALL)
+        target_link_libraries(abaddon libdave)
+    endif ()
+
     if (ENABLE_RNNOISE)
         target_compile_definitions(abaddon PRIVATE WITH_RNNOISE)
 
