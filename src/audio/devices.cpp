@@ -23,6 +23,11 @@ Glib::RefPtr<Gtk::ListStore> AudioDevices::GetCaptureDeviceModel() {
 
 void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_count, ma_device_info *pCapture, ma_uint32 capture_count) {
     m_playback->clear();
+    // reset state
+    m_default_playback_iter = {};
+    m_active_playback_iter = {};
+    m_default_capture_iter = {};
+    m_active_capture_iter = {};
 
     for (ma_uint32 i = 0; i < playback_count; i++) {
         auto &d = pPlayback[i];
@@ -35,6 +40,17 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
             m_default_playback_iter = row;
             SetActivePlaybackDevice(row);
         }
+    }
+
+    // some platforms don't have a default playback device, so fallback
+    if (!m_default_playback_iter && !m_playback->children().empty()) {
+        auto first = m_playback->children().begin();
+        m_default_playback_iter = first;
+        SetActivePlaybackDevice(first);
+
+        spdlog::get("audio")->warn(
+            "No default playback device reported; falling back to first device."
+        );
     }
 
     m_capture->clear();
@@ -50,6 +66,17 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
             m_default_capture_iter = row;
             SetActiveCaptureDevice(row);
         }
+    }
+
+    // some platforms don't have a default capture device, so fallback
+    if (!m_default_capture_iter && !m_capture->children().empty()) {
+        auto first = m_capture->children().begin();
+        m_default_capture_iter = first;
+        SetActiveCaptureDevice(first);
+
+        spdlog::get("audio")->warn(
+            "No default capture device reported; falling back to first device."
+        );
     }
 
     if (!m_default_playback_iter) {
