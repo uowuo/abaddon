@@ -31,9 +31,11 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
         row[m_playback_columns.Name] = d.name;
         row[m_playback_columns.DeviceID] = d.id;
 
-        if (d.isDefault) {
-            m_default_playback_iter = row;
-            SetActivePlaybackDevice(row);
+        // some platforms don't have a default playback device, so fallback
+        if (!m_default_playback_iter && !m_playback->children().empty()) {
+            auto first = m_playback->children().begin();
+            m_default_playback_iter = first;
+            SetActivePlaybackDevice(first);
         }
     }
 
@@ -46,9 +48,11 @@ void AudioDevices::SetDevices(ma_device_info *pPlayback, ma_uint32 playback_coun
         row[m_capture_columns.Name] = d.name;
         row[m_capture_columns.DeviceID] = d.id;
 
-        if (d.isDefault) {
-            m_default_capture_iter = row;
-            SetActiveCaptureDevice(row);
+        // some platforms don't have a default capture device, so fallback
+        if (!m_default_capture_iter && !m_capture->children().empty()) {
+            auto first = m_capture->children().begin();
+            m_default_capture_iter = first;
+            SetActiveCaptureDevice(first);
         }
     }
 
