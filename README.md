@@ -70,17 +70,7 @@ the result of fundamental issues with Discord's thread implementation.
     * mingw-w64-x86_64-libsodium
     * mingw-w64-x86_64-openssl
     * mingw-w64-x86_64-spdlog
-2. Build and install mlspp (required for voice E2EE):
-    ```Shell
-    git clone https://github.com/cisco/mlspp && cd mlspp
-    git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
-    mkdir build && cd build
-    cmake .. -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64 -DCMAKE_BUILD_TYPE=Release -DTESTING=OFF -DDISABLE_GREASE=ON -DMLS_CXX_NAMESPACE="mlspp" -DCMAKE_CXX_FLAGS="-Wno-maybe-uninitialized"
-    cmake --build .
-    cmake --install .
-    cd ../..
-    ```
-3. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
+2. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
 4. `mkdir build && cd build`
 5. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
 6. `ninja`
@@ -197,7 +187,7 @@ spam filter's wrath:
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 * [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
 * [libdave](https://github.com/discord/libdave) (provided as submodule, required for voice E2EE)
-* [mlspp](https://github.com/cisco/mlspp) (required for voice E2EE, must be built from source)
+* [mlspp](https://github.com/cisco/mlspp) (provided as submodule, required for voice E2EE)
 
 ### TODO:
 

@@ -168,6 +168,40 @@ if (ENABLE_VOICE)
 
     target_link_libraries(abaddon ${CMAKE_DL_LIBS})
 
+    # mlspp and libdave need nlohmann_json::nlohmann_json target
+    if (NOT TARGET nlohmann_json::nlohmann_json)
+        add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+        set_target_properties(nlohmann_json::nlohmann_json PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIRS}")
+    endif ()
+
+    find_package(MLSPP QUIET)
+    if (NOT MLSPP_FOUND)
+        message(STATUS "mlspp not found, using subproject")
+        set(DISABLE_GREASE ON CACHE BOOL "" FORCE)
+        set(TESTING OFF CACHE BOOL "" FORCE)
+        set(MLS_CXX_NAMESPACE "mlspp" CACHE STRING "" FORCE)
+        set(CMAKE_EXPORT_PACKAGE_REGISTRY OFF CACHE BOOL "" FORCE)
+        add_subdirectory(subprojects/mlspp EXCLUDE_FROM_ALL)
+        if (NOT TARGET MLSPP::mlspp)
+            add_library(MLSPP::mlspp ALIAS mlspp)
+        endif ()
+        if (NOT TARGET MLSPP::hpke)
+            add_library(MLSPP::hpke ALIAS hpke)
+        endif ()
+        set(MLSPP_FOUND TRUE CACHE BOOL "" FORCE)
+        # Write a shim config so libdave's find_dependency(MLSPP) finds this
+        # instead of the broken build-tree config that add_subdirectory generates
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim/MLSPPConfig.cmake"
+            "set(MLSPP_FOUND TRUE)\n")
+        set(MLSPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim" CACHE PATH "" FORCE)
+    else ()
+        message(STATUS "Found system mlspp")
+    endif ()
+
+    # Prevent find_package from finding mlspp's broken build-tree config via registry
+    set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON)
+
     find_package(libdave QUIET)
     if (libdave_FOUND)
         message(STATUS "Found system libdave")
@@ -177,6 +211,8 @@ if (ENABLE_VOICE)
         add_subdirectory(subprojects/libdave/cpp EXCLUDE_FROM_ALL)
         target_link_libraries(abaddon libdave)
     endif ()
+
+    set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY OFF)
 
     if (ENABLE_RNNOISE)
         target_compile_definitions(abaddon PRIVATE WITH_RNNOISE)

@@ -64,23 +64,6 @@ jobs:
           update: true
           install: ${{ steps.setupmsys.outputs.value }}
 
-      - name: Build mlspp
-        if: ${{ matrix.mindeps != true }}
-        run: |
-          git clone https://github.com/cisco/mlspp /tmp/mlspp
-          cd /tmp/mlspp
-          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
-          mkdir build && cd build
-          cmake .. -G "MinGW Makefiles" \
-            -DCMAKE_INSTALL_PREFIX=/mingw64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTESTING=OFF \
-            -DDISABLE_GREASE=ON \
-            -DMLS_CXX_NAMESPACE="mlspp" \
-            -DCMAKE_CXX_FLAGS="-Wno-error"
-          cmake --build .
-          cmake --install .
-
       - name: Build (1)
         uses: haya14busa/action-cond@v1
         id: build
@@ -171,21 +154,6 @@ jobs:
           brew install libhandy
           brew install openssl@3
 
-      - name: Build mlspp
-        run: |
-          git clone https://github.com/cisco/mlspp /tmp/mlspp
-          cd /tmp/mlspp
-          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTESTING=OFF \
-            -DDISABLE_GREASE=ON \
-            -DMLS_CXX_NAMESPACE="mlspp" \
-            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
-          cmake --build .
-          sudo cmake --install .
-
       - name: Build
         run: |
           cmake -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
@@ -231,21 +199,6 @@ jobs:
           cmake .. -DJSON_BuildTests=OFF
           make
           sudo make install
-
-      - name: Build mlspp
-        run: |
-          git clone https://github.com/cisco/mlspp /tmp/mlspp
-          cd /tmp/mlspp
-          git checkout 1cc50a124a3bc4e143a787ec934280dc70c1034d
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTESTING=OFF \
-            -DDISABLE_GREASE=ON \
-            -DMLS_CXX_NAMESPACE="mlspp" \
-            -DCMAKE_CXX_FLAGS="-Wno-error"
-          cmake --build .
-          sudo cmake --install .
 
       - name: Build
         run: |
