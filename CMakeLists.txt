@@ -187,7 +187,7 @@ if (ENABLE_VOICE)
             set(REQUIRE_BORINGSSL ON CACHE BOOL "" FORCE)
             set(OPENSSL_ROOT_DIR "/usr/local/eboringssl" CACHE PATH "" FORCE)
             set(OPENSSL_INCLUDE_DIR "/usr/local/eboringssl/include" CACHE PATH "" FORCE)
-            set(OPENSSL_CRYPTO_LIBRARY "/usr/local/eboringssl/lib/libcrypto.a" CACHE FILEPATH "" FO
+            set(OPENSSL_CRYPTO_LIBRARY "/usr/local/eboringssl/lib/libcrypto.a" CACHE FILEPATH "" FORCE)
             set(OPENSSL_SSL_LIBRARY "/usr/local/eboringssl/lib/libssl.a" CACHE FILEPATH "" FORCE)
         endif()
         add_subdirectory(subprojects/mlspp EXCLUDE_FROM_ALL)
