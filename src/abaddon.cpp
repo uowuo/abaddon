@@ -287,6 +287,11 @@ int Abaddon::StartGTK() {
         Gtk::Settings::get_default()->set_property("gtk-xft-dpi", newdpi);
     }
 
+#ifdef _WIN32
+    // Enable dark theme on Windows
+    Gtk::Settings::get_default()->set_property("gtk-application-prefer-dark-theme", true);
+#endif
+
     // store must be checked before this can be called
     m_main_window->UpdateComponents();
 
