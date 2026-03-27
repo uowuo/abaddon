@@ -30,7 +30,7 @@ DaveSession::DaveSession(Snowflake channelId, Snowflake userId,
                     log->warn("[DAVE] {}:{} {}", file, line, message);
                     break;
                 case discord::dave::LS_INFO:
-                    log->info("[DAVE] {}", message);
+                    log->debug("[DAVE] {}", message);
                     break;
                 case discord::dave::LS_VERBOSE:
                     log->debug("[DAVE] {}", message);
