@@ -59,7 +59,7 @@
 /bin/libsharpyuv-0.dll
 /bin/libsigc-2.0-0.dll
 /bin/libsodium-26.dll
-/bin/libspdlog-1.15.dll
+/bin/libspdlog-1.17.dll
 /bin/libsqlite3-0.dll
 /bin/libssh2-1.dll
 /bin/libssl-3-x64.dll

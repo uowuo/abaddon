@@ -5,9 +5,11 @@
 #include "snowflake.hpp"
 #include "waiter.hpp"
 #include "websocket.hpp"
+#include "dave.hpp"
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <set>
 #include <string>
 #include <glibmm/dispatcher.h>
 #include <sigc++/sigc++.h>
@@ -42,6 +44,7 @@ enum class VoiceGatewayOp : int {
     Resume = 7,
     Hello = 8,
     Resumed = 9,
+    ClientConnect = 11,
     ClientDisconnect = 13,
     SessionUpdate = 14,
     MediaSinkWants = 15,
@@ -60,6 +63,7 @@ enum class VoiceGatewayOp : int {
     MlsCommitWelcome = 28,
     MlsPrepareCommitTransition = 29,
     MlsWelcome = 30,
+    MlsInvalidCommitWelcome = 31,
 };
 
 struct VoiceGatewayMessage {
@@ -129,6 +133,7 @@ struct VoiceSessionDescriptionData {
     // std::string MediaSessionID;
     std::string Mode;
     std::array<uint8_t, 32> SecretKey;
+    int DaveProtocolVersion = 0;
 
     friend void from_json(const nlohmann::json &j, VoiceSessionDescriptionData &m);
 };
@@ -209,6 +214,7 @@ public:
     void SetEndpoint(std::string_view endpoint);
     void SetToken(std::string_view token);
     void SetServerID(Snowflake id);
+    void SetChannelID(Snowflake id);
     void SetUserID(Snowflake id);
 
     // todo serialize
@@ -236,6 +242,12 @@ private:
     void HandleGatewayReady(const VoiceGatewayMessage &m);
     void HandleGatewaySessionDescription(const VoiceGatewayMessage &m);
     void HandleGatewaySpeaking(const VoiceGatewayMessage &m);
+    void HandleGatewayDavePrepareTransition(const VoiceGatewayMessage &m);
+    void HandleGatewayDaveExecuteTransition(const VoiceGatewayMessage &m);
+    void HandleGatewayDavePrepareEpoch(const VoiceGatewayMessage &m);
+    void HandleGatewayClientConnect(const VoiceGatewayMessage &m);
+    void HandleGatewayClientDisconnect(const VoiceGatewayMessage &m);
+    void HandleGatewaySessionUpdate(const VoiceGatewayMessage &m);
 
     void Identify();
     void Discovery();
@@ -244,6 +256,13 @@ private:
     void OnWebsocketOpen();
     void OnWebsocketClose(const ix::WebSocketCloseInfo &info);
     void OnWebsocketMessage(const std::string &str);
+    void OnWebsocketBinaryMessage(const std::string &data);
+
+    void OnBinaryDispatch();
+    void SendBinaryPayload(int opcode, const std::vector<uint8_t> &data);
+    void SendDaveReadyForTransition(int transitionId);
+    void SendDaveInvalidCommitWelcome(int transitionId);
+    void EnsureDaveSession(uint16_t protocolVersion);
 
     void HeartbeatThread();
     void KeepaliveThread();
@@ -269,6 +288,7 @@ private:
     uint32_t m_ssrc;
 
     int m_heartbeat_msec;
+    std::atomic<int> m_last_received_seq { -1 };
     Waiter m_heartbeat_waiter;
     std::thread m_heartbeat_thread;
 
@@ -282,7 +302,15 @@ private:
     std::queue<std::string> m_dispatch_queue;
     std::mutex m_dispatch_mutex;
 
+    Glib::Dispatcher m_binary_dispatcher;
+    std::queue<std::string> m_binary_dispatch_queue;
+    std::mutex m_binary_dispatch_mutex;
+
     void OnDispatch();
+
+    std::unique_ptr<DaveSession> m_dave;
+    std::unordered_map<uint32_t, Snowflake> m_ssrc_user_map;
+    std::set<std::string> m_connected_users;
 
     std::array<uint8_t, 1275> m_opus_buffer;
 
