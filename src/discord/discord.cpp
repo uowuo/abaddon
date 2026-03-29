@@ -2476,6 +2476,7 @@ void DiscordClient::HandleGatewayVoiceServerUpdate(const GatewayMessage &msg) {
         spdlog::get("discord")->error("No guild or channel ID in voice server?");
     }
     m_voice.SetUserID(m_user_data.ID);
+    m_voice.SetChannelID(m_voice_channel_id);
     m_voice.Start();
 }
 

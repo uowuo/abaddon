@@ -5,7 +5,6 @@
 #include <gtkmm/main.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-
 Websocket::Websocket(const std::string &id)
     : m_close_info { 1000, "Normal", false } {
     if (m_log = spdlog::get(id); !m_log) {
@@ -46,6 +45,10 @@ void Websocket::SetPrintMessages(bool show) noexcept {
     m_print_messages = show;
 }
 
+void Websocket::SetSeparateBinaryMessages(bool separate) noexcept {
+    m_separate_binary = separate;
+}
+
 void Websocket::Stop() {
     m_log->debug("Stopping with default close code");
     Stop(ix::WebSocketCloseConstants::kNormalClosureCode);
@@ -71,6 +74,10 @@ void Websocket::Send(const nlohmann::json &j) {
     Send(j.dump());
 }
 
+void Websocket::SendBinary(const std::string &data) {
+    m_websocket->sendBinary(data);
+}
+
 void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
     switch (msg->type) {
         case ix::WebSocketMessageType::Open: {
@@ -84,7 +91,10 @@ void Websocket::OnMessage(const ix::WebSocketMessagePtr &msg) {
             m_close_dispatcher.emit();
         } break;
         case ix::WebSocketMessageType::Message: {
-            m_signal_message.emit(msg->str);
+            if (m_separate_binary && msg->binary)
+                m_signal_binary_message.emit(msg->str);
+            else
+                m_signal_message.emit(msg->str);
         } break;
         case ix::WebSocketMessageType::Error: {
             m_log->error("Websocket error: Status: {} Reason: {}", msg->errorInfo.http_status, msg->errorInfo.reason);
@@ -104,4 +114,8 @@ Websocket::type_signal_close Websocket::signal_close() {
 
 Websocket::type_signal_message Websocket::signal_message() {
     return m_signal_message;
+}
+
+Websocket::type_signal_binary_message Websocket::signal_binary_message() {
+    return m_signal_binary_message;
 }

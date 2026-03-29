@@ -68,12 +68,13 @@ the result of fundamental issues with Discord's thread implementation.
     * mingw-w64-x86_64-libhandy
     * mingw-w64-x86_64-opus
     * mingw-w64-x86_64-libsodium
+    * mingw-w64-x86_64-openssl
     * mingw-w64-x86_64-spdlog
 2. `git clone --recurse-submodules="subprojects" https://github.com/uowuo/abaddon && cd abaddon`
-3. `mkdir build && cd build`
-4. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
-5. `ninja`
-6. [Copy resources](#resources)
+4. `mkdir build && cd build`
+5. `cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
+6. `ninja`
+7. [Copy resources](#resources)
 
 #### Mac:
 
@@ -185,6 +186,8 @@ spam filter's wrath:
 * [libopus](https://opus-codec.org/) (optional, required for voice)
 * [libsodium](https://doc.libsodium.org/) (optional, required for voice)
 * [rnnoise](https://gitlab.xiph.org/xiph/rnnoise) (optional, provided as submodule, noise suppression and improved VAD)
+* [libdave](https://github.com/discord/libdave) (provided as submodule, required for voice E2EE)
+* [mlspp](https://github.com/cisco/mlspp) (provided as submodule, required for voice E2EE)
 
 ### TODO:
 
