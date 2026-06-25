@@ -176,6 +176,10 @@ if (ENABLE_VOICE)
             INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIRS}")
     endif ()
 
+    # Ensure we don't pick up a stale shim config from a prior run
+    unset(MLSPP_DIR CACHE)
+    unset(MLSPP_FOUND CACHE)
+
     find_package(MLSPP QUIET)
     if (NOT MLSPP_FOUND)
         message(STATUS "mlspp not found, using subproject")
@@ -184,21 +188,31 @@ if (ENABLE_VOICE)
         set(MLS_CXX_NAMESPACE "mlspp" CACHE STRING "" FORCE)
         set(CMAKE_EXPORT_PACKAGE_REGISTRY OFF CACHE BOOL "" FORCE)
         add_subdirectory(subprojects/mlspp EXCLUDE_FROM_ALL)
-        if (NOT TARGET MLSPP::mlspp)
-            add_library(MLSPP::mlspp ALIAS mlspp)
-        endif ()
-        if (NOT TARGET MLSPP::hpke)
-            add_library(MLSPP::hpke ALIAS hpke)
-        endif ()
-        set(MLSPP_FOUND TRUE CACHE BOOL "" FORCE)
-        # Write a shim config so libdave's find_dependency(MLSPP) finds this
-        # instead of the broken build-tree config that add_subdirectory generates
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim/MLSPPConfig.cmake"
-            "set(MLSPP_FOUND TRUE)\n")
-        set(MLSPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim" CACHE PATH "" FORCE)
-    else ()
-        message(STATUS "Found system mlspp")
     endif ()
+
+    # Ensure targets exist for libdave regardless of whether mlspp was found via
+    # system install or subproject — the subproject doesn't export a usable
+    # build-tree config, and the system mlspp may have been our own shim.
+    if (NOT TARGET MLSPP::mlspp)
+        if (TARGET mlspp)
+            add_library(MLSPP::mlspp ALIAS mlspp)
+        else ()
+            message(FATAL_ERROR "MLSPP::mlspp target not found and mlspp library target not available")
+        endif ()
+    endif ()
+    if (NOT TARGET MLSPP::hpke)
+        if (TARGET hpke)
+            add_library(MLSPP::hpke ALIAS hpke)
+        else ()
+            message(FATAL_ERROR "MLSPP::hpke target not found and hpke library target not available")
+        endif ()
+    endif ()
+
+    # Write a shim config so libdave's find_dependency(MLSPP) finds this
+    # instead of the broken build-tree config that add_subdirectory generates
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim/MLSPPConfig.cmake"
+        "set(MLSPP_FOUND TRUE)\n")
+    set(MLSPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/mlspp-shim" CACHE INTERNAL "" FORCE)
 
     # Prevent find_package from finding mlspp's broken build-tree config via registry
     set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON)
@@ -279,8 +293,15 @@ install(DIRECTORY res/res DESTINATION ${ABADDON_RESOURCE_DIR})
 if (NOT (APPLE OR WIN32))
     install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.desktop
-    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications
+    )
+    install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/metainfo
+    )
+    install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps
+    RENAME io.github.uowuo.abaddon.svg
     )
 endif()
