@@ -98,15 +98,7 @@ the result of fundamental issues with Discord's thread implementation.
       ```
     * On Void Linux:
       ```Shell
-      $ # Install core dependencies
-      $ sudo xbps-install cmake make meson pkg-config gcc libcurl libcurl-devel libsecret libsecret-devel gtkmm gtkmm-devel sqlite sqlite-devel openssl openssl-devel libhandy1 libhandy1-devel opus opus-devel libsodium libsodium-devel spdlog libspdlog
-      $ # Clone and install nlohmann json:
-      $ git clone https://github.com/nlohmann/json && cd json
-      $ mkdir build
-      $ meson build
-      $ cd build
-      $ sudo meson install
-      $ cd ../..
+      $ sudo xbps-install cmake make json-c++ pkg-config gcc libcurl libcurl-devel libsecret libsecret-devel gtkmm gtkmm-devel sqlite sqlite-devel openssl openssl-devel libhandy1 libhandy1-devel opus opus-devel libsodium libsodium-devel spdlog libspdlog
       ```
     * On Fedora Linux:
       ```Shell
