@@ -1,4 +1,5 @@
 set(gdkmm_LIBRARY_NAME gdkmm-3.0)
+set(gtkmm_LIBRARY_NAME gtkmm-3.0)
 
 find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
@@ -23,7 +24,8 @@ find_path(gdkmm_CONFIG_INCLUDE_DIR
                 /usr/lib
                 /usr/local/lib
                 /opt/local/lib
-          PATH_SUFFIXES ${gdkmm_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${gdkmm_LIBRARY_NAME}/include
+                ${gtkmm_LIBRARY_NAME})
 
 find_library(gdkmm_LIBRARY
              NAMES ${gdkmm_LIBRARY_NAME}

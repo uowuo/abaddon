@@ -224,6 +224,75 @@ std::string Platform::FindStateCacheFolder() {
     return home_path;
 }
 
+#elif __HAIKU__
+#include <Directory.h>
+#include <Entry.h>
+#include <FindDirectory.h>
+#include <fs_info.h>
+
+std::string Platform::FindResourceFolder() {
+    static std::string found_path;
+    static bool found = false;
+    if(found) return found_path;
+
+    // try the path of the packaged resource folder
+    dev_t volume = dev_for_path("/boot");
+    char buffer[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH] = {};
+    find_directory(B_SYSTEM_DATA_DIRECTORY, volume, false, buffer, sizeof(buffer));
+    strcat(buffer, "/abaddon/");
+
+    // check if the directory exists
+    BEntry entry(buffer);
+    if(entry.Exists() && entry.IsDirectory()) {
+    	found = true;
+        found_path = std::string(buffer);
+        return found_path;
+    }
+
+    // otherwise, fall back to the cwd
+    spdlog::get("discord")->warn("cant find a resources folder, will try to load from cwd");
+    found_path = ".";
+    found = true;
+    return found_path;
+}
+
+std::string Platform::FindConfigFile() {
+    const auto cfg = std::getenv("ABADDON_CONFIG");
+    if (cfg != nullptr) return cfg;
+
+    static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    // generate the path of the config directory. If it does not exist, create it
+    dev_t volume = dev_for_path("/boot");
+    char buffer[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH] = {};
+    find_directory(B_USER_SETTINGS_DIRECTORY, volume, false, buffer, sizeof(buffer));
+    strcat(buffer, "/abaddon/");
+    create_directory(buffer, 0777);
+
+    strcat(buffer, "abaddon.ini");
+    found_path = std::string(buffer);
+    return found_path;
+}
+
+std::string Platform::FindStateCacheFolder() {
+	static std::string found_path;
+    static bool found = false;
+    if (found) return found_path;
+
+    dev_t volume = dev_for_path("/boot");
+    char buffer[B_PATH_NAME_LENGTH+B_FILE_NAME_LENGTH];
+    find_directory(B_USER_CACHE_DIRECTORY, volume, false, buffer, sizeof(buffer));
+    strcat(buffer, "/abaddon/");
+    create_directory(buffer, 0777);
+
+
+    found_path = std::string(buffer);
+    found = true;
+    return found_path;
+}
+
 
 #else
 std::string Platform::FindResourceFolder() {

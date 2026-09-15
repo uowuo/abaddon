@@ -19,7 +19,8 @@ find_path(SIGC++_INCLUDE_DIR
 find_path(SIGC++_CONFIG_INCLUDE_DIR
           NAMES sigc++config.h
           HINTS ${SIGC++_LIBRARY_HINTS}
-          PATH_SUFFIXES ${SIGC++_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${SIGC++_LIBRARY_NAME}/include
+                        ${SIGC++_LIBRARY_NAME})
 
 find_library(SIGC++_LIBRARY
              NAMES ${SIGC++_LIBRARY_FILE}

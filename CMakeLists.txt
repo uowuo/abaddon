@@ -34,6 +34,11 @@ if (MINGW OR WIN32)
     link_libraries(ws2_32)
 endif ()
 
+if (HAIKU)
+    link_libraries(be)
+    link_libraries(network)
+endif ()
+
 if (WIN32)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(NOMINMAX)
@@ -71,7 +76,8 @@ if (NOT (APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
     target_precompile_headers(abaddon PRIVATE <gtkmm.h> src/abaddon.hpp src/util.hpp)
 endif ()
 
-if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1"))
+if (NOT HAIKU AND
+((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1")))
     target_link_libraries(abaddon stdc++fs)
 endif ()
 

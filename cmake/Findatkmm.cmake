@@ -25,7 +25,8 @@ find_path(ATKMM_CONFIG_INCLUDE_DIR
                 /usr/lib
                 /usr/local/lib
                 /opt/local/lib
-          PATH_SUFFIXES ${ATKMM_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${ATKMM_LIBRARY_NAME}/include
+                ${ATKMM_LIBRARY_NAME})
 
 find_library(ATKMM_LIBRARY
              NAMES ${ATKMM_LIBRARY_NAME}

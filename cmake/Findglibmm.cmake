@@ -22,7 +22,8 @@ find_path(GLIBMM_INCLUDE_DIR
 find_path(GLIBMM_CONFIG_INCLUDE_DIR
           NAMES glibmmconfig.h
           HINTS ${GLIBMM_LIBRARY_HINTS}
-          PATH_SUFFIXES ${GLIBMM_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${GLIBMM_LIBRARY_NAME}/include
+                   ${GLIBMM_LIBRARY_NAME})
 
 find_library(GLIBMM_LIBRARY
              NAMES ${GLIBMM_LIBRARY_NAME}

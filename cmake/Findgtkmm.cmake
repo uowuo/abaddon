@@ -32,12 +32,12 @@ find_path(GTKMM_INCLUDE_DIR
 find_path(GTKMM_CONFIG_INCLUDE_DIR
           NAMES gtkmmconfig.h
           HINTS ${GTKMM_LIBRARY_HINTS}
-          PATH_SUFFIXES ${GTKMM_LIBRARY_NAME}/include)
+          PATH_SUFFIXES ${GTKMM_LIBRARY_NAME} ${GTKMM_LIBRARY_NAME}/include)
 
 find_library(GTKMM_LIB
              NAMES ${GTKMM_LIBRARY_NAME}
                    gtkmm
-             HINTS ${GTKMM_LIBRARY_HINTS}
+             HINTS ${GTKMM_LIBRARY_HINTS} ${GTKMM_INCLUDE_DIR}
              PATH_SUFFIXES ${GTKMM_LIBRARY_NAME}
                            ${GTKMM_LIBRARY_NAME}/include)
 
