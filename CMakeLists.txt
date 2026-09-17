@@ -277,10 +277,17 @@ install(DIRECTORY res/res DESTINATION ${ABADDON_RESOURCE_DIR})
 
 
 if (NOT (APPLE OR WIN32))
-    install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.desktop
-    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications
-    )
+
+  install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.desktop
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications
+  )
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/io.github.uowuo.abaddon.metainfo.xml
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/metainfo
+  )
+
+  install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/res/desktop/icon.svg
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps RENAME io.github.uowuo.abaddon.svg)
+
 endif()
