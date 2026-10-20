@@ -381,3 +381,25 @@ For example, memory_db would be set by adding `memory_db = true` under the line 
 | `ABADDON_CONFIG` | change path of configuration file to use. relative to cwd or can be absolute |
 
 </details>
+
+### System tray on Linux
+
+Enable close-to-tray in the **`[gui]`** section of `abaddon.ini` (restart after
+editing):
+
+```ini
+[gui]
+hide_to_tray = true
+```
+
+Linux builds automatically use Ayatana AppIndicator, or the legacy AppIndicator
+library, when its GTK 3 development package is available. This provides a native
+StatusNotifier tray on Wayland and X11, with **Show Abaddon**, **Hide Abaddon**, and
+**Quit** actions. No polling loop is added. Without either library, the existing
+GTK status icon is retained; `-DUSE_APPINDICATOR=OFF` explicitly selects it.
+
+Closing the window exits normally when no usable tray is connected. If the tray
+host disappears while Abaddon is hidden, the window is shown again. The ordinary
+minimize button still belongs to the desktop's taskbar; close with **X** to hide
+to the tray. On Wayland, the panel determines whether clicking the icon opens its
+menu; use **Show Abaddon** in that menu to restore the window.

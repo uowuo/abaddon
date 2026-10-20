@@ -17,6 +17,9 @@
 #define APP_TITLE "Abaddon"
 
 class AudioManager;
+#ifdef WITH_APPINDICATOR
+struct _AppIndicator;
+#endif
 
 class Abaddon {
 private:
@@ -156,6 +159,8 @@ protected:
     void on_user_menu_copy_id();
     void on_user_menu_open_dm();
     void on_user_menu_remove_recipient();
+    bool HasUsableTray();
+    void ShowFromTray();
     void on_tray_click();
     void on_tray_popup_menu(int button, int activate_time);
     void on_tray_menu_click();
@@ -183,6 +188,10 @@ private:
     Glib::RefPtr<Gtk::Application> m_gtk_app;
     Glib::RefPtr<Gtk::CssProvider> m_css_provider;
     Glib::RefPtr<Gtk::StatusIcon> m_tray;
+#ifdef WITH_APPINDICATOR
+    _AppIndicator *m_app_indicator = nullptr;
+    bool m_app_indicator_connected = false;
+#endif
     std::unique_ptr<MainWindow> m_main_window; // wah wah cant create a gtkstylecontext fuck you
 
     Notifications m_notifications;
