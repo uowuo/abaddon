@@ -6,6 +6,11 @@
 #include <string>
 #include <algorithm>
 #include <gtkmm.h>
+#ifdef WITH_AYATANA_APPINDICATOR
+#include <libayatana-appindicator/app-indicator.h>
+#elif defined(WITH_APPINDICATOR)
+#include <libappindicator/app-indicator.h>
+#endif
 #include "platform.hpp"
 #include "audio/manager.hpp"
 #include "discord/discord.hpp"
@@ -323,18 +328,46 @@ int Abaddon::StartGTK() {
     ActionReloadCSS();
     AttachCSSMonitor();
 
+    m_tray_menu = Gtk::make_managed<Gtk::Menu>();
+    auto *tray_show = Gtk::make_managed<Gtk::MenuItem>("Show Abaddon", false);
+    auto *tray_hide = Gtk::make_managed<Gtk::MenuItem>("Hide Abaddon", false);
+    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit", false);
+    tray_show->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::ShowFromTray));
+    tray_hide->signal_activate().connect([this] { m_main_window->hide(); });
+    m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
+    m_tray_menu->append(*tray_show);
+    m_tray_menu->append(*tray_hide);
+    m_tray_menu->append(*Gtk::make_managed<Gtk::SeparatorMenuItem>());
+    m_tray_menu->append(*m_tray_exit);
+    m_tray_menu->show_all();
+
     if (m_settings.GetSettings().HideToTray) {
+#ifdef WITH_APPINDICATOR
+        const auto icon_path = GetResPath("/abaddon.svg");
+        m_app_indicator = app_indicator_new("abaddon", icon_path.c_str(),
+                                           APP_INDICATOR_CATEGORY_COMMUNICATIONS);
+        app_indicator_set_title(m_app_indicator, APP_TITLE);
+        app_indicator_set_menu(m_app_indicator, m_tray_menu->gobj());
+        app_indicator_set_secondary_activate_target(m_app_indicator, GTK_WIDGET(tray_show->gobj()));
+        g_signal_connect(m_app_indicator, "connection-changed", G_CALLBACK(+[](
+            AppIndicator *, gboolean connected, gpointer data) {
+            auto *app = static_cast<Abaddon *>(data);
+            app->m_app_indicator_connected = connected;
+            // A vanished panel must not strand an invisible client.
+            if (!connected && !app->m_main_window->is_visible())
+                app->ShowFromTray();
+        }), this);
+        app_indicator_set_status(m_app_indicator, APP_INDICATOR_STATUS_ACTIVE);
+#else
         m_tray = Gtk::StatusIcon::create("discord");
         m_tray->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_click));
         m_tray->signal_popup_menu().connect(sigc::mem_fun(*this, &Abaddon::on_tray_popup_menu));
+        m_tray->property_embedded().signal_changed().connect([this] {
+            if (!m_tray->is_embedded() && !m_main_window->is_visible())
+                ShowFromTray();
+        });
+#endif
     }
-    m_tray_menu = Gtk::make_managed<Gtk::Menu>();
-    m_tray_exit = Gtk::make_managed<Gtk::MenuItem>("Quit", false);
-
-    m_tray_exit->signal_activate().connect(sigc::mem_fun(*this, &Abaddon::on_tray_menu_click));
-
-    m_tray_menu->append(*m_tray_exit);
-    m_tray_menu->show_all();
 
     m_main_window->signal_hide().connect(sigc::mem_fun(*this, &Abaddon::on_window_hide));
     m_gtk_app->signal_shutdown().connect(sigc::mem_fun(*this, &Abaddon::OnShutdown), false);
@@ -369,6 +402,15 @@ int Abaddon::StartGTK() {
 }
 
 void Abaddon::OnShutdown() {
+#ifdef WITH_APPINDICATOR
+    if (m_app_indicator != nullptr) {
+        g_signal_handlers_disconnect_by_data(m_app_indicator, this);
+        app_indicator_set_status(m_app_indicator, APP_INDICATOR_STATUS_PASSIVE);
+        g_object_unref(m_app_indicator);
+        m_app_indicator = nullptr;
+        m_app_indicator_connected = false;
+    }
+#endif
     StopDiscord();
     m_settings.Close();
 }
@@ -1135,8 +1177,27 @@ AudioManager &Abaddon::GetAudio() {
 }
 #endif
 
+bool Abaddon::HasUsableTray() {
+    if (!m_settings.GetSettings().HideToTray)
+        return false;
+#ifdef WITH_APPINDICATOR
+    return m_app_indicator != nullptr && m_app_indicator_connected;
+#else
+    return m_tray && m_tray->is_embedded();
+#endif
+}
+
+void Abaddon::ShowFromTray() {
+    m_main_window->show();
+    m_main_window->deiconify();
+    m_main_window->present();
+}
+
 void Abaddon::on_tray_click() {
-    m_main_window->set_visible(!m_main_window->is_visible());
+    if (m_main_window->is_visible())
+        m_main_window->hide();
+    else
+        ShowFromTray();
 }
 
 void Abaddon::on_tray_menu_click() {
@@ -1148,7 +1209,7 @@ void Abaddon::on_tray_popup_menu(int button, int activate_time) {
 }
 
 void Abaddon::on_window_hide() {
-    if (!m_settings.GetSettings().HideToTray) {
+    if (!HasUsableTray()) {
         m_gtk_app->quit();
     }
 }
